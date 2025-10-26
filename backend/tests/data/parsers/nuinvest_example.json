@@ -1,0 +1,25 @@
+{
+  "portfolio": {
+    "name": "Meu Portfólio Nu",
+    "positions": [
+      {
+        "ticker": "PETR4",
+        "quantity": 100,
+        "averagePrice": 28.50,
+        "currentPrice": 30.00
+      },
+      {
+        "ticker": "VALE3",
+        "quantity": 50,
+        "averagePrice": 65.00,
+        "currentPrice": 68.00
+      },
+      {
+        "ticker": "ITUB4",
+        "quantity": 200,
+        "averagePrice": 25.00,
+        "currentPrice": 26.50
+      }
+    ]
+  }
+}

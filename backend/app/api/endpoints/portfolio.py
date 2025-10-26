@@ -79,45 +79,89 @@ async def create_portfolio(portfolio: Portfolio, db: Session = Depends(get_db)):
 
 
 @router.post("/portfolio/import")
-async def import_portfolio(request: ImportPortfolioRequest):
+async def import_portfolio(request: ImportPortfolioRequest, db: Session = Depends(get_db)):
     """
-    Importa portfólio de diferentes fontes (CEI, Clear, BTG, XP, etc.)
+    Importa portfólio de diferentes fontes
+
+    Fontes suportadas:
+    - myprofit: CSV do MyProfit
+    - investidor10: CSV/Excel do Investidor10
+    - nuinvest: JSON do Nu Invest
+    - cei: CSV do Canal Eletrônico do Investidor
+    - clear: CSV da Clear Corretora
 
     Args:
         request: Dados da importação (source, data)
+        db: Sessão do banco de dados
 
     Returns:
-        Portfólio importado
+        Portfólio importado e salvo no database
     """
     logger.info(f"POST /portfolio/import - source: {request.source}")
 
     try:
-        # TODO: Implementar parsers para cada fonte
-        supported_sources = ["cei", "clear", "btg", "xp", "custom"]
+        # Importar ParserFactory
+        from ...parsers.portfolio_parsers import ParserFactory
 
-        if request.source not in supported_sources:
+        # Obter fontes suportadas
+        supported_sources = ParserFactory.get_supported_sources()
+
+        # Validar fonte
+        if request.source.lower() not in supported_sources:
             raise HTTPException(
                 status_code=400,
-                detail=f"Fonte '{request.source}' não suportada. Fontes disponíveis: {supported_sources}"
+                detail=f"Fonte '{request.source}' não suportada. Fontes disponíveis: {', '.join(supported_sources)}"
             )
 
-        # Mock de importação
-        portfolio_data = {
-            "id": "imported_123",
-            "source": request.source,
-            "imported_at": datetime.utcnow().isoformat(),
-            "status": "success",
-            "positions": [],  # TODO: Parse data
-            "message": f"Portfólio importado de {request.source} (implementação pendente)"
+        # Criar parser apropriado
+        parser = ParserFactory.create_parser(request.source)
+
+        # Parse dos dados
+        try:
+            parsed_portfolio = parser.parse(request.data)
+            logger.info(f"Dados parseados com sucesso - {len(parsed_portfolio['positions'])} posições encontradas")
+        except ValueError as e:
+            logger.error(f"Erro ao fazer parse dos dados: {str(e)}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Erro ao processar dados: {str(e)}"
+            )
+
+        # Salvar no database usando PortfolioService
+        service = PortfolioService(db)
+
+        # Preparar dados para salvar
+        portfolio_to_save = {
+            "name": parsed_portfolio["name"],
+            "description": parsed_portfolio["description"],
+            "positions": parsed_portfolio["positions"],
+            "currency": parsed_portfolio["currency"]
         }
 
-        return portfolio_data
+        # Salvar portfólio
+        saved_portfolio = await service.save_portfolio(portfolio_to_save)
+
+        logger.info(f"Portfólio importado e salvo com ID: {saved_portfolio.get('id')}")
+
+        # Retornar resultado
+        return {
+            "status": "success",
+            "message": f"Portfólio importado com sucesso de {request.source}",
+            "portfolio": {
+                "id": saved_portfolio.get("id"),
+                "name": saved_portfolio.get("name"),
+                "total_positions": len(parsed_portfolio["positions"]),
+                "source": request.source,
+                "imported_at": parsed_portfolio["imported_at"],
+                "metadata": parsed_portfolio.get("metadata", {})
+            }
+        }
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Erro ao importar portfólio: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 
 @router.get("/portfolio/{portfolio_id}")
