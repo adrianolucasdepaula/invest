@@ -1,0 +1,3 @@
+"""
+Crypto scrapers package
+"""

@@ -1,0 +1,3 @@
+"""
+Macroeconomic scrapers package
+"""

@@ -1,0 +1,3 @@
+"""
+Insiders scrapers package
+"""
