@@ -343,6 +343,216 @@ class PortfolioService:
             "by_asset_type": by_asset_type,
         }
 
+    def calculate_annualized_return(self, returns: List[float], days: int) -> float:
+        """
+        Calcula retorno anualizado
+
+        Args:
+            returns: Lista de retornos diários (em decimal, ex: 0.05 = 5%)
+            days: Número de dias do período
+
+        Returns:
+            Retorno anualizado (%)
+        """
+        if not returns or days == 0:
+            return 0.0
+
+        total_return = sum(returns)
+        annualized = (1 + total_return) ** (252 / days) - 1  # 252 dias úteis/ano
+        return annualized * 100
+
+    def calculate_volatility(self, returns: List[float]) -> float:
+        """
+        Calcula volatilidade (desvio padrão dos retornos)
+
+        Args:
+            returns: Lista de retornos diários
+
+        Returns:
+            Volatilidade anualizada (%)
+        """
+        if not returns or len(returns) < 2:
+            return 0.0
+
+        import numpy as np
+        daily_volatility = np.std(returns)
+        annualized_volatility = daily_volatility * np.sqrt(252)  # Anualiza
+        return annualized_volatility * 100
+
+    def calculate_sharpe_ratio(
+        self,
+        returns: List[float],
+        risk_free_rate: float = 0.1075  # CDI aproximado 10.75% ao ano
+    ) -> float:
+        """
+        Calcula Sharpe Ratio (retorno ajustado pelo risco)
+
+        Args:
+            returns: Lista de retornos diários
+            risk_free_rate: Taxa livre de risco anualizada (CDI)
+
+        Returns:
+            Sharpe Ratio
+        """
+        if not returns or len(returns) < 2:
+            return 0.0
+
+        import numpy as np
+
+        excess_returns = [r - (risk_free_rate / 252) for r in returns]  # Excesso sobre CDI
+        mean_excess = np.mean(excess_returns)
+        std_excess = np.std(excess_returns)
+
+        if std_excess == 0:
+            return 0.0
+
+        sharpe = mean_excess / std_excess * np.sqrt(252)  # Anualizado
+        return round(sharpe, 2)
+
+    def calculate_max_drawdown(self, prices: List[float]) -> float:
+        """
+        Calcula Maximum Drawdown (maior queda do pico ao vale)
+
+        Args:
+            prices: Lista de valores do portfólio ao longo do tempo
+
+        Returns:
+            Max drawdown (%)
+        """
+        if not prices or len(prices) < 2:
+            return 0.0
+
+        import numpy as np
+
+        prices_arr = np.array(prices)
+        peak = np.maximum.accumulate(prices_arr)
+        drawdown = (prices_arr - peak) / peak
+        max_dd = np.min(drawdown)
+
+        return abs(max_dd * 100)  # Retorna como % positivo
+
+    def calculate_win_rate(self, trades: List[Dict[str, Any]]) -> float:
+        """
+        Calcula taxa de acerto (win rate)
+
+        Args:
+            trades: Lista de operações com profit_loss
+
+        Returns:
+            Win rate (%)
+        """
+        if not trades:
+            return 0.0
+
+        winning_trades = sum(1 for t in trades if t.get("profit_loss", 0) > 0)
+        total_trades = len(trades)
+
+        return (winning_trades / total_trades * 100) if total_trades > 0 else 0.0
+
+    async def save_portfolio(self, portfolio_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Salva portfólio no database
+
+        Args:
+            portfolio_data: Dados do portfólio
+
+        Returns:
+            Portfólio salvo com ID
+        """
+        from ..models.portfolio import Portfolio as PortfolioModel
+
+        try:
+            portfolio = PortfolioModel(
+                name=portfolio_data.get("name"),
+                description=portfolio_data.get("description"),
+                currency=portfolio_data.get("currency", "BRL"),
+                user_id=portfolio_data.get("user_id"),  # TODO: Implementar autenticação
+            )
+
+            self.db.add(portfolio)
+            self.db.commit()
+            self.db.refresh(portfolio)
+
+            logger.info(f"Portfólio '{portfolio.name}' salvo com ID {portfolio.id}")
+
+            return {
+                "id": portfolio.id,
+                "name": portfolio.name,
+                "description": portfolio.description,
+                "currency": portfolio.currency,
+                "created_at": portfolio.created_at.isoformat() if portfolio.created_at else None,
+                "updated_at": portfolio.updated_at.isoformat() if portfolio.updated_at else None,
+            }
+
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Erro ao salvar portfólio: {str(e)}")
+            raise
+
+    async def get_portfolio(self, portfolio_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Busca portfólio do database
+
+        Args:
+            portfolio_id: ID do portfólio
+
+        Returns:
+            Dados do portfólio ou None
+        """
+        from ..models.portfolio import Portfolio as PortfolioModel
+
+        try:
+            portfolio = self.db.query(PortfolioModel).filter(
+                PortfolioModel.id == portfolio_id
+            ).first()
+
+            if not portfolio:
+                return None
+
+            return {
+                "id": portfolio.id,
+                "name": portfolio.name,
+                "description": portfolio.description,
+                "currency": portfolio.currency,
+                "created_at": portfolio.created_at.isoformat() if portfolio.created_at else None,
+                "updated_at": portfolio.updated_at.isoformat() if portfolio.updated_at else None,
+            }
+
+        except Exception as e:
+            logger.error(f"Erro ao buscar portfólio {portfolio_id}: {str(e)}")
+            raise
+
+    async def delete_portfolio(self, portfolio_id: int) -> bool:
+        """
+        Remove portfólio do database
+
+        Args:
+            portfolio_id: ID do portfólio
+
+        Returns:
+            True se removido com sucesso
+        """
+        from ..models.portfolio import Portfolio as PortfolioModel
+
+        try:
+            portfolio = self.db.query(PortfolioModel).filter(
+                PortfolioModel.id == portfolio_id
+            ).first()
+
+            if not portfolio:
+                return False
+
+            self.db.delete(portfolio)
+            self.db.commit()
+
+            logger.info(f"Portfólio {portfolio_id} removido com sucesso")
+            return True
+
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Erro ao remover portfólio {portfolio_id}: {str(e)}")
+            raise
+
     async def consolidate_portfolios(
         self,
         portfolios: List[Dict[str, Any]]
