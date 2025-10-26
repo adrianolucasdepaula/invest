@@ -595,3 +595,377 @@ class PortfolioService:
         consolidated["summary"] = self._calculate_portfolio_summary(consolidated["positions"])
 
         return consolidated
+
+    # ==================== MÉTODOS DE HISTÓRICO ====================
+
+    async def save_snapshot(
+        self,
+        portfolio_id: int,
+        snapshot_date: str,
+        total_value: float,
+        total_invested: float,
+        positions: List[Dict[str, Any]],
+        daily_return: Optional[float] = None,
+        ibovespa_value: Optional[float] = None,
+        cdi_accumulated: Optional[float] = None
+    ) -> Dict[str, Any]:
+        """
+        Salva snapshot diário do portfólio para histórico
+
+        Args:
+            portfolio_id: ID do portfólio
+            snapshot_date: Data do snapshot (YYYY-MM-DD)
+            total_value: Valor total do portfólio
+            total_invested: Total investido
+            positions: Lista de posições
+            daily_return: Retorno do dia (%)
+            ibovespa_value: Valor do Ibovespa
+            cdi_accumulated: CDI acumulado (%)
+
+        Returns:
+            Snapshot salvo
+        """
+        from ..models.portfolio_history import PortfolioHistory
+        from datetime import datetime
+
+        try:
+            # Converter data string para date object
+            date_obj = datetime.strptime(snapshot_date, "%Y-%m-%d").date()
+
+            # Verificar se já existe snapshot para essa data
+            existing = self.db.query(PortfolioHistory).filter(
+                PortfolioHistory.portfolio_id == portfolio_id,
+                PortfolioHistory.snapshot_date == date_obj
+            ).first()
+
+            if existing:
+                # Atualizar snapshot existente
+                existing.total_value = total_value
+                existing.total_invested = total_invested
+                existing.positions_snapshot = {p["ticker"]: p for p in positions}
+                existing.daily_return = daily_return
+                existing.ibovespa_value = ibovespa_value
+                existing.cdi_accumulated = cdi_accumulated
+                snapshot = existing
+            else:
+                # Criar novo snapshot
+                snapshot = PortfolioHistory(
+                    portfolio_id=portfolio_id,
+                    snapshot_date=date_obj,
+                    total_value=total_value,
+                    total_invested=total_invested,
+                    positions_snapshot={p["ticker"]: p for p in positions},
+                    daily_return=daily_return,
+                    ibovespa_value=ibovespa_value,
+                    cdi_accumulated=cdi_accumulated,
+                    accumulated_return=((total_value - total_invested) / total_invested * 100) if total_invested > 0 else 0,
+                    accumulated_return_value=total_value - total_invested
+                )
+                self.db.add(snapshot)
+
+            self.db.commit()
+            self.db.refresh(snapshot)
+
+            logger.info(f"Snapshot salvo para portfólio {portfolio_id} em {snapshot_date}")
+
+            return {
+                "id": snapshot.id,
+                "portfolio_id": snapshot.portfolio_id,
+                "snapshot_date": snapshot.snapshot_date.isoformat(),
+                "total_value": snapshot.total_value,
+                "daily_return": snapshot.daily_return,
+            }
+
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Erro ao salvar snapshot: {str(e)}")
+            raise
+
+    async def get_historical_data(
+        self,
+        portfolio_id: int,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        period: str = "1M"
+    ) -> List[Dict[str, Any]]:
+        """
+        Busca dados históricos do portfólio
+
+        Args:
+            portfolio_id: ID do portfólio
+            start_date: Data início (YYYY-MM-DD)
+            end_date: Data fim (YYYY-MM-DD)
+            period: Período (1D, 1W, 1M, 3M, 6M, 1Y, YTD, ALL)
+
+        Returns:
+            Lista de snapshots históricos
+        """
+        from ..models.portfolio_history import PortfolioHistory
+        from datetime import datetime, timedelta
+
+        try:
+            # Calcular datas baseado no período
+            end = datetime.strptime(end_date, "%Y-%m-%d").date() if end_date else datetime.now().date()
+
+            if not start_date:
+                period_map = {
+                    "1D": 1,
+                    "1W": 7,
+                    "1M": 30,
+                    "3M": 90,
+                    "6M": 180,
+                    "1Y": 365,
+                    "YTD": (datetime.now() - datetime(datetime.now().year, 1, 1)).days,
+                    "ALL": 3650  # 10 anos
+                }
+                days = period_map.get(period, 30)
+                start = end - timedelta(days=days)
+            else:
+                start = datetime.strptime(start_date, "%Y-%m-%d").date()
+
+            # Buscar snapshots
+            snapshots = self.db.query(PortfolioHistory).filter(
+                PortfolioHistory.portfolio_id == portfolio_id,
+                PortfolioHistory.snapshot_date >= start,
+                PortfolioHistory.snapshot_date <= end
+            ).order_by(PortfolioHistory.snapshot_date).all()
+
+            logger.info(f"Encontrados {len(snapshots)} snapshots para portfólio {portfolio_id}")
+
+            return [
+                {
+                    "date": s.snapshot_date.isoformat(),
+                    "total_value": s.total_value,
+                    "total_invested": s.total_invested,
+                    "daily_return": s.daily_return,
+                    "accumulated_return": s.accumulated_return,
+                    "ibovespa_value": s.ibovespa_value,
+                    "cdi_accumulated": s.cdi_accumulated,
+                }
+                for s in snapshots
+            ]
+
+        except Exception as e:
+            logger.error(f"Erro ao buscar dados históricos: {str(e)}")
+            raise
+
+    async def save_dividend(
+        self,
+        portfolio_id: int,
+        ticker: str,
+        value_per_share: float,
+        total_shares: float,
+        payment_date: str,
+        dividend_type: str = "dividendo"
+    ) -> Dict[str, Any]:
+        """
+        Salva dividendo recebido
+
+        Args:
+            portfolio_id: ID do portfólio
+            ticker: Ticker do ativo
+            value_per_share: Valor por ação
+            total_shares: Quantidade de ações
+            payment_date: Data de pagamento (YYYY-MM-DD)
+            dividend_type: Tipo (dividendo, jcp, rendimento)
+
+        Returns:
+            Dividendo salvo
+        """
+        from ..models.portfolio_history import PortfolioDividend
+        from datetime import datetime
+
+        try:
+            date_obj = datetime.strptime(payment_date, "%Y-%m-%d").date()
+            total_value = value_per_share * total_shares
+
+            dividend = PortfolioDividend(
+                portfolio_id=portfolio_id,
+                ticker=ticker,
+                dividend_type=dividend_type,
+                value_per_share=value_per_share,
+                total_shares=total_shares,
+                total_value=total_value,
+                payment_date=date_obj,
+                status="received"
+            )
+
+            self.db.add(dividend)
+            self.db.commit()
+            self.db.refresh(dividend)
+
+            logger.info(f"Dividendo salvo: {ticker} - R$ {total_value:.2f}")
+
+            return {
+                "id": dividend.id,
+                "ticker": dividend.ticker,
+                "total_value": dividend.total_value,
+                "payment_date": dividend.payment_date.isoformat(),
+            }
+
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Erro ao salvar dividendo: {str(e)}")
+            raise
+
+    async def get_dividends(
+        self,
+        portfolio_id: int,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        period: str = "1Y"
+    ) -> Dict[str, Any]:
+        """
+        Busca dividendos recebidos por período
+
+        Args:
+            portfolio_id: ID do portfólio
+            start_date: Data início (YYYY-MM-DD)
+            end_date: Data fim (YYYY-MM-DD)
+            period: Período (1M, 3M, 6M, 1Y, ALL)
+
+        Returns:
+            Dados de dividendos
+        """
+        from ..models.portfolio_history import PortfolioDividend
+        from datetime import datetime, timedelta
+        from collections import defaultdict
+
+        try:
+            # Calcular datas
+            end = datetime.strptime(end_date, "%Y-%m-%d").date() if end_date else datetime.now().date()
+
+            if not start_date:
+                period_map = {
+                    "1M": 30,
+                    "3M": 90,
+                    "6M": 180,
+                    "1Y": 365,
+                    "ALL": 3650
+                }
+                days = period_map.get(period, 365)
+                start = end - timedelta(days=days)
+            else:
+                start = datetime.strptime(start_date, "%Y-%m-%d").date()
+
+            # Buscar dividendos
+            dividends = self.db.query(PortfolioDividend).filter(
+                PortfolioDividend.portfolio_id == portfolio_id,
+                PortfolioDividend.payment_date >= start,
+                PortfolioDividend.payment_date <= end
+            ).order_by(PortfolioDividend.payment_date).all()
+
+            # Agrupar por ticker
+            by_ticker = defaultdict(lambda: {"total": 0.0, "payments": 0, "dividends": []})
+
+            total_received = 0.0
+            for div in dividends:
+                total_received += div.total_value
+                by_ticker[div.ticker]["total"] += div.total_value
+                by_ticker[div.ticker]["payments"] += 1
+                by_ticker[div.ticker]["dividends"].append({
+                    "date": div.payment_date.isoformat(),
+                    "value": div.total_value,
+                    "type": div.dividend_type
+                })
+
+            # Buscar portfólio para calcular yield
+            portfolio = await self.get_portfolio(portfolio_id)
+            total_invested = portfolio.get("total_invested", 0) if portfolio else 0
+            dividend_yield = (total_received / total_invested * 100) if total_invested > 0 else 0
+
+            # Calcular média mensal
+            days_diff = (end - start).days
+            months = max(days_diff / 30, 1)
+            monthly_average = total_received / months
+
+            logger.info(f"Encontrados {len(dividends)} dividendos para portfólio {portfolio_id}")
+
+            return {
+                "portfolio_id": portfolio_id,
+                "period": period,
+                "total_received": round(total_received, 2),
+                "dividend_yield": round(dividend_yield, 2),
+                "monthly_average": round(monthly_average, 2),
+                "total_payments": len(dividends),
+                "by_ticker": [
+                    {
+                        "ticker": ticker,
+                        "total": round(data["total"], 2),
+                        "payments": data["payments"],
+                        "yield": round((data["total"] / total_invested * 100) if total_invested > 0 else 0, 2)
+                    }
+                    for ticker, data in sorted(by_ticker.items(), key=lambda x: x[1]["total"], reverse=True)
+                ],
+                "next_payments": [],  # TODO: Implementar previsão de próximos pagamentos
+            }
+
+        except Exception as e:
+            logger.error(f"Erro ao buscar dividendos: {str(e)}")
+            raise
+
+    async def save_transaction(
+        self,
+        portfolio_id: int,
+        ticker: str,
+        transaction_type: str,
+        quantity: float,
+        price: float,
+        transaction_date: str,
+        fees: float = 0.0
+    ) -> Dict[str, Any]:
+        """
+        Salva transação (compra/venda) do portfólio
+
+        Args:
+            portfolio_id: ID do portfólio
+            ticker: Ticker do ativo
+            transaction_type: Tipo (buy, sell)
+            quantity: Quantidade
+            price: Preço unitário
+            transaction_date: Data (YYYY-MM-DD)
+            fees: Taxas e corretagem
+
+        Returns:
+            Transação salva
+        """
+        from ..models.portfolio_history import PortfolioTransaction
+        from datetime import datetime
+
+        try:
+            date_obj = datetime.strptime(transaction_date, "%Y-%m-%d").date()
+            total_value = quantity * price
+            net_value = total_value + fees if transaction_type == "buy" else total_value - fees
+
+            transaction = PortfolioTransaction(
+                portfolio_id=portfolio_id,
+                ticker=ticker,
+                transaction_type=transaction_type,
+                quantity=quantity,
+                price=price,
+                total_value=total_value,
+                fees=fees,
+                net_value=net_value,
+                transaction_date=date_obj
+            )
+
+            self.db.add(transaction)
+            self.db.commit()
+            self.db.refresh(transaction)
+
+            logger.info(f"Transação salva: {transaction_type} {quantity} {ticker} @ R$ {price:.2f}")
+
+            return {
+                "id": transaction.id,
+                "ticker": transaction.ticker,
+                "type": transaction.transaction_type,
+                "quantity": transaction.quantity,
+                "price": transaction.price,
+                "total_value": transaction.total_value,
+                "transaction_date": transaction.transaction_date.isoformat(),
+            }
+
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Erro ao salvar transação: {str(e)}")
+            raise

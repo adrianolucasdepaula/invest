@@ -7,7 +7,8 @@ from .technical_data import TechnicalData
 from .option_data import OptionData
 from .news import News
 from .report import Report
-from .portfolio import Portfolio
+from .portfolio import Portfolio, PortfolioPosition
+from .portfolio_history import PortfolioHistory, PortfolioDividend, PortfolioTransaction
 from .data_source import DataSource
 
 __all__ = [
@@ -18,5 +19,9 @@ __all__ = [
     "News",
     "Report",
     "Portfolio",
+    "PortfolioPosition",
+    "PortfolioHistory",
+    "PortfolioDividend",
+    "PortfolioTransaction",
     "DataSource",
 ]

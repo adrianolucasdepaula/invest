@@ -288,19 +288,40 @@ async def get_portfolio_performance(
         total_return_value = current_value - total_invested
         total_return_percent = (total_return_value / total_invested * 100) if total_invested > 0 else 0
 
-        # TODO: Buscar dados históricos do database para cálculos reais
-        # Por enquanto, usar dados simulados para demonstração dos métodos
-        # Simular retornos diários (lista de retornos percentuais)
-        mock_returns = [0.005, -0.002, 0.008, -0.003, 0.004] * 10  # 50 dias de retornos simulados
-        mock_prices = [total_invested * (1 + sum(mock_returns[:i])) for i in range(1, len(mock_returns) + 1)]
-        mock_trades = [{"profit_loss": 150}, {"profit_loss": -50}, {"profit_loss": 100}, {"profit_loss": 75}]
+        # Buscar dados históricos do database
+        historical_data = await service.get_historical_data(portfolio_id, period=period)
 
-        # Calcular métricas usando o service
-        annualized_return = service.calculate_annualized_return(mock_returns, len(mock_returns))
-        volatility = service.calculate_volatility(mock_returns)
-        sharpe_ratio = service.calculate_sharpe_ratio(mock_returns)
-        max_drawdown = service.calculate_max_drawdown(mock_prices)
-        win_rate = service.calculate_win_rate(mock_trades)
+        # Extrair retornos e preços dos dados históricos
+        returns = [h["daily_return"] for h in historical_data if h["daily_return"] is not None]
+        prices = [h["total_value"] for h in historical_data]
+
+        # Se não houver dados históricos suficientes, usar dados atuais
+        if len(returns) < 2:
+            logger.warning(f"Portfólio {portfolio_id} sem dados históricos suficientes. Usando cálculo simplificado.")
+            annualized_return = total_return_percent
+            volatility = 0.0
+            sharpe_ratio = 0.0
+            max_drawdown = 0.0
+            win_rate = 0.0
+            note = "Dados históricos insuficientes. Métricas baseadas em valores atuais. Use save_snapshot() para registrar histórico."
+        else:
+            # Calcular métricas usando dados históricos reais
+            annualized_return = service.calculate_annualized_return(returns, len(returns))
+            volatility = service.calculate_volatility(returns)
+            sharpe_ratio = service.calculate_sharpe_ratio(returns)
+            max_drawdown = service.calculate_max_drawdown(prices)
+
+            # Win rate: calcular baseado em retornos positivos
+            positive_days = sum(1 for r in returns if r > 0)
+            win_rate = (positive_days / len(returns) * 100) if returns else 0.0
+            note = f"Métricas calculadas com {len(historical_data)} dias de dados históricos reais."
+
+        # Calcular benchmarks (Ibovespa e CDI) dos dados históricos
+        ibov_values = [h["ibovespa_value"] for h in historical_data if h["ibovespa_value"] is not None]
+        cdi_values = [h["cdi_accumulated"] for h in historical_data if h["cdi_accumulated"] is not None]
+
+        ibov_return = ((ibov_values[-1] - ibov_values[0]) / ibov_values[0] * 100) if len(ibov_values) >= 2 else 0.0
+        cdi_return = cdi_values[-1] - cdi_values[0] if len(cdi_values) >= 2 else 0.0
 
         performance = {
             "portfolio_id": portfolio_id,
@@ -314,17 +335,16 @@ async def get_portfolio_performance(
                 "max_drawdown": round(max_drawdown, 2),
                 "win_rate": round(win_rate, 2),
             },
-            "historical_data": [
-                # TODO: Implementar busca de dados históricos reais do database
-            ],
+            "historical_data": historical_data,  # Dados históricos reais do database
             "benchmark_comparison": {
                 "portfolio_return": round(total_return_percent, 2),
-                "ibovespa_return": 3.50,  # TODO: Buscar dados reais
-                "cdi_return": 0.89,  # TODO: Buscar dados reais
-                "outperformance_ibov": round(total_return_percent - 3.50, 2),
-                "outperformance_cdi": round(total_return_percent - 0.89, 2)
+                "ibovespa_return": round(ibov_return, 2),
+                "cdi_return": round(cdi_return, 2),
+                "outperformance_ibov": round(total_return_percent - ibov_return, 2),
+                "outperformance_cdi": round(total_return_percent - cdi_return, 2)
             },
-            "note": "Métricas calculadas com dados históricos simulados. Implementar busca de dados reais do database.",
+            "data_points": len(historical_data),
+            "note": note,
             "calculated_at": datetime.utcnow().isoformat()
         }
 
@@ -536,7 +556,8 @@ async def get_portfolio_allocation(portfolio_id: int, db: Session = Depends(get_
 @router.get("/portfolio/{portfolio_id}/dividends")
 async def get_portfolio_dividends(
     portfolio_id: int,
-    period: str = "1Y"
+    period: str = "1Y",
+    db: Session = Depends(get_db)
 ):
     """
     Obtém histórico e projeção de dividendos do portfólio
@@ -544,6 +565,7 @@ async def get_portfolio_dividends(
     Args:
         portfolio_id: ID do portfólio
         period: Período de análise
+        db: Sessão do banco de dados
 
     Returns:
         Dados de dividendos
@@ -551,42 +573,32 @@ async def get_portfolio_dividends(
     logger.info(f"GET /portfolio/{portfolio_id}/dividends - period: {period}")
 
     try:
-        # TODO: Implementar cálculo de dividendos reais no PortfolioService
-        # TODO: Buscar histórico de dividendos do database
-        # TODO: Projetar próximos pagamentos baseado em histórico
-        dividends = {
-            "portfolio_id": portfolio_id,
-            "period": period,
-            "total_received": 250.00,  # Mock
-            "dividend_yield": 3.97,  # Mock: 250/6300
-            "monthly_average": 20.83,  # Mock
-            "by_ticker": [
-                {
-                    "ticker": "PETR4",
-                    "total": 150.00,
-                    "yield": 4.92,
-                    "payments": 3
-                },
-                {
-                    "ticker": "VALE3",
-                    "total": 100.00,
-                    "yield": 3.08,
-                    "payments": 2
-                }
-            ],
-            "next_payments": [
-                # TODO: Próximos pagamentos previstos
-            ],
-            "projection_12m": 300.00,  # Mock
-            "note": "Dados mockados - implementação de dividendos pendente",
-            "calculated_at": datetime.utcnow().isoformat()
-        }
+        service = PortfolioService(db)
+
+        # Buscar dividendos reais do database
+        dividends = await service.get_dividends(portfolio_id, period=period)
+
+        # Calcular projeção 12m baseada na média mensal
+        monthly_avg = dividends.get("monthly_average", 0)
+        projection_12m = monthly_avg * 12
+
+        # Adicionar projeção ao response
+        dividends["projection_12m"] = round(projection_12m, 2)
+        dividends["calculated_at"] = datetime.utcnow().isoformat()
+
+        # Adicionar nota sobre dados
+        if dividends.get("total_payments", 0) == 0:
+            dividends["note"] = "Nenhum dividendo registrado. Use save_dividend() para adicionar dividendos."
+        else:
+            dividends["note"] = f"Dados reais de {dividends.get('total_payments', 0)} pagamentos de dividendos."
 
         return {
             "status": "success",
             "dividends": dividends,
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Erro ao calcular dividendos do portfólio {portfolio_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
