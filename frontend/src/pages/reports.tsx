@@ -37,7 +37,7 @@ export default function ReportsPage() {
     if (!ticker.trim()) return;
 
     try {
-      const response = await reportsAPI.exportMarkdown(ticker.toUpperCase(), aiProvider);
+      const response = await reportsAPI.exportMarkdown(ticker.toUpperCase(), aiProvider) as any;
       const blob = new Blob([response.markdown], { type: 'text/markdown' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

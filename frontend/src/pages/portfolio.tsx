@@ -35,9 +35,9 @@ export default function PortfolioPage() {
         portfolioAPI.getAllocation(mockPortfolioId),
       ]);
 
-      setSelectedPortfolio(portfolioRes.portfolio);
-      setSummary(summaryRes.summary);
-      setAllocation(allocationRes.allocation);
+      setSelectedPortfolio((portfolioRes as any).portfolio);
+      setSummary((summaryRes as any).summary);
+      setAllocation((allocationRes as any).allocation);
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar portfólio');
     } finally {
@@ -48,7 +48,7 @@ export default function PortfolioPage() {
   const loadPerformance = async (period: string) => {
     try {
       const res = await portfolioAPI.getPerformance(mockPortfolioId, period);
-      setPerformance(res.performance);
+      setPerformance((res as any).performance);
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar performance');
     }

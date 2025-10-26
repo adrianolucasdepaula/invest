@@ -49,7 +49,7 @@ export default function ComparePage() {
     setResult(null);
 
     try {
-      const response = await analysisAPI.compareAssets(validTickers, true);
+      const response = await analysisAPI.compareAssets(validTickers, true) as ComparisonResult;
       setResult(response);
     } catch (err: any) {
       setError(err.message || 'Erro ao comparar ativos');
