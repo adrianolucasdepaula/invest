@@ -7,9 +7,16 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks, Query
 from pydantic import BaseModel
 from loguru import logger
 from ...services import DataCollectionService
+from ...tasks.data_collection import (
+    collect_asset_data_async,
+    batch_collect_assets,
+    update_market_prices,
+)
+from ...tasks.scheduler import TaskScheduler
 
 router = APIRouter()
 collection_service = DataCollectionService()
+scheduler = TaskScheduler()
 
 
 # Pydantic Models
@@ -242,4 +249,198 @@ async def get_economic_calendar(
 
     except Exception as e:
         logger.error(f"Erro ao obter calendário econômico: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== ASYNC TASK ENDPOINTS =====
+
+@router.post("/assets/async/collect")
+async def collect_asset_async_endpoint(
+    ticker: str,
+    force_update: bool = False
+):
+    """
+    Iniciar coleta assíncrona de dados de um ativo (via Celery)
+
+    Args:
+        ticker: Código do ativo
+        force_update: Forçar atualização
+
+    Returns:
+        Task ID para acompanhamento
+    """
+    logger.info(f"POST /assets/async/collect - {ticker}")
+
+    try:
+        task = collect_asset_data_async.apply_async(
+            args=[ticker, force_update]
+        )
+
+        return {
+            "status": "queued",
+            "task_id": task.id,
+            "ticker": ticker,
+            "message": "Coleta assíncrona iniciada. Use o task_id para consultar o status."
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao iniciar coleta assíncrona de {ticker}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/assets/async/batch-collect")
+async def batch_collect_async_endpoint(
+    tickers: List[str],
+    force_update: bool = False
+):
+    """
+    Iniciar coleta assíncrona de múltiplos ativos em lote
+
+    Args:
+        tickers: Lista de tickers
+        force_update: Forçar atualização
+
+    Returns:
+        Task ID para acompanhamento
+    """
+    logger.info(f"POST /assets/async/batch-collect - {len(tickers)} ativos")
+
+    try:
+        task = batch_collect_assets.apply_async(
+            args=[tickers, force_update]
+        )
+
+        return {
+            "status": "queued",
+            "task_id": task.id,
+            "total_assets": len(tickers),
+            "message": "Coleta em lote iniciada. Use o task_id para consultar o status."
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao iniciar batch collect assíncrono: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/assets/async/update-prices")
+async def update_market_prices_endpoint(
+    tickers: Optional[List[str]] = None
+):
+    """
+    Atualizar preços de mercado de forma assíncrona
+
+    Args:
+        tickers: Lista de tickers (se None, atualiza todos)
+
+    Returns:
+        Task ID para acompanhamento
+    """
+    logger.info(f"POST /assets/async/update-prices")
+
+    try:
+        task = update_market_prices.apply_async(
+            args=[tickers]
+        )
+
+        return {
+            "status": "queued",
+            "task_id": task.id,
+            "message": "Atualização de preços iniciada"
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao atualizar preços: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/tasks/{task_id}/status")
+async def get_task_status(task_id: str):
+    """
+    Obter status de uma tarefa assíncrona
+
+    Args:
+        task_id: ID da tarefa
+
+    Returns:
+        Status e resultado da tarefa (se disponível)
+    """
+    logger.info(f"GET /tasks/{task_id}/status")
+
+    try:
+        status = scheduler.get_task_status(task_id)
+        return status
+
+    except Exception as e:
+        logger.error(f"Erro ao obter status da tarefa {task_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/tasks/{task_id}")
+async def cancel_task(task_id: str):
+    """
+    Cancelar uma tarefa assíncrona
+
+    Args:
+        task_id: ID da tarefa
+
+    Returns:
+        Confirmação de cancelamento
+    """
+    logger.info(f"DELETE /tasks/{task_id}")
+
+    try:
+        success = scheduler.cancel_task(task_id)
+
+        if success:
+            return {
+                "status": "cancelled",
+                "task_id": task_id,
+                "message": "Tarefa cancelada com sucesso"
+            }
+        else:
+            raise HTTPException(status_code=400, detail="Não foi possível cancelar a tarefa")
+
+    except Exception as e:
+        logger.error(f"Erro ao cancelar tarefa {task_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/tasks/active")
+async def get_active_tasks():
+    """
+    Listar todas as tarefas ativas
+
+    Returns:
+        Lista de tarefas ativas
+    """
+    logger.info("GET /tasks/active")
+
+    try:
+        tasks = scheduler.get_active_tasks()
+        return {
+            "active_tasks": tasks,
+            "count": len(tasks)
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao listar tarefas ativas: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/tasks/queue/stats")
+async def get_queue_stats():
+    """
+    Obter estatísticas das filas de tarefas
+
+    Returns:
+        Estatísticas das filas
+    """
+    logger.info("GET /tasks/queue/stats")
+
+    try:
+        stats = scheduler.get_queue_stats()
+        return stats
+
+    except Exception as e:
+        logger.error(f"Erro ao obter estatísticas das filas: {e}")
         raise HTTPException(status_code=500, detail=str(e))

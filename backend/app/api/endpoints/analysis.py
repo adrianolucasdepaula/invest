@@ -2,15 +2,23 @@
 API endpoints para Analysis (Análises)
 Endpoints para análise de ativos e comparações
 """
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from loguru import logger
 from ...services import DataCollectionService, AnalysisService
+from ...tasks.analysis import (
+    analyze_asset_async,
+    compare_assets_async,
+    detect_opportunities,
+    update_asset_rankings,
+)
+from ...tasks.scheduler import TaskScheduler
 
 router = APIRouter()
 collection_service = DataCollectionService()
 analysis_service = AnalysisService()
+scheduler = TaskScheduler()
 
 
 # Pydantic Models
@@ -304,4 +312,140 @@ async def get_rankings(tickers: List[str] = None):
 
     except Exception as e:
         logger.error(f"Erro ao gerar rankings: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== ASYNC TASK ENDPOINTS =====
+
+@router.post("/analysis/async/analyze")
+async def analyze_asset_async_endpoint(
+    ticker: str,
+    include_ai: bool = False
+):
+    """
+    Iniciar análise assíncrona de um ativo (via Celery)
+
+    Args:
+        ticker: Código do ativo
+        include_ai: Incluir análise com IA
+
+    Returns:
+        Task ID para acompanhamento
+    """
+    logger.info(f"POST /analysis/async/analyze - {ticker}")
+
+    try:
+        task = analyze_asset_async.apply_async(
+            args=[ticker, include_ai]
+        )
+
+        return {
+            "status": "queued",
+            "task_id": task.id,
+            "ticker": ticker,
+            "message": "Análise assíncrona iniciada. Use o task_id para consultar o status."
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao iniciar análise assíncrona de {ticker}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/analysis/async/compare")
+async def compare_assets_async_endpoint(
+    tickers: List[str],
+    criteria: Optional[List[str]] = None
+):
+    """
+    Iniciar comparação assíncrona de múltiplos ativos
+
+    Args:
+        tickers: Lista de tickers
+        criteria: Critérios de comparação
+
+    Returns:
+        Task ID para acompanhamento
+    """
+    logger.info(f"POST /analysis/async/compare - {len(tickers)} ativos")
+
+    try:
+        task = compare_assets_async.apply_async(
+            args=[tickers, criteria]
+        )
+
+        return {
+            "status": "queued",
+            "task_id": task.id,
+            "total_assets": len(tickers),
+            "message": "Comparação assíncrona iniciada"
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao iniciar comparação assíncrona: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/analysis/async/opportunities")
+async def detect_opportunities_async_endpoint(
+    market: str = "stocks",
+    min_score: float = 7.0
+):
+    """
+    Detectar oportunidades de forma assíncrona
+
+    Args:
+        market: Mercado a analisar
+        min_score: Score mínimo
+
+    Returns:
+        Task ID para acompanhamento
+    """
+    logger.info(f"POST /analysis/async/opportunities - market: {market}")
+
+    try:
+        task = detect_opportunities.apply_async(
+            args=[market, min_score]
+        )
+
+        return {
+            "status": "queued",
+            "task_id": task.id,
+            "market": market,
+            "message": "Detecção de oportunidades iniciada"
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao detectar oportunidades: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/analysis/async/update-rankings")
+async def update_rankings_async_endpoint(
+    market: str = "stocks"
+):
+    """
+    Atualizar rankings de ativos de forma assíncrona
+
+    Args:
+        market: Mercado a atualizar
+
+    Returns:
+        Task ID para acompanhamento
+    """
+    logger.info(f"POST /analysis/async/update-rankings - market: {market}")
+
+    try:
+        task = update_asset_rankings.apply_async(
+            args=[market]
+        )
+
+        return {
+            "status": "queued",
+            "task_id": task.id,
+            "market": market,
+            "message": "Atualização de rankings iniciada"
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao atualizar rankings: {e}")
         raise HTTPException(status_code=500, detail=str(e))

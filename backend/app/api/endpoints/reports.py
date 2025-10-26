@@ -7,11 +7,20 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from loguru import logger
 from ...services import DataCollectionService, ReportService, AIService
+from ...tasks.reports import (
+    generate_report_async,
+    generate_comparison_report_async,
+    generate_portfolio_report_async,
+    generate_market_overview_async,
+    generate_multi_ai_analysis,
+)
+from ...tasks.scheduler import TaskScheduler
 
 router = APIRouter()
 collection_service = DataCollectionService()
 report_service = ReportService()
 ai_service = AIService()
+scheduler = TaskScheduler()
 
 
 # Pydantic Models
@@ -361,4 +370,186 @@ async def generate_multi_ai_analysis(
 
     except Exception as e:
         logger.error(f"Erro ao gerar análise multi-IA de {ticker}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== ASYNC TASK ENDPOINTS =====
+
+@router.post("/reports/async/generate")
+async def generate_report_async_endpoint(
+    ticker: str,
+    ai_provider: str = "openai",
+    language: str = "pt-BR"
+):
+    """
+    Gerar relatório de forma assíncrona (via Celery)
+
+    Args:
+        ticker: Código do ativo
+        ai_provider: Provedor de IA
+        language: Idioma do relatório
+
+    Returns:
+        Task ID para acompanhamento
+    """
+    logger.info(f"POST /reports/async/generate - {ticker}")
+
+    try:
+        task = generate_report_async.apply_async(
+            args=[ticker, ai_provider, language]
+        )
+
+        return {
+            "status": "queued",
+            "task_id": task.id,
+            "ticker": ticker,
+            "ai_provider": ai_provider,
+            "message": "Geração de relatório iniciada"
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao iniciar geração de relatório: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/reports/async/compare")
+async def generate_comparison_report_async_endpoint(
+    tickers: List[str],
+    ai_provider: str = "openai",
+    language: str = "pt-BR"
+):
+    """
+    Gerar relatório comparativo de forma assíncrona
+
+    Args:
+        tickers: Lista de tickers
+        ai_provider: Provedor de IA
+        language: Idioma do relatório
+
+    Returns:
+        Task ID para acompanhamento
+    """
+    logger.info(f"POST /reports/async/compare - {len(tickers)} ativos")
+
+    try:
+        task = generate_comparison_report_async.apply_async(
+            args=[tickers, ai_provider, language]
+        )
+
+        return {
+            "status": "queued",
+            "task_id": task.id,
+            "total_assets": len(tickers),
+            "ai_provider": ai_provider,
+            "message": "Geração de relatório comparativo iniciada"
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao iniciar relatório comparativo: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/reports/async/portfolio")
+async def generate_portfolio_report_async_endpoint(
+    portfolio_id: str,
+    ai_provider: str = "openai",
+    include_recommendations: bool = True
+):
+    """
+    Gerar relatório de portfólio de forma assíncrona
+
+    Args:
+        portfolio_id: ID do portfólio
+        ai_provider: Provedor de IA
+        include_recommendations: Incluir recomendações
+
+    Returns:
+        Task ID para acompanhamento
+    """
+    logger.info(f"POST /reports/async/portfolio - {portfolio_id}")
+
+    try:
+        task = generate_portfolio_report_async.apply_async(
+            args=[portfolio_id, ai_provider, include_recommendations]
+        )
+
+        return {
+            "status": "queued",
+            "task_id": task.id,
+            "portfolio_id": portfolio_id,
+            "message": "Geração de relatório de portfólio iniciada"
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao iniciar relatório de portfólio: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/reports/async/market-overview")
+async def generate_market_overview_async_endpoint(
+    market: str = "stocks",
+    ai_provider: str = "openai",
+    top_n: int = 10
+):
+    """
+    Gerar visão geral do mercado de forma assíncrona
+
+    Args:
+        market: Mercado a analisar
+        ai_provider: Provedor de IA
+        top_n: Número de ativos principais
+
+    Returns:
+        Task ID para acompanhamento
+    """
+    logger.info(f"POST /reports/async/market-overview - market: {market}")
+
+    try:
+        task = generate_market_overview_async.apply_async(
+            args=[market, ai_provider, top_n]
+        )
+
+        return {
+            "status": "queued",
+            "task_id": task.id,
+            "market": market,
+            "message": "Geração de visão geral do mercado iniciada"
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao iniciar visão geral do mercado: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/reports/async/multi-ai")
+async def generate_multi_ai_analysis_async_endpoint(
+    ticker: str,
+    providers: Optional[List[str]] = None
+):
+    """
+    Gerar análise multi-IA de forma assíncrona
+
+    Args:
+        ticker: Código do ativo
+        providers: Lista de provedores (se None, usa todos)
+
+    Returns:
+        Task ID para acompanhamento
+    """
+    logger.info(f"POST /reports/async/multi-ai - {ticker}")
+
+    try:
+        task = generate_multi_ai_analysis.apply_async(
+            args=[ticker, providers]
+        )
+
+        return {
+            "status": "queued",
+            "task_id": task.id,
+            "ticker": ticker,
+            "message": "Análise multi-IA iniciada"
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao iniciar análise multi-IA: {e}")
         raise HTTPException(status_code=500, detail=str(e))
