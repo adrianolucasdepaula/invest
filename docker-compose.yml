@@ -52,7 +52,7 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     ports:
-      - "8000:8000"
+      - "8100:8000"
     volumes:
       - ./backend:/app
     depends_on:
@@ -135,9 +135,9 @@ services:
       dockerfile: Dockerfile
     container_name: invest_frontend
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8100/api/v1
     ports:
-      - "3000:3000"
+      - "3100:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
