@@ -9,8 +9,8 @@ import sys
 from .core.config import settings
 from .core.database import engine, Base
 
-# Importar routers (será criado depois)
-# from .api.v1 import api_router
+# Importar routers dos endpoints
+from .api.endpoints import assets, analysis, reports, portfolio
 
 # Configurar logger
 logger.remove()
@@ -64,7 +64,26 @@ async def health_check():
 
 
 # Incluir routers
-# app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(
+    assets.router,
+    prefix=f"{settings.API_V1_STR}",
+    tags=["Assets"]
+)
+app.include_router(
+    analysis.router,
+    prefix=f"{settings.API_V1_STR}",
+    tags=["Analysis"]
+)
+app.include_router(
+    reports.router,
+    prefix=f"{settings.API_V1_STR}",
+    tags=["Reports"]
+)
+app.include_router(
+    portfolio.router,
+    prefix=f"{settings.API_V1_STR}",
+    tags=["Portfolio"]
+)
 
 
 @app.on_event("startup")
