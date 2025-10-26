@@ -363,7 +363,8 @@ async def get_portfolio_performance(
 @router.post("/portfolio/{portfolio_id}/position")
 async def add_or_update_position(
     portfolio_id: int,
-    request: UpdatePositionRequest
+    request: UpdatePositionRequest,
+    db: Session = Depends(get_db)
 ):
     """
     Adiciona ou atualiza posição no portfólio
@@ -371,6 +372,7 @@ async def add_or_update_position(
     Args:
         portfolio_id: ID do portfólio
         request: Dados da posição
+        db: Sessão do banco de dados
 
     Returns:
         Posição atualizada
@@ -385,17 +387,15 @@ async def add_or_update_position(
                 detail=f"Operação inválida. Operações válidas: {valid_operations}"
             )
 
-        # TODO: Implementar método update_position() no PortfolioService
-        # Por enquanto, retornar mock de sucesso
-        position = {
-            "portfolio_id": portfolio_id,
-            "ticker": request.ticker,
-            "quantity": request.quantity,
-            "average_price": request.average_price,
-            "operation": request.operation,
-            "updated_at": datetime.utcnow().isoformat(),
-            "message": f"Posição {request.operation} com sucesso (implementação pendente)"
-        }
+        # Usar método real do PortfolioService
+        service = PortfolioService(db)
+        position = await service.update_position(
+            portfolio_id=portfolio_id,
+            ticker=request.ticker,
+            quantity=request.quantity,
+            average_price=request.average_price,
+            operation=request.operation
+        )
 
         return {
             "status": "success",
@@ -410,13 +410,14 @@ async def add_or_update_position(
 
 
 @router.delete("/portfolio/{portfolio_id}/position/{ticker}")
-async def remove_position(portfolio_id: int, ticker: str):
+async def remove_position(portfolio_id: int, ticker: str, db: Session = Depends(get_db)):
     """
     Remove posição do portfólio
 
     Args:
         portfolio_id: ID do portfólio
         ticker: Ticker da posição a remover
+        db: Sessão do banco de dados
 
     Returns:
         Confirmação de remoção
@@ -424,14 +425,24 @@ async def remove_position(portfolio_id: int, ticker: str):
     logger.info(f"DELETE /portfolio/{portfolio_id}/position/{ticker}")
 
     try:
-        # TODO: Implementar método remove_position() no PortfolioService
-        # Por enquanto, retornar mock de sucesso
+        # Usar método real do PortfolioService
+        service = PortfolioService(db)
+        success = await service.remove_position(portfolio_id, ticker)
+
+        if not success:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Posição {ticker} não encontrada no portfólio {portfolio_id}"
+            )
+
         return {
             "status": "success",
-            "message": f"Posição {ticker} removida do portfólio {portfolio_id} (implementação pendente)",
+            "message": f"Posição {ticker} removida do portfólio {portfolio_id}",
             "removed_at": datetime.utcnow().isoformat()
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Erro ao remover posição {ticker} do portfólio {portfolio_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -605,34 +616,38 @@ async def get_portfolio_dividends(
 
 
 @router.get("/portfolios")
-async def list_portfolios():
+async def list_portfolios(
+    user_id: Optional[int] = None,
+    limit: int = 100,
+    offset: int = 0,
+    db: Session = Depends(get_db)
+):
     """
     Lista todos os portfólios do usuário
 
+    Args:
+        user_id: ID do usuário (opcional)
+        limit: Limite de resultados (default: 100)
+        offset: Offset para paginação (default: 0)
+        db: Sessão do banco de dados
+
     Returns:
-        Lista de portfólios
+        Lista paginada de portfólios
     """
-    logger.info(f"GET /portfolios")
+    logger.info(f"GET /portfolios - user_id: {user_id}, limit: {limit}, offset: {offset}")
 
     try:
-        # TODO: Buscar do database
-        portfolios = [
-            {
-                "id": "portfolio_1",
-                "name": "Meu Portfólio Principal",
-                "total_value": 6625.00,
-                "total_profit_loss": 325.00,
-                "total_profit_loss_percent": 5.16,
-                "positions_count": 2,
-                "created_at": "2024-01-01T00:00:00Z",
-                "updated_at": datetime.utcnow().isoformat()
-            }
-        ]
+        # Usar método real do PortfolioService
+        service = PortfolioService(db)
+        result = await service.list_portfolios(
+            user_id=user_id,
+            limit=limit,
+            offset=offset
+        )
 
         return {
             "status": "success",
-            "total": len(portfolios),
-            "portfolios": portfolios,
+            **result  # Inclui: total, portfolios, limit, offset, has_more
         }
 
     except Exception as e:

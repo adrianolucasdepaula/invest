@@ -969,3 +969,262 @@ class PortfolioService:
             self.db.rollback()
             logger.error(f"Erro ao salvar transação: {str(e)}")
             raise
+
+    # ==================== MÉTODOS AUXILIARES ====================
+
+    async def update_position(
+        self,
+        portfolio_id: int,
+        ticker: str,
+        quantity: float,
+        average_price: float,
+        operation: str = "add"
+    ) -> Dict[str, Any]:
+        """
+        Atualiza ou adiciona posição no portfólio
+
+        Args:
+            portfolio_id: ID do portfólio
+            ticker: Ticker do ativo
+            quantity: Quantidade
+            average_price: Preço médio
+            operation: Operação (add, remove, update)
+
+        Returns:
+            Posição atualizada
+        """
+        from ..models.portfolio import Portfolio as PortfolioModel
+
+        try:
+            # Buscar portfólio
+            portfolio = self.db.query(PortfolioModel).filter(
+                PortfolioModel.id == portfolio_id
+            ).first()
+
+            if not portfolio:
+                raise ValueError(f"Portfólio {portfolio_id} não encontrado")
+
+            # Carregar posições atuais
+            positions = portfolio.positions if portfolio.positions else []
+
+            # Encontrar posição existente
+            existing_position = None
+            position_index = None
+            for i, pos in enumerate(positions):
+                if pos.get("ticker") == ticker:
+                    existing_position = pos
+                    position_index = i
+                    break
+
+            # Executar operação
+            if operation == "add":
+                if existing_position:
+                    # Atualizar posição existente (média ponderada)
+                    old_qty = existing_position.get("quantity", 0)
+                    old_price = existing_position.get("average_price", 0)
+                    old_invested = old_qty * old_price
+
+                    new_qty = old_qty + quantity
+                    new_invested = old_invested + (quantity * average_price)
+                    new_avg_price = new_invested / new_qty if new_qty > 0 else 0
+
+                    existing_position["quantity"] = new_qty
+                    existing_position["average_price"] = new_avg_price
+                    existing_position["total_invested"] = new_invested
+
+                    logger.info(f"Posição {ticker} atualizada: {old_qty} → {new_qty} @ R$ {new_avg_price:.2f}")
+                else:
+                    # Criar nova posição
+                    new_position = {
+                        "ticker": ticker,
+                        "quantity": quantity,
+                        "average_price": average_price,
+                        "total_invested": quantity * average_price,
+                        "asset_type": "stock"  # Default, pode ser melhorado
+                    }
+                    positions.append(new_position)
+                    logger.info(f"Nova posição criada: {ticker} - {quantity} @ R$ {average_price:.2f}")
+
+            elif operation == "remove":
+                if existing_position:
+                    old_qty = existing_position.get("quantity", 0)
+                    new_qty = old_qty - quantity
+
+                    if new_qty <= 0:
+                        # Remover posição completamente
+                        positions.pop(position_index)
+                        logger.info(f"Posição {ticker} removida completamente")
+                    else:
+                        # Reduzir quantidade
+                        existing_position["quantity"] = new_qty
+                        existing_position["total_invested"] = new_qty * existing_position.get("average_price", 0)
+                        logger.info(f"Posição {ticker} reduzida: {old_qty} → {new_qty}")
+                else:
+                    raise ValueError(f"Posição {ticker} não encontrada para remover")
+
+            elif operation == "update":
+                if existing_position:
+                    existing_position["quantity"] = quantity
+                    existing_position["average_price"] = average_price
+                    existing_position["total_invested"] = quantity * average_price
+                    logger.info(f"Posição {ticker} atualizada diretamente: {quantity} @ R$ {average_price:.2f}")
+                else:
+                    raise ValueError(f"Posição {ticker} não encontrada para atualizar")
+
+            else:
+                raise ValueError(f"Operação inválida: {operation}")
+
+            # Salvar no database
+            portfolio.positions = positions
+            portfolio.updated_at = datetime.utcnow()
+            self.db.commit()
+            self.db.refresh(portfolio)
+
+            # Retornar posição atualizada
+            updated_position = None
+            for pos in positions:
+                if pos.get("ticker") == ticker:
+                    updated_position = pos
+                    break
+
+            return {
+                "portfolio_id": portfolio_id,
+                "ticker": ticker,
+                "operation": operation,
+                "position": updated_position,
+                "updated_at": datetime.utcnow().isoformat()
+            }
+
+        except ValueError as e:
+            logger.error(f"Erro de validação ao atualizar posição: {str(e)}")
+            raise
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Erro ao atualizar posição: {str(e)}")
+            raise
+
+    async def remove_position(
+        self,
+        portfolio_id: int,
+        ticker: str
+    ) -> bool:
+        """
+        Remove posição completamente do portfólio
+
+        Args:
+            portfolio_id: ID do portfólio
+            ticker: Ticker da posição a remover
+
+        Returns:
+            True se removido, False se não encontrado
+        """
+        from ..models.portfolio import Portfolio as PortfolioModel
+
+        try:
+            # Buscar portfólio
+            portfolio = self.db.query(PortfolioModel).filter(
+                PortfolioModel.id == portfolio_id
+            ).first()
+
+            if not portfolio:
+                logger.warning(f"Portfólio {portfolio_id} não encontrado")
+                return False
+
+            # Carregar posições
+            positions = portfolio.positions if portfolio.positions else []
+
+            # Encontrar e remover posição
+            original_length = len(positions)
+            positions = [pos for pos in positions if pos.get("ticker") != ticker]
+
+            if len(positions) == original_length:
+                logger.warning(f"Posição {ticker} não encontrada no portfólio {portfolio_id}")
+                return False
+
+            # Salvar no database
+            portfolio.positions = positions
+            portfolio.updated_at = datetime.utcnow()
+            self.db.commit()
+
+            logger.info(f"Posição {ticker} removida do portfólio {portfolio_id}")
+            return True
+
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Erro ao remover posição {ticker}: {str(e)}")
+            raise
+
+    async def list_portfolios(
+        self,
+        user_id: Optional[int] = None,
+        limit: int = 100,
+        offset: int = 0
+    ) -> Dict[str, Any]:
+        """
+        Lista portfólios com paginação
+
+        Args:
+            user_id: ID do usuário (opcional, para filtrar)
+            limit: Limite de resultados
+            offset: Offset para paginação
+
+        Returns:
+            Lista de portfólios com metadados
+        """
+        from ..models.portfolio import Portfolio as PortfolioModel
+
+        try:
+            # Construir query
+            query = self.db.query(PortfolioModel)
+
+            # Filtrar por usuário se especificado
+            if user_id is not None:
+                query = query.filter(PortfolioModel.user_id == user_id)
+
+            # Contar total
+            total = query.count()
+
+            # Aplicar paginação
+            portfolios = query.order_by(
+                PortfolioModel.updated_at.desc()
+            ).limit(limit).offset(offset).all()
+
+            # Converter para dicionários com cálculos
+            portfolio_list = []
+            for portfolio in portfolios:
+                positions = portfolio.positions if portfolio.positions else []
+
+                # Calcular totais
+                total_invested = sum(p.get("total_invested", 0) for p in positions)
+                current_value = sum(p.get("current_value", total_invested) for p in positions)
+                total_profit_loss = current_value - total_invested
+                profit_loss_percent = (total_profit_loss / total_invested * 100) if total_invested > 0 else 0
+
+                portfolio_list.append({
+                    "id": portfolio.id,
+                    "name": portfolio.name,
+                    "description": portfolio.description,
+                    "source": portfolio.source,
+                    "total_invested": round(total_invested, 2),
+                    "current_value": round(current_value, 2),
+                    "total_profit_loss": round(total_profit_loss, 2),
+                    "profit_loss_percent": round(profit_loss_percent, 2),
+                    "positions_count": len(positions),
+                    "created_at": portfolio.imported_at.isoformat() if portfolio.imported_at else None,
+                    "updated_at": portfolio.updated_at.isoformat() if portfolio.updated_at else None,
+                })
+
+            logger.info(f"Listados {len(portfolio_list)} portfólios (total: {total})")
+
+            return {
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+                "count": len(portfolio_list),
+                "portfolios": portfolio_list,
+                "has_more": (offset + len(portfolio_list)) < total
+            }
+
+        except Exception as e:
+            logger.error(f"Erro ao listar portfólios: {str(e)}")
+            raise
