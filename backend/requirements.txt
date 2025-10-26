@@ -50,7 +50,7 @@ langchain-openai==0.0.2
 
 # Financial Data
 yfinance==0.2.35
-pandas-ta==0.3.14b
+# pandas-ta>=0.3.14b  # NOTE: Not available on PyPI, install from GitHub if needed
 
 # Utilities
 python-dateutil==2.8.2
