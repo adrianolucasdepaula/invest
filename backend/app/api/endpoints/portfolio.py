@@ -4,7 +4,7 @@ Endpoints para gerenciamento e análise de portfólios de investimento
 """
 from typing import List, Dict, Any, Optional
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from loguru import logger
 

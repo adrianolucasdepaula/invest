@@ -6,11 +6,10 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Query
 from pydantic import BaseModel
 from loguru import logger
-from ...services import DataCollectionService, AnalysisService
+from ...services import DataCollectionService
 
 router = APIRouter()
 collection_service = DataCollectionService()
-analysis_service = AnalysisService()
 
 
 # Pydantic Models
