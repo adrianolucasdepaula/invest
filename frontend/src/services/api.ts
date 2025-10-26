@@ -150,13 +150,6 @@ export const assetsAPI = {
   getEconomicCalendar: async (country = 'BR', importance = 'high', days = 7) => {
     return fetchAPI(`/market/economic-calendar?country=${country}&importance=${importance}&days=${days}`);
   },
-
-  /**
-   * Obter status das fontes de dados
-   */
-  getSourcesStatus: async () => {
-    return fetchAPI('/assets/sources/status');
-  },
 };
 
 // ========== ANALYSIS ENDPOINTS ==========
