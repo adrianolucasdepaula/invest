@@ -10,16 +10,16 @@ import { Search, Filter } from 'lucide-react';
 
 // Mock data
 const mockAssets = [
-  { ticker: 'PETR4', name: 'Petrobras PN', price: 38.45, change: 2.34, volume: 125000000, marketCap: 500000000000 },
-  { ticker: 'VALE3', name: 'Vale ON', price: 65.78, change: -1.12, volume: 98000000, marketCap: 350000000000 },
-  { ticker: 'ITUB4', name: 'Itaú Unibanco PN', price: 28.90, change: 0.87, volume: 67000000, marketCap: 280000000000 },
-  { ticker: 'BBDC4', name: 'Bradesco PN', price: 14.56, change: 1.45, volume: 89000000, marketCap: 150000000000 },
-  { ticker: 'BBAS3', name: 'Banco do Brasil ON', price: 25.34, change: -0.34, volume: 45000000, marketCap: 120000000000 },
-  { ticker: 'ABEV3', name: 'Ambev ON', price: 12.89, change: 0.78, volume: 78000000, marketCap: 200000000000 },
-  { ticker: 'WEGE3', name: 'WEG ON', price: 42.15, change: 1.92, volume: 34000000, marketCap: 160000000000 },
-  { ticker: 'RENT3', name: 'Localiza ON', price: 58.32, change: -0.56, volume: 23000000, marketCap: 80000000000 },
-  { ticker: 'MGLU3', name: 'Magazine Luiza ON', price: 3.45, change: 3.45, volume: 156000000, marketCap: 45000000000 },
-  { ticker: 'SUZB3', name: 'Suzano ON', price: 52.67, change: -1.23, volume: 19000000, marketCap: 95000000000 },
+  { ticker: 'PETR4', name: 'Petrobras PN', price: 38.45, change: 2.34, changePercent: 2.34, volume: 125000000, marketCap: 500000000000 },
+  { ticker: 'VALE3', name: 'Vale ON', price: 65.78, change: -1.12, changePercent: -1.12, volume: 98000000, marketCap: 350000000000 },
+  { ticker: 'ITUB4', name: 'Itaú Unibanco PN', price: 28.90, change: 0.87, changePercent: 0.87, volume: 67000000, marketCap: 280000000000 },
+  { ticker: 'BBDC4', name: 'Bradesco PN', price: 14.56, change: 1.45, changePercent: 1.45, volume: 89000000, marketCap: 150000000000 },
+  { ticker: 'BBAS3', name: 'Banco do Brasil ON', price: 25.34, change: -0.34, changePercent: -0.34, volume: 45000000, marketCap: 120000000000 },
+  { ticker: 'ABEV3', name: 'Ambev ON', price: 12.89, change: 0.78, changePercent: 0.78, volume: 78000000, marketCap: 200000000000 },
+  { ticker: 'WEGE3', name: 'WEG ON', price: 42.15, change: 1.92, changePercent: 1.92, volume: 34000000, marketCap: 160000000000 },
+  { ticker: 'RENT3', name: 'Localiza ON', price: 58.32, change: -0.56, changePercent: -0.56, volume: 23000000, marketCap: 80000000000 },
+  { ticker: 'MGLU3', name: 'Magazine Luiza ON', price: 3.45, change: 3.45, changePercent: 3.45, volume: 156000000, marketCap: 45000000000 },
+  { ticker: 'SUZB3', name: 'Suzano ON', price: 52.67, change: -1.23, changePercent: -1.23, volume: 19000000, marketCap: 95000000000 },
 ];
 
 export default function AssetsPage() {

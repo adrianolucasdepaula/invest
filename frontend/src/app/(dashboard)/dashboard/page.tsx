@@ -16,11 +16,11 @@ const mockStats = {
 };
 
 const mockAssets = [
-  { ticker: 'PETR4', name: 'Petrobras PN', price: 38.45, change: 2.34, volume: 125000000, marketCap: 500000000000 },
-  { ticker: 'VALE3', name: 'Vale ON', price: 65.78, change: -1.12, volume: 98000000, marketCap: 350000000000 },
-  { ticker: 'ITUB4', name: 'Itaú Unibanco PN', price: 28.90, change: 0.87, volume: 67000000, marketCap: 280000000000 },
-  { ticker: 'BBDC4', name: 'Bradesco PN', price: 14.56, change: 1.45, volume: 89000000, marketCap: 150000000000 },
-  { ticker: 'BBAS3', name: 'Banco do Brasil ON', price: 25.34, change: -0.34, volume: 45000000, marketCap: 120000000000 },
+  { ticker: 'PETR4', name: 'Petrobras PN', price: 38.45, change: 2.34, changePercent: 2.34, volume: 125000000, marketCap: 500000000000 },
+  { ticker: 'VALE3', name: 'Vale ON', price: 65.78, change: -1.12, changePercent: -1.12, volume: 98000000, marketCap: 350000000000 },
+  { ticker: 'ITUB4', name: 'Itaú Unibanco PN', price: 28.90, change: 0.87, changePercent: 0.87, volume: 67000000, marketCap: 280000000000 },
+  { ticker: 'BBDC4', name: 'Bradesco PN', price: 14.56, change: 1.45, changePercent: 1.45, volume: 89000000, marketCap: 150000000000 },
+  { ticker: 'BBAS3', name: 'Banco do Brasil ON', price: 25.34, change: -0.34, changePercent: -0.34, volume: 45000000, marketCap: 120000000000 },
 ];
 
 export default function DashboardPage() {

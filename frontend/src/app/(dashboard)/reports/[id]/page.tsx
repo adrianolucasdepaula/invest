@@ -1,6 +1,5 @@
 'use client';
 
-import { use } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -154,9 +153,9 @@ const getRecommendationLabel = (action: string) => {
 export default function ReportDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = use(params);
+  const { id } = params;
 
   return (
     <div className="space-y-6">
