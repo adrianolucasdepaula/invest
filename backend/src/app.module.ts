@@ -4,11 +4,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { CacheModule } from '@nestjs/cache-manager';
-import * as redisStore from 'cache-manager-redis-store';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
+import { CommonModule } from './common/common.module';
 import { AuthModule } from './api/auth/auth.module';
 import { AssetsModule } from './api/assets/assets.module';
 import { AnalysisModule } from './api/analysis/analysis.module';
@@ -46,21 +45,6 @@ import { ValidatorsModule } from './validators/validators.module';
       inject: [ConfigService],
     }),
 
-    // Redis Cache
-    CacheModule.registerAsync({
-      isGlobal: true,
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        store: redisStore,
-        host: configService.get('REDIS_HOST'),
-        port: configService.get('REDIS_PORT'),
-        password: configService.get('REDIS_PASSWORD'),
-        ttl: configService.get('CACHE_TTL', 300),
-        max: configService.get('CACHE_MAX', 1000),
-      }),
-      inject: [ConfigService],
-    }),
-
     // Bull Queue
     BullModule.forRootAsync({
       imports: [ConfigModule],
@@ -88,6 +72,7 @@ import { ValidatorsModule } from './validators/validators.module';
     }),
 
     // Application Modules
+    CommonModule,
     DatabaseModule,
     AuthModule,
     AssetsModule,
