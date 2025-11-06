@@ -136,6 +136,8 @@ invest/
 
 ## 🚀 Getting Started
 
+> 🆕 **INSTALAÇÃO LIMPA COMPLETA:** Para instalar do ZERO com guia passo-a-passo detalhado, veja: **[CLEAN_INSTALL.md](CLEAN_INSTALL.md)** (Windows PowerShell)
+
 ### Pré-requisitos
 - Node.js 20+
 - Python 3.11+
@@ -143,9 +145,44 @@ invest/
 - PostgreSQL 15+
 - Redis 7+
 
-### Instalação
+### Instalação Rápida
 
-#### Opção 1: Docker (Recomendado)
+#### Opção 1: Script Automatizado (Recomendado)
+
+**Windows PowerShell:**
+```powershell
+# 1. Clone e entre no diretório
+git clone https://github.com/adrianolucasdepaula/invest.git invest-claude-web
+cd invest-claude-web
+git checkout claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
+
+# 2. Execute o script (faz tudo automaticamente!)
+.\system-manager.ps1 start
+# Responda 'y' para instalar dependências e build
+```
+
+**Linux/Mac (Bash):**
+```bash
+# 1. Clone e entre no diretório
+git clone https://github.com/adrianolucasdepaula/invest.git invest-claude-web
+cd invest-claude-web
+git checkout claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
+
+# 2. Execute o script
+chmod +x system-manager.sh
+./system-manager.sh start
+# Responda 'y' para instalar dependências e build
+```
+
+O script automaticamente:
+- ✅ Verifica atualizações do Git
+- ✅ Instala dependências npm (backend + frontend)
+- ✅ Faz build das imagens Docker (backend, frontend, scrapers Python)
+- ✅ Inicia todos os serviços
+- ✅ Aguarda health checks
+- ✅ Mostra URLs de acesso
+
+#### Opção 2: Docker Manual
 
 ```bash
 # 1. Clone o repositório

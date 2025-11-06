@@ -4,6 +4,8 @@
 **Status:** ✅ Sistema pronto para uso
 **Pré-requisitos:** VS Code instalado + Extensão Claude Code
 
+> 🆕 **NOVO:** Se você quer começar do ZERO (instalação limpa completa), veja: **[CLEAN_INSTALL.md](CLEAN_INSTALL.md)**
+
 ---
 
 ## 📋 Índice
