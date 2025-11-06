@@ -12,7 +12,8 @@ export function formatCurrency(value: number, currency: string = 'BRL'): string 
   }).format(value)
 }
 
-export function formatPercent(value: number, decimals: number = 2): string {
+export function formatPercent(value: number | undefined | null, decimals: number = 2): string {
+  if (value === undefined || value === null || isNaN(value)) return 'N/A';
   return `${value >= 0 ? '+' : ''}${value.toFixed(decimals)}%`
 }
 
