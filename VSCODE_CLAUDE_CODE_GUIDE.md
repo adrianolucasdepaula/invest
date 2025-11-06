@@ -987,6 +987,46 @@ claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
 - ✅ Working directory limpo garantido
 - ✅ **Solução 100% testada** ✅
 
+### 🔧 Problema 14: Erro "unable to prepare context: path backend/python-scrapers not found"
+
+**Sintoma:**
+```
+unable to prepare context: path "...\backend\python-scrapers" not found
+✗ Erro ao criar imagens Docker
+```
+
+**Causa:** O serviço `scrapers` no `docker-compose.yml` tentava fazer build de uma pasta `backend/python-scrapers` que está vazia (sem Dockerfile).
+
+**Status:** ✅ **CORRIGIDO PERMANENTEMENTE**
+
+**O que foi feito:**
+1. ✅ Serviço `scrapers` **comentado** no docker-compose.yml
+2. ✅ Scripts `system-manager.ps1` e `system-manager.sh` atualizados
+3. ✅ Sistema funciona apenas com os serviços essenciais:
+   - PostgreSQL + TimescaleDB
+   - Redis
+   - Backend (NestJS com scrapers TypeScript integrados)
+   - Frontend (Next.js)
+
+**Observação:**
+- Os scrapers **TypeScript** estão funcionais em `backend/src/scrapers/`
+- O serviço Docker `scrapers` Python não é necessário
+- Se houver necessidade futura de scrapers Python separados, eles podem ser implementados
+
+**Solução aplicada no código:**
+```yaml
+# docker-compose.yml
+# Python Scrapers (TEMPORARIAMENTE DESABILITADO - pasta vazia)
+# TODO: Implementar scrapers Python ou remover este serviço
+# scrapers:
+#   build: ...
+```
+
+**Após atualizar (`git pull`):**
+- ✅ Build do Docker funcionará corretamente
+- ✅ Apenas 2 imagens serão buildadas: backend e frontend
+- ✅ Avisos sobre `version` obsoleto removidos
+
 ---
 
 ## 10. System Manager - Gerenciamento Inteligente do Sistema

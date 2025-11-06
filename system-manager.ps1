@@ -222,7 +222,6 @@ function Test-DockerImages {
     # Check if custom images exist
     $backendImage = docker images invest_backend -q
     $frontendImage = docker images invest_frontend -q
-    $scrapersImage = docker images invest_scrapers -q
 
     if (-not $backendImage) {
         Print-Warning "Imagem do backend não encontrada"
@@ -238,12 +237,7 @@ function Test-DockerImages {
         Print-Success "Imagem do frontend encontrada"
     }
 
-    if (-not $scrapersImage) {
-        Print-Warning "Imagem dos scrapers não encontrada"
-        $needsBuild = $true
-    } else {
-        Print-Success "Imagem dos scrapers encontrada"
-    }
+    Print-Info "Scrapers desabilitado temporariamente (pasta vazia)"
 
     if ($needsBuild) {
         $build = Read-Host "Deseja fazer o build das imagens Docker agora? (y/n)"
@@ -364,8 +358,8 @@ function Get-SystemStatus {
 
     Write-Host ""
 
-    # Check service health
-    $services = @("postgres", "redis", "backend", "frontend", "scrapers")
+    # Check service health (scrapers desabilitado temporariamente)
+    $services = @("postgres", "redis", "backend", "frontend")
 
     foreach ($service in $services) {
         $status = docker-compose ps -q $service
