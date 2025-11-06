@@ -2,6 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FundamentusScraper } from './fundamental/fundamentus.scraper';
 import { BrapiScraper } from './fundamental/brapi.scraper';
+import { StatusInvestScraper } from './fundamental/statusinvest.scraper';
+import { Investidor10Scraper } from './fundamental/investidor10.scraper';
+import { OpcoesScraper } from './options/opcoes.scraper';
 import { ScraperResult } from './base/base-scraper.interface';
 
 export interface CrossValidationResult<T = any> {
@@ -22,6 +25,9 @@ export class ScrapersService {
     private configService: ConfigService,
     private fundamentusScraper: FundamentusScraper,
     private brapiScraper: BrapiScraper,
+    private statusInvestScraper: StatusInvestScraper,
+    private investidor10Scraper: Investidor10Scraper,
+    private opcoesScraper: OpcoesScraper,
   ) {
     this.minSources = this.configService.get<number>('MIN_DATA_SOURCES', 3);
   }
@@ -35,7 +41,8 @@ export class ScrapersService {
     const results = await Promise.allSettled([
       this.fundamentusScraper.scrape(ticker),
       this.brapiScraper.scrape(ticker),
-      // Add more scrapers here
+      this.statusInvestScraper.scrape(ticker),
+      this.investidor10Scraper.scrape(ticker),
     ]);
 
     const successfulResults = results
@@ -167,6 +174,21 @@ export class ScrapersService {
   }
 
   /**
+   * Scrape options data
+   */
+  async scrapeOptionsData(ticker: string): Promise<any> {
+    this.logger.log(`Scraping options data for ${ticker}`);
+
+    try {
+      const result = await this.opcoesScraper.scrape(ticker);
+      return result;
+    } catch (error) {
+      this.logger.error(`Failed to scrape options data for ${ticker}: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * Get all available scrapers
    */
   getAvailableScrapers(): any[] {
@@ -180,6 +202,21 @@ export class ScrapersService {
         name: this.brapiScraper.name,
         source: this.brapiScraper.source,
         requiresLogin: this.brapiScraper.requiresLogin,
+      },
+      {
+        name: this.statusInvestScraper.name,
+        source: this.statusInvestScraper.source,
+        requiresLogin: this.statusInvestScraper.requiresLogin,
+      },
+      {
+        name: this.investidor10Scraper.name,
+        source: this.investidor10Scraper.source,
+        requiresLogin: this.investidor10Scraper.requiresLogin,
+      },
+      {
+        name: this.opcoesScraper.name,
+        source: this.opcoesScraper.source,
+        requiresLogin: this.opcoesScraper.requiresLogin,
       },
     ];
   }
