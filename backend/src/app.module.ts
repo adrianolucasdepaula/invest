@@ -18,6 +18,7 @@ import { DataSourcesModule } from './api/data-sources/data-sources.module';
 import { QueueModule } from './queue/queue.module';
 import { AiModule } from './ai/ai.module';
 import { ValidatorsModule } from './validators/validators.module';
+import { WebSocketModule } from './websocket/websocket.module';
 
 @Module({
   imports: [
@@ -84,6 +85,7 @@ import { ValidatorsModule } from './validators/validators.module';
     QueueModule,
     AiModule,
     ValidatorsModule,
+    WebSocketModule,
   ],
   controllers: [AppController],
   providers: [AppService],
