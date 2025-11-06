@@ -8,18 +8,76 @@
 
 ## 📋 Índice
 
-1. [⚡ Método Rápido: Teleport (Recomendado)](#método-rápido-teleport-recomendado)
-2. [Pré-requisitos](#pré-requisitos)
-3. [Instalação da Extensão Claude Code](#instalação-da-extensão-claude-code)
-4. [Configuração Inicial](#configuração-inicial)
-5. [Abrindo o Projeto](#abrindo-o-projeto)
-6. [Verificações Pós-Abertura](#verificações-pós-abertura)
-7. [Comandos Úteis](#comandos-úteis)
-8. [Troubleshooting](#troubleshooting)
+1. [💡 Workflow de Desenvolvimento (IMPORTANTE)](#workflow-de-desenvolvimento-importante)
+2. [⚡ Método Rápido: Teleport (Recomendado)](#método-rápido-teleport-recomendado)
+3. [Pré-requisitos](#pré-requisitos)
+4. [Instalação da Extensão Claude Code](#instalação-da-extensão-claude-code)
+5. [Configuração Inicial](#configuração-inicial)
+6. [Abrindo o Projeto](#abrindo-o-projeto)
+7. [Verificações Pós-Abertura](#verificações-pós-abertura)
+8. [Comandos Úteis](#comandos-úteis)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
-## ⚡ 1. Método Rápido: Teleport (Recomendado)
+## 💡 1. Workflow de Desenvolvimento (IMPORTANTE)
+
+### 🎯 Entenda o Fluxo de Trabalho
+
+**Este projeto segue um workflow específico:**
+
+```
+┌─────────────────────────────────────────────────────┐
+│  CLAUDE CODE WEB (claude.ai)                        │
+│  ✅ DESENVOLVIMENTO (Fonte da Verdade)              │
+│  ✅ Todos os ajustes e correções                    │
+│  ✅ Commits e push para remote                      │
+│  ✅ SEMPRE a versão correta                         │
+└──────────────────┬──────────────────────────────────┘
+                   │
+                   │ git push (automático)
+                   ▼
+         ┌─────────────────────┐
+         │   Git Remote        │
+         │   (GitHub)          │
+         └─────────────────────┘
+                   │
+                   │ teleport + git pull
+                   ▼
+┌─────────────────────────────────────────────────────┐
+│  CLAUDE CODE CLI (VS Code Local)                    │
+│  ✅ TESTES REAIS apenas                             │
+│  ✅ Validação de execução                           │
+│  ✅ Verificação de builds                           │
+│  ❌ NUNCA fazer ajustes aqui                        │
+│  ❌ Descartar mudanças locais sempre                │
+└─────────────────────────────────────────────────────┘
+```
+
+### ⚠️ REGRA DE OURO
+
+- **Claude Web = Desenvolvimento**
+  - Faça TODOS os ajustes aqui
+  - Esta é a **versão correta sempre**
+  - Commits e push automáticos
+
+- **Claude CLI (VS Code) = Testes apenas**
+  - Baixe código do remote
+  - Execute e teste
+  - **NUNCA modifique** código aqui
+  - Descarte mudanças locais sem medo
+
+### 💡 Implicações Práticas
+
+Quando usar teleport no VS Code local:
+- ✅ Pode descartar TODAS mudanças locais
+- ✅ Sempre faça `git reset --hard` sem medo
+- ✅ A versão do remote (Claude Web) é sempre correta
+- ✅ Mudanças locais não são importantes
+
+---
+
+## ⚡ 2. Método Rápido: Teleport (Recomendado)
 
 ### 🎯 Migrar Sessão do Claude Web para VS Code
 
@@ -115,7 +173,7 @@ Se preferir fazer a configuração **manual completa**, continue lendo as próxi
 
 ---
 
-## 2. Pré-requisitos
+## 3. Pré-requisitos
 
 ### ✅ Checklist Antes de Começar
 
@@ -156,7 +214,7 @@ Se preferir fazer a configuração **manual completa**, continue lendo as próxi
 
 ---
 
-## 2. Instalação da Extensão Claude Code
+## 4. Instalação da Extensão Claude Code
 
 ### Opção A: Instalar via VS Code Marketplace
 
@@ -195,7 +253,7 @@ Você deve ver: `anthropic.claude-code`
 
 ---
 
-## 3. Configuração Inicial
+## 5. Configuração Inicial
 
 ### 3.1. Configurar API Key da Anthropic
 
@@ -290,7 +348,7 @@ OPENAI_API_KEY=sk-...  # Sua API key da OpenAI
 
 ---
 
-## 4. Abrindo o Projeto
+## 6. Abrindo o Projeto
 
 ### 4.1. Via Terminal
 
@@ -322,7 +380,7 @@ claude code .
 
 ---
 
-## 5. Verificações Pós-Abertura
+## 7. Verificações Pós-Abertura
 
 ### 5.1. Checklist de Verificação
 
@@ -399,7 +457,7 @@ code --install-extension eamodio.gitlens
 
 ---
 
-## 6. Comandos Úteis
+## 8. Comandos Úteis
 
 ### 6.1. Claude Code
 
@@ -503,7 +561,7 @@ docker-compose up -d --build
 
 ---
 
-## 7. Troubleshooting
+## 9. Troubleshooting
 
 ### 🔧 Problema 1: Claude Code não aparece
 
@@ -730,9 +788,132 @@ claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
 - ❌ **Não logado:** Execute `claude login` primeiro
 - ❌ **Projeto não existe localmente:** Clone o projeto antes
 
+### 🔧 Problema 11: Arquivo "nul" bloqueando Git no Windows
+
+**Sintoma:**
+```
+error: open("frontend/nul"): No such file or directory
+error: unable to index file 'frontend/nul'
+fatal: adding files failed
+
+Ou:
+
+Unlink of file 'frontend/nul' failed. Should I try again? (y/n)
+warning: failed to remove frontend/nul: Permission denied
+```
+
+**Causa:** O arquivo `nul` é uma **palavra reservada no Windows** (device file), similar a `CON`, `PRN`, `AUX`. O Windows não consegue criar, modificar ou deletar arquivos com esses nomes.
+
+**Como isso acontece:** Geralmente criado acidentalmente por redirecionamento de saída incorreto:
+```bash
+# Errado no Windows:
+npm run build > nul  # Cria arquivo problemático
+
+# Correto no Windows:
+npm run build > NUL  # Maiúsculo - usa o device
+```
+
+**Solução 1: Remover com Caminho UNC (PowerShell)**
+
+```powershell
+# Use o caminho completo com prefixo \\?\
+Remove-Item -Path "\\?\C:\caminho\completo\para\invest-claudeweb\frontend\nul" -Force
+
+# Exemplo real:
+Remove-Item -Path "\\?\C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claudeweb\frontend\nul" -Force
+```
+
+**Solução 2: Reclonar Repositório (Mais Rápido e Recomendado)**
+
+Se a Solução 1 falhar, **reclone o repositório**:
+
+```powershell
+# 1. Sair da pasta
+cd ..
+
+# 2. Renomear pasta atual (backup)
+Rename-Item "invest-claudeweb" "invest-claudeweb-OLD"
+
+# 3. Clonar repositório limpo do GitHub
+git clone https://github.com/adrianolucasdepaula/invest.git invest-claudeweb
+
+# 4. Entrar na pasta
+cd invest-claudeweb
+
+# 5. Checkout no branch correto
+git checkout claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
+
+# 6. Verificar status (deve estar limpo)
+git status
+
+# 7. Teleport (vai funcionar!)
+claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+
+# 8. (Opcional) Deletar pasta antiga depois
+# Remove-Item -Path "..\invest-claudeweb-OLD" -Recurse -Force
+```
+
+**Solução 3: Adicionar ao .gitignore (Prevenção)**
+
+```powershell
+# Prevenir que o arquivo seja rastreado novamente
+echo "nul" >> .gitignore
+echo "*/nul" >> .gitignore
+git add .gitignore
+git commit -m "chore: adicionar nul ao gitignore"
+```
+
+**Por que reclonar é recomendado?**
+- ✅ **Mais rápido** (2 minutos) que debugar o problema
+- ✅ **100% garantido** de funcionar
+- ✅ Repositório do GitHub não tem o arquivo problemático
+- ✅ Estado limpo e consistente
+- ✅ Pasta antiga guardada como backup
+
+**Prevenção futura:**
+```powershell
+# Windows: Sempre use maiúsculo para device files
+comando > NUL 2>&1  # Correto
+comando > nul 2>&1  # Errado - cria arquivo
+
+# Ou use $null do PowerShell
+comando > $null
+```
+
+### 🔧 Problema 12: Branch desatualizado (behind by N commits)
+
+**Sintoma:**
+```
+Your branch is behind 'origin/...' by 18 commits, and can be fast-forwarded.
+```
+
+**Causa:** Você está desenvolvendo no Claude Web (que commitou 18 vezes) mas o repositório local está desatualizado.
+
+**Solução (PowerShell):**
+
+```powershell
+# 1. Descartar mudanças locais (lembre: Claude Web é a verdade)
+git reset --hard HEAD
+
+# 2. Puxar atualizações do remote
+git pull origin claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
+
+# 3. Verificar se está atualizado
+git status
+# Deve mostrar: "Your branch is up to date"
+
+# 4. Teleport
+claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+```
+
+**Lembre-se:** Com o workflow Claude Web → Claude CLI:
+- ✅ Pode descartar mudanças locais sem medo
+- ✅ `git reset --hard` é seguro (versão correta está no remote)
+- ✅ Sempre faça pull antes do teleport
+
 ---
 
-## 8. Workflow Recomendado
+## 10. Workflow Recomendado
 
 ### 8.1. Primeira Vez (Com Teleport - Recomendado ⚡)
 
@@ -812,7 +993,7 @@ code .
 
 ---
 
-## 9. Recursos Adicionais
+## 11. Recursos Adicionais
 
 ### 📚 Documentação do Projeto
 
