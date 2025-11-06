@@ -8,17 +8,71 @@
 
 ## 📋 Índice
 
-1. [Pré-requisitos](#pré-requisitos)
-2. [Instalação da Extensão Claude Code](#instalação-da-extensão-claude-code)
-3. [Configuração Inicial](#configuração-inicial)
-4. [Abrindo o Projeto](#abrindo-o-projeto)
-5. [Verificações Pós-Abertura](#verificações-pós-abertura)
-6. [Comandos Úteis](#comandos-úteis)
-7. [Troubleshooting](#troubleshooting)
+1. [⚡ Método Rápido: Teleport (Recomendado)](#método-rápido-teleport-recomendado)
+2. [Pré-requisitos](#pré-requisitos)
+3. [Instalação da Extensão Claude Code](#instalação-da-extensão-claude-code)
+4. [Configuração Inicial](#configuração-inicial)
+5. [Abrindo o Projeto](#abrindo-o-projeto)
+6. [Verificações Pós-Abertura](#verificações-pós-abertura)
+7. [Comandos Úteis](#comandos-úteis)
+8. [Troubleshooting](#troubleshooting)
 
 ---
 
-## 1. Pré-requisitos
+## ⚡ 1. Método Rápido: Teleport (Recomendado)
+
+### 🎯 Migrar Sessão do Claude Web para VS Code
+
+Se você está **atualmente no Claude Web** (claude.ai), a forma **mais fácil e rápida** é usar o comando `--teleport`:
+
+```bash
+claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+```
+
+### Como Funciona
+
+1. **No Claude Web**, você verá a opção de abrir no VS Code
+2. **Copie o comando** fornecido (inclui o ID da sua sessão)
+3. **Abra um terminal** no seu computador
+4. **Cole e execute** o comando
+5. **VS Code abrirá automaticamente** com:
+   - ✅ Projeto correto aberto
+   - ✅ Sessão sincronizada
+   - ✅ Contexto completo preservado
+   - ✅ Histórico de conversas mantido
+
+### Vantagens do Teleport
+
+- 🚀 **Migração instantânea** - Em segundos você está no VS Code
+- 💾 **Contexto preservado** - Todo o histórico da conversa continua
+- 🔄 **Sincronização automática** - Branch e arquivos corretos
+- ⚙️ **Configuração automática** - Menos passos manuais
+
+### Pré-requisitos para Teleport
+
+```bash
+# 1. Instale o Claude CLI (se ainda não tiver)
+npm install -g @anthropic/claude-cli
+
+# 2. Faça login
+claude login
+
+# 3. Verifique a instalação
+claude --version
+
+# 4. Execute o teleport
+claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+```
+
+### ⚠️ Nota Importante
+
+Após usar o teleport, **pule para a seção [Verificações Pós-Abertura](#verificações-pós-abertura)** para validar que tudo está funcionando corretamente.
+
+Se preferir fazer a configuração **manual completa**, continue lendo as próximas seções.
+
+---
+
+## 2. Pré-requisitos
 
 ### ✅ Checklist Antes de Começar
 
@@ -551,11 +605,64 @@ export NODE_OPTIONS="--max-old-space-size=4096"
 }
 ```
 
+### 🔧 Problema 9: Comando teleport não funciona
+
+**Sintoma:** `claude: command not found` ou `teleport failed`
+
+**Solução:**
+```bash
+# 1. Verificar se Claude CLI está instalado
+claude --version
+
+# Se não estiver instalado:
+npm install -g @anthropic/claude-cli
+
+# 2. Verificar se está logado
+claude login
+
+# 3. Verificar se a sessão é válida
+# O ID da sessão deve corresponder à sua sessão no Claude Web
+# Formato correto: session_011CUqhhHmDLCpG3Za3ppFeU
+
+# 4. Tentar novamente com o comando completo
+claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+
+# 5. Se ainda falhar, tente o método manual
+# Veja seção: "2. Instalação da Extensão Claude Code"
+```
+
+**Problemas comuns:**
+- ❌ **Sessão expirada:** Copie o comando novamente do Claude Web
+- ❌ **CLI desatualizado:** Execute `npm update -g @anthropic/claude-cli`
+- ❌ **Não logado:** Execute `claude login` primeiro
+- ❌ **Projeto não existe localmente:** Clone o projeto antes
+
 ---
 
 ## 8. Workflow Recomendado
 
-### 8.1. Primeira Vez
+### 8.1. Primeira Vez (Com Teleport - Recomendado ⚡)
+
+```bash
+# Método mais rápido se você já está no Claude Web:
+
+# 1. No Claude Web, copie o comando teleport fornecido
+# Exemplo: claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+
+# 2. Instale o Claude CLI (se necessário)
+npm install -g @anthropic/claude-cli
+
+# 3. Faça login
+claude login
+
+# 4. Execute o teleport (cole o comando copiado)
+claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+
+# 5. VS Code abrirá automaticamente! ✨
+# Pule para: ./validate-vscode-cli.sh
+```
+
+### 8.2. Primeira Vez (Método Manual)
 
 ```bash
 # 1. Clonar repositório
@@ -585,7 +692,7 @@ code .
 # 8. Pronto! 🎉
 ```
 
-### 8.2. Desenvolvimento Diário
+### 8.3. Desenvolvimento Diário
 
 ```bash
 # 1. Atualizar repositório
