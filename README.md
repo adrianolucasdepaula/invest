@@ -145,49 +145,53 @@ invest/
 
 ### Instalação
 
-1. Clone o repositório:
+#### Opção 1: Docker (Recomendado)
+
 ```bash
+# 1. Clone o repositório
 git clone <repository-url>
 cd invest
-```
 
-2. Configure as variáveis de ambiente:
-```bash
+# 2. Configure as variáveis de ambiente
 cp .env.example .env
-# Edite o .env com suas credenciais
-```
+# Edite o .env e configure JWT_SECRET e outras variáveis
 
-3. Inicie os containers:
-```bash
+# 3. Inicie todos os serviços com Docker
 docker-compose up -d
+
+# 4. Aguarde os serviços ficarem prontos (30-60 segundos)
+docker-compose ps
+
+# 5. Acesse a aplicação
+# Frontend: http://localhost:3000
+# Backend:  http://localhost:3001
+# API Docs: http://localhost:3001/api/docs
 ```
 
-4. Instale as dependências:
-```bash
-# Backend
-cd backend
-npm install
+**Para guia completo de deployment com Docker, veja [DOCKER_DEPLOYMENT.md](./DOCKER_DEPLOYMENT.md)**
 
-# Frontend
-cd ../frontend
-npm install
-```
+#### Opção 2: Instalação Local
 
-5. Execute as migrations:
 ```bash
-cd backend
-npm run migration:run
-```
+# 1. Configure as variáveis de ambiente
+cp .env.example .env
+# Altere DB_HOST=localhost e REDIS_HOST=localhost no .env
 
-6. Inicie a aplicação:
-```bash
+# 2. Instale PostgreSQL e Redis localmente
+
+# 3. Instale as dependências
+cd backend && npm install
+cd ../frontend && npm install
+
+# 4. Execute as migrations
+cd backend && npm run migration:run
+
+# 5. Inicie a aplicação
 # Backend (porta 3001)
-cd backend
-npm run start:dev
+cd backend && npm run start:dev
 
 # Frontend (porta 3000)
-cd frontend
-npm run dev
+cd frontend && npm run dev
 ```
 
 Acesse: http://localhost:3000
@@ -256,7 +260,8 @@ Para suporte, abra uma issue ou entre em contato através de [email].
 | **Design System** | ✅ Completo | - | 500+ linhas |
 | **DevTools Validation** | ✅ Completo | 85 testes | 800+ linhas |
 | **Integration** | ✅ Completo | - | 900+ linhas |
-| **Docker Setup** | ✅ Completo | - | ✅ Completo |
+| **Docker Setup** | ✅ Production-Ready | Auto-tests | 1,200+ linhas |
+| **Deployment Guide** | ✅ Completo | - | 900+ linhas |
 
 ### 📊 Métricas
 
@@ -301,11 +306,13 @@ Build Status: ✅ Success
 | Documento | Linhas | Status |
 |-----------|--------|--------|
 | `INTEGRATION_GUIDE.md` | 900+ | ✅ Completo |
+| `DOCKER_DEPLOYMENT.md` | 900+ | ✅ Completo |
 | `backend/README.md` | 600+ | ✅ Completo |
 | `frontend/DESIGN_SYSTEM.md` | 500+ | ✅ Completo |
 | `frontend/DEVTOOLS_FIGMA_CONTEXT7_GUIDE.md` | 800+ | ✅ Completo |
+| `docker/nginx/ssl/README.md` | 200+ | ✅ Completo |
 | `VALIDATION_REPORT.md` | 345 | ✅ Completo |
-| **Total** | **3,145 linhas** | ✅ |
+| **Total** | **4,245 linhas** | ✅ |
 
 ### 🚀 Features Implementadas
 
@@ -364,6 +371,27 @@ Build Status: ✅ Success
 
 ### 🔧 Como Executar
 
+#### Docker (Recomendado)
+
+```bash
+# Iniciar todos os serviços
+docker-compose up -d
+
+# Verificar status
+docker-compose ps
+
+# Ver logs em tempo real
+docker-compose logs -f backend frontend
+
+# Parar serviços
+docker-compose down
+
+# Executar testes do Docker
+./docker-test.sh
+```
+
+#### Local
+
 ```bash
 # Backend (porta 3001)
 cd backend
@@ -374,15 +402,14 @@ npm run start:dev
 cd frontend
 npm install
 npm run dev
-
-# Docker (tudo junto)
-docker-compose up -d
 ```
 
 Acesse:
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:3001
 - **Swagger Docs**: http://localhost:3001/api/docs
+- **PgAdmin** (dev): http://localhost:5050
+- **Redis Commander** (dev): http://localhost:8081
 
 ### 🧪 Como Testar
 
