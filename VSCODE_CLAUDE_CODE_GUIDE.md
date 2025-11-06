@@ -60,9 +60,52 @@ claude login
 # 3. Verifique a instalação
 claude --version
 
-# 4. Execute o teleport
+# 4. CRÍTICO: Verifique se o working directory está limpo
+git status
+
+# 5. Se houver mudanças não commitadas, faça commit
+git add .
+git commit -m "chore: salvar estado antes do teleport"
+
+# 6. Execute o teleport
 claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
 ```
+
+### 🚨 ATENÇÃO: Working Directory Limpo
+
+**O comando teleport exige que seu repositório Git esteja limpo!**
+
+**Antes de executar o teleport, certifique-se:**
+
+```bash
+# Verificar status do Git
+git status
+```
+
+**Se aparecer "nothing to commit, working tree clean":** ✅ Pode prosseguir!
+
+**Se aparecer arquivos modificados:** ❌ Você precisa resolver primeiro!
+
+**Opção 1: Fazer Commit (Recomendado)**
+```bash
+git add .
+git commit -m "chore: salvar estado antes do teleport"
+git push  # Opcional mas recomendado
+claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+```
+
+**Opção 2: Usar Stash (Temporário)**
+```bash
+git stash save "mudanças antes do teleport"
+claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+# Depois: git stash pop (para recuperar)
+```
+
+**Por que esse requisito?**
+- 📦 Teleport pode fazer checkout de branches
+- 🔄 Sincroniza com o repositório remote
+- 💾 Previne perda de código não commitado
+- ⚠️ Garante que o projeto está em estado consistente
 
 ### ⚠️ Nota Importante
 
@@ -605,7 +648,57 @@ export NODE_OPTIONS="--max-old-space-size=4096"
 }
 ```
 
-### 🔧 Problema 9: Comando teleport não funciona
+### 🔧 Problema 9: Teleport falha - "Git working directory is not clean"
+
+**Sintoma:**
+```
+Error: Git working directory is not clean.
+Please commit or stash your changes before using --teleport.
+```
+
+**Causa:** O teleport exige que não existam mudanças não commitadas no repositório Git.
+
+**Solução Rápida (PowerShell/Bash):**
+
+```bash
+# 1. Verificar o que está modificado
+git status
+
+# 2. Opção A: Fazer commit (Recomendado)
+git add .
+git commit -m "chore: salvar estado antes do teleport"
+git push  # Recomendado
+claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+
+# 3. Opção B: Usar stash (temporário)
+git stash save "mudanças antes do teleport"
+claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+# Recuperar depois: git stash pop
+```
+
+**PowerShell (Windows):**
+```powershell
+# Mesmo processo, mas com sintaxe PowerShell
+git status
+git add .
+git commit -m "chore: salvar estado antes do teleport"
+git push
+claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+```
+
+**Verificar se está limpo:**
+```bash
+git status
+# Deve mostrar: "nothing to commit, working tree clean"
+```
+
+**Por que esse erro acontece?**
+- ⚠️ Teleport precisa fazer checkout de branches
+- 🔄 Pode sincronizar com remote
+- 💾 Previne perda de código não salvo
+- ✅ Garante estado consistente do projeto
+
+### 🔧 Problema 10: Comando teleport não funciona
 
 **Sintoma:** `claude: command not found` ou `teleport failed`
 
