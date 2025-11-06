@@ -116,3 +116,29 @@ downloads/
 # Backup files
 *.bak
 *.backup
+
+# Windows reserved device names (prevent accidental creation)
+# These are invalid file names on Windows and cause Git errors
+nul
+NUL
+*/nul
+*/NUL
+**/nul
+**/NUL
+CON
+PRN
+AUX
+CLOCK$
+com[1-9]
+lpt[1-9]
+*/CON
+*/PRN
+*/AUX
+**/CON
+**/PRN
+**/AUX
+
+# Playwright test artifacts (generated during tests)
+playwright-report/
+test-results/
+*.tsbuildinfo

@@ -817,58 +817,63 @@ npm run build > NUL  # Maiúsculo - usa o device
 
 ```powershell
 # Use o caminho completo com prefixo \\?\
-Remove-Item -Path "\\?\C:\caminho\completo\para\invest-claudeweb\frontend\nul" -Force
+Remove-Item -Path "\\?\C:\caminho\completo\para\invest-claude-web\frontend\nul" -Force
 
 # Exemplo real:
-Remove-Item -Path "\\?\C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claudeweb\frontend\nul" -Force
+Remove-Item -Path "\\?\C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\frontend\nul" -Force
 ```
 
 **Solução 2: Reclonar Repositório (Mais Rápido e Recomendado)**
 
-Se a Solução 1 falhar, **reclone o repositório**:
+Se a Solução 1 falhar, **reclone o repositório em uma pasta nova**:
 
 ```powershell
-# 1. Sair da pasta
+# 1. Sair da pasta problemática (se estiver dentro)
 cd ..
 
-# 2. Renomear pasta atual (backup)
-Rename-Item "invest-claudeweb" "invest-claudeweb-OLD"
+# 2. Clonar repositório limpo do GitHub em nova pasta
+git clone https://github.com/adrianolucasdepaula/invest.git invest-claude-web
 
-# 3. Clonar repositório limpo do GitHub
-git clone https://github.com/adrianolucasdepaula/invest.git invest-claudeweb
+# 3. Entrar na nova pasta
+cd invest-claude-web
 
-# 4. Entrar na pasta
-cd invest-claudeweb
-
-# 5. Checkout no branch correto
+# 4. Checkout no branch correto
 git checkout claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
 
-# 6. Verificar status (deve estar limpo)
+# 5. Verificar status (deve estar limpo)
 git status
 
-# 7. Teleport (vai funcionar!)
+# 6. Teleport (vai funcionar!)
 claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
-
-# 8. (Opcional) Deletar pasta antiga depois
-# Remove-Item -Path "..\invest-claudeweb-OLD" -Recurse -Force
 ```
 
-**Solução 3: Adicionar ao .gitignore (Prevenção)**
+**✅ Proteção Permanente Já Implementada**
 
-```powershell
-# Prevenir que o arquivo seja rastreado novamente
-echo "nul" >> .gitignore
-echo "*/nul" >> .gitignore
-git add .gitignore
-git commit -m "chore: adicionar nul ao gitignore"
+Este repositório **já possui proteção** contra arquivos `nul` no `.gitignore`:
+
+```gitignore
+# Windows reserved device names (prevent accidental creation)
+nul
+NUL
+*/nul
+*/NUL
+**/nul
+**/NUL
+CON, PRN, AUX, CLOCK$, com[1-9], lpt[1-9]
 ```
+
+**Isso significa:**
+- ✅ Git **nunca mais** vai rastrear arquivos com esses nomes
+- ✅ **Proteção automática** contra palavras reservadas do Windows
+- ✅ Também protege contra: CON, PRN, AUX, COM1-9, LPT1-9
+- ✅ Inclui Playwright test artifacts (playwright-report/, test-results/)
 
 **Por que reclonar é recomendado?**
 - ✅ **Mais rápido** (2 minutos) que debugar o problema
 - ✅ **100% garantido** de funcionar
 - ✅ Repositório do GitHub não tem o arquivo problemático
 - ✅ Estado limpo e consistente
-- ✅ Pasta antiga guardada como backup
+- ✅ **Proteção já incluída** no .gitignore
 
 **Prevenção futura:**
 ```powershell
