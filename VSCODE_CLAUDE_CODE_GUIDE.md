@@ -1094,6 +1094,84 @@ O sistema possui **7 serviços Docker:**
 | PgAdmin | 5150 | Admin PostgreSQL (opcional) |
 | Redis Commander | 8181 | Admin Redis (opcional) |
 
+### 🪟 Usuários do PowerShell (Windows/VS Code)
+
+Se você está usando **PowerShell** (especialmente no terminal do VS Code no Windows), use a versão PowerShell do script:
+
+**Arquivo:** `system-manager.ps1` (na raiz do projeto)
+
+#### Comandos PowerShell
+
+```powershell
+# Executar script PowerShell
+.\system-manager.ps1 start       # Inicia o sistema
+.\system-manager.ps1 stop        # Para todo o sistema
+.\system-manager.ps1 restart     # Reinicia o sistema
+.\system-manager.ps1 status      # Status detalhado
+.\system-manager.ps1 health      # Health check rápido
+.\system-manager.ps1 install     # Instala/atualiza dependências
+.\system-manager.ps1 build       # Build das imagens Docker
+.\system-manager.ps1 logs backend  # Ver logs de um serviço
+.\system-manager.ps1 clean       # Remove TODOS os dados
+.\system-manager.ps1 help        # Ajuda completa
+```
+
+#### ⚠️ Problema: Script abre no VS Code em vez de executar
+
+**Sintoma:** Quando você tenta `./system-manager.sh start`, o VS Code abre o arquivo em vez de executá-lo.
+
+**Causa:** Scripts `.sh` são para Bash (Linux/Mac), não PowerShell (Windows).
+
+**Solução:** Use o script PowerShell (`.ps1`) em vez do Bash (`.sh`):
+
+```powershell
+# ❌ NÃO use (Bash script)
+./system-manager.sh start
+
+# ✅ USE (PowerShell script)
+.\system-manager.ps1 start
+```
+
+#### 🔒 Política de Execução do PowerShell
+
+Se você receber erro de política de execução:
+
+```powershell
+.\system-manager.ps1 : File cannot be loaded because running scripts is disabled on this system.
+```
+
+**Solução:**
+
+```powershell
+# Opção 1: Permitir execução temporariamente (recomendado)
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+.\system-manager.ps1 start
+
+# Opção 2: Permitir permanentemente para o usuário atual
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+.\system-manager.ps1 start
+
+# Opção 3: Executar diretamente (mais seguro)
+powershell -ExecutionPolicy Bypass -File .\system-manager.ps1 start
+```
+
+#### Diferenças Bash vs PowerShell
+
+| Recurso | Bash (.sh) | PowerShell (.ps1) |
+|---------|------------|-------------------|
+| Sistema | Linux/Mac/Git Bash | Windows PowerShell |
+| Sintaxe | `./script.sh` | `.\script.ps1` |
+| Cores | ✅ Funciona | ✅ Funciona |
+| Docker | ✅ Funciona | ✅ Funciona |
+| VS Code | ✅ Terminal Bash | ✅ Terminal PowerShell |
+
+**💡 Dica:** Se você tiver Git Bash instalado no Windows, também pode usar o script `.sh`:
+
+```bash
+# No Git Bash (Windows)
+bash ./system-manager.sh start
+```
+
 ---
 
 ## 11. Workflow Recomendado
@@ -1118,7 +1196,7 @@ cd invest-claude-web
 git checkout claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
 
 # 5. INICIE O SISTEMA (faz tudo automaticamente!)
-./system-manager.sh start
+.\system-manager.ps1 start
 # Responda 'y' para instalar dependências
 # Responda 'y' para build do Docker
 # Configure o .env se solicitado
@@ -1188,14 +1266,35 @@ git checkout claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
 claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
 
 # ✅ VS Code abrirá automaticamente!
-# ✅ Use ./system-manager.sh start dentro do VS Code para iniciar
+# ✅ Use .\system-manager.ps1 start dentro do VS Code para iniciar
 ```
 
 ---
 
 ### 11.3. Desenvolvimento Diário (COM SYSTEM MANAGER 🆕)
 
-**Workflow simplificado com system-manager.sh:**
+**Workflow simplificado - PowerShell (Windows):**
+
+```powershell
+# Manhã - Iniciar o sistema
+.\system-manager.ps1 start
+# ✅ Verifica atualizações automaticamente
+# ✅ Atualiza dependências se necessário
+# ✅ Inicia todos os serviços
+
+# Durante o dia - Ver status
+.\system-manager.ps1 status    # Status completo
+.\system-manager.ps1 health    # Health check rápido
+
+# Ver logs se necessário
+.\system-manager.ps1 logs backend   # Logs do backend
+.\system-manager.ps1 logs frontend  # Logs do frontend
+
+# Noite - Parar o sistema
+.\system-manager.ps1 stop
+```
+
+**Workflow simplificado - Bash (Linux/Mac):**
 
 ```bash
 # Manhã - Iniciar o sistema
@@ -1223,7 +1322,8 @@ claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
 git pull
 
 # 2. Instalar dependências se houver mudanças
-./system-manager.sh install
+# PowerShell: .\system-manager.ps1 install
+# Bash:       ./system-manager.sh install
 
 # 3. Iniciar desenvolvimento manualmente
 cd backend
@@ -1239,6 +1339,14 @@ code .
 
 ### 11.4. Após Mudanças de Código
 
+**PowerShell:**
+```powershell
+# Rebuild e restart
+.\system-manager.ps1 build     # Rebuild das imagens
+.\system-manager.ps1 restart   # Reinicia tudo
+```
+
+**Bash:**
 ```bash
 # Rebuild e restart
 ./system-manager.sh build     # Rebuild das imagens
@@ -1247,6 +1355,21 @@ code .
 
 ### 11.5. Resolver Problemas
 
+**PowerShell:**
+```powershell
+# Ver logs
+.\system-manager.ps1 logs backend
+.\system-manager.ps1 logs frontend
+
+# Verificar status de todos os serviços
+.\system-manager.ps1 status
+
+# Limpeza completa (remove dados!)
+.\system-manager.ps1 clean
+.\system-manager.ps1 start
+```
+
+**Bash:**
 ```bash
 # Ver logs
 ./system-manager.sh logs backend
