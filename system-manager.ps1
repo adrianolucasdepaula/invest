@@ -317,9 +317,182 @@ function Build-DockerImages {
     }
 }
 
+# Wait for services to be healthy
+function Wait-ForHealthy {
+    param(
+        [int]$MaxWaitSeconds = 120,
+        [array]$Services = @("postgres", "redis", "backend", "frontend", "scrapers")
+    )
+
+    Print-Info "Aguardando serviços ficarem prontos (timeout: ${MaxWaitSeconds}s)..."
+
+    $waited = 0
+    $checkInterval = 5
+
+    while ($waited -lt $MaxWaitSeconds) {
+        $allHealthy = $true
+        $statusMessages = @()
+
+        foreach ($service in $Services) {
+            $containerName = "invest_$service"
+
+            try {
+                # Check if container exists and is running
+                $containerState = docker inspect --format='{{.State.Status}}' $containerName 2>$null
+
+                if ($containerState -ne "running") {
+                    $allHealthy = $false
+                    $statusMessages += "${YELLOW}⏳${RESET} $service (não rodando)"
+                    continue
+                }
+
+                # Check health status
+                $health = docker inspect --format='{{.State.Health.Status}}' $containerName 2>$null
+
+                if ($health -eq "healthy") {
+                    $statusMessages += "${GREEN}✓${RESET} $service"
+                } elseif ($health -eq "starting") {
+                    $allHealthy = $false
+                    $statusMessages += "${YELLOW}⏳${RESET} $service (iniciando)"
+                } elseif ($health -eq "unhealthy") {
+                    $allHealthy = $false
+                    $statusMessages += "${RED}✗${RESET} $service (não saudável)"
+                } else {
+                    # No health check defined, just check if running
+                    $statusMessages += "${CYAN}ℹ${RESET} $service (sem health check)"
+                }
+            } catch {
+                $allHealthy = $false
+                $statusMessages += "${RED}✗${RESET} $service (erro: $_)"
+            }
+        }
+
+        # Clear line and show status
+        Write-Host "`r$(' ' * 100)`r" -NoNewline
+        Write-Host "Status: $($statusMessages -join ' | ')" -NoNewline
+
+        if ($allHealthy) {
+            Write-Host ""
+            Write-Host ""
+            Print-Success "Todos os serviços estão prontos!"
+            return $true
+        }
+
+        Start-Sleep -Seconds $checkInterval
+        $waited += $checkInterval
+    }
+
+    Write-Host ""
+    Write-Host ""
+    Print-Warning "Timeout aguardando serviços (${MaxWaitSeconds}s). Alguns serviços podem não estar prontos."
+    Print-Info "Verifique os logs: .\system-manager.ps1 logs <service>"
+    return $false
+}
+
+# Validate essential files
+function Test-EssentialFiles {
+    Print-Header "Validando Arquivos Essenciais"
+
+    $allOk = $true
+    $essentialFiles = @(
+        "docker-compose.yml",
+        "backend/package.json",
+        "frontend/package.json",
+        "backend/Dockerfile",
+        "frontend/Dockerfile",
+        "backend/python-scrapers/Dockerfile",
+        "backend/python-scrapers/requirements.txt"
+    )
+
+    foreach ($file in $essentialFiles) {
+        if (-not (Test-Path $file)) {
+            Print-Error "Arquivo essencial não encontrado: $file"
+            $allOk = $false
+        }
+    }
+
+    # Check and create database directory
+    if (-not (Test-Path "database")) {
+        Print-Warning "Diretório 'database' não encontrado. Criando..."
+        New-Item -ItemType Directory -Force -Path "database" | Out-Null
+    }
+
+    # Check and create init.sql
+    if (-not (Test-Path "database/init.sql")) {
+        Print-Warning "Arquivo 'database/init.sql' não encontrado. Criando arquivo padrão..."
+
+        $initSql = @"
+-- B3 AI Analysis Platform Database Initialization
+-- Este arquivo é executado automaticamente na primeira vez que o PostgreSQL inicia
+
+-- Criar extensão TimescaleDB
+CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
+
+-- Configurações de performance
+ALTER SYSTEM SET shared_buffers = '256MB';
+ALTER SYSTEM SET effective_cache_size = '1GB';
+ALTER SYSTEM SET maintenance_work_mem = '64MB';
+ALTER SYSTEM SET checkpoint_completion_target = 0.9;
+ALTER SYSTEM SET wal_buffers = '16MB';
+ALTER SYSTEM SET default_statistics_target = 100;
+ALTER SYSTEM SET random_page_cost = 1.1;
+ALTER SYSTEM SET effective_io_concurrency = 200;
+ALTER SYSTEM SET work_mem = '10MB';
+
+-- Log de inicialização
+DO `$`$
+BEGIN
+    RAISE NOTICE 'B3 AI Analysis Platform - Database initialized successfully';
+END
+`$`$;
+"@
+
+        $initSql | Out-File -FilePath "database/init.sql" -Encoding UTF8
+        Print-Success "Arquivo database/init.sql criado com sucesso!"
+    } else {
+        Print-Success "Arquivo database/init.sql encontrado"
+    }
+
+    # Check and create logs directory
+    if (-not (Test-Path "logs")) {
+        Print-Info "Criando diretório 'logs'..."
+        New-Item -ItemType Directory -Force -Path "logs" | Out-Null
+    }
+
+    # Check and create uploads directory
+    if (-not (Test-Path "uploads")) {
+        Print-Info "Criando diretório 'uploads'..."
+        New-Item -ItemType Directory -Force -Path "uploads" | Out-Null
+    }
+
+    # Check and create reports directory
+    if (-not (Test-Path "reports")) {
+        Print-Info "Criando diretório 'reports'..."
+        New-Item -ItemType Directory -Force -Path "reports" | Out-Null
+    }
+
+    # Check and create browser-profiles directory
+    if (-not (Test-Path "browser-profiles")) {
+        Print-Info "Criando diretório 'browser-profiles'..."
+        New-Item -ItemType Directory -Force -Path "browser-profiles" | Out-Null
+    }
+
+    if ($allOk) {
+        Print-Success "Todos os arquivos essenciais estão presentes"
+    }
+
+    return $allOk
+}
+
 # Start system
 function Start-System {
     Print-Header "Iniciando Sistema B3 AI Analysis Platform"
+
+    # Validate essential files first
+    if (-not (Test-EssentialFiles)) {
+        Print-Error "Arquivos essenciais faltando. Corrija os problemas antes de continuar."
+        return
+    }
 
     # Prerequisites
     if (-not (Test-Prerequisites)) {
@@ -347,33 +520,38 @@ function Start-System {
 
     # Start services
     Print-Header "Iniciando Serviços Docker"
-    Print-Info "Iniciando containers (isso pode levar alguns minutos)..."
+    Print-Info "Iniciando containers..."
 
     docker-compose up -d
 
     if ($LASTEXITCODE -eq 0) {
-        Print-Success "Serviços iniciados!"
-
-        # Wait for services to be healthy
-        Print-Info "Aguardando serviços ficarem prontos..."
-        Start-Sleep -Seconds 10
-
-        # Show status
-        Get-SystemStatus
-
-        # Show URLs
         Write-Host ""
-        Print-Success "Sistema iniciado com sucesso!"
-        Write-Host ""
-        Write-Host "URLs de acesso:"
-        Write-Host "  ${GREEN}Frontend:${RESET}  http://localhost:3100"
-        Write-Host "  ${GREEN}Backend:${RESET}   http://localhost:3101"
-        Write-Host "  ${GREEN}API Docs:${RESET}  http://localhost:3101/api/docs"
-        Write-Host "  ${CYAN}PgAdmin:${RESET}   http://localhost:5150 (dev profile)"
-        Write-Host "  ${CYAN}Redis UI:${RESET}  http://localhost:8181 (dev profile)"
-        Write-Host ""
+
+        # Wait for services to be healthy (with real health checks)
+        $isHealthy = Wait-ForHealthy -MaxWaitSeconds 120
+
+        if ($isHealthy) {
+            # Show URLs
+            Write-Host ""
+            Print-Success "Sistema iniciado com sucesso e todos os serviços estão prontos!"
+            Write-Host ""
+            Write-Host "URLs de acesso:"
+            Write-Host "  ${GREEN}Frontend:${RESET}  http://localhost:3100"
+            Write-Host "  ${GREEN}Backend:${RESET}   http://localhost:3101"
+            Write-Host "  ${GREEN}API Docs:${RESET}  http://localhost:3101/api/docs"
+            Write-Host "  ${CYAN}PgAdmin:${RESET}   http://localhost:5150 (dev profile)"
+            Write-Host "  ${CYAN}Redis UI:${RESET}  http://localhost:8181 (dev profile)"
+            Write-Host ""
+        } else {
+            Write-Host ""
+            Print-Warning "Sistema iniciou mas alguns serviços podem não estar prontos"
+            Print-Info "Verifique o status: .\system-manager.ps1 status"
+            Print-Info "Verifique os logs: .\system-manager.ps1 logs <service>"
+            Write-Host ""
+        }
     } else {
         Print-Error "Erro ao iniciar serviços"
+        Print-Info "Verifique os logs: .\system-manager.ps1 logs"
     }
 }
 

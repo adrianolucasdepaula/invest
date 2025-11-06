@@ -248,9 +248,162 @@ install_deps() {
     print_success "Todas as dependências foram instaladas/atualizadas!"
 }
 
+# Wait for services to be healthy
+wait_for_healthy() {
+    local MAX_WAIT=${1:-120}
+    local SERVICES=("postgres" "redis" "backend" "frontend" "scrapers")
+
+    print_info "Aguardando serviços ficarem prontos (timeout: ${MAX_WAIT}s)..."
+
+    local WAITED=0
+    local CHECK_INTERVAL=5
+
+    while [ $WAITED -lt $MAX_WAIT ]; do
+        local ALL_HEALTHY=true
+        local STATUS_MSG=""
+
+        for SERVICE in "${SERVICES[@]}"; do
+            local CONTAINER_NAME="invest_${SERVICE}"
+
+            # Check if container exists and is running
+            if ! CONTAINER_STATE=$(docker inspect --format='{{.State.Status}}' "$CONTAINER_NAME" 2>/dev/null); then
+                ALL_HEALTHY=false
+                STATUS_MSG+="${YELLOW}⏳${NC} $SERVICE (não rodando) | "
+                continue
+            fi
+
+            if [ "$CONTAINER_STATE" != "running" ]; then
+                ALL_HEALTHY=false
+                STATUS_MSG+="${YELLOW}⏳${NC} $SERVICE (não rodando) | "
+                continue
+            fi
+
+            # Check health status
+            HEALTH=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_NAME" 2>/dev/null || echo "none")
+
+            if [ "$HEALTH" = "healthy" ]; then
+                STATUS_MSG+="${GREEN}✓${NC} $SERVICE | "
+            elif [ "$HEALTH" = "starting" ]; then
+                ALL_HEALTHY=false
+                STATUS_MSG+="${YELLOW}⏳${NC} $SERVICE (iniciando) | "
+            elif [ "$HEALTH" = "unhealthy" ]; then
+                ALL_HEALTHY=false
+                STATUS_MSG+="${RED}✗${NC} $SERVICE (não saudável) | "
+            else
+                # No health check, just check if running
+                STATUS_MSG+="${CYAN}ℹ${NC} $SERVICE (sem health check) | "
+            fi
+        done
+
+        # Clear line and show status
+        echo -ne "\r\033[K"
+        echo -ne "Status: $STATUS_MSG"
+
+        if $ALL_HEALTHY; then
+            echo ""
+            echo ""
+            print_success "Todos os serviços estão prontos!"
+            return 0
+        fi
+
+        sleep $CHECK_INTERVAL
+        WAITED=$((WAITED + CHECK_INTERVAL))
+    done
+
+    echo ""
+    echo ""
+    print_warning "Timeout aguardando serviços (${MAX_WAIT}s). Alguns serviços podem não estar prontos."
+    print_info "Verifique os logs: ./system-manager.sh logs <service>"
+    return 1
+}
+
+# Validate essential files
+test_essential_files() {
+    print_header "Validando Arquivos Essenciais"
+
+    local ALL_OK=true
+    local ESSENTIAL_FILES=(
+        "docker-compose.yml"
+        "backend/package.json"
+        "frontend/package.json"
+        "backend/Dockerfile"
+        "frontend/Dockerfile"
+        "backend/python-scrapers/Dockerfile"
+        "backend/python-scrapers/requirements.txt"
+    )
+
+    for FILE in "${ESSENTIAL_FILES[@]}"; do
+        if [ ! -f "$FILE" ]; then
+            print_error "Arquivo essencial não encontrado: $FILE"
+            ALL_OK=false
+        fi
+    done
+
+    # Check and create database directory
+    if [ ! -d "database" ]; then
+        print_warning "Diretório 'database' não encontrado. Criando..."
+        mkdir -p database
+    fi
+
+    # Check and create init.sql
+    if [ ! -f "database/init.sql" ]; then
+        print_warning "Arquivo 'database/init.sql' não encontrado. Criando arquivo padrão..."
+
+        cat > database/init.sql <<'EOF'
+-- B3 AI Analysis Platform Database Initialization
+-- Este arquivo é executado automaticamente na primeira vez que o PostgreSQL inicia
+
+-- Criar extensão TimescaleDB
+CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
+
+-- Configurações de performance
+ALTER SYSTEM SET shared_buffers = '256MB';
+ALTER SYSTEM SET effective_cache_size = '1GB';
+ALTER SYSTEM SET maintenance_work_mem = '64MB';
+ALTER SYSTEM SET checkpoint_completion_target = 0.9;
+ALTER SYSTEM SET wal_buffers = '16MB';
+ALTER SYSTEM SET default_statistics_target = 100;
+ALTER SYSTEM SET random_page_cost = 1.1;
+ALTER SYSTEM SET effective_io_concurrency = 200;
+ALTER SYSTEM SET work_mem = '10MB';
+
+-- Log de inicialização
+DO $$
+BEGIN
+    RAISE NOTICE 'B3 AI Analysis Platform - Database initialized successfully';
+END
+$$;
+EOF
+
+        print_success "Arquivo database/init.sql criado com sucesso!"
+    else
+        print_success "Arquivo database/init.sql encontrado"
+    fi
+
+    # Create necessary directories
+    for DIR in "logs" "uploads" "reports" "browser-profiles"; do
+        if [ ! -d "$DIR" ]; then
+            print_info "Criando diretório '$DIR'..."
+            mkdir -p "$DIR"
+        fi
+    done
+
+    if $ALL_OK; then
+        print_success "Todos os arquivos essenciais estão presentes"
+    fi
+
+    return $([ "$ALL_OK" = true ] && echo 0 || echo 1)
+}
+
 # Start system
 start_system() {
     print_header "Iniciando Sistema B3 AI Analysis Platform"
+
+    # Validate essential files first
+    if ! test_essential_files; then
+        print_error "Arquivos essenciais faltando. Corrija os problemas antes de continuar."
+        return 1
+    fi
 
     check_docker
 
@@ -299,65 +452,37 @@ start_system() {
     print_step "Iniciando serviços Docker..."
     docker-compose up -d
 
-    print_info "Aguardando serviços ficarem prontos..."
-    sleep 10
+    if [ $? -eq 0 ]; then
+        echo ""
 
-    # Check services
-    print_step "Verificando status dos serviços..."
-
-    # PostgreSQL
-    if docker-compose exec -T postgres pg_isready -U invest_user -d invest_db &> /dev/null; then
-        print_success "PostgreSQL está pronto"
+        # Wait for services to be healthy (with real health checks)
+        if wait_for_healthy 120; then
+            # Show URLs
+            echo ""
+            print_success "Sistema iniciado com sucesso e todos os serviços estão prontos!"
+            echo ""
+            echo -e "${GREEN}🌐 URLs de Acesso:${NC}"
+            echo "  Frontend:    http://localhost:3100"
+            echo "  Backend API: http://localhost:3101"
+            echo "  API Docs:    http://localhost:3101/api/docs"
+            echo "  PostgreSQL:  localhost:5532"
+            echo "  Redis:       localhost:6479"
+            echo ""
+            echo -e "${BLUE}📊 Ferramentas de Dev:${NC}"
+            echo "  PgAdmin:     http://localhost:5150 (docker-compose --profile dev up -d pgadmin)"
+            echo "  Redis UI:    http://localhost:8181 (docker-compose --profile dev up -d redis-commander)"
+            echo ""
+        else
+            echo ""
+            print_warning "Sistema iniciou mas alguns serviços podem não estar prontos"
+            print_info "Verifique o status: ./system-manager.sh status"
+            print_info "Verifique os logs: ./system-manager.sh logs <service>"
+            echo ""
+        fi
     else
-        print_warning "PostgreSQL ainda não está pronto"
+        print_error "Erro ao iniciar serviços"
+        print_info "Verifique os logs: ./system-manager.sh logs"
     fi
-
-    # Redis
-    if docker-compose exec -T redis redis-cli ping | grep -q "PONG"; then
-        print_success "Redis está pronto"
-    else
-        print_warning "Redis ainda não está pronto"
-    fi
-
-    # Wait for backend
-    print_step "Aguardando Backend..."
-    for i in {1..30}; do
-        if curl -s http://localhost:3101/health > /dev/null 2>&1; then
-            print_success "Backend está pronto"
-            break
-        fi
-        if [ $i -eq 30 ]; then
-            print_warning "Backend demorou para iniciar. Verifique os logs: docker-compose logs backend"
-        fi
-        sleep 2
-    done
-
-    # Wait for frontend
-    print_step "Aguardando Frontend..."
-    for i in {1..30}; do
-        if curl -s http://localhost:3100 > /dev/null 2>&1; then
-            print_success "Frontend está pronto"
-            break
-        fi
-        if [ $i -eq 30 ]; then
-            print_warning "Frontend demorou para iniciar. Verifique os logs: docker-compose logs frontend"
-        fi
-        sleep 2
-    done
-
-    print_header "Sistema Iniciado!"
-    echo ""
-    echo -e "${GREEN}🌐 URLs de Acesso:${NC}"
-    echo "  Frontend:    http://localhost:3100"
-    echo "  Backend API: http://localhost:3101"
-    echo "  API Docs:    http://localhost:3101/api/docs"
-    echo "  PostgreSQL:  localhost:5532"
-    echo "  Redis:       localhost:6479"
-    echo ""
-    echo -e "${BLUE}📊 Ferramentas de Dev:${NC}"
-    echo "  PgAdmin:     http://localhost:5150 (docker-compose --profile dev up -d pgadmin)"
-    echo "  Redis UI:    http://localhost:8181 (docker-compose --profile dev up -d redis-commander)"
-    echo ""
 }
 
 # Stop system
