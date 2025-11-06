@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { AbstractScraper } from '../base/abstract-scraper';
 import * as cheerio from 'cheerio';
 
@@ -15,17 +14,11 @@ export interface NewsArticle {
 @Injectable()
 export class GoogleNewsScraper extends AbstractScraper<NewsArticle[]> {
   protected readonly logger = new Logger(GoogleNewsScraper.name);
+  readonly name = 'Google News';
+  readonly source = 'google-news';
+  readonly requiresLogin = false;
 
-  constructor(configService: ConfigService) {
-    super(configService, {
-      name: 'Google News',
-      baseUrl: 'https://news.google.com',
-      headless: true,
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    });
-  }
-
-  async scrape(ticker: string): Promise<NewsArticle[]> {
+  protected async scrapeData(ticker: string): Promise<NewsArticle[]> {
     const startTime = Date.now();
     this.logger.log(`Iniciando scraping de notícias para ${ticker}`);
 

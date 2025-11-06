@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Portfolio, PortfolioPosition, Asset } from '@database/entities';
+import { Portfolio, PortfolioPosition, Asset, AssetType } from '@database/entities';
 import { B3Parser } from './parsers/b3-parser';
 import { KinvoParser } from './parsers/kinvo-parser';
 import { PortfolioParser } from './parsers/portfolio-parser.interface';
@@ -32,12 +32,15 @@ export class PortfolioService {
     });
   }
 
-  async create(userId: string, data: any) {
+  async create(userId: string, data: any): Promise<Portfolio> {
     const portfolio = this.portfolioRepository.create({
       userId,
       ...data,
     });
-    return this.portfolioRepository.save(portfolio);
+    const saved = await this.portfolioRepository.save(portfolio);
+    // TypeORM save can return either single entity or array depending on input
+    // We know it's a single entity, so cast appropriately
+    return (Array.isArray(saved) ? saved[0] : saved) as Portfolio;
   }
 
   async importFromFile(userId: string, fileBuffer: Buffer, filename: string) {
@@ -105,10 +108,10 @@ export class PortfolioService {
     }
   }
 
-  private getAssetType(ticker: string): any {
-    if (ticker.endsWith('11') || ticker.endsWith('B')) return 'fii';
-    if (ticker.match(/^[A-Z]{4}[0-9]{2}$/)) return 'bdr';
-    if (ticker.match(/^[A-Z]{4}[A-Z][0-9]{2}$/)) return 'option';
-    return 'stock';
+  private getAssetType(ticker: string): AssetType {
+    if (ticker.endsWith('11') || ticker.endsWith('B')) return AssetType.FII;
+    if (ticker.match(/^[A-Z]{4}[0-9]{2}$/)) return AssetType.BDR;
+    if (ticker.match(/^[A-Z]{4}[A-Z][0-9]{2}$/)) return AssetType.OPTION;
+    return AssetType.STOCK;
   }
 }

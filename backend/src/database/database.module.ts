@@ -1,9 +1,31 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import * as entities from './entities';
+import {
+  User,
+  Asset,
+  AssetPrice,
+  FundamentalData,
+  Portfolio,
+  PortfolioPosition,
+  DataSource,
+  ScrapedData,
+  Analysis,
+} from './entities';
 
 @Module({
-  imports: [TypeOrmModule.forFeature(Object.values(entities))],
+  imports: [
+    TypeOrmModule.forFeature([
+      User,
+      Asset,
+      AssetPrice,
+      FundamentalData,
+      Portfolio,
+      PortfolioPosition,
+      DataSource,
+      ScrapedData,
+      Analysis,
+    ]),
+  ],
   exports: [TypeOrmModule],
 })
 export class DatabaseModule {}

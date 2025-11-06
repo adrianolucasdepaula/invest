@@ -4,7 +4,7 @@ import { Job } from 'bull';
 import { ScrapersService } from '@scrapers/scrapers.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Asset, ScrapedData, DataSource } from '@database/entities';
+import { Asset, AssetType, ScrapedData, DataSource } from '@database/entities';
 
 export interface ScrapingJob {
   ticker: string;
@@ -57,7 +57,7 @@ export class ScrapingProcessor {
         asset = await this.assetRepository.save({
           ticker: ticker.toUpperCase(),
           name: ticker.toUpperCase(),
-          type: 'stock',
+          type: AssetType.STOCK,
           isActive: true,
         });
       }
