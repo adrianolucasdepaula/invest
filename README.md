@@ -175,12 +175,23 @@ chmod +x system-manager.sh
 ```
 
 O script automaticamente:
-- ✅ Verifica atualizações do Git
-- ✅ Instala dependências npm (backend + frontend)
+- ✅ Detecta containers com problemas e oferece limpeza automática
+- ✅ Verifica atualizações do Git e mostra commits disponíveis
+- ✅ Instala/atualiza dependências npm quando necessário
 - ✅ Faz build das imagens Docker (backend, frontend, scrapers Python)
-- ✅ Inicia todos os serviços
-- ✅ Aguarda health checks
-- ✅ Mostra URLs de acesso
+- ✅ Valida arquivos essenciais (postgresql.conf, init.sql, etc.)
+- ✅ Inicia todos os 5 serviços com health checks reais
+- ✅ Aguarda serviços ficarem prontos (até 120s)
+- ✅ Mostra status em tempo real durante inicialização
+- ✅ Exibe URLs de acesso quando tudo estiver pronto
+
+**🔧 Limpeza Automática de Problemas:**
+Se houver containers com problemas (unhealthy, error), o script:
+1. Detecta automaticamente
+2. Lista os containers problemáticos
+3. Oferece limpar volumes corrompidos
+4. Executa `docker-compose down -v` se você aceitar
+5. Garante início limpo sem erros persistentes
 
 #### Opção 2: Docker Manual
 
