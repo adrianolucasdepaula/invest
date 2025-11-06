@@ -817,10 +817,10 @@ npm run build > NUL  # Maiúsculo - usa o device
 
 ```powershell
 # Use o caminho completo com prefixo \\?\
-Remove-Item -Path "\\?\C:\caminho\completo\para\invest-claude-web\frontend\nul" -Force
-
-# Exemplo real:
 Remove-Item -Path "\\?\C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\frontend\nul" -Force
+
+# Formato genérico:
+Remove-Item -Path "\\?\C:\seu\caminho\completo\invest-claude-web\frontend\nul" -Force
 ```
 
 **Solução 2: Reclonar Repositório (Mais Rápido e Recomendado)**
