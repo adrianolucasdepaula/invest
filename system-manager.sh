@@ -330,6 +330,7 @@ test_essential_files() {
         "frontend/Dockerfile"
         "backend/python-scrapers/Dockerfile"
         "backend/python-scrapers/requirements.txt"
+        "database/postgresql.conf"
     )
 
     for FILE in "${ESSENTIAL_FILES[@]}"; do

@@ -401,7 +401,8 @@ function Test-EssentialFiles {
         "backend/Dockerfile",
         "frontend/Dockerfile",
         "backend/python-scrapers/Dockerfile",
-        "backend/python-scrapers/requirements.txt"
+        "backend/python-scrapers/requirements.txt",
+        "database/postgresql.conf"
     )
 
     foreach ($file in $essentialFiles) {
