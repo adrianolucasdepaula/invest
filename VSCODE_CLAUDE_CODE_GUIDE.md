@@ -17,6 +17,9 @@
 7. [Verificações Pós-Abertura](#verificações-pós-abertura)
 8. [Comandos Úteis](#comandos-úteis)
 9. [Troubleshooting](#troubleshooting)
+10. [System Manager - Gerenciamento Inteligente](#system-manager---gerenciamento-inteligente-do-sistema) 🆕
+11. [Workflow Recomendado](#workflow-recomendado)
+12. [Recursos Adicionais](#recursos-adicionais)
 
 ---
 
@@ -986,14 +989,188 @@ claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
 
 ---
 
-## 10. Workflow Recomendado
+## 10. System Manager - Gerenciamento Inteligente do Sistema
 
-### 10.1. Primeira Vez (Com Teleport - Testado ✅)
+### 🚀 Script `system-manager.sh`
 
-**Este é o método que FUNCIONOU no teste real:**
+O projeto possui um **script de gerenciamento inteligente** que automatiza todo o ciclo de vida do sistema.
+
+**Localização:** `./system-manager.sh` (na raiz do projeto)
+
+### Comandos Principais
+
+```bash
+./system-manager.sh start       # Inicia o sistema com verificações automáticas
+./system-manager.sh stop        # Para todo o sistema
+./system-manager.sh restart     # Reinicia o sistema
+./system-manager.sh status      # Status detalhado de todos os componentes
+./system-manager.sh health      # Health check rápido
+./system-manager.sh install     # Instala/atualiza dependências
+./system-manager.sh build       # Build das imagens Docker
+./system-manager.sh logs <srv>  # Ver logs (backend, frontend, postgres, redis)
+./system-manager.sh clean       # Remove TODOS os dados (cuidado!)
+./system-manager.sh help        # Ajuda completa
+```
+
+### ✨ START INTELIGENTE - O Mais Importante
+
+O comando `start` é **INTELIGENTE** e faz verificações automáticas:
+
+```bash
+./system-manager.sh start
+```
+
+**O que ele faz automaticamente:**
+
+1. ✅ **Verifica atualizações do Git** → oferece pull se houver
+2. ✅ **Detecta dependências faltando** → oferece install
+3. ✅ **Detecta dependências desatualizadas** → oferece update
+4. ✅ **Verifica imagens Docker** → oferece build se necessário
+5. ✅ **Sugere rebuild** se houve mudanças
+6. ✅ **Inicia todos os serviços** Docker
+7. ✅ **Aguarda ficarem prontos** (health checks)
+8. ✅ **Mostra URLs de acesso**
+
+**Exemplo de execução:**
+
+```bash
+$ ./system-manager.sh start
+
+╔══════════════════════════════════════════════════════════╗
+║  Iniciando Sistema B3 AI Analysis Platform
+╚══════════════════════════════════════════════════════════╝
+
+ℹ Verificando atualizações do repositório...
+⚠ Há atualizações disponíveis no repositório!
+Deseja atualizar o código? (y/n): y
+✓ Código atualizado!
+
+ℹ Verificando dependências do projeto...
+⚠ Backend: package.json foi modificado
+Deseja atualizar as dependências? (y/n): y
+✓ Todas as dependências foram instaladas/atualizadas!
+
+ℹ Verificando imagens Docker...
+✓ Imagens Docker estão disponíveis
+
+▶ Iniciando serviços Docker...
+✓ PostgreSQL está pronto
+✓ Redis está pronto
+✓ Backend está pronto
+✓ Frontend está pronto
+
+╔══════════════════════════════════════════════════════════╗
+║  Sistema Iniciado!
+╚══════════════════════════════════════════════════════════╝
+
+🌐 URLs de Acesso:
+  Frontend:    http://localhost:3100
+  Backend API: http://localhost:3101
+  API Docs:    http://localhost:3101/api/docs
+```
+
+### Benefícios do System Manager
+
+- 🔄 **Mantém sistema sempre atualizado** - verifica Git automaticamente
+- 📦 **Instala dependências automaticamente** - detecta package.json mudanças
+- 🐳 **Gerencia Docker** - build, start, stop, status
+- 🏥 **Health checks** - verifica se todos os serviços estão saudáveis
+- 📊 **Status em tempo real** - CPU, memória, containers
+- 📝 **Logs centralizados** - fácil acesso aos logs de qualquer serviço
+- ✅ **Guiado** - pergunta o que fazer (y/n)
+- 🛡️ **Seguro** - não faz nada sem perguntar
+
+### Componentes Gerenciados
+
+O sistema possui **7 serviços Docker:**
+
+| Serviço | Porta | Descrição |
+|---------|-------|-----------|
+| PostgreSQL | 5532 | Banco de dados (TimescaleDB) |
+| Redis | 6479 | Cache e filas |
+| Backend | 3101 | API NestJS |
+| Frontend | 3100 | Interface Next.js |
+| Scrapers | - | Coletores de dados Python |
+| PgAdmin | 5150 | Admin PostgreSQL (opcional) |
+| Redis Commander | 8181 | Admin Redis (opcional) |
+
+---
+
+## 11. Workflow Recomendado
+
+### 11.1. Primeira Vez - Download e Setup (ATUALIZADO 🆕)
+
+**Este é o fluxo MAIS SIMPLES usando o system-manager.sh:**
+
+#### **PowerShell (Windows):**
 
 ```powershell
-# PowerShell (Windows):
+# 1. Navegue para onde quer o projeto
+cd "C:\Users\SEU_USUARIO\Dropbox\PC (2)\Downloads\Python - Projetos"
+
+# 2. Clone o repositório
+git clone https://github.com/adrianolucasdepaula/invest.git invest-claude-web
+
+# 3. Entre na pasta
+cd invest-claude-web
+
+# 4. Checkout no branch correto
+git checkout claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
+
+# 5. INICIE O SISTEMA (faz tudo automaticamente!)
+./system-manager.sh start
+# Responda 'y' para instalar dependências
+# Responda 'y' para build do Docker
+# Configure o .env se solicitado
+
+# 6. Sistema está pronto! 🎉
+# Frontend: http://localhost:3100
+# Backend:  http://localhost:3101
+```
+
+#### **Bash (Linux/Mac):**
+
+```bash
+# 1. Navegue para onde quer o projeto
+cd ~/projetos
+
+# 2. Clone o repositório
+git clone https://github.com/adrianolucasdepaula/invest.git invest-claude-web
+
+# 3. Entre na pasta
+cd invest-claude-web
+
+# 4. Checkout no branch correto
+git checkout claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
+
+# 5. INICIE O SISTEMA (faz tudo automaticamente!)
+chmod +x system-manager.sh  # Tornar executável
+./system-manager.sh start
+# Responda 'y' para instalar dependências
+# Responda 'y' para build do Docker
+# Configure o .env se solicitado
+
+# 6. Sistema está pronto! 🎉
+```
+
+**O que acontece automaticamente:**
+- ✅ Detecta que dependências não estão instaladas → oferece install
+- ✅ Detecta que imagens Docker não existem → oferece build
+- ✅ Cria .env a partir de .env.example → pede para configurar
+- ✅ Inicia todos os serviços
+- ✅ Aguarda ficarem prontos
+- ✅ Mostra URLs de acesso
+
+**Tempo total:** ~5-10 minutos (dependendo da conexão)
+
+---
+
+### 11.2. Primeira Vez com Claude Code (Teleport) - SIMPLIFICADO 🆕
+
+**Fluxo completo para abrir no VS Code:**
+
+```powershell
+# Windows (PowerShell):
 
 # 1. Instale o Claude CLI (se necessário)
 npm install -g @anthropic/claude-cli
@@ -1001,110 +1178,54 @@ npm install -g @anthropic/claude-cli
 # 2. Faça login
 claude login
 
-# 3. Navegue para a pasta onde quer o projeto
+# 3. Navegue e clone
 cd "C:\Users\SEU_USUARIO\Dropbox\PC (2)\Downloads\Python - Projetos"
-
-# 4. Se a pasta invest-claude-web já existe, remova
-Remove-Item -Path "invest-claude-web" -Recurse -Force -ErrorAction SilentlyContinue
-
-# 5. Clone o repositório
 git clone https://github.com/adrianolucasdepaula/invest.git invest-claude-web
-
-# 6. Entre na pasta
 cd invest-claude-web
-
-# 7. Checkout no branch correto
 git checkout claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
 
-# 8. Verifique o status (deve estar limpo)
-git status
-
-# 9. Execute o teleport
+# 4. Execute o teleport
 claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
 
-# ✅ VS Code abrirá automaticamente com o projeto!
+# ✅ VS Code abrirá automaticamente!
+# ✅ Use ./system-manager.sh start dentro do VS Code para iniciar
 ```
 
-**Bash/Linux/Mac:**
+---
+
+### 11.3. Desenvolvimento Diário (COM SYSTEM MANAGER 🆕)
+
+**Workflow simplificado com system-manager.sh:**
 
 ```bash
-# 1. Instale o Claude CLI
-npm install -g @anthropic/claude-cli
+# Manhã - Iniciar o sistema
+./system-manager.sh start
+# ✅ Verifica atualizações automaticamente
+# ✅ Atualiza dependências se necessário
+# ✅ Inicia todos os serviços
 
-# 2. Faça login
-claude login
+# Durante o dia - Ver status
+./system-manager.sh status    # Status completo
+./system-manager.sh health     # Health check rápido
 
-# 3. Navegue para onde quer o projeto
-cd ~/projetos
+# Ver logs se necessário
+./system-manager.sh logs backend   # Logs do backend
+./system-manager.sh logs frontend  # Logs do frontend
 
-# 4. Remova pasta se existir
-rm -rf invest-claude-web
-
-# 5. Clone o repositório
-git clone https://github.com/adrianolucasdepaula/invest.git invest-claude-web
-
-# 6. Entre na pasta
-cd invest-claude-web
-
-# 7. Checkout no branch
-git checkout claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
-
-# 8. Verifique status
-git status
-
-# 9. Teleport
-claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+# Noite - Parar o sistema
+./system-manager.sh stop
 ```
 
-**Garantias desta abordagem:**
-- ✅ **Testado e funcionando** em ambiente real Windows
-- ✅ Remove qualquer pasta problemática automaticamente
-- ✅ Clone garante repositório Git completo e válido
-- ✅ Proteção contra `nul` já incluída do remote
-- ✅ Working directory limpo garantido
-- ✅ Branch correto desde o início
-
-### 10.2. Primeira Vez (Método Manual)
-
-```bash
-# 1. Clonar repositório
-git clone <repo-url>
-cd invest
-
-# 2. Instalar dependências
-cd backend && npm install && cd ..
-cd frontend && npm install && cd ..
-
-# 3. Configurar .env
-cp backend/.env.example backend/.env
-# Editar backend/.env e adicionar OPENAI_API_KEY
-
-# 4. Validar sistema
-./validate-vscode-cli.sh
-
-# 5. Abrir no VS Code
-code .
-
-# 6. No VS Code, verificar extensão Claude Code
-# Ctrl+Shift+X → Buscar "Claude Code" → Install
-
-# 7. Configurar API key no VS Code
-# Ctrl+Shift+P → "Claude Code: Settings"
-
-# 8. Pronto! 🎉
-```
-
-### 10.3. Desenvolvimento Diário
+**Fluxo tradicional (sem Docker):**
 
 ```bash
 # 1. Atualizar repositório
-git pull origin main
+git pull
 
-# 2. Instalar novas dependências (se houver)
-cd backend && npm install && cd ..
-cd frontend && npm install && cd ..
+# 2. Instalar dependências se houver mudanças
+./system-manager.sh install
 
-# 3. Iniciar desenvolvimento
+# 3. Iniciar desenvolvimento manualmente
 cd backend
 npm run start:dev
 
@@ -1114,14 +1235,34 @@ npm run dev
 
 # 4. Abrir no VS Code
 code .
+```
 
-# 5. Usar Claude Code para desenvolvimento
-# Ctrl+Shift+C para abrir o chat
+### 11.4. Após Mudanças de Código
+
+```bash
+# Rebuild e restart
+./system-manager.sh build     # Rebuild das imagens
+./system-manager.sh restart   # Reinicia tudo
+```
+
+### 11.5. Resolver Problemas
+
+```bash
+# Ver logs
+./system-manager.sh logs backend
+./system-manager.sh logs frontend
+
+# Verificar status de todos os serviços
+./system-manager.sh status
+
+# Limpeza completa (remove dados!)
+./system-manager.sh clean
+./system-manager.sh start
 ```
 
 ---
 
-## 11. Recursos Adicionais
+## 12. Recursos Adicionais
 
 ### 📚 Documentação do Projeto
 
