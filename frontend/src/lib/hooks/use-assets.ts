@@ -1,0 +1,39 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '../api';
+
+export function useAssets(params?: { search?: string; type?: string; limit?: number }) {
+  return useQuery({
+    queryKey: ['assets', params],
+    queryFn: () => api.getAssets(params),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useAsset(ticker: string) {
+  return useQuery({
+    queryKey: ['asset', ticker],
+    queryFn: () => api.getAsset(ticker),
+    enabled: !!ticker,
+  });
+}
+
+export function useAssetPrices(
+  ticker: string,
+  params?: { startDate?: string; endDate?: string },
+) {
+  return useQuery({
+    queryKey: ['asset-prices', ticker, params],
+    queryFn: () => api.getAssetPrices(ticker, params),
+    enabled: !!ticker,
+    staleTime: 1 * 60 * 1000, // 1 minute
+  });
+}
+
+export function useAssetFundamentals(ticker: string) {
+  return useQuery({
+    queryKey: ['asset-fundamentals', ticker],
+    queryFn: () => api.getAssetFundamentals(ticker),
+    enabled: !!ticker,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+  });
+}
