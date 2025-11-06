@@ -381,10 +381,14 @@ EOF
     fi
 
     # Create necessary directories
-    for DIR in "logs" "uploads" "reports" "browser-profiles"; do
+    for DIR in "logs" "uploads" "reports" "browser-profiles" "frontend/public"; do
         if [ ! -d "$DIR" ]; then
             print_info "Criando diretório '$DIR'..."
             mkdir -p "$DIR"
+            # Create .gitkeep for frontend/public to preserve in git
+            if [ "$DIR" = "frontend/public" ]; then
+                touch "$DIR/.gitkeep"
+            fi
         fi
     done
 

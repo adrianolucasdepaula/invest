@@ -477,6 +477,14 @@ END
         New-Item -ItemType Directory -Force -Path "browser-profiles" | Out-Null
     }
 
+    # Check and create frontend/public directory (required by Next.js Dockerfile)
+    if (-not (Test-Path "frontend/public")) {
+        Print-Info "Criando diretório 'frontend/public'..."
+        New-Item -ItemType Directory -Force -Path "frontend/public" | Out-Null
+        # Create .gitkeep to preserve in git
+        New-Item -ItemType File -Force -Path "frontend/public/.gitkeep" | Out-Null
+    }
+
     if ($allOk) {
         Print-Success "Todos os arquivos essenciais estão presentes"
     }
