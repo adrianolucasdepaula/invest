@@ -494,6 +494,44 @@ END
     return $allOk
 }
 
+# Clean containers and volumes
+function Clean-Containers {
+    param(
+        [bool]$Force = $false
+    )
+
+    Print-Header "Limpando Containers e Volumes"
+
+    # Check if there are running containers
+    $runningContainers = docker ps -q --filter "name=invest_" 2>$null
+    $stoppedContainers = docker ps -aq --filter "name=invest_" 2>$null
+
+    if (-not $Force -and ($runningContainers -or $stoppedContainers)) {
+        Print-Warning "Esta operação irá:"
+        Write-Host "  • Parar todos os containers"
+        Write-Host "  • Remover todos os containers"
+        Write-Host "  • Remover todos os volumes (banco de dados será LIMPO)"
+        Write-Host "  • Remover redes"
+        Write-Host ""
+        $confirm = Read-Host "Tem certeza? (y/n)"
+        if ($confirm -ne "y") {
+            Print-Info "Operação cancelada"
+            return $false
+        }
+    }
+
+    Print-Info "Parando e removendo containers, volumes e redes..."
+    docker-compose down -v 2>&1 | Out-Null
+
+    if ($LASTEXITCODE -eq 0) {
+        Print-Success "Containers, volumes e redes removidos com sucesso!"
+        return $true
+    } else {
+        Print-Error "Erro ao limpar containers"
+        return $false
+    }
+}
+
 # Start system
 function Start-System {
     Print-Header "Iniciando Sistema B3 AI Analysis Platform"
@@ -508,6 +546,22 @@ function Start-System {
     if (-not (Test-Prerequisites)) {
         Print-Error "Pré-requisitos não atendidos. Corrija os problemas antes de continuar."
         return
+    }
+
+    # Check if there are containers with errors or unhealthy status
+    $problemContainers = docker ps -a --filter "name=invest_" --format "{{.Names}}: {{.Status}}" | Select-String -Pattern "(unhealthy|Exited|Error)"
+
+    if ($problemContainers) {
+        Write-Host ""
+        Print-Warning "Containers com problemas detectados:"
+        $problemContainers | ForEach-Object { Write-Host "  $_" }
+        Write-Host ""
+        Print-Warning "Recomendado limpar containers antigos antes de iniciar"
+        $clean = Read-Host "Deseja limpar containers e volumes agora? (y/n)"
+        if ($clean -eq "y") {
+            Clean-Containers -Force $true
+            Write-Host ""
+        }
     }
 
     # Check for updates
@@ -685,16 +739,15 @@ function Clear-System {
     $confirm = Read-Host "Tem certeza que deseja continuar? Digite 'CONFIRMAR' para prosseguir"
 
     if ($confirm -eq "CONFIRMAR") {
-        Print-Info "Parando serviços..."
-        docker-compose down
-
-        Print-Info "Removendo volumes..."
-        docker-compose down -v
+        # Use Clean-Containers to remove containers and volumes
+        Clean-Containers -Force $true
 
         Print-Info "Removendo imagens personalizadas..."
-        docker rmi invest_backend invest_frontend invest_scrapers 2>$null
+        docker rmi invest-claude-web-backend invest-claude-web-frontend invest-claude-web-scrapers 2>$null | Out-Null
 
-        Print-Success "Sistema limpo!"
+        Print-Success "Sistema limpo completamente!"
+        Write-Host ""
+        Print-Info "Para iniciar novamente: .\system-manager.ps1 start"
     } else {
         Print-Info "Operação cancelada"
     }

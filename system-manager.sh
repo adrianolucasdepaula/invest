@@ -401,6 +401,43 @@ EOF
     return $([ "$ALL_OK" = true ] && echo 0 || echo 1)
 }
 
+# Clean containers and volumes
+clean_containers() {
+    local FORCE=${1:-false}
+
+    print_header "Limpando Containers e Volumes"
+
+    # Check if there are running containers
+    local RUNNING_CONTAINERS=$(docker ps -q --filter "name=invest_" 2>/dev/null)
+    local STOPPED_CONTAINERS=$(docker ps -aq --filter "name=invest_" 2>/dev/null)
+
+    if [ "$FORCE" != "true" ] && ([ -n "$RUNNING_CONTAINERS" ] || [ -n "$STOPPED_CONTAINERS" ]); then
+        print_warning "Esta operação irá:"
+        echo "  • Parar todos os containers"
+        echo "  • Remover todos os containers"
+        echo "  • Remover todos os volumes (banco de dados será LIMPO)"
+        echo "  • Remover redes"
+        echo ""
+        echo -n "Tem certeza? (y/n): "
+        read -r CONFIRM
+        if [ "$CONFIRM" != "y" ] && [ "$CONFIRM" != "Y" ]; then
+            print_info "Operação cancelada"
+            return 1
+        fi
+    fi
+
+    print_info "Parando e removendo containers, volumes e redes..."
+    docker-compose down -v >/dev/null 2>&1
+
+    if [ $? -eq 0 ]; then
+        print_success "Containers, volumes e redes removidos com sucesso!"
+        return 0
+    else
+        print_error "Erro ao limpar containers"
+        return 1
+    fi
+}
+
 # Start system
 start_system() {
     print_header "Iniciando Sistema B3 AI Analysis Platform"
@@ -412,6 +449,25 @@ start_system() {
     fi
 
     check_docker
+
+    # Check if there are containers with errors or unhealthy status
+    local PROBLEM_CONTAINERS=$(docker ps -a --filter "name=invest_" --format "{{.Names}}: {{.Status}}" | grep -E "(unhealthy|Exited|Error)")
+
+    if [ -n "$PROBLEM_CONTAINERS" ]; then
+        echo ""
+        print_warning "Containers com problemas detectados:"
+        echo "$PROBLEM_CONTAINERS" | while read -r line; do
+            echo "  $line"
+        done
+        echo ""
+        print_warning "Recomendado limpar containers antigos antes de iniciar"
+        echo -n "Deseja limpar containers e volumes agora? (y/n): "
+        read -r CLEAN_NOW
+        if [ "$CLEAN_NOW" == "y" ] || [ "$CLEAN_NOW" == "Y" ]; then
+            clean_containers true
+            echo ""
+        fi
+    fi
 
     # Check for code updates
     check_for_updates
@@ -648,20 +704,24 @@ build_system() {
 clean_system() {
     print_header "Limpeza Completa do Sistema"
 
-    print_warning "Isso vai REMOVER todos os dados (banco de dados, cache, etc.)"
-    echo -n "Tem certeza? (yes/no): "
+    print_warning "ATENÇÃO: Isso vai REMOVER todos os dados (banco de dados, cache, volumes)!"
+    echo -n "Tem certeza que deseja continuar? Digite 'CONFIRMAR' para prosseguir: "
     read -r confirmation
 
-    if [ "$confirmation" != "yes" ]; then
+    if [ "$confirmation" != "CONFIRMAR" ]; then
         print_info "Operação cancelada"
-        exit 0
+        return 0
     fi
 
-    print_step "Parando e removendo containers, volumes e redes..."
-    docker-compose down -v
+    # Use clean_containers to remove containers and volumes
+    clean_containers true
 
-    print_success "Sistema limpo! Volumes removidos."
-    print_info "Para reiniciar: $0 start"
+    print_info "Removendo imagens personalizadas..."
+    docker rmi invest-claude-web-backend invest-claude-web-frontend invest-claude-web-scrapers 2>/dev/null >/dev/null
+
+    print_success "Sistema limpo completamente!"
+    echo ""
+    print_info "Para iniciar novamente: $0 start"
 }
 
 # Show usage
