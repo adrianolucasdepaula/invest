@@ -163,9 +163,9 @@ docker-compose up -d
 docker-compose ps
 
 # 5. Acesse a aplicação
-# Frontend: http://localhost:3000
-# Backend:  http://localhost:3001
-# API Docs: http://localhost:3001/api/docs
+# Frontend: http://localhost:3100
+# Backend:  http://localhost:3101
+# API Docs: http://localhost:3101/api/docs
 ```
 
 **Para guia completo de deployment com Docker, veja [DOCKER_DEPLOYMENT.md](./DOCKER_DEPLOYMENT.md)**
@@ -187,14 +187,14 @@ cd ../frontend && npm install
 cd backend && npm run migration:run
 
 # 5. Inicie a aplicação
-# Backend (porta 3001)
+# Backend (porta 3101)
 cd backend && npm run start:dev
 
-# Frontend (porta 3000)
+# Frontend (porta 3100)
 cd frontend && npm run dev
 ```
 
-Acesse: http://localhost:3000
+Acesse: http://localhost:3100
 
 ## 📊 Uso
 
@@ -405,11 +405,11 @@ npm run dev
 ```
 
 Acesse:
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:3001
-- **Swagger Docs**: http://localhost:3001/api/docs
-- **PgAdmin** (dev): http://localhost:5050
-- **Redis Commander** (dev): http://localhost:8081
+- **Frontend**: http://localhost:3100
+- **Backend API**: http://localhost:3101
+- **Swagger Docs**: http://localhost:3101/api/docs
+- **PgAdmin** (dev): http://localhost:5150
+- **Redis Commander** (dev): http://localhost:8181
 
 ### 🧪 Como Testar
 

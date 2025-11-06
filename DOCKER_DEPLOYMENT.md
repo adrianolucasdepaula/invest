@@ -41,9 +41,9 @@ docker-compose up -d
 docker-compose ps
 
 # 6. Access the application
-# Frontend: http://localhost:3000
-# Backend:  http://localhost:3001
-# API Docs: http://localhost:3001/api/docs
+# Frontend: http://localhost:3100
+# Backend:  http://localhost:3101
+# API Docs: http://localhost:3101/api/docs
 ```
 
 ### Production Mode
@@ -89,23 +89,23 @@ Ensure these ports are available:
 
 | Port | Service | Required |
 |------|---------|----------|
-| 3000 | Frontend | Yes |
-| 3001 | Backend API | Yes |
-| 5432 | PostgreSQL | Yes |
-| 6379 | Redis | Yes |
-| 80 | Nginx HTTP | Production |
-| 443 | Nginx HTTPS | Production |
-| 5050 | PgAdmin | Dev only |
-| 8081 | Redis Commander | Dev only |
+| 3100 | Frontend | Yes |
+| 3101 | Backend API | Yes |
+| 5532 | PostgreSQL | Yes |
+| 6479 | Redis | Yes |
+| 180 | Nginx HTTP | Production |
+| 543 | Nginx HTTPS | Production |
+| 5150 | PgAdmin | Dev only |
+| 8181 | Redis Commander | Dev only |
 
 Check port availability:
 
 ```bash
 # Linux/Mac
-netstat -tuln | grep -E '3000|3001|5432|6379'
+netstat -tuln | grep -E '3100|3101|5532|6479'
 
 # Windows
-netstat -an | findstr "3000 3001 5432 6379"
+netstat -an | findstr "3100 3101 5532 6479"
 ```
 
 ---
@@ -229,13 +229,13 @@ docker-compose exec backend npm run seed
 
 ### Step 5: Access Application
 
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:3001
-- **Swagger Docs**: http://localhost:3001/api/docs
-- **PgAdmin**: http://localhost:5050 (with --profile dev)
+- **Frontend**: http://localhost:3100
+- **Backend API**: http://localhost:3101
+- **Swagger Docs**: http://localhost:3101/api/docs
+- **PgAdmin**: http://localhost:5150 (with --profile dev)
   - Email: `admin@invest.com`
   - Password: `admin`
-- **Redis Commander**: http://localhost:8081 (with --profile dev)
+- **Redis Commander**: http://localhost:8181 (with --profile dev)
 
 ### Development Tools
 
@@ -443,7 +443,7 @@ docker-compose exec backend npm run info
 
 ```bash
 # Check backend health
-curl http://localhost:3001/health
+curl http://localhost:3101/health
 
 # Check PostgreSQL
 docker-compose exec postgres pg_isready -U invest_user

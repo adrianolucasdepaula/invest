@@ -206,7 +206,7 @@ test_services() {
     # Wait for backend to be ready
     print_info "Waiting for backend to be ready..."
     for i in {1..30}; do
-        if curl -s http://localhost:3001/health > /dev/null 2>&1; then
+        if curl -s http://localhost:3101/health > /dev/null 2>&1; then
             print_success "Backend is ready"
             break
         fi
@@ -220,7 +220,7 @@ test_services() {
     # Wait for frontend to be ready
     print_info "Waiting for frontend to be ready..."
     for i in {1..30}; do
-        if curl -s http://localhost:3000 > /dev/null 2>&1; then
+        if curl -s http://localhost:3100 > /dev/null 2>&1; then
             print_success "Frontend is ready"
             break
         fi
@@ -238,7 +238,7 @@ test_endpoints() {
 
     # Test health endpoint
     print_info "Testing backend health endpoint..."
-    HEALTH_RESPONSE=$(curl -s http://localhost:3001/health)
+    HEALTH_RESPONSE=$(curl -s http://localhost:3101/health)
     if echo "$HEALTH_RESPONSE" | grep -q "ok\|healthy"; then
         print_success "Health endpoint is working"
     else
@@ -248,7 +248,7 @@ test_endpoints() {
 
     # Test API endpoint
     print_info "Testing API endpoint..."
-    API_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api)
+    API_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3101/api)
     if [ "$API_RESPONSE" -eq 200 ] || [ "$API_RESPONSE" -eq 404 ]; then
         print_success "API endpoint is responding (HTTP $API_RESPONSE)"
     else
@@ -257,7 +257,7 @@ test_endpoints() {
 
     # Test frontend
     print_info "Testing frontend..."
-    FRONTEND_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
+    FRONTEND_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3100)
     if [ "$FRONTEND_RESPONSE" -eq 200 ]; then
         print_success "Frontend is responding (HTTP $FRONTEND_RESPONSE)"
     else
@@ -293,11 +293,11 @@ display_summary() {
 
     echo ""
     echo "Access URLs:"
-    echo "  Frontend:  http://localhost:3000"
-    echo "  Backend:   http://localhost:3001"
-    echo "  API Docs:  http://localhost:3001/api/docs"
-    echo "  PgAdmin:   http://localhost:5050 (dev profile)"
-    echo "  Redis UI:  http://localhost:8081 (dev profile)"
+    echo "  Frontend:  http://localhost:3100"
+    echo "  Backend:   http://localhost:3101"
+    echo "  API Docs:  http://localhost:3101/api/docs"
+    echo "  PgAdmin:   http://localhost:5150 (dev profile)"
+    echo "  Redis UI:  http://localhost:8181 (dev profile)"
 
     echo ""
     echo "Useful commands:"
