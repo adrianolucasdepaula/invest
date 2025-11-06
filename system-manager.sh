@@ -58,9 +58,133 @@ check_docker() {
     fi
 }
 
+# Check if updates are available
+check_for_updates() {
+    print_info "Verificando atualizações do repositório..."
+
+    # Fetch latest changes
+    git fetch origin $(git branch --show-current) 2>/dev/null || true
+
+    # Check if behind
+    LOCAL=$(git rev-parse @)
+    REMOTE=$(git rev-parse @{u} 2>/dev/null || echo $LOCAL)
+
+    if [ "$LOCAL" != "$REMOTE" ]; then
+        print_warning "Há atualizações disponíveis no repositório!"
+        echo -n "Deseja atualizar o código? (y/n): "
+        read -r UPDATE_CODE
+
+        if [ "$UPDATE_CODE" == "y" ] || [ "$UPDATE_CODE" == "Y" ]; then
+            print_step "Atualizando código..."
+            git pull
+            print_success "Código atualizado!"
+            return 0  # Código foi atualizado
+        else
+            print_info "Continuando com versão local atual"
+            return 1  # Código não foi atualizado
+        fi
+    else
+        print_success "Código está atualizado"
+        return 1  # Já estava atualizado
+    fi
+}
+
+# Check if dependencies need to be installed/updated
+check_dependencies() {
+    local NEEDS_INSTALL=false
+    local NEEDS_UPDATE=false
+
+    print_info "Verificando dependências do projeto..."
+
+    # Check backend
+    if [ ! -d "backend/node_modules" ]; then
+        print_warning "Backend: node_modules não encontrado"
+        NEEDS_INSTALL=true
+    elif [ "backend/package.json" -nt "backend/node_modules" ]; then
+        print_warning "Backend: package.json foi modificado"
+        NEEDS_UPDATE=true
+    fi
+
+    # Check frontend
+    if [ ! -d "frontend/node_modules" ]; then
+        print_warning "Frontend: node_modules não encontrado"
+        NEEDS_INSTALL=true
+    elif [ "frontend/package.json" -nt "frontend/node_modules" ]; then
+        print_warning "Frontend: package.json foi modificado"
+        NEEDS_UPDATE=true
+    fi
+
+    if [ "$NEEDS_INSTALL" = true ]; then
+        print_warning "⚠️  Dependências precisam ser instaladas!"
+        echo -n "Deseja instalar as dependências agora? (y/n): "
+        read -r INSTALL_DEPS
+
+        if [ "$INSTALL_DEPS" == "y" ] || [ "$INSTALL_DEPS" == "Y" ]; then
+            install_deps
+            return 0  # Instalou
+        else
+            print_error "Sistema não pode iniciar sem dependências!"
+            echo "Execute: $0 install"
+            exit 1
+        fi
+    elif [ "$NEEDS_UPDATE" = true ]; then
+        print_warning "⚠️  Dependências podem estar desatualizadas!"
+        echo -n "Deseja atualizar as dependências? (y/n): "
+        read -r UPDATE_DEPS
+
+        if [ "$UPDATE_DEPS" == "y" ] || [ "$UPDATE_DEPS" == "Y" ]; then
+            install_deps
+            return 0  # Atualizou
+        else
+            print_info "Continuando com dependências atuais..."
+            return 1  # Não atualizou
+        fi
+    else
+        print_success "Dependências estão instaladas"
+        return 1  # Não precisou instalar/atualizar
+    fi
+}
+
+# Check if Docker images need rebuild
+check_docker_images() {
+    print_info "Verificando imagens Docker..."
+
+    # Check if Dockerfiles were modified
+    NEEDS_REBUILD=false
+
+    if [ ! "$(docker images -q invest_backend 2>/dev/null)" ]; then
+        print_warning "Imagem do backend não encontrada"
+        NEEDS_REBUILD=true
+    fi
+
+    if [ ! "$(docker images -q invest_frontend 2>/dev/null)" ]; then
+        print_warning "Imagem do frontend não encontrada"
+        NEEDS_REBUILD=true
+    fi
+
+    if [ "$NEEDS_REBUILD" = true ]; then
+        print_warning "⚠️  Imagens Docker precisam ser construídas!"
+        echo -n "Deseja fazer o build agora? (y/n): "
+        read -r BUILD_IMAGES
+
+        if [ "$BUILD_IMAGES" == "y" ] || [ "$BUILD_IMAGES" == "Y" ]; then
+            print_step "Fazendo build das imagens..."
+            docker-compose build
+            print_success "Build concluído!"
+            return 0  # Fez build
+        else
+            print_info "Continuando sem rebuild..."
+            return 1  # Não fez build
+        fi
+    else
+        print_success "Imagens Docker estão disponíveis"
+        return 1  # Não precisou rebuild
+    fi
+}
+
 # Install dependencies
 install_deps() {
-    print_header "Instalando Dependências"
+    print_header "Instalando/Atualizando Dependências"
 
     print_step "Backend dependencies..."
     cd backend
@@ -82,7 +206,7 @@ install_deps() {
     fi
     cd ..
 
-    print_success "Todas as dependências foram instaladas!"
+    print_success "Todas as dependências foram instaladas/atualizadas!"
 }
 
 # Start system
@@ -91,13 +215,45 @@ start_system() {
 
     check_docker
 
+    # Check for code updates
+    check_for_updates
+    CODE_UPDATED=$?
+
+    # Check and install/update dependencies
+    check_dependencies
+    DEPS_CHANGED=$?
+
+    # Check and rebuild Docker images if needed
+    check_docker_images
+    IMAGES_CHANGED=$?
+
+    # If code or deps changed, suggest rebuild
+    if [ $CODE_UPDATED -eq 0 ] || [ $DEPS_CHANGED -eq 0 ]; then
+        print_info "💡 Recomendação: Como houve mudanças, considere fazer rebuild das imagens"
+        echo -n "Deseja fazer rebuild agora? (y/n): "
+        read -r REBUILD_NOW
+
+        if [ "$REBUILD_NOW" == "y" ] || [ "$REBUILD_NOW" == "Y" ]; then
+            print_step "Fazendo rebuild das imagens Docker..."
+            docker-compose build
+            print_success "Rebuild concluído!"
+        fi
+    fi
+
     # Check if .env exists
     if [ ! -f ".env" ]; then
         print_warning "Arquivo .env não encontrado"
         if [ -f ".env.example" ]; then
             print_info "Criando .env a partir de .env.example"
             cp .env.example .env
-            print_warning "Configure o arquivo .env antes de continuar (especialmente OPENAI_API_KEY)"
+            print_warning "⚠️  IMPORTANTE: Configure o arquivo .env antes de continuar!"
+            echo "Edite .env e configure:"
+            echo "  - OPENAI_API_KEY (obrigatório para funcionalidades de IA)"
+            echo "  - JWT_SECRET (mínimo 32 caracteres)"
+            echo "  - Senhas do banco de dados (para produção)"
+            echo ""
+            echo -n "Pressione ENTER para continuar após configurar o .env..."
+            read
         fi
     fi
 
@@ -348,14 +504,19 @@ show_usage() {
     echo "Uso: $0 <comando> [opções]"
     echo ""
     echo -e "${GREEN}Comandos Principais:${NC}"
-    echo "  start       - Inicia todo o sistema (Docker + Serviços)"
+    echo "  start       - Inicia todo o sistema de forma inteligente"
+    echo "                  ✓ Verifica atualizações do Git"
+    echo "                  ✓ Detecta se precisa instalar dependências"
+    echo "                  ✓ Verifica se precisa rebuild do Docker"
+    echo "                  ✓ Oferece opção de instalar/atualizar automaticamente"
+    echo "                  ✓ Mantém sistema sempre atualizado"
     echo "  stop        - Para todo o sistema"
     echo "  restart     - Reinicia o sistema"
     echo "  status      - Mostra status detalhado de todos os componentes"
     echo "  health      - Health check rápido"
     echo ""
     echo -e "${GREEN}Comandos de Desenvolvimento:${NC}"
-    echo "  install     - Instala dependências (npm install)"
+    echo "  install     - Instala/atualiza dependências (npm install)"
     echo "  build       - Build das imagens Docker"
     echo "  logs <srv>  - Visualiza logs de um serviço"
     echo "                Serviços: backend, frontend, postgres, redis, scrapers"
@@ -365,10 +526,18 @@ show_usage() {
     echo "  help        - Mostra esta ajuda"
     echo ""
     echo -e "${YELLOW}Exemplos:${NC}"
-    echo "  $0 start                 # Inicia o sistema"
+    echo "  $0 start                 # Inicia com verificações automáticas"
     echo "  $0 status                # Verifica status"
     echo "  $0 logs backend          # Ver logs do backend"
     echo "  $0 health                # Health check rápido"
+    echo ""
+    echo -e "${MAGENTA}🚀 Fluxo Inteligente do START:${NC}"
+    echo "  1. Verifica se há atualizações no Git → oferece pull"
+    echo "  2. Verifica dependências (node_modules) → oferece install"
+    echo "  3. Verifica imagens Docker → oferece build"
+    echo "  4. Sugere rebuild se houve mudanças"
+    echo "  5. Inicia serviços e aguarda ficarem prontos"
+    echo "  6. Mostra URLs de acesso"
     echo ""
     echo -e "${BLUE}Scripts de Validação:${NC}"
     echo "  ./validate-system.sh              # Valida estrutura completa"
