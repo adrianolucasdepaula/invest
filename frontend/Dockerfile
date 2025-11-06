@@ -1,5 +1,8 @@
 FROM node:20-alpine AS base
 
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
 # Development stage
 FROM base AS development
 
