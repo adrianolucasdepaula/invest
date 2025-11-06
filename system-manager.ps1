@@ -116,19 +116,63 @@ function Test-Updates {
 
         $local = git rev-parse "@"
         $remote = git rev-parse "@{u}"
+        $base = git merge-base "@" "@{u}"
 
-        if ($local -ne $remote) {
-            Print-Warning "Existem atualizações disponíveis no repositório remoto"
-            $update = Read-Host "Deseja atualizar o código? (y/n)"
+        if ($local -eq $remote) {
+            Print-Success "Código já está atualizado"
+            $localCommit = git log -1 --format="%h - %s" HEAD
+            Print-Info "Commit atual: $localCommit"
+            return $false
+        }
+
+        # Check if local is behind remote
+        if ($local -eq $base) {
+            # Local está atrás do remote
+            $behindCount = git rev-list --count "${local}..${remote}"
+            Write-Host ""
+            Print-Warning "Seu código está $behindCount commit(s) atrás do repositório remoto"
+            Write-Host ""
+            Write-Host "${YELLOW}Commits disponíveis:${RESET}"
+            git log --oneline --decorate --color=always "${local}..${remote}" | ForEach-Object { Write-Host "  $_" }
+            Write-Host ""
+
+            $update = Read-Host "Deseja atualizar o código agora? (y/n)"
             if ($update -eq "y") {
                 Print-Info "Atualizando código..."
-                git pull origin $currentBranch
-                Print-Success "Código atualizado com sucesso!"
-                return $true
+                Write-Host ""
+
+                $pullResult = git pull origin $currentBranch 2>&1
+
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host ""
+                    Print-Success "Código atualizado com sucesso!"
+                    Write-Host ""
+                    Write-Host "${GREEN}Arquivos atualizados:${RESET}"
+                    git diff --stat "${local}..HEAD" | ForEach-Object { Write-Host "  $_" }
+                    Write-Host ""
+                    return $true
+                } else {
+                    Write-Host ""
+                    Print-Error "Erro ao atualizar código:"
+                    Write-Host "$pullResult"
+                    return $false
+                }
+            } else {
+                Print-Warning "Continuando com versão desatualizada (não recomendado)"
+                return $false
             }
-        } else {
-            Print-Success "Código já está atualizado"
         }
+        elseif ($remote -eq $base) {
+            # Local está à frente do remote
+            Print-Warning "Seu código local está à frente do remote (você tem commits não enviados)"
+            return $false
+        }
+        else {
+            # Diverged
+            Print-Warning "Seu código divergiu do remote. Execute 'git status' para detalhes"
+            return $false
+        }
+
     } catch {
         Print-Warning "Não foi possível verificar atualizações: $_"
     }

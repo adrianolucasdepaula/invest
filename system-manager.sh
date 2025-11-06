@@ -62,30 +62,69 @@ check_docker() {
 check_for_updates() {
     print_info "Verificando atualizações do repositório..."
 
-    # Fetch latest changes
-    git fetch origin $(git branch --show-current) 2>/dev/null || true
+    # Get current branch
+    CURRENT_BRANCH=$(git branch --show-current)
+    print_info "Branch atual: $CURRENT_BRANCH"
 
-    # Check if behind
+    # Fetch latest changes
+    print_step "Buscando atualizações do repositório remoto..."
+    git fetch origin "$CURRENT_BRANCH" 2>/dev/null || true
+
+    # Check status
     LOCAL=$(git rev-parse @)
     REMOTE=$(git rev-parse @{u} 2>/dev/null || echo $LOCAL)
+    BASE=$(git merge-base @ @{u} 2>/dev/null || echo $LOCAL)
 
-    if [ "$LOCAL" != "$REMOTE" ]; then
-        print_warning "Há atualizações disponíveis no repositório!"
-        echo -n "Deseja atualizar o código? (y/n): "
+    if [ "$LOCAL" = "$REMOTE" ]; then
+        print_success "Código já está atualizado"
+        LOCAL_COMMIT=$(git log -1 --format="%h - %s" HEAD)
+        print_info "Commit atual: $LOCAL_COMMIT"
+        return 1  # Já estava atualizado
+    fi
+
+    # Check if local is behind remote
+    if [ "$LOCAL" = "$BASE" ]; then
+        # Local está atrás do remote
+        BEHIND_COUNT=$(git rev-list --count "${LOCAL}..${REMOTE}")
+        echo ""
+        print_warning "Seu código está $BEHIND_COUNT commit(s) atrás do repositório remoto"
+        echo ""
+        echo -e "${YELLOW}Commits disponíveis:${NC}"
+        git log --oneline --decorate --color=always "${LOCAL}..${REMOTE}" | sed 's/^/  /'
+        echo ""
+
+        echo -n "Deseja atualizar o código agora? (y/n): "
         read -r UPDATE_CODE
 
-        if [ "$UPDATE_CODE" == "y" ] || [ "$UPDATE_CODE" == "Y" ]; then
+        if [ "$UPDATE_CODE" = "y" ] || [ "$UPDATE_CODE" = "Y" ]; then
             print_step "Atualizando código..."
-            git pull
-            print_success "Código atualizado!"
-            return 0  # Código foi atualizado
+            echo ""
+
+            if git pull origin "$CURRENT_BRANCH"; then
+                echo ""
+                print_success "Código atualizado com sucesso!"
+                echo ""
+                echo -e "${GREEN}Arquivos atualizados:${NC}"
+                git diff --stat "${LOCAL}..HEAD" | sed 's/^/  /'
+                echo ""
+                return 0  # Código foi atualizado
+            else
+                echo ""
+                print_error "Erro ao atualizar código"
+                return 1
+            fi
         else
-            print_info "Continuando com versão local atual"
+            print_warning "Continuando com versão desatualizada (não recomendado)"
             return 1  # Código não foi atualizado
         fi
+    elif [ "$REMOTE" = "$BASE" ]; then
+        # Local está à frente do remote
+        print_warning "Seu código local está à frente do remote (você tem commits não enviados)"
+        return 1
     else
-        print_success "Código está atualizado"
-        return 1  # Já estava atualizado
+        # Diverged
+        print_warning "Seu código divergiu do remote. Execute 'git status' para detalhes"
+        return 1
     fi
 }
 
