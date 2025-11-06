@@ -916,32 +916,155 @@ claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
 - ✅ `git reset --hard` é seguro (versão correta está no remote)
 - ✅ Sempre faça pull antes do teleport
 
+### 🔧 Problema 13: "fatal: not a git repository"
+
+**Sintoma:**
+```
+PS C:\...\invest-claude-web> git remote -v
+fatal: not a git repository (or any of the parent directories): .git
+```
+
+**Causa:** A pasta existe mas **não é um repositório Git** (pasta vazia ou criada manualmente).
+
+**Solução Definitiva (PowerShell) - Testada e Funcionando ✅**
+
+```powershell
+# 1. Voltar para a pasta pai
+cd ..
+
+# 2. Remover a pasta vazia/inválida
+Remove-Item -Path "invest-claude-web" -Recurse -Force
+
+# 3. Clonar o repositório (cria a pasta automaticamente)
+git clone https://github.com/adrianolucasdepaula/invest.git invest-claude-web
+
+# 4. Entrar na pasta
+cd invest-claude-web
+
+# 5. Fazer checkout no branch correto
+git checkout claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
+
+# 6. Verificar status (deve estar limpo)
+git status
+
+# 7. Teleport (vai funcionar!)
+claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+```
+
+**Caminho completo (exemplo real que funcionou):**
+
+```powershell
+# Navegar para pasta pai
+cd "C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos"
+
+# Remover pasta problemática
+Remove-Item -Path "invest-claude-web" -Recurse -Force
+
+# Clonar repositório
+git clone https://github.com/adrianolucasdepaula/invest.git invest-claude-web
+
+# Entrar na pasta
+cd invest-claude-web
+
+# Checkout no branch
+git checkout claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
+
+# Verificar
+git status
+
+# Teleport
+claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+```
+
+**Por que isso funciona:**
+- ✅ Remove qualquer pasta problemática
+- ✅ Clone cria repositório Git completo
+- ✅ Baixa TODO o código com proteção contra `nul`
+- ✅ Branch correto configurado
+- ✅ Working directory limpo garantido
+- ✅ **Solução 100% testada** ✅
+
 ---
 
 ## 10. Workflow Recomendado
 
-### 8.1. Primeira Vez (Com Teleport - Recomendado ⚡)
+### 10.1. Primeira Vez (Com Teleport - Testado ✅)
 
-```bash
-# Método mais rápido se você já está no Claude Web:
+**Este é o método que FUNCIONOU no teste real:**
 
-# 1. No Claude Web, copie o comando teleport fornecido
-# Exemplo: claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+```powershell
+# PowerShell (Windows):
 
-# 2. Instale o Claude CLI (se necessário)
+# 1. Instale o Claude CLI (se necessário)
 npm install -g @anthropic/claude-cli
 
-# 3. Faça login
+# 2. Faça login
 claude login
 
-# 4. Execute o teleport (cole o comando copiado)
+# 3. Navegue para a pasta onde quer o projeto
+cd "C:\Users\SEU_USUARIO\Dropbox\PC (2)\Downloads\Python - Projetos"
+
+# 4. Se a pasta invest-claude-web já existe, remova
+Remove-Item -Path "invest-claude-web" -Recurse -Force -ErrorAction SilentlyContinue
+
+# 5. Clone o repositório
+git clone https://github.com/adrianolucasdepaula/invest.git invest-claude-web
+
+# 6. Entre na pasta
+cd invest-claude-web
+
+# 7. Checkout no branch correto
+git checkout claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
+
+# 8. Verifique o status (deve estar limpo)
+git status
+
+# 9. Execute o teleport
 claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
 
-# 5. VS Code abrirá automaticamente! ✨
-# Pule para: ./validate-vscode-cli.sh
+# ✅ VS Code abrirá automaticamente com o projeto!
 ```
 
-### 8.2. Primeira Vez (Método Manual)
+**Bash/Linux/Mac:**
+
+```bash
+# 1. Instale o Claude CLI
+npm install -g @anthropic/claude-cli
+
+# 2. Faça login
+claude login
+
+# 3. Navegue para onde quer o projeto
+cd ~/projetos
+
+# 4. Remova pasta se existir
+rm -rf invest-claude-web
+
+# 5. Clone o repositório
+git clone https://github.com/adrianolucasdepaula/invest.git invest-claude-web
+
+# 6. Entre na pasta
+cd invest-claude-web
+
+# 7. Checkout no branch
+git checkout claude/b3-ai-analysis-platform-011CUqhhHmDLCpG3Za3ppFeU
+
+# 8. Verifique status
+git status
+
+# 9. Teleport
+claude --teleport session_011CUqhhHmDLCpG3Za3ppFeU
+```
+
+**Garantias desta abordagem:**
+- ✅ **Testado e funcionando** em ambiente real Windows
+- ✅ Remove qualquer pasta problemática automaticamente
+- ✅ Clone garante repositório Git completo e válido
+- ✅ Proteção contra `nul` já incluída do remote
+- ✅ Working directory limpo garantido
+- ✅ Branch correto desde o início
+
+### 10.2. Primeira Vez (Método Manual)
 
 ```bash
 # 1. Clonar repositório
@@ -971,7 +1094,7 @@ code .
 # 8. Pronto! 🎉
 ```
 
-### 8.3. Desenvolvimento Diário
+### 10.3. Desenvolvimento Diário
 
 ```bash
 # 1. Atualizar repositório
