@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/dashboard/stat-card';
+import { ImportPortfolioDialog } from '@/components/portfolio/import-portfolio-dialog';
+import { AddPositionDialog } from '@/components/portfolio/add-position-dialog';
 import {
   DollarSign,
   TrendingUp,
@@ -95,14 +97,23 @@ export default function PortfolioPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline">
-            <Upload className="mr-2 h-4 w-4" />
-            Importar
-          </Button>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Adicionar Posição
-          </Button>
+          <ImportPortfolioDialog
+            trigger={
+              <Button variant="outline">
+                <Upload className="mr-2 h-4 w-4" />
+                Importar
+              </Button>
+            }
+          />
+          <AddPositionDialog
+            portfolioId="default-portfolio"
+            trigger={
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar Posição
+              </Button>
+            }
+          />
         </div>
       </div>
 
