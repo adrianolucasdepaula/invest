@@ -425,19 +425,20 @@ function Test-EssentialFiles {
 -- B3 AI Analysis Platform Database Initialization
 -- Este arquivo é executado automaticamente na primeira vez que o PostgreSQL inicia
 
--- Criar extensão TimescaleDB
-CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
+-- Enable TimescaleDB extension
+CREATE EXTENSION IF NOT EXISTS timescaledb;
 
--- Configurações de performance
-ALTER SYSTEM SET shared_buffers = '256MB';
-ALTER SYSTEM SET effective_cache_size = '1GB';
-ALTER SYSTEM SET maintenance_work_mem = '64MB';
-ALTER SYSTEM SET checkpoint_completion_target = 0.9;
-ALTER SYSTEM SET wal_buffers = '16MB';
-ALTER SYSTEM SET default_statistics_target = 100;
-ALTER SYSTEM SET random_page_cost = 1.1;
-ALTER SYSTEM SET effective_io_concurrency = 200;
-ALTER SYSTEM SET work_mem = '10MB';
+-- Create pg_trgm extension for text search
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Create uuid-ossp extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Note: The tables will be created automatically by TypeORM migrations
+-- This script just ensures the necessary extensions are installed
+
+-- After TypeORM creates the asset_prices table, we'll convert it to a hypertable
+-- This will be done in a separate migration file
 
 -- Log de inicialização
 DO `$`$
