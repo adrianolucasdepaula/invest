@@ -995,36 +995,57 @@ unable to prepare context: path "...\backend\python-scrapers" not found
 ✗ Erro ao criar imagens Docker
 ```
 
-**Causa:** O serviço `scrapers` no `docker-compose.yml` tentava fazer build de uma pasta `backend/python-scrapers` que está vazia (sem Dockerfile).
+**Causa:** O serviço `scrapers` no `docker-compose.yml` tentava fazer build de uma pasta `backend/python-scrapers` que estava vazia (sem Dockerfile).
 
-**Status:** ✅ **CORRIGIDO PERMANENTEMENTE**
+**Status:** ✅ **RESOLVIDO COMPLETAMENTE**
 
 **O que foi feito:**
-1. ✅ Serviço `scrapers` **comentado** no docker-compose.yml
-2. ✅ Scripts `system-manager.ps1` e `system-manager.sh` atualizados
-3. ✅ Sistema funciona apenas com os serviços essenciais:
-   - PostgreSQL + TimescaleDB
-   - Redis
-   - Backend (NestJS com scrapers TypeScript integrados)
-   - Frontend (Next.js)
+1. ✅ Criado **Dockerfile completo** para scrapers Python
+2. ✅ Implementada **estrutura completa** de scrapers Python:
+   - `config.py` - Configurações e variáveis de ambiente
+   - `database.py` - Conexão PostgreSQL com SQLAlchemy
+   - `redis_client.py` - Cliente Redis para cache e filas
+   - `base_scraper.py` - Classe abstrata base para scrapers
+   - `scrapers/statusinvest_scraper.py` - Scraper StatusInvest funcional
+   - `main.py` - Serviço principal com loop de jobs
+3. ✅ Adicionado **requirements.txt** com todas as dependências:
+   - Selenium + Chrome WebDriver
+   - BeautifulSoup4, requests, aiohttp
+   - PostgreSQL (psycopg2) e Redis clients
+   - pandas, numpy para processamento
+4. ✅ Serviço **totalmente funcional**:
+   - Escuta jobs do Redis (queue: `scraper:jobs`)
+   - Executa scraping com retry automático
+   - Salva resultados no PostgreSQL
+   - Publica eventos de sucesso/erro no Redis
+5. ✅ Scripts e documentação atualizados
 
-**Observação:**
-- Os scrapers **TypeScript** estão funcionais em `backend/src/scrapers/`
-- O serviço Docker `scrapers` Python não é necessário
-- Se houver necessidade futura de scrapers Python separados, eles podem ser implementados
-
-**Solução aplicada no código:**
-```yaml
-# docker-compose.yml
-# Python Scrapers (TEMPORARIAMENTE DESABILITADO - pasta vazia)
-# TODO: Implementar scrapers Python ou remover este serviço
-# scrapers:
-#   build: ...
+**Arquitetura implementada:**
 ```
+backend/python-scrapers/
+├── Dockerfile              # Python 3.11 + Chrome + ChromeDriver
+├── requirements.txt        # Todas as dependências
+├── config.py              # Configurações
+├── database.py            # PostgreSQL client
+├── redis_client.py        # Redis client
+├── base_scraper.py        # Classe base abstrata
+├── main.py                # Serviço principal
+└── scrapers/
+    ├── __init__.py
+    └── statusinvest_scraper.py  # Scraper funcional
+```
+
+**Sistema completo com 5 serviços:**
+- PostgreSQL + TimescaleDB (porta 5532)
+- Redis (porta 6479)
+- Backend NestJS (porta 3101)
+- Frontend Next.js (porta 3100)
+- **Scrapers Python** (serviço background)
 
 **Após atualizar (`git pull`):**
 - ✅ Build do Docker funcionará corretamente
-- ✅ Apenas 2 imagens serão buildadas: backend e frontend
+- ✅ **3 imagens** serão buildadas: backend, frontend, **scrapers**
+- ✅ Scrapers Python funcionais e integrados
 - ✅ Avisos sobre `version` obsoleto removidos
 
 ---

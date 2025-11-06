@@ -147,54 +147,53 @@ services:
           memory: 1G
     command: npm run start:dev
 
-  # Python Scrapers (TEMPORARIAMENTE DESABILITADO - pasta vazia)
-  # TODO: Implementar scrapers Python ou remover este serviço
-  # scrapers:
-  #   build:
-  #     context: ./backend/python-scrapers
-  #     dockerfile: Dockerfile
-  #   container_name: invest_scrapers
-  #   environment:
-  #     # Database
-  #     - DB_HOST=postgres
-  #     - DB_PORT=5432
-  #     - DB_USERNAME=invest_user
-  #     - DB_PASSWORD=invest_password
-  #     - DB_DATABASE=invest_db
-  #
-  #     # Redis
-  #     - REDIS_HOST=redis
-  #     - REDIS_PORT=6379
-  #
-  #     # Scraper Configuration
-  #     - CHROME_HEADLESS=${CHROME_HEADLESS:-true}
-  #     - SCRAPER_TIMEOUT=${SCRAPER_TIMEOUT:-30000}
-  #     - SCRAPER_MAX_RETRIES=${SCRAPER_MAX_RETRIES:-3}
-  #   volumes:
-  #     - ./backend/python-scrapers:/app
-  #     - ./browser-profiles:/app/browser-profiles
-  #     - ./logs:/app/logs
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - invest_network
-  #   restart: unless-stopped
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: '2.0'
-  #         memory: 2G
-  #       reservations:
-  #         cpus: '0.5'
-  #         memory: 512M
+  # Python Scrapers
+  scrapers:
+    build:
+      context: ./backend/python-scrapers
+      dockerfile: Dockerfile
+    container_name: invest_scrapers
+    environment:
+      # Database
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=invest_user
+      - DB_PASSWORD=invest_password
+      - DB_DATABASE=invest_db
+
+      # Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+      # Scraper Configuration
+      - CHROME_HEADLESS=${CHROME_HEADLESS:-true}
+      - SCRAPER_TIMEOUT=${SCRAPER_TIMEOUT:-30000}
+      - SCRAPER_MAX_RETRIES=${SCRAPER_MAX_RETRIES:-3}
+    volumes:
+      - ./backend/python-scrapers:/app
+      - ./browser-profiles:/app/browser-profiles
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - invest_network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   # Frontend Next.js
   frontend:
