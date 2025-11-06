@@ -1,0 +1,115 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing
+coverage/
+*.lcov
+.nyc_output
+.cache
+pytest_cache/
+
+# Production
+/build
+.next/
+out/
+
+# Misc
+.DS_Store
+*.pem
+.AppleDouble
+.LSOverride
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Environment variables
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+Thumbs.db
+desktop.ini
+
+# Docker
+docker-compose.override.yml
+
+# Database
+*.sqlite
+*.db
+/data
+/postgres-data
+/redis-data
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Credentials and sensitive data
+credentials/
+secrets/
+*.key
+*.pem
+*.p12
+*.jks
+
+# Browser profiles for scraping
+browser-profiles/
+user-data-dir/
+
+# Reports and exports
+reports/
+exports/
+downloads/
+
+# Backup files
+*.bak
+*.backup
