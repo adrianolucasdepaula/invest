@@ -11,7 +11,15 @@ from config import settings
 from database import db
 from redis_client import redis_client
 from base_scraper import BaseScraper
-from scrapers import StatusInvestScraper, FundamentusScraper, InvestsiteScraper
+from scrapers import (
+    StatusInvestScraper,
+    FundamentusScraper,
+    InvestsiteScraper,
+    B3Scraper,
+    GriffinScraper,
+    CoinMarketCapScraper,
+    OpcoesNetScraper,
+)
 
 
 class ScraperService:
@@ -27,6 +35,12 @@ class ScraperService:
         # Public scrapers (no login required)
         self.scrapers["FUNDAMENTUS"] = FundamentusScraper
         self.scrapers["INVESTSITE"] = InvestsiteScraper
+        self.scrapers["B3"] = B3Scraper
+        self.scrapers["GRIFFIN"] = GriffinScraper
+        self.scrapers["COINMARKETCAP"] = CoinMarketCapScraper
+
+        # Scrapers with credentials
+        self.scrapers["OPCOES_NET"] = OpcoesNetScraper
 
         # Scrapers with potential login (will use cookies later)
         self.scrapers["STATUSINVEST"] = StatusInvestScraper
