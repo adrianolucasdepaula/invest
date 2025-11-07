@@ -21,13 +21,13 @@ from enum import Enum
 from loguru import logger
 
 # Add python-scrapers to path
-sys.path.insert(0, str(Path(__file__) / "python-scrapers"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "python-scrapers"))
 
 try:
-    from python-scrapers.database import db
-    from python-scrapers.redis_client import redis_client
-    from python-scrapers.scheduler import ScraperScheduler, JobProcessor
-    from python-scrapers.config import settings
+    from database import db
+    from redis_client import redis_client
+    from scheduler import ScraperScheduler, JobProcessor
+    from config import settings
 except ImportError as e:
     logger.warning(f"Import error: {e}")
     db = None
