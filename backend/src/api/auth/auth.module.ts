@@ -25,7 +25,28 @@ import { GoogleStrategy } from './strategies/google.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, GoogleStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    // Conditionally register GoogleStrategy only if credentials are provided
+    {
+      provide: GoogleStrategy,
+      useFactory: (configService: ConfigService) => {
+        const clientId = configService.get<string>('GOOGLE_CLIENT_ID');
+        const clientSecret = configService.get<string>('GOOGLE_CLIENT_SECRET');
+
+        // Only create GoogleStrategy if both credentials are provided
+        if (clientId && clientSecret) {
+          return new GoogleStrategy(configService);
+        }
+
+        // Return null if credentials not provided (Google OAuth disabled)
+        console.log('⚠️  Google OAuth disabled - GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not configured');
+        return null;
+      },
+      inject: [ConfigService],
+    },
+  ],
   exports: [AuthService, JwtModule, PassportModule],
 })
 export class AuthModule {}
