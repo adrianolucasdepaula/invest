@@ -39,3 +39,7 @@ httpx==0.26.0
 
 # Parser helpers
 python-slugify==8.0.1
+
+# Job Scheduling
+apscheduler==3.10.4
+pyyaml==6.0.1

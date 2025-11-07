@@ -173,10 +173,12 @@ services:
       - CHROME_HEADLESS=${CHROME_HEADLESS:-true}
       - SCRAPER_TIMEOUT=${SCRAPER_TIMEOUT:-30000}
       - SCRAPER_MAX_RETRIES=${SCRAPER_MAX_RETRIES:-3}
+      - SCRAPER_CONCURRENT_JOBS=${SCRAPER_CONCURRENT_JOBS:-3}
     volumes:
       - ./backend/python-scrapers:/app
       - ./browser-profiles:/app/browser-profiles
       - ./logs:/app/logs
+      - ./data:/app/data
     depends_on:
       postgres:
         condition: service_healthy
@@ -204,6 +206,121 @@ services:
         reservations:
           cpus: '0.5'
           memory: 512M
+
+  # API Service (FastAPI for Scrapers)
+  api-service:
+    build:
+      context: ./backend/api-service
+      dockerfile: Dockerfile
+    container_name: invest_api_service
+    environment:
+      # Database
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=invest_user
+      - DB_PASSWORD=invest_password
+      - DB_DATABASE=invest_db
+
+      # Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+      # API Configuration
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/api-service:/app
+      - ./backend/python-scrapers:/app/python-scrapers
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      scrapers:
+        condition: service_started
+    networks:
+      - invest_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Service Orchestrator
+  orchestrator:
+    build:
+      context: ./backend
+      dockerfile: python-scrapers/Dockerfile
+    container_name: invest_orchestrator
+    environment:
+      # Database
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=invest_user
+      - DB_PASSWORD=invest_password
+      - DB_DATABASE=invest_db
+
+      # Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+      # Orchestrator Configuration
+      - SCRAPER_CONCURRENT_JOBS=${SCRAPER_CONCURRENT_JOBS:-3}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./backend:/app
+      - ./logs:/app/logs
+      - ./config:/app/config
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      scrapers:
+        condition: service_started
+    networks:
+      - invest_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r=redis.Redis(host='redis', port=6379); r.ping()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    command: python orchestrator.py
 
   # Frontend Next.js
   frontend:
@@ -335,4 +452,6 @@ volumes:
   frontend_node_modules:
     driver: local
   frontend_next:
+    driver: local
+  data:
     driver: local

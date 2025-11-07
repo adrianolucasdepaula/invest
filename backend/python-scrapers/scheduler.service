@@ -1,0 +1,40 @@
+# Systemd service file for B3 AI Analysis Platform Scheduler
+# Installation:
+#   sudo cp scheduler.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable scheduler
+#   sudo systemctl start scheduler
+#
+# Management:
+#   sudo systemctl status scheduler
+#   sudo systemctl restart scheduler
+#   sudo systemctl stop scheduler
+#   sudo journalctl -u scheduler -f
+
+[Unit]
+Description=B3 AI Analysis Platform - Job Scheduler
+After=network.target postgresql.service redis.service
+Requires=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/home/user/invest/backend/python-scrapers
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONPATH=/home/user/invest/backend/python-scrapers"
+ExecStart=/usr/bin/python3 /home/user/invest/backend/python-scrapers/scheduler.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/user/invest/logs
+
+[Install]
+WantedBy=multi-user.target

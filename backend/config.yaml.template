@@ -1,0 +1,104 @@
+# B3 AI Analysis Platform - Configuration File Template (YAML)
+# This file provides an alternative to .env for configuration management
+# Priority: Environment variables > Docker secrets > .env > config.yaml > defaults
+
+# =============================================================================
+# DATABASE CONFIGURATION
+# =============================================================================
+database:
+  host: localhost
+  port: 5432
+  name: invest_db
+  user: invest_user
+  # password: "***CHANGE_THIS***"  # Better to use env var or Docker secret
+
+# =============================================================================
+# REDIS CONFIGURATION
+# =============================================================================
+redis:
+  host: localhost
+  port: 6379
+  db: 0
+  # password: ""  # Optional
+
+# =============================================================================
+# SCRAPER CONFIGURATION
+# =============================================================================
+scrapers:
+  # Chrome/Browser settings
+  chrome:
+    headless: true
+    executable_path: /usr/bin/chromium-browser
+    user_data_dir: ./browser-profiles
+
+  # Timeouts and retries
+  timeout: 30000  # milliseconds
+  max_retries: 3
+  concurrent_jobs: 3
+
+  # Opcoes.net.br credentials
+  opcoes:
+    # username: ""  # Better to use env var
+    # password: ""  # Better to use env var
+
+  # Google credentials for OAuth
+  google:
+    # email: ""  # Better to use env var
+    # password: ""  # Better to use env var
+
+# =============================================================================
+# PATHS CONFIGURATION
+# =============================================================================
+paths:
+  cookies_file: ./cookies.json
+  log_file: /app/logs/scrapers.log
+  log_file_path: ./logs
+  browser_profiles: ./browser-profiles
+  upload_dir: ./uploads
+  reports_dir: ./reports
+
+# =============================================================================
+# APPLICATION CONFIGURATION
+# =============================================================================
+application:
+  environment: development
+  port: 3101
+  log_level: INFO
+
+# =============================================================================
+# API KEYS
+# =============================================================================
+api_keys:
+  # Store sensitive keys in environment variables or Docker secrets
+  # brapi: ""
+  # openai: ""
+  # anthropic: ""
+
+# =============================================================================
+# FEATURE FLAGS
+# =============================================================================
+features:
+  realtime_updates: true
+  ai_analysis: true
+  portfolio_import: true
+  reports_generation: true
+
+# =============================================================================
+# NOTES
+# =============================================================================
+# 1. Sensitive values (passwords, API keys) should be stored in:
+#    - Environment variables (highest priority)
+#    - Docker secrets (/run/secrets/)
+#    - .env file (git-ignored)
+#
+# 2. This file is useful for:
+#    - Non-sensitive configuration
+#    - Default values
+#    - Structured configuration
+#
+# 3. Configuration priority (highest to lowest):
+#    1. Environment variables
+#    2. Docker secrets
+#    3. .env file
+#    4. config.yaml (this file)
+#    5. Default values

@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  config-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: b3-config-api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount .env file for configuration
+      - ../.env:/app/.env:ro
+      # Mount config.yaml if exists
+      - ./config.yaml:/app/config.yaml:ro
+      # Mount logs directory
+      - ./logs:/app/logs
+      # Mount docker secrets if using
+      - /run/secrets:/run/secrets:ro
+    environment:
+      # Override specific configs if needed
+      - API_PORT=8000
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    networks:
+      - b3-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  b3-network:
+    external: true
+    name: b3-network
