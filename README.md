@@ -32,9 +32,9 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 - Fundamentei (login Google)
 - Investidor10 (login Google)
 - StatusInvest (login Google)
-- Fundamentus
-- Investsite
-- BRAPI (API)
+- **Fundamentus** (sem login - público)
+- **Investsite** (sem login - público)
+- BRAPI (API pública)
 
 #### Análise Geral do Mercado
 - Investing.com (login Google)
@@ -48,10 +48,10 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 - Opcoes.net.br (login credenciais)
 
 #### Criptomoedas
-- CoinMarketCap
+- CoinMarketCap (API pública)
 
 #### Insiders
-- Griffin.app.br
+- Griffin.app.br (sem login - público)
 
 #### Relatórios Institucionais
 - BTG Pactual (login token)
@@ -60,8 +60,8 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 - Mais Retorno (login Google)
 
 #### Dados Oficiais
-- B3
-- Google Search
+- B3 (sem login - público)
+- Google Search (sem login - público)
 
 #### Análise com IA
 - ChatGPT (login Google)
@@ -71,12 +71,12 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 - Grok (login Google)
 
 #### Notícias
-- Google News
-- Bloomberg Línea
-- Investing News
-- Valor Econômico
-- Exame
-- InfoMoney
+- Google News (sem login - público)
+- Bloomberg Línea (sem login - público)
+- Investing News (sem login - público)
+- Valor Econômico (sem login - público)
+- Exame (sem login - público)
+- InfoMoney (sem login - público)
 
 ## 🏗️ Arquitetura
 
