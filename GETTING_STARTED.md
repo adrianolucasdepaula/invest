@@ -30,10 +30,11 @@ docker-compose logs -f
 ```
 
 Acesse:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:3001
-- API Docs: http://localhost:3001/api/docs
-- PgAdmin: http://localhost:5050 (opcional, use profile dev)
+- Frontend: http://localhost:3100
+- Backend API: http://localhost:3101
+- API Docs: http://localhost:3101/api/docs
+- PgAdmin: http://localhost:5150 (opcional, use profile dev)
+- Redis Commander: http://localhost:8181 (opcional, use profile dev)
 
 ## Instalação Manual (Desenvolvimento)
 
@@ -59,7 +60,7 @@ npm run seed
 npm run start:dev
 ```
 
-O backend estará rodando em http://localhost:3001
+O backend estará rodando em http://localhost:3101
 
 ### 2. Frontend
 
@@ -73,7 +74,7 @@ npm install
 npm run dev
 ```
 
-O frontend estará rodando em http://localhost:3000
+O frontend estará rodando em http://localhost:3100
 
 ### 3. Banco de Dados (PostgreSQL + TimescaleDB)
 
@@ -118,10 +119,10 @@ REDIS_PORT=6379
 JWT_SECRET=your-secret-key
 JWT_EXPIRATION=7d
 
-# Google OAuth (opcional)
+# Google OAuth (opcional - desabilitado automaticamente se não configurado)
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_CALLBACK_URL=http://localhost:3001/auth/google/callback
+GOOGLE_CALLBACK_URL=http://localhost:3101/api/v1/auth/google/callback
 
 # BRAPI
 BRAPI_API_KEY=mVcy3EFZaBdza27tPQjdC1
@@ -138,8 +139,8 @@ GOOGLE_PASSWORD=your-password
 ### Frontend (.env.local)
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3001
-NEXT_PUBLIC_WS_URL=http://localhost:3002
+NEXT_PUBLIC_API_URL=http://localhost:3101
+NEXT_PUBLIC_WS_URL=http://localhost:3102
 ```
 
 ## Populando o Banco de Dados
@@ -160,22 +161,22 @@ Isso irá:
 
 ### Usando a documentação Swagger
 
-Acesse http://localhost:3001/api/docs para ver a documentação interativa da API.
+Acesse http://localhost:3101/api/docs para ver a documentação interativa da API.
 
 ### Usando curl
 
 ```bash
 # Health check
-curl http://localhost:3001/api/v1/health
+curl http://localhost:3101/api/v1/health
 
 # Listar ativos
-curl http://localhost:3001/api/v1/assets
+curl http://localhost:3101/api/v1/assets
 
 # Buscar ativo específico
-curl http://localhost:3001/api/v1/assets/PETR4
+curl http://localhost:3101/api/v1/assets/PETR4
 
 # Listar fontes de dados
-curl http://localhost:3001/api/v1/data-sources
+curl http://localhost:3101/api/v1/data-sources
 ```
 
 ## Estrutura do Projeto
@@ -212,7 +213,7 @@ invest/
 
 ### Porta já em uso
 
-Se as portas 3000, 3001 ou 5432 já estiverem em uso, você pode alterá-las no docker-compose.yml ou no .env.
+Se as portas 3100, 3101 ou 5532 já estiverem em uso, você pode alterá-las no docker-compose.yml.
 
 ### Erro de conexão com banco de dados
 

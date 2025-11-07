@@ -134,9 +134,36 @@ invest/
 - **Nginx**: Reverse proxy
 - **GitHub Actions**: CI/CD
 
+## 📚 Documentação
+
+### Guias de Início Rápido
+- 📖 **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Referência rápida de comandos e URLs
+- 🚀 **[GETTING_STARTED.md](GETTING_STARTED.md)** - Guia básico de início
+- 🔄 **[CLEAN_INSTALL.md](CLEAN_INSTALL.md)** - Instalação limpa do zero (Windows)
+
+### Documentação Técnica
+- 🐳 **[DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)** - Deploy com Docker (produção)
+- 📋 **[PROCESS_DOCUMENTATION.md](PROCESS_DOCUMENTATION.md)** - Processos e manutenção
+- 🔗 **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** - Guia de integração
+- 💻 **[VSCODE_CLAUDE_CODE_GUIDE.md](VSCODE_CLAUDE_CODE_GUIDE.md)** - VS Code + Claude
+
+### Análise e Validação
+- 📊 **[SYSTEM_REVIEW.md](SYSTEM_REVIEW.md)** - Revisão técnica completa
+- ✅ **[CRITICAL_FIXES_IMPLEMENTED.md](CRITICAL_FIXES_IMPLEMENTED.md)** - Correções aplicadas
+- 📈 **[REQUIREMENTS_VALIDATION_FINAL.md](REQUIREMENTS_VALIDATION_FINAL.md)** - Validação de requisitos
+- 🧪 **[VALIDATION_REPORT.md](VALIDATION_REPORT.md)** - Relatório de validação
+
+### Metodologia
+- 📐 **[BMAD_METHOD_ANALYSIS.md](BMAD_METHOD_ANALYSIS.md)** - Análise do método BMAD
+- 🎯 **[BMAD_CONCEPTS_ADAPTATION.md](BMAD_CONCEPTS_ADAPTATION.md)** - Adaptação de conceitos
+
+---
+
 ## 🚀 Getting Started
 
 > 🆕 **INSTALAÇÃO LIMPA COMPLETA:** Para instalar do ZERO com guia passo-a-passo detalhado, veja: **[CLEAN_INSTALL.md](CLEAN_INSTALL.md)** (Windows PowerShell)
+>
+> ⚡ **REFERÊNCIA RÁPIDA:** Para comandos e URLs de acesso, veja: **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)**
 
 ### Pré-requisitos
 - Node.js 20+
@@ -441,12 +468,12 @@ docker-compose down
 #### Local
 
 ```bash
-# Backend (porta 3001)
+# Backend (porta 3101)
 cd backend
 npm install
 npm run start:dev
 
-# Frontend (porta 3000)
+# Frontend (porta 3100)
 cd frontend
 npm install
 npm run dev
