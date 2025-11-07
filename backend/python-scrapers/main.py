@@ -11,7 +11,7 @@ from config import settings
 from database import db
 from redis_client import redis_client
 from base_scraper import BaseScraper
-from scrapers import StatusInvestScraper
+from scrapers import StatusInvestScraper, FundamentusScraper, InvestsiteScraper
 
 
 class ScraperService:
@@ -24,7 +24,13 @@ class ScraperService:
 
     def _register_scrapers(self):
         """Register available scrapers"""
+        # Public scrapers (no login required)
+        self.scrapers["FUNDAMENTUS"] = FundamentusScraper
+        self.scrapers["INVESTSITE"] = InvestsiteScraper
+
+        # Scrapers with potential login (will use cookies later)
         self.scrapers["STATUSINVEST"] = StatusInvestScraper
+
         logger.info(f"Registered {len(self.scrapers)} scrapers: {list(self.scrapers.keys())}")
 
     async def initialize(self):
