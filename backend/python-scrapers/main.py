@@ -12,14 +12,42 @@ from database import db
 from redis_client import redis_client
 from base_scraper import BaseScraper
 from scrapers import (
+    # Fundamental Analysis
     StatusInvestScraper,
     FundamentusScraper,
     InvestsiteScraper,
+    FundamenteiScraper,
+    Investidor10Scraper,
+    # Market Analysis
+    InvestingScraper,
+    ADVFNScraper,
+    GoogleFinanceScraper,
+    TradingViewScraper,
+    # Official Data
     B3Scraper,
-    GriffinScraper,
-    CoinMarketCapScraper,
-    OpcoesNetScraper,
     BCBScraper,
+    # Insider Trading
+    GriffinScraper,
+    # Crypto
+    CoinMarketCapScraper,
+    # Options
+    OpcoesNetScraper,
+    # AI Assistants
+    ChatGPTScraper,
+    GeminiScraper,
+    DeepSeekScraper,
+    ClaudeScraper,
+    GrokScraper,
+    # News
+    BloombergScraper,
+    GoogleNewsScraper,
+    InvestingNewsScraper,
+    ValorScraper,
+    ExameScraper,
+    InfoMoneyScraper,
+    # Institutional Reports
+    EstadaoScraper,
+    MaisRetornoScraper,
 )
 
 
@@ -37,15 +65,42 @@ class ScraperService:
         self.scrapers["FUNDAMENTUS"] = FundamentusScraper
         self.scrapers["INVESTSITE"] = InvestsiteScraper
         self.scrapers["B3"] = B3Scraper
+        self.scrapers["BCB"] = BCBScraper
         self.scrapers["GRIFFIN"] = GriffinScraper
         self.scrapers["COINMARKETCAP"] = CoinMarketCapScraper
-        self.scrapers["BCB"] = BCBScraper
+        self.scrapers["GOOGLENEWS"] = GoogleNewsScraper
 
-        # Scrapers with credentials
+        # Scrapers with specific credentials
         self.scrapers["OPCOES_NET"] = OpcoesNetScraper
 
-        # Scrapers with potential login (will use cookies later)
+        # Fundamental analysis (Google OAuth)
         self.scrapers["STATUSINVEST"] = StatusInvestScraper
+        self.scrapers["FUNDAMENTEI"] = FundamenteiScraper
+        self.scrapers["INVESTIDOR10"] = Investidor10Scraper
+
+        # Market analysis (Google OAuth)
+        self.scrapers["INVESTING"] = InvestingScraper
+        self.scrapers["ADVFN"] = ADVFNScraper
+        self.scrapers["GOOGLEFINANCE"] = GoogleFinanceScraper
+        self.scrapers["TRADINGVIEW"] = TradingViewScraper
+
+        # AI assistants (Google OAuth)
+        self.scrapers["CHATGPT"] = ChatGPTScraper
+        self.scrapers["GEMINI"] = GeminiScraper
+        self.scrapers["DEEPSEEK"] = DeepSeekScraper
+        self.scrapers["CLAUDE"] = ClaudeScraper
+        self.scrapers["GROK"] = GrokScraper
+
+        # News (Google OAuth)
+        self.scrapers["BLOOMBERG"] = BloombergScraper
+        self.scrapers["INVESTING_NEWS"] = InvestingNewsScraper
+        self.scrapers["VALOR"] = ValorScraper
+        self.scrapers["EXAME"] = ExameScraper
+        self.scrapers["INFOMONEY"] = InfoMoneyScraper
+
+        # Institutional reports (Google OAuth)
+        self.scrapers["ESTADAO"] = EstadaoScraper
+        self.scrapers["MAISRETORNO"] = MaisRetornoScraper
 
         logger.info(f"Registered {len(self.scrapers)} scrapers: {list(self.scrapers.keys())}")
 

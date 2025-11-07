@@ -2,8 +2,8 @@
 
 **Última atualização:** 2025-11-07
 **Total de fontes:** 30+
-**Implementados:** 8
-**Em produção:** 47%
+**Implementados:** 10
+**Em produção:** 33%
 
 ---
 
@@ -17,14 +17,14 @@
 | **Análise de Opções** | 1 | 1 | 100% ✅ |
 | **Criptomoedas** | 1 | 1 | 100% ✅ |
 | **Insiders** | 1 | 1 | 100% ✅ |
-| **Relatórios Institucionais** | 4 | 0 | 0% |
+| **Relatórios Institucionais** | 4 | 2 | 50% |
 | **Busca Geral / Dados Oficiais** | 7 | 2 | 29% |
 | **Notícias** | 6 | 0 | 0% |
-| **TOTAL** | **30** | **8** | **27%** |
+| **TOTAL** | **30** | **10** | **33%** |
 
 ---
 
-## ✅ Scrapers Implementados (8)
+## ✅ Scrapers Implementados (10)
 
 ### 1. Fundamentus ✅
 - **Arquivo:** `scrapers/fundamentus_scraper.py` (330 linhas)
@@ -86,9 +86,25 @@
 - **Dados Históricos:** ✅ Últimos 12 meses por indicador
 - **Status:** ✅ PRONTO PARA USO
 
+### 9. Estadão Investidor ✅
+- **Arquivo:** `scrapers/estadao_scraper.py` (353 linhas)
+- **URL:** https://einvestidor.estadao.com.br/
+- **Login:** ✅ SIM - Google OAuth
+- **Dados:** Análises, relatórios institucionais, notícias do mercado
+- **Estratégia:** Cookies salvos via Google OAuth
+- **Status:** ✅ PRONTO PARA USO
+
+### 10. Mais Retorno ✅
+- **Arquivo:** `scrapers/maisretorno_scraper.py` (364 linhas)
+- **URL:** https://maisretorno.com/
+- **Login:** ✅ SIM - Google OAuth
+- **Dados:** Análises, educação financeira, relatórios, notícias
+- **Estratégia:** Cookies salvos via Google OAuth
+- **Status:** ✅ PRONTO PARA USO
+
 ---
 
-## 📋 Scrapers Planejados (22)
+## 📋 Scrapers Planejados (20)
 
 ### Análise Fundamentalista (3 faltando)
 
@@ -141,36 +157,21 @@
 - **Prioridade:** 🟡 Média
 - **Estimativa:** 4-5 horas
 
-### Relatórios Institucionais (4)
+### Relatórios Institucionais (2 faltando)
 
-#### BTG Pactual ⏳
+#### BTG Pactual ⏳ (SKIPPED)
 - **URL:** https://content.btgpactual.com/research/
 - **Login:** 🔑 Token no celular (complexo)
 - **Template:** N/A (requer 2FA)
-- **Prioridade:** 🟢 Baixa
-- **Estimativa:** 5-8 horas (alto esforço)
-- **Nota:** Requer autenticação 2FA, considerar se vale a pena
+- **Prioridade:** 🔴 SKIPPED (2FA complexo)
+- **Nota:** Requer autenticação 2FA, considerado não viável no momento
 
-#### XPI ⏳
+#### XPI ⏳ (SKIPPED)
 - **URL:** https://conteudos.xpi.com.br/
 - **Login:** 🔑 Token no celular (complexo)
 - **Template:** N/A (requer 2FA)
-- **Prioridade:** 🟢 Baixa
-- **Estimativa:** 5-8 horas (alto esforço)
-
-#### Estadão Investidor ⏳
-- **URL:** https://einvestidor.estadao.com.br/
-- **Login:** 🔐 Google OAuth
-- **Template:** [Google OAuth Template](#template-google-oauth)
-- **Prioridade:** 🟢 Baixa
-- **Estimativa:** 2-3 horas
-
-#### Mais Retorno ⏳
-- **URL:** https://maisretorno.com/
-- **Login:** 🔐 Google OAuth
-- **Template:** [Google OAuth Template](#template-google-oauth)
-- **Prioridade:** 🟢 Baixa
-- **Estimativa:** 2-3 horas
+- **Prioridade:** 🔴 SKIPPED (2FA complexo)
+- **Nota:** Requer autenticação 2FA, considerado não viável no momento
 
 ### IAs via Browser (5)
 
