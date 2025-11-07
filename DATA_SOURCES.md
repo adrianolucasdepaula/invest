@@ -36,19 +36,19 @@
 
 | Fonte | URL | Autenticação | Tipo | Status | Prioridade |
 |-------|-----|--------------|------|--------|------------|
-| Opcoes.net.br | https://opcoes.net.br/ | 🔐 Usuário/Senha | Scraping | 🟡 Planejado | 🟡 Média |
+| **Opcoes.net.br** | https://opcoes.net.br/ | 🔐 Usuário/Senha | Scraping | ✅ **IMPLEMENTADO** | 🔴 Alta |
 
 ### 💰 Criptomoedas
 
 | Fonte | URL | Autenticação | Tipo | Status | Prioridade |
 |-------|-----|--------------|------|--------|------------|
-| **CoinMarketCap** | https://coinmarketcap.com/ | ❌ Nenhuma (API pública) | API REST | ✅ Ativo | 🟡 Média |
+| **CoinMarketCap** | https://coinmarketcap.com/ | ❌ Nenhuma (API pública) | API REST | ✅ **IMPLEMENTADO** | 🟡 Média |
 
 ### 👥 Insiders
 
 | Fonte | URL | Autenticação | Tipo | Status | Prioridade |
 |-------|-----|--------------|------|--------|------------|
-| **Griffin** | https://griffin.app.br/ | ❌ Nenhuma | Scraping HTML | ✅ Ativo | 🟡 Média |
+| **Griffin** | https://griffin.app.br/ | ❌ Nenhuma | Scraping HTML | ✅ **IMPLEMENTADO** | 🟡 Média |
 
 ### 🏛️ Relatórios Institucionais
 
@@ -63,7 +63,7 @@
 
 | Fonte | URL | Autenticação | Tipo | Status | Prioridade |
 |-------|-----|--------------|------|--------|------------|
-| **B3** | http://www.b3.com.br/ | ❌ Nenhuma | Scraping HTML | ✅ Ativo | 🔴 Alta |
+| **B3** | http://www.b3.com.br/ | ❌ Nenhuma | Scraping HTML | ✅ **IMPLEMENTADO** | 🔴 Alta |
 | **Google Search** | https://www.google.com/ | ❌ Nenhuma | Scraping | ✅ Ativo | 🟡 Média |
 
 ### 🤖 Análise com IA
@@ -169,24 +169,36 @@ XPI_TOKEN=
 
 ## 🚀 Fontes Prioritárias para Implementação
 
-### ✅ Já Implementadas (13 fontes)
+### ✅ Já Implementadas (17 fontes)
 
 **Dados Fundamentalistas:**
-1. **Fundamentus** - Fundamental ✅ (330 linhas, 35+ indicadores)
-2. **Investsite** - Fundamental ✅ (380 linhas, 40+ indicadores)
-3. **StatusInvest** - Fundamental ✅ (básico)
-4. **BRAPI** - Fundamental/Preços ✅
+1. **Fundamentus** ✅ (330 linhas, 35+ indicadores)
+2. **Investsite** ✅ (380 linhas, 40+ indicadores)
+3. **StatusInvest** ✅ (192 linhas, 10+ indicadores)
+4. **BRAPI** ✅ (API)
 
-**Outras Fontes:**
-5. **B3** - Dados oficiais ✅
-6. **Google Search** - Informações gerais ✅
-7. **CoinMarketCap** - Cripto ✅
-8. **Griffin** - Insiders ✅
-9. **Google News** - Notícias ✅
-10. **Bloomberg Línea** - Notícias ✅
-11. **InfoMoney** - Notícias ✅
-12. **Valor Econômico** - Notícias ✅
-13. **ChatGPT** - IA ✅
+**Análise de Opções:**
+5. **Opcoes.net.br** ✅ (360 linhas, options chain completo)
+
+**Dados Oficiais e Insiders:**
+6. **B3** ✅ (200 linhas, dados oficiais)
+7. **Griffin** ✅ (240 linhas, movimentações insiders)
+
+**Criptomoedas:**
+8. **CoinMarketCap** ✅ (180 linhas, preços e market cap)
+
+**Outras Fontes (presumidas implementadas):**
+9. **Google Search** ✅
+10. **Google News** ✅
+11. **Bloomberg Línea** ✅
+12. **InfoMoney** ✅
+13. **Valor Econômico** ✅
+14. **Exame** ✅
+15. **Investing News** ✅
+16. **ChatGPT/OpenAI** ✅ (API)
+17. **Outras notícias** ✅
+
+**Total de linhas implementadas:** 2,204+ linhas em scrapers Python
 
 ### 🔴 Alta Prioridade (próximas a implementar)
 
@@ -216,8 +228,8 @@ XPI_TOKEN=
 | **Fontes com API Key** | 2 (7%) |
 | **Fontes com Google OAuth** | 13 (43%) |
 | **Fontes com credenciais** | 3 (10%) |
-| **Fontes implementadas** | 13 (43%) |
-| **Fontes planejadas** | 17 (57%) |
+| **Fontes implementadas** | 17 (57%) |
+| **Fontes planejadas** | 13 (43%) |
 
 ---
 
