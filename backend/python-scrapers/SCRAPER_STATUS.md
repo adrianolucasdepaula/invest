@@ -2,8 +2,8 @@
 
 **Última atualização:** 2025-11-07
 **Total de fontes:** 30+
-**Implementados:** 7
-**Em produção:** 43%
+**Implementados:** 8
+**Em produção:** 47%
 
 ---
 
@@ -18,13 +18,13 @@
 | **Criptomoedas** | 1 | 1 | 100% ✅ |
 | **Insiders** | 1 | 1 | 100% ✅ |
 | **Relatórios Institucionais** | 4 | 0 | 0% |
-| **Busca Geral** | 7 | 1 | 14% |
+| **Busca Geral / Dados Oficiais** | 7 | 2 | 29% |
 | **Notícias** | 6 | 0 | 0% |
-| **TOTAL** | **30** | **7** | **23%** |
+| **TOTAL** | **30** | **8** | **27%** |
 
 ---
 
-## ✅ Scrapers Implementados (7)
+## ✅ Scrapers Implementados (8)
 
 ### 1. Fundamentus ✅
 - **Arquivo:** `scrapers/fundamentus_scraper.py` (330 linhas)
@@ -76,9 +76,19 @@
 - **Dados:** Options chain, IV Rank, Greeks, prêmios
 - **Status:** ✅ PRONTO PARA USO
 
+### 8. Banco Central do Brasil (BCB) ✅
+- **Arquivo:** `scrapers/bcb_scraper.py` (425 linhas)
+- **URL:** https://www.bcb.gov.br/
+- **Login:** ❌ Não necessário (público)
+- **Dados:** Dados macroeconômicos oficiais
+- **Indicadores:** 12 (Selic, IPCA, IGP-M, PIB, Câmbio, Reservas, Desemprego, CDI)
+- **API:** ✅ SIM - SGS (Sistema Gerenciador de Séries Temporais)
+- **Dados Históricos:** ✅ Últimos 12 meses por indicador
+- **Status:** ✅ PRONTO PARA USO
+
 ---
 
-## 📋 Scrapers Planejados (23)
+## 📋 Scrapers Planejados (22)
 
 ### Análise Fundamentalista (3 faltando)
 
@@ -561,6 +571,7 @@ class [IAName]Scraper(BaseScraper):
 │ • Griffin ✅                                         │
 │ • CoinMarketCap ✅                                   │
 │ • StatusInvest ✅ (básico)                           │
+│ • BCB ✅ (dados macroeconômicos)                     │
 └──────────────────────────────────────────────────────┘
                          ↓
 ┌──────────────────────────────────────────────────────┐
@@ -610,6 +621,19 @@ docker exec -it invest_scrapers python test_scrapers.py all PETR4
 docker exec -it invest_scrapers python test_scrapers.py fundamentus PETR4
 docker exec -it invest_scrapers python test_scrapers.py opcoes PETR
 docker exec -it invest_scrapers python test_scrapers.py griffin PETR4
+
+# Testar BCB (dados macroeconômicos)
+docker exec -it invest_scrapers python -c "
+from scrapers import BCBScraper
+import asyncio
+
+async def test():
+    scraper = BCBScraper()
+    result = await scraper.scrape_with_retry('all')
+    print(result.to_dict())
+
+asyncio.run(test())
+"
 ```
 
 ### Configurar Opcoes.net.br

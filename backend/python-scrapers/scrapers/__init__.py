@@ -8,6 +8,7 @@ from .b3_scraper import B3Scraper
 from .griffin_scraper import GriffinScraper
 from .coinmarketcap_scraper import CoinMarketCapScraper
 from .opcoes_scraper import OpcoesNetScraper
+from .bcb_scraper import BCBScraper
 
 __all__ = [
     "StatusInvestScraper",
@@ -17,4 +18,5 @@ __all__ = [
     "GriffinScraper",
     "CoinMarketCapScraper",
     "OpcoesNetScraper",
+    "BCBScraper",
 ]

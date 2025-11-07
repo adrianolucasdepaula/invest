@@ -64,6 +64,7 @@
 | Fonte | URL | Autenticação | Tipo | Status | Prioridade |
 |-------|-----|--------------|------|--------|------------|
 | **B3** | http://www.b3.com.br/ | ❌ Nenhuma | Scraping HTML | ✅ **IMPLEMENTADO** | 🔴 Alta |
+| **BCB** | https://www.bcb.gov.br/ | ❌ Nenhuma | API SGS + Scraping | ✅ **IMPLEMENTADO** | 🔴 Alta |
 | **Google Search** | https://www.google.com/ | ❌ Nenhuma | Scraping | ✅ Ativo | 🟡 Média |
 
 ### 🤖 Análise com IA
@@ -96,12 +97,13 @@
 - ✅ Fundamentus
 - ✅ Investsite
 - ✅ B3
+- ✅ BCB (Banco Central do Brasil)
 - ✅ Google Search
 - ✅ CoinMarketCap
 - ✅ Griffin
 - ✅ Todas as fontes de notícias (6 fontes)
 
-**Total:** 11 fontes públicas
+**Total:** 12 fontes públicas
 
 ### 🔑 API Key
 **Requer chave de API:**
@@ -143,6 +145,7 @@
 # Fundamentus - sem configuração necessária ✅
 # Investsite - sem configuração necessária ✅
 # B3 - sem configuração necessária ✅
+# BCB - sem configuração necessária ✅ (usa API SGS pública)
 
 # APIs com chave pública
 BRAPI_API_KEY=mVcy3EFZaBdza27tPQjdC1
@@ -169,7 +172,7 @@ XPI_TOKEN=
 
 ## 🚀 Fontes Prioritárias para Implementação
 
-### ✅ Já Implementadas (17 fontes)
+### ✅ Já Implementadas (18 fontes)
 
 **Dados Fundamentalistas:**
 1. **Fundamentus** ✅ (330 linhas, 35+ indicadores)
@@ -182,23 +185,24 @@ XPI_TOKEN=
 
 **Dados Oficiais e Insiders:**
 6. **B3** ✅ (200 linhas, dados oficiais)
-7. **Griffin** ✅ (240 linhas, movimentações insiders)
+7. **BCB** ✅ (425 linhas, dados macroeconômicos - 12 indicadores com API SGS)
+8. **Griffin** ✅ (240 linhas, movimentações insiders)
 
 **Criptomoedas:**
-8. **CoinMarketCap** ✅ (180 linhas, preços e market cap)
+9. **CoinMarketCap** ✅ (180 linhas, preços e market cap)
 
 **Outras Fontes (presumidas implementadas):**
-9. **Google Search** ✅
-10. **Google News** ✅
-11. **Bloomberg Línea** ✅
-12. **InfoMoney** ✅
-13. **Valor Econômico** ✅
-14. **Exame** ✅
-15. **Investing News** ✅
-16. **ChatGPT/OpenAI** ✅ (API)
-17. **Outras notícias** ✅
+10. **Google Search** ✅
+11. **Google News** ✅
+12. **Bloomberg Línea** ✅
+13. **InfoMoney** ✅
+14. **Valor Econômico** ✅
+15. **Exame** ✅
+16. **Investing News** ✅
+17. **ChatGPT/OpenAI** ✅ (API)
+18. **Outras notícias** ✅
 
-**Total de linhas implementadas:** 2,204+ linhas em scrapers Python
+**Total de linhas implementadas:** 2,629+ linhas em scrapers Python
 
 ### 🔴 Alta Prioridade (próximas a implementar)
 
@@ -224,12 +228,12 @@ XPI_TOKEN=
 | Métrica | Valor |
 |---------|-------|
 | **Total de fontes** | 30+ |
-| **Fontes públicas (sem login)** | 11 (36%) |
+| **Fontes públicas (sem login)** | 12 (40%) |
 | **Fontes com API Key** | 2 (7%) |
 | **Fontes com Google OAuth** | 13 (43%) |
 | **Fontes com credenciais** | 3 (10%) |
-| **Fontes implementadas** | 17 (57%) |
-| **Fontes planejadas** | 13 (43%) |
+| **Fontes implementadas** | 18 (60%) |
+| **Fontes planejadas** | 12 (40%) |
 
 ---
 
@@ -297,6 +301,7 @@ Sempre que possível, validar dados com múltiplas fontes:
 - [x] StatusInvest ✅ Implementado (básico)
 - [x] BRAPI ✅
 - [x] B3 ✅
+- [x] BCB ✅ **IMPLEMENTADO** (425 linhas, 12 indicadores macroeconômicos)
 - [x] Notícias públicas ✅
 
 ### Fase 2 (Próxima) 🟡

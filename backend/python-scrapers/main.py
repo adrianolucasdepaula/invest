@@ -19,6 +19,7 @@ from scrapers import (
     GriffinScraper,
     CoinMarketCapScraper,
     OpcoesNetScraper,
+    BCBScraper,
 )
 
 
@@ -38,6 +39,7 @@ class ScraperService:
         self.scrapers["B3"] = B3Scraper
         self.scrapers["GRIFFIN"] = GriffinScraper
         self.scrapers["COINMARKETCAP"] = CoinMarketCapScraper
+        self.scrapers["BCB"] = BCBScraper
 
         # Scrapers with credentials
         self.scrapers["OPCOES_NET"] = OpcoesNetScraper
