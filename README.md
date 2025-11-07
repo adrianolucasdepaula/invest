@@ -144,6 +144,7 @@ invest/
 ### Documentação Técnica
 - 🐳 **[DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)** - Deploy com Docker (produção)
 - 📋 **[PROCESS_DOCUMENTATION.md](PROCESS_DOCUMENTATION.md)** - Processos e manutenção
+- 📊 **[DATA_SOURCES.md](DATA_SOURCES.md)** - Fontes de dados e autenticação
 - 🔗 **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** - Guia de integração
 - 💻 **[VSCODE_CLAUDE_CODE_GUIDE.md](VSCODE_CLAUDE_CODE_GUIDE.md)** - VS Code + Claude
 
