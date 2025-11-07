@@ -73,6 +73,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: development
     container_name: invest_backend
     environment:
       # Server
@@ -209,6 +210,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: development
     container_name: invest_frontend
     environment:
       # App Environment

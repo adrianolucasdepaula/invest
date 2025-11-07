@@ -19,18 +19,17 @@ FROM base AS development
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files (for cache layer)
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
-
-# Copy source code
-COPY . .
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Expose ports (3101 for API, 3102 for debugging)
 EXPOSE 3101 3102
 
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["npm", "run", "start:dev"]
 
 # Build stage
