@@ -466,6 +466,49 @@ asyncio.run(test())
 
 ## 🐛 Troubleshooting
 
+### Erro: Docker Build Failed - "parent snapshot does not exist"
+
+**Problema:** Cache do Docker corrompido
+
+**Erro completo:**
+```
+failed to prepare extraction snapshot: parent snapshot sha256:... does not exist: not found
+```
+
+**Solução Rápida (Recomendada):**
+```powershell
+# Windows PowerShell
+docker-compose down -v
+docker builder prune -a -f
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+```bash
+# Linux/macOS
+docker-compose down -v
+docker builder prune -a -f
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+**Solução Completa (se a rápida não funcionar):**
+```powershell
+# Windows - CUIDADO: Remove todas as imagens Docker não usadas
+docker-compose down -v
+docker system prune -a -f --volumes
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+**Último Recurso:**
+1. Fechar Docker Desktop completamente
+2. Abrir Docker Desktop novamente
+3. Aguardar inicializar
+4. Executar solução rápida
+
+---
+
 ### Erro: "No module named 'loguru'"
 
 **Problema:** Dependências Python não instaladas
