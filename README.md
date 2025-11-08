@@ -302,11 +302,13 @@ Gere relatórios completos em PDF/Excel com:
 
 ## 🔒 Segurança
 
-- Credenciais armazenadas de forma segura
-- Autenticação OAuth2 com Google
-- Criptografia de dados sensíveis
-- Rate limiting nas APIs
-- Validação de dados em múltiplas camadas
+- ✅ Credenciais armazenadas de forma segura
+- ✅ **Autenticação OAuth2 com Google** (Login social implementado)
+- ✅ JWT Authentication com cookies seguros
+- ✅ Criptografia de dados sensíveis
+- ✅ Rate limiting nas APIs
+- ✅ Validação de dados em múltiplas camadas
+- ✅ CORS configurado corretamente
 
 ## 📝 Licença
 
@@ -519,7 +521,7 @@ npx playwright show-report
 - [x] Docker setup
 
 ### 🚧 Próximos Passos
-- [ ] OAuth Google (código pronto, falta testar)
+- [x] OAuth Google (✅ Implementado e documentado)
 - [ ] Notificações Telegram (bot pronto)
 - [ ] Backtest de estratégias
 - [ ] Machine Learning para previsões
