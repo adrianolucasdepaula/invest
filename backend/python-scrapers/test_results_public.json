@@ -1,0 +1,88 @@
+{
+  "timestamp": "2025-11-08T03:05:09.895771",
+  "total": 8,
+  "success": 0,
+  "failed": 8,
+  "tests": [
+    {
+      "name": "Fundamentus",
+      "source": "FUNDAMENTUS",
+      "query": "PETR4",
+      "success": false,
+      "error": "Failed after 3 attempts: Message: Unable to locate or obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location\n",
+      "duration": 3.0,
+      "data_size": 0,
+      "timestamp": "2025-11-08T03:04:34.786288"
+    },
+    {
+      "name": "Investsite",
+      "source": "INVESTSITE",
+      "query": "PETR4",
+      "success": false,
+      "error": "Failed after 3 attempts: Message: Unable to locate or obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location\n",
+      "duration": 3.0,
+      "data_size": 0,
+      "timestamp": "2025-11-08T03:04:39.791706"
+    },
+    {
+      "name": "B3",
+      "source": "B3",
+      "query": "PETR4",
+      "success": false,
+      "error": "Failed after 3 attempts: Message: Unable to locate or obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location\n",
+      "duration": 3.0,
+      "data_size": 0,
+      "timestamp": "2025-11-08T03:04:44.797311"
+    },
+    {
+      "name": "BCB",
+      "source": "BCB",
+      "query": "all",
+      "success": false,
+      "error": "Failed after 3 attempts: Failed to fetch data for indicator: all",
+      "duration": 3.07,
+      "data_size": 0,
+      "timestamp": "2025-11-08T03:04:49.866599"
+    },
+    {
+      "name": "Griffin",
+      "source": "GRIFFIN",
+      "query": "PETR4",
+      "success": false,
+      "error": "Failed after 3 attempts: Message: Unable to locate or obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location\n",
+      "duration": 3.01,
+      "data_size": 0,
+      "timestamp": "2025-11-08T03:04:54.874083"
+    },
+    {
+      "name": "CoinMarketCap",
+      "source": "COINMARKETCAP",
+      "query": "BTC",
+      "success": false,
+      "error": "Failed after 3 attempts: Ticker BTC not found on CoinMarketCap",
+      "duration": 3.01,
+      "data_size": 0,
+      "timestamp": "2025-11-08T03:04:59.884395"
+    },
+    {
+      "name": "Bloomberg Línea",
+      "source": "BLOOMBERG",
+      "query": "mercado",
+      "success": false,
+      "error": "Failed after 3 attempts: 'NoneType' object has no attribute 'get'",
+      "duration": 3.0,
+      "data_size": 0,
+      "timestamp": "2025-11-08T03:05:04.890068"
+    },
+    {
+      "name": "Google News",
+      "source": "GOOGLENEWS",
+      "query": "PETR4",
+      "success": false,
+      "error": "Failed after 3 attempts: 'NoneType' object has no attribute 'get'",
+      "duration": 3.0,
+      "data_size": 0,
+      "timestamp": "2025-11-08T03:05:09.893800"
+    }
+  ]
+}
