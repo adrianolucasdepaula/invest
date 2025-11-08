@@ -1,19 +1,139 @@
 # 🚀 Guia de Configuração - B3 AI Analysis Platform
 
-**Última Atualização:** 2025-11-07
-**Versão:** 1.0
+**Última Atualização:** 2025-01-08
+**Versão:** 2.0
 **Fase:** 1 - Preparação e Configuração ✅
+**Branch Atual:** `claude/b3-ai-analysis-platform-011CUvNS7Jp7D7bGQWkaBvBw`
 
 ---
 
 ## 📋 Índice
 
-1. [Pré-requisitos](#-pré-requisitos)
-2. [Instalação Rápida](#-instalação-rápida)
-3. [Configuração Detalhada](#-configuração-detalhada)
-4. [Validação do Ambiente](#-validação-do-ambiente)
-5. [Próximos Passos](#-próximos-passos)
-6. [Troubleshooting](#-troubleshooting)
+1. [⚡ Setup Rápido - Branch Atualizada](#-setup-rápido---branch-atualizada) **← NOVO!**
+2. [Pré-requisitos](#-pré-requisitos)
+3. [Instalação Rápida](#-instalação-rápida)
+4. [Configuração Detalhada](#-configuração-detalhada)
+5. [Validação do Ambiente](#-validação-do-ambiente)
+6. [Próximos Passos](#-próximos-passos)
+7. [Troubleshooting](#-troubleshooting)
+
+---
+
+## ⚡ Setup Rápido - Branch Atualizada
+
+**Use este procedimento para baixar e rodar a branch mais recente com todos os updates:**
+
+Últimas atualizações nesta branch:
+- ✅ 3 Novos endpoints data-sources (PATCH, GET/:id, POST/:id/test)
+- ✅ Type safety melhorado (interfaces TypeScript, 0 tipos `any`)
+- ✅ 22 testes unitários (100% coverage nos novos endpoints)
+- ✅ 0 warnings React Hook e build
+- ✅ Melhorias de validação (DTOs completos)
+
+### Windows (PowerShell)
+
+```powershell
+# 1. Parar e limpar (necessário para recriar com nova config)
+cd "C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web"
+docker-compose down -v
+
+# 2. Atualizar código (pegar últimos commits)
+git fetch origin
+git checkout claude/b3-ai-analysis-platform-011CUvNS7Jp7D7bGQWkaBvBw
+git pull origin claude/b3-ai-analysis-platform-011CUvNS7Jp7D7bGQWkaBvBw
+
+# 3. Verificar últimos commits
+git log --oneline -5
+# Deve mostrar:
+# 3cfffb0 test: adicionar testes unitários completos para data-sources endpoints
+# 6153da4 refactor: melhorar type safety removendo tipos any e adicionando interfaces
+# f642723 feat: implementar endpoints PATCH e POST test para data-sources
+# 0e785c1 fix: corrigir 9 warnings React Hook useEffect com eslint-disable justificados
+
+# 4. Iniciar sistema (usa script manager ou docker-compose)
+.\system-manager.ps1 start
+
+# OU direto com docker-compose
+docker-compose up -d --build
+```
+
+### Linux / macOS (Bash)
+
+```bash
+# 1. Parar e limpar
+cd ~/invest-claude-web  # ou caminho do seu projeto
+docker-compose down -v
+
+# 2. Atualizar código
+git fetch origin
+git checkout claude/b3-ai-analysis-platform-011CUvNS7Jp7D7bGQWkaBvBw
+git pull origin claude/b3-ai-analysis-platform-011CUvNS7Jp7D7bGQWkaBvBw
+
+# 3. Verificar últimos commits
+git log --oneline -5
+
+# 4. Iniciar sistema
+./system-manager.sh start
+
+# OU direto com docker-compose
+docker-compose up -d --build
+```
+
+### Verificação Pós-Setup
+
+```bash
+# Verificar containers rodando
+docker-compose ps
+
+# Ver logs
+docker-compose logs -f
+
+# Aguardar ~30 segundos e verificar status
+# Deve mostrar: postgres, redis, backend, frontend todos "Up"
+
+# Testar backend
+curl http://localhost:3001/api/health
+# Resposta esperada: {"status":"ok"}
+
+# Testar novos endpoints data-sources
+curl http://localhost:3001/api/data-sources
+curl http://localhost:3001/api/data-sources/status
+```
+
+### Acessar Aplicação
+
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://localhost:3001/api
+- **API Docs (Swagger):** http://localhost:3001/api/docs
+- **FastAPI Service:** http://localhost:8000/docs
+- **PgAdmin:** http://localhost:5050 (admin@invest.com / admin123)
+
+### Executar Migrations e Seeds (Primeira vez)
+
+```bash
+# Executar migrations
+docker-compose exec backend npm run migration:run
+
+# Popular banco
+docker-compose exec backend npm run seed
+
+# Verificar dados
+docker-compose exec postgres psql -U postgres -d invest_db -c "SELECT COUNT(*) FROM assets;"
+```
+
+### Executar Testes (Opcional)
+
+```bash
+# Rodar testes backend
+docker-compose exec backend npm test
+
+# Rodar testes específicos (data-sources)
+docker-compose exec backend npm test -- data-sources
+# Resultado esperado: 22 passed
+
+# Build frontend (verificar 0 warnings)
+docker-compose exec frontend npm run build
+```
 
 ---
 
