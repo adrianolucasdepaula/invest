@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PortfolioService } from './portfolio.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -16,10 +16,61 @@ export class PortfolioController {
     return this.portfolioService.findUserPortfolios(req.user.id);
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Get specific portfolio' })
+  async getPortfolio(@Req() req: any, @Param('id') id: string) {
+    return this.portfolioService.findOne(id, req.user.id);
+  }
+
   @Post()
   @ApiOperation({ summary: 'Create portfolio' })
   async createPortfolio(@Req() req: any, @Body() data: any) {
     return this.portfolioService.create(req.user.id, data);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update portfolio' })
+  async updatePortfolio(@Req() req: any, @Param('id') id: string, @Body() data: any) {
+    return this.portfolioService.update(id, req.user.id, data);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete portfolio' })
+  async deletePortfolio(@Req() req: any, @Param('id') id: string) {
+    await this.portfolioService.remove(id, req.user.id);
+    return { success: true };
+  }
+
+  @Post(':portfolioId/positions')
+  @ApiOperation({ summary: 'Add position to portfolio' })
+  async addPosition(
+    @Req() req: any,
+    @Param('portfolioId') portfolioId: string,
+    @Body() data: any,
+  ) {
+    return this.portfolioService.addPosition(portfolioId, req.user.id, data);
+  }
+
+  @Patch(':portfolioId/positions/:positionId')
+  @ApiOperation({ summary: 'Update position' })
+  async updatePosition(
+    @Req() req: any,
+    @Param('portfolioId') portfolioId: string,
+    @Param('positionId') positionId: string,
+    @Body() data: any,
+  ) {
+    return this.portfolioService.updatePosition(portfolioId, positionId, req.user.id, data);
+  }
+
+  @Delete(':portfolioId/positions/:positionId')
+  @ApiOperation({ summary: 'Delete position' })
+  async deletePosition(
+    @Req() req: any,
+    @Param('portfolioId') portfolioId: string,
+    @Param('positionId') positionId: string,
+  ) {
+    await this.portfolioService.removePosition(portfolioId, positionId, req.user.id);
+    return { success: true };
   }
 
   @Post('import')
