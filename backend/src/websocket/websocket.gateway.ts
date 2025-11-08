@@ -38,10 +38,7 @@ export class AppWebSocketGateway implements OnGatewayConnection, OnGatewayDiscon
   }
 
   @SubscribeMessage('subscribe')
-  handleSubscribe(
-    @MessageBody() data: SubscriptionData,
-    @ConnectedSocket() client: Socket,
-  ) {
+  handleSubscribe(@MessageBody() data: SubscriptionData, @ConnectedSocket() client: Socket) {
     this.userSubscriptions.set(client.id, data);
     this.logger.log(`Cliente ${client.id} inscrito em: ${JSON.stringify(data)}`);
 
@@ -64,14 +61,10 @@ export class AppWebSocketGateway implements OnGatewayConnection, OnGatewayDiscon
 
     if (currentSub) {
       if (data.tickers) {
-        currentSub.tickers = currentSub.tickers.filter(
-          (t) => !data.tickers.includes(t),
-        );
+        currentSub.tickers = currentSub.tickers.filter((t) => !data.tickers.includes(t));
       }
       if (data.types) {
-        currentSub.types = currentSub.types.filter(
-          (t) => !data.types.includes(t as any),
-        );
+        currentSub.types = currentSub.types.filter((t) => !data.types.includes(t as any));
       }
 
       this.userSubscriptions.set(client.id, currentSub);
@@ -86,10 +79,7 @@ export class AppWebSocketGateway implements OnGatewayConnection, OnGatewayDiscon
   // Métodos para emitir atualizações
   emitPriceUpdate(ticker: string, data: any) {
     this.userSubscriptions.forEach((subscription, clientId) => {
-      if (
-        subscription.tickers.includes(ticker) &&
-        subscription.types.includes('prices')
-      ) {
+      if (subscription.tickers.includes(ticker) && subscription.types.includes('prices')) {
         this.server.to(clientId).emit('price_update', {
           ticker,
           data,
@@ -101,10 +91,7 @@ export class AppWebSocketGateway implements OnGatewayConnection, OnGatewayDiscon
 
   emitAnalysisComplete(ticker: string, analysisId: string, type: string) {
     this.userSubscriptions.forEach((subscription, clientId) => {
-      if (
-        subscription.tickers.includes(ticker) &&
-        subscription.types.includes('analysis')
-      ) {
+      if (subscription.tickers.includes(ticker) && subscription.types.includes('analysis')) {
         this.server.to(clientId).emit('analysis_complete', {
           ticker,
           analysisId,
@@ -117,10 +104,7 @@ export class AppWebSocketGateway implements OnGatewayConnection, OnGatewayDiscon
 
   emitReportReady(ticker: string, reportId: string) {
     this.userSubscriptions.forEach((subscription, clientId) => {
-      if (
-        subscription.tickers.includes(ticker) &&
-        subscription.types.includes('reports')
-      ) {
+      if (subscription.tickers.includes(ticker) && subscription.types.includes('reports')) {
         this.server.to(clientId).emit('report_ready', {
           ticker,
           reportId,

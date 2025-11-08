@@ -7,10 +7,7 @@ import {
   RiskAnalystAgent,
   MacroAnalystAgent,
 } from '../agents';
-import {
-  AnalysisContext,
-  AgentResponse,
-} from '../interfaces/analysis.types';
+import { AnalysisContext, AgentResponse } from '../interfaces/analysis.types';
 import { MultiAgentAnalysis } from '../interfaces/financial-agent.interface';
 
 /**
@@ -149,11 +146,13 @@ export class MultiAgentAnalysisService {
   /**
    * Calcula consenso entre os agentes
    */
-  private calculateConsensus(agents: { [key: string]: AgentResponse }): {
-    recommendation: 'BUY' | 'HOLD' | 'SELL';
-    confidence: number;
-    agreement: number;
-  } | undefined {
+  private calculateConsensus(agents: { [key: string]: AgentResponse }):
+    | {
+        recommendation: 'BUY' | 'HOLD' | 'SELL';
+        confidence: number;
+        agreement: number;
+      }
+    | undefined {
     const recommendations: { [key: string]: number } = {
       BUY: 0,
       HOLD: 0,
@@ -177,9 +176,7 @@ export class MultiAgentAnalysisService {
     }
 
     // Recomendação com maior score
-    const sortedRecs = Object.entries(recommendations).sort(
-      ([, a], [, b]) => b - a,
-    );
+    const sortedRecs = Object.entries(recommendations).sort(([, a], [, b]) => b - a);
 
     const topRecommendation = sortedRecs[0][0] as 'BUY' | 'HOLD' | 'SELL';
     const topScore = sortedRecs[0][1];
@@ -220,15 +217,18 @@ export class MultiAgentAnalysisService {
 
     // Resumo de cada agente
     Object.entries(agents).forEach(([name, result]) => {
-      const emoji = {
-        fundamental: '📊',
-        technical: '📈',
-        sentiment: '💭',
-        risk: '⚠️',
-        macro: '🌍',
-      }[name] || '🤖';
+      const emoji =
+        {
+          fundamental: '📊',
+          technical: '📈',
+          sentiment: '💭',
+          risk: '⚠️',
+          macro: '🌍',
+        }[name] || '🤖';
 
-      parts.push(`${emoji} ${name.toUpperCase()}: ${result.recommendation || 'N/A'} (${(result.confidence * 100).toFixed(0)}%)`);
+      parts.push(
+        `${emoji} ${name.toUpperCase()}: ${result.recommendation || 'N/A'} (${(result.confidence * 100).toFixed(0)}%)`,
+      );
 
       // Principais sinais
       if (result.signals && result.signals.length > 0) {
@@ -264,12 +264,8 @@ export class MultiAgentAnalysisService {
 
     // Apenas fundamental e técnico
     const results = await Promise.all([
-      this.agents.fundamental.canAnalyze(context)
-        ? this.agents.fundamental.analyze(context)
-        : null,
-      this.agents.technical.canAnalyze(context)
-        ? this.agents.technical.analyze(context)
-        : null,
+      this.agents.fundamental.canAnalyze(context) ? this.agents.fundamental.analyze(context) : null,
+      this.agents.technical.canAnalyze(context) ? this.agents.technical.analyze(context) : null,
     ]);
 
     const agentResults: { [key: string]: AgentResponse } = {};

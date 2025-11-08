@@ -35,15 +35,8 @@ export class DocumentShardingService {
   /**
    * Divide documento em chunks menores
    */
-  shardDocument(
-    document: string,
-    options: ShardingOptions = {},
-  ): DocumentChunk[] {
-    const {
-      maxTokensPerChunk = 2000,
-      overlapTokens = 200,
-      preserveParagraphs = true,
-    } = options;
+  shardDocument(document: string, options: ShardingOptions = {}): DocumentChunk[] {
+    const { maxTokensPerChunk = 2000, overlapTokens = 200, preserveParagraphs = true } = options;
 
     const chunks: DocumentChunk[] = [];
 
@@ -57,10 +50,7 @@ export class DocumentShardingService {
   /**
    * Divide por parágrafos (melhor para manter contexto)
    */
-  private shardByParagraphs(
-    document: string,
-    maxTokens: number,
-  ): DocumentChunk[] {
+  private shardByParagraphs(document: string, maxTokens: number): DocumentChunk[] {
     const chunks: DocumentChunk[] = [];
     const paragraphs = document.split(/\n\n+/);
 
@@ -85,10 +75,12 @@ export class DocumentShardingService {
 
         // Divide o parágrafo grande
         const subChunks = this.shardByTokens(paragraph, maxTokens, 0);
-        chunks.push(...subChunks.map((c, i) => ({
-          ...c,
-          id: `chunk_${chunkId++}`,
-        })));
+        chunks.push(
+          ...subChunks.map((c, i) => ({
+            ...c,
+            id: `chunk_${chunkId++}`,
+          })),
+        );
 
         continue;
       }
@@ -128,11 +120,7 @@ export class DocumentShardingService {
   /**
    * Divide por tokens com overlap (para contexto contínuo)
    */
-  private shardByTokens(
-    text: string,
-    maxTokens: number,
-    overlapTokens: number,
-  ): DocumentChunk[] {
+  private shardByTokens(text: string, maxTokens: number, overlapTokens: number): DocumentChunk[] {
     const chunks: DocumentChunk[] = [];
     const words = text.split(/\s+/);
     const tokensPerWord = 1.3; // Estimativa: ~1.3 tokens por palavra
@@ -179,9 +167,7 @@ export class DocumentShardingService {
         return chunks;
       }
 
-      this.logger.log(
-        `Selecting ${maxChunks} most relevant chunks from ${chunks.length} total`,
-      );
+      this.logger.log(`Selecting ${maxChunks} most relevant chunks from ${chunks.length} total`);
 
       // Gerar embedding da query
       const queryEmbedding = await this.getEmbedding(query);
@@ -204,7 +190,8 @@ export class DocumentShardingService {
         .sort((a, b) => (b.relevance || 0) - (a.relevance || 0))
         .slice(0, maxChunks);
 
-      const totalTokensSaved = chunks.reduce((sum, c) => sum + c.tokens, 0) -
+      const totalTokensSaved =
+        chunks.reduce((sum, c) => sum + c.tokens, 0) -
         selected.reduce((sum, c) => sum + c.tokens, 0);
 
       this.logger.log(
@@ -240,11 +227,7 @@ export class DocumentShardingService {
       this.logger.log(`Document sharded into ${chunks.length} chunks`);
 
       // 2. Selecionar chunks relevantes (ECONOMIA AQUI!)
-      const relevantChunks = await this.selectRelevantChunks(
-        chunks,
-        question,
-        maxChunks,
-      );
+      const relevantChunks = await this.selectRelevantChunks(chunks, question, maxChunks);
 
       // 3. Combinar chunks relevantes
       const context = relevantChunks
@@ -258,7 +241,8 @@ export class DocumentShardingService {
         messages: [
           {
             role: 'system',
-            content: 'Você é um analista financeiro. Responda baseado apenas no contexto fornecido.',
+            content:
+              'Você é um analista financeiro. Responda baseado apenas no contexto fornecido.',
           },
           {
             role: 'user',

@@ -72,14 +72,11 @@ export class NotificationsService {
     try {
       const text = this.formatTelegramMessage(notification);
 
-      await axios.post(
-        `https://api.telegram.org/bot${this.telegramBotToken}/sendMessage`,
-        {
-          chat_id: this.telegramChatId,
-          text,
-          parse_mode: 'HTML',
-        },
-      );
+      await axios.post(`https://api.telegram.org/bot${this.telegramBotToken}/sendMessage`, {
+        chat_id: this.telegramChatId,
+        text,
+        parse_mode: 'HTML',
+      });
 
       this.logger.log('Telegram notification sent');
     } catch (error) {

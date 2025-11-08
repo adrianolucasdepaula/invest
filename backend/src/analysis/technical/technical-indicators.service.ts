@@ -86,7 +86,11 @@ export class TechnicalIndicatorsService {
       atr: this.atr(highs, lows, closes, 14),
       obv: this.obv(closes, volumes),
       volumeSma: this.sma(volumes, 20),
-      pivot: this.pivotPoints(highs[highs.length - 1], lows[lows.length - 1], closes[closes.length - 1]),
+      pivot: this.pivotPoints(
+        highs[highs.length - 1],
+        lows[lows.length - 1],
+        closes[closes.length - 1],
+      ),
       trend: this.detectTrend(closes),
       trendStrength: this.calculateTrendStrength(closes),
     };

@@ -79,9 +79,8 @@ export class StatusInvestScraper extends AbstractScraper<StatusInvestData> {
     };
 
     // Get company name
-    const companyName = $('.company-name').text().trim() ||
-                       $('h1.lh-4').text().trim() ||
-                       ticker.toUpperCase();
+    const companyName =
+      $('.company-name').text().trim() || $('h1.lh-4').text().trim() || ticker.toUpperCase();
 
     // Get price
     const price = getValue('.value') || getValue('.top-info-price');
@@ -99,7 +98,9 @@ export class StatusInvestScraper extends AbstractScraper<StatusInvestData> {
       pAtivos: getValueByLabel('P/ATIVOS') || getValue('[title="Preço sobre Ativos"]'),
       pCapGiro: getValueByLabel('P/CAP. GIRO') || getValue('[title="Preço sobre Capital de Giro"]'),
       pEbit: getValueByLabel('P/EBIT') || getValue('[title="Preço sobre EBIT"]'),
-      pAtivCircLiq: getValueByLabel('P/ATIV CIRC LIQ') || getValue('[title="Preço sobre Ativo Circulante Líquido"]'),
+      pAtivCircLiq:
+        getValueByLabel('P/ATIV CIRC LIQ') ||
+        getValue('[title="Preço sobre Ativo Circulante Líquido"]'),
       evEbit: getValueByLabel('EV/EBIT') || getValue('[title="Enterprise Value sobre EBIT"]'),
       evEbitda: getValueByLabel('EV/EBITDA') || getValue('[title="Enterprise Value sobre EBITDA"]'),
 
@@ -116,7 +117,8 @@ export class StatusInvestScraper extends AbstractScraper<StatusInvestData> {
       // Financial data
       patrimonioLiq: getValueByLabel('PATRIM. LÍQ') || getValue('[title="Patrimônio Líquido"]'),
       dividaBruta: getValueByLabel('DÍV. BRUTA') || getValue('[title="Dívida Bruta"]'),
-      disponibilidades: getValueByLabel('DISPONIBILIDADES') || getValue('[title="Disponibilidades"]'),
+      disponibilidades:
+        getValueByLabel('DISPONIBILIDADES') || getValue('[title="Disponibilidades"]'),
       ativoTotal: getValueByLabel('ATIVO') || getValue('[title="Ativo Total"]'),
       receitaLiquida: getValueByLabel('RECEITA LÍQUIDA') || getValue('[title="Receita Líquida"]'),
       ebit: getValueByLabel('EBIT') || getValue('[title="EBIT"]'),

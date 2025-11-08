@@ -111,13 +111,11 @@ export class Investidor10Scraper extends AbstractScraper<Investidor10Data> {
     };
 
     // Get company name and price
-    const companyName = $('.symbol-name').text().trim() ||
-                       $('h1').first().text().trim() ||
-                       ticker.toUpperCase();
+    const companyName =
+      $('.symbol-name').text().trim() || $('h1').first().text().trim() || ticker.toUpperCase();
 
-    const priceText = $('.cotacao').text() ||
-                     $('.value').first().text() ||
-                     $('[data-type="price"]').text();
+    const priceText =
+      $('.cotacao').text() || $('.value').first().text() || $('[data-type="price"]').text();
     const price = cleanValue(priceText);
 
     const data: Investidor10Data = {
@@ -165,7 +163,8 @@ export class Investidor10Scraper extends AbstractScraper<Investidor10Data> {
       dividaLiquidaEbit: getIndicatorValue('Dív. Líq./EBIT') || getIndicatorValue('Dív Liq/EBIT'),
       plSobreAtivos: getIndicatorValue('PL/Ativos') || getIndicatorValue('Pat Liq/Ativos'),
       passivosAtivos: getIndicatorValue('Passivos/Ativos') || getIndicatorValue('Pass/Ativos'),
-      liquidezCorrente: getIndicatorValue('Liquidez Corrente') || getIndicatorValue('Liq. Corrente'),
+      liquidezCorrente:
+        getIndicatorValue('Liquidez Corrente') || getIndicatorValue('Liq. Corrente'),
 
       // Growth
       cagr5anos: getIndicatorValue('CAGR Receitas 5 anos') || getIndicatorValue('CAGR 5a'),

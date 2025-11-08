@@ -66,12 +66,8 @@ export class CacheInterceptor implements NestInterceptor {
     const query = request.query || {};
     const userId = request.user?.id || 'anonymous';
 
-    const paramsStr = Object.keys(params).length
-      ? ':' + Object.values(params).join(':')
-      : '';
-    const queryStr = Object.keys(query).length
-      ? ':' + JSON.stringify(query)
-      : '';
+    const paramsStr = Object.keys(params).length ? ':' + Object.values(params).join(':') : '';
+    const queryStr = Object.keys(query).length ? ':' + JSON.stringify(query) : '';
 
     return `${prefix}:${userId}${paramsStr}${queryStr}`;
   }

@@ -90,16 +90,21 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
     await this.page.goto(url, { waitUntil: 'networkidle2', timeout: this.config.timeout });
 
     // Wait for options table
-    await this.page.waitForSelector('.options-table, .opcoes-table', {
-      timeout: 10000,
-    }).catch(() => {
-      this.logger.warn('Options table not found');
-    });
+    await this.page
+      .waitForSelector('.options-table, .opcoes-table', {
+        timeout: 10000,
+      })
+      .catch(() => {
+        this.logger.warn('Options table not found');
+      });
 
     const data = await this.page.evaluate(() => {
       const getNumber = (text: string): number => {
         if (!text) return 0;
-        const cleaned = text.replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, '');
+        const cleaned = text
+          .replace(/\./g, '')
+          .replace(',', '.')
+          .replace(/[^\d.-]/g, '');
         return parseFloat(cleaned) || 0;
       };
 

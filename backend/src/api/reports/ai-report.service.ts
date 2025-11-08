@@ -3,35 +3,35 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
 export interface ReportData {
-  ticker: string
-  fundamentalData: any
-  technicalData: any
-  optionsData?: any
-  newsData?: any
-  macroData?: any
+  ticker: string;
+  fundamentalData: any;
+  technicalData: any;
+  optionsData?: any;
+  newsData?: any;
+  macroData?: any;
 }
 
 export interface AIReport {
-  ticker: string
-  generatedAt: Date
-  summary: string
-  fundamentalAnalysis: string
-  technicalAnalysis: string
-  riskAnalysis: string
+  ticker: string;
+  generatedAt: Date;
+  summary: string;
+  fundamentalAnalysis: string;
+  technicalAnalysis: string;
+  riskAnalysis: string;
   recommendation: {
-    action: 'STRONG_BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG_SELL'
-    confidence: number
-    reasoning: string
-  }
+    action: 'STRONG_BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG_SELL';
+    confidence: number;
+    reasoning: string;
+  };
   targetPrices: {
-    conservative: number
-    moderate: number
-    optimistic: number
-  }
-  keyPoints: string[]
-  warnings: string[]
-  opportunities: string[]
-  fullReport: string
+    conservative: number;
+    moderate: number;
+    optimistic: number;
+  };
+  keyPoints: string[];
+  warnings: string[];
+  opportunities: string[];
+  fullReport: string;
 }
 
 @Injectable()
@@ -221,15 +221,15 @@ Seja profissional, objetivo e baseie todas as conclusões nos dados fornecidos.
       // Map recommendation action
       const actionMap: Record<string, any> = {
         'COMPRA FORTE': 'STRONG_BUY',
-        'COMPRA': 'BUY',
-        'MANTER': 'HOLD',
-        'VENDA': 'SELL',
+        COMPRA: 'BUY',
+        MANTER: 'HOLD',
+        VENDA: 'SELL',
         'VENDA FORTE': 'STRONG_SELL',
-        'STRONG_BUY': 'STRONG_BUY',
-        'BUY': 'BUY',
-        'HOLD': 'HOLD',
-        'SELL': 'SELL',
-        'STRONG_SELL': 'STRONG_SELL',
+        STRONG_BUY: 'STRONG_BUY',
+        BUY: 'BUY',
+        HOLD: 'HOLD',
+        SELL: 'SELL',
+        STRONG_SELL: 'STRONG_SELL',
       };
 
       return {

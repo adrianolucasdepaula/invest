@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  IFinancialAgent,
-  AgentConfig,
-} from '../interfaces/financial-agent.interface';
+import { IFinancialAgent, AgentConfig } from '../interfaces/financial-agent.interface';
 import { AgentResponse, AnalysisContext } from '../interfaces/analysis.types';
 import OpenAI from 'openai';
 
@@ -97,9 +94,7 @@ export abstract class BaseFinancialAgent implements IFinancialAgent {
       `Variação: ${stockData.change > 0 ? '+' : ''}${stockData.change?.toFixed(2)} (${stockData.changePercent?.toFixed(2)}%)`,
     );
     lines.push(`Volume: ${stockData.volume?.toLocaleString('pt-BR')}`);
-    lines.push(
-      `Market Cap: R$ ${(stockData.marketCap / 1_000_000_000).toFixed(2)}B`,
-    );
+    lines.push(`Market Cap: R$ ${(stockData.marketCap / 1_000_000_000).toFixed(2)}B`);
 
     if (stockData.sector) lines.push(`Setor: ${stockData.sector}`);
     if (stockData.industry) lines.push(`Indústria: ${stockData.industry}`);
@@ -110,9 +105,7 @@ export abstract class BaseFinancialAgent implements IFinancialAgent {
   /**
    * Extrai recomendação do texto da resposta
    */
-  protected extractRecommendation(
-    text: string,
-  ): 'BUY' | 'HOLD' | 'SELL' | undefined {
+  protected extractRecommendation(text: string): 'BUY' | 'HOLD' | 'SELL' | undefined {
     const normalized = text.toUpperCase();
 
     // Procura por palavras-chave
@@ -150,24 +143,15 @@ export abstract class BaseFinancialAgent implements IFinancialAgent {
     const normalized = text.toLowerCase();
 
     // Procura por indicadores de confiança
-    if (
-      normalized.includes('muito confiante') ||
-      normalized.includes('alta confiança')
-    ) {
+    if (normalized.includes('muito confiante') || normalized.includes('alta confiança')) {
       return 0.9;
     }
 
-    if (
-      normalized.includes('confiante') ||
-      normalized.includes('confiança moderada')
-    ) {
+    if (normalized.includes('confiante') || normalized.includes('confiança moderada')) {
       return 0.75;
     }
 
-    if (
-      normalized.includes('incerto') ||
-      normalized.includes('baixa confiança')
-    ) {
+    if (normalized.includes('incerto') || normalized.includes('baixa confiança')) {
       return 0.5;
     }
 

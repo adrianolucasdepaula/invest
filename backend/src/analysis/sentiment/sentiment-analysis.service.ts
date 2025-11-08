@@ -34,15 +34,43 @@ export class SentimentAnalysisService {
     try {
       // Análise básica usando palavras-chave (fallback)
       const positiveWords = [
-        'lucro', 'crescimento', 'alta', 'ganho', 'positivo', 'otimista',
-        'valorização', 'recuperação', 'expansão', 'aumento', 'melhora',
-        'recorde', 'forte', 'bom', 'excelente', 'superou', 'expectativas'
+        'lucro',
+        'crescimento',
+        'alta',
+        'ganho',
+        'positivo',
+        'otimista',
+        'valorização',
+        'recuperação',
+        'expansão',
+        'aumento',
+        'melhora',
+        'recorde',
+        'forte',
+        'bom',
+        'excelente',
+        'superou',
+        'expectativas',
       ];
 
       const negativeWords = [
-        'prejuízo', 'queda', 'perda', 'negativo', 'pessimista', 'desvalorização',
-        'crise', 'redução', 'diminuição', 'fraco', 'ruim', 'frustrou',
-        'decepção', 'baixa', 'risco', 'problema', 'dificuldade'
+        'prejuízo',
+        'queda',
+        'perda',
+        'negativo',
+        'pessimista',
+        'desvalorização',
+        'crise',
+        'redução',
+        'diminuição',
+        'fraco',
+        'ruim',
+        'frustrou',
+        'decepção',
+        'baixa',
+        'risco',
+        'problema',
+        'dificuldade',
       ];
 
       const textLower = text.toLowerCase();
@@ -51,7 +79,7 @@ export class SentimentAnalysisService {
       let negativeCount = 0;
       const foundKeywords: string[] = [];
 
-      positiveWords.forEach(word => {
+      positiveWords.forEach((word) => {
         const regex = new RegExp(`\\b${word}\\b`, 'gi');
         const matches = textLower.match(regex);
         if (matches) {
@@ -60,7 +88,7 @@ export class SentimentAnalysisService {
         }
       });
 
-      negativeWords.forEach(word => {
+      negativeWords.forEach((word) => {
         const regex = new RegExp(`\\b${word}\\b`, 'gi');
         const matches = textLower.match(regex);
         if (matches) {
@@ -117,9 +145,13 @@ export class SentimentAnalysisService {
     }
 
     // Calcular métricas gerais
-    const positiveCount = sentiments.filter(s => s.label === 'positive' || s.label === 'very_positive').length;
-    const negativeCount = sentiments.filter(s => s.label === 'negative' || s.label === 'very_negative').length;
-    const neutralCount = sentiments.filter(s => s.label === 'neutral').length;
+    const positiveCount = sentiments.filter(
+      (s) => s.label === 'positive' || s.label === 'very_positive',
+    ).length;
+    const negativeCount = sentiments.filter(
+      (s) => s.label === 'negative' || s.label === 'very_negative',
+    ).length;
+    const neutralCount = sentiments.filter((s) => s.label === 'neutral').length;
 
     const avgScore = sentiments.reduce((sum, s) => sum + s.score, 0) / sentiments.length;
     const avgConfidence = sentiments.reduce((sum, s) => sum + s.confidence, 0) / sentiments.length;
@@ -135,11 +167,14 @@ export class SentimentAnalysisService {
     }
 
     // Agregar keywords
-    const allKeywords = sentiments.flatMap(s => s.keywords);
-    const keywordCounts = allKeywords.reduce((acc, keyword) => {
-      acc[keyword] = (acc[keyword] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const allKeywords = sentiments.flatMap((s) => s.keywords);
+    const keywordCounts = allKeywords.reduce(
+      (acc, keyword) => {
+        acc[keyword] = (acc[keyword] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     const sortedKeywords = Object.entries(keywordCounts)
       .sort(([, a], [, b]) => b - a)
@@ -149,8 +184,12 @@ export class SentimentAnalysisService {
     const positiveKeywords = ['lucro', 'crescimento', 'alta', 'ganho', 'positivo', 'valorização'];
     const negativeKeywords = ['prejuízo', 'queda', 'perda', 'negativo', 'desvalorização', 'crise'];
 
-    const topPositiveKeywords = sortedKeywords.filter(k => positiveKeywords.includes(k)).slice(0, 5);
-    const topNegativeKeywords = sortedKeywords.filter(k => negativeKeywords.includes(k)).slice(0, 5);
+    const topPositiveKeywords = sortedKeywords
+      .filter((k) => positiveKeywords.includes(k))
+      .slice(0, 5);
+    const topNegativeKeywords = sortedKeywords
+      .filter((k) => negativeKeywords.includes(k))
+      .slice(0, 5);
 
     // Determinar label geral
     let overallLabel: SentimentResult['label'] = 'neutral';

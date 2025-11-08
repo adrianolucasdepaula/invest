@@ -66,10 +66,12 @@ import { WebSocketModule } from './websocket/websocket.module';
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        throttlers: [{
-          ttl: configService.get('RATE_LIMIT_TTL', 60000),
-          limit: configService.get('RATE_LIMIT_MAX_REQUESTS', 100),
-        }],
+        throttlers: [
+          {
+            ttl: configService.get('RATE_LIMIT_TTL', 60000),
+            limit: configService.get('RATE_LIMIT_MAX_REQUESTS', 100),
+          },
+        ],
       }),
       inject: [ConfigService],
     }),

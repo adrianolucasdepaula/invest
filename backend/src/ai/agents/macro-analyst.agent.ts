@@ -45,13 +45,14 @@ Considere: ciclo econômico, políticas monetária/fiscal, cenário político.`;
 
   private buildMacroPrompt(stockData: any, macroData: any): string {
     const parts = [
-      `Analise o impacto macroeconômico em ${stockData.ticker} (${stockData.sector || 'setor'}):`
+      `Analise o impacto macroeconômico em ${stockData.ticker} (${stockData.sector || 'setor'}):`,
     ];
 
     if (macroData.selic) parts.push(`Selic: ${macroData.selic.toFixed(2)}%`);
     if (macroData.ipca) parts.push(`IPCA: ${macroData.ipca.toFixed(2)}%`);
     if (macroData.usdBrl) parts.push(`USD/BRL: R$ ${macroData.usdBrl.toFixed(2)}`);
-    if (macroData.gdpGrowth) parts.push(`PIB: ${macroData.gdpGrowth > 0 ? '+' : ''}${macroData.gdpGrowth.toFixed(2)}%`);
+    if (macroData.gdpGrowth)
+      parts.push(`PIB: ${macroData.gdpGrowth > 0 ? '+' : ''}${macroData.gdpGrowth.toFixed(2)}%`);
 
     parts.push('\nAvalie: impacto no setor, perspectivas, riscos macroeconômicos.');
     return parts.join('\n');

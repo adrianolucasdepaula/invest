@@ -12,18 +12,8 @@ import { ScrapedData } from '../database/entities/scraped-data.entity';
 
 @Module({
   imports: [
-    BullModule.registerQueue(
-      { name: 'scraping' },
-      { name: 'analysis' },
-      { name: 'reports' },
-    ),
-    TypeOrmModule.forFeature([
-      Asset,
-      FundamentalData,
-      AssetPrice,
-      DataSource,
-      ScrapedData,
-    ]),
+    BullModule.registerQueue({ name: 'scraping' }, { name: 'analysis' }, { name: 'reports' }),
+    TypeOrmModule.forFeature([Asset, FundamentalData, AssetPrice, DataSource, ScrapedData]),
     ScrapersModule,
   ],
   providers: [ScrapingProcessor, ScheduledJobsService],

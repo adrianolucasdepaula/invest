@@ -74,7 +74,7 @@ Sugira: diversificação, hedge, dimensionamento de posição.`;
     }
 
     if (portfolio?.concentration) {
-      const maxConcentration = Math.max(...Object.values(portfolio.concentration) as number[]);
+      const maxConcentration = Math.max(...(Object.values(portfolio.concentration) as number[]));
       if (maxConcentration > 0.4) {
         signals.push({
           type: 'WARNING',

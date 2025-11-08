@@ -55,16 +55,34 @@ export class FundamentalData {
   pegRatio: number; // PEG Ratio
 
   // Debt Indicators
-  @Column({ type: 'decimal', precision: 18, scale: 2, name: 'divida_liquida_patrimonio', nullable: true })
+  @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 2,
+    name: 'divida_liquida_patrimonio',
+    nullable: true,
+  })
   dividaLiquidaPatrimonio: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2, name: 'divida_liquida_ebitda', nullable: true })
+  @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 2,
+    name: 'divida_liquida_ebitda',
+    nullable: true,
+  })
   dividaLiquidaEbitda: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, name: 'divida_liquida_ebit', nullable: true })
   dividaLiquidaEbit: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2, name: 'patrimonio_liquido_ativos', nullable: true })
+  @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 2,
+    name: 'patrimonio_liquido_ativos',
+    nullable: true,
+  })
   patrimonioLiquidoAtivos: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, name: 'passivos_ativos', nullable: true })

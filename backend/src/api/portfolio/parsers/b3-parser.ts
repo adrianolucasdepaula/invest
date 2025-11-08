@@ -1,10 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as XLSX from 'xlsx';
-import {
-  PortfolioParser,
-  ParsedPortfolio,
-  PortfolioPosition,
-} from './portfolio-parser.interface';
+import { PortfolioParser, ParsedPortfolio, PortfolioPosition } from './portfolio-parser.interface';
 
 @Injectable()
 export class B3Parser implements PortfolioParser {
@@ -88,7 +84,10 @@ export class B3Parser implements PortfolioParser {
 
     for (const key of quantityKeys) {
       if (row[key] !== undefined && row[key] !== null) {
-        const value = typeof row[key] === 'string' ? parseFloat(row[key].replace(/\./g, '').replace(',', '.')) : row[key];
+        const value =
+          typeof row[key] === 'string'
+            ? parseFloat(row[key].replace(/\./g, '').replace(',', '.'))
+            : row[key];
         if (!isNaN(value)) return value;
       }
     }
@@ -113,7 +112,10 @@ export class B3Parser implements PortfolioParser {
 
         // Handle string prices
         if (typeof value === 'string') {
-          value = value.replace(/R\$\s?/g, '').replace(/\./g, '').replace(',', '.');
+          value = value
+            .replace(/R\$\s?/g, '')
+            .replace(/\./g, '')
+            .replace(',', '.');
           value = parseFloat(value);
         }
 

@@ -1,10 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as XLSX from 'xlsx';
-import {
-  PortfolioParser,
-  ParsedPortfolio,
-  PortfolioPosition,
-} from './portfolio-parser.interface';
+import { PortfolioParser, ParsedPortfolio, PortfolioPosition } from './portfolio-parser.interface';
 
 @Injectable()
 export class KinvoParser implements PortfolioParser {
@@ -13,8 +9,10 @@ export class KinvoParser implements PortfolioParser {
 
   canParse(filename: string, fileBuffer: Buffer): boolean {
     const ext = filename.toLowerCase();
-    return (ext.endsWith('.xlsx') || ext.endsWith('.xls') || ext.endsWith('.csv')) &&
-           filename.toLowerCase().includes('kinvo');
+    return (
+      (ext.endsWith('.xlsx') || ext.endsWith('.xls') || ext.endsWith('.csv')) &&
+      filename.toLowerCase().includes('kinvo')
+    );
   }
 
   async parse(fileBuffer: Buffer, filename: string): Promise<ParsedPortfolio> {
@@ -106,7 +104,10 @@ export class KinvoParser implements PortfolioParser {
         let value = row[key];
 
         if (typeof value === 'string') {
-          value = value.replace(/R\$\s?/g, '').replace(/\./g, '').replace(',', '.');
+          value = value
+            .replace(/R\$\s?/g, '')
+            .replace(/\./g, '')
+            .replace(',', '.');
           value = parseFloat(value);
         }
 

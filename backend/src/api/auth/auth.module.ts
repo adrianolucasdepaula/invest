@@ -41,7 +41,9 @@ import { GoogleStrategy } from './strategies/google.strategy';
         }
 
         // Return null if credentials not provided (Google OAuth disabled)
-        console.log('⚠️  Google OAuth disabled - GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not configured');
+        console.log(
+          '⚠️  Google OAuth disabled - GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not configured',
+        );
         return null;
       },
       inject: [ConfigService],
