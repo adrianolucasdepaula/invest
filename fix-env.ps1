@@ -167,7 +167,7 @@ if ($backendRunning) {
 
             # Verificar se está respondendo
             try {
-                $health = Invoke-WebRequest -Uri "http://localhost:3101/health" -TimeoutSec 5 -UseBasicParsing
+                $health = Invoke-WebRequest -Uri "http://localhost:3101/api/v1/health" -TimeoutSec 5 -UseBasicParsing
                 Print-Success "Backend reiniciado com sucesso!"
             } catch {
                 Print-Warning "Backend pode ainda estar iniciando. Aguarde mais alguns segundos."

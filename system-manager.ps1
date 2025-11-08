@@ -778,7 +778,7 @@ function Get-HealthCheck {
 
     # Check Backend
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:3101/health" -TimeoutSec 5 -UseBasicParsing
+        $response = Invoke-WebRequest -Uri "http://localhost:3101/api/v1/health" -TimeoutSec 5 -UseBasicParsing
         if ($response.StatusCode -eq 200) {
             Print-Success "Backend: OK"
         } else {

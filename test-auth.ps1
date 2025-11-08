@@ -46,7 +46,7 @@ Write-Host ""
 # ====================================================================
 Write-Host "1. Testando conexão com backend..." -ForegroundColor Yellow
 try {
-    $healthResponse = Invoke-WebRequest -Uri "http://localhost:3101/health" -TimeoutSec 5 -UseBasicParsing
+    $healthResponse = Invoke-WebRequest -Uri "http://localhost:3101/api/v1/health" -TimeoutSec 5 -UseBasicParsing
     if ($healthResponse.StatusCode -eq 200) {
         Print-Success "Backend está online!"
     }
