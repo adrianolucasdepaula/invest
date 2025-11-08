@@ -19,6 +19,17 @@ import { QueueModule } from './queue/queue.module';
 import { AiModule } from './ai/ai.module';
 import { ValidatorsModule } from './validators/validators.module';
 import { WebSocketModule } from './websocket/websocket.module';
+import {
+  User,
+  Asset,
+  AssetPrice,
+  FundamentalData,
+  Portfolio,
+  PortfolioPosition,
+  DataSource,
+  ScrapedData,
+  Analysis,
+} from './database/entities';
 
 @Module({
   imports: [
@@ -38,7 +49,17 @@ import { WebSocketModule } from './websocket/websocket.module';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        entities: [
+          User,
+          Asset,
+          AssetPrice,
+          FundamentalData,
+          Portfolio,
+          PortfolioPosition,
+          DataSource,
+          ScrapedData,
+          Analysis,
+        ],
         synchronize: configService.get('DB_SYNCHRONIZE', false),
         logging: configService.get('DB_LOGGING', false),
         ssl: configService.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
