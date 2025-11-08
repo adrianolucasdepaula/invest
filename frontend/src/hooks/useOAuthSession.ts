@@ -302,7 +302,7 @@ export function useOAuthSession(): UseOAuthSessionReturn {
     }, 3000); // Refresh a cada 3 segundos
 
     return () => clearInterval(interval);
-  }, [session?.status, isSessionActive, refreshStatus]);
+  }, [session, isSessionActive, refreshStatus]);
 
   return {
     // State

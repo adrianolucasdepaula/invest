@@ -47,7 +47,9 @@ export function usePriceUpdates(tickers: string[]) {
       unsubscribe(tickers, ['prices']);
       unsubscribeListener();
     };
-  }, [tickers.join(',')]);
+    // wsService methods are stable singleton references, safe to omit from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tickers]);
 
   return prices;
 }
@@ -69,7 +71,9 @@ export function useAnalysisUpdates(tickers: string[]) {
       unsubscribe(tickers, ['analysis']);
       unsubscribeListener();
     };
-  }, [tickers.join(',')]);
+    // wsService methods are stable singleton references, safe to omit from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tickers]);
 
   return analyses;
 }
@@ -91,7 +95,9 @@ export function useReportUpdates(tickers: string[]) {
       unsubscribe(tickers, ['reports']);
       unsubscribeListener();
     };
-  }, [tickers.join(',')]);
+    // wsService methods are stable singleton references, safe to omit from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tickers]);
 
   return reports;
 }
@@ -111,6 +117,8 @@ export function usePortfolioUpdates() {
       unsubscribe([], ['portfolio']);
       unsubscribeListener();
     };
+    // wsService methods are stable singleton references, safe to omit from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return updates;
@@ -128,6 +136,8 @@ export function useMarketStatus() {
     return () => {
       unsubscribe();
     };
+    // wsService methods are stable singleton references, safe to omit from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return status;
