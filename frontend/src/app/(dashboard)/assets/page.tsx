@@ -1,36 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAssets } from '@/lib/hooks/use-assets';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AssetTable } from '@/components/dashboard/asset-table';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Filter } from 'lucide-react';
-
-// Mock data
-const mockAssets = [
-  { ticker: 'PETR4', name: 'Petrobras PN', price: 38.45, change: 2.34, changePercent: 2.34, volume: 125000000, marketCap: 500000000000 },
-  { ticker: 'VALE3', name: 'Vale ON', price: 65.78, change: -1.12, changePercent: -1.12, volume: 98000000, marketCap: 350000000000 },
-  { ticker: 'ITUB4', name: 'Itaú Unibanco PN', price: 28.90, change: 0.87, changePercent: 0.87, volume: 67000000, marketCap: 280000000000 },
-  { ticker: 'BBDC4', name: 'Bradesco PN', price: 14.56, change: 1.45, changePercent: 1.45, volume: 89000000, marketCap: 150000000000 },
-  { ticker: 'BBAS3', name: 'Banco do Brasil ON', price: 25.34, change: -0.34, changePercent: -0.34, volume: 45000000, marketCap: 120000000000 },
-  { ticker: 'ABEV3', name: 'Ambev ON', price: 12.89, change: 0.78, changePercent: 0.78, volume: 78000000, marketCap: 200000000000 },
-  { ticker: 'WEGE3', name: 'WEG ON', price: 42.15, change: 1.92, changePercent: 1.92, volume: 34000000, marketCap: 160000000000 },
-  { ticker: 'RENT3', name: 'Localiza ON', price: 58.32, change: -0.56, changePercent: -0.56, volume: 23000000, marketCap: 80000000000 },
-  { ticker: 'MGLU3', name: 'Magazine Luiza ON', price: 3.45, change: 3.45, changePercent: 3.45, volume: 156000000, marketCap: 45000000000 },
-  { ticker: 'SUZB3', name: 'Suzano ON', price: 52.67, change: -1.23, changePercent: -1.23, volume: 19000000, marketCap: 95000000000 },
-];
 
 export default function AssetsPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
+  const { data: assets, isLoading, error } = useAssets();
 
-  const filteredAssets = mockAssets.filter(
-    (asset) =>
-      asset.ticker.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      asset.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const filteredAssets = useMemo(() => {
+    if (!assets) return [];
+    return assets.filter(
+      (asset: any) =>
+        asset.ticker.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [assets, searchTerm]);
 
   const handleAssetClick = (ticker: string) => {
     router.push(`/assets/${ticker}`);
@@ -65,10 +57,28 @@ export default function AssetsPage() {
       </Card>
 
       <Card className="p-6">
-        <AssetTable
-          assets={filteredAssets}
-          onAssetClick={handleAssetClick}
-        />
+        {isLoading ? (
+          <div className="space-y-4">
+            {Array(10)
+              .fill(0)
+              .map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+          </div>
+        ) : error ? (
+          <div className="text-center py-8">
+            <p className="text-destructive">Erro ao carregar ativos</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Verifique sua conexão e tente novamente
+            </p>
+          </div>
+        ) : filteredAssets.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Nenhum ativo encontrado</p>
+          </div>
+        ) : (
+          <AssetTable assets={filteredAssets} onAssetClick={handleAssetClick} />
+        )}
       </Card>
     </div>
   );

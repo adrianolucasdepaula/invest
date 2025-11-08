@@ -14,7 +14,52 @@ export class AssetsService {
 
   async findAll(type?: string) {
     const where = type ? { type: type as AssetType } : {};
-    return this.assetRepository.find({ where, order: { ticker: 'ASC' } });
+    const assets = await this.assetRepository.find({ where, order: { ticker: 'ASC' } });
+
+    // Enrich assets with latest price data
+    const enrichedAssets = await Promise.all(
+      assets.map(async (asset) => {
+        const latestPrice = await this.assetPriceRepository.findOne({
+          where: { assetId: asset.id },
+          order: { date: 'DESC' },
+        });
+
+        if (!latestPrice) {
+          return {
+            ...asset,
+            price: null,
+            change: null,
+            changePercent: null,
+            volume: null,
+            marketCap: null,
+          };
+        }
+
+        // Get previous day's price for change calculation
+        const recentPrices = await this.assetPriceRepository.find({
+          where: { assetId: asset.id },
+          order: { date: 'DESC' },
+          take: 2,
+        });
+        const previousPrice = recentPrices.length > 1 ? recentPrices[1] : null;
+
+        const price = Number(latestPrice.close);
+        const previousClose = previousPrice ? Number(previousPrice.close) : price;
+        const change = price - previousClose;
+        const changePercent = previousClose !== 0 ? (change / previousClose) * 100 : 0;
+
+        return {
+          ...asset,
+          price,
+          change,
+          changePercent,
+          volume: Number(latestPrice.volume),
+          marketCap: latestPrice.marketCap ? Number(latestPrice.marketCap) : null,
+        };
+      }),
+    );
+
+    return enrichedAssets;
   }
 
   async findByTicker(ticker: string) {
@@ -26,7 +71,44 @@ export class AssetsService {
       throw new NotFoundException(`Asset ${ticker} not found`);
     }
 
-    return asset;
+    // Enrich with latest price data
+    const latestPrice = await this.assetPriceRepository.findOne({
+      where: { assetId: asset.id },
+      order: { date: 'DESC' },
+    });
+
+    if (!latestPrice) {
+      return {
+        ...asset,
+        price: null,
+        change: null,
+        changePercent: null,
+        volume: null,
+        marketCap: null,
+      };
+    }
+
+    // Get previous day's price for change calculation
+    const recentPrices = await this.assetPriceRepository.find({
+      where: { assetId: asset.id },
+      order: { date: 'DESC' },
+      take: 2,
+    });
+    const previousPrice = recentPrices.length > 1 ? recentPrices[1] : null;
+
+    const price = Number(latestPrice.close);
+    const previousClose = previousPrice ? Number(previousPrice.close) : price;
+    const change = price - previousClose;
+    const changePercent = previousClose !== 0 ? (change / previousClose) * 100 : 0;
+
+    return {
+      ...asset,
+      price,
+      change,
+      changePercent,
+      volume: Number(latestPrice.volume),
+      marketCap: latestPrice.marketCap ? Number(latestPrice.marketCap) : null,
+    };
   }
 
   async getPriceHistory(ticker: string, startDate?: string, endDate?: string) {

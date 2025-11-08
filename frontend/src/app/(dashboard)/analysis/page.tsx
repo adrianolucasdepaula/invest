@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useAnalyses } from '@/lib/hooks/use-analysis';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Search,
   TrendingUp,
@@ -14,73 +16,6 @@ import {
   Play,
 } from 'lucide-react';
 import { cn, formatPercent } from '@/lib/utils';
-
-const mockAnalyses = [
-  {
-    id: '1',
-    ticker: 'PETR4',
-    assetName: 'Petrobras PN',
-    type: 'complete',
-    createdAt: '2024-01-15T10:30:00',
-    technicalSignal: 'BUY',
-    technicalScore: 78,
-    fundamentalScore: 72,
-    rsi: 62.5,
-    pl: 8.5,
-    roe: 18.5,
-    status: 'completed',
-  },
-  {
-    id: '2',
-    ticker: 'VALE3',
-    assetName: 'Vale ON',
-    type: 'technical',
-    createdAt: '2024-01-14T15:45:00',
-    technicalSignal: 'HOLD',
-    technicalScore: 55,
-    rsi: 48.2,
-    status: 'completed',
-  },
-  {
-    id: '3',
-    ticker: 'ITUB4',
-    assetName: 'Itaú Unibanco PN',
-    type: 'fundamental',
-    createdAt: '2024-01-13T09:15:00',
-    fundamentalScore: 85,
-    pl: 7.2,
-    roe: 22.3,
-    status: 'completed',
-  },
-  {
-    id: '4',
-    ticker: 'WEGE3',
-    assetName: 'WEG ON',
-    type: 'complete',
-    createdAt: '2024-01-12T14:20:00',
-    technicalSignal: 'STRONG_BUY',
-    technicalScore: 88,
-    fundamentalScore: 92,
-    rsi: 68.4,
-    pl: 32.5,
-    roe: 28.7,
-    status: 'completed',
-  },
-  {
-    id: '5',
-    ticker: 'MGLU3',
-    assetName: 'Magazine Luiza ON',
-    type: 'complete',
-    createdAt: '2024-01-11T11:00:00',
-    technicalSignal: 'SELL',
-    technicalScore: 35,
-    fundamentalScore: 28,
-    rsi: 32.1,
-    pl: -15.2,
-    roe: -8.5,
-    status: 'completed',
-  },
-];
 
 const getSignalColor = (signal?: string) => {
   switch (signal) {
@@ -124,13 +59,19 @@ export default function AnalysisPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'fundamental' | 'technical' | 'complete'>('all');
 
-  const filteredAnalyses = mockAnalyses.filter((analysis) => {
-    const matchesSearch =
-      analysis.ticker.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      analysis.assetName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || analysis.type === filterType;
-    return matchesSearch && matchesType;
+  const { data: analyses, isLoading, error } = useAnalyses({
+    type: filterType === 'all' ? undefined : filterType,
   });
+
+  const filteredAnalyses = useMemo(() => {
+    if (!analyses) return [];
+    return analyses.filter((analysis: any) => {
+      const matchesSearch =
+        analysis.asset?.ticker?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        analysis.asset?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesSearch;
+    });
+  }, [analyses, searchTerm]);
 
   return (
     <div className="space-y-6">
@@ -188,104 +129,40 @@ export default function AnalysisPage() {
         </div>
       </div>
 
-      <div className="grid gap-4">
-        {filteredAnalyses.map((analysis) => (
-          <Card key={analysis.id} className="p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-start justify-between">
-              <div className="flex-1 space-y-3">
-                <div className="flex items-center space-x-4">
-                  <div>
-                    <h3 className="text-xl font-semibold">{analysis.ticker}</h3>
-                    <p className="text-sm text-muted-foreground">{analysis.assetName}</p>
+      {isLoading ? (
+        <div className="grid gap-4">
+          {Array(3)
+            .fill(0)
+            .map((_, i) => (
+              <Card key={i} className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <Skeleton className="h-6 w-24" />
+                    <Skeleton className="h-6 w-32" />
+                    <Skeleton className="h-6 w-20" />
                   </div>
-                  <div className="rounded-full bg-primary/10 px-3 py-1">
-                    <span className="text-sm font-medium text-primary capitalize">
-                      {analysis.type === 'complete' ? 'Completa' : analysis.type === 'fundamental' ? 'Fundamentalista' : 'Técnica'}
-                    </span>
-                  </div>
-                  {analysis.technicalSignal && (
-                    <div
-                      className={cn(
-                        'flex items-center space-x-2 rounded-full border px-3 py-1',
-                        getSignalColor(analysis.technicalSignal),
-                      )}
-                    >
-                      {analysis.technicalSignal.includes('BUY') ? (
-                        <TrendingUp className="h-4 w-4" />
-                      ) : analysis.technicalSignal === 'HOLD' ? (
-                        <Activity className="h-4 w-4" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4" />
-                      )}
-                      <span className="text-sm font-semibold">
-                        {getSignalLabel(analysis.technicalSignal)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-6 gap-4">
-                  {analysis.technicalScore !== undefined && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Score Técnico</p>
-                      <p className={cn('text-2xl font-bold', getScoreColor(analysis.technicalScore))}>
-                        {analysis.technicalScore}
-                      </p>
-                    </div>
-                  )}
-                  {analysis.fundamentalScore !== undefined && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Score Fundamentalista</p>
-                      <p className={cn('text-2xl font-bold', getScoreColor(analysis.fundamentalScore))}>
-                        {analysis.fundamentalScore}
-                      </p>
-                    </div>
-                  )}
-                  {analysis.rsi !== undefined && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">RSI</p>
-                      <p className="text-lg font-semibold">{analysis.rsi.toFixed(1)}</p>
-                    </div>
-                  )}
-                  {analysis.pl !== undefined && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">P/L</p>
-                      <p className="text-lg font-semibold">{analysis.pl.toFixed(1)}</p>
-                    </div>
-                  )}
-                  {analysis.roe !== undefined && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">ROE</p>
-                      <p className="text-lg font-semibold">{formatPercent(analysis.roe)}</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm text-muted-foreground">Realizada em</p>
-                    <div className="flex items-center space-x-1">
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      <p className="text-sm font-medium">
-                        {new Date(analysis.createdAt).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
+                  <div className="grid grid-cols-6 gap-4">
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
                   </div>
                 </div>
-              </div>
-
-              <div className="flex items-center space-x-2 ml-4">
-                <Button variant="outline" size="sm">
-                  Ver Detalhes
-                </Button>
-                <Button variant="outline" size="sm">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Atualizar
-                </Button>
-              </div>
+              </Card>
+            ))}
+        </div>
+      ) : error ? (
+        <Card className="p-12">
+          <div className="flex flex-col items-center justify-center text-center space-y-4">
+            <Activity className="h-16 w-16 text-destructive/50" />
+            <div>
+              <h3 className="text-lg font-semibold text-destructive">Erro ao carregar análises</h3>
+              <p className="text-sm text-muted-foreground">
+                Verifique sua conexão e tente novamente
+              </p>
             </div>
-          </Card>
-        ))}
-      </div>
-
-      {filteredAnalyses.length === 0 && (
+          </div>
+        </Card>
+      ) : filteredAnalyses.length === 0 ? (
         <Card className="p-12">
           <div className="flex flex-col items-center justify-center text-center space-y-4">
             <Activity className="h-16 w-16 text-muted-foreground/50" />
@@ -297,6 +174,104 @@ export default function AnalysisPage() {
             </div>
           </div>
         </Card>
+      ) : (
+        <div className="grid gap-4">
+          {filteredAnalyses.map((analysis: any) => (
+            <Card key={analysis.id} className="p-6 hover:shadow-lg transition-shadow">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 space-y-3">
+                  <div className="flex items-center space-x-4">
+                    <div>
+                      <h3 className="text-xl font-semibold">{analysis.asset?.ticker || 'N/A'}</h3>
+                      <p className="text-sm text-muted-foreground">{analysis.asset?.name || 'N/A'}</p>
+                    </div>
+                    <div className="rounded-full bg-primary/10 px-3 py-1">
+                      <span className="text-sm font-medium text-primary capitalize">
+                        {analysis.type === 'complete' ? 'Completa' : analysis.type === 'fundamental' ? 'Fundamentalista' : 'Técnica'}
+                      </span>
+                    </div>
+                    <div
+                      className={cn(
+                        'rounded-full border px-3 py-1',
+                        analysis.status === 'completed' ? 'bg-success/10 border-success/20 text-success' :
+                        analysis.status === 'processing' ? 'bg-warning/10 border-warning/20 text-warning' :
+                        analysis.status === 'failed' ? 'bg-destructive/10 border-destructive/20 text-destructive' :
+                        'bg-muted/10 border-muted/20 text-muted-foreground'
+                      )}
+                    >
+                      <span className="text-sm font-medium capitalize">
+                        {analysis.status === 'completed' ? 'Concluída' :
+                         analysis.status === 'processing' ? 'Processando' :
+                         analysis.status === 'failed' ? 'Falhou' : 'Pendente'}
+                      </span>
+                    </div>
+                    {analysis.recommendation && (
+                      <div
+                        className={cn(
+                          'flex items-center space-x-2 rounded-full border px-3 py-1',
+                          getSignalColor(analysis.recommendation.toUpperCase()),
+                        )}
+                      >
+                        {analysis.recommendation.includes('buy') ? (
+                          <TrendingUp className="h-4 w-4" />
+                        ) : analysis.recommendation === 'hold' ? (
+                          <Activity className="h-4 w-4" />
+                        ) : (
+                          <TrendingDown className="h-4 w-4" />
+                        )}
+                        <span className="text-sm font-semibold">
+                          {getSignalLabel(analysis.recommendation.toUpperCase())}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-6 gap-4">
+                    {analysis.confidenceScore && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Confiança</p>
+                        <p className={cn('text-2xl font-bold', getScoreColor(analysis.confidenceScore * 100))}>
+                          {(analysis.confidenceScore * 100).toFixed(0)}
+                        </p>
+                      </div>
+                    )}
+                    {analysis.sourcesCount > 0 && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Fontes</p>
+                        <p className="text-lg font-semibold">{analysis.sourcesCount}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm text-muted-foreground">Realizada em</p>
+                      <div className="flex items-center space-x-1">
+                        <Clock className="h-3 w-3 text-muted-foreground" />
+                        <p className="text-sm font-medium">
+                          {new Date(analysis.createdAt).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {analysis.summary && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {analysis.summary}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center space-x-2 ml-4">
+                  <Button variant="outline" size="sm">
+                    Ver Detalhes
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Atualizar
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );
