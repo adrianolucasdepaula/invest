@@ -1,8 +1,9 @@
 'use client';
 
-import { use } from 'react';
+import { use, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { PriceChart } from '@/components/charts/price-chart';
 import { StatCard } from '@/components/dashboard/stat-card';
 import {
@@ -13,46 +14,11 @@ import {
   FileText,
   Star,
   ArrowLeft,
+  AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
-
-// Mock data
-const mockPriceData = Array.from({ length: 90 }, (_, i) => {
-  const basePrice = 38 + Math.random() * 5;
-  return {
-    date: new Date(Date.now() - (89 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-    }),
-    open: basePrice,
-    high: basePrice + Math.random() * 2,
-    low: basePrice - Math.random() * 2,
-    close: basePrice + Math.random() * 2 - 1,
-    volume: Math.floor(Math.random() * 50000000) + 10000000,
-  };
-});
-
-const mockFundamentals = {
-  pl: 8.5,
-  pvp: 1.2,
-  roe: 18.5,
-  dividendYield: 12.3,
-  debtEquity: 0.45,
-  currentRatio: 1.8,
-  grossMargin: 42.5,
-  netMargin: 15.2,
-};
-
-const mockTechnicalIndicators = {
-  rsi: 62.5,
-  macd: 'Compra',
-  sma20: 37.8,
-  sma50: 36.5,
-  sma200: 35.2,
-  bollingerUpper: 40.2,
-  bollingerLower: 35.8,
-  signal: 'COMPRA',
-};
+import { useAsset, useAssetPrices, useAssetFundamentals } from '@/lib/hooks/use-assets';
+import { useAnalysis, useRequestAnalysis } from '@/lib/hooks/use-analysis';
 
 export default function AssetDetailPage({
   params,
@@ -60,6 +26,52 @@ export default function AssetDetailPage({
   params: Promise<{ ticker: string }>;
 }) {
   const { ticker } = use(params);
+
+  // Fetch real data from API
+  const { data: asset, isLoading: assetLoading, error: assetError } = useAsset(ticker);
+  const { data: priceHistory, isLoading: pricesLoading } = useAssetPrices(ticker, {
+    startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  });
+  const { data: fundamentals, isLoading: fundamentalsLoading } = useAssetFundamentals(ticker);
+  const { data: technicalAnalysis, isLoading: technicalLoading } = useAnalysis(ticker, 'technical');
+  const requestAnalysis = useRequestAnalysis();
+
+  // Calculate 52-week high/low from price history
+  const weekStats = useMemo(() => {
+    if (!priceHistory || priceHistory.length === 0) {
+      return { high52w: null, low52w: null };
+    }
+
+    const prices = priceHistory.map((p: any) => Number(p.close));
+    return {
+      high52w: Math.max(...prices),
+      low52w: Math.min(...prices),
+    };
+  }, [priceHistory]);
+
+  // Handle request technical analysis
+  const handleRequestAnalysis = () => {
+    requestAnalysis.mutate({ ticker, type: 'technical' });
+  };
+
+  const isLoading = assetLoading || pricesLoading;
+
+  // Error state
+  if (assetError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <AlertCircle className="h-12 w-12 text-destructive" />
+        <h2 className="text-2xl font-bold">Ativo não encontrado</h2>
+        <p className="text-muted-foreground">O ticker {ticker.toUpperCase()} não foi encontrado</p>
+        <Link href="/assets">
+          <Button>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar para Ativos
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -71,10 +83,17 @@ export default function AssetDetailPage({
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{ticker.toUpperCase()}</h1>
-            <p className="text-muted-foreground">
-              Petrobras Preferencial
-            </p>
+            {isLoading ? (
+              <>
+                <Skeleton className="h-9 w-32 mb-2" />
+                <Skeleton className="h-5 w-48" />
+              </>
+            ) : (
+              <>
+                <h1 className="text-3xl font-bold tracking-tight">{ticker.toUpperCase()}</h1>
+                <p className="text-muted-foreground">{asset?.name || 'Carregando...'}</p>
+              </>
+            )}
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -89,36 +108,52 @@ export default function AssetDetailPage({
         </div>
       </div>
 
+      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Preço Atual"
-          value={38.45}
-          change={2.34}
-          format="currency"
-          icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
-        />
-        <StatCard
-          title="Volume"
-          value={125000000}
-          format="number"
-          icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
-        />
-        <StatCard
-          title="Máxima 52 semanas"
-          value={42.15}
-          change={5.67}
-          format="currency"
-          icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
-        />
-        <StatCard
-          title="Mínima 52 semanas"
-          value={32.10}
-          change={-12.34}
-          format="currency"
-          icon={<TrendingDown className="h-4 w-4 text-muted-foreground" />}
-        />
+        {isLoading ? (
+          Array(4).fill(0).map((_, i) => (
+            <Card key={i} className="p-6">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+            </Card>
+          ))
+        ) : (
+          <>
+            <StatCard
+              title="Preço Atual"
+              value={asset?.price ?? 0}
+              change={asset?.changePercent ?? undefined}
+              format="currency"
+              icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+            />
+            <StatCard
+              title="Volume"
+              value={asset?.volume ?? 0}
+              format="number"
+              icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
+            />
+            <StatCard
+              title="Máxima 52 semanas"
+              value={weekStats.high52w ?? 0}
+              change={undefined}
+              format="currency"
+              icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
+            />
+            <StatCard
+              title="Mínima 52 semanas"
+              value={weekStats.low52w ?? 0}
+              change={undefined}
+              format="currency"
+              icon={<TrendingDown className="h-4 w-4 text-muted-foreground" />}
+            />
+          </>
+        )}
       </div>
 
+      {/* Price Chart */}
       <Card className="p-6">
         <div className="mb-4">
           <h3 className="text-lg font-semibold">Gráfico de Preços - Últimos 90 dias</h3>
@@ -126,10 +161,19 @@ export default function AssetDetailPage({
             Evolução do preço com volume negociado
           </p>
         </div>
-        <PriceChart data={mockPriceData} />
+        {pricesLoading ? (
+          <Skeleton className="h-[400px] w-full" />
+        ) : priceHistory && priceHistory.length > 0 ? (
+          <PriceChart data={priceHistory} />
+        ) : (
+          <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+            <p>Sem dados de histórico de preços disponíveis</p>
+          </div>
+        )}
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
+        {/* Fundamental Analysis */}
         <Card className="p-6">
           <div className="mb-4">
             <h3 className="text-lg font-semibold">Análise Fundamentalista</h3>
@@ -137,83 +181,147 @@ export default function AssetDetailPage({
               Principais indicadores fundamentalistas
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">P/L</p>
-              <p className="text-2xl font-bold">{mockFundamentals.pl.toFixed(2)}</p>
+          {fundamentalsLoading ? (
+            <div className="grid grid-cols-2 gap-4">
+              {Array(8).fill(0).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-8 w-16" />
+                </div>
+              ))}
             </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">P/VP</p>
-              <p className="text-2xl font-bold">{mockFundamentals.pvp.toFixed(2)}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">ROE</p>
-              <p className="text-2xl font-bold">{mockFundamentals.roe.toFixed(1)}%</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Div. Yield</p>
-              <p className="text-2xl font-bold">{mockFundamentals.dividendYield.toFixed(1)}%</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Dívida/PL</p>
-              <p className="text-2xl font-bold">{mockFundamentals.debtEquity.toFixed(2)}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Liquidez Corrente</p>
-              <p className="text-2xl font-bold">{mockFundamentals.currentRatio.toFixed(2)}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Margem Bruta</p>
-              <p className="text-2xl font-bold">{mockFundamentals.grossMargin.toFixed(1)}%</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Margem Líquida</p>
-              <p className="text-2xl font-bold">{mockFundamentals.netMargin.toFixed(1)}%</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold">Análise Técnica</h3>
-            <p className="text-sm text-muted-foreground">
-              Indicadores técnicos e sinais
-            </p>
-          </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <span className="text-sm font-medium">Sinal Geral</span>
-              <span className="rounded-full bg-success px-3 py-1 text-sm font-semibold text-success-foreground">
-                {mockTechnicalIndicators.signal}
-              </span>
-            </div>
+          ) : fundamentals ? (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">RSI (14)</p>
-                <p className="text-xl font-bold">{mockTechnicalIndicators.rsi.toFixed(1)}</p>
+                <p className="text-sm text-muted-foreground">P/L</p>
+                <p className="text-2xl font-bold">{fundamentals.pl?.toFixed(2) ?? 'N/A'}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">MACD</p>
-                <p className="text-xl font-bold">{mockTechnicalIndicators.macd}</p>
+                <p className="text-sm text-muted-foreground">P/VP</p>
+                <p className="text-2xl font-bold">{fundamentals.pvp?.toFixed(2) ?? 'N/A'}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">SMA 20</p>
-                <p className="text-xl font-bold">R$ {mockTechnicalIndicators.sma20.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">ROE</p>
+                <p className="text-2xl font-bold">{fundamentals.roe?.toFixed(1) ?? 'N/A'}%</p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">SMA 50</p>
-                <p className="text-xl font-bold">R$ {mockTechnicalIndicators.sma50.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">Div. Yield</p>
+                <p className="text-2xl font-bold">{fundamentals.dividendYield?.toFixed(1) ?? 'N/A'}%</p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">SMA 200</p>
-                <p className="text-xl font-bold">R$ {mockTechnicalIndicators.sma200.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">Dívida/PL</p>
+                <p className="text-2xl font-bold">{fundamentals.debtEquity?.toFixed(2) ?? 'N/A'}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Bollinger Superior</p>
-                <p className="text-xl font-bold">R$ {mockTechnicalIndicators.bollingerUpper.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">Liquidez Corrente</p>
+                <p className="text-2xl font-bold">{fundamentals.currentRatio?.toFixed(2) ?? 'N/A'}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Margem Bruta</p>
+                <p className="text-2xl font-bold">{fundamentals.grossMargin?.toFixed(1) ?? 'N/A'}%</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Margem Líquida</p>
+                <p className="text-2xl font-bold">{fundamentals.netMargin?.toFixed(1) ?? 'N/A'}%</p>
               </div>
             </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 space-y-2">
+              <p className="text-muted-foreground">Dados fundamentalistas não disponíveis</p>
+            </div>
+          )}
+        </Card>
+
+        {/* Technical Analysis */}
+        <Card className="p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Análise Técnica</h3>
+              <p className="text-sm text-muted-foreground">
+                Indicadores técnicos e sinais
+              </p>
+            </div>
+            {!technicalAnalysis && !technicalLoading && (
+              <Button
+                size="sm"
+                onClick={handleRequestAnalysis}
+                disabled={requestAnalysis.isPending}
+              >
+                {requestAnalysis.isPending ? 'Gerando...' : 'Gerar Análise'}
+              </Button>
+            )}
           </div>
+          {technicalLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-full" />
+              <div className="grid grid-cols-2 gap-4">
+                {Array(6).fill(0).map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-6 w-16" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : technicalAnalysis?.indicators ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <span className="text-sm font-medium">Sinal Geral</span>
+                <span className={`rounded-full px-3 py-1 text-sm font-semibold ${
+                  technicalAnalysis.recommendation === 'STRONG_BUY' || technicalAnalysis.recommendation === 'BUY'
+                    ? 'bg-success text-success-foreground'
+                    : technicalAnalysis.recommendation === 'STRONG_SELL' || technicalAnalysis.recommendation === 'SELL'
+                    ? 'bg-destructive text-destructive-foreground'
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {technicalAnalysis.recommendation || 'NEUTRO'}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">RSI (14)</p>
+                  <p className="text-xl font-bold">{technicalAnalysis.indicators.rsi?.toFixed(1) ?? 'N/A'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">MACD</p>
+                  <p className="text-xl font-bold">
+                    {technicalAnalysis.indicators.macd?.histogram > 0 ? 'Compra' : 'Venda'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">SMA 20</p>
+                  <p className="text-xl font-bold">
+                    R$ {technicalAnalysis.indicators.sma20?.toFixed(2) ?? 'N/A'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">SMA 50</p>
+                  <p className="text-xl font-bold">
+                    R$ {technicalAnalysis.indicators.sma50?.toFixed(2) ?? 'N/A'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">SMA 200</p>
+                  <p className="text-xl font-bold">
+                    R$ {technicalAnalysis.indicators.sma200?.toFixed(2) ?? 'N/A'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">EMA 12</p>
+                  <p className="text-xl font-bold">
+                    R$ {technicalAnalysis.indicators.ema12?.toFixed(2) ?? 'N/A'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 space-y-2">
+              <p className="text-muted-foreground">Análise técnica não disponível</p>
+              <p className="text-sm text-muted-foreground">
+                Clique em &quot;Gerar Análise&quot; para criar uma nova análise
+              </p>
+            </div>
+          )}
         </Card>
       </div>
     </div>
