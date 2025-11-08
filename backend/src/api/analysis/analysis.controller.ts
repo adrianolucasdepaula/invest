@@ -30,10 +30,7 @@ export class AnalysisController {
 
   @Get(':ticker')
   @ApiOperation({ summary: 'Get all analyses for a ticker' })
-  async getAnalyses(
-    @Param('ticker') ticker: string,
-    @Query('type') type?: string,
-  ) {
+  async getAnalyses(@Param('ticker') ticker: string, @Query('type') type?: string) {
     return this.analysisService.findByTicker(ticker, type);
   }
 

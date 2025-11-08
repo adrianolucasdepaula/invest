@@ -84,7 +84,7 @@ Forneça recomendação baseada no sentimento geral.`;
   private aggregateSentiment(news: any[]): { positive: number; neutral: number; negative: number } {
     const counts = { positive: 0, neutral: 0, negative: 0 };
 
-    news.forEach(item => {
+    news.forEach((item) => {
       if (item.sentiment) {
         counts[item.sentiment.toLowerCase()]++;
       } else {

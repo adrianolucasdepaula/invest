@@ -18,8 +18,17 @@ import ScraperCard from '@/components/ScraperCard';
 import TestResultModal from '@/components/TestResultModal';
 import CookieStatusBanner from '@/components/CookieStatusBanner';
 
+// Scraper type definitions
+interface Scraper {
+  id: string;
+  name: string;
+  category: string;
+  auth: 'public' | 'oauth' | 'credentials';
+  status: string;
+}
+
 // Scraper definitions with categorization
-const SCRAPERS = [
+const SCRAPERS: Scraper[] = [
   // Fundamental Analysis (5)
   { id: 'fundamentus', name: 'Fundamentus', category: 'fundamental', auth: 'public', status: 'implemented' },
   { id: 'investsite', name: 'Investsite', category: 'fundamental', auth: 'public', status: 'implemented' },

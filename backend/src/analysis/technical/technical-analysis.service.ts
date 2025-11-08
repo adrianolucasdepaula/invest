@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { TechnicalIndicatorsService, PriceData, TechnicalIndicators } from './technical-indicators.service';
+import {
+  TechnicalIndicatorsService,
+  PriceData,
+  TechnicalIndicators,
+} from './technical-indicators.service';
 
 export interface TechnicalAnalysisResult {
   ticker: string;
@@ -73,14 +77,25 @@ export class TechnicalAnalysisService {
   /**
    * Analyze trend signal
    */
-  private analyzeTrendSignal(indicators: TechnicalIndicators, currentPrice: number): 'BUY' | 'SELL' | 'NEUTRAL' {
+  private analyzeTrendSignal(
+    indicators: TechnicalIndicators,
+    currentPrice: number,
+  ): 'BUY' | 'SELL' | 'NEUTRAL' {
     let buySignals = 0;
     let sellSignals = 0;
 
     // Check moving averages
-    if (currentPrice > indicators.sma20 && currentPrice > indicators.sma50 && currentPrice > indicators.sma200) {
+    if (
+      currentPrice > indicators.sma20 &&
+      currentPrice > indicators.sma50 &&
+      currentPrice > indicators.sma200
+    ) {
       buySignals += 2;
-    } else if (currentPrice < indicators.sma20 && currentPrice < indicators.sma50 && currentPrice < indicators.sma200) {
+    } else if (
+      currentPrice < indicators.sma20 &&
+      currentPrice < indicators.sma50 &&
+      currentPrice < indicators.sma200
+    ) {
       sellSignals += 2;
     }
 
@@ -244,12 +259,22 @@ export class TechnicalAnalysisService {
 
     for (let i = 2; i < highs.length - 2; i++) {
       // Check if local maximum
-      if (highs[i] > highs[i - 1] && highs[i] > highs[i - 2] && highs[i] > highs[i + 1] && highs[i] > highs[i + 2]) {
+      if (
+        highs[i] > highs[i - 1] &&
+        highs[i] > highs[i - 2] &&
+        highs[i] > highs[i + 1] &&
+        highs[i] > highs[i + 2]
+      ) {
         resistanceLevels.push(highs[i]);
       }
 
       // Check if local minimum
-      if (lows[i] < lows[i - 1] && lows[i] < lows[i - 2] && lows[i] < lows[i + 1] && lows[i] < lows[i + 2]) {
+      if (
+        lows[i] < lows[i - 1] &&
+        lows[i] < lows[i - 2] &&
+        lows[i] < lows[i + 1] &&
+        lows[i] < lows[i + 2]
+      ) {
         supportLevels.push(lows[i]);
       }
     }
@@ -273,18 +298,26 @@ export class TechnicalAnalysisService {
 
     // Overall recommendation
     if (signals.overall === 'BUY') {
-      recommendations.push(`⬆️ COMPRA (${signals.strength}% confiança): Indicadores técnicos sugerem tendência de alta`);
+      recommendations.push(
+        `⬆️ COMPRA (${signals.strength}% confiança): Indicadores técnicos sugerem tendência de alta`,
+      );
     } else if (signals.overall === 'SELL') {
-      recommendations.push(`⬇️ VENDA (${signals.strength}% confiança): Indicadores técnicos sugerem tendência de baixa`);
+      recommendations.push(
+        `⬇️ VENDA (${signals.strength}% confiança): Indicadores técnicos sugerem tendência de baixa`,
+      );
     } else {
       recommendations.push(`⏸️ NEUTRO: Aguardar confirmação de tendência`);
     }
 
     // RSI recommendations
     if (indicators.rsi < 30) {
-      recommendations.push(`📊 RSI em ${indicators.rsi.toFixed(1)} - Ativo sobreven dido, possível reversão de alta`);
+      recommendations.push(
+        `📊 RSI em ${indicators.rsi.toFixed(1)} - Ativo sobreven dido, possível reversão de alta`,
+      );
     } else if (indicators.rsi > 70) {
-      recommendations.push(`📊 RSI em ${indicators.rsi.toFixed(1)} - Ativo sobrecomprado, possível correção`);
+      recommendations.push(
+        `📊 RSI em ${indicators.rsi.toFixed(1)} - Ativo sobrecomprado, possível correção`,
+      );
     }
 
     // Trend recommendations

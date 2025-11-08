@@ -72,7 +72,9 @@ export class GoogleNewsScraper extends AbstractScraper<NewsArticle[]> {
       });
 
       const duration = Date.now() - startTime;
-      this.logger.log(`Scraping concluído para ${ticker}. ${articles.length} notícias encontradas em ${duration}ms`);
+      this.logger.log(
+        `Scraping concluído para ${ticker}. ${articles.length} notícias encontradas em ${duration}ms`,
+      );
 
       return articles;
     } catch (error) {

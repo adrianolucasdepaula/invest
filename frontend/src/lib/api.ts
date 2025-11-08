@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import Cookies from 'js-cookie';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -21,7 +22,7 @@ class ApiClient {
     // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem('access_token');
+        const token = Cookies.get('access_token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -35,8 +36,10 @@ class ApiClient {
       (response) => response,
       (error: AxiosError) => {
         if (error.response?.status === 401) {
-          localStorage.removeItem('access_token');
-          window.location.href = '/login';
+          Cookies.remove('access_token');
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
         }
         return Promise.reject(error);
       },
@@ -198,7 +201,12 @@ class ApiClient {
   async login(email: string, password: string) {
     const response = await this.client.post('/auth/login', { email, password });
     if (response.data.access_token) {
-      localStorage.setItem('access_token', response.data.access_token);
+      // Store token in cookie with 7 days expiration
+      Cookies.set('access_token', response.data.access_token, {
+        expires: 7,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+      });
     }
     return response.data;
   }
@@ -206,13 +214,23 @@ class ApiClient {
   async loginWithGoogle(token: string) {
     const response = await this.client.post('/auth/google', { token });
     if (response.data.access_token) {
-      localStorage.setItem('access_token', response.data.access_token);
+      // Store token in cookie with 7 days expiration
+      Cookies.set('access_token', response.data.access_token, {
+        expires: 7,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+      });
     }
     return response.data;
   }
 
   async logout() {
-    localStorage.removeItem('access_token');
+    Cookies.remove('access_token');
+  }
+
+  async register(data: { email: string; password: string; firstName?: string; lastName?: string }) {
+    const response = await this.client.post('/auth/register', data);
+    return response.data;
   }
 
   async getProfile() {

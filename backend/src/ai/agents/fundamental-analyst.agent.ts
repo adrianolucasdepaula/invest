@@ -23,10 +23,7 @@ export class FundamentalAnalystAgent extends BaseFinancialAgent {
     // Precisa de pelo menos alguns indicadores fundamentalistas
     return !!(
       stockData &&
-      (stockData.pe ||
-        stockData.roe ||
-        stockData.dividendYield ||
-        stockData.debtToEquity)
+      (stockData.pe || stockData.roe || stockData.dividendYield || stockData.debtToEquity)
     );
   }
 

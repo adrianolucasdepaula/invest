@@ -131,12 +131,14 @@ export class GoogleAuthHelper {
         this.logger.warn('Please complete 2FA verification manually');
 
         // Wait for manual 2FA completion (up to 2 minutes)
-        await page.waitForNavigation({
-          waitUntil: 'networkidle2',
-          timeout: 120000,
-        }).catch(() => {
-          this.logger.warn('2FA timeout - user may still be completing verification');
-        });
+        await page
+          .waitForNavigation({
+            waitUntil: 'networkidle2',
+            timeout: 120000,
+          })
+          .catch(() => {
+            this.logger.warn('2FA timeout - user may still be completing verification');
+          });
       }
     } catch (error) {
       this.logger.warn(`2FA check failed: ${error.message}`);

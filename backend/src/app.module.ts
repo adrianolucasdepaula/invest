@@ -3,7 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
@@ -19,6 +20,17 @@ import { QueueModule } from './queue/queue.module';
 import { AiModule } from './ai/ai.module';
 import { ValidatorsModule } from './validators/validators.module';
 import { WebSocketModule } from './websocket/websocket.module';
+import {
+  User,
+  Asset,
+  AssetPrice,
+  FundamentalData,
+  Portfolio,
+  PortfolioPosition,
+  DataSource,
+  ScrapedData,
+  Analysis,
+} from './database/entities';
 
 @Module({
   imports: [
@@ -38,7 +50,17 @@ import { WebSocketModule } from './websocket/websocket.module';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        entities: [
+          User,
+          Asset,
+          AssetPrice,
+          FundamentalData,
+          Portfolio,
+          PortfolioPosition,
+          DataSource,
+          ScrapedData,
+          Analysis,
+        ],
         synchronize: configService.get('DB_SYNCHRONIZE', false),
         logging: configService.get('DB_LOGGING', false),
         ssl: configService.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
@@ -66,10 +88,12 @@ import { WebSocketModule } from './websocket/websocket.module';
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        throttlers: [{
-          ttl: configService.get('RATE_LIMIT_TTL', 60000),
-          limit: configService.get('RATE_LIMIT_MAX_REQUESTS', 100),
-        }],
+        throttlers: [
+          {
+            ttl: configService.get('RATE_LIMIT_TTL', 60000),
+            limit: configService.get('RATE_LIMIT_MAX_REQUESTS', 100),
+          },
+        ],
       }),
       inject: [ConfigService],
     }),
@@ -90,6 +114,12 @@ import { WebSocketModule } from './websocket/websocket.module';
     WebSocketModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

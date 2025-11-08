@@ -43,7 +43,7 @@ try:
     from scrapers.griffin_scraper import GriffinScraper
     from scrapers.coinmarketcap_scraper import CoinMarketCapScraper
     from scrapers.bloomberg_scraper import BloombergScraper
-    from scrapers.google_news_scraper import GoogleNewsScraper
+    from scrapers.googlenews_scraper import GoogleNewsScraper
 except ImportError as e:
     logger.error(f"Erro ao importar scrapers: {e}")
     logger.error("Certifique-se de que os scrapers estão implementados")

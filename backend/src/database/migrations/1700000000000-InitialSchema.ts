@@ -79,11 +79,17 @@ export class InitialSchema1700000000000 implements MigrationInterface {
     `);
 
     // Create indexes for asset_prices
-    await queryRunner.query(`CREATE INDEX "IDX_asset_prices_asset_date" ON "asset_prices" ("asset_id", "date")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_asset_prices_asset_date" ON "asset_prices" ("asset_id", "date")`,
+    );
     await queryRunner.query(`CREATE INDEX "IDX_asset_prices_date" ON "asset_prices" ("date")`);
 
     // Convert asset_prices to TimescaleDB hypertable
-    await queryRunner.query(`SELECT create_hypertable('asset_prices', 'date', if_not_exists => TRUE)`);
+    // NOTE: Commented out for vanilla PostgreSQL (without TimescaleDB extension)
+    // Uncomment if using TimescaleDB:
+    // await queryRunner.query(
+    //   `SELECT create_hypertable('asset_prices', 'date', if_not_exists => TRUE)`,
+    // );
 
     // Create fundamental_data table
     await queryRunner.query(`
@@ -134,7 +140,9 @@ export class InitialSchema1700000000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_fundamental_data_asset_date" ON "fundamental_data" ("asset_id", "reference_date")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_fundamental_data_asset_date" ON "fundamental_data" ("asset_id", "reference_date")`,
+    );
 
     // Create portfolios table
     await queryRunner.query(`
@@ -182,8 +190,12 @@ export class InitialSchema1700000000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_portfolio_positions_portfolio" ON "portfolio_positions" ("portfolio_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_portfolio_positions_asset" ON "portfolio_positions" ("asset_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_portfolio_positions_portfolio" ON "portfolio_positions" ("portfolio_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_portfolio_positions_asset" ON "portfolio_positions" ("asset_id")`,
+    );
 
     // Create data_sources table
     await queryRunner.query(`
@@ -241,9 +253,15 @@ export class InitialSchema1700000000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_scraped_data_asset_source_type_date" ON "scraped_data" ("asset_id", "data_source_id", "data_type", "scraped_at")`);
-    await queryRunner.query(`CREATE INDEX "IDX_scraped_data_source" ON "scraped_data" ("data_source_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_scraped_data_scraped_at" ON "scraped_data" ("scraped_at")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_scraped_data_asset_source_type_date" ON "scraped_data" ("asset_id", "data_source_id", "data_type", "scraped_at")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_scraped_data_source" ON "scraped_data" ("data_source_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_scraped_data_scraped_at" ON "scraped_data" ("scraped_at")`,
+    );
 
     // Create analyses table
     await queryRunner.query(`
@@ -279,7 +297,9 @@ export class InitialSchema1700000000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_analyses_asset_type" ON "analyses" ("asset_id", "type")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_analyses_asset_type" ON "analyses" ("asset_id", "type")`,
+    );
     await queryRunner.query(`CREATE INDEX "IDX_analyses_user" ON "analyses" ("user_id")`);
     await queryRunner.query(`CREATE INDEX "IDX_analyses_status" ON "analyses" ("status")`);
     await queryRunner.query(`CREATE INDEX "IDX_analyses_created_at" ON "analyses" ("created_at")`);

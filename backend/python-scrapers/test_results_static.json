@@ -1,0 +1,522 @@
+{
+  "test_metadata": {
+    "date": "2025-11-08",
+    "test_type": "static_analysis_and_import_validation",
+    "project": "B3 AI Analysis Platform - Python Scrapers",
+    "directory": "/home/user/invest/backend/python-scrapers",
+    "duration_seconds": 300
+  },
+  "summary": {
+    "total_scrapers": 27,
+    "import_success": 27,
+    "import_failed": 0,
+    "inherits_base": 27,
+    "implements_scrape": 27,
+    "has_error_handling": 27,
+    "has_logging": 27,
+    "has_retry": 27,
+    "has_validation": 8,
+    "runtime_tests": 0,
+    "overall_status": "EXCELLENT"
+  },
+  "scrapers_by_auth": {
+    "public": 9,
+    "oauth": 13,
+    "credentials": 2,
+    "subscription": 3
+  },
+  "scrapers_by_category": {
+    "fundamental_analysis": 5,
+    "market_analysis": 4,
+    "ai_assistants": 5,
+    "news": 6,
+    "official_data": 2,
+    "options": 1,
+    "crypto": 1,
+    "insider_trading": 1,
+    "institutional_reports": 2
+  },
+  "infrastructure": {
+    "redis": {
+      "status": "not_running",
+      "host": "localhost",
+      "port": 6479
+    },
+    "postgresql": {
+      "status": "not_running",
+      "host": "localhost",
+      "port": 5532
+    },
+    "chrome": {
+      "status": "not_installed",
+      "required": true,
+      "critical": true
+    },
+    "chromedriver": {
+      "status": "installed",
+      "version": "142.0.7444.61",
+      "path": "/opt/node22/bin/chromedriver"
+    }
+  },
+  "oauth_config": {
+    "total_sites": 19,
+    "required_sites": 10,
+    "optional_sites": 9,
+    "cookie_file_exists": false,
+    "cookie_file_path": "browser-profiles/google_cookies.pkl"
+  },
+  "critical_blockers": [
+    {
+      "id": 1,
+      "name": "chrome_not_installed",
+      "severity": "critical",
+      "impact": "blocks_all_scrapers",
+      "fix": "apt-get install google-chrome-stable"
+    },
+    {
+      "id": 2,
+      "name": "redis_not_running",
+      "severity": "high",
+      "impact": "no_caching",
+      "fix": "docker-compose up -d redis"
+    },
+    {
+      "id": 3,
+      "name": "postgres_not_running",
+      "severity": "high",
+      "impact": "no_persistence",
+      "fix": "docker-compose up -d postgres"
+    },
+    {
+      "id": 4,
+      "name": "oauth_cookies_missing",
+      "severity": "high",
+      "impact": "13_oauth_scrapers_blocked",
+      "fix": "python3 save_google_cookies.py"
+    }
+  ],
+  "scrapers": [
+    {
+      "name": "StatusInvestScraper",
+      "source": "STATUSINVEST",
+      "category": "fundamental_analysis",
+      "auth_type": "public",
+      "requires_login": false,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_chrome_install"
+    },
+    {
+      "name": "FundamentusScraper",
+      "source": "FUNDAMENTUS",
+      "category": "fundamental_analysis",
+      "auth_type": "public",
+      "requires_login": false,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_chrome_install"
+    },
+    {
+      "name": "InvestsiteScraper",
+      "source": "INVESTSITE",
+      "category": "fundamental_analysis",
+      "auth_type": "public",
+      "requires_login": false,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_chrome_install"
+    },
+    {
+      "name": "FundamenteiScraper",
+      "source": "FUNDAMENTEI",
+      "category": "fundamental_analysis",
+      "auth_type": "oauth",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_oauth_setup"
+    },
+    {
+      "name": "Investidor10Scraper",
+      "source": "INVESTIDOR10",
+      "category": "fundamental_analysis",
+      "auth_type": "oauth",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_oauth_setup"
+    },
+    {
+      "name": "InvestingScraper",
+      "source": "INVESTING",
+      "category": "market_analysis",
+      "auth_type": "oauth",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_oauth_setup"
+    },
+    {
+      "name": "ADVFNScraper",
+      "source": "ADVFN",
+      "category": "market_analysis",
+      "auth_type": "credentials",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_credential_config"
+    },
+    {
+      "name": "GoogleFinanceScraper",
+      "source": "GOOGLE_FINANCE",
+      "category": "market_analysis",
+      "auth_type": "oauth",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_oauth_setup"
+    },
+    {
+      "name": "TradingViewScraper",
+      "source": "TRADINGVIEW",
+      "category": "market_analysis",
+      "auth_type": "oauth",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_oauth_setup"
+    },
+    {
+      "name": "B3Scraper",
+      "source": "B3",
+      "category": "official_data",
+      "auth_type": "public",
+      "requires_login": false,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_chrome_install"
+    },
+    {
+      "name": "BCBScraper",
+      "source": "BCB",
+      "category": "official_data",
+      "auth_type": "public",
+      "requires_login": false,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_chrome_install"
+    },
+    {
+      "name": "GriffinScraper",
+      "source": "GRIFFIN",
+      "category": "insider_trading",
+      "auth_type": "public",
+      "requires_login": false,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_chrome_install"
+    },
+    {
+      "name": "CoinMarketCapScraper",
+      "source": "COINMARKETCAP",
+      "category": "crypto",
+      "auth_type": "public",
+      "requires_login": false,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_chrome_install"
+    },
+    {
+      "name": "OpcoesNetScraper",
+      "source": "OPCOES_NET",
+      "category": "options",
+      "auth_type": "credentials",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_credential_config"
+    },
+    {
+      "name": "ChatGPTScraper",
+      "source": "CHATGPT",
+      "category": "ai_assistants",
+      "auth_type": "oauth",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_oauth_setup"
+    },
+    {
+      "name": "GeminiScraper",
+      "source": "GEMINI",
+      "category": "ai_assistants",
+      "auth_type": "oauth",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_oauth_setup"
+    },
+    {
+      "name": "DeepSeekScraper",
+      "source": "DEEPSEEK",
+      "category": "ai_assistants",
+      "auth_type": "oauth",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_oauth_setup"
+    },
+    {
+      "name": "ClaudeScraper",
+      "source": "CLAUDE",
+      "category": "ai_assistants",
+      "auth_type": "oauth",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_oauth_setup"
+    },
+    {
+      "name": "GrokScraper",
+      "source": "GROK",
+      "category": "ai_assistants",
+      "auth_type": "oauth",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_oauth_setup"
+    },
+    {
+      "name": "BloombergScraper",
+      "source": "BLOOMBERG",
+      "category": "news",
+      "auth_type": "public",
+      "requires_login": false,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_chrome_install"
+    },
+    {
+      "name": "GoogleNewsScraper",
+      "source": "GOOGLENEWS",
+      "category": "news",
+      "auth_type": "public",
+      "requires_login": false,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_chrome_install"
+    },
+    {
+      "name": "InvestingNewsScraper",
+      "source": "INVESTING",
+      "category": "news",
+      "auth_type": "oauth",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_oauth_setup"
+    },
+    {
+      "name": "ValorScraper",
+      "source": "VALOR",
+      "category": "news",
+      "auth_type": "subscription",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_subscription_setup"
+    },
+    {
+      "name": "ExameScraper",
+      "source": "EXAME",
+      "category": "news",
+      "auth_type": "subscription",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_subscription_setup"
+    },
+    {
+      "name": "InfoMoneyScraper",
+      "source": "INFOMONEY",
+      "category": "news",
+      "auth_type": "oauth",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_oauth_setup"
+    },
+    {
+      "name": "EstadaoScraper",
+      "source": "ESTADAO",
+      "category": "institutional_reports",
+      "auth_type": "subscription",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_subscription_setup"
+    },
+    {
+      "name": "MaisRetornoScraper",
+      "source": "MAISRETORNO",
+      "category": "institutional_reports",
+      "auth_type": "oauth",
+      "requires_login": true,
+      "import_status": "success",
+      "inherits_base": true,
+      "implements_scrape": true,
+      "has_error_handling": true,
+      "has_logging": true,
+      "has_retry": true,
+      "ready_to_test": "after_oauth_setup"
+    }
+  ],
+  "next_steps": [
+    {
+      "step": 1,
+      "action": "Install Chrome browser",
+      "priority": "urgent",
+      "command": "apt-get install google-chrome-stable"
+    },
+    {
+      "step": 2,
+      "action": "Start infrastructure services",
+      "priority": "high",
+      "command": "docker-compose up -d redis postgres"
+    },
+    {
+      "step": 3,
+      "action": "Save Google OAuth cookies",
+      "priority": "high",
+      "command": "python3 save_google_cookies.py"
+    },
+    {
+      "step": 4,
+      "action": "Run public scraper tests",
+      "priority": "medium",
+      "command": "python3 tests/test_public_scrapers.py"
+    },
+    {
+      "step": 5,
+      "action": "Test OAuth scrapers",
+      "priority": "medium",
+      "command": "TBD"
+    },
+    {
+      "step": 6,
+      "action": "Configure credentials",
+      "priority": "low",
+      "command": "Edit config for ADVFN and Opcoes"
+    },
+    {
+      "step": 7,
+      "action": "Setup subscriptions",
+      "priority": "low",
+      "command": "Configure Valor, Estadao, Exame access"
+    }
+  ]
+}

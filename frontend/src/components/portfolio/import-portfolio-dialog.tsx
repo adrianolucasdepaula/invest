@@ -160,8 +160,8 @@ export function ImportPortfolioDialog({
               <h4 className="text-sm font-semibold">Como exportar da B3:</h4>
               <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
                 <li>Acesse o Canal Eletrônico do Investidor (CEI)</li>
-                <li>Vá em "Consultas" → "Posição Consolidada"</li>
-                <li>Selecione "Exportar para Excel"</li>
+                <li>Vá em &quot;Consultas&quot; → &quot;Posição Consolidada&quot;</li>
+                <li>Selecione &quot;Exportar para Excel&quot;</li>
                 <li>Faça o upload do arquivo aqui</li>
               </ol>
             </div>
@@ -173,7 +173,7 @@ export function ImportPortfolioDialog({
               <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
                 <li>Entre no Kinvo Web</li>
                 <li>Acesse sua carteira de investimentos</li>
-                <li>Clique em "Exportar" no canto superior direito</li>
+                <li>Clique em &quot;Exportar&quot; no canto superior direito</li>
                 <li>Escolha o formato Excel ou CSV</li>
                 <li>Faça o upload do arquivo aqui</li>
               </ol>

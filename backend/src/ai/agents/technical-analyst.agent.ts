@@ -21,13 +21,7 @@ export class TechnicalAnalystAgent extends BaseFinancialAgent {
     const { stockData } = context;
 
     // Precisa de pelo menos alguns indicadores técnicos
-    return !!(
-      stockData &&
-      (stockData.rsi ||
-        stockData.macd ||
-        stockData.sma20 ||
-        stockData.sma50)
-    );
+    return !!(stockData && (stockData.rsi || stockData.macd || stockData.sma20 || stockData.sma50));
   }
 
   async analyze(context: AnalysisContext): Promise<AgentResponse> {

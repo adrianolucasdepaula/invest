@@ -1,29 +1,47 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useAssets } from '@/lib/hooks/use-assets';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { AssetTable } from '@/components/dashboard/asset-table';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Activity, DollarSign } from 'lucide-react';
 import { MarketChart } from '@/components/charts/market-chart';
-
-// Mock data - substituir com chamadas reais à API
-const mockStats = {
-  ibovespa: { value: 127453.68, change: 1.23 },
-  portfolio: { value: 125430.50, change: 2.45 },
-  dayGain: { value: 3456.78, change: 1.85 },
-  totalGain: { value: 15234.90, change: 13.85 },
-};
-
-const mockAssets = [
-  { ticker: 'PETR4', name: 'Petrobras PN', price: 38.45, change: 2.34, changePercent: 2.34, volume: 125000000, marketCap: 500000000000 },
-  { ticker: 'VALE3', name: 'Vale ON', price: 65.78, change: -1.12, changePercent: -1.12, volume: 98000000, marketCap: 350000000000 },
-  { ticker: 'ITUB4', name: 'Itaú Unibanco PN', price: 28.90, change: 0.87, changePercent: 0.87, volume: 67000000, marketCap: 280000000000 },
-  { ticker: 'BBDC4', name: 'Bradesco PN', price: 14.56, change: 1.45, changePercent: 1.45, volume: 89000000, marketCap: 150000000000 },
-  { ticker: 'BBAS3', name: 'Banco do Brasil ON', price: 25.34, change: -0.34, changePercent: -0.34, volume: 45000000, marketCap: 120000000000 },
-];
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
+  const { data: assets, isLoading, error } = useAssets({ limit: 10 });
+
+  // Calculate real stats from assets data
+  const stats = useMemo(() => {
+    if (!assets || assets.length === 0) {
+      return {
+        ibovespa: { value: null, change: null },
+        topGainers: 0,
+        activeAssets: 0,
+        avgChange: null,
+      };
+    }
+
+    // Find Ibovespa (^BVSP) or use first index asset
+    const ibovespaAsset = assets.find((a: any) =>
+      a.ticker === '^BVSP' || a.ticker === 'IBOV' || a.name?.includes('Ibovespa')
+    );
+
+    const topGainers = assets.filter((a: any) => a.changePercent && a.changePercent > 0).length;
+    const activeAssets = assets.length;
+    const avgChange = assets.reduce((sum: number, a: any) => sum + (a.changePercent || 0), 0) / assets.length;
+
+    return {
+      ibovespa: {
+        value: ibovespaAsset?.price || null,
+        change: ibovespaAsset?.changePercent || null,
+      },
+      topGainers,
+      activeAssets,
+      avgChange,
+    };
+  }, [assets]);
   return (
     <div className="space-y-6">
       <div>
@@ -34,34 +52,54 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Ibovespa"
-          value={mockStats.ibovespa.value}
-          change={mockStats.ibovespa.change}
-          format="number"
-          icon={<Activity className="h-4 w-4 text-muted-foreground" />}
-        />
-        <StatCard
-          title="Valor do Portfólio"
-          value={mockStats.portfolio.value}
-          change={mockStats.portfolio.change}
-          format="currency"
-          icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
-        />
-        <StatCard
-          title="Ganho do Dia"
-          value={mockStats.dayGain.value}
-          change={mockStats.dayGain.change}
-          format="currency"
-          icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
-        />
-        <StatCard
-          title="Ganho Total"
-          value={mockStats.totalGain.value}
-          change={mockStats.totalGain.change}
-          format="currency"
-          icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
-        />
+        {isLoading ? (
+          <>
+            {Array(4).fill(0).map((_, i) => (
+              <Card key={i} className="p-6">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              </Card>
+            ))}
+          </>
+        ) : (
+          <>
+            <StatCard
+              title="Ibovespa"
+              value={stats.ibovespa.value ?? 0}
+              change={stats.ibovespa.change ?? undefined}
+              format="number"
+              icon={<Activity className="h-4 w-4 text-muted-foreground" />}
+            />
+            <StatCard
+              title="Ativos Rastreados"
+              value={stats.activeAssets}
+              change={stats.avgChange ?? undefined}
+              format="number"
+              icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+            />
+            <StatCard
+              title="Maiores Altas"
+              value={stats.topGainers}
+              change={undefined}
+              format="number"
+              icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
+            />
+            <StatCard
+              title="Variação Média"
+              value={stats.avgChange ?? 0}
+              change={undefined}
+              format="percent"
+              icon={stats.avgChange && stats.avgChange >= 0 ? (
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <TrendingDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            />
+          </>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -83,30 +121,55 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="space-y-4">
-            {mockAssets.slice(0, 5).map((asset) => (
-              <div key={asset.ticker} className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{asset.ticker}</p>
-                  <p className="text-sm text-muted-foreground">{asset.name}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium">
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    }).format(asset.price)}
-                  </p>
-                  <p
-                    className={`text-sm ${
-                      asset.change >= 0 ? 'text-success' : 'text-destructive'
-                    }`}
-                  >
-                    {asset.change >= 0 ? '+' : ''}
-                    {asset.change.toFixed(2)}%
-                  </p>
-                </div>
-              </div>
-            ))}
+            {isLoading ? (
+              Array(5)
+                .fill(0)
+                .map((_, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-3 w-12" />
+                    </div>
+                  </div>
+                ))
+            ) : error ? (
+              <p className="text-sm text-destructive">Erro ao carregar ativos</p>
+            ) : (
+              assets
+                ?.filter((asset: any) => asset.changePercent && asset.changePercent > 0)
+                .sort((a: any, b: any) => (b.changePercent || 0) - (a.changePercent || 0))
+                .slice(0, 5)
+                .map((asset: any) => (
+                  <div key={asset.ticker} className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{asset.ticker}</p>
+                      <p className="text-sm text-muted-foreground">{asset.name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">
+                        {asset.price
+                          ? new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            }).format(asset.price)
+                          : 'N/A'}
+                      </p>
+                      <p
+                        className={`text-sm ${
+                          (asset.changePercent || 0) >= 0 ? 'text-success' : 'text-destructive'
+                        }`}
+                      >
+                        {(asset.changePercent || 0) >= 0 ? '+' : ''}
+                        {asset.changePercent?.toFixed(2)}%
+                      </p>
+                    </div>
+                  </div>
+                ))
+            )}
           </div>
         </Card>
       </div>
@@ -118,7 +181,19 @@ export default function DashboardPage() {
             Principais ativos do mercado brasileiro
           </p>
         </div>
-        <AssetTable assets={mockAssets} />
+        {isLoading ? (
+          <div className="space-y-4">
+            {Array(5)
+              .fill(0)
+              .map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+          </div>
+        ) : error ? (
+          <p className="text-sm text-destructive">Erro ao carregar ativos</p>
+        ) : (
+          <AssetTable assets={assets || []} />
+        )}
       </Card>
     </div>
   );

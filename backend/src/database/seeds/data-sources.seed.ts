@@ -55,7 +55,7 @@ export async function seedDataSources(dataSource: DataSource) {
       requiresLogin: false,
       isVerified: true,
       isTrusted: true,
-      reliabilityScore: 0.90,
+      reliabilityScore: 0.9,
     },
     {
       name: 'Investsite',
@@ -95,7 +95,7 @@ export async function seedDataSources(dataSource: DataSource) {
       loginType: 'google',
       isVerified: true,
       isTrusted: true,
-      reliabilityScore: 0.90,
+      reliabilityScore: 0.9,
     },
     {
       name: 'ADVFN Brasil',
@@ -151,7 +151,7 @@ export async function seedDataSources(dataSource: DataSource) {
       loginType: 'credentials',
       isVerified: true,
       isTrusted: true,
-      reliabilityScore: 0.90,
+      reliabilityScore: 0.9,
     },
 
     // Insider Analysis Sources
@@ -208,7 +208,7 @@ export async function seedDataSources(dataSource: DataSource) {
       loginType: 'google',
       isVerified: true,
       isTrusted: true,
-      reliabilityScore: 0.90,
+      reliabilityScore: 0.9,
     },
     {
       name: 'Bloomberg Línea',
@@ -246,7 +246,7 @@ export async function seedDataSources(dataSource: DataSource) {
       loginType: 'google',
       isVerified: true,
       isTrusted: true,
-      reliabilityScore: 0.90,
+      reliabilityScore: 0.9,
     },
 
     // AI Sources
@@ -261,7 +261,7 @@ export async function seedDataSources(dataSource: DataSource) {
       loginType: 'google',
       isVerified: true,
       isTrusted: true,
-      reliabilityScore: 0.90,
+      reliabilityScore: 0.9,
     },
     {
       name: 'DeepSeek',
@@ -287,7 +287,7 @@ export async function seedDataSources(dataSource: DataSource) {
       loginType: 'google',
       isVerified: true,
       isTrusted: true,
-      reliabilityScore: 0.90,
+      reliabilityScore: 0.9,
     },
     {
       name: 'Claude',
@@ -300,7 +300,7 @@ export async function seedDataSources(dataSource: DataSource) {
       loginType: 'google',
       isVerified: true,
       isTrusted: true,
-      reliabilityScore: 0.90,
+      reliabilityScore: 0.9,
     },
     {
       name: 'Grok',

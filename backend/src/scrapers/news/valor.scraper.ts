@@ -48,8 +48,9 @@ export class ValorScraper extends AbstractScraper<ValorArticle[]> {
           const title = $article.find('.widget--info__title, h2').text().trim();
           const url = $article.find('a').first().attr('href');
           const author = $article.find('.widget--info__meta-author').text().trim();
-          const timeText = $article.find('time').attr('datetime') ||
-                          $article.find('.widget--info__meta-time').text().trim();
+          const timeText =
+            $article.find('time').attr('datetime') ||
+            $article.find('.widget--info__meta-time').text().trim();
           const summary = $article.find('.widget--info__description, p').first().text().trim();
           const category = $article.find('.widget--info__header-title').text().trim();
           const imageUrl = $article.find('img').first().attr('src');
@@ -80,7 +81,9 @@ export class ValorScraper extends AbstractScraper<ValorArticle[]> {
       });
 
       const duration = Date.now() - startTime;
-      this.logger.log(`Scraping Valor concluído para ${ticker}. ${articles.length} artigos em ${duration}ms`);
+      this.logger.log(
+        `Scraping Valor concluído para ${ticker}. ${articles.length} artigos em ${duration}ms`,
+      );
 
       return articles.slice(0, 20); // Limitar a 20 artigos mais recentes
     } catch (error) {

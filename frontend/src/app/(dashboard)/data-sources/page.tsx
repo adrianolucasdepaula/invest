@@ -81,19 +81,6 @@ const mockDataSources = [
     avgResponseTime: 1650,
     requiresAuth: false,
   },
-  {
-    id: '6',
-    name: 'Yahoo Finance',
-    url: 'https://finance.yahoo.com',
-    type: 'prices',
-    status: 'warning',
-    lastSync: '2024-01-15T09:30:00',
-    successRate: 89.5,
-    totalRequests: 25432,
-    failedRequests: 2670,
-    avgResponseTime: 3200,
-    requiresAuth: false,
-  },
 ];
 
 const getStatusColor = (status: string) => {
