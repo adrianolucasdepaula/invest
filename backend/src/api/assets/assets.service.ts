@@ -13,71 +13,117 @@ export class AssetsService {
   ) {}
 
   async findAll(type?: string) {
-    const where = type ? { type: type as AssetType } : {};
-    const assets = await this.assetRepository.find({ where, order: { ticker: 'ASC' } });
+    // Build optimized query with LEFT JOIN to get latest 2 prices per asset
+    const qb = this.assetRepository
+      .createQueryBuilder('asset')
+      .leftJoinAndSelect(
+        'asset_prices',
+        'price1',
+        `price1.asset_id = asset.id AND price1.date = (
+          SELECT MAX(p.date)
+          FROM asset_prices p
+          WHERE p.asset_id = asset.id
+        )`
+      )
+      .leftJoinAndSelect(
+        'asset_prices',
+        'price2',
+        `price2.asset_id = asset.id AND price2.date = (
+          SELECT MAX(p.date)
+          FROM asset_prices p
+          WHERE p.asset_id = asset.id
+            AND p.date < (
+              SELECT MAX(p2.date)
+              FROM asset_prices p2
+              WHERE p2.asset_id = asset.id
+            )
+        )`
+      )
+      .orderBy('asset.ticker', 'ASC');
 
-    // Enrich assets with latest price data
-    const enrichedAssets = await Promise.all(
-      assets.map(async (asset) => {
-        const latestPrice = await this.assetPriceRepository.findOne({
-          where: { assetId: asset.id },
-          order: { date: 'DESC' },
-        });
+    if (type) {
+      qb.where('asset.type = :type', { type });
+    }
 
-        if (!latestPrice) {
-          return {
-            ...asset,
-            price: null,
-            change: null,
-            changePercent: null,
-            volume: null,
-            marketCap: null,
-          };
-        }
+    const assets = await qb.getRawAndEntities();
 
-        // Get previous day's price for change calculation
-        const recentPrices = await this.assetPriceRepository.find({
-          where: { assetId: asset.id },
-          order: { date: 'DESC' },
-          take: 2,
-        });
-        const previousPrice = recentPrices.length > 1 ? recentPrices[1] : null;
+    // Process results to calculate enriched data
+    const enrichedAssets = assets.entities.map((asset, index) => {
+      const rawData = assets.raw[index];
 
-        const price = Number(latestPrice.close);
-        const previousClose = previousPrice ? Number(previousPrice.close) : price;
-        const change = price - previousClose;
-        const changePercent = previousClose !== 0 ? (change / previousClose) * 100 : 0;
+      const latestClose = rawData?.price1_close;
+      const previousClose = rawData?.price2_close;
 
+      if (!latestClose) {
         return {
           ...asset,
-          price,
-          change,
-          changePercent,
-          volume: Number(latestPrice.volume),
-          marketCap: latestPrice.marketCap ? Number(latestPrice.marketCap) : null,
+          price: null,
+          change: null,
+          changePercent: null,
+          volume: null,
+          marketCap: null,
         };
-      }),
-    );
+      }
+
+      const price = Number(latestClose);
+      const prevPrice = previousClose ? Number(previousClose) : price;
+      const change = price - prevPrice;
+      const changePercent = prevPrice !== 0 ? (change / prevPrice) * 100 : 0;
+
+      return {
+        ...asset,
+        price,
+        change,
+        changePercent,
+        volume: rawData?.price1_volume ? Number(rawData.price1_volume) : null,
+        marketCap: rawData?.price1_market_cap ? Number(rawData.price1_market_cap) : null,
+      };
+    });
 
     return enrichedAssets;
   }
 
   async findByTicker(ticker: string) {
-    const asset = await this.assetRepository.findOne({
-      where: { ticker: ticker.toUpperCase() },
-    });
+    // Optimized query with LEFT JOIN to get latest 2 prices
+    const result = await this.assetRepository
+      .createQueryBuilder('asset')
+      .leftJoinAndSelect(
+        'asset_prices',
+        'price1',
+        `price1.asset_id = asset.id AND price1.date = (
+          SELECT MAX(p.date)
+          FROM asset_prices p
+          WHERE p.asset_id = asset.id
+        )`
+      )
+      .leftJoinAndSelect(
+        'asset_prices',
+        'price2',
+        `price2.asset_id = asset.id AND price2.date = (
+          SELECT MAX(p.date)
+          FROM asset_prices p
+          WHERE p.asset_id = asset.id
+            AND p.date < (
+              SELECT MAX(p2.date)
+              FROM asset_prices p2
+              WHERE p2.asset_id = asset.id
+            )
+        )`
+      )
+      .where('UPPER(asset.ticker) = :ticker', { ticker: ticker.toUpperCase() })
+      .getRawAndEntities();
 
-    if (!asset) {
+    if (!result.entities.length) {
       throw new NotFoundException(`Asset ${ticker} not found`);
     }
 
-    // Enrich with latest price data
-    const latestPrice = await this.assetPriceRepository.findOne({
-      where: { assetId: asset.id },
-      order: { date: 'DESC' },
-    });
+    const asset = result.entities[0];
+    const rawData = result.raw[0];
 
-    if (!latestPrice) {
+    const latestClose = rawData?.price1_close;
+    const previousClose = rawData?.price2_close;
+
+    if (!latestClose) {
       return {
         ...asset,
         price: null,
@@ -88,26 +134,18 @@ export class AssetsService {
       };
     }
 
-    // Get previous day's price for change calculation
-    const recentPrices = await this.assetPriceRepository.find({
-      where: { assetId: asset.id },
-      order: { date: 'DESC' },
-      take: 2,
-    });
-    const previousPrice = recentPrices.length > 1 ? recentPrices[1] : null;
-
-    const price = Number(latestPrice.close);
-    const previousClose = previousPrice ? Number(previousPrice.close) : price;
-    const change = price - previousClose;
-    const changePercent = previousClose !== 0 ? (change / previousClose) * 100 : 0;
+    const price = Number(latestClose);
+    const prevPrice = previousClose ? Number(previousClose) : price;
+    const change = price - prevPrice;
+    const changePercent = prevPrice !== 0 ? (change / prevPrice) * 100 : 0;
 
     return {
       ...asset,
       price,
       change,
       changePercent,
-      volume: Number(latestPrice.volume),
-      marketCap: latestPrice.marketCap ? Number(latestPrice.marketCap) : null,
+      volume: rawData?.price1_volume ? Number(rawData.price1_volume) : null,
+      marketCap: rawData?.price1_market_cap ? Number(rawData.price1_market_cap) : null,
     };
   }
 

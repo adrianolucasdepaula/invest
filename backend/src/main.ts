@@ -19,10 +19,31 @@ async function bootstrap() {
   app.use(compression());
   app.use(cookieParser());
 
-  // CORS configuration
+  // CORS configuration - secure multi-origin support
+  const corsOrigins = configService
+    .get('CORS_ORIGIN', 'http://localhost:3000')
+    .split(',')
+    .map((origin: string) => origin.trim());
+
   app.enableCors({
-    origin: configService.get('CORS_ORIGIN', 'http://localhost:3000'),
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Check if origin is in allowed list
+      if (corsOrigins.indexOf(origin) !== -1 || corsOrigins.includes('*')) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS policy`));
+      }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    exposedHeaders: ['X-Total-Count', 'X-Page-Number'],
+    maxAge: 3600, // Cache preflight requests for 1 hour
   });
 
   // Global validation pipe

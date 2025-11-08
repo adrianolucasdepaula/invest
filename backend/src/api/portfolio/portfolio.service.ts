@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Portfolio, PortfolioPosition, Asset, AssetType } from '@database/entities';
 import { B3Parser } from './parsers/b3-parser';
 import { KinvoParser } from './parsers/kinvo-parser';
@@ -18,6 +18,7 @@ export class PortfolioService {
     private positionRepository: Repository<PortfolioPosition>,
     @InjectRepository(Asset)
     private assetRepository: Repository<Asset>,
+    private dataSource: DataSource,
     private b3Parser: B3Parser,
     private kinvoParser: KinvoParser,
   ) {
@@ -59,49 +60,71 @@ export class PortfolioService {
       // Parse file
       const parsedPortfolio = await parser.parse(fileBuffer, filename);
 
-      // Create portfolio
-      const portfolio = await this.create(userId, {
-        name: `Importado de ${parsedPortfolio.source} - ${new Date().toLocaleDateString('pt-BR')}`,
-        description: `Portfolio importado de ${parsedPortfolio.source}`,
-        totalInvested: parsedPortfolio.totalInvested,
-      });
-
-      // Create positions
-      for (const position of parsedPortfolio.positions) {
-        // Find or create asset
-        let asset = await this.assetRepository.findOne({
-          where: { ticker: position.ticker },
+      // Use transaction for atomic operations and performance
+      const result = await this.dataSource.transaction(async (manager) => {
+        // Create portfolio
+        const portfolio = await manager.save(Portfolio, {
+          userId,
+          name: `Importado de ${parsedPortfolio.source} - ${new Date().toLocaleDateString('pt-BR')}`,
+          description: `Portfolio importado de ${parsedPortfolio.source}`,
+          totalInvested: parsedPortfolio.totalInvested,
         });
 
-        if (!asset) {
-          // Create asset if it doesn't exist
-          asset = await this.assetRepository.save({
-            ticker: position.ticker,
-            name: position.ticker,
-            type: this.getAssetType(position.ticker),
-            isActive: true,
-          });
+        // Get all unique tickers from positions
+        const tickers = [...new Set(parsedPortfolio.positions.map((p) => p.ticker))];
+
+        // Batch fetch all existing assets (1 query instead of N)
+        const existingAssets = await manager.find(Asset, {
+          where: tickers.map((ticker) => ({ ticker })),
+        });
+
+        const existingAssetMap = new Map(existingAssets.map((a) => [a.ticker, a]));
+
+        // Identify missing assets
+        const missingTickers = tickers.filter((ticker) => !existingAssetMap.has(ticker));
+
+        // Batch create missing assets (1 query instead of N)
+        if (missingTickers.length > 0) {
+          const newAssets = await manager.save(
+            Asset,
+            missingTickers.map((ticker) => ({
+              ticker,
+              name: ticker,
+              type: this.getAssetType(ticker),
+              isActive: true,
+            })),
+          );
+
+          // Add new assets to map
+          newAssets.forEach((asset) => existingAssetMap.set(asset.ticker, asset));
         }
 
-        // Create position
-        await this.positionRepository.save({
-          portfolioId: portfolio.id,
-          assetId: asset.id,
-          quantity: position.quantity,
-          averagePrice: position.averagePrice,
-          totalInvested: position.totalInvested,
-          currentPrice: position.currentPrice,
-          notes: position.notes ? { imported: position.notes } : null,
+        // Batch create all positions (1 query instead of N)
+        const positions = parsedPortfolio.positions.map((position) => {
+          const asset = existingAssetMap.get(position.ticker);
+          return {
+            portfolioId: portfolio.id,
+            assetId: asset!.id,
+            quantity: position.quantity,
+            averagePrice: position.averagePrice,
+            totalInvested: position.totalInvested,
+            currentPrice: position.currentPrice,
+            notes: position.notes ? { imported: position.notes } : null,
+          };
         });
-      }
 
-      return {
-        success: true,
-        portfolio,
-        positionsCount: parsedPortfolio.positions.length,
-        source: parsedPortfolio.source,
-        metadata: parsedPortfolio.metadata,
-      };
+        await manager.save(PortfolioPosition, positions);
+
+        return {
+          success: true,
+          portfolio,
+          positionsCount: parsedPortfolio.positions.length,
+          source: parsedPortfolio.source,
+          metadata: parsedPortfolio.metadata,
+        };
+      });
+
+      return result;
     } catch (error) {
       this.logger.error(`Failed to import portfolio: ${error.message}`);
       throw error;

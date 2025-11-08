@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
 import { PortfolioParser, ParsedPortfolio, PortfolioPosition } from './portfolio-parser.interface';
 
 @Injectable()
@@ -16,15 +16,39 @@ export class B3Parser implements PortfolioParser {
     this.logger.log(`Parsing B3 portfolio from ${filename}`);
 
     try {
-      const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const data = XLSX.utils.sheet_to_json(worksheet);
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(fileBuffer as any);
+
+      const worksheet = workbook.worksheets[0];
+      const data: any[] = [];
+
+      // Convert worksheet to JSON format
+      const headers: string[] = [];
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) {
+          // First row is headers
+          row.eachCell((cell) => {
+            headers.push(String(cell.value || ''));
+          });
+        } else {
+          // Data rows
+          const rowData: any = {};
+          row.eachCell((cell, colNumber) => {
+            const header = headers[colNumber - 1];
+            if (header) {
+              rowData[header] = cell.value;
+            }
+          });
+          if (Object.keys(rowData).length > 0) {
+            data.push(rowData);
+          }
+        }
+      });
 
       const positions: PortfolioPosition[] = [];
       let totalInvested = 0;
 
-      for (const row of data as any[]) {
+      for (const row of data) {
         // B3 format variations
         const ticker = this.extractTicker(row);
         const quantity = this.extractQuantity(row);
