@@ -8,7 +8,7 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleDestroy } from '@nestjs/common';
 
 interface SubscriptionData {
   tickers: string[];
@@ -21,25 +21,85 @@ interface SubscriptionData {
     credentials: true,
   },
 })
-export class AppWebSocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class AppWebSocketGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleDestroy
+{
   @WebSocketServer()
   server: Server;
 
   private readonly logger = new Logger(AppWebSocketGateway.name);
   private userSubscriptions = new Map<string, SubscriptionData>();
+  private cleanupInterval: NodeJS.Timeout;
 
   handleConnection(client: Socket) {
     this.logger.log(`Cliente conectado: ${client.id}`);
+
+    // Inicia cleanup periódico no primeiro cliente
+    if (this.userSubscriptions.size === 0 && !this.cleanupInterval) {
+      this.startPeriodicCleanup();
+    }
   }
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Cliente desconectado: ${client.id}`);
+
+    // Remove das subscrições
     this.userSubscriptions.delete(client.id);
+
+    // Leave all rooms para liberar memória
+    const rooms = Array.from(client.rooms);
+    rooms.forEach(room => {
+      if (room !== client.id) {
+        client.leave(room);
+      }
+    });
+
+    // Para cleanup se não houver mais clientes
+    if (this.userSubscriptions.size === 0 && this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+  }
+
+  onModuleDestroy() {
+    // Cleanup ao destruir o módulo
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
+    this.userSubscriptions.clear();
+  }
+
+  private startPeriodicCleanup() {
+    // Limpa conexões órfãs a cada 5 minutos
+    this.cleanupInterval = setInterval(() => {
+      const connectedSockets = this.server.sockets.sockets;
+      const orphanedSubscriptions: string[] = [];
+
+      this.userSubscriptions.forEach((_, clientId) => {
+        if (!connectedSockets.has(clientId)) {
+          orphanedSubscriptions.push(clientId);
+        }
+      });
+
+      if (orphanedSubscriptions.length > 0) {
+        orphanedSubscriptions.forEach(id => this.userSubscriptions.delete(id));
+        this.logger.log(`Limpou ${orphanedSubscriptions.length} subscrições órfãs`);
+      }
+    }, 300000); // 5 minutos
   }
 
   @SubscribeMessage('subscribe')
   handleSubscribe(@MessageBody() data: SubscriptionData, @ConnectedSocket() client: Socket) {
     this.userSubscriptions.set(client.id, data);
+
+    // Join rooms para broadcast eficiente O(1)
+    data.tickers.forEach(ticker => {
+      data.types.forEach(type => {
+        const roomName = `${ticker}:${type}`;
+        client.join(roomName);
+      });
+    });
+
     this.logger.log(`Cliente ${client.id} inscrito em: ${JSON.stringify(data)}`);
 
     return {
@@ -60,11 +120,25 @@ export class AppWebSocketGateway implements OnGatewayConnection, OnGatewayDiscon
     const currentSub = this.userSubscriptions.get(client.id);
 
     if (currentSub) {
+      // Leave rooms das subscrições removidas
       if (data.tickers) {
+        data.tickers.forEach(ticker => {
+          currentSub.types.forEach(type => {
+            const roomName = `${ticker}:${type}`;
+            client.leave(roomName);
+          });
+        });
         currentSub.tickers = currentSub.tickers.filter((t) => !data.tickers.includes(t));
       }
       if (data.types) {
-        currentSub.types = currentSub.types.filter((t) => !data.types.includes(t as any));
+        const typesToRemove = data.types as ('prices' | 'analysis' | 'reports' | 'portfolio')[];
+        typesToRemove.forEach(type => {
+          currentSub.tickers.forEach(ticker => {
+            const roomName = `${ticker}:${type}`;
+            client.leave(roomName);
+          });
+        });
+        currentSub.types = currentSub.types.filter((t) => !typesToRemove.includes(t));
       }
 
       this.userSubscriptions.set(client.id, currentSub);
@@ -76,54 +150,43 @@ export class AppWebSocketGateway implements OnGatewayConnection, OnGatewayDiscon
     };
   }
 
-  // Métodos para emitir atualizações
+  // Métodos para emitir atualizações - Otimizado com rooms O(1)
   emitPriceUpdate(ticker: string, data: any) {
-    this.userSubscriptions.forEach((subscription, clientId) => {
-      if (subscription.tickers.includes(ticker) && subscription.types.includes('prices')) {
-        this.server.to(clientId).emit('price_update', {
-          ticker,
-          data,
-          timestamp: new Date(),
-        });
-      }
+    const roomName = `${ticker}:prices`;
+    this.server.to(roomName).emit('price_update', {
+      ticker,
+      data,
+      timestamp: new Date(),
     });
   }
 
   emitAnalysisComplete(ticker: string, analysisId: string, type: string) {
-    this.userSubscriptions.forEach((subscription, clientId) => {
-      if (subscription.tickers.includes(ticker) && subscription.types.includes('analysis')) {
-        this.server.to(clientId).emit('analysis_complete', {
-          ticker,
-          analysisId,
-          type,
-          timestamp: new Date(),
-        });
-      }
+    const roomName = `${ticker}:analysis`;
+    this.server.to(roomName).emit('analysis_complete', {
+      ticker,
+      analysisId,
+      type,
+      timestamp: new Date(),
     });
   }
 
   emitReportReady(ticker: string, reportId: string) {
-    this.userSubscriptions.forEach((subscription, clientId) => {
-      if (subscription.tickers.includes(ticker) && subscription.types.includes('reports')) {
-        this.server.to(clientId).emit('report_ready', {
-          ticker,
-          reportId,
-          timestamp: new Date(),
-        });
-      }
+    const roomName = `${ticker}:reports`;
+    this.server.to(roomName).emit('report_ready', {
+      ticker,
+      reportId,
+      timestamp: new Date(),
     });
   }
 
   emitPortfolioUpdate(userId: string, portfolioId: string, data: any) {
-    this.userSubscriptions.forEach((subscription, clientId) => {
-      if (subscription.types.includes('portfolio')) {
-        this.server.to(clientId).emit('portfolio_update', {
-          userId,
-          portfolioId,
-          data,
-          timestamp: new Date(),
-        });
-      }
+    // Portfolio usa um padrão diferente pois não é por ticker
+    const roomName = `${userId}:portfolio`;
+    this.server.to(roomName).emit('portfolio_update', {
+      userId,
+      portfolioId,
+      data,
+      timestamp: new Date(),
     });
   }
 

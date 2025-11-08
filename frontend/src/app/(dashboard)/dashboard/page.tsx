@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useAssets } from '@/lib/hooks/use-assets';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { AssetTable } from '@/components/dashboard/asset-table';
@@ -8,16 +9,39 @@ import { TrendingUp, TrendingDown, Activity, DollarSign } from 'lucide-react';
 import { MarketChart } from '@/components/charts/market-chart';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Mock stats - TODO: Integrate with real portfolio data
-const mockStats = {
-  ibovespa: { value: 127453.68, change: 1.23 },
-  portfolio: { value: 125430.50, change: 2.45 },
-  dayGain: { value: 3456.78, change: 1.85 },
-  totalGain: { value: 15234.90, change: 13.85 },
-};
-
 export default function DashboardPage() {
   const { data: assets, isLoading, error } = useAssets({ limit: 10 });
+
+  // Calculate real stats from assets data
+  const stats = useMemo(() => {
+    if (!assets || assets.length === 0) {
+      return {
+        ibovespa: { value: null, change: null },
+        topGainers: 0,
+        activeAssets: 0,
+        avgChange: null,
+      };
+    }
+
+    // Find Ibovespa (^BVSP) or use first index asset
+    const ibovespaAsset = assets.find((a: any) =>
+      a.ticker === '^BVSP' || a.ticker === 'IBOV' || a.name?.includes('Ibovespa')
+    );
+
+    const topGainers = assets.filter((a: any) => a.changePercent && a.changePercent > 0).length;
+    const activeAssets = assets.length;
+    const avgChange = assets.reduce((sum: number, a: any) => sum + (a.changePercent || 0), 0) / assets.length;
+
+    return {
+      ibovespa: {
+        value: ibovespaAsset?.price || null,
+        change: ibovespaAsset?.changePercent || null,
+      },
+      topGainers,
+      activeAssets,
+      avgChange,
+    };
+  }, [assets]);
   return (
     <div className="space-y-6">
       <div>
@@ -28,34 +52,54 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Ibovespa"
-          value={mockStats.ibovespa.value}
-          change={mockStats.ibovespa.change}
-          format="number"
-          icon={<Activity className="h-4 w-4 text-muted-foreground" />}
-        />
-        <StatCard
-          title="Valor do Portfólio"
-          value={mockStats.portfolio.value}
-          change={mockStats.portfolio.change}
-          format="currency"
-          icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
-        />
-        <StatCard
-          title="Ganho do Dia"
-          value={mockStats.dayGain.value}
-          change={mockStats.dayGain.change}
-          format="currency"
-          icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
-        />
-        <StatCard
-          title="Ganho Total"
-          value={mockStats.totalGain.value}
-          change={mockStats.totalGain.change}
-          format="currency"
-          icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
-        />
+        {isLoading ? (
+          <>
+            {Array(4).fill(0).map((_, i) => (
+              <Card key={i} className="p-6">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              </Card>
+            ))}
+          </>
+        ) : (
+          <>
+            <StatCard
+              title="Ibovespa"
+              value={stats.ibovespa.value ?? 0}
+              change={stats.ibovespa.change ?? undefined}
+              format="number"
+              icon={<Activity className="h-4 w-4 text-muted-foreground" />}
+            />
+            <StatCard
+              title="Ativos Rastreados"
+              value={stats.activeAssets}
+              change={stats.avgChange ?? undefined}
+              format="number"
+              icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+            />
+            <StatCard
+              title="Maiores Altas"
+              value={stats.topGainers}
+              change={undefined}
+              format="number"
+              icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
+            />
+            <StatCard
+              title="Variação Média"
+              value={stats.avgChange ?? 0}
+              change={undefined}
+              format="percent"
+              icon={stats.avgChange && stats.avgChange >= 0 ? (
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <TrendingDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            />
+          </>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
