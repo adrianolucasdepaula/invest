@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AnalysisService } from '../analysis/analysis.service';
+import { GenerateReportDto } from './dto';
 
 @ApiTags('reports')
 @Controller('reports')
@@ -39,7 +40,7 @@ export class ReportsController {
 
   @Post('generate')
   @ApiOperation({ summary: 'Generate complete report for asset' })
-  async generateReport(@Req() req: any, @Body() body: { ticker: string }) {
+  async generateReport(@Req() req: any, @Body() body: GenerateReportDto) {
     return this.analysisService.generateCompleteAnalysis(body.ticker, req.user.id);
   }
 

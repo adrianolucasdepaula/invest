@@ -2,6 +2,12 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Req } fro
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PortfolioService } from './portfolio.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import {
+  CreatePortfolioDto,
+  UpdatePortfolioDto,
+  AddPositionDto,
+  UpdatePositionDto,
+} from './dto';
 
 @ApiTags('portfolio')
 @Controller('portfolio')
@@ -24,13 +30,13 @@ export class PortfolioController {
 
   @Post()
   @ApiOperation({ summary: 'Create portfolio' })
-  async createPortfolio(@Req() req: any, @Body() data: any) {
+  async createPortfolio(@Req() req: any, @Body() data: CreatePortfolioDto) {
     return this.portfolioService.create(req.user.id, data);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update portfolio' })
-  async updatePortfolio(@Req() req: any, @Param('id') id: string, @Body() data: any) {
+  async updatePortfolio(@Req() req: any, @Param('id') id: string, @Body() data: UpdatePortfolioDto) {
     return this.portfolioService.update(id, req.user.id, data);
   }
 
@@ -46,7 +52,7 @@ export class PortfolioController {
   async addPosition(
     @Req() req: any,
     @Param('portfolioId') portfolioId: string,
-    @Body() data: any,
+    @Body() data: AddPositionDto,
   ) {
     return this.portfolioService.addPosition(portfolioId, req.user.id, data);
   }
@@ -57,7 +63,7 @@ export class PortfolioController {
     @Req() req: any,
     @Param('portfolioId') portfolioId: string,
     @Param('positionId') positionId: string,
-    @Body() data: any,
+    @Body() data: UpdatePositionDto,
   ) {
     return this.portfolioService.updatePosition(portfolioId, positionId, req.user.id, data);
   }
