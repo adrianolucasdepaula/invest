@@ -6,6 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   FileText,
   Download,
   Eye,
@@ -16,9 +22,13 @@ import {
   TrendingDown,
   Minus,
   AlertCircle,
+  FileJson,
+  FileType,
+  ChevronDown,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useReports, useGenerateReport } from '@/lib/hooks/use-reports';
+import { useToast } from '@/components/ui/use-toast';
 import Link from 'next/link';
 
 const getRecommendationColor = (recommendation: string) => {
@@ -63,6 +73,52 @@ export default function ReportsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const { data: reports, isLoading, error } = useReports();
   const generateReport = useGenerateReport();
+  const { toast } = useToast();
+
+  const handleDownload = async (reportId: string, format: 'pdf' | 'html' | 'json') => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/reports/${reportId}/download?format=${format}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Falha ao baixar relatório');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+
+      // Get filename from Content-Disposition header or create a default one
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filenameMatch = contentDisposition?.match(/filename="?(.+)"?/);
+      const filename = filenameMatch?.[1] || `report_${reportId}.${format}`;
+
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: 'Download concluído!',
+        description: `Relatório baixado em formato ${format.toUpperCase()}.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro ao baixar relatório',
+        description: 'Não foi possível baixar o relatório. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const filteredReports = (reports || []).filter(
     (report: any) =>
@@ -215,10 +271,29 @@ export default function ReportsPage() {
                         Visualizar
                       </Button>
                     </Link>
-                    <Button variant="outline" size="sm" disabled={true}>
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Download className="mr-2 h-4 w-4" />
+                          Download
+                          <ChevronDown className="ml-1 h-3 w-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleDownload(report.id, 'pdf')}>
+                          <FileText className="mr-2 h-4 w-4" />
+                          PDF
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDownload(report.id, 'html')}>
+                          <FileType className="mr-2 h-4 w-4" />
+                          HTML
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDownload(report.id, 'json')}>
+                          <FileJson className="mr-2 h-4 w-4" />
+                          JSON
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </Card>
