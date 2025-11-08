@@ -135,6 +135,96 @@ NEXT_PUBLIC_WS_URL=http://localhost:3101
 
 ---
 
+### Configuração do Google OAuth (Login Social)
+
+O sistema suporta login com Google OAuth. Para habilitar esta funcionalidade:
+
+#### 1. Obter Credenciais do Google Cloud Console
+
+1. Acesse: https://console.cloud.google.com/
+2. Crie um novo projeto ou selecione um existente
+3. Vá em **"APIs & Services"** > **"Credentials"**
+4. Clique em **"Create Credentials"** > **"OAuth 2.0 Client ID"**
+5. Configure o OAuth consent screen se solicitado
+6. Na criação do OAuth Client ID:
+   - **Application type:** Web application
+   - **Name:** B3 AI Analysis Platform
+   - **Authorized JavaScript origins:**
+     - `http://localhost:3100` (frontend desenvolvimento)
+     - `http://localhost:3101` (backend desenvolvimento)
+     - Adicione suas URLs de produção quando aplicável
+   - **Authorized redirect URIs:**
+     - `http://localhost:3101/api/auth/google/callback`
+     - Adicione suas URLs de produção quando aplicável
+7. Clique em **"Create"** e copie o **Client ID** e **Client Secret**
+
+#### 2. Configurar Variáveis de Ambiente
+
+Edite o arquivo `backend/.env` e adicione as credenciais:
+
+```bash
+# Google OAuth
+GOOGLE_CLIENT_ID=seu-client-id-aqui.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-seu-secret-aqui
+GOOGLE_CALLBACK_URL=http://localhost:3101/api/auth/google/callback
+FRONTEND_URL=http://localhost:3100
+```
+
+#### 3. Como Funciona
+
+1. **Usuário clica em "Entrar com Google"** na página de login
+2. **Redirecionamento para Google:** O usuário é redirecionado para a tela de login do Google
+3. **Autenticação Google:** Usuário faz login e autoriza a aplicação
+4. **Callback:** Google redireciona de volta para `http://localhost:3101/api/auth/google/callback`
+5. **Backend processa:** Sistema cria/busca usuário no banco de dados e gera token JWT
+6. **Redirecionamento final:** Usuário é redirecionado para o dashboard já autenticado
+
+#### 4. Arquivos Implementados
+
+- **Backend:**
+  - `src/api/auth/strategies/google.strategy.ts` - Estratégia Passport Google OAuth
+  - `src/api/auth/guards/google-auth.guard.ts` - Guard de autenticação
+  - `src/api/auth/auth.controller.ts` - Endpoints `/auth/google` e `/auth/google/callback`
+  - `src/api/auth/auth.service.ts` - Método `googleLogin()` para criar/buscar usuário
+
+- **Frontend:**
+  - `src/app/login/page.tsx` - Botão "Entrar com Google"
+  - `src/app/auth/google/callback/page.tsx` - Página de callback que processa o token
+
+#### 5. Testar o Login
+
+1. Certifique-se de que backend e frontend estão rodando:
+   ```bash
+   # Terminal 1 - Backend
+   cd backend
+   npm run start:dev
+
+   # Terminal 2 - Frontend
+   cd frontend
+   npm run dev
+   ```
+
+2. Acesse: http://localhost:3100/login
+3. Clique em **"Entrar com Google"**
+4. Complete o fluxo de autenticação do Google
+5. Você deve ser redirecionado para o dashboard após login bem-sucedido
+
+#### 6. Troubleshooting
+
+**Erro: "redirect_uri_mismatch"**
+- Verifique se a URL de callback no Google Cloud Console está exatamente como: `http://localhost:3101/api/auth/google/callback`
+- Certifique-se de que não há espaços ou caracteres extras
+
+**Erro: "invalid_client"**
+- Verifique se `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` estão corretos no `.env`
+- Certifique-se de que copiou os valores completamente
+
+**Erro: "CORS error"**
+- Verifique se `FRONTEND_URL` está configurado corretamente no `.env`
+- Verifique se `CORS_ORIGIN` inclui `http://localhost:3100`
+
+---
+
 ### Passo 2: Criar Diretórios Necessários
 
 ```bash

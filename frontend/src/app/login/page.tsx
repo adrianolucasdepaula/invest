@@ -39,11 +39,10 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    toast({
-      title: 'Em desenvolvimento',
-      description: 'Login com Google será implementado em breve.',
-    });
+  const handleGoogleLogin = () => {
+    // Redirecionar para o endpoint do backend que inicia o fluxo OAuth
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api';
+    window.location.href = `${apiUrl}/auth/google`;
   };
 
   return (

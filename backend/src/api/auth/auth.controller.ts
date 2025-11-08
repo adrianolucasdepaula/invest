@@ -1,6 +1,8 @@
-import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
@@ -9,7 +11,10 @@ import { RegisterDto, LoginDto } from './dto';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('register')
   @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 requests per hour
@@ -35,8 +40,12 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google OAuth callback' })
-  async googleAuthCallback(@Req() req: any) {
-    return this.authService.googleLogin(req.user);
+  async googleAuthCallback(@Req() req: any, @Res() res: Response) {
+    const result = await this.authService.googleLogin(req.user);
+
+    // Redirecionar para o frontend com o token
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3100';
+    res.redirect(`${frontendUrl}/auth/google/callback?token=${result.token}`);
   }
 
   @Get('me')
