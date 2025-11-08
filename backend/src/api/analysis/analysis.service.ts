@@ -320,9 +320,43 @@ export class AnalysisService {
     };
   }
 
-  async generateCompleteAnalysis(ticker: string) {
+  async generateCompleteAnalysis(ticker: string, userId?: string) {
     // TODO: Implement complete analysis with AI
-    return { message: 'Complete analysis generation not implemented yet' };
+    return {
+      message: 'Complete analysis generation not implemented yet',
+      ticker,
+      userId,
+    };
+  }
+
+  async findAll(
+    userId: string,
+    params?: {
+      type?: string;
+      ticker?: string;
+      limit?: number;
+      offset?: number;
+    },
+  ) {
+    const where: any = { user: { id: userId } };
+
+    if (params?.type) {
+      where.type = params.type;
+    }
+
+    if (params?.ticker) {
+      where.asset = { ticker: params.ticker.toUpperCase() };
+    }
+
+    const query = this.analysisRepository.find({
+      where,
+      relations: ['asset'],
+      order: { createdAt: 'DESC' },
+      take: params?.limit || 50,
+      skip: params?.offset || 0,
+    });
+
+    return query;
   }
 
   async findByTicker(ticker: string, type?: string) {
