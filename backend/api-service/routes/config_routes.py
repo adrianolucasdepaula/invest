@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 # Add parent directory to path to import config_manager
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "python-scrapers"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "python-scrapers"))
 
 from config_manager import config_manager, ConfigManager
 
@@ -451,17 +451,3 @@ async def get_redis_url(hide_password: bool = True):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error getting Redis URL: {str(e)}"
         )
-
-
-# Error handlers
-@router.exception_handler(Exception)
-async def generic_exception_handler(request, exc):
-    """Handle any unhandled exceptions"""
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "error": "Internal server error",
-            "detail": str(exc),
-            "timestamp": datetime.now().isoformat()
-        }
-    )

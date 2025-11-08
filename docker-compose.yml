@@ -174,6 +174,16 @@ services:
       - SCRAPER_TIMEOUT=${SCRAPER_TIMEOUT:-30000}
       - SCRAPER_MAX_RETRIES=${SCRAPER_MAX_RETRIES:-3}
       - SCRAPER_CONCURRENT_JOBS=${SCRAPER_CONCURRENT_JOBS:-3}
+
+      # VNC Configuration
+      - DISPLAY=:99
+      - DISPLAY_WIDTH=1920
+      - DISPLAY_HEIGHT=1080
+      - VNC_PORT=5900
+      - NOVNC_PORT=6080
+    ports:
+      - "5900:5900"  # VNC direct connection
+      - "6080:6080"  # noVNC web interface
     volumes:
       - ./backend/python-scrapers:/app
       - ./browser-profiles:/app/browser-profiles
@@ -269,8 +279,8 @@ services:
   # Service Orchestrator
   orchestrator:
     build:
-      context: ./backend
-      dockerfile: python-scrapers/Dockerfile
+      context: ./backend/python-scrapers
+      dockerfile: Dockerfile
     container_name: invest_orchestrator
     environment:
       # Database
