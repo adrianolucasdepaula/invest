@@ -1,0 +1,467 @@
+====================================================================
+MAPEAMENTO COMPLETO DA ARQUITETURA DO BACKEND - RESUMO EXECUTIVO
+====================================================================
+
+ARQUIVO GERADO:
+/home/user/invest/backend/ARCHITECTURE_MAPPING_COMPLETE.md (1937 linhas)
+
+====================================================================
+1. ESTRUTURA MODULAR NESTJS (14 MÓDULOS)
+====================================================================
+
+MÓDULOS PRINCIPAIS:
+✓ AppModule (raiz com setup global)
+✓ AuthModule (JWT + Google OAuth)
+✓ AssetsModule (Gerenciamento de ativos)
+✓ PortfolioModule (CRUD portfólio com import B3/Kinvo)
+✓ AnalysisModule (Análise técnica e fundamental)
+✓ ReportsModule (Geração JSON/HTML/PDF)
+✓ QueueModule (Bull queue com CRON)
+✓ ScrapersModule (8 web scrapers com Puppeteer)
+✓ AiModule (5 agentes especializados de IA)
+✓ WebSocketModule (Real-time com Socket.io)
+✓ CommonModule (Global: Cache Redis + Notificações)
+✓ DataSourcesModule (Gerenciamento de fontes)
+✓ DatabaseModule (TypeORM PostgreSQL)
+✓ ValidatorsModule (Validadores customizados)
+
+====================================================================
+2. ENDPOINTS MAPEADOS (29 ENDPOINTS)
+====================================================================
+
+AUTH (5 endpoints):
+- POST   /api/v1/auth/register
+- POST   /api/v1/auth/login
+- GET    /api/v1/auth/google
+- GET    /api/v1/auth/google/callback
+- GET    /api/v1/auth/me
+
+ASSETS (4 endpoints):
+- GET    /api/v1/assets
+- GET    /api/v1/assets/:ticker
+- GET    /api/v1/assets/:ticker/price-history
+- POST   /api/v1/assets/:ticker/sync
+
+PORTFOLIO (9 endpoints):
+- GET    /api/v1/portfolio
+- GET    /api/v1/portfolio/:id
+- POST   /api/v1/portfolio
+- PATCH  /api/v1/portfolio/:id
+- DELETE /api/v1/portfolio/:id
+- POST   /api/v1/portfolio/:portfolioId/positions
+- PATCH  /api/v1/portfolio/:portfolioId/positions/:positionId
+- DELETE /api/v1/portfolio/:portfolioId/positions/:positionId
+- POST   /api/v1/portfolio/import
+
+ANALYSIS (5 endpoints):
+- POST   /api/v1/analysis/:ticker/fundamental
+- POST   /api/v1/analysis/:ticker/technical
+- POST   /api/v1/analysis/:ticker/complete
+- GET    /api/v1/analysis/:ticker
+- GET    /api/v1/analysis/:id/details
+
+REPORTS (4 endpoints):
+- GET    /api/v1/reports
+- GET    /api/v1/reports/:id
+- POST   /api/v1/reports/generate
+- GET    /api/v1/reports/:id/download (JSON/HTML/PDF)
+
+DATA SOURCES (2 endpoints):
+- GET    /api/v1/data-sources
+- GET    /api/v1/data-sources/status
+
+====================================================================
+3. SERVICES MAPEADOS (20+ SERVICES)
+====================================================================
+
+API Services:
+✓ AuthService - Autenticação JWT + OAuth
+✓ AssetsService - CRUD assets com otimizações de query
+✓ PortfolioService - CRUD portfólio com transações
+✓ AnalysisService - Análises técnica/fundamental com indicadores
+✓ ReportsService - Gerenciamento de relatórios
+✓ DataSourcesService - Status de fontes de dados
+
+Queue/Jobs Services:
+✓ ScheduledJobsService - CRON jobs com Bull
+✓ ScrapingProcessor - Job processor para scraping
+
+Analysis Services:
+✓ TechnicalAnalysisService
+✓ TechnicalIndicatorsService
+✓ SentimentAnalysisService
+
+AI Services:
+✓ MultiAgentAnalysisService - Orquestra agentes
+✓ DocumentShardingService - Divide documentos grandes
+✓ 5 Agents especializados (Fundamental, Technical, Sentiment, Risk, Macro)
+
+Report Services:
+✓ ReportTemplateService - Gerador HTML
+✓ PdfGeneratorService - Conversor HTML->PDF
+✓ AIReportService - Relatórios com IA
+
+Scraping Services:
+✓ ScrapersService (orquestrador)
+✓ AbstractScraper (classe base)
+✓ 8 scrapers específicos
+
+Common Services:
+✓ CacheService - Redis cache
+✓ NotificationsService - Sistema de notificações
+
+====================================================================
+4. ENTITIES DO BANCO (10 ENTITIES)
+====================================================================
+
+User (13 campos):
+  - Email único, senha, Google ID
+  - Preferences e notifications (JSONB)
+  - OneToMany: portfolios
+
+Asset (13 campos + 3 índices):
+  - Tipos: stock, fii, etf, bdr, option, future, crypto, fixed_income
+  - Setor, subsector, segment
+  - OneToMany: prices, fundamentalData
+
+AssetPrice (10 campos + 2 índices):
+  - OHLCV (Open, High, Low, Close, Volume)
+  - Adjusted close, market cap, número de trades
+  - ManyToOne: asset
+
+FundamentalData (59 campos + 1 índice):
+  - Valuation: P/L, P/VP, P/SR, P/EBIT, EV/EBIT, EV/EBITDA, PEG
+  - Debt: Dívida líquida, patrimônio, passivos
+  - Efficiency: Margens, ROE, ROA, ROIC
+  - Growth: CAGR receitas/lucros
+  - Dividend: Dividend yield, payout
+  - Financial statements em milhões
+
+Portfolio (10 campos + 1 índice):
+  - User FK, name, description, is_active
+  - Total invested, current value, profit (%)
+  - OneToMany: positions
+
+PortfolioPosition (13 campos + 2 índices):
+  - Quantity, average price, current price
+  - Total invested, current value, profit (%)
+  - First buy date, last update date
+  - Portfolio FK, Asset FK
+
+Analysis (19 campos + 4 índices):
+  - Tipos: fundamental, technical, macro, sentiment, correlation, options, risk, complete
+  - Status: pending, processing, completed, failed
+  - Recommendation: strong_buy, buy, hold, sell, strong_sell
+  - Confidence score, processing time
+  - JSONB: analysis, indicators, risks, targetPrices, dataSources
+  - Asset FK, User FK
+
+DataSource (15 campos + 2 índices):
+  - Tipos: fundamental, technical, news, options, macro, insider, report, ai, general
+  - Status: active, inactive, maintenance, error
+  - Requires login, is verified, is trusted
+  - Reliability score (0.0-1.0)
+  - Stats: error count, success count, avg response time
+  - OneToMany: scrapedData
+
+ScrapedData (12 campos + 3 índices):
+  - Asset FK, DataSource FK
+  - Data type, JSONB data, reference date
+  - Scraped timestamp, response time
+  - Is valid, validation errors
+  - ManyToOne: asset, dataSource
+
+====================================================================
+5. JOBS AGENDADOS (CRON)
+====================================================================
+
+Daily 21:00 (9 PM):
+  Job: updateFundamentalData()
+  Target: Top 50 ações
+  Queue: scraping
+  Type: bulk-scraping
+  Retry: 3x exponential backoff (5s)
+  Status: ATIVO
+
+Daily 18:00 (6 PM):
+  Job: updateOptionsData()
+  Target: Top 20 ações com opções
+  Queue: scraping
+  Type: options
+  Retry: 3x
+  Status: ATIVO
+
+Weekly Sunday 03:00 AM:
+  Job: cleanOldData()
+  Target: Dados com >90 dias
+  Queue: local
+  Status: TODO (não implementado)
+
+Every 15 minutes (9 AM - 6 PM, seg-sex):
+  Job: updatePriceData()
+  Target: Top 100 ativos
+  Queue: scraping
+  Status: TODO (não implementado)
+
+====================================================================
+6. WEBSOCKET GATEWAY
+====================================================================
+
+Eventos:
+✓ subscribe - Cliente se inscreve em tickers/tipos
+✓ unsubscribe - Cliente se desinscreve
+✓ price_update - Atualização de preço (broadcast)
+✓ analysis_complete - Análise concluída (broadcast)
+✓ report_ready - Relatório pronto (broadcast)
+✓ portfolio_update - Portfólio atualizado (broadcast)
+✓ market_status - Status do mercado (broadcast)
+
+Rooms Pattern: {ticker}:{type}
+  Tipos: prices, analysis, reports, portfolio
+
+Memory Management:
+✓ Cleanup a cada 5 minutos
+✓ Remove subscrições órfãs
+✓ Libera rooms ao desconectar
+
+====================================================================
+7. SCRAPERS WEB (8 IMPLEMENTADOS)
+====================================================================
+
+Fundamental Data (4):
+✓ BrapiScraper - API Brapi
+✓ FundamentusScraper - Fundamentus
+✓ Investidor10Scraper - Investidor10
+✓ StatusinvestScraper - StatusInvest
+
+News (2):
+✓ GoogleNewsScraper
+✓ ValorScraper
+
+Options (1):
+✓ OpcoesScraper
+
+Base (1):
+✓ AbstractScraper - Template pattern com Puppeteer
+
+Recursos:
+- Retry com exponential backoff
+- Timeout configurável
+- User agent customizado
+- Stealth plugin (anti-detection)
+- Browser headless
+
+====================================================================
+8. INDICADORES TÉCNICOS
+====================================================================
+
+Implementados (5):
+✓ RSI - Relative Strength Index (14 períodos)
+✓ SMA - Simple Moving Average (20, 50, 200)
+✓ EMA - Exponential Moving Average (12, 26)
+✓ MACD - Moving Average Convergence Divergence
+✓ Price changes - 1d, 5d, 20d
+
+Faltando:
+- Bollinger Bands
+- Stochastic Oscillator
+- ATR (Average True Range)
+- Ichimoku Cloud
+- ADX (Average Directional Index)
+
+Recomendações geradas:
+- STRONG_BUY | BUY | HOLD | SELL | STRONG_SELL
+- Confidence score (0.0-1.0)
+
+====================================================================
+9. INTEGRAÇÕES EXTERNAS
+====================================================================
+
+APIs:
+✓ OpenAI (para análises com IA)
+✓ Google OAuth (autenticação social)
+✓ Brapi (cotações e dados)
+
+Web Scrapers:
+✓ Fundamentus, Investidor10, StatusInvest
+✓ Google News, Valor Econômico
+✓ Opcoes.com
+
+Databases:
+✓ PostgreSQL 14+ (dados primários)
+✓ Redis 5.3.2 (cache + queue)
+
+Opcional:
+- Telegram Bot (notificações)
+
+====================================================================
+10. PROBLEMAS IDENTIFICADOS (12)
+====================================================================
+
+CRÍTICOS:
+1. ⚠️ generateCompleteAnalysis() não implementada (TODO)
+   - Impacto: Relatórios não usam IA
+   - Solução: Integrar com MultiAgentAnalysisService
+
+2. ⚠️ syncAsset() não implementada (TODO)
+   - Impacto: Sincronização manual não funciona
+   - Solução: Integrar com ScrapersService
+
+3. ⚠️ cleanOldData() não implementada (TODO)
+   - Impacto: BD cresce indefinidamente
+   - Solução: Implementar deleção >90 dias
+
+4. ⚠️ updatePriceData() não implementada (TODO)
+   - Impacto: Preços não atualizam automaticamente
+   - Solução: Implementar job de atualização
+
+5. ⚠️ importPortfolio() sem multer (TODO)
+   - Impacto: Upload de arquivo não funciona
+   - Solução: Implementar middleware multer
+
+MÉDIOS:
+6. ⚠️ Indicadores técnicos incompletos
+   - Faltam: Bollinger Bands, Stochastic, ATR, Ichimoku, ADX
+   - Impacto: Análise técnica limitada
+
+7. ⚠️ Cobertura de testes baixa
+   - Impacto: Risco de regressões
+   - Solução: Implementar suite de testes
+
+8. ⚠️ Validação inconsistente
+   - Alguns validadores não implementados
+   - Solução: Completar ValidatorsModule
+
+9. ⚠️ Tratamento de erros inconsistente
+   - Não há GlobalExceptionFilter padronizado
+   - Solução: Criar filter global
+
+MENORES:
+10. ⚠️ Rate limiting muito permissivo (100 req/60s global)
+11. ⚠️ Documentação de scrapers incompleta
+12. ⚠️ CORS precisa validação em produção
+
+====================================================================
+11. CONFIGURAÇÕES E VARIÁVEIS
+====================================================================
+
+Database:
+  DB_HOST=localhost
+  DB_PORT=5432
+  DB_USERNAME=invest_user
+  DB_PASSWORD=invest_password
+  DB_DATABASE=invest_db
+
+Redis:
+  REDIS_HOST=localhost
+  REDIS_PORT=6379
+  REDIS_PASSWORD=
+
+JWT:
+  JWT_SECRET=<min 32 chars>
+  JWT_EXPIRATION=7d
+
+Google OAuth:
+  GOOGLE_CLIENT_ID=
+  GOOGLE_CLIENT_SECRET=
+  GOOGLE_CALLBACK_URL=http://localhost:3101/api/auth/google/callback
+
+OpenAI:
+  OPENAI_API_KEY=
+
+Scrapers:
+  SCRAPER_HEADLESS=true
+  SCRAPER_CONCURRENT_JOBS=3
+  SCRAPER_RETRY_ATTEMPTS=3
+  SCRAPER_TIMEOUT=30000
+
+Rate Limiting:
+  THROTTLE_TTL=60 (segundos)
+  THROTTLE_LIMIT=100 (requisições)
+
+CORS:
+  CORS_ORIGIN=http://localhost:3100,http://localhost:3000
+
+====================================================================
+12. STACK TÉCNICO
+====================================================================
+
+Framework: NestJS 10.3.0
+Language: TypeScript 5.3.3
+Database: PostgreSQL 14+
+Cache: Redis 5.3.2
+Queue: Bull 4.16.5
+ORM: TypeORM 0.3.19
+Auth: JWT + Passport
+Real-time: Socket.io 4.6.1
+API Docs: Swagger/OpenAPI
+Scraping: Puppeteer 23.11.1
+PDF: Puppeteer (headless)
+Validation: class-validator 0.14.1
+Testing: Jest 29.7.0
+
+====================================================================
+13. PADRÕES DE DESIGN
+====================================================================
+
+✓ Module Pattern - Separação em módulos
+✓ Dependency Injection - via NestJS
+✓ Repository Pattern - TypeORM
+✓ Gateway Pattern - WebSocket
+✓ Queue Pattern - Bull processamento
+✓ Decorator Pattern - Custom decorators
+✓ Strategy Pattern - Parsers diversos
+✓ Abstract Factory - AbstractScraper
+✓ Observer Pattern - Queue listeners
+✓ Singleton Pattern - Services
+
+====================================================================
+14. RESUMO FINAL
+====================================================================
+
+Total de Arquivos: 70+ TypeScript files
+Total de DTOs: 7
+Total de Controllers: 6
+Total de Services: 20+
+Total de Entities: 10
+Total de Scrapers: 8
+Total de Agents IA: 5
+Total de Endpoints: 29
+
+Índices de Database: 19
+Campos no Database: 144
+Relacionamentos: 9
+
+Módulos NestJS: 14
+Filas Bull: 3
+CRON Jobs: 4
+
+Status Geral: ARQUITETURA SÓLIDA COM PONTOS DE ATENÇÃO
+
+Pontos Fortes:
+✓ Separação clara de responsabilidades
+✓ Módulos bem organizados
+✓ Real-time com WebSocket
+✓ Queue para processamento assíncrono
+✓ Múltiplas fontes de dados (scrapers)
+✓ IA integrada (agentes especializados)
+✓ Validação de entrada robusta
+✓ Documentação Swagger
+
+Pontos a Melhorar:
+✗ Completar implementações TODO (5 críticas)
+✗ Adicionar mais indicadores técnicos
+✗ Aumentar cobertura de testes
+✗ Padronizar tratamento de erros
+✗ Refinar rate limiting
+✗ Documentar scrapers
+
+Recomendação: A arquitetura está pronta para produção, porém
+alguns TODOs devem ser completados antes de deploy em produção.
+
+====================================================================
+FIM DO RESUMO EXECUTIVO
+====================================================================
+
+Para detalhes completos, consultar:
+/home/user/invest/backend/ARCHITECTURE_MAPPING_COMPLETE.md

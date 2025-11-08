@@ -30,6 +30,16 @@ export class AssetsController {
     return this.assetsService.getPriceHistory(ticker, startDate, endDate);
   }
 
+  @Get(':ticker/prices')
+  @ApiOperation({ summary: 'Get asset price history (alias for /price-history)' })
+  async getPricesAlias(
+    @Param('ticker') ticker: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.assetsService.getPriceHistory(ticker, startDate, endDate);
+  }
+
   @Post(':ticker/sync')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

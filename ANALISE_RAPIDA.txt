@@ -1,0 +1,188 @@
+================================================================================
+                  ANÁLISE RÁPIDA - MAPEAMENTO DE INTEGRAÇÕES
+================================================================================
+
+Data: 2025-11-08
+Tempo de Análise: ~2 horas
+Escopo: Todos os endpoints, WebSocket, BD, autenticação, externas
+
+================================================================================
+                            STATUS GERAL
+================================================================================
+
+FUNCIONALIDADE:  ⚠️ 73.9% Funcionando (34/46 endpoints OK)
+PRONTA PRODUÇÃO: ❌ NÃO (3 blockers críticos)
+ARQUITETURA:     ✅ SÓLIDA (bem estruturada, mas com gaps)
+
+================================================================================
+                        PROBLEMAS CRÍTICOS 🔴
+================================================================================
+
+3 ROTAS COM PROBLEMAS SEVEROS:
+
+1. GET /auth/profile vs /auth/me
+   └─ Impacto: Perfil do usuário não carrega após login
+   └─ Tempo Fix: 30 minutos
+   └─ Solução: Adicionar alias em auth.controller.ts
+
+2. GET /assets/:ticker/prices vs /price-history
+   └─ Impacto: Gráficos de preço não funcionam
+   └─ Tempo Fix: 30 minutos
+   └─ Solução: Adicionar alias em assets.controller.ts
+
+3. POST /analysis (genérico) não existe
+   └─ Impacto: Usuário não consegue requisitar análises
+   └─ Tempo Fix: 1-2 horas
+   └─ Solução: Criar endpoint router que direciona para /fundamental, /technical, /complete
+
+================================================================================
+                        PROBLEMAS ALTOS 🟠
+================================================================================
+
+3 FUNCIONALIDADES FALTANDO:
+
+4. GET /analysis (lista) - Padrão confuso
+   └─ Impacto: Não consegue listar análises
+   └─ Tempo Fix: 1-2 horas
+
+5. POST /data-sources/scrape não implementado
+   └─ Impacto: Não pode disparar scraping manual
+   └─ Tempo Fix: 2-3 horas
+
+6. GET /assets/:ticker/fundamentals não mapeado
+   └─ Impacto: Dados fundamentais não carregam no detalhe do ativo
+   └─ Tempo Fix: 1-2 horas
+
+================================================================================
+                        PROBLEMAS MÉDIOS 🟡
+================================================================================
+
+2 ENDPOINTS PENDENTES:
+
+7. POST /data-sources/:id/test
+   └─ Tempo Fix: 1-2 horas
+
+8. PATCH /data-sources/:id
+   └─ Tempo Fix: 1-2 horas
+
+================================================================================
+                        O QUE FUNCIONA BEM ✅
+================================================================================
+
+✅ AUTENTICAÇÃO
+   - Register com rate limiting
+   - Login com rate limiting
+   - JWT token management
+   - Google OAuth flow
+   - Password hashing com bcrypt
+
+✅ PORTFOLIO
+   - CRUD completo
+   - Positions management
+   - User isolation
+
+✅ REPORTS
+   - Geração de relatórios
+   - Download (PDF/HTML/JSON)
+   - Cache de análises
+
+✅ WEBSOCKET
+   - Real-time price updates
+   - Room-based subscriptions
+   - Memory leak prevention
+   - 5 eventos implementados
+
+✅ BANCO DE DADOS
+   - Relacionamentos corretos
+   - Índices otimizados
+   - TimescaleDB para séries temporais
+   - JSONB para dados flexíveis
+
+✅ SCRAPING
+   - Cross-validation de múltiplas fontes
+   - 4+ scrapers implementados
+   - Score de confiança
+   - Tratamento de erro robusto
+
+================================================================================
+                    LINHA DO TEMPO PARA PRODUÇÃO
+================================================================================
+
+HOJE (2h):
+  [ ] Corrigir GET /auth/profile (30 min)
+  [ ] Corrigir GET /assets/:ticker/prices (30 min)
+  [ ] Criar POST /analysis router (60 min)
+  └─ RESULTADO: APP FUNCIONA BASICAMENTE
+
+ESTA SEMANA (4-6h):
+  [ ] Implementar GET /analysis (list)
+  [ ] Implementar POST /data-sources/scrape
+  [ ] Implementar GET /assets/:ticker/fundamentals
+  [ ] Testes básicos
+  └─ RESULTADO: FEATURES PRINCIPAIS FUNCIONAM
+
+STAGING (2-3 dias):
+  [ ] Implementar POST /data-sources/:id/test
+  [ ] Implementar PATCH /data-sources/:id
+  [ ] Testes E2E completos
+  [ ] Performance testing
+  └─ RESULTADO: PRONTO PARA DEPLOY
+
+PRODUÇÃO (1-2 dias):
+  [ ] Final QA
+  [ ] Monitoring setup
+  [ ] Backup/recovery testing
+  └─ RESULTADO: GO LIVE
+
+TOTAL: 5-7 dias para produção
+
+================================================================================
+                        ESTIMATIVAS
+================================================================================
+
+Corrigir Incompatibilidades:    2-4 horas   (Baixa complexidade)
+Implementar Endpoints:          4-6 horas   (Média complexidade)
+Completar AI Integration:      16-24 horas  (Alta complexidade)
+Testes Completos:              8-12 horas   (Média complexidade)
+                              ─────────────
+TOTAL MVP:                    10-15 horas
+TOTAL PRODUÇÃO:               30-46 horas
+
+================================================================================
+                        RECOMENDAÇÃO FINAL
+================================================================================
+
+STATUS: ⛔ NÃO PRONTA PARA PRODUÇÃO
+
+MAS: Com 10-15 horas de trabalho, consegue um MVP funcional.
+     Com 30-40 horas, consegue uma produção robusta.
+
+AÇÃO RECOMENDADA: Investir o tempo agora nas correções críticas antes de
+                  qualquer deploy. Vale a pena!
+
+================================================================================
+                        ARQUIVOS GERADOS
+================================================================================
+
+1. MAPEAMENTO_INTEGRACAO_COMPLETO.md (39KB)
+   └─ Análise COMPLETA e detalhada de todas as integrações
+
+2. RESUMO_PROBLEMAS_INTEGRACAO.md
+   └─ Dashboard de problemas com checklist e estimativas
+
+3. ENDPOINTS_COMPATIBILITY_MATRIX.md
+   └─ Matriz de compatibilidade com todos os 46 endpoints
+
+4. ANALISE_RAPIDA.txt (este arquivo)
+   └─ TL;DR para leitura rápida
+
+================================================================================
+
+Próximo passo recomendado:
+1. Ler RESUMO_PROBLEMAS_INTEGRACAO.md (5 min)
+2. Ler ENDPOINTS_COMPATIBILITY_MATRIX.md (10 min)
+3. Começar a implementar as correções (hoje)
+
+Dúvidas? Consulte MAPEAMENTO_INTEGRACAO_COMPLETO.md para detalhes completos.
+
+================================================================================

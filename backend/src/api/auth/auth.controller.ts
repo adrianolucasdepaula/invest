@@ -46,4 +46,12 @@ export class AuthController {
   async getProfile(@Req() req: any) {
     return req.user;
   }
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user profile (alias for /me)' })
+  async getProfileAlias(@Req() req: any) {
+    return req.user;
+  }
 }

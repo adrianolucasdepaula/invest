@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Query, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AnalysisService } from './analysis.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RequestAnalysisDto } from './dto';
 
 @ApiTags('analysis')
 @Controller('analysis')
@@ -9,6 +10,24 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 @ApiBearerAuth()
 export class AnalysisController {
   constructor(private readonly analysisService: AnalysisService) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Generate analysis (generic router)' })
+  async requestAnalysis(@Req() req: any, @Body() dto: RequestAnalysisDto) {
+    const { ticker, type } = dto;
+    const userId = req.user.id;
+
+    switch (type) {
+      case 'fundamental':
+        return this.analysisService.generateFundamentalAnalysis(ticker);
+      case 'technical':
+        return this.analysisService.generateTechnicalAnalysis(ticker);
+      case 'complete':
+        return this.analysisService.generateCompleteAnalysis(ticker, userId);
+      default:
+        throw new Error(`Invalid analysis type: ${type}`);
+    }
+  }
 
   @Post(':ticker/fundamental')
   @ApiOperation({ summary: 'Generate fundamental analysis' })
