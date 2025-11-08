@@ -142,3 +142,4 @@ lpt[1-9]
 playwright-report/
 test-results/
 *.tsbuildinfo
+dump.rdb

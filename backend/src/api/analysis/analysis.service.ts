@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Analysis, AnalysisType, AnalysisStatus } from '@database/entities';
+import { Analysis, AnalysisType, AnalysisStatus, Asset } from '@database/entities';
 import { ScrapersService } from '@scrapers/scrapers.service';
 
 @Injectable()
@@ -11,15 +11,26 @@ export class AnalysisService {
   constructor(
     @InjectRepository(Analysis)
     private analysisRepository: Repository<Analysis>,
+    @InjectRepository(Asset)
+    private assetRepository: Repository<Asset>,
     private scrapersService: ScrapersService,
   ) {}
 
   async generateFundamentalAnalysis(ticker: string) {
     this.logger.log(`Generating fundamental analysis for ${ticker}`);
 
+    // Get asset ID from ticker
+    const asset = await this.assetRepository.findOne({
+      where: { ticker: ticker.toUpperCase() },
+    });
+
+    if (!asset) {
+      throw new NotFoundException(`Asset with ticker ${ticker} not found`);
+    }
+
     // Create analysis record
     const analysis = this.analysisRepository.create({
-      assetId: null, // TODO: Get asset ID
+      assetId: asset.id,
       type: AnalysisType.FUNDAMENTAL,
       status: AnalysisStatus.PROCESSING,
     });
