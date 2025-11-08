@@ -19,7 +19,7 @@ export class User {
   @Column({ nullable: true })
   password: string;
 
-  @Column({ name: 'googleId', nullable: true })
+  @Column({ name: 'google_id', nullable: true })
   googleId: string;
 
   @Column({ name: 'first_name', nullable: true })
@@ -31,10 +31,10 @@ export class User {
   @Column({ nullable: true })
   avatar: string;
 
-  @Column({ name: 'isActive', default: true })
+  @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
-  @Column({ name: 'isEmailVerified', default: false })
+  @Column({ name: 'is_email_verified', default: false })
   isEmailVerified: boolean;
 
   @Column({ type: 'jsonb', nullable: true })
