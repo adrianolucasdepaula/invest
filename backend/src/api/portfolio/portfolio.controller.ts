@@ -25,6 +25,10 @@ export class PortfolioController {
   @Post('import')
   @ApiOperation({ summary: 'Import portfolio from file' })
   async importPortfolio(@Req() req: any, @Body() data: any) {
-    return this.portfolioService.importFromFile(req.user.id, data);
+    // TODO: Implement file upload handling with multer
+    // For now, pass empty buffer and filename
+    const buffer = Buffer.from(JSON.stringify(data));
+    const filename = 'import.json';
+    return this.portfolioService.importFromFile(req.user.id, buffer, filename);
   }
 }

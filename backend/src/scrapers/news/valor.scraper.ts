@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { AbstractScraper } from '../base/abstract-scraper';
 import * as cheerio from 'cheerio';
 
@@ -16,17 +15,11 @@ export interface ValorArticle {
 @Injectable()
 export class ValorScraper extends AbstractScraper<ValorArticle[]> {
   protected readonly logger = new Logger(ValorScraper.name);
+  readonly name = 'Valor Econômico';
+  readonly source = 'valor';
+  readonly requiresLogin = false;
 
-  constructor(configService: ConfigService) {
-    super(configService, {
-      name: 'Valor Econômico',
-      baseUrl: 'https://valor.globo.com',
-      headless: true,
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    });
-  }
-
-  async scrape(ticker: string): Promise<ValorArticle[]> {
+  protected async scrapeData(ticker: string): Promise<ValorArticle[]> {
     const startTime = Date.now();
     this.logger.log(`Iniciando scraping Valor para ${ticker}`);
 

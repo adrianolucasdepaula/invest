@@ -4,7 +4,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Asset } from '@database/entities';
+import { Asset, AssetType } from '@database/entities';
 
 @Injectable()
 export class ScheduledJobsService {
@@ -27,7 +27,7 @@ export class ScheduledJobsService {
     try {
       // Get active stocks (most traded)
       const assets = await this.assetRepository.find({
-        where: { isActive: true, type: 'stock' },
+        where: { isActive: true, type: AssetType.STOCK },
         take: 50, // Top 50 stocks
       });
 
@@ -62,7 +62,7 @@ export class ScheduledJobsService {
     try {
       // Get stocks with options
       const assets = await this.assetRepository.find({
-        where: { isActive: true, type: 'stock' },
+        where: { isActive: true, type: AssetType.STOCK },
         take: 20, // Top 20 stocks with options
       });
 

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"],
+      "description": "Servidor Context7 para fornecer documentação atualizada de Next.js, React, TypeScript e bibliotecas do projeto"
+    }
+  }
+}

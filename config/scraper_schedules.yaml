@@ -1,0 +1,344 @@
+# B3 AI Analysis Platform - Scraper Schedules Configuration
+#
+# This file defines when scrapers should run automatically
+#
+# Schedule types:
+#   - cron: Cron-style scheduling (minute, hour, day, month, day_of_week)
+#   - interval: Interval-based scheduling (hours, minutes, seconds)
+#   - date: One-time scheduled execution
+#
+# Priority levels: high, normal, low
+
+schedules:
+  # Critical market data - runs every hour during market hours
+  market_data_hourly:
+    enabled: true
+    type: cron
+    scraper: B3
+    priority: high
+    hour: "9-17"  # 9 AM to 5 PM
+    minute: 0
+    day_of_week: "0-4"  # Monday to Friday
+    tickers:
+      - PETR4
+      - VALE3
+      - ITUB4
+      - BBDC4
+      - MGLU3
+      - ABEV3
+      - WEGE3
+      - RENT3
+      - BBAS3
+      - ELET3
+    description: "Hourly B3 official data for top 10 stocks during market hours"
+
+  # Fundamentals data - runs daily after market close
+  fundamentals_daily:
+    enabled: true
+    type: cron
+    scraper: StatusInvest
+    priority: normal
+    hour: 19  # 7 PM - after market close
+    minute: 0
+    day_of_week: "0-4"  # Monday to Friday
+    tickers:
+      - PETR4
+      - VALE3
+      - ITUB4
+      - BBDC4
+      - MGLU3
+      - ABEV3
+      - WEGE3
+      - RENT3
+      - BBAS3
+      - ELET3
+    description: "Daily fundamental analysis from Status Invest"
+
+  # Alternative fundamentals - runs daily
+  fundamentus_daily:
+    enabled: true
+    type: cron
+    scraper: Fundamentus
+    priority: normal
+    hour: 20  # 8 PM
+    minute: 0
+    day_of_week: "0-4"
+    tickers:
+      - PETR4
+      - VALE3
+      - ITUB4
+      - BBDC4
+      - MGLU3
+    description: "Daily data from Fundamentus"
+
+  # Crypto market data - runs every 15 minutes
+  crypto_frequent:
+    enabled: true
+    type: interval
+    scraper: CoinMarketCap
+    priority: normal
+    minutes: 15
+    tickers:
+      - BTC
+      - ETH
+      - BNB
+      - SOL
+      - ADA
+    description: "Crypto prices updated every 15 minutes"
+
+  # News aggregation - runs every 30 minutes
+  news_frequent:
+    enabled: true
+    type: interval
+    scraper: GoogleNews
+    priority: high
+    minutes: 30
+    tickers:
+      - PETR4
+      - VALE3
+      - ITUB4
+    description: "News updates every 30 minutes for major stocks"
+
+  # Financial news - runs every 2 hours
+  financial_news:
+    enabled: true
+    type: interval
+    scraper: Valor
+    priority: normal
+    hours: 2
+    tickers:
+      - PETR4
+      - VALE3
+      - ITUB4
+      - BBDC4
+    description: "Valor Econômico news every 2 hours"
+
+  # BCB economic indicators - runs daily
+  bcb_indicators:
+    enabled: true
+    type: cron
+    scraper: BCB
+    priority: high
+    hour: 10  # 10 AM - after BCB publishes data
+    minute: 30
+    day_of_week: "0-4"
+    tickers:
+      - SELIC
+      - IPCA
+      - IGPM
+      - USD
+      - EUR
+    description: "Daily BCB economic indicators"
+
+  # Options data - runs daily after market
+  options_daily:
+    enabled: true
+    type: cron
+    scraper: Opcoes
+    priority: normal
+    hour: 18  # 6 PM
+    minute: 30
+    day_of_week: "0-4"
+    tickers:
+      - PETR4
+      - VALE3
+      - ITUB4
+    description: "Daily options chain data"
+
+  # AI analysis - runs weekly on Sunday
+  ai_analysis_weekly:
+    enabled: true
+    type: cron
+    scraper: ChatGPT
+    priority: low
+    hour: 2  # 2 AM Sunday
+    minute: 0
+    day_of_week: 6  # Sunday
+    tickers:
+      - PETR4
+      - VALE3
+      - ITUB4
+      - BBDC4
+      - MGLU3
+      - ABEV3
+      - WEGE3
+      - RENT3
+      - BBAS3
+      - ELET3
+      - VIVT3
+      - GGBR4
+      - EMBR3
+      - SUZB3
+      - LREN3
+    description: "Weekly AI-powered analysis for major stocks"
+
+  # Alternative AI - runs weekly
+  gemini_analysis_weekly:
+    enabled: true
+    type: cron
+    scraper: Gemini
+    priority: low
+    hour: 3  # 3 AM Sunday
+    minute: 0
+    day_of_week: 6
+    tickers:
+      - PETR4
+      - VALE3
+      - ITUB4
+      - BBDC4
+      - MGLU3
+    description: "Weekly Gemini AI analysis"
+
+  # International news - runs every 3 hours
+  bloomberg_updates:
+    enabled: true
+    type: interval
+    scraper: Bloomberg
+    priority: normal
+    hours: 3
+    tickers:
+      - PETR4
+      - VALE3
+    description: "Bloomberg international news every 3 hours"
+
+  # Complete market scan - runs weekly on Saturday
+  complete_market_scan:
+    enabled: true
+    type: cron
+    scraper: B3
+    priority: low
+    hour: 1  # 1 AM Saturday
+    minute: 0
+    day_of_week: 5  # Saturday
+    tickers:
+      - PETR4
+      - VALE3
+      - ITUB4
+      - BBDC4
+      - MGLU3
+      - ABEV3
+      - WEGE3
+      - RENT3
+      - BBAS3
+      - ELET3
+      - VIVT3
+      - GGBR4
+      - EMBR3
+      - SUZB3
+      - LREN3
+      - RADL3
+      - RAIL3
+      - BEEF3
+      - B3SA3
+      - CMIG4
+      - CIEL3
+      - CSNA3
+      - CYRE3
+      - ECOR3
+      - ENBR3
+      - EQTL3
+      - FLRY3
+      - GGBR4
+      - GOAU4
+      - GOLL4
+      - HAPV3
+      - HYPE3
+      - IGTA3
+      - IRBR3
+      - JBSS3
+      - KLBN11
+      - LAME4
+      - LWSA3
+      - MRFG3
+      - MRVE3
+      - MULT3
+      - NTCO3
+      - PCAR3
+      - PRIO3
+      - QUAL3
+      - RDOR3
+      - SANB11
+      - SBSP3
+      - SULA11
+      - TAEE11
+      - TIMS3
+      - TOTS3
+      - UGPA3
+      - USIM5
+      - VBBR3
+      - VIIA3
+      - YDUQ3
+    description: "Complete market scan of top 60 stocks on Saturday"
+
+  # Trading signals - runs every 4 hours during market days
+  tradingview_signals:
+    enabled: true
+    type: interval
+    scraper: TradingView
+    priority: normal
+    hours: 4
+    tickers:
+      - PETR4
+      - VALE3
+      - ITUB4
+      - BBDC4
+      - MGLU3
+    description: "TradingView technical analysis every 4 hours"
+
+  # Advanced metrics - runs daily
+  investidor10_daily:
+    enabled: true
+    type: cron
+    scraper: Investidor10
+    priority: normal
+    hour: 21  # 9 PM
+    minute: 0
+    day_of_week: "0-4"
+    tickers:
+      - PETR4
+      - VALE3
+      - ITUB4
+      - BBDC4
+      - MGLU3
+    description: "Daily advanced metrics from Investidor10"
+
+  # International data - runs daily
+  investing_international:
+    enabled: true
+    type: cron
+    scraper: Investing
+    priority: normal
+    hour: 22  # 10 PM
+    minute: 0
+    day_of_week: "0-4"
+    tickers:
+      - PETR4
+      - VALE3
+      - ITUB4
+    description: "Daily international market data"
+
+# Note: All times are in America/Sao_Paulo timezone (Brasília Time)
+#
+# To add a new schedule:
+# 1. Choose a unique schedule name
+# 2. Set enabled: true/false
+# 3. Choose schedule type (cron/interval/date)
+# 4. Specify the scraper name (must match scraper class name)
+# 5. Set priority (high/normal/low)
+# 6. Configure timing based on schedule type
+# 7. List tickers to scrape
+# 8. Add a description
+#
+# Example custom schedule:
+# my_custom_schedule:
+#   enabled: true
+#   type: cron
+#   scraper: B3
+#   priority: normal
+#   hour: 12
+#   minute: 0
+#   day_of_week: "0-4"
+#   tickers:
+#     - MYSTOCK1
+#     - MYSTOCK2
+#   description: "My custom schedule description"

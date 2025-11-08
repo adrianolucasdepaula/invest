@@ -1,13 +1,14 @@
 FROM node:20-alpine AS base
 
-# Install dependencies for Puppeteer
+# Install dependencies for Puppeteer and curl for healthcheck
 RUN apk add --no-cache \
     chromium \
     nss \
     freetype \
     harfbuzz \
     ca-certificates \
-    ttf-freefont
+    ttf-freefont \
+    curl
 
 # Tell Puppeteer to skip installing Chrome. We'll be using the installed package.
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
@@ -18,18 +19,17 @@ FROM base AS development
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files (for cache layer)
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Copy source code
-COPY . .
+# Expose ports (3101 for API, 3102 for debugging)
+EXPOSE 3101 3102
 
-# Expose ports
-EXPOSE 3001 3002
-
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["npm", "run", "start:dev"]
 
 # Build stage
@@ -55,6 +55,7 @@ RUN npm ci --only=production
 
 COPY --from=build /app/dist ./dist
 
-EXPOSE 3001 3002
+# Expose ports (3101 for API, 3102 for debugging)
+EXPOSE 3101 3102
 
 CMD ["node", "dist/main"]

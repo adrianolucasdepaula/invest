@@ -52,12 +52,20 @@ export class CacheService {
 
   /**
    * Clear all cache
+   * Note: reset() is not available in cache-manager v6+
+   * Use store-specific methods if needed
    */
   async reset(): Promise<void> {
     try {
-      await this.cacheManager.reset();
-      this.logger.log('Cache cleared');
-    } catch (error) {
+      // @ts-ignore - reset may not be available in all store implementations
+      const store = (this.cacheManager as any).store;
+      if (store && typeof store.reset === 'function') {
+        await store.reset();
+        this.logger.log('Cache cleared');
+      } else {
+        this.logger.warn('Cache reset not supported by current store');
+      }
+    } catch (error: any) {
       this.logger.error(`Cache reset error: ${error.message}`);
     }
   }

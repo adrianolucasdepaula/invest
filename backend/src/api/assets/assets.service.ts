@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Asset, AssetPrice } from '@database/entities';
+import { Asset, AssetType, AssetPrice } from '@database/entities';
 
 @Injectable()
 export class AssetsService {
@@ -13,7 +13,7 @@ export class AssetsService {
   ) {}
 
   async findAll(type?: string) {
-    const where = type ? { type } : {};
+    const where = type ? { type: type as AssetType } : {};
     return this.assetRepository.find({ where, order: { ticker: 'ASC' } });
   }
 
