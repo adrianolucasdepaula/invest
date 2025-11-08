@@ -1,5 +1,11 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import Cookies from 'js-cookie';
+import type {
+  UpdatePortfolioData,
+  AddPositionData,
+  UpdatePositionData,
+} from '@/types/portfolio.types';
+import type { UpdateDataSourceData } from '@/types/data-source.types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -101,7 +107,7 @@ class ApiClient {
     return response.data;
   }
 
-  async updatePortfolio(id: string, data: any) {
+  async updatePortfolio(id: string, data: UpdatePortfolioData) {
     const response = await this.client.patch(`/portfolio/${id}`, data);
     return response.data;
   }
@@ -111,12 +117,12 @@ class ApiClient {
     return response.data;
   }
 
-  async addPosition(portfolioId: string, data: any) {
+  async addPosition(portfolioId: string, data: AddPositionData) {
     const response = await this.client.post(`/portfolio/${portfolioId}/positions`, data);
     return response.data;
   }
 
-  async updatePosition(portfolioId: string, positionId: string, data: any) {
+  async updatePosition(portfolioId: string, positionId: string, data: UpdatePositionData) {
     const response = await this.client.patch(
       `/portfolio/${portfolioId}/positions/${positionId}`,
       data,
@@ -179,7 +185,7 @@ class ApiClient {
     return response.data;
   }
 
-  async updateDataSource(id: string, data: any) {
+  async updateDataSource(id: string, data: UpdateDataSourceData) {
     const response = await this.client.patch(`/data-sources/${id}`, data);
     return response.data;
   }

@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
 import { wsService } from '../websocket';
+import type {
+  PriceUpdateData,
+  AnalysisCompleteData,
+  ReportReadyData,
+  PortfolioUpdateData,
+  MarketStatusData,
+} from '@/types/websocket.types';
 
 export function useWebSocket() {
   const [isConnected, setIsConnected] = useState(false);
@@ -28,7 +35,7 @@ export function useWebSocket() {
 }
 
 export function usePriceUpdates(tickers: string[]) {
-  const [prices, setPrices] = useState<Record<string, any>>({});
+  const [prices, setPrices] = useState<Record<string, PriceUpdateData['data']>>({});
   const { subscribe, unsubscribe, on } = useWebSocket();
 
   useEffect(() => {
@@ -36,7 +43,7 @@ export function usePriceUpdates(tickers: string[]) {
 
     subscribe(tickers, ['prices']);
 
-    const unsubscribeListener = on('price_update', (data: any) => {
+    const unsubscribeListener = on('price_update', (data: PriceUpdateData) => {
       setPrices((prev) => ({
         ...prev,
         [data.ticker]: data.data,
@@ -55,7 +62,7 @@ export function usePriceUpdates(tickers: string[]) {
 }
 
 export function useAnalysisUpdates(tickers: string[]) {
-  const [analyses, setAnalyses] = useState<any[]>([]);
+  const [analyses, setAnalyses] = useState<AnalysisCompleteData[]>([]);
   const { subscribe, unsubscribe, on } = useWebSocket();
 
   useEffect(() => {
@@ -63,7 +70,7 @@ export function useAnalysisUpdates(tickers: string[]) {
 
     subscribe(tickers, ['analysis']);
 
-    const unsubscribeListener = on('analysis_complete', (data: any) => {
+    const unsubscribeListener = on('analysis_complete', (data: AnalysisCompleteData) => {
       setAnalyses((prev) => [...prev, data]);
     });
 
@@ -79,7 +86,7 @@ export function useAnalysisUpdates(tickers: string[]) {
 }
 
 export function useReportUpdates(tickers: string[]) {
-  const [reports, setReports] = useState<any[]>([]);
+  const [reports, setReports] = useState<ReportReadyData[]>([]);
   const { subscribe, unsubscribe, on } = useWebSocket();
 
   useEffect(() => {
@@ -87,7 +94,7 @@ export function useReportUpdates(tickers: string[]) {
 
     subscribe(tickers, ['reports']);
 
-    const unsubscribeListener = on('report_ready', (data: any) => {
+    const unsubscribeListener = on('report_ready', (data: ReportReadyData) => {
       setReports((prev) => [...prev, data]);
     });
 
@@ -103,13 +110,13 @@ export function useReportUpdates(tickers: string[]) {
 }
 
 export function usePortfolioUpdates() {
-  const [updates, setUpdates] = useState<any[]>([]);
+  const [updates, setUpdates] = useState<PortfolioUpdateData[]>([]);
   const { subscribe, unsubscribe, on } = useWebSocket();
 
   useEffect(() => {
     subscribe([], ['portfolio']);
 
-    const unsubscribeListener = on('portfolio_update', (data: any) => {
+    const unsubscribeListener = on('portfolio_update', (data: PortfolioUpdateData) => {
       setUpdates((prev) => [...prev, data]);
     });
 
@@ -129,7 +136,7 @@ export function useMarketStatus() {
   const { on } = useWebSocket();
 
   useEffect(() => {
-    const unsubscribe = on('market_status', (data: any) => {
+    const unsubscribe = on('market_status', (data: MarketStatusData) => {
       setStatus(data.status);
     });
 

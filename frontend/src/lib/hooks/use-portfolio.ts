@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
+import type {
+  UpdatePortfolioData,
+  AddPositionData,
+  UpdatePositionData,
+} from '@/types/portfolio.types';
 
 export function usePortfolios() {
   return useQuery({
@@ -32,7 +37,7 @@ export function useUpdatePortfolio() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdatePortfolioData }) =>
       api.updatePortfolio(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['portfolio', variables.id] });
@@ -56,7 +61,7 @@ export function useAddPosition() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ portfolioId, data }: { portfolioId: string; data: any }) =>
+    mutationFn: ({ portfolioId, data }: { portfolioId: string; data: AddPositionData }) =>
       api.addPosition(portfolioId, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['portfolio', variables.portfolioId] });
@@ -68,7 +73,7 @@ export function useUpdatePosition() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ portfolioId, positionId, data }: { portfolioId: string; positionId: string; data: any }) =>
+    mutationFn: ({ portfolioId, positionId, data }: { portfolioId: string; positionId: string; data: UpdatePositionData }) =>
       api.updatePosition(portfolioId, positionId, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['portfolio', variables.portfolioId] });
