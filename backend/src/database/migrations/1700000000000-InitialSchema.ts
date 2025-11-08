@@ -85,9 +85,11 @@ export class InitialSchema1700000000000 implements MigrationInterface {
     await queryRunner.query(`CREATE INDEX "IDX_asset_prices_date" ON "asset_prices" ("date")`);
 
     // Convert asset_prices to TimescaleDB hypertable
-    await queryRunner.query(
-      `SELECT create_hypertable('asset_prices', 'date', if_not_exists => TRUE)`,
-    );
+    // NOTE: Commented out for vanilla PostgreSQL (without TimescaleDB extension)
+    // Uncomment if using TimescaleDB:
+    // await queryRunner.query(
+    //   `SELECT create_hypertable('asset_prices', 'date', if_not_exists => TRUE)`,
+    // );
 
     // Create fundamental_data table
     await queryRunner.query(`
