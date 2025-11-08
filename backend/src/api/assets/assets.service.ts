@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Asset, AssetType, AssetPrice } from '@database/entities';
+import { Asset, AssetType, AssetPrice, FundamentalData } from '@database/entities';
 
 @Injectable()
 export class AssetsService {
@@ -10,6 +10,8 @@ export class AssetsService {
     private assetRepository: Repository<Asset>,
     @InjectRepository(AssetPrice)
     private assetPriceRepository: Repository<AssetPrice>,
+    @InjectRepository(FundamentalData)
+    private fundamentalDataRepository: Repository<FundamentalData>,
   ) {}
 
   async findAll(type?: string) {
@@ -166,6 +168,25 @@ export class AssetsService {
     }
 
     return query.getMany();
+  }
+
+  async getFundamentals(ticker: string, limit: number = 1) {
+    const asset = await this.findByTicker(ticker);
+
+    const fundamentals = await this.fundamentalDataRepository
+      .createQueryBuilder('fundamental')
+      .where('fundamental.assetId = :assetId', { assetId: asset.id })
+      .orderBy('fundamental.referenceDate', 'DESC')
+      .limit(limit)
+      .getMany();
+
+    if (fundamentals.length === 0) {
+      // Return empty fundamental structure if no data exists
+      return null;
+    }
+
+    // Return latest fundamental data (or array if limit > 1)
+    return limit === 1 ? fundamentals[0] : fundamentals;
   }
 
   async syncAsset(ticker: string) {

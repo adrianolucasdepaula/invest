@@ -29,6 +29,24 @@ export class AnalysisController {
     }
   }
 
+  @Get()
+  @ApiOperation({ summary: 'Get all analyses for current user' })
+  async getAllAnalyses(
+    @Req() req: any,
+    @Query('type') type?: string,
+    @Query('ticker') ticker?: string,
+    @Query('limit') limit?: number,
+    @Query('offset') offset?: number,
+  ) {
+    const userId = req.user.id;
+    return this.analysisService.findAll(userId, {
+      type,
+      ticker,
+      limit,
+      offset,
+    });
+  }
+
   @Post(':ticker/fundamental')
   @ApiOperation({ summary: 'Generate fundamental analysis' })
   async fundamentalAnalysis(@Param('ticker') ticker: string) {

@@ -40,6 +40,15 @@ export class AssetsController {
     return this.assetsService.getPriceHistory(ticker, startDate, endDate);
   }
 
+  @Get(':ticker/fundamentals')
+  @ApiOperation({ summary: 'Get asset fundamental data' })
+  async getFundamentals(
+    @Param('ticker') ticker: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.assetsService.getFundamentals(ticker, limit || 1);
+  }
+
   @Post(':ticker/sync')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
