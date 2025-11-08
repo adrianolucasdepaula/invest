@@ -17,7 +17,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "python-scrapers"))
 from routes.scraper_test_routes import router as scraper_router
 from routes.config_routes import router as config_router
 from routes.job_routes import router as job_router
-from routes.analysis_routes import router as analysis_router
+from routes.oauth_routes import router as oauth_router
+# Temporarily disabled - requires analysis-service volume mount
+# from routes.analysis_routes import router as analysis_router
 
 # Import database and redis clients
 try:
@@ -111,7 +113,9 @@ async def log_requests(request: Request, call_next):
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Global exception handler"""
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    logger.error(f"🚨 EXCEPTION for {request.url.path}: {exc}", exc_info=True)
+    logger.error(f"🚨 Exception type: {type(exc).__name__}")
+    logger.error(f"🚨 Exception details: {str(exc)}")
     return JSONResponse(
         status_code=500,
         content={
@@ -126,7 +130,14 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(scraper_router)
 app.include_router(config_router)
 app.include_router(job_router)
-app.include_router(analysis_router)
+
+# Debug: Log OAuth router details
+logger.info(f"🔍 OAuth Router: prefix={oauth_router.prefix}, routes={len(oauth_router.routes)}")
+app.include_router(oauth_router)
+logger.success("✓ OAuth router included")
+
+# Temporarily disabled - requires analysis-service volume mount
+# app.include_router(analysis_router)
 
 
 # Root endpoint

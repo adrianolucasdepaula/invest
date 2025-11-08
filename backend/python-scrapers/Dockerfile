@@ -1,7 +1,7 @@
 # Python Scrapers Dockerfile
 FROM python:3.11-slim
 
-# Install system dependencies for Chrome and Selenium
+# Install system dependencies for Chrome, Selenium, and VNC
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -27,6 +27,14 @@ RUN apt-get update && apt-get install -y \
     libxkbcommon0 \
     libxrandr2 \
     xdg-utils \
+    # VNC dependencies
+    xvfb \
+    x11vnc \
+    fluxbox \
+    supervisor \
+    net-tools \
+    novnc \
+    websockify \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Google Chrome (método moderno sem apt-key)
@@ -62,6 +70,21 @@ RUN mkdir -p /app/logs /app/browser-profiles
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
+ENV DISPLAY=:99
+ENV DISPLAY_WIDTH=1920
+ENV DISPLAY_HEIGHT=1080
+ENV VNC_PORT=5900
+ENV NOVNC_PORT=6080
 
-# Run the scraper service
-CMD ["python", "main.py"]
+# Copy VNC startup scripts (will be overridden by volume mount, kept for non-volume builds)
+COPY docker/vnc-startup.sh /app/docker/vnc-startup.sh
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Make startup script executable
+RUN chmod +x /app/docker/vnc-startup.sh
+
+# Expose VNC ports
+EXPOSE 5900 6080
+
+# Run VNC startup script (volume mount preserves docker/ directory structure)
+CMD ["/app/docker/vnc-startup.sh"]

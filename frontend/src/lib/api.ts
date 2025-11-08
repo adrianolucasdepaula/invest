@@ -219,6 +219,92 @@ class ApiClient {
     const response = await this.client.get('/auth/profile');
     return response.data;
   }
+
+  // OAuth Management endpoints (FastAPI api-service port 8000)
+  // Note: These use direct connection to api-service
+  private getOAuthClient() {
+    return axios.create({
+      baseURL: 'http://localhost:8000',
+      timeout: 60000, // OAuth operations can take longer
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+
+  oauth = {
+    // Start new OAuth session
+    startSession: async () => {
+      const client = this.getOAuthClient();
+      const response = await client.post('/api/oauth/session/start');
+      return response.data;
+    },
+
+    // Get current session status
+    getSessionStatus: async () => {
+      const client = this.getOAuthClient();
+      const response = await client.get('/api/oauth/session/status');
+      return response.data;
+    },
+
+    // Confirm login on current site and move to next
+    confirmLogin: async () => {
+      const client = this.getOAuthClient();
+      const response = await client.post('/api/oauth/session/confirm-login');
+      return response.data;
+    },
+
+    // Skip current site
+    skipSite: async (reason?: string) => {
+      const client = this.getOAuthClient();
+      const response = await client.post('/api/oauth/session/skip-site', {
+        reason: reason || 'Usuário optou por pular',
+      });
+      return response.data;
+    },
+
+    // Save cookies and finish session
+    saveCookies: async () => {
+      const client = this.getOAuthClient();
+      const response = await client.post('/api/oauth/session/save');
+      return response.data;
+    },
+
+    // Cancel session
+    cancelSession: async () => {
+      const client = this.getOAuthClient();
+      const response = await client.delete('/api/oauth/session/cancel');
+      return response.data;
+    },
+
+    // Get VNC URL
+    getVncUrl: async () => {
+      const client = this.getOAuthClient();
+      const response = await client.get('/api/oauth/vnc-url');
+      return response.data;
+    },
+
+    // Get list of OAuth sites
+    getSites: async () => {
+      const client = this.getOAuthClient();
+      const response = await client.get('/api/oauth/sites');
+      return response.data;
+    },
+
+    // Navigate to specific site (advanced)
+    navigateToSite: async (siteId: string) => {
+      const client = this.getOAuthClient();
+      const response = await client.post(`/api/oauth/navigate/${siteId}`);
+      return response.data;
+    },
+
+    // Health check
+    healthCheck: async () => {
+      const client = this.getOAuthClient();
+      const response = await client.get('/api/oauth/health');
+      return response.data;
+    },
+  };
 }
 
 export const api = new ApiClient();
