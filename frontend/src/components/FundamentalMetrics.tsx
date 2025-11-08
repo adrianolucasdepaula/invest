@@ -204,7 +204,9 @@ export default function FundamentalMetrics({
                 <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                   {metric.label}
                   {metric.tooltip && (
-                    <Info className="h-3 w-3 cursor-help" title={metric.tooltip} />
+                    <span title={metric.tooltip}>
+                      <Info className="h-3 w-3 cursor-help" />
+                    </span>
                   )}
                 </p>
               </div>
@@ -231,7 +233,9 @@ export default function FundamentalMetrics({
                   <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                     {metric.label}
                     {metric.tooltip && (
-                      <Info className="h-3 w-3 cursor-help" title={metric.tooltip} />
+                      <span title={metric.tooltip}>
+                        <Info className="h-3 w-3 cursor-help" />
+                      </span>
                     )}
                   </p>
                 </div>

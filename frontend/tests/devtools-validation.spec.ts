@@ -1,5 +1,14 @@
 import { test, expect } from '@playwright/test';
 
+// Extend Performance interface for Chrome's memory property
+interface ChromePerformance extends Performance {
+  memory?: {
+    usedJSHeapSize: number;
+    totalJSHeapSize: number;
+    jsHeapSizeLimit: number;
+  };
+}
+
 /**
  * Testes de validação usando recursos do Chrome DevTools
  * - Console logs e errors
@@ -239,10 +248,11 @@ test.describe('Chrome DevTools - Memory & Resources', () => {
 
     // Coletar métricas de memória iniciais
     const initialMetrics = await page.evaluate(() => {
-      if (performance.memory) {
+      const perf = performance as ChromePerformance;
+      if (perf.memory) {
         return {
-          usedJSHeapSize: performance.memory.usedJSHeapSize,
-          totalJSHeapSize: performance.memory.totalJSHeapSize,
+          usedJSHeapSize: perf.memory.usedJSHeapSize,
+          totalJSHeapSize: perf.memory.totalJSHeapSize,
         };
       }
       return null;
@@ -262,10 +272,11 @@ test.describe('Chrome DevTools - Memory & Resources', () => {
 
     // Coletar métricas finais
     const finalMetrics = await page.evaluate(() => {
-      if (performance.memory) {
+      const perf = performance as ChromePerformance;
+      if (perf.memory) {
         return {
-          usedJSHeapSize: performance.memory.usedJSHeapSize,
-          totalJSHeapSize: performance.memory.totalJSHeapSize,
+          usedJSHeapSize: perf.memory.usedJSHeapSize,
+          totalJSHeapSize: perf.memory.totalJSHeapSize,
         };
       }
       return null;
