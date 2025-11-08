@@ -299,17 +299,12 @@ QUEUE_REDIS_PORT=6379
    - Ranking de ativos
    - Comparações setoriais
 
-5. **Yahoo Finance**
-   - Preços internacionais
-   - Histórico longo (anos)
-   - Dados macroeconômicos
-
-6. **Google Finance**
+5. **Google Finance**
    - Cotações em tempo real
    - Notícias integradas
    - Gráficos
 
-7. **Investing.com**
+6. **Investing.com**
    - Agenda econômica
    - Calendário de dividendos
    - Análise técnica

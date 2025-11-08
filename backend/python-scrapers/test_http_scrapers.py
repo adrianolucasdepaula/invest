@@ -139,76 +139,6 @@ async def test_coinmarketcap_http():
     return results
 
 
-async def test_yahoo_finance_api():
-    """
-    Testa Yahoo Finance API (alternativa sem scraper)
-    """
-    print("\n" + "="*60)
-    print("📈 TESTE: Yahoo Finance - API Pública")
-    print("="*60)
-
-    tickers = ["VALE3.SA", "PETR4.SA", "ITUB4.SA"]
-
-    results = {}
-
-    async with aiohttp.ClientSession() as session:
-        for ticker in tickers:
-            try:
-                # Yahoo Finance quote endpoint (público)
-                url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
-
-                print(f"\n📊 Buscando {ticker}...")
-
-                params = {
-                    "interval": "1d",
-                    "range": "5d",
-                }
-
-                async with session.get(url, params=params, timeout=15) as response:
-                    if response.status == 200:
-                        data = await response.json()
-
-                        if "chart" in data and "result" in data["chart"]:
-                            result = data["chart"]["result"][0]
-                            meta = result.get("meta", {})
-
-                            price = meta.get("regularMarketPrice")
-                            previous_close = meta.get("previousClose")
-
-                            if price:
-                                print(f"  ✅ {ticker}: R$ {price:.2f}")
-                                print(f"     Fechamento anterior: R$ {previous_close:.2f}")
-
-                                results[ticker] = {
-                                    "price": price,
-                                    "previous_close": previous_close,
-                                    "currency": meta.get("currency"),
-                                    "exchange": meta.get("exchangeName"),
-                                }
-                            else:
-                                print(f"  ⚠️  {ticker}: Sem preço disponível")
-                                results[ticker] = None
-                        else:
-                            print(f"  ❌ {ticker}: Formato inesperado")
-                            results[ticker] = None
-                    else:
-                        print(f"  ❌ {ticker}: HTTP {response.status}")
-                        results[ticker] = None
-
-            except Exception as e:
-                print(f"  ❌ {ticker}: Erro - {e}")
-                results[ticker] = None
-
-    print("\n" + "="*60)
-    print("📈 RESUMO Yahoo Finance:")
-    for ticker, result in results.items():
-        status = "✅" if result else "❌"
-        print(f"  {status} {ticker}")
-    print("="*60)
-
-    return results
-
-
 async def main():
     """
     Executa todos os testes HTTP (sem Chrome)
@@ -221,7 +151,6 @@ async def main():
 
     # Testes
     bcb_results = await test_bcb_api()
-    yahoo_results = await test_yahoo_finance_api()
     cmc_results = await test_coinmarketcap_http()
 
     # Resumo final
@@ -231,13 +160,11 @@ async def main():
 
     total_tests = (
         len(bcb_results) +
-        len(yahoo_results) +
         len(cmc_results)
     )
 
     successful_tests = (
         sum(1 for r in bcb_results.values() if r) +
-        sum(1 for r in yahoo_results.values() if r) +
         sum(1 for r in cmc_results.values() if r)
     )
 
@@ -246,7 +173,6 @@ async def main():
     print(f"\n✅ Testes bem-sucedidos: {successful_tests}/{total_tests} ({success_rate:.1f}%)")
     print(f"\n📋 Fontes testadas:")
     print(f"   • BCB (Banco Central): {len(bcb_results)} séries")
-    print(f"   • Yahoo Finance: {len(yahoo_results)} ativos")
     print(f"   • CoinMarketCap: {len(cmc_results)} criptos")
 
     print("\n💡 CONCLUSÃO:")

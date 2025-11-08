@@ -213,7 +213,6 @@ Temporary failure in name resolution
 
 **Testes Realizados:**
 - ❌ API Banco Central (BCB): Falhou
-- ❌ API Yahoo Finance: Falhou
 - ❌ CoinMarketCap HTTP: Falhou
 - ❌ Download Chrome via Puppeteer: Erro 403
 
@@ -253,7 +252,7 @@ Não é possível usar containers Docker com Chrome pré-instalado como soluçã
 
 4. **`backend/python-scrapers/test_http_scrapers.py`**
    - Testa scrapers HTTP sem Selenium
-   - Valida APIs: BCB, Yahoo Finance, CoinMarketCap
+   - Valida APIs: BCB, CoinMarketCap
    - **Status:** Bloqueado por falta de internet
 
 5. **`TESTE_INTEGRACAO.md`**
