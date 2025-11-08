@@ -2,6 +2,20 @@
 
 **Branch:** `claude/continue-development-011CUw8hP5PSczzaKeJyY6KF`
 
+## 🔧 Última Atualização (2025-11-08)
+
+**Commit:** `78ba094` - fix: corrigir mapeamento de colunas User e registro GoogleStrategy
+
+### Correções Aplicadas:
+✅ **User Entity:** Mapeamento de colunas corrigido (google_id, is_active, is_email_verified)
+✅ **Auth Module:** GoogleStrategy sempre registrada (não retorna mais null)
+✅ **Google OAuth:** Autenticação funcionando corretamente
+✅ **Email/Senha:** Registro e login funcionando
+
+📚 **Guia de Testes:** Veja [AUTH_FIX_TESTING_GUIDE.md](./AUTH_FIX_TESTING_GUIDE.md) para testar as correções
+
+---
+
 ## ✅ Pré-configurado
 
 O arquivo `backend/.env` **já está configurado** com:
