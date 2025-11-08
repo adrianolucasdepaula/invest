@@ -50,108 +50,90 @@ pwd
 # Parar todos os containers
 .\system-manager.ps1 stop
 
-# OU manualmente:
-docker-compose down
-
 # Aguarde mensagem: "✓ Todos os serviços foram parados"
 ```
 
 ---
 
-### **Passo 4: Atualizar Código da Branch**
-
-```powershell
-# Verificar branch atual
-git branch
-
-# Deve mostrar: * claude/continue-development-011CUw8hP5PSczzaKeJyY6KF
-
-# Atualizar código do repositório
-git pull origin claude/continue-development-011CUw8hP5PSczzaKeJyY6KF
-
-# Saída esperada:
-# Updating 693e4f9..7980ca0
-# Fast-forward
-#  backend/src/api/auth/auth.module.ts         | 4 +---
-#  backend/src/database/entities/user.entity.ts | 6 +++---
-#  AUTH_FIX_TESTING_GUIDE.md                   | 300 +++++++++++++++++++++++++
-#  BACKEND_CONTAINER_FIX.md                    | 235 +++++++++++++++++++
-#  ...
-```
-
-**Se aparecer erro de conflito:**
-```powershell
-# Salvar mudanças locais (se houver)
-git stash
-
-# Atualizar novamente
-git pull origin claude/continue-development-011CUw8hP5PSczzaKeJyY6KF
-
-# Aplicar mudanças salvas (se necessário)
-git stash pop
-```
-
----
-
-### **Passo 5: Verificar Commits Recebidos**
-
-```powershell
-# Ver últimos 5 commits
-git log --oneline -5
-
-# Deve mostrar:
-# 7980ca0 docs: adicionar guia de correção para erro do container backend
-# cf729a9 docs: adicionar guia de teste de correções de autenticação
-# 78ba094 fix: corrigir mapeamento de colunas User e registro GoogleStrategy
-# 693e4f9 docs: adicionar guia rápido de atualização Google OAuth
-# dcf876b docs: atualizar procedimentos de setup com Google OAuth
-```
-
----
-
-### **Passo 6: Limpar Containers e Volumes Antigos (Recomendado)**
+### **Passo 4: Limpar Containers e Volumes (Recomendado)**
 
 ```powershell
 # Remover containers e volumes antigos
 docker-compose down -v
 
 # ⚠️ Isso vai apagar dados do banco! Apenas para ambiente de desenvolvimento
-
-# Saída esperada:
-# Stopping invest_backend ... done
-# Stopping invest_frontend ... done
-# Stopping invest_postgres ... done
-# Stopping invest_redis ... done
-# Removing invest_backend ... done
-# Removing invest_frontend ... done
-# Removing invest_postgres ... done
-# Removing invest_redis ... done
-# Removing network invest_default
-# Removing volume invest_postgres_data
-# Removing volume invest_redis_data
 ```
 
 ---
 
-### **Passo 7: Iniciar Sistema com System Manager**
+### **Passo 5: Iniciar Sistema com System Manager**
 
 ```powershell
 # Iniciar todos os serviços
+# O script VAI FAZER TUDO AUTOMATICAMENTE:
+# - Verificar e atualizar código (git pull)
+# - Verificar e instalar dependências (npm install)
+# - Fazer build das imagens Docker
+# - Iniciar todos os containers
+
 .\system-manager.ps1 start
 ```
 
 **O que vai acontecer:**
 
-1. **Script detecta dependências:**
+1. **Script verifica atualizações:**
    ```
-   📦 Verificando dependências...
-   ⚠️  Detectado: node_modules desatualizado
+   ============================================
+     Verificando Atualizações
+   ============================================
+
+   ℹ Branch atual: claude/continue-development-011CUw8hP5PSczzaKeJyY6KF
+   ℹ Buscando atualizações do repositório remoto...
+   ⚠ Seu código está 5 commit(s) atrás do repositório remoto
+
+   Commits disponíveis:
+     70b4a5a - docs: atualizar README.md com novos guias
+     743abdd - docs: adicionar procedimento completo de atualização
+     7980ca0 - docs: adicionar guia de correção backend
+     cf729a9 - docs: adicionar guia de teste de autenticação
+     78ba094 - fix: corrigir mapeamento User e GoogleStrategy
+
+   Deseja atualizar o código agora? (y/n):
+   ```
+   **→ Digite: `y` e pressione Enter**
+
+2. **Código é atualizado automaticamente:**
+   ```
+   ℹ Atualizando código...
+
+   Updating 693e4f9..70b4a5a
+   Fast-forward
+    backend/src/api/auth/auth.module.ts         | 4 +---
+    backend/src/database/entities/user.entity.ts | 6 +++---
+    ...
+
+   ✓ Código atualizado com sucesso!
+
+   Arquivos atualizados:
+     backend/src/api/auth/auth.module.ts         | 23 +-----
+     backend/src/database/entities/user.entity.ts | 6 +-
+     ...
+   ```
+
+3. **Script detecta dependências:**
+   ```
+   ============================================
+     Verificando Dependências
+   ============================================
+
+   ⚠ Dependências do backend estão desatualizadas
+   ⚠ Dependências do frontend estão desatualizadas
 
    Deseja instalar/atualizar dependências? (y/n):
    ```
    **→ Digite: `y` e pressione Enter**
 
-2. **Instalação de dependências:**
+4. **Instalação de dependências:**
    ```
    📥 Instalando dependências do backend...
    npm install
