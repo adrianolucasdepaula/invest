@@ -205,6 +205,7 @@ class ApiClient {
       // Store token in cookie with 7 days expiration
       Cookies.set('access_token', response.data.token, {
         expires: 7,
+        path: '/',
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production',
       });
@@ -218,6 +219,7 @@ class ApiClient {
       // Store token in cookie with 7 days expiration
       Cookies.set('access_token', response.data.token, {
         expires: 7,
+        path: '/',
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production',
       });

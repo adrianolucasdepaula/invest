@@ -27,7 +27,8 @@ export default function LoginPage() {
         description: 'Bem-vindo à plataforma B3 AI Analysis.',
         variant: 'default',
       });
-      router.push('/dashboard');
+      // Usar window.location.href para garantir que o cookie seja reconhecido pelo middleware
+      window.location.href = '/dashboard';
     } catch (error) {
       toast({
         title: 'Erro no login',

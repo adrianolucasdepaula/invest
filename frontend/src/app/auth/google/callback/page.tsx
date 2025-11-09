@@ -24,12 +24,13 @@ export default function GoogleCallbackPage() {
       // Salvar token no cookie
       Cookies.set('access_token', token, {
         expires: 7, // 7 dias
+        path: '/',
         sameSite: 'strict',
         secure: process.env.NODE_ENV === 'production',
       });
 
-      // Redirecionar para o dashboard
-      router.push('/dashboard');
+      // Redirecionar para o dashboard usando window.location para garantir reconhecimento do cookie
+      window.location.href = '/dashboard';
     } else {
       // Token não encontrado, redirecionar para login
       router.push('/login?error=google_auth_failed');
