@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -59,13 +60,52 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t p-4">
-        <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-purple-600" />
-          <div className="flex-1">
-            <p className="text-sm font-medium">Usuário</p>
-            <p className="text-xs text-muted-foreground">user@example.com</p>
-          </div>
+        <UserProfile />
+      </div>
+    </div>
+  );
+}
+
+function UserProfile() {
+  const [user, setUser] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { api } = await import('@/lib/api');
+        const userData = await api.getProfile();
+        setUser(userData);
+      } catch (error) {
+        console.error('Erro ao buscar perfil:', error);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  if (!user) {
+    return (
+      <div className="flex items-center space-x-3">
+        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-purple-600 animate-pulse" />
+        <div className="flex-1">
+          <div className="h-4 w-20 bg-muted rounded animate-pulse mb-1" />
+          <div className="h-3 w-32 bg-muted rounded animate-pulse" />
         </div>
+      </div>
+    );
+  }
+
+  const initials = `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`.toUpperCase();
+
+  return (
+    <div className="flex items-center space-x-3">
+      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white font-semibold">
+        {initials}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">
+          {user.firstName} {user.lastName}
+        </p>
+        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
       </div>
     </div>
   );
