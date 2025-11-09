@@ -77,7 +77,7 @@ export function AssetTable({ assets, isLoading = false, onAssetClick }: AssetTab
                     </div>
                   </td>
                   <td className="py-3 px-4 text-right text-sm">
-                    {asset.volume.toLocaleString('pt-BR')}
+                    {asset.volume ? asset.volume.toLocaleString('pt-BR') : '-'}
                   </td>
                   {asset.marketCap && (
                     <td className="py-3 px-4 text-right text-sm">

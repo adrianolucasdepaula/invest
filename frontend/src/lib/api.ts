@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import Cookies from 'js-cookie';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api/v1';
 const OAUTH_BASE_URL = process.env.NEXT_PUBLIC_OAUTH_URL || 'http://localhost:8000';
 
 class ApiClient {
@@ -200,7 +200,7 @@ class ApiClient {
 
   // Auth endpoints
   async login(email: string, password: string) {
-    const response = await this.client.post('/v1/auth/login', { email, password });
+    const response = await this.client.post('/auth/login', { email, password });
     if (response.data.token) {
       // Store token in cookie with 7 days expiration
       Cookies.set('access_token', response.data.token, {
@@ -214,7 +214,7 @@ class ApiClient {
   }
 
   async loginWithGoogle(token: string) {
-    const response = await this.client.post('/v1/auth/google', { token });
+    const response = await this.client.post('/auth/google', { token });
     if (response.data.token) {
       // Store token in cookie with 7 days expiration
       Cookies.set('access_token', response.data.token, {
@@ -232,12 +232,12 @@ class ApiClient {
   }
 
   async register(data: { email: string; password: string; firstName?: string; lastName?: string }) {
-    const response = await this.client.post('/v1/auth/register', data);
+    const response = await this.client.post('/auth/register', data);
     return response.data;
   }
 
   async getProfile() {
-    const response = await this.client.get('/v1/auth/me');
+    const response = await this.client.get('/auth/me');
     return response.data;
   }
 
