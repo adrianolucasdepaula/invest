@@ -42,8 +42,12 @@ export default function LoginPage() {
 
   const handleGoogleLogin = () => {
     // Redirecionar para o endpoint do backend que inicia o fluxo OAuth
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api';
-    window.location.href = `${apiUrl}/v1/auth/google`;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api/v1';
+    const googleAuthUrl = `${apiUrl}/auth/google`;
+    console.log('=== Google Login ===');
+    console.log('API URL:', apiUrl);
+    console.log('Redirecting to:', googleAuthUrl);
+    window.location.href = googleAuthUrl;
   };
 
   return (

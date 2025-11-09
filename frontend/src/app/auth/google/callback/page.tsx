@@ -14,13 +14,19 @@ export default function GoogleCallbackPage() {
     const token = searchParams.get('token');
     const error = searchParams.get('error');
 
+    console.log('Google Callback - Token:', token);
+    console.log('Google Callback - Error:', error);
+    console.log('Google Callback - All params:', Object.fromEntries(searchParams.entries()));
+
     if (error) {
+      console.log('Redirecting to login with error:', error);
       // Redirecionar para login com mensagem de erro
       router.push(`/login?error=${error}`);
       return;
     }
 
     if (token) {
+      console.log('Saving token to cookie...');
       // Salvar token no cookie
       Cookies.set('access_token', token, {
         expires: 7, // 7 dias
@@ -29,9 +35,11 @@ export default function GoogleCallbackPage() {
         secure: process.env.NODE_ENV === 'production',
       });
 
+      console.log('Redirecting to dashboard...');
       // Redirecionar para o dashboard usando window.location para garantir reconhecimento do cookie
       window.location.href = '/dashboard';
     } else {
+      console.log('No token found, redirecting to login with error');
       // Token não encontrado, redirecionar para login
       router.push('/login?error=google_auth_failed');
     }

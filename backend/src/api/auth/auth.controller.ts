@@ -41,11 +41,25 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google OAuth callback' })
   async googleAuthCallback(@Req() req: any, @Res() res: Response) {
-    const result = await this.authService.googleLogin(req.user);
+    console.log('=== Google OAuth Callback ===');
+    console.log('User from Google:', req.user);
 
-    // Redirecionar para o frontend com o token
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3100';
-    res.redirect(`${frontendUrl}/auth/google/callback?token=${result.token}`);
+    try {
+      const result = await this.authService.googleLogin(req.user);
+      console.log('Login result:', result);
+      console.log('Token generated:', result.token ? 'YES' : 'NO');
+
+      // Redirecionar para o frontend com o token
+      const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3100';
+      const redirectUrl = `${frontendUrl}/auth/google/callback?token=${result.token}`;
+      console.log('Redirecting to:', redirectUrl);
+
+      res.redirect(redirectUrl);
+    } catch (error) {
+      console.error('Error in Google callback:', error);
+      const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3100';
+      res.redirect(`${frontendUrl}/login?error=google_auth_failed`);
+    }
   }
 
   @Get('me')
