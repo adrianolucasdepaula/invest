@@ -344,7 +344,7 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
 
       # API Configuration
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3101/api}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3101/api/v1}
       - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-http://localhost:3101}
       - NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV:-development}
 

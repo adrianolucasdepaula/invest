@@ -27,7 +27,8 @@ export default function LoginPage() {
         description: 'Bem-vindo à plataforma B3 AI Analysis.',
         variant: 'default',
       });
-      router.push('/dashboard');
+      // Usar window.location.href para garantir que o cookie seja reconhecido pelo middleware
+      window.location.href = '/dashboard';
     } catch (error) {
       toast({
         title: 'Erro no login',
@@ -39,11 +40,14 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    toast({
-      title: 'Em desenvolvimento',
-      description: 'Login com Google será implementado em breve.',
-    });
+  const handleGoogleLogin = () => {
+    // Redirecionar para o endpoint do backend que inicia o fluxo OAuth
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api/v1';
+    const googleAuthUrl = `${apiUrl}/auth/google`;
+    console.log('=== Google Login ===');
+    console.log('API URL:', apiUrl);
+    console.log('Redirecting to:', googleAuthUrl);
+    window.location.href = googleAuthUrl;
   };
 
   return (
@@ -157,7 +161,7 @@ export default function LoginPage() {
 
         <p className="text-center text-sm text-muted-foreground">
           Não tem uma conta?{' '}
-          <a href="#" className="text-primary hover:underline font-medium">
+          <a href="/register" className="text-primary hover:underline font-medium">
             Cadastre-se
           </a>
         </p>

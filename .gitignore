@@ -143,3 +143,18 @@ playwright-report/
 test-results/
 *.tsbuildinfo
 dump.rdb
+
+# Claude Code and IDE specific
+.claude/
+.history/
+.mcp.json
+
+# Test artifacts and temporary data
+cookies.txt
+login_response.json
+*.response.json
+
+# Environment backups (contain sensitive data)
+.env.backup
+.env.backup.*
+*.env.backup

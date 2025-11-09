@@ -141,6 +141,12 @@ invest/
 - 🚀 **[GETTING_STARTED.md](GETTING_STARTED.md)** - Guia básico de início
 - 🔄 **[CLEAN_INSTALL.md](CLEAN_INSTALL.md)** - Instalação limpa do zero (Windows)
 
+### Guias de Atualização e Correção
+- 🔄 **[COMPLETE_UPDATE_PROCEDURE.md](COMPLETE_UPDATE_PROCEDURE.md)** - Procedimento completo de atualização (Windows PowerShell)
+- ⚡ **[QUICK_UPDATE_GOOGLE_OAUTH.md](QUICK_UPDATE_GOOGLE_OAUTH.md)** - Atualização rápida Google OAuth
+- 🔐 **[AUTH_FIX_TESTING_GUIDE.md](AUTH_FIX_TESTING_GUIDE.md)** - Guia de teste de correções de autenticação
+- 🐛 **[BACKEND_CONTAINER_FIX.md](BACKEND_CONTAINER_FIX.md)** - Correção de problemas do container backend
+
 ### Documentação Técnica
 - 🐳 **[DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)** - Deploy com Docker (produção)
 - 📋 **[PROCESS_DOCUMENTATION.md](PROCESS_DOCUMENTATION.md)** - Processos e manutenção
@@ -162,6 +168,8 @@ invest/
 
 ## 🚀 Getting Started
 
+> 🔄 **ATUALIZAR PROJETO EXISTENTE:** Se já tem o projeto e quer atualizar, veja: **[COMPLETE_UPDATE_PROCEDURE.md](COMPLETE_UPDATE_PROCEDURE.md)** (Windows PowerShell)
+>
 > 🆕 **INSTALAÇÃO LIMPA COMPLETA:** Para instalar do ZERO com guia passo-a-passo detalhado, veja: **[CLEAN_INSTALL.md](CLEAN_INSTALL.md)** (Windows PowerShell)
 >
 > ⚡ **REFERÊNCIA RÁPIDA:** Para comandos e URLs de acesso, veja: **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)**
@@ -302,11 +310,13 @@ Gere relatórios completos em PDF/Excel com:
 
 ## 🔒 Segurança
 
-- Credenciais armazenadas de forma segura
-- Autenticação OAuth2 com Google
-- Criptografia de dados sensíveis
-- Rate limiting nas APIs
-- Validação de dados em múltiplas camadas
+- ✅ Credenciais armazenadas de forma segura
+- ✅ **Autenticação OAuth2 com Google** (Login social implementado)
+- ✅ JWT Authentication com cookies seguros
+- ✅ Criptografia de dados sensíveis
+- ✅ Rate limiting nas APIs
+- ✅ Validação de dados em múltiplas camadas
+- ✅ CORS configurado corretamente
 
 ## 📝 Licença
 
@@ -519,7 +529,7 @@ npx playwright show-report
 - [x] Docker setup
 
 ### 🚧 Próximos Passos
-- [ ] OAuth Google (código pronto, falta testar)
+- [x] OAuth Google (✅ Implementado e documentado)
 - [ ] Notificações Telegram (bot pronto)
 - [ ] Backtest de estratégias
 - [ ] Machine Learning para previsões

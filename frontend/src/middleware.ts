@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Rotas públicas que não requerem autenticação
-const publicRoutes = ['/login', '/register', '/forgot-password'];
+const publicRoutes = ['/login', '/register', '/forgot-password', '/auth/google/callback'];
 
 // Rotas de autenticação que redirecionam para dashboard se já autenticado
 const authRoutes = ['/login', '/register'];

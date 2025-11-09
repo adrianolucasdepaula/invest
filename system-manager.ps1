@@ -389,6 +389,52 @@ function Wait-ForHealthy {
     return $false
 }
 
+# Check and create environment files
+function Test-EnvironmentFiles {
+    Print-Header "Verificando Arquivos de Ambiente"
+
+    $needsSetup = $false
+
+    # Check backend .env
+    if (-not (Test-Path "backend/.env")) {
+        Print-Warning "Arquivo backend/.env não encontrado"
+
+        if (Test-Path "backend/.env.example") {
+            Print-Info "Criando backend/.env a partir do .env.example..."
+            Copy-Item "backend/.env.example" "backend/.env"
+            Print-Success "Arquivo backend/.env criado!"
+            Print-Warning "IMPORTANTE: Configure suas credenciais em backend/.env se necessário"
+            $needsSetup = $true
+        } else {
+            Print-Error "Arquivo backend/.env.example não encontrado!"
+            return $false
+        }
+    } else {
+        Print-Success "Arquivo backend/.env encontrado"
+    }
+
+    # Check frontend .env
+    if (-not (Test-Path "frontend/.env")) {
+        Print-Warning "Arquivo frontend/.env não encontrado"
+
+        if (Test-Path "frontend/.env.example") {
+            Print-Info "Criando frontend/.env a partir do .env.example..."
+            Copy-Item "frontend/.env.example" "frontend/.env"
+            Print-Success "Arquivo frontend/.env criado!"
+        }
+    } else {
+        Print-Success "Arquivo frontend/.env encontrado"
+    }
+
+    if ($needsSetup) {
+        Write-Host ""
+        Print-Info "Arquivos .env foram criados. Pressione ENTER para continuar..."
+        Read-Host
+    }
+
+    return $true
+}
+
 # Validate essential files
 function Test-EssentialFiles {
     Print-Header "Validando Arquivos Essenciais"
@@ -494,6 +540,33 @@ END
     return $allOk
 }
 
+# Run database migrations
+function Invoke-Migrations {
+    Print-Header "Executando Migrações do Banco de Dados"
+
+    # Check if backend container is running
+    $backendRunning = docker-compose ps -q backend 2>$null
+    if (-not $backendRunning) {
+        Print-Error "Container do backend não está rodando"
+        Print-Info "Inicie o sistema primeiro: .\system-manager.ps1 start"
+        return $false
+    }
+
+    Print-Info "Aguardando backend ficar pronto..."
+    Start-Sleep -Seconds 5
+
+    Print-Info "Executando migrações..."
+    docker-compose exec -T backend npm run migration:run
+
+    if ($LASTEXITCODE -eq 0) {
+        Print-Success "Migrações executadas com sucesso!"
+        return $true
+    } else {
+        Print-Warning "Não foi possível executar migrações (pode já estar atualizado)"
+        return $false
+    }
+}
+
 # Clean containers and volumes
 function Clean-Containers {
     param(
@@ -535,6 +608,12 @@ function Clean-Containers {
 # Start system
 function Start-System {
     Print-Header "Iniciando Sistema B3 AI Analysis Platform"
+
+    # Check and create environment files
+    if (-not (Test-EnvironmentFiles)) {
+        Print-Error "Erro ao configurar arquivos de ambiente. Corrija os problemas antes de continuar."
+        return
+    }
 
     # Validate essential files first
     if (-not (Test-EssentialFiles)) {
@@ -595,6 +674,10 @@ function Start-System {
         $isHealthy = Wait-ForHealthy -MaxWaitSeconds 120
 
         if ($isHealthy) {
+            # Run database migrations automatically
+            Write-Host ""
+            Invoke-Migrations
+
             # Show URLs
             Write-Host ""
             Print-Success "Sistema iniciado com sucesso e todos os serviços estão prontos!"
@@ -695,7 +778,7 @@ function Get-HealthCheck {
 
     # Check Backend
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:3101/health" -TimeoutSec 5 -UseBasicParsing
+        $response = Invoke-WebRequest -Uri "http://localhost:3101/api/v1/health" -TimeoutSec 5 -UseBasicParsing
         if ($response.StatusCode -eq 200) {
             Print-Success "Backend: OK"
         } else {
@@ -771,6 +854,7 @@ function Show-Help {
     Write-Host "  ${CYAN}health${RESET}             Health check rápido de todos os serviços"
     Write-Host "  ${GREEN}install${RESET}            Instala/atualiza dependências (npm)"
     Write-Host "  ${GREEN}build${RESET}              Faz build das imagens Docker"
+    Write-Host "  ${YELLOW}migrate${RESET}            Executa migrações do banco de dados"
     Write-Host "  ${BLUE}logs [service]${RESET}     Mostra logs (opcional: especificar serviço)"
     Write-Host "  ${RED}clean${RESET}              Remove todos os dados e volumes (CUIDADO!)"
     Write-Host "  ${BLUE}help${RESET}               Mostra esta mensagem de ajuda"
@@ -803,6 +887,7 @@ switch ($command) {
     "health" { Get-HealthCheck }
     "install" { Install-Dependencies }
     "build" { Build-DockerImages }
+    "migrate" { Invoke-Migrations }
     "logs" { Get-Logs -Service $param }
     "clean" { Clear-System }
     "help" { Show-Help }

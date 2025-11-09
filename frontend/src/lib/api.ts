@@ -1,7 +1,8 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import Cookies from 'js-cookie';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api/v1';
+const OAUTH_BASE_URL = process.env.NEXT_PUBLIC_OAUTH_URL || 'http://localhost:8000';
 
 class ApiClient {
   private client: AxiosInstance;
@@ -200,10 +201,11 @@ class ApiClient {
   // Auth endpoints
   async login(email: string, password: string) {
     const response = await this.client.post('/auth/login', { email, password });
-    if (response.data.access_token) {
+    if (response.data.token) {
       // Store token in cookie with 7 days expiration
-      Cookies.set('access_token', response.data.access_token, {
+      Cookies.set('access_token', response.data.token, {
         expires: 7,
+        path: '/',
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production',
       });
@@ -213,10 +215,11 @@ class ApiClient {
 
   async loginWithGoogle(token: string) {
     const response = await this.client.post('/auth/google', { token });
-    if (response.data.access_token) {
+    if (response.data.token) {
       // Store token in cookie with 7 days expiration
-      Cookies.set('access_token', response.data.access_token, {
+      Cookies.set('access_token', response.data.token, {
         expires: 7,
+        path: '/',
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production',
       });
@@ -234,7 +237,7 @@ class ApiClient {
   }
 
   async getProfile() {
-    const response = await this.client.get('/auth/profile');
+    const response = await this.client.get('/auth/me');
     return response.data;
   }
 
@@ -242,7 +245,7 @@ class ApiClient {
   // Note: These use direct connection to api-service
   private getOAuthClient() {
     return axios.create({
-      baseURL: 'http://localhost:8000',
+      baseURL: OAUTH_BASE_URL,
       timeout: 60000, // OAuth operations can take longer
       headers: {
         'Content-Type': 'application/json',

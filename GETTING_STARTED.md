@@ -122,7 +122,8 @@ JWT_EXPIRATION=7d
 # Google OAuth (opcional - desabilitado automaticamente se não configurado)
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_CALLBACK_URL=http://localhost:3101/api/v1/auth/google/callback
+GOOGLE_CALLBACK_URL=http://localhost:3101/api/auth/google/callback
+FRONTEND_URL=http://localhost:3100
 
 # BRAPI
 BRAPI_API_KEY=mVcy3EFZaBdza27tPQjdC1
@@ -139,9 +140,48 @@ GOOGLE_PASSWORD=your-password
 ### Frontend (.env.local)
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3101
-NEXT_PUBLIC_WS_URL=http://localhost:3102
+NEXT_PUBLIC_API_URL=http://localhost:3101/api
+NEXT_PUBLIC_WS_URL=http://localhost:3101
 ```
+
+## Configurando Google OAuth (Login Social)
+
+O sistema suporta login com Google OAuth. Siga estes passos para habilitar:
+
+### 1. Obter Credenciais do Google
+
+1. Acesse: https://console.cloud.google.com/
+2. Crie um projeto ou selecione um existente
+3. Vá em **APIs & Services** > **Credentials**
+4. Crie **OAuth 2.0 Client ID**:
+   - **Application type**: Web application
+   - **Authorized JavaScript origins**:
+     - `http://localhost:3100`
+     - `http://localhost:3101`
+   - **Authorized redirect URIs**:
+     - `http://localhost:3101/api/auth/google/callback`
+5. Copie o **Client ID** e **Client Secret**
+
+### 2. Configurar Backend
+
+Edite `backend/.env`:
+
+```env
+GOOGLE_CLIENT_ID=seu-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-seu-secret
+GOOGLE_CALLBACK_URL=http://localhost:3101/api/auth/google/callback
+FRONTEND_URL=http://localhost:3100
+```
+
+### 3. Testar Login
+
+1. Inicie backend e frontend
+2. Acesse: http://localhost:3100/login
+3. Clique em **"Entrar com Google"**
+4. Complete o fluxo OAuth
+5. Você será redirecionado para o dashboard
+
+**📚 Guia completo**: Veja [SETUP_GUIDE.md](./SETUP_GUIDE.md#configuração-do-google-oauth-login-social) para troubleshooting e detalhes.
 
 ## Populando o Banco de Dados
 
