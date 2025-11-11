@@ -7,6 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { NewAnalysisDialog } from '@/components/analysis';
+import { AddPositionDialog } from '@/components/portfolio/add-position-dialog';
+import {
   Search,
   TrendingUp,
   TrendingDown,
@@ -16,6 +25,7 @@ import {
   Play,
 } from 'lucide-react';
 import { cn, formatPercent } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 const getSignalColor = (signal?: string) => {
   switch (signal) {
@@ -58,8 +68,12 @@ const getScoreColor = (score: number) => {
 export default function AnalysisPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'fundamental' | 'technical' | 'complete'>('all');
+  const [selectedAnalysis, setSelectedAnalysis] = useState<any>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [refreshingId, setRefreshingId] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const { data: analyses, isLoading, error } = useAnalyses({
+  const { data: analyses, isLoading, error, refetch } = useAnalyses({
     type: filterType === 'all' ? undefined : filterType,
   });
 
@@ -73,6 +87,49 @@ export default function AnalysisPage() {
     });
   }, [analyses, searchTerm]);
 
+  const handleViewDetails = (analysis: any) => {
+    setSelectedAnalysis(analysis);
+    setIsDetailsOpen(true);
+  };
+
+  const handleRefreshAnalysis = async (analysis: any) => {
+    setRefreshingId(analysis.id);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/analysis/${analysis.asset.ticker}/${analysis.type}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Falha ao atualizar análise');
+      }
+
+      toast({
+        title: 'Análise atualizada!',
+        description: `A análise de ${analysis.asset.ticker} foi atualizada com sucesso.`,
+      });
+
+      // Refetch analyses after a short delay to allow processing
+      setTimeout(() => refetch(), 2000);
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao atualizar análise',
+        description: error.message || 'Ocorreu um erro ao atualizar a análise. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRefreshingId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -82,10 +139,7 @@ export default function AnalysisPage() {
             Análises técnicas e fundamentalistas dos ativos
           </p>
         </div>
-        <Button>
-          <Play className="mr-2 h-4 w-4" />
-          Nova Análise
-        </Button>
+        <NewAnalysisDialog />
       </div>
 
       <div className="flex items-center space-x-4">
@@ -260,12 +314,21 @@ export default function AnalysisPage() {
                 </div>
 
                 <div className="flex items-center space-x-2 ml-4">
-                  <Button variant="outline" size="sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleViewDetails(analysis)}
+                  >
                     Ver Detalhes
                   </Button>
-                  <Button variant="outline" size="sm">
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Atualizar
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRefreshAnalysis(analysis)}
+                    disabled={refreshingId === analysis.id}
+                  >
+                    <RefreshCw className={cn("mr-2 h-4 w-4", refreshingId === analysis.id && "animate-spin")} />
+                    {refreshingId === analysis.id ? 'Atualizando...' : 'Atualizar'}
                   </Button>
                 </div>
               </div>
@@ -273,6 +336,112 @@ export default function AnalysisPage() {
           ))}
         </div>
       )}
+
+      {/* Details Dialog */}
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Detalhes da Análise - {selectedAnalysis?.asset?.ticker}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedAnalysis?.asset?.name} | {' '}
+              {selectedAnalysis?.type === 'complete' ? 'Análise Completa' : selectedAnalysis?.type === 'fundamental' ? 'Análise Fundamentalista' : 'Análise Técnica'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedAnalysis && (
+            <div className="space-y-6 py-4">
+              {/* Overview Section */}
+              <div className="grid grid-cols-3 gap-4">
+                <Card className="p-4">
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  <p className="text-lg font-semibold capitalize">{selectedAnalysis.status === 'completed' ? 'Concluída' : selectedAnalysis.status === 'processing' ? 'Processando' : selectedAnalysis.status === 'failed' ? 'Falhou' : 'Pendente'}</p>
+                </Card>
+                {selectedAnalysis.recommendation && (
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground">Recomendação</p>
+                    <p className="text-lg font-semibold">{getSignalLabel(selectedAnalysis.recommendation.toUpperCase())}</p>
+                  </Card>
+                )}
+                {selectedAnalysis.confidenceScore && (
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground">Confiança</p>
+                    <p className={cn('text-lg font-semibold', getScoreColor(selectedAnalysis.confidenceScore * 100))}>
+                      {(selectedAnalysis.confidenceScore * 100).toFixed(0)}%
+                    </p>
+                  </Card>
+                )}
+              </div>
+
+              {/* Analysis Data */}
+              {selectedAnalysis.analysis && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Dados da Análise</h4>
+                  <Card className="p-4">
+                    <pre className="text-xs overflow-auto max-h-96">
+                      {JSON.stringify(selectedAnalysis.analysis, null, 2)}
+                    </pre>
+                  </Card>
+                </div>
+              )}
+
+              {/* Indicators */}
+              {selectedAnalysis.indicators && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Indicadores</h4>
+                  <Card className="p-4">
+                    <pre className="text-xs overflow-auto">
+                      {JSON.stringify(selectedAnalysis.indicators, null, 2)}
+                    </pre>
+                  </Card>
+                </div>
+              )}
+
+              {/* Data Sources */}
+              {selectedAnalysis.dataSources && selectedAnalysis.dataSources.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Fontes de Dados ({selectedAnalysis.sourcesCount})</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedAnalysis.dataSources.map((source: string, index: number) => (
+                      <span key={index} className="px-3 py-1 bg-primary/10 rounded-full text-sm">
+                        {source}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Metadata */}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Criado em</p>
+                  <p className="font-medium">{new Date(selectedAnalysis.createdAt).toLocaleString('pt-BR')}</p>
+                </div>
+                {selectedAnalysis.completedAt && (
+                  <div>
+                    <p className="text-muted-foreground">Concluído em</p>
+                    <p className="font-medium">{new Date(selectedAnalysis.completedAt).toLocaleString('pt-BR')}</p>
+                  </div>
+                )}
+                {selectedAnalysis.processingTime && (
+                  <div>
+                    <p className="text-muted-foreground">Tempo de processamento</p>
+                    <p className="font-medium">{selectedAnalysis.processingTime}ms</p>
+                  </div>
+                )}
+              </div>
+
+              {selectedAnalysis.errorMessage && (
+                <Card className="p-4 border-destructive">
+                  <p className="text-sm font-semibold text-destructive">Erro:</p>
+                  <p className="text-sm text-muted-foreground">{selectedAnalysis.errorMessage}</p>
+                </Card>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

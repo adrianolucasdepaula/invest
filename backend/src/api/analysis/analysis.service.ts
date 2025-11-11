@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Analysis, AnalysisType, AnalysisStatus, Asset, AssetPrice, Recommendation } from '@database/entities';
+import { Analysis, AnalysisType, AnalysisStatus, Asset, AssetPrice, Recommendation, User } from '@database/entities';
 import { ScrapersService } from '@scrapers/scrapers.service';
 
 @Injectable()
@@ -321,12 +321,64 @@ export class AnalysisService {
   }
 
   async generateCompleteAnalysis(ticker: string, userId?: string) {
-    // TODO: Implement complete analysis with AI
-    return {
-      message: 'Complete analysis generation not implemented yet',
-      ticker,
-      userId,
+    this.logger.log(`Generating complete analysis for ${ticker}`);
+
+    // Get asset ID from ticker
+    const asset = await this.assetRepository.findOne({
+      where: { ticker: ticker.toUpperCase() },
+    });
+
+    if (!asset) {
+      throw new NotFoundException(`Asset with ticker ${ticker} not found`);
+    }
+
+    // Create analysis record
+    const createData: Partial<Analysis> = {
+      assetId: asset.id,
+      type: AnalysisType.COMPLETE,
+      status: AnalysisStatus.PROCESSING,
     };
+
+    if (userId) {
+      createData.userId = userId;
+    }
+
+    const analysis = this.analysisRepository.create(createData);
+    await this.analysisRepository.save(analysis);
+
+    this.logger.log(`Analysis created with ID: ${analysis.id}`);
+
+    try {
+      // Scrape fundamental data
+      const fundamentalResult = await this.scrapersService.scrapeFundamentalData(ticker);
+
+      // Update analysis with results
+      analysis.status = AnalysisStatus.COMPLETED;
+      analysis.analysis = fundamentalResult.data;
+      analysis.dataSources = fundamentalResult.sources;
+      analysis.sourcesCount = fundamentalResult.sourcesCount;
+      analysis.confidenceScore = fundamentalResult.confidence;
+
+      // Set recommendation based on confidence score
+      if (fundamentalResult.confidence >= 0.8) {
+        analysis.recommendation = Recommendation.BUY;
+      } else if (fundamentalResult.confidence >= 0.6) {
+        analysis.recommendation = Recommendation.HOLD;
+      } else {
+        analysis.recommendation = Recommendation.SELL;
+      }
+
+      await this.analysisRepository.save(analysis);
+
+      this.logger.log(`Complete analysis finished for ${ticker}: ${analysis.recommendation}`);
+      return analysis;
+    } catch (error) {
+      this.logger.error(`Error generating complete analysis: ${error.message}`);
+      analysis.status = AnalysisStatus.FAILED;
+      analysis.analysis = { error: error.message };
+      await this.analysisRepository.save(analysis);
+      throw error;
+    }
   }
 
   async findAll(
@@ -338,7 +390,7 @@ export class AnalysisService {
       offset?: number;
     },
   ) {
-    const where: any = { user: { id: userId } };
+    const where: any = { userId };
 
     if (params?.type) {
       where.type = params.type;
