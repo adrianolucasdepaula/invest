@@ -25,7 +25,7 @@ import {
   Play,
 } from 'lucide-react';
 import { cn, formatPercent } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 const getSignalColor = (signal?: string) => {
   switch (signal) {
