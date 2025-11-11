@@ -76,33 +76,24 @@ export function NewAnalysisDialog({ children }: NewAnalysisDialogProps) {
       console.log('Response URL:', response.url);
 
       if (!response.ok) {
-        if (response.status === 401) {
-          toast({
-            title: 'Sessão expirada',
-            description: 'Sua sessão expirou. Por favor, faça login novamente.',
-            variant: 'destructive',
-          });
-          // Limpar token e redirecionar
-          localStorage.removeItem('token');
-          setTimeout(() => {
-            window.location.href = '/auth/login';
-          }, 2000);
-          return;
+        // Capturar o corpo da resposta como texto primeiro
+        const errorText = await response.text();
+        console.error(`[Nova Análise] Erro ${response.status}:`, errorText);
+
+        let errorMessage = '';
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.message || errorText;
+        } catch {
+          errorMessage = errorText || `Erro ${response.status}`;
         }
 
-        if (response.status === 404) {
-          const errorText = await response.text();
-          console.error('404 Error details:', errorText);
-          toast({
-            title: 'Erro 404 - Rota não encontrada',
-            description: `A rota de análise não foi encontrada. Verifique a configuração do backend.`,
-            variant: 'destructive',
-          });
-          return;
-        }
-
-        const error = await response.json().catch(() => ({ message: 'Falha ao solicitar análise' }));
-        throw new Error(error.message || 'Falha ao solicitar análise');
+        toast({
+          title: `Erro ${response.status}`,
+          description: errorMessage,
+          variant: 'destructive',
+        });
+        return;
       }
 
       const data = await response.json();
