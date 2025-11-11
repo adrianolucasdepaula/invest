@@ -379,9 +379,164 @@ export default function AnalysisPage() {
                 <div>
                   <h4 className="text-sm font-semibold mb-2">Dados da Análise</h4>
                   <Card className="p-4">
-                    <pre className="text-xs overflow-auto max-h-96">
-                      {JSON.stringify(selectedAnalysis.analysis, null, 2)}
-                    </pre>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {/* Valuation */}
+                      {(selectedAnalysis.analysis.cotacao || selectedAnalysis.analysis.pl || selectedAnalysis.analysis.pvp) && (
+                        <div className="col-span-2 md:col-span-3">
+                          <h5 className="text-xs font-semibold text-muted-foreground mb-2">Valuation</h5>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {selectedAnalysis.analysis.cotacao && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Cotação</p>
+                                <p className="font-medium">R$ {Number(selectedAnalysis.analysis.cotacao).toFixed(2)}</p>
+                              </div>
+                            )}
+                            {selectedAnalysis.analysis.pl && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">P/L</p>
+                                <p className="font-medium">{Number(selectedAnalysis.analysis.pl).toFixed(2)}</p>
+                              </div>
+                            )}
+                            {selectedAnalysis.analysis.pvp && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">P/VP</p>
+                                <p className="font-medium">{Number(selectedAnalysis.analysis.pvp).toFixed(2)}</p>
+                              </div>
+                            )}
+                            {selectedAnalysis.analysis.psr && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">P/SR</p>
+                                <p className="font-medium">{Number(selectedAnalysis.analysis.psr).toFixed(2)}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Dividendos e Rentabilidade */}
+                      {(selectedAnalysis.analysis.dividendYield || selectedAnalysis.analysis.roe || selectedAnalysis.analysis.roic) && (
+                        <div className="col-span-2 md:col-span-3">
+                          <h5 className="text-xs font-semibold text-muted-foreground mb-2">Rentabilidade</h5>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {selectedAnalysis.analysis.dividendYield && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Dividend Yield</p>
+                                <p className="font-medium">{Number(selectedAnalysis.analysis.dividendYield).toFixed(2)}%</p>
+                              </div>
+                            )}
+                            {selectedAnalysis.analysis.roe && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">ROE</p>
+                                <p className="font-medium">{Number(selectedAnalysis.analysis.roe).toFixed(2)}%</p>
+                              </div>
+                            )}
+                            {selectedAnalysis.analysis.roic && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">ROIC</p>
+                                <p className="font-medium">{Number(selectedAnalysis.analysis.roic).toFixed(2)}%</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Margens */}
+                      {(selectedAnalysis.analysis.margemEbit || selectedAnalysis.analysis.margemLiquida) && (
+                        <div className="col-span-2 md:col-span-3">
+                          <h5 className="text-xs font-semibold text-muted-foreground mb-2">Margens</h5>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {selectedAnalysis.analysis.margemEbit && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Margem EBIT</p>
+                                <p className="font-medium">{Number(selectedAnalysis.analysis.margemEbit).toFixed(2)}%</p>
+                              </div>
+                            )}
+                            {selectedAnalysis.analysis.margemLiquida && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Margem Líquida</p>
+                                <p className="font-medium">{Number(selectedAnalysis.analysis.margemLiquida).toFixed(2)}%</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Indicadores de Valor */}
+                      {(selectedAnalysis.analysis.evEbit || selectedAnalysis.analysis.pEbit) && (
+                        <div className="col-span-2 md:col-span-3">
+                          <h5 className="text-xs font-semibold text-muted-foreground mb-2">Múltiplos</h5>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {selectedAnalysis.analysis.evEbit && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">EV/EBIT</p>
+                                <p className="font-medium">{Number(selectedAnalysis.analysis.evEbit).toFixed(2)}</p>
+                              </div>
+                            )}
+                            {selectedAnalysis.analysis.evEbitda && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">EV/EBITDA</p>
+                                <p className="font-medium">{Number(selectedAnalysis.analysis.evEbitda).toFixed(2)}</p>
+                              </div>
+                            )}
+                            {selectedAnalysis.analysis.pEbit && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">P/EBIT</p>
+                                <p className="font-medium">{Number(selectedAnalysis.analysis.pEbit).toFixed(2)}</p>
+                              </div>
+                            )}
+                            {selectedAnalysis.analysis.pAtivo && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">P/Ativo</p>
+                                <p className="font-medium">{Number(selectedAnalysis.analysis.pAtivo).toFixed(2)}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Dados Financeiros */}
+                      {(selectedAnalysis.analysis.patrimonioLiquido || selectedAnalysis.analysis.dividaBruta || selectedAnalysis.analysis.disponibilidades) && (
+                        <div className="col-span-2 md:col-span-3">
+                          <h5 className="text-xs font-semibold text-muted-foreground mb-2">Dados Financeiros</h5>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {selectedAnalysis.analysis.patrimonioLiquido && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Patrimônio Líquido</p>
+                                <p className="font-medium">R$ {(Number(selectedAnalysis.analysis.patrimonioLiquido) / 1000000).toFixed(0)}M</p>
+                              </div>
+                            )}
+                            {selectedAnalysis.analysis.dividaBruta && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Dívida Bruta</p>
+                                <p className="font-medium">R$ {(Number(selectedAnalysis.analysis.dividaBruta) / 1000000).toFixed(0)}M</p>
+                              </div>
+                            )}
+                            {selectedAnalysis.analysis.disponibilidades && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Disponibilidades</p>
+                                <p className="font-medium">R$ {(Number(selectedAnalysis.analysis.disponibilidades) / 1000000).toFixed(0)}M</p>
+                              </div>
+                            )}
+                            {selectedAnalysis.analysis.lucroLiquido && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Lucro Líquido</p>
+                                <p className="font-medium">R$ {(Number(selectedAnalysis.analysis.lucroLiquido) / 1000000).toFixed(0)}M</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* JSON completo em collapse */}
+                    <details className="mt-4">
+                      <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                        Ver dados completos (JSON)
+                      </summary>
+                      <pre className="text-xs overflow-auto max-h-60 mt-2 p-2 bg-muted rounded">
+                        {JSON.stringify(selectedAnalysis.analysis, null, 2)}
+                      </pre>
+                    </details>
                   </Card>
                 </div>
               )}
