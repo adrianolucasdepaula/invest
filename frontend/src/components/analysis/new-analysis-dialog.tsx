@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Cookies from 'js-cookie';
 import {
   Dialog,
   DialogContent,
@@ -45,8 +46,8 @@ export function NewAnalysisDialog({ children }: NewAnalysisDialogProps) {
     }
 
     try {
-      // Buscar token
-      const token = localStorage.getItem('token');
+      // Buscar token do cookie
+      const token = Cookies.get('access_token');
       if (!token) {
         toast({
           title: 'Não autorizado',

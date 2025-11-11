@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Cookies from 'js-cookie';
 import { useAnalyses } from '@/lib/hooks/use-analysis';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -95,8 +96,8 @@ export default function AnalysisPage() {
   const handleRefreshAnalysis = async (analysis: any) => {
     setRefreshingId(analysis.id);
     try {
-      // Buscar token
-      const token = localStorage.getItem('token');
+      // Buscar token do cookie
+      const token = Cookies.get('access_token');
       if (!token) {
         toast({
           title: 'Não autorizado',
