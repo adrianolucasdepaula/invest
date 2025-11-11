@@ -95,20 +95,63 @@ export default function AnalysisPage() {
   const handleRefreshAnalysis = async (analysis: any) => {
     setRefreshingId(analysis.id);
     try {
+      // Buscar token
       const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/analysis/${analysis.asset.ticker}/${analysis.type}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      if (!token) {
+        toast({
+          title: 'Não autorizado',
+          description: 'Você precisa estar autenticado. Por favor, faça login novamente.',
+          variant: 'destructive',
+        });
+        // Redirecionar para login após 2 segundos
+        setTimeout(() => {
+          window.location.href = '/auth/login';
+        }, 2000);
+        return;
+      }
+
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/analysis/${analysis.asset.ticker}/${analysis.type}`;
+      console.log('[Atualizar] Requesting URL:', apiUrl);
+      console.log('[Atualizar] Token:', token ? 'exists' : 'missing');
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      console.log('[Atualizar] Response status:', response.status);
+      console.log('[Atualizar] Response URL:', response.url);
 
       if (!response.ok) {
-        const error = await response.json();
+        if (response.status === 401) {
+          toast({
+            title: 'Sessão expirada',
+            description: 'Sua sessão expirou. Por favor, faça login novamente.',
+            variant: 'destructive',
+          });
+          // Limpar token e redirecionar
+          localStorage.removeItem('token');
+          setTimeout(() => {
+            window.location.href = '/auth/login';
+          }, 2000);
+          return;
+        }
+
+        if (response.status === 404) {
+          const errorText = await response.text();
+          console.error('[Atualizar] 404 Error details:', errorText);
+          toast({
+            title: 'Erro 404 - Rota não encontrada',
+            description: `A rota de análise não foi encontrada. Verifique a configuração do backend.`,
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        const error = await response.json().catch(() => ({ message: 'Falha ao atualizar análise' }));
         throw new Error(error.message || 'Falha ao atualizar análise');
       }
 
@@ -120,6 +163,7 @@ export default function AnalysisPage() {
       // Refetch analyses after a short delay to allow processing
       setTimeout(() => refetch(), 2000);
     } catch (error: any) {
+      console.error('[Atualizar] Erro ao atualizar análise:', error);
       toast({
         title: 'Erro ao atualizar análise',
         description: error.message || 'Ocorreu um erro ao atualizar a análise. Tente novamente.',
