@@ -44,32 +44,36 @@ export function NewAnalysisDialog({ children }: NewAnalysisDialogProps) {
       return;
     }
 
-    // Validar token
-    const token = localStorage.getItem('token');
-    if (!token) {
-      toast({
-        title: 'Não autorizado',
-        description: 'Você precisa estar autenticado. Por favor, faça login novamente.',
-        variant: 'destructive',
-      });
-      // Redirecionar para login após 2 segundos
-      setTimeout(() => {
-        window.location.href = '/auth/login';
-      }, 2000);
-      return;
-    }
-
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/analysis/${ticker.toUpperCase()}/${type}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      // Buscar token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast({
+          title: 'Não autorizado',
+          description: 'Você precisa estar autenticado. Por favor, faça login novamente.',
+          variant: 'destructive',
+        });
+        // Redirecionar para login após 2 segundos
+        setTimeout(() => {
+          window.location.href = '/auth/login';
+        }, 2000);
+        return;
+      }
+
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/analysis/${ticker.toUpperCase()}/${type}`;
+      console.log('Requesting URL:', apiUrl);
+      console.log('Token:', token ? 'exists' : 'missing');
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response URL:', response.url);
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -83,6 +87,17 @@ export function NewAnalysisDialog({ children }: NewAnalysisDialogProps) {
           setTimeout(() => {
             window.location.href = '/auth/login';
           }, 2000);
+          return;
+        }
+
+        if (response.status === 404) {
+          const errorText = await response.text();
+          console.error('404 Error details:', errorText);
+          toast({
+            title: 'Erro 404 - Rota não encontrada',
+            description: `A rota de análise não foi encontrada. Verifique a configuração do backend.`,
+            variant: 'destructive',
+          });
           return;
         }
 
