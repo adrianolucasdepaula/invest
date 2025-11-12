@@ -5,7 +5,7 @@ import { Asset, FundamentalData, UpdateLog, UpdateStatus, UpdateTrigger, Portfol
 import { ScrapersService } from '../../scrapers/scrapers.service';
 import { AppWebSocketGateway } from '../../websocket/websocket.gateway';
 
-interface UpdateResult {
+export interface UpdateResult {
   success: boolean;
   assetId: string;
   ticker: string;
@@ -21,7 +21,7 @@ interface UpdateResult {
   };
 }
 
-interface BatchUpdateResult {
+export interface BatchUpdateResult {
   totalAssets: number;
   successCount: number;
   failedCount: number;

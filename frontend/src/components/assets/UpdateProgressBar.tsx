@@ -48,7 +48,7 @@ export function UpdateProgressBar({
         clearTimeout(hideTimeout);
       }
     };
-  }, [isBatchUpdating, batchProgress.total]);
+  }, [isBatchUpdating, batchProgress.total, hideTimeout]);
 
   if (!isVisible) return null;
 

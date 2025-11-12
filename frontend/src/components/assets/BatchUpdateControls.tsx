@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,11 +35,7 @@ export function BatchUpdateControls({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadOutdatedAssets();
-  }, [portfolioId]);
-
-  const loadOutdatedAssets = async () => {
+  const loadOutdatedAssets = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -51,7 +47,11 @@ export function BatchUpdateControls({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [portfolioId, getOutdatedAssets]);
+
+  useEffect(() => {
+    loadOutdatedAssets();
+  }, [loadOutdatedAssets]);
 
   const handleSelectAll = () => {
     if (selectedTickers.length === outdatedAssets.length) {

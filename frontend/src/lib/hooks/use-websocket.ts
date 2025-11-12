@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { wsService } from '../websocket';
 
 export function useWebSocket() {
@@ -19,11 +19,23 @@ export function useWebSocket() {
     };
   }, []);
 
+  const subscribe = useCallback((tickers: string[], events: ('prices' | 'analysis' | 'reports' | 'portfolio')[]) => {
+    return wsService.subscribe(tickers, events);
+  }, []);
+
+  const unsubscribe = useCallback((tickers?: string[], events?: string[]) => {
+    return wsService.unsubscribe(tickers, events);
+  }, []);
+
+  const on = useCallback((event: string, callback: (data: any) => void) => {
+    return wsService.on(event, callback);
+  }, []);
+
   return {
     isConnected,
-    subscribe: wsService.subscribe.bind(wsService),
-    unsubscribe: wsService.unsubscribe.bind(wsService),
-    on: wsService.on.bind(wsService),
+    subscribe,
+    unsubscribe,
+    on,
   };
 }
 
@@ -47,7 +59,7 @@ export function usePriceUpdates(tickers: string[]) {
       unsubscribe(tickers, ['prices']);
       unsubscribeListener();
     };
-  }, [tickers.join(',')]);
+  }, [tickers, subscribe, unsubscribe, on]);
 
   return prices;
 }
@@ -69,7 +81,7 @@ export function useAnalysisUpdates(tickers: string[]) {
       unsubscribe(tickers, ['analysis']);
       unsubscribeListener();
     };
-  }, [tickers.join(',')]);
+  }, [tickers, subscribe, unsubscribe, on]);
 
   return analyses;
 }
@@ -91,7 +103,7 @@ export function useReportUpdates(tickers: string[]) {
       unsubscribe(tickers, ['reports']);
       unsubscribeListener();
     };
-  }, [tickers.join(',')]);
+  }, [tickers, subscribe, unsubscribe, on]);
 
   return reports;
 }
@@ -111,7 +123,7 @@ export function usePortfolioUpdates() {
       unsubscribe([], ['portfolio']);
       unsubscribeListener();
     };
-  }, []);
+  }, [subscribe, unsubscribe, on]);
 
   return updates;
 }
@@ -128,7 +140,7 @@ export function useMarketStatus() {
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [on]);
 
   return status;
 }
