@@ -17,6 +17,7 @@ export interface AssetWithAnalysisStatus {
 
   // Status da análise
   hasAnalysis: boolean;
+  lastAnalysisId?: string;
   lastAnalysisDate?: string;
   lastAnalysisType?: string;
   lastAnalysisStatus?: string;
@@ -54,7 +55,7 @@ export function useRequestAnalysis() {
 
   return useMutation({
     mutationFn: async (ticker: string) => {
-      const response = await api.post('/analysis/complete', { ticker });
+      const response = await api.post(`/analysis/${ticker}/complete`);
       return response.data;
     },
     onSuccess: (data, ticker) => {
