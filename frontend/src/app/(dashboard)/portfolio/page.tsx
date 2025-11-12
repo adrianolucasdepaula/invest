@@ -327,7 +327,10 @@ export default function PortfolioPage() {
                       )}
                     </div>
                     <div className="col-span-1 text-right font-medium">
-                      {position.quantity}
+                      {Number(position.quantity).toLocaleString('pt-BR', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2
+                      })}
                     </div>
                     <div className="col-span-2 text-right">
                       {formatCurrency(position.averagePrice)}

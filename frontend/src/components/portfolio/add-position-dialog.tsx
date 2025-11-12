@@ -31,13 +31,14 @@ export function AddPositionDialog({
   const [ticker, setTicker] = useState('');
   const [quantity, setQuantity] = useState('');
   const [averagePrice, setAveragePrice] = useState('');
+  const [purchaseDate, setPurchaseDate] = useState('');
   const { toast } = useToast();
   const addMutation = useAddPosition();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!ticker || !quantity || !averagePrice) {
+    if (!ticker || !quantity || !averagePrice || !purchaseDate) {
       toast({
         title: 'Campos obrigatórios',
         description: 'Preencha todos os campos para adicionar a posição.',
@@ -53,6 +54,7 @@ export function AddPositionDialog({
           ticker: ticker.toUpperCase(),
           quantity: parseInt(quantity),
           averagePrice: parseFloat(averagePrice),
+          purchaseDate: purchaseDate,
         },
       });
 
@@ -65,6 +67,7 @@ export function AddPositionDialog({
       setTicker('');
       setQuantity('');
       setAveragePrice('');
+      setPurchaseDate('');
       onSuccess?.();
     } catch (error) {
       toast({
@@ -149,7 +152,24 @@ export function AddPositionDialog({
               </p>
             </div>
 
-            {ticker && quantity && averagePrice && (
+            <div className="space-y-2">
+              <label htmlFor="purchaseDate" className="text-sm font-medium">
+                Data de Compra *
+              </label>
+              <Input
+                id="purchaseDate"
+                type="date"
+                value={purchaseDate}
+                onChange={(e) => setPurchaseDate(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Data em que o ativo foi comprado
+              </p>
+            </div>
+
+            {ticker && quantity && averagePrice && purchaseDate && (
               <div className="rounded-lg border p-4 bg-muted/50">
                 <h4 className="text-sm font-semibold mb-2">Resumo:</h4>
                 <div className="space-y-1 text-sm">
@@ -168,6 +188,12 @@ export function AddPositionDialog({
                         style: 'currency',
                         currency: 'BRL',
                       }).format(parseFloat(averagePrice) || 0)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Data de Compra:</span>
+                    <span className="font-medium">
+                      {new Date(purchaseDate + 'T00:00:00').toLocaleDateString('pt-BR')}
                     </span>
                   </div>
                   <div className="flex justify-between border-t pt-2 mt-2">

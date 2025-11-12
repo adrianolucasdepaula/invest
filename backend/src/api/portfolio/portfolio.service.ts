@@ -106,6 +106,7 @@ export class PortfolioService {
       quantity: data.quantity,
       averagePrice: data.averagePrice,
       totalInvested: data.quantity * data.averagePrice,
+      firstBuyDate: data.purchaseDate ? new Date(data.purchaseDate) : new Date(),
     });
 
     return this.positionRepository.save(position);
