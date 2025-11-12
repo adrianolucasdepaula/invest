@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, Query, UseGuards, Request, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body, Query, UseGuards, Request, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AnalysisService } from './analysis.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -45,15 +45,31 @@ export class AnalysisController {
     });
   }
 
+  @Get(':id/details')
+  @ApiOperation({ summary: 'Get analysis details' })
+  async getAnalysisDetails(@Param('id') id: string) {
+    return this.analysisService.findById(id);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete analysis' })
+  async deleteAnalysis(@Param('id') id: string, @Request() req) {
+    return this.analysisService.deleteAnalysis(id, req.user?.sub || req.user?.id);
+  }
+
   @Get(':ticker')
   @ApiOperation({ summary: 'Get all analyses for a ticker' })
   async getAnalyses(@Param('ticker') ticker: string, @Query('type') type?: string) {
     return this.analysisService.findByTicker(ticker, type);
   }
 
-  @Get(':id/details')
-  @ApiOperation({ summary: 'Get analysis details' })
-  async getAnalysisDetails(@Param('id') id: string) {
-    return this.analysisService.findById(id);
+  @Post('bulk/request')
+  @ApiOperation({ summary: 'Request analysis for all active assets' })
+  async requestBulkAnalysis(
+    @Body() body: { type: 'fundamental' | 'technical' | 'complete' },
+    @Request() req,
+  ) {
+    const userId = (req.user?.sub || req.user?.id || '') as string;
+    return this.analysisService.requestBulkAnalysis(body.type as any, userId);
   }
 }

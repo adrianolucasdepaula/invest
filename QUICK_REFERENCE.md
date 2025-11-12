@@ -1,8 +1,10 @@
 # 📖 Referência Rápida - B3 AI Analysis Platform
 
-**Última atualização:** 2025-11-07
-**Versão:** 2.0
+**Última atualização:** 2025-11-12
+**Versão:** 1.2.0
 **Status:** ✅ Sistema em Produção
+
+**Última Correção:** Variação de Ativos (change/changePercent) - veja `CORRECAO_VARIACAO_ATIVOS.md`
 
 ---
 
@@ -132,7 +134,7 @@ JWT_EXPIRATION=7d
 # Portas
 APP_PORT=3101
 PORT=3101
-WEBSOCKET_PORT=3102
+# WebSocket roda na mesma porta do backend (3101)
 ```
 
 ### Variáveis Opcionais
