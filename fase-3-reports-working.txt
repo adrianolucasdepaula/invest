@@ -1,0 +1,32 @@
+uid=4_0 RootWebArea "B3 AI Analysis Platform" url="http://localhost:3100/reports"
+  uid=4_1 link "B3 AI Analysis" url="http://localhost:3100/dashboard"
+    uid=4_2 StaticText "B3 AI Analysis"
+  uid=4_3 navigation
+    uid=4_4 link "Dashboard" url="http://localhost:3100/dashboard"
+      uid=4_5 StaticText "Dashboard"
+    uid=4_6 link "Ativos" url="http://localhost:3100/assets"
+      uid=4_7 StaticText "Ativos"
+    uid=4_8 link "Análises" url="http://localhost:3100/analysis"
+      uid=4_9 StaticText "Análises"
+    uid=4_10 link "Portfólio" url="http://localhost:3100/portfolio"
+      uid=4_11 StaticText "Portfólio"
+    uid=4_12 link "Relatórios" url="http://localhost:3100/reports"
+      uid=4_13 StaticText "Relatórios"
+    uid=4_14 link "Fontes de Dados" url="http://localhost:3100/data-sources"
+      uid=4_15 StaticText "Fontes de Dados"
+    uid=4_16 link "Configurações" url="http://localhost:3100/settings"
+      uid=4_17 StaticText "Configurações"
+  uid=4_18 StaticText "teste1762875976@exemplo.com"
+  uid=4_19 banner
+    uid=4_20 button "Toggle sidebar"
+    uid=4_21 searchbox "Buscar ativos, análises..."
+    uid=4_22 button
+    uid=4_23 button "Sair"
+  uid=4_24 main
+    uid=4_25 heading "Relatórios de Análise" level="1"
+    uid=4_26 StaticText "Análises completas de todos os ativos"
+    uid=4_27 heading "Erro ao Carregar Ativos" level="3"
+    uid=4_28 StaticText "Request failed with status code 404"
+    uid=4_29 button "Tentar Novamente"
+  uid=4_30 region "Notifications (F8)"
+    uid=4_31 list

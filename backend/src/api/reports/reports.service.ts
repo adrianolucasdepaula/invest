@@ -156,6 +156,7 @@ export class ReportsService {
 
             // Status da análise
             hasAnalysis: !!lastAnalysis,
+            lastAnalysisId: lastAnalysis?.id,
             lastAnalysisDate: lastAnalysis?.createdAt,
             lastAnalysisType: lastAnalysis?.type,
             lastAnalysisStatus: lastAnalysis?.status,

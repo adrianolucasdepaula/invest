@@ -419,7 +419,7 @@ export default function ReportsPage() {
                   {/* Actions */}
                   <div className="flex items-center gap-2">
                     {/* View Report */}
-                    <Link href={`/reports/${asset.id}`} className="flex-1">
+                    <Link href={`/reports/${asset.lastAnalysisId}`} className="flex-1">
                       <Button variant="outline" className="w-full">
                         <Eye className="mr-2 h-4 w-4" />
                         Visualizar Relatório

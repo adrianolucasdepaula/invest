@@ -664,7 +664,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Botões de ação (Update/Edit/Remove) 100% funcionais
 - Fix pointer-events interception nas progress bars
 
-### FASE 3: Refatoração Sistema Reports ✅ 100% COMPLETO (FASES 1-3)
+### FASE 3: Refatoração Sistema Reports ✅ 100% COMPLETO (FASES 1-4)
 - [x] FASE 1: Limpeza de Dados (Backend) ✅
   - Script cleanup-analyses.ts criado
   - 102 análises pending travadas removidas
@@ -682,13 +682,20 @@ Co-Authored-By: Claude <noreply@anthropic.com>
   - MultiSourceTooltip (4 fontes)
   - AlertDialog (confirmação bulk)
   - Correções: URLs duplicadas + changePercent null check
-- [ ] FASE 4: Conectar Detail Page 🔜 PRÓXIMO
-- [ ] FASE 5: Implementar Downloads (PDF/JSON)
+- [x] FASE 4: Conectar Detail Page `/reports/[id]` ✅
+  - Hook `useReport(id)` criado (20 linhas)
+  - Página refatorada com dados reais (222 linhas)
+  - Backend: Campo `lastAnalysisId` adicionado ao DTO
+  - Frontend: Link corrigido para usar analysis ID (não asset ID)
+  - 4 tabs funcionando (Overview, Fundamental, Technical, Risks)
+  - Loading, error, empty states
+  - Download handlers (PDF/JSON preparados)
+- [ ] FASE 5: Implementar Downloads (PDF/JSON) 🔜 PRÓXIMO
 - [ ] FASE 6: Testes e Validação Final
 
-**Referência:** `REFATORACAO_SISTEMA_REPORTS.md`, `VALIDACAO_FASE_3_REPORTS_REFATORADO.md`
-**Commits:** `0321c58`, `f142a8a`, `d30e9b3`
-**Status:** 3/6 fases completas (50%)
+**Referência:** `REFATORACAO_SISTEMA_REPORTS.md`, `VALIDACAO_FASE_3_REPORTS_REFATORADO.md`, `VALIDACAO_FASE_4_REPORTS_DETAIL.md`
+**Commits:** `0321c58`, `f142a8a`, `d30e9b3`, `[pending FASE 4]`
+**Status:** 4/6 fases completas (67%)
 
 ### FASE 23: Dados Históricos BRAPI 🔜 PLANEJADO
 - [ ] Pesquisar endpoints BRAPI para histórico
