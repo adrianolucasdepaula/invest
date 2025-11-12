@@ -24,7 +24,9 @@
     "migration:create": "npm run typeorm -- migration:create",
     "migration:run": "npm run typeorm -- migration:run -d src/database/data-source.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/database/data-source.ts",
-    "seed": "ts-node src/database/seeds/seed.ts"
+    "seed": "ts-node src/database/seeds/seed.ts",
+    "cleanup:analyses": "ts-node src/database/scripts/cleanup-analyses.ts",
+    "cleanup:analyses:full": "ts-node src/database/scripts/cleanup-analyses.ts --remove-old"
   },
   "dependencies": {
     "@nestjs/bull": "^11.0.4",

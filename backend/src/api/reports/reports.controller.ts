@@ -1,8 +1,9 @@
 import { Controller, Post, Get, Param, Query, Body, UseGuards, Req } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AnalysisService } from '../analysis/analysis.service';
+import { AssetWithAnalysisStatusDto } from './dto/asset-with-analysis-status.dto';
 
 @ApiTags('reports')
 @Controller('reports')
@@ -13,6 +14,20 @@ export class ReportsController {
     private readonly reportsService: ReportsService,
     private readonly analysisService: AnalysisService,
   ) {}
+
+  @Get('assets-status')
+  @ApiOperation({
+    summary: 'Get all assets with analysis status',
+    description:
+      'Returns all active assets with information about their latest complete analysis (if any)',
+  })
+  @ApiOkResponse({
+    description: 'List of assets with analysis status',
+    type: [AssetWithAnalysisStatusDto],
+  })
+  async getAssetsWithAnalysisStatus(): Promise<AssetWithAnalysisStatusDto[]> {
+    return this.reportsService.getAssetsWithAnalysisStatus();
+  }
 
   @Get()
   @ApiOperation({ summary: 'Get all reports (complete analyses)' })
