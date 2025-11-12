@@ -664,6 +664,32 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Botões de ação (Update/Edit/Remove) 100% funcionais
 - Fix pointer-events interception nas progress bars
 
+### FASE 3: Refatoração Sistema Reports ✅ 100% COMPLETO (FASES 1-3)
+- [x] FASE 1: Limpeza de Dados (Backend) ✅
+  - Script cleanup-analyses.ts criado
+  - 102 análises pending travadas removidas
+  - Apenas 2 análises completed restantes (WEGE3, VIVT3)
+- [x] FASE 2: Novo Endpoint Backend ✅
+  - DTO: AssetWithAnalysisStatusDto (asset + status análise)
+  - Endpoint: GET /api/v1/reports/assets-status
+  - Retorna: 55 ativos com flags (isAnalysisRecent, isAnalysisOutdated, canRequestAnalysis)
+- [x] FASE 3: Refatorar Frontend /reports ✅
+  - Página redesenhada (540 linhas)
+  - Lista de TODOS os ativos (55) com status de análise
+  - Botão "Analisar Todos os Ativos" (bulk)
+  - Botão "Solicitar Análise" individual por ativo
+  - Busca por ticker ou nome
+  - MultiSourceTooltip (4 fontes)
+  - AlertDialog (confirmação bulk)
+  - Correções: URLs duplicadas + changePercent null check
+- [ ] FASE 4: Conectar Detail Page 🔜 PRÓXIMO
+- [ ] FASE 5: Implementar Downloads (PDF/JSON)
+- [ ] FASE 6: Testes e Validação Final
+
+**Referência:** `REFATORACAO_SISTEMA_REPORTS.md`, `VALIDACAO_FASE_3_REPORTS_REFATORADO.md`
+**Commits:** `0321c58`, `f142a8a`, `d30e9b3`
+**Status:** 3/6 fases completas (50%)
+
 ### FASE 23: Dados Históricos BRAPI 🔜 PLANEJADO
 - [ ] Pesquisar endpoints BRAPI para histórico
 - [ ] Verificar períodos disponíveis (diário, semanal, mensal, anual, 3-10 anos)
