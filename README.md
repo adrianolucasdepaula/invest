@@ -28,13 +28,15 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 
 ### Fontes de Dados
 
-#### Análise Fundamentalista
-- Fundamentei (login Google)
-- Investidor10 (login Google)
-- StatusInvest (login Google)
-- **Fundamentus** (sem login - público)
-- **Investsite** (sem login - público)
-- BRAPI (API pública)
+#### Análise Fundamentalista (Implementadas)
+- **Fundamentus** (sem login - público) ✅
+- **BRAPI** (API pública) ✅
+- **StatusInvest** (login Google) ✅
+- **Investidor10** (login Google) ✅
+
+#### Análise Fundamentalista (Planejadas)
+- Fundamentei (login Google) 🔜
+- Investsite (sem login - público) 🔜
 
 #### Análise Geral do Mercado
 - Investing.com (login Google)
