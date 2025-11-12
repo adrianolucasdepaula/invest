@@ -93,13 +93,20 @@ export default function PortfolioPage() {
     const dayGain = enrichedPositions.reduce((sum: number, p: any) => {
       const asset = assetMap.get(p.assetId);
 
-      // Check if position was bought today
-      const today = new Date().toDateString();
-      const buyDate = p.firstBuyDate ? new Date(p.firstBuyDate).toDateString() : null;
-      const isBoughtToday = buyDate === today;
+      // Check if position was bought today (compare date parts only, ignore time/timezone)
+      if (p.firstBuyDate) {
+        const buyDate = new Date(p.firstBuyDate);
+        const today = new Date();
 
-      // If bought today, no day gain/loss (you didn't own it yesterday)
-      if (isBoughtToday) return sum;
+        // Compare year, month, and day
+        const isBoughtToday =
+          buyDate.getFullYear() === today.getFullYear() &&
+          buyDate.getMonth() === today.getMonth() &&
+          buyDate.getDate() === today.getDate();
+
+        // If bought today, no day gain/loss (you didn't own it yesterday)
+        if (isBoughtToday) return sum;
+      }
 
       const dayChange = asset?.change || 0;
       return sum + (dayChange * p.quantity);
