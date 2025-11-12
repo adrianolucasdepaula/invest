@@ -47,6 +47,27 @@ class ApiClient {
     );
   }
 
+  // Generic methods
+  async get(url: string, config?: any) {
+    return this.client.get(url, config);
+  }
+
+  async post(url: string, data?: any, config?: any) {
+    return this.client.post(url, data, config);
+  }
+
+  async put(url: string, data?: any, config?: any) {
+    return this.client.put(url, data, config);
+  }
+
+  async delete(url: string, config?: any) {
+    return this.client.delete(url, config);
+  }
+
+  async patch(url: string, data?: any, config?: any) {
+    return this.client.patch(url, data, config);
+  }
+
   // Assets endpoints
   async getAssets(params?: { search?: string; type?: string; limit?: number; offset?: number }) {
     const response = await this.client.get('/assets', { params });
