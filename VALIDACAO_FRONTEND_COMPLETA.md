@@ -1,8 +1,8 @@
 # PLANO DE VALIDAÇÃO FRONTEND 100% - ULTRA-DETALHADO
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Data:** 2025-11-09
-**Versão:** v1.4
+**Data:** 2025-11-12
+**Versão:** v1.6
 **Status:** ⏸️ **BLOQUEADA - FASE 4** (Erro Crítico em Asset Detail)
 
 ---
@@ -1141,6 +1141,7 @@ Conforme orientação: não continuar enquanto houver erros críticos.
   - FASE 21: Acessibilidade
   - FASE 22: Sistema de Atualização de Ativos
   - FASE 23: Dados Históricos BRAPI
+  - FASE 24: Refatoração Botão "Solicitar Análises"
 
 #### Descrição Detalhada das Novas Fases
 
@@ -1193,6 +1194,36 @@ Conforme orientação: não continuar enquanto houver erros críticos.
   - ✅ Estimativa de esforço
   - ✅ Documento de requisitos
 
+**FASE 24: Refatoração Botão "Solicitar Análises" (UX/Arquitetura)**
+- **Referência:** `REFATORACAO_BOTAO_SOLICITAR_ANALISES.md`
+- **Status:** 0% completo (aguardando aprovação)
+- **Objetivo:** Mover botão "Solicitar Análises" de `/assets` para `/analysis` para melhor UX e separação de responsabilidades
+- **Escopo:**
+  - Frontend: Remover botão e função de `/assets/page.tsx` (linhas 79-96, 218-226)
+  - Frontend: Adicionar botão renderizado em `/analysis/page.tsx` (função já existe nas linhas 261-332)
+  - Frontend: Adicionar Tooltip explicativo sobre coleta multi-fonte
+  - Frontend: Melhorar mensagem de confirmação (enfatizar coleta de TODAS as fontes)
+  - Backend: Validar que `requestBulkAnalysis('complete')` coleta de TODAS as 6 fontes (Fundamentus, Investsite, BRAPI, Fundamentei, Investidor10, StatusInvest)
+  - Backend: Confirmar cross-validation entre fontes
+  - Backend: Confirmar logs de fontes consultadas
+  - Testes: Validar funcionalidade em `/analysis`
+  - Testes: Confirmar remoção em `/assets`
+- **Tempo Estimado:** 2 horas
+- **Prioridade:** Alta (arquitetura e UX)
+- **Critérios de Aprovação:**
+  - ✅ Botão "Solicitar Análises em Massa" visível e funcional em `/analysis`
+  - ✅ Botão removido completamente de `/assets`
+  - ✅ Tooltip explicando coleta multi-fonte renderizado
+  - ✅ Mensagem de confirmação clara sobre tempo e fontes
+  - ✅ Backend confirmado coletando de TODAS as 6 fontes
+  - ✅ Toast de sucesso mostrando contadores (requested/skipped)
+  - ✅ Estado de loading funcionando (`requestingBulk`)
+  - ✅ Ícone `BarChart3` animando durante solicitação
+  - ✅ 0 erros console
+  - ✅ 0 erros TypeScript
+  - ✅ Página `/assets` focada apenas em listar/atualizar preços
+  - ✅ Logs backend mostrando fontes consultadas para cada análise
+
 ### 6.3 Próximos Passos (Após Desbloqueio)
 
 **Imediato:**
@@ -1239,7 +1270,8 @@ Conforme orientação: não continuar enquanto houver erros críticos.
 | 21 | Acessibilidade | 9 | 0 | 0 | 9 | 0% | ⏳ PENDENTE |
 | 22 | Sistema Atualização | 25 | 0 | 0 | 25 | 0% | ⏳ PENDENTE |
 | 23 | Dados Históricos | 8 | 0 | 0 | 8 | 0% | ⏳ PENDENTE |
-| **TOTAL** | **23 Fases** | **283+** | **11** | **1** | **271+** | **3.9%** | **⏸️ BLOQUEADA** |
+| 24 | Refatoração Botão | 8 | 0 | 0 | 8 | 0% | ⏳ PENDENTE |
+| **TOTAL** | **24 Fases** | **291+** | **11** | **1** | **279+** | **3.8%** | **⏸️ BLOQUEADA** |
 
 ### 6.5 Critérios para Desbloqueio
 
@@ -1316,11 +1348,18 @@ A validação será **DESBLOQUEADA** e poderá prosseguir quando **TODOS** os cr
 
 ---
 
-**Última Atualização:** 2025-11-12 03:30 (Sessão 3 - Adição Fases 22-23)
-**Versão do Documento:** 1.5
+**Última Atualização:** 2025-11-12 04:00 (Sessão 4 - Adição FASE 24)
+**Versão do Documento:** 1.6
 **Status:** ⏸️ **BLOQUEADA NA FASE 4** - Aguardando correção do erro Asset Detail
 **Próxima Ação:** Correção do código em `src/app/(dashboard)/assets/[ticker]/page.tsx:28`
 **Executor:** Claude Code (Sonnet 4.5)
+
+**Mudanças v1.6:**
+- ✅ Adicionada FASE 24 (Refatoração Botão "Solicitar Análises")
+- ✅ Atualizada tabela de progressão (23 → 24 fases, 283+ → 291+ testes)
+- ✅ Documentados critérios de aprovação enfatizando coleta multi-fonte
+- ✅ Referência ao documento `REFATORACAO_BOTAO_SOLICITAR_ANALISES.md`
+- ✅ Validação de backend para confirmar coleta de TODAS as 6 fontes
 
 **Mudanças v1.5:**
 - ✅ Adicionadas FASE 22 (Sistema de Atualização de Ativos) e FASE 23 (Dados Históricos BRAPI)
