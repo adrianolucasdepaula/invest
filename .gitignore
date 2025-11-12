@@ -158,3 +158,32 @@ login_response.json
 .env.backup
 .env.backup.*
 *.env.backup
+
+# Temporary validation and certification files
+# (Keep only final/important documentation in git)
+CERTIFICACAO_FASE_*.md
+RELATORIO_BLOQUEIO_*.md
+RELATORIO_FASE_*.md
+REVISAO_RIGOROSA_FASE_*.md
+RESUMO_FASE_*.md
+STATUS_ATUAL_*.md
+ERRO_CRITICO_*.md
+ESCLARECIMENTOS_*.md
+CORRECAO_*.md
+VALIDACAO_ATIVOS_*.md
+FASE_*_PLANO.md
+*.png
+response.json
+
+# Keep important documentation (exceptions)
+!README.md
+!claude.md
+!ROADMAP_*.md
+!VALIDACAO_FRONTEND_COMPLETA.md
+!REFATORACAO_*.md
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Duplicate/legacy directories
+invest-claude-web/
