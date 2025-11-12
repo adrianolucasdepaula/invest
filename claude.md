@@ -634,10 +634,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - `CORRECOES_PORTFOLIO_2025-11-12.md` (documentação completa)
 - `BUG_GANHO_DO_DIA_EM_INVESTIGACAO.md` (investigação técnica)
 - `SOLUCAO_BUG_GANHO_DO_DIA.md` (solução completa)
-**Commits:** `43cb96d`, `a5b31f6`, `0c6143b`
-**Status:** ✅ 7/7 itens completos - FASE 100% concluída
-**Validação:** TypeScript 0 erros, Build OK, 4 bugs corrigidos, 2 features adicionadas
-**Screenshot:** `portfolio-ganho-dia-corrigido.png` (R$ 0,00 ✅)
+- `VALIDACAO_GANHO_DO_DIA_MULTIPLAS_DATAS.md` (validação completa multi-data)
+**Commits:** `43cb96d`, `a5b31f6`, `0c6143b`, `31c1c1c`, `e430264`
+**Status:** ✅ 7/7 itens completos - FASE 100% concluída e VALIDADA com múltiplas datas
+**Validação:** TypeScript 0 erros, Build OK, 5 posições testadas (3 hoje + 2 antigas), cálculo 100% correto
+**Screenshots:**
+- `portfolio-ganho-dia-corrigido.png` (R$ 0,00 para VALE3 comprada hoje ✅)
+- `portfolio-validacao-ganho-dia-completa.png` (5 posições, Ganho do Dia R$ 2,00 ✅)
+- `portfolio-validacao-posicoes-completas.png` (evidências visuais)
+**Teste Final:** 5 posições (VALE3, PETR4, ITUB4, MGLU3, BBAS3) - Cálculo: -R$ 10 + R$ 12 + R$ 0 + R$ 0 + R$ 0 = R$ 2,00 ✅
 
 ### FASE 23: Dados Históricos BRAPI 🔜 PLANEJADO
 - [ ] Pesquisar endpoints BRAPI para histórico
