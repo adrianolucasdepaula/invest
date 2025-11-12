@@ -283,7 +283,7 @@ export default function ReportsPage() {
             <Search className="h-12 w-12 text-muted-foreground" />
             <h3 className="text-xl font-semibold">Nenhum Resultado</h3>
             <p className="text-muted-foreground max-w-md">
-              Nenhum ativo encontrado com o termo "{searchTerm}"
+              Nenhum ativo encontrado com o termo &ldquo;{searchTerm}&rdquo;
             </p>
           </div>
         </Card>
@@ -310,7 +310,7 @@ export default function ReportsPage() {
                     <p className="text-2xl font-bold">
                       {formatCurrency(asset.currentPrice)}
                     </p>
-                    {asset.changePercent !== undefined && (
+                    {asset.changePercent !== undefined && asset.changePercent !== null && (
                       <p
                         className={cn(
                           'text-sm font-medium',
@@ -322,7 +322,7 @@ export default function ReportsPage() {
                         )}
                       >
                         {asset.changePercent > 0 ? '+' : ''}
-                        {asset.changePercent.toFixed(2)}%
+                        {Number(asset.changePercent).toFixed(2)}%
                       </p>
                     )}
                   </div>

@@ -38,7 +38,7 @@ export function useReportsAssets() {
   return useQuery<AssetWithAnalysisStatus[]>({
     queryKey: ['reports', 'assets-status'],
     queryFn: async () => {
-      const response = await api.get('/api/v1/reports/assets-status');
+      const response = await api.get('/reports/assets-status');
       return response.data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
@@ -54,7 +54,7 @@ export function useRequestAnalysis() {
 
   return useMutation({
     mutationFn: async (ticker: string) => {
-      const response = await api.post('/api/v1/analysis/complete', { ticker });
+      const response = await api.post('/analysis/complete', { ticker });
       return response.data;
     },
     onSuccess: (data, ticker) => {
@@ -90,7 +90,7 @@ export function useRequestBulkAnalysis() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await api.post('/api/v1/analysis/bulk/request', {
+      const response = await api.post('/analysis/bulk/request', {
         type: 'complete',
       });
       return response.data;
