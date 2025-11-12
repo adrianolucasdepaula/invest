@@ -89,8 +89,18 @@ export default function PortfolioPage() {
     const totalGainPercent = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
 
     // Calculate day gain from asset changes
+    // Only count gains for positions bought before today
     const dayGain = enrichedPositions.reduce((sum: number, p: any) => {
       const asset = assetMap.get(p.assetId);
+
+      // Check if position was bought today
+      const today = new Date().toDateString();
+      const buyDate = p.firstBuyDate ? new Date(p.firstBuyDate).toDateString() : null;
+      const isBoughtToday = buyDate === today;
+
+      // If bought today, no day gain/loss (you didn't own it yesterday)
+      if (isBoughtToday) return sum;
+
       const dayChange = asset?.change || 0;
       return sum + (dayChange * p.quantity);
     }, 0);
@@ -290,15 +300,15 @@ export default function PortfolioPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-muted-foreground border-b">
-                <div className="col-span-2">Ticker</div>
-                <div className="col-span-1">Status</div>
-                <div className="col-span-1 text-right">Qtd.</div>
-                <div className="col-span-2 text-right">Preço Médio</div>
-                <div className="col-span-2 text-right">Preço Atual</div>
-                <div className="col-span-1 text-right">Valor Total</div>
-                <div className="col-span-1 text-right">Ganho</div>
-                <div className="col-span-2 text-right">Ações</div>
+              <div className="grid grid-cols-[minmax(150px,2fr)_minmax(120px,1.5fr)_minmax(80px,1fr)_minmax(100px,1fr)_minmax(100px,1fr)_minmax(120px,1.5fr)_minmax(120px,1.5fr)_minmax(140px,1.5fr)] gap-3 px-4 py-2 text-sm font-medium text-muted-foreground border-b">
+                <div>Ticker</div>
+                <div>Status</div>
+                <div className="text-right">Qtd.</div>
+                <div className="text-right">Preço Médio</div>
+                <div className="text-right">Preço Atual</div>
+                <div className="text-right">Valor Total</div>
+                <div className="text-right">Ganho</div>
+                <div className="text-right">Ações</div>
               </div>
               {enrichedPositions.map((position: any) => {
                 const asset = assetMap.get(position.assetId);
@@ -306,16 +316,16 @@ export default function PortfolioPage() {
                   <div
                     key={position.id}
                     className={cn(
-                      'grid grid-cols-12 gap-4 px-4 py-3 rounded-lg transition-colors hover:bg-accent cursor-pointer',
+                      'grid grid-cols-[minmax(150px,2fr)_minmax(120px,1.5fr)_minmax(80px,1fr)_minmax(100px,1fr)_minmax(100px,1fr)_minmax(120px,1.5fr)_minmax(120px,1.5fr)_minmax(140px,1.5fr)] gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-accent cursor-pointer',
                       selectedPosition === position.id && 'bg-accent',
                     )}
                     onClick={() => setSelectedPosition(position.id)}
                   >
-                    <div className="col-span-2">
+                    <div>
                       <p className="font-semibold">{position.ticker}</p>
                       <p className="text-xs text-muted-foreground truncate">{position.name}</p>
                     </div>
-                    <div className="col-span-1" onClick={(e) => e.stopPropagation()}>
+                    <div onClick={(e) => e.stopPropagation()}>
                       {asset && (
                         <OutdatedBadge
                           lastUpdated={asset.lastUpdated}
@@ -326,22 +336,22 @@ export default function PortfolioPage() {
                         />
                       )}
                     </div>
-                    <div className="col-span-1 text-right font-medium">
+                    <div className="text-right font-medium">
                       {Number(position.quantity).toLocaleString('pt-BR', {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 2
                       })}
                     </div>
-                    <div className="col-span-2 text-right">
+                    <div className="text-right">
                       {formatCurrency(position.averagePrice)}
                     </div>
-                    <div className="col-span-2 text-right font-medium">
+                    <div className="text-right font-medium">
                       {formatCurrency(position.currentPrice)}
                     </div>
-                    <div className="col-span-1 text-right font-semibold">
+                    <div className="text-right font-semibold">
                       {formatCurrency(position.totalValue)}
                     </div>
-                    <div className="col-span-1 text-right">
+                    <div className="text-right">
                       <div className={cn('font-semibold text-sm', getChangeColor(position.gain))}>
                         {formatCurrency(position.gain)}
                       </div>
@@ -349,7 +359,7 @@ export default function PortfolioPage() {
                         {formatPercent(position.gainPercent)}
                       </div>
                     </div>
-                    <div className="col-span-2 flex items-center justify-end space-x-1" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end space-x-1" onClick={(e) => e.stopPropagation()}>
                       {user?.id && (
                         <AssetUpdateButton
                           ticker={position.ticker}

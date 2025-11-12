@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useAddPosition } from '@/lib/hooks/use-portfolio';
-import { Plus } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown } from 'lucide-react';
+import { api } from '@/lib/api';
 
 interface AddPositionDialogProps {
   portfolioId: string;
@@ -32,8 +33,34 @@ export function AddPositionDialog({
   const [quantity, setQuantity] = useState('');
   const [averagePrice, setAveragePrice] = useState('');
   const [purchaseDate, setPurchaseDate] = useState('');
-  const { toast } = useToast();
+  const [assetInfo, setAssetInfo] = useState<any>(null);
+  const [loadingAsset, setLoadingAsset] = useState(false);
+  const { toast} = useToast();
   const addMutation = useAddPosition();
+
+  // Fetch asset info when ticker changes
+  useEffect(() => {
+    const fetchAssetInfo = async () => {
+      if (ticker.length >= 3) {
+        setLoadingAsset(true);
+        try {
+          const assets = await api.getAssets({ search: ticker.toUpperCase() });
+          const asset = assets.find((a: any) => a.ticker === ticker.toUpperCase());
+          setAssetInfo(asset || null);
+        } catch (error) {
+          console.error('Error fetching asset:', error);
+          setAssetInfo(null);
+        } finally {
+          setLoadingAsset(false);
+        }
+      } else {
+        setAssetInfo(null);
+      }
+    };
+
+    const debounce = setTimeout(fetchAssetInfo, 500);
+    return () => clearTimeout(debounce);
+  }, [ticker]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +139,38 @@ export function AddPositionDialog({
               <p className="text-xs text-muted-foreground">
                 Código do ativo na B3
               </p>
+              {loadingAsset && (
+                <p className="text-xs text-blue-600">Buscando informações...</p>
+              )}
+              {assetInfo && (
+                <div className="rounded-md border border-green-200 bg-green-50 p-3 space-y-1">
+                  <p className="text-sm font-semibold text-green-900">{assetInfo.name}</p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-green-700">Preço Atual:</span>
+                    <span className="font-bold text-green-900">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      }).format(assetInfo.price || 0)}
+                    </span>
+                  </div>
+                  {assetInfo.changePercent && (
+                    <div className="flex items-center gap-1 text-xs">
+                      {assetInfo.changePercent > 0 ? (
+                        <TrendingUp className="h-3 w-3 text-green-600" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3 text-red-600" />
+                      )}
+                      <span className={assetInfo.changePercent > 0 ? 'text-green-600' : 'text-red-600'}>
+                        {assetInfo.changePercent > 0 ? '+' : ''}{assetInfo.changePercent?.toFixed(2)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+              {ticker.length >= 3 && !loadingAsset && !assetInfo && (
+                <p className="text-xs text-amber-600">Ativo não encontrado no sistema</p>
+              )}
             </div>
 
             <div className="space-y-2">

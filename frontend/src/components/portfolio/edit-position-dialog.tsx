@@ -35,13 +35,13 @@ export function EditPositionDialog({
   onSuccess,
 }: EditPositionDialogProps) {
   const [open, setOpen] = useState(false);
-  const [quantity, setQuantity] = useState(position.quantity.toString());
+  const [quantity, setQuantity] = useState(Number(position.quantity).toString());
   const [averagePrice, setAveragePrice] = useState(position.averagePrice.toString());
   const { toast } = useToast();
   const updateMutation = useUpdatePosition();
 
   useEffect(() => {
-    setQuantity(position.quantity.toString());
+    setQuantity(Number(position.quantity).toString());
     setAveragePrice(position.averagePrice.toString());
   }, [position]);
 
