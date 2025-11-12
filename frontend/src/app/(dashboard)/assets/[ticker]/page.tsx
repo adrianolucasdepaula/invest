@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { useMemo, lazy, Suspense } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,21 +25,9 @@ const PriceChart = lazy(() => import('@/components/charts/price-chart').then(mod
 export default function AssetDetailPage({
   params,
 }: {
-  params: Promise<{ ticker: string }> | { ticker: string };
+  params: { ticker: string };
 }) {
-  const [ticker, setTicker] = useState<string>('');
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    // Handle both Promise and direct params
-    const resolveParams = async () => {
-      const resolvedParams = params instanceof Promise ? await params : params;
-      setTicker(resolvedParams.ticker);
-      setIsReady(true);
-    };
-
-    resolveParams();
-  }, [params]);
+  const ticker = params.ticker;
 
   // Fetch critical data first (for LCP optimization)
   const { data: asset, isLoading: assetLoading, error: assetError } = useAsset(ticker);
@@ -76,25 +64,7 @@ export default function AssetDetailPage({
     requestAnalysis.mutate({ ticker, type: 'technical' });
   };
 
-  const isLoading = assetLoading || pricesLoading || !isReady;
-
-  // Wait for ticker to be ready
-  if (!isReady) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <Skeleton className="h-9 w-32" />
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {Array(4).fill(0).map((_, i) => (
-            <Card key={i} className="p-6">
-              <Skeleton className="h-20 w-full" />
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const isLoading = assetLoading || pricesLoading;
 
   // Error state
   if (assetError) {
