@@ -1,16 +1,18 @@
 'use client';
 
-import { Bell, Search, LogOut, User } from 'lucide-react';
+import { Bell, Search, LogOut, User, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import { useEffect, useState } from 'react';
+import { useSidebar } from '@/contexts/sidebar-context';
 
 export function Header() {
   const router = useRouter();
   const { toast } = useToast();
+  const { toggle } = useSidebar();
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -46,6 +48,15 @@ export function Header() {
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
       <div className="flex items-center space-x-4 flex-1 max-w-md">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggle}
+          className="shrink-0"
+          aria-label="Toggle sidebar"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input

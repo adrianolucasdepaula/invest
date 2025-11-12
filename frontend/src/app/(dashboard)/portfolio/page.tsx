@@ -307,8 +307,8 @@ export default function PortfolioPage() {
         />
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="col-span-2 p-6">
+      <div className="space-y-4">
+        <Card className="p-6 relative z-10">
           <div className="mb-4">
             <h3 className="text-lg font-semibold">Posições</h3>
             <p className="text-sm text-muted-foreground">
@@ -427,7 +427,7 @@ export default function PortfolioPage() {
           )}
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 relative z-0">
           <div className="mb-4">
             <h3 className="text-lg font-semibold">Distribuição</h3>
             <p className="text-sm text-muted-foreground">
@@ -446,9 +446,9 @@ export default function PortfolioPage() {
                     <span className="font-medium">{item.ticker}</span>
                     <span className="text-muted-foreground">{formatPercent(item.weight)}</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                  <div className="h-2 w-full rounded-full bg-muted overflow-hidden pointer-events-none">
                     <div
-                      className="h-full bg-primary transition-all"
+                      className="h-full bg-primary transition-all pointer-events-none"
                       style={{ width: `${item.weight}%` }}
                     />
                   </div>
