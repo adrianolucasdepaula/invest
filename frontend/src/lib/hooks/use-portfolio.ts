@@ -5,6 +5,7 @@ export function usePortfolios() {
   return useQuery({
     queryKey: ['portfolios'],
     queryFn: () => api.getPortfolios(),
+    staleTime: 0, // Always fetch fresh data to ensure firstBuyDate is up-to-date
   });
 }
 

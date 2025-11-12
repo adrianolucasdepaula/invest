@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,13 +27,21 @@ import { cn, formatCurrency, formatPercent, getChangeColor } from '@/lib/utils';
 import { usePortfolios, useCreatePortfolio } from '@/lib/hooks/use-portfolio';
 import { useAssets } from '@/lib/hooks/use-assets';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function PortfolioPage() {
   const [selectedPosition, setSelectedPosition] = useState<string | null>(null);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data: portfolios, isLoading: portfoliosLoading, refetch: refetchPortfolios } = usePortfolios();
   const { data: assets, refetch: refetchAssets } = useAssets();
   const createPortfolio = useCreatePortfolio();
+
+  // Force cache invalidation on mount to ensure fresh data
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['portfolios'] });
+    queryClient.invalidateQueries({ queryKey: ['assets'] });
+  }, [queryClient]);
 
   // Get first portfolio or create default
   const portfolio = useMemo(() => {
@@ -95,18 +103,27 @@ export default function PortfolioPage() {
 
       // Check if position was bought today (compare date parts only, ignore time/timezone)
       if (p.firstBuyDate) {
-        const buyDate = new Date(p.firstBuyDate);
-        const today = new Date();
+        // IMPORTANT: Parse the date string (YYYY-MM-DD) and create a local date
+        // This prevents timezone issues when the backend sends UTC dates
+        const [year, month, day] = p.firstBuyDate.split('-').map(Number);
+        const buyDate = new Date(year, month - 1, day); // month is 0-indexed
 
-        // Compare year, month, and day
+        const today = new Date();
+        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
         const isBoughtToday =
-          buyDate.getFullYear() === today.getFullYear() &&
-          buyDate.getMonth() === today.getMonth() &&
-          buyDate.getDate() === today.getDate();
+          buyDate.getFullYear() === todayDate.getFullYear() &&
+          buyDate.getMonth() === todayDate.getMonth() &&
+          buyDate.getDate() === todayDate.getDate();
 
         // If bought today, no day gain/loss (you didn't own it yesterday)
-        if (isBoughtToday) return sum;
+        if (isBoughtToday) {
+          return sum;
+        }
       }
+      // IMPORTANT: If firstBuyDate is null, we can't determine when it was bought
+      // For safety, assume it's an old position and include it in day gain calculation
+      // This is the correct behavior for positions migrated before firstBuyDate field existed
 
       const dayChange = asset?.change || 0;
       return sum + (dayChange * p.quantity);

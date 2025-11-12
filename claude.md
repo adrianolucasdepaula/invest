@@ -621,21 +621,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 **Status:** Sistema 100% implementado e funcional
 **Validação:** TypeScript 0 erros, Build OK, Componentes UI testados
 
-### FASE 22.5: Correções e Melhorias do Portfólio ✅ 90% COMPLETO
+### FASE 22.5: Correções e Melhorias do Portfólio ✅ 100% COMPLETO
 - [x] Bug: Quantidade com zeros excessivos (100.00000000 → 100)
 - [x] Bug: Grid com sobreposição de colunas (grid-cols-12 → minmax customizado)
 - [x] Feature: Preço atual no formulário "Adicionar Posição"
 - [x] Feature: Campo "Data de Compra" obrigatório
 - [x] Backend: Campo firstBuyDate salvo e retornado corretamente
 - [x] Frontend: Lógica de comparação de datas corrigida
-- [ ] ⚠️ Bug: Cache React Query impedindo atualização de "Ganho do Dia"
+- [x] Bug: "Ganho do Dia" incorreto (timezone) - ✅ RESOLVIDO
 
 **Referência:**
 - `CORRECOES_PORTFOLIO_2025-11-12.md` (documentação completa)
 - `BUG_GANHO_DO_DIA_EM_INVESTIGACAO.md` (investigação técnica)
-**Commits:** `43cb96d`, `a5b31f6`
-**Status:** 6/7 itens completos - aguardando resolução de cache
-**Validação:** TypeScript 0 erros, Build OK, 3 bugs corrigidos, 2 features adicionadas
+- `SOLUCAO_BUG_GANHO_DO_DIA.md` (solução completa)
+**Commits:** `43cb96d`, `a5b31f6`, `0c6143b`
+**Status:** ✅ 7/7 itens completos - FASE 100% concluída
+**Validação:** TypeScript 0 erros, Build OK, 4 bugs corrigidos, 2 features adicionadas
+**Screenshot:** `portfolio-ganho-dia-corrigido.png` (R$ 0,00 ✅)
 
 ### FASE 23: Dados Históricos BRAPI 🔜 PLANEJADO
 - [ ] Pesquisar endpoints BRAPI para histórico
