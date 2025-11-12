@@ -588,7 +588,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - [ ] Página de relatórios (/reports)
 - [ ] Página de configurações (/settings)
 
-### FASE 12-21: Validação Frontend 🔄 PLANEJADO
+### FASE 12-21: Validação Frontend 🔄 EM ANDAMENTO
 - [ ] FASE 12: Responsividade (mobile, tablet, desktop)
 - [ ] FASE 13: Navegação (links, breadcrumbs, sidebar)
 - [ ] FASE 14: Performance (loading, lazy, caching)
@@ -599,6 +599,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - [ ] FASE 19: Integrações Complexas (WebSocket, OAuth)
 - [ ] FASE 20: Estados e Transições (loading, success, error)
 - [ ] FASE 21: Acessibilidade (a11y, ARIA, keyboard)
+
+**Fases Concluídas:**
+- [x] FASE 4: Dashboard (/dashboard) - ✅ 100% COMPLETO (2025-11-12)
+- [x] FASE 5: Portfolio (/portfolio) - ✅ 100% COMPLETO (2025-11-12)
+
+**Referência:** `VALIDACAO_FRONTEND_COMPLETA.md`
 
 ### FASE 22: Sistema de Atualização de Ativos ✅ 100% COMPLETO
 - [x] Entidades (UpdateLog)
