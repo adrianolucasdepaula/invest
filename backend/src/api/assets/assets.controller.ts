@@ -37,4 +37,21 @@ export class AssetsController {
   async syncAsset(@Param('ticker') ticker: string) {
     return this.assetsService.syncAsset(ticker);
   }
+
+  @Post(':ticker/populate')
+  @ApiOperation({
+    summary: 'Populate fundamental data for asset (DEVELOPMENT/TESTING)',
+    description: 'Scrapes fundamental data from multiple sources and saves to database. Validates data quality (min 3 sources, 0.7 confidence). Returns detailed results.'
+  })
+  async populateFundamentalData(@Param('ticker') ticker: string) {
+    return this.assetsService.populateFundamentalData(ticker);
+  }
+
+  @Post('sync-all')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Sync all assets data from sources' })
+  async syncAllAssets() {
+    return this.assetsService.syncAllAssets();
+  }
 }

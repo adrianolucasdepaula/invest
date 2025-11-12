@@ -332,6 +332,22 @@ export class AnalysisService {
       throw new NotFoundException(`Asset with ticker ${ticker} not found`);
     }
 
+    // Check for existing analysis and delete it to allow new one
+    if (userId) {
+      const existingAnalysis = await this.analysisRepository.findOne({
+        where: {
+          assetId: asset.id,
+          userId: userId,
+          type: AnalysisType.COMPLETE,
+        },
+      });
+
+      if (existingAnalysis) {
+        this.logger.log(`Removing old analysis for ${ticker} by user ${userId} before creating new one`);
+        await this.analysisRepository.remove(existingAnalysis);
+      }
+    }
+
     // Create analysis record
     const createData: Partial<Analysis> = {
       assetId: asset.id,
@@ -428,5 +444,94 @@ export class AnalysisService {
       where: { id },
       relations: ['asset'],
     });
+  }
+
+  async deleteAnalysis(id: string, userId: string) {
+    const analysis = await this.analysisRepository.findOne({
+      where: { id, userId },
+    });
+
+    if (!analysis) {
+      throw new NotFoundException('Analysis not found or you do not have permission to delete it');
+    }
+
+    await this.analysisRepository.remove(analysis);
+
+    this.logger.log(`Analysis ${id} deleted by user ${userId}`);
+
+    return { message: 'Analysis deleted successfully', id };
+  }
+
+  async requestBulkAnalysis(type: AnalysisType, userId: string) {
+    this.logger.log(`Requesting bulk ${type} analysis for all active assets`);
+
+    // Get all active assets
+    const assets = await this.assetRepository.find({
+      where: { isActive: true },
+      order: { ticker: 'ASC' },
+    });
+
+    if (assets.length === 0) {
+      return {
+        message: 'No active assets found',
+        total: 0,
+        requested: 0,
+      };
+    }
+
+    this.logger.log(`Found ${assets.length} active assets to analyze`);
+
+    const requested = [];
+    const skipped = [];
+
+    // Create analysis records for each asset
+    for (const asset of assets) {
+      try {
+        // Check if analysis already exists and is recent (less than 7 days old)
+        const existingAnalysis = await this.analysisRepository.findOne({
+          where: {
+            assetId: asset.id,
+            type,
+            userId,
+          },
+          order: { createdAt: 'DESC' },
+        });
+
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        if (existingAnalysis && existingAnalysis.createdAt > sevenDaysAgo) {
+          this.logger.debug(`Skipping ${asset.ticker} - recent analysis exists`);
+          skipped.push(asset.ticker);
+          continue;
+        }
+
+        // Create pending analysis record
+        const analysis = this.analysisRepository.create({
+          assetId: asset.id,
+          type,
+          userId,
+          status: AnalysisStatus.PENDING,
+        });
+
+        await this.analysisRepository.save(analysis);
+        requested.push(asset.ticker);
+
+        this.logger.debug(`Created pending ${type} analysis for ${asset.ticker}`);
+      } catch (error) {
+        this.logger.error(`Failed to create analysis for ${asset.ticker}: ${error.message}`);
+      }
+    }
+
+    this.logger.log(`Bulk analysis request completed: ${requested.length} requested, ${skipped.length} skipped`);
+
+    return {
+      message: `Bulk ${type} analysis requested successfully`,
+      total: assets.length,
+      requested: requested.length,
+      skipped: skipped.length,
+      requestedAssets: requested,
+      skippedAssets: skipped,
+    };
   }
 }

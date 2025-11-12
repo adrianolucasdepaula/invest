@@ -83,3 +83,33 @@ export function getSignalBadgeColor(signal: 'BUY' | 'SELL' | 'NEUTRAL' | 'HOLD')
       return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
   }
 }
+
+export function formatRelativeTime(date: Date | string | null | undefined): string {
+  if (!date) return 'Nunca'
+
+  const now = new Date()
+  const past = typeof date === 'string' ? new Date(date) : date
+  const diffMs = now.getTime() - past.getTime()
+
+  const diffSeconds = Math.floor(diffMs / 1000)
+  const diffMinutes = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffSeconds < 30) return 'agora'
+  if (diffMinutes < 1) return `${diffSeconds}s atrás`
+  if (diffMinutes < 60) return `${diffMinutes}m atrás`
+  if (diffHours < 24) return `${diffHours}h atrás`
+  return `${diffDays}d atrás`
+}
+
+export function isDataStale(date: Date | string | null | undefined, thresholdHours: number = 1): boolean {
+  if (!date) return true
+
+  const now = new Date()
+  const past = typeof date === 'string' ? new Date(date) : date
+  const diffMs = now.getTime() - past.getTime()
+  const diffHours = diffMs / 3600000
+
+  return diffHours > thresholdHours
+}

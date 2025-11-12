@@ -75,6 +75,8 @@ services:
       dockerfile: Dockerfile
       target: development
     container_name: invest_backend
+    env_file:
+      - .env
     environment:
       # Server
       - NODE_ENV=${NODE_ENV:-development}

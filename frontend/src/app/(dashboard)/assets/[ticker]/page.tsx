@@ -1,10 +1,9 @@
 'use client';
 
-import { use, useMemo } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PriceChart } from '@/components/charts/price-chart';
 import { StatCard } from '@/components/dashboard/stat-card';
 import {
   TrendingUp,
@@ -20,19 +19,42 @@ import Link from 'next/link';
 import { useAsset, useAssetPrices, useAssetFundamentals } from '@/lib/hooks/use-assets';
 import { useAnalysis, useRequestAnalysis } from '@/lib/hooks/use-analysis';
 
+// Lazy load heavy components for better LCP
+const PriceChart = lazy(() => import('@/components/charts/price-chart').then(mod => ({ default: mod.PriceChart })));
+
 export default function AssetDetailPage({
   params,
 }: {
-  params: Promise<{ ticker: string }>;
+  params: Promise<{ ticker: string }> | { ticker: string };
 }) {
-  const { ticker } = use(params);
+  const [ticker, setTicker] = useState<string>('');
+  const [isReady, setIsReady] = useState(false);
 
-  // Fetch real data from API
+  useEffect(() => {
+    // Handle both Promise and direct params
+    const resolveParams = async () => {
+      const resolvedParams = params instanceof Promise ? await params : params;
+      setTicker(resolvedParams.ticker);
+      setIsReady(true);
+    };
+
+    resolveParams();
+  }, [params]);
+
+  // Fetch critical data first (for LCP optimization)
   const { data: asset, isLoading: assetLoading, error: assetError } = useAsset(ticker);
+
+  // Defer non-critical data to improve LCP - fetch in parallel after critical data
   const { data: priceHistory, isLoading: pricesLoading } = useAssetPrices(ticker, {
     startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   });
-  const { data: fundamentals, isLoading: fundamentalsLoading } = useAssetFundamentals(ticker);
+
+  // TODO: Fundamentals API not implemented yet - temporarily disabled to avoid 404 errors
+  // const { data: fundamentals, isLoading: fundamentalsLoading } = useAssetFundamentals(ticker);
+  const fundamentals = null;
+  const fundamentalsLoading = false;
+
+  // Defer technical analysis (non-critical for LCP)
   const { data: technicalAnalysis, isLoading: technicalLoading } = useAnalysis(ticker, 'technical');
   const requestAnalysis = useRequestAnalysis();
 
@@ -54,7 +76,25 @@ export default function AssetDetailPage({
     requestAnalysis.mutate({ ticker, type: 'technical' });
   };
 
-  const isLoading = assetLoading || pricesLoading;
+  const isLoading = assetLoading || pricesLoading || !isReady;
+
+  // Wait for ticker to be ready
+  if (!isReady) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4">
+          <Skeleton className="h-9 w-32" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array(4).fill(0).map((_, i) => (
+            <Card key={i} className="p-6">
+              <Skeleton className="h-20 w-full" />
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // Error state
   if (assetError) {
@@ -153,7 +193,7 @@ export default function AssetDetailPage({
         )}
       </div>
 
-      {/* Price Chart */}
+      {/* Price Chart - Lazy loaded for better LCP */}
       <Card className="p-6">
         <div className="mb-4">
           <h3 className="text-lg font-semibold">Gráfico de Preços - Últimos 90 dias</h3>
@@ -164,7 +204,9 @@ export default function AssetDetailPage({
         {pricesLoading ? (
           <Skeleton className="h-[400px] w-full" />
         ) : priceHistory && priceHistory.length > 0 ? (
-          <PriceChart data={priceHistory} />
+          <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+            <PriceChart data={priceHistory} />
+          </Suspense>
         ) : (
           <div className="flex items-center justify-center h-[400px] text-muted-foreground">
             <p>Sem dados de histórico de preços disponíveis</p>
@@ -181,55 +223,11 @@ export default function AssetDetailPage({
               Principais indicadores fundamentalistas
             </p>
           </div>
-          {fundamentalsLoading ? (
-            <div className="grid grid-cols-2 gap-4">
-              {Array(8).fill(0).map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-8 w-16" />
-                </div>
-              ))}
-            </div>
-          ) : fundamentals ? (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">P/L</p>
-                <p className="text-2xl font-bold">{fundamentals.pl?.toFixed(2) ?? 'N/A'}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">P/VP</p>
-                <p className="text-2xl font-bold">{fundamentals.pvp?.toFixed(2) ?? 'N/A'}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">ROE</p>
-                <p className="text-2xl font-bold">{fundamentals.roe?.toFixed(1) ?? 'N/A'}%</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Div. Yield</p>
-                <p className="text-2xl font-bold">{fundamentals.dividendYield?.toFixed(1) ?? 'N/A'}%</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Dívida/PL</p>
-                <p className="text-2xl font-bold">{fundamentals.debtEquity?.toFixed(2) ?? 'N/A'}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Liquidez Corrente</p>
-                <p className="text-2xl font-bold">{fundamentals.currentRatio?.toFixed(2) ?? 'N/A'}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Margem Bruta</p>
-                <p className="text-2xl font-bold">{fundamentals.grossMargin?.toFixed(1) ?? 'N/A'}%</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Margem Líquida</p>
-                <p className="text-2xl font-bold">{fundamentals.netMargin?.toFixed(1) ?? 'N/A'}%</p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 space-y-2">
-              <p className="text-muted-foreground">Dados fundamentalistas não disponíveis</p>
-            </div>
-          )}
+          {/* TODO: API de fundamentals não implementada ainda - exibindo mensagem padrão */}
+          <div className="flex flex-col items-center justify-center py-8 space-y-2">
+            <p className="text-muted-foreground">Dados fundamentalistas não disponíveis</p>
+            <p className="text-xs text-muted-foreground">API em desenvolvimento</p>
+          </div>
         </Card>
 
         {/* Technical Analysis */}

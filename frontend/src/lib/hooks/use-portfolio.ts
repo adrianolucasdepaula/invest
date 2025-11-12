@@ -60,6 +60,7 @@ export function useAddPosition() {
       api.addPosition(portfolioId, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['portfolio', variables.portfolioId] });
+      queryClient.invalidateQueries({ queryKey: ['portfolios'] });
     },
   });
 }
@@ -72,6 +73,7 @@ export function useUpdatePosition() {
       api.updatePosition(portfolioId, positionId, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['portfolio', variables.portfolioId] });
+      queryClient.invalidateQueries({ queryKey: ['portfolios'] });
     },
   });
 }
@@ -84,6 +86,7 @@ export function useDeletePosition() {
       api.deletePosition(portfolioId, positionId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['portfolio', variables.portfolioId] });
+      queryClient.invalidateQueries({ queryKey: ['portfolios'] });
     },
   });
 }

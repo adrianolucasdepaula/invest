@@ -59,12 +59,22 @@ class ApiClient {
   }
 
   async getAssetPrices(ticker: string, params?: { startDate?: string; endDate?: string }) {
-    const response = await this.client.get(`/assets/${ticker}/prices`, { params });
+    const response = await this.client.get(`/assets/${ticker}/price-history`, { params });
     return response.data;
   }
 
   async getAssetFundamentals(ticker: string) {
     const response = await this.client.get(`/assets/${ticker}/fundamentals`);
+    return response.data;
+  }
+
+  async syncAllAssets() {
+    const response = await this.client.post('/assets/sync-all');
+    return response.data;
+  }
+
+  async syncAsset(ticker: string) {
+    const response = await this.client.post(`/assets/${ticker}/sync`);
     return response.data;
   }
 
@@ -83,6 +93,11 @@ class ApiClient {
 
   async listAnalyses(params?: { ticker?: string; type?: string; limit?: number }) {
     const response = await this.client.get('/analysis', { params });
+    return response.data;
+  }
+
+  async requestBulkAnalysis(type: 'fundamental' | 'technical' | 'complete') {
+    const response = await this.client.post('/analysis/bulk/request', { type });
     return response.data;
   }
 

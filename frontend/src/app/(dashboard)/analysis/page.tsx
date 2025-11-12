@@ -24,6 +24,8 @@ import {
   Clock,
   RefreshCw,
   Play,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn, formatPercent } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
@@ -72,11 +74,29 @@ export default function AnalysisPage() {
   const [selectedAnalysis, setSelectedAnalysis] = useState<any>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [requestingBulk, setRequestingBulk] = useState(false);
   const { toast } = useToast();
 
   const { data: analyses, isLoading, error, refetch } = useAnalyses({
     type: filterType === 'all' ? undefined : filterType,
   });
+
+  // Identificar análises duplicadas
+  const duplicateMap = useMemo(() => {
+    if (!analyses) return new Map();
+    const map = new Map<string, any[]>();
+
+    analyses.forEach((analysis: any) => {
+      const key = `${analysis.asset?.ticker}-${analysis.type}`;
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key)!.push(analysis);
+    });
+
+    return map;
+  }, [analyses]);
 
   const filteredAnalyses = useMemo(() => {
     if (!analyses) return [];
@@ -87,6 +107,11 @@ export default function AnalysisPage() {
       return matchesSearch;
     });
   }, [analyses, searchTerm]);
+
+  const hasDuplicates = (analysis: any) => {
+    const key = `${analysis.asset?.ticker}-${analysis.type}`;
+    return (duplicateMap.get(key)?.length || 0) > 1;
+  };
 
   const handleViewDetails = (analysis: any) => {
     setSelectedAnalysis(analysis);
@@ -163,6 +188,146 @@ export default function AnalysisPage() {
       });
     } finally {
       setRefreshingId(null);
+    }
+  };
+
+  const handleDeleteAnalysis = async (analysis: any) => {
+    if (!confirm(`Tem certeza que deseja remover a análise ${analysis.type} de ${analysis.asset.ticker}?`)) {
+      return;
+    }
+
+    setDeletingId(analysis.id);
+    try {
+      const token = Cookies.get('access_token');
+      if (!token) {
+        toast({
+          title: 'Não autorizado',
+          description: 'Você precisa estar autenticado. Por favor, faça login novamente.',
+          variant: 'destructive',
+        });
+        setTimeout(() => {
+          window.location.href = '/auth/login';
+        }, 2000);
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/analysis/${analysis.id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = '';
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.message || errorText;
+        } catch {
+          errorMessage = errorText || `Erro ${response.status}`;
+        }
+
+        toast({
+          title: `Erro ${response.status}`,
+          description: errorMessage,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Análise removida!',
+        description: `A análise de ${analysis.asset.ticker} foi removida com sucesso.`,
+      });
+
+      // Refetch analyses
+      refetch();
+    } catch (error: any) {
+      console.error('[Remover] Erro ao remover análise:', error);
+      toast({
+        title: 'Erro ao remover análise',
+        description: error.message || 'Ocorreu um erro ao remover a análise. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleRequestBulkAnalysis = async () => {
+    const type = filterType === 'all' ? 'complete' : filterType;
+
+    if (!confirm(`Deseja solicitar análise ${type === 'complete' ? 'completa' : type === 'fundamental' ? 'fundamentalista' : 'técnica'} para TODOS os ativos? Isso pode levar bastante tempo.`)) {
+      return;
+    }
+
+    setRequestingBulk(true);
+    try {
+      const token = Cookies.get('access_token');
+      if (!token) {
+        toast({
+          title: 'Não autorizado',
+          description: 'Você precisa estar autenticado. Por favor, faça login novamente.',
+          variant: 'destructive',
+        });
+        setTimeout(() => {
+          window.location.href = '/auth/login';
+        }, 2000);
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/analysis/bulk/request`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ type }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = '';
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.message || errorText;
+        } catch {
+          errorMessage = errorText || `Erro ${response.status}`;
+        }
+
+        toast({
+          title: `Erro ${response.status}`,
+          description: errorMessage,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: 'Análises solicitadas!',
+        description: `${result.requested} análises foram solicitadas. ${result.skipped} foram ignoradas (análise recente existe).`,
+      });
+
+      // Refetch analyses after a delay
+      setTimeout(() => refetch(), 2000);
+    } catch (error: any) {
+      console.error('[Bulk] Erro ao solicitar análises em massa:', error);
+      toast({
+        title: 'Erro ao solicitar análises',
+        description: error.message || 'Ocorreu um erro ao solicitar as análises. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRequestingBulk(false);
     }
   };
 
@@ -280,6 +445,12 @@ export default function AnalysisPage() {
                         {analysis.type === 'complete' ? 'Completa' : analysis.type === 'fundamental' ? 'Fundamentalista' : 'Técnica'}
                       </span>
                     </div>
+                    {hasDuplicates(analysis) && (
+                      <div className="flex items-center space-x-1 rounded-full bg-warning/10 border border-warning/20 px-3 py-1">
+                        <AlertTriangle className="h-4 w-4 text-warning" />
+                        <span className="text-sm font-medium text-warning">Duplicada</span>
+                      </div>
+                    )}
                     <div
                       className={cn(
                         'rounded-full border px-3 py-1',
@@ -365,6 +536,16 @@ export default function AnalysisPage() {
                   >
                     <RefreshCw className={cn("mr-2 h-4 w-4", refreshingId === analysis.id && "animate-spin")} />
                     {refreshingId === analysis.id ? 'Atualizando...' : 'Atualizar'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteAnalysis(analysis)}
+                    disabled={deletingId === analysis.id}
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className={cn("mr-2 h-4 w-4", deletingId === analysis.id && "animate-pulse")} />
+                    {deletingId === analysis.id ? 'Removendo...' : 'Remover'}
                   </Button>
                 </div>
               </div>

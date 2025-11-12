@@ -1,8 +1,23 @@
 'use client'
 
+// Updated with new columns
 import * as React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatCurrency, formatPercent, cn, getChangeColor } from '@/lib/utils'
+import { formatCurrency, formatPercent, cn, getChangeColor, formatRelativeTime, isDataStale, formatDateTime } from '@/lib/utils'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { Button } from '@/components/ui/button'
+import { MoreVertical, RefreshCw, AlertTriangle, Eye } from 'lucide-react'
 
 interface Asset {
   ticker: string
@@ -12,15 +27,21 @@ interface Asset {
   changePercent: number
   volume: number
   marketCap?: number
+  currentPrice?: {
+    date: string
+    close: number
+    collectedAt: string | null
+  }
 }
 
 interface AssetTableProps {
   assets: Asset[]
   isLoading?: boolean
   onAssetClick?: (ticker: string) => void
+  onSyncAsset?: (ticker: string) => void
 }
 
-export function AssetTable({ assets, isLoading = false, onAssetClick }: AssetTableProps) {
+export function AssetTable({ assets, isLoading = false, onAssetClick, onSyncAsset }: AssetTableProps) {
   if (isLoading) {
     return (
       <Card>
@@ -56,36 +77,104 @@ export function AssetTable({ assets, isLoading = false, onAssetClick }: AssetTab
                 {assets.some((a) => a.marketCap) && (
                   <th className="text-right py-3 px-4 font-medium">Market Cap</th>
                 )}
+                <th className="text-right py-3 px-4 font-medium">Última Atualização</th>
+                <th className="text-center py-3 px-4 font-medium w-20">Ações</th>
               </tr>
             </thead>
             <tbody>
-              {assets.map((asset) => (
-                <tr
-                  key={asset.ticker}
-                  className="border-b hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
-                  onClick={() => onAssetClick?.(asset.ticker)}
-                >
-                  <td className="py-3 px-4 font-semibold">{asset.ticker}</td>
-                  <td className="py-3 px-4 text-sm text-muted-foreground">{asset.name}</td>
-                  <td className="py-3 px-4 text-right font-medium">
-                    {formatCurrency(asset.price)}
-                  </td>
-                  <td className={cn('py-3 px-4 text-right font-medium', getChangeColor(asset.changePercent))}>
-                    <div className="flex flex-col items-end">
-                      <span>{formatPercent(asset.changePercent)}</span>
-                      <span className="text-xs">({formatCurrency(asset.change)})</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-right text-sm">
-                    {asset.volume ? asset.volume.toLocaleString('pt-BR') : '-'}
-                  </td>
-                  {asset.marketCap && (
-                    <td className="py-3 px-4 text-right text-sm">
-                      {formatCurrency(asset.marketCap)}
+              {assets.map((asset) => {
+                const collectedAt = asset.currentPrice?.collectedAt
+                const isStale = isDataStale(collectedAt)
+
+                return (
+                  <tr
+                    key={asset.ticker}
+                    className="border-b hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <td
+                      className="py-3 px-4 font-semibold cursor-pointer"
+                      onClick={() => onAssetClick?.(asset.ticker)}
+                    >
+                      {asset.ticker}
                     </td>
-                  )}
-                </tr>
-              ))}
+                    <td
+                      className="py-3 px-4 text-sm text-muted-foreground cursor-pointer"
+                      onClick={() => onAssetClick?.(asset.ticker)}
+                    >
+                      {asset.name}
+                    </td>
+                    <td
+                      className="py-3 px-4 text-right font-medium cursor-pointer"
+                      onClick={() => onAssetClick?.(asset.ticker)}
+                    >
+                      {formatCurrency(asset.price)}
+                    </td>
+                    <td
+                      className={cn('py-3 px-4 text-right font-medium cursor-pointer', getChangeColor(asset.changePercent))}
+                      onClick={() => onAssetClick?.(asset.ticker)}
+                    >
+                      <div className="flex flex-col items-end">
+                        <span>{formatPercent(asset.changePercent)}</span>
+                        <span className="text-xs">({formatCurrency(asset.change)})</span>
+                      </div>
+                    </td>
+                    <td
+                      className="py-3 px-4 text-right text-sm cursor-pointer"
+                      onClick={() => onAssetClick?.(asset.ticker)}
+                    >
+                      {asset.volume ? asset.volume.toLocaleString('pt-BR') : '-'}
+                    </td>
+                    {asset.marketCap && (
+                      <td
+                        className="py-3 px-4 text-right text-sm cursor-pointer"
+                        onClick={() => onAssetClick?.(asset.ticker)}
+                      >
+                        {formatCurrency(asset.marketCap)}
+                      </td>
+                    )}
+                    <td className="py-3 px-4 text-right text-sm">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center justify-end gap-1">
+                              {isStale && (
+                                <AlertTriangle className="h-3 w-3 text-amber-500" />
+                              )}
+                              <span className={cn(
+                                isStale ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'
+                              )}>
+                                {formatRelativeTime(collectedAt)}
+                              </span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{collectedAt ? formatDateTime(collectedAt) : 'Nunca atualizado'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </td>
+                    <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => onAssetClick?.(asset.ticker)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Ver Detalhes
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onSyncAsset?.(asset.ticker)}>
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Atualizar Dados
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
           {assets.length === 0 && (

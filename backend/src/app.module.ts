@@ -30,6 +30,7 @@ import {
   DataSource,
   ScrapedData,
   Analysis,
+  UpdateLog,
 } from './database/entities';
 
 @Module({
@@ -60,6 +61,7 @@ import {
           DataSource,
           ScrapedData,
           Analysis,
+          UpdateLog,
         ],
         synchronize: configService.get('DB_SYNCHRONIZE', false),
         logging: configService.get('DB_LOGGING', false),

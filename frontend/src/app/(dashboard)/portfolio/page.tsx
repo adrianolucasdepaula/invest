@@ -4,11 +4,17 @@ import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { ImportPortfolioDialog } from '@/components/portfolio/import-portfolio-dialog';
 import { AddPositionDialog } from '@/components/portfolio/add-position-dialog';
 import { EditPositionDialog } from '@/components/portfolio/edit-position-dialog';
 import { DeletePositionDialog } from '@/components/portfolio/delete-position-dialog';
+import {
+  AssetUpdateButton,
+  OutdatedBadge,
+  BatchUpdateControls,
+} from '@/components/assets';
 import {
   DollarSign,
   TrendingUp,
@@ -20,11 +26,13 @@ import {
 import { cn, formatCurrency, formatPercent, getChangeColor } from '@/lib/utils';
 import { usePortfolios, useCreatePortfolio } from '@/lib/hooks/use-portfolio';
 import { useAssets } from '@/lib/hooks/use-assets';
+import { useAuth } from '@/lib/hooks/use-auth';
 
 export default function PortfolioPage() {
   const [selectedPosition, setSelectedPosition] = useState<string | null>(null);
-  const { data: portfolios, isLoading: portfoliosLoading } = usePortfolios();
-  const { data: assets } = useAssets();
+  const { user } = useAuth();
+  const { data: portfolios, isLoading: portfoliosLoading, refetch: refetchPortfolios } = usePortfolios();
+  const { data: assets, refetch: refetchAssets } = useAssets();
   const createPortfolio = useCreatePortfolio();
 
   // Get first portfolio or create default
@@ -76,7 +84,7 @@ export default function PortfolioPage() {
     }
 
     const totalValue = enrichedPositions.reduce((sum: number, p: any) => sum + p.totalValue, 0);
-    const totalInvested = enrichedPositions.reduce((sum: number, p: any) => sum + p.totalInvested, 0);
+    const totalInvested = enrichedPositions.reduce((sum: number, p: any) => sum + Number(p.totalInvested || 0), 0);
     const totalGain = totalValue - totalInvested;
     const totalGainPercent = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
 
@@ -216,6 +224,10 @@ export default function PortfolioPage() {
                 Adicionar Posição
               </Button>
             }
+            onSuccess={() => {
+              refetchPortfolios();
+              refetchAssets();
+            }}
           />
         </div>
       </div>
@@ -249,6 +261,18 @@ export default function PortfolioPage() {
         />
       </div>
 
+      {/* Asset Updates Section */}
+      {portfolio && user?.id && (
+        <BatchUpdateControls
+          portfolioId={portfolio.id}
+          userId={user.id}
+          onUpdateComplete={() => {
+            refetchPortfolios();
+            refetchAssets();
+          }}
+        />
+      )}
+
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="col-span-2 p-6">
           <div className="mb-4">
@@ -268,64 +292,100 @@ export default function PortfolioPage() {
             <div className="space-y-2">
               <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-muted-foreground border-b">
                 <div className="col-span-2">Ticker</div>
+                <div className="col-span-1">Status</div>
                 <div className="col-span-1 text-right">Qtd.</div>
                 <div className="col-span-2 text-right">Preço Médio</div>
                 <div className="col-span-2 text-right">Preço Atual</div>
-                <div className="col-span-2 text-right">Valor Total</div>
-                <div className="col-span-2 text-right">Ganho</div>
-                <div className="col-span-1 text-right">Ações</div>
+                <div className="col-span-1 text-right">Valor Total</div>
+                <div className="col-span-1 text-right">Ganho</div>
+                <div className="col-span-2 text-right">Ações</div>
               </div>
-              {enrichedPositions.map((position: any) => (
-                <div
-                  key={position.id}
-                  className={cn(
-                    'grid grid-cols-12 gap-4 px-4 py-3 rounded-lg transition-colors hover:bg-accent cursor-pointer',
-                    selectedPosition === position.id && 'bg-accent',
-                  )}
-                  onClick={() => setSelectedPosition(position.id)}
-                >
-                  <div className="col-span-2">
-                    <p className="font-semibold">{position.ticker}</p>
-                    <p className="text-xs text-muted-foreground truncate">{position.name}</p>
-                  </div>
-                  <div className="col-span-1 text-right font-medium">
-                    {position.quantity}
-                  </div>
-                  <div className="col-span-2 text-right">
-                    {formatCurrency(position.averagePrice)}
-                  </div>
-                  <div className="col-span-2 text-right font-medium">
-                    {formatCurrency(position.currentPrice)}
-                  </div>
-                  <div className="col-span-2 text-right font-semibold">
-                    {formatCurrency(position.totalValue)}
-                  </div>
-                  <div className="col-span-2 text-right">
-                    <div className={cn('font-semibold', getChangeColor(position.gain))}>
-                      {formatCurrency(position.gain)}
+              {enrichedPositions.map((position: any) => {
+                const asset = assetMap.get(position.assetId);
+                return (
+                  <div
+                    key={position.id}
+                    className={cn(
+                      'grid grid-cols-12 gap-4 px-4 py-3 rounded-lg transition-colors hover:bg-accent cursor-pointer',
+                      selectedPosition === position.id && 'bg-accent',
+                    )}
+                    onClick={() => setSelectedPosition(position.id)}
+                  >
+                    <div className="col-span-2">
+                      <p className="font-semibold">{position.ticker}</p>
+                      <p className="text-xs text-muted-foreground truncate">{position.name}</p>
                     </div>
-                    <div className={cn('text-xs', getChangeColor(position.gainPercent))}>
-                      {formatPercent(position.gainPercent)}
+                    <div className="col-span-1" onClick={(e) => e.stopPropagation()}>
+                      {asset && (
+                        <OutdatedBadge
+                          lastUpdated={asset.lastUpdated}
+                          lastUpdateStatus={asset.lastUpdateStatus}
+                          lastUpdateError={asset.lastUpdateError}
+                          updateRetryCount={asset.updateRetryCount}
+                          showTime={false}
+                        />
+                      )}
+                    </div>
+                    <div className="col-span-1 text-right font-medium">
+                      {position.quantity}
+                    </div>
+                    <div className="col-span-2 text-right">
+                      {formatCurrency(position.averagePrice)}
+                    </div>
+                    <div className="col-span-2 text-right font-medium">
+                      {formatCurrency(position.currentPrice)}
+                    </div>
+                    <div className="col-span-1 text-right font-semibold">
+                      {formatCurrency(position.totalValue)}
+                    </div>
+                    <div className="col-span-1 text-right">
+                      <div className={cn('font-semibold text-sm', getChangeColor(position.gain))}>
+                        {formatCurrency(position.gain)}
+                      </div>
+                      <div className={cn('text-xs', getChangeColor(position.gainPercent))}>
+                        {formatPercent(position.gainPercent)}
+                      </div>
+                    </div>
+                    <div className="col-span-2 flex items-center justify-end space-x-1" onClick={(e) => e.stopPropagation()}>
+                      {user?.id && (
+                        <AssetUpdateButton
+                          ticker={position.ticker}
+                          userId={user.id}
+                          variant="icon"
+                          size="icon"
+                          showLabel={false}
+                          onUpdateComplete={() => {
+                            refetchAssets();
+                            refetchPortfolios();
+                          }}
+                        />
+                      )}
+                      <EditPositionDialog
+                        portfolioId={portfolio.id}
+                        position={{
+                          id: position.id,
+                          ticker: position.ticker,
+                          quantity: position.quantity,
+                          averagePrice: position.averagePrice,
+                        }}
+                        onSuccess={() => {
+                          refetchPortfolios();
+                          refetchAssets();
+                        }}
+                      />
+                      <DeletePositionDialog
+                        portfolioId={portfolio.id}
+                        positionId={position.id}
+                        ticker={position.ticker}
+                        onSuccess={() => {
+                          refetchPortfolios();
+                          refetchAssets();
+                        }}
+                      />
                     </div>
                   </div>
-                  <div className="col-span-1 flex items-center justify-end space-x-1">
-                    <EditPositionDialog
-                      portfolioId={portfolio.id}
-                      position={{
-                        id: position.id,
-                        ticker: position.ticker,
-                        quantity: position.quantity,
-                        averagePrice: position.averagePrice,
-                      }}
-                    />
-                    <DeletePositionDialog
-                      portfolioId={portfolio.id}
-                      positionId={position.id}
-                      ticker={position.ticker}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Card>

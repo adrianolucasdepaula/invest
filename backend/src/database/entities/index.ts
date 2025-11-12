@@ -7,3 +7,4 @@ export { PortfolioPosition } from './portfolio-position.entity';
 export { DataSource, DataSourceType, DataSourceStatus } from './data-source.entity';
 export { ScrapedData } from './scraped-data.entity';
 export { Analysis, AnalysisType, AnalysisStatus, Recommendation } from './analysis.entity';
+export { UpdateLog, UpdateStatus, UpdateTrigger } from './update-log.entity';

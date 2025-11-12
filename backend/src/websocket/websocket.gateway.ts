@@ -204,4 +204,90 @@ export class AppWebSocketGateway
       timestamp: new Date(),
     });
   }
+
+  // ============================================================================
+  // MÉTODOS PARA ASSET UPDATES
+  // ============================================================================
+
+  emitAssetUpdateStarted(data: {
+    assetId: string;
+    ticker: string;
+    updateLogId: string;
+    triggeredBy: string;
+  }) {
+    this.server.emit('asset_update_started', {
+      ...data,
+      timestamp: new Date(),
+    });
+    this.logger.log(`[WS] Asset update started: ${data.ticker}`);
+  }
+
+  emitAssetUpdateCompleted(data: {
+    assetId: string;
+    ticker: string;
+    updateLogId: string;
+    status: string;
+    duration: number;
+    metadata?: any;
+  }) {
+    this.server.emit('asset_update_completed', {
+      ...data,
+      timestamp: new Date(),
+    });
+    this.logger.log(`[WS] Asset update completed: ${data.ticker} (${data.duration}ms)`);
+  }
+
+  emitAssetUpdateFailed(data: {
+    assetId: string;
+    ticker: string;
+    updateLogId: string;
+    error: string;
+    duration: number;
+  }) {
+    this.server.emit('asset_update_failed', {
+      ...data,
+      timestamp: new Date(),
+    });
+    this.logger.error(`[WS] Asset update failed: ${data.ticker} - ${data.error}`);
+  }
+
+  emitBatchUpdateStarted(data: {
+    portfolioId?: string;
+    totalAssets: number;
+    tickers: string[];
+  }) {
+    this.server.emit('batch_update_started', {
+      ...data,
+      timestamp: new Date(),
+    });
+    this.logger.log(`[WS] Batch update started: ${data.totalAssets} assets`);
+  }
+
+  emitBatchUpdateProgress(data: {
+    portfolioId?: string;
+    current: number;
+    total: number;
+    currentTicker: string;
+  }) {
+    this.server.emit('batch_update_progress', {
+      ...data,
+      timestamp: new Date(),
+    });
+  }
+
+  emitBatchUpdateCompleted(data: {
+    portfolioId?: string;
+    totalAssets: number;
+    successCount: number;
+    failedCount: number;
+    duration: number;
+  }) {
+    this.server.emit('batch_update_completed', {
+      ...data,
+      timestamp: new Date(),
+    });
+    this.logger.log(
+      `[WS] Batch update completed: ${data.successCount}/${data.totalAssets} successful (${data.duration}ms)`
+    );
+  }
 }

@@ -16,6 +16,7 @@ import { DataSource } from './data-source.entity';
 @Index(['scrapedAt'])
 export class ScrapedData {
   @PrimaryGeneratedColumn('uuid')
+  @Column({ primary: true })
   id: string;
 
   @ManyToOne(() => Asset, { onDelete: 'CASCADE' })
@@ -41,7 +42,7 @@ export class ScrapedData {
   @Column({ type: 'date', name: 'reference_date', nullable: true })
   referenceDate: Date;
 
-  @Column({ name: 'scraped_at' })
+  @Column({ name: 'scraped_at', primary: true })
   scrapedAt: Date;
 
   @Column({ type: 'int', name: 'response_time', nullable: true })

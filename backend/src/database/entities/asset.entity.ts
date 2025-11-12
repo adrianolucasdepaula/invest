@@ -71,6 +71,22 @@ export class Asset {
   @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, any>;
 
+  // Update tracking fields
+  @Column({ name: 'last_updated', type: 'timestamp', nullable: true })
+  lastUpdated: Date;
+
+  @Column({ name: 'last_update_status', nullable: true })
+  lastUpdateStatus: 'success' | 'failed' | 'pending' | 'outdated';
+
+  @Column({ name: 'last_update_error', type: 'text', nullable: true })
+  lastUpdateError: string;
+
+  @Column({ name: 'update_retry_count', default: 0 })
+  updateRetryCount: number;
+
+  @Column({ name: 'auto_update_enabled', default: true })
+  autoUpdateEnabled: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
