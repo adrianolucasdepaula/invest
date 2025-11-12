@@ -8,6 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -26,6 +32,7 @@ import {
   Play,
   Trash2,
   AlertTriangle,
+  BarChart3,
 } from 'lucide-react';
 import { cn, formatPercent } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
@@ -260,8 +267,17 @@ export default function AnalysisPage() {
 
   const handleRequestBulkAnalysis = async () => {
     const type = filterType === 'all' ? 'complete' : filterType;
+    const typeLabel = type === 'complete' ? 'completa' : type === 'fundamental' ? 'fundamentalista' : 'técnica';
 
-    if (!confirm(`Deseja solicitar análise ${type === 'complete' ? 'completa' : type === 'fundamental' ? 'fundamentalista' : 'técnica'} para TODOS os ativos? Isso pode levar bastante tempo.`)) {
+    const confirmMessage = `🔍 Solicitar Análise ${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)} em Massa\n\n` +
+      `Esta ação irá:\n` +
+      `✓ Analisar TODOS os ativos cadastrados\n` +
+      `✓ Coletar dados de TODAS as fontes (Fundamentus, BRAPI, StatusInvest, Investidor10)\n` +
+      `✓ Realizar validação cruzada para máxima precisão\n\n` +
+      `⏱️ Tempo estimado: 5-10 minutos\n\n` +
+      `Deseja continuar?`;
+
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -340,7 +356,31 @@ export default function AnalysisPage() {
             Análises técnicas e fundamentalistas dos ativos
           </p>
         </div>
-        <NewAnalysisDialog />
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleRequestBulkAnalysis}
+                  disabled={requestingBulk}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <BarChart3 className={cn('h-4 w-4', requestingBulk && 'animate-pulse')} />
+                  {requestingBulk ? 'Solicitando...' : 'Solicitar Análises em Massa'}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                <p className="font-semibold mb-1">Análise em Massa com Multi-Fonte</p>
+                <p className="text-xs text-muted-foreground">
+                  Coleta dados de <strong>4 fontes</strong> (Fundamentus, BRAPI, StatusInvest, Investidor10)
+                  e realiza validação cruzada para garantir máxima precisão nas análises.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <NewAnalysisDialog />
+        </div>
       </div>
 
       <div className="flex items-center space-x-4">

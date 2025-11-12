@@ -15,7 +15,6 @@ import {
   TrendingUp,
   TrendingDown,
   Layers,
-  BarChart3
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
@@ -39,7 +38,6 @@ export default function AssetsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [syncing, setSyncing] = useState(false);
   const [syncingAsset, setSyncingAsset] = useState<string | null>(null);
-  const [requestingAnalysis, setRequestingAnalysis] = useState(false);
   const { data: assets, isLoading, error, refetch } = useAssets();
 
   // Auto-refresh every hour
@@ -73,25 +71,6 @@ export default function AssetsPage() {
       });
     } finally {
       setSyncing(false);
-    }
-  };
-
-  const handleRequestBulkAnalysis = async () => {
-    setRequestingAnalysis(true);
-    try {
-      const result = await api.requestBulkAnalysis('complete');
-      toast({
-        title: 'Análises solicitadas',
-        description: `${result.requested} análises solicitadas, ${result.skipped} puladas (já existentes).`,
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Erro ao solicitar análises',
-        description: error.message || 'Erro ao solicitar análises em massa',
-        variant: 'destructive',
-      });
-    } finally {
-      setRequestingAnalysis(false);
     }
   };
 
@@ -214,25 +193,14 @@ export default function AssetsPage() {
             </p>
           )}
         </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={handleRequestBulkAnalysis}
-            disabled={requestingAnalysis}
-            variant="outline"
-            className="gap-2"
-          >
-            <BarChart3 className={cn('h-4 w-4', requestingAnalysis && 'animate-pulse')} />
-            {requestingAnalysis ? 'Solicitando...' : 'Solicitar Análises'}
-          </Button>
-          <Button
-            onClick={handleSyncAll}
-            disabled={syncing}
-            className="gap-2"
-          >
-            <RefreshCw className={cn('h-4 w-4', syncing && 'animate-spin')} />
-            {syncing ? 'Sincronizando...' : 'Atualizar Todos'}
-          </Button>
-        </div>
+        <Button
+          onClick={handleSyncAll}
+          disabled={syncing}
+          className="gap-2"
+        >
+          <RefreshCw className={cn('h-4 w-4', syncing && 'animate-spin')} />
+          {syncing ? 'Sincronizando...' : 'Atualizar Todos'}
+        </Button>
       </div>
 
       <Card className="p-4">
