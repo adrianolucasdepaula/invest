@@ -1,5 +1,5 @@
-import { Controller, Get, Logger } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Param, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ScrapersService } from './scrapers.service';
 
 export interface DataSourceStatusDto {
@@ -118,5 +118,96 @@ export class ScrapersController {
     ];
 
     return sources;
+  }
+
+  @Post('test/:scraperId')
+  @ApiOperation({ summary: 'Test a specific scraper' })
+  @ApiParam({ name: 'scraperId', description: 'Scraper ID to test' })
+  @ApiResponse({
+    status: 200,
+    description: 'Scraper test completed successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Scraper not found',
+  })
+  async testScraper(@Param('scraperId') scraperId: string) {
+    this.logger.log(`Testing scraper: ${scraperId}`);
+
+    const availableScrapers = this.scrapersService.getAvailableScrapers();
+    const scraper = availableScrapers.find((s) => s.source === scraperId);
+
+    if (!scraper) {
+      throw new HttpException('Scraper not found', HttpStatus.NOT_FOUND);
+    }
+
+    try {
+      // Test with PETR4 as default ticker
+      const result = await this.scrapersService.scrapeFundamentalData('PETR4');
+
+      return {
+        success: true,
+        scraperId,
+        message: `Scraper ${scraperId} tested successfully`,
+        sourcesCount: result.sourcesCount,
+        confidence: result.confidence,
+        testedAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      this.logger.error(`Failed to test scraper ${scraperId}: ${error.message}`);
+      throw new HttpException(
+        `Failed to test scraper: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('sync/:scraperId')
+  @ApiOperation({ summary: 'Sync data from a specific scraper' })
+  @ApiParam({ name: 'scraperId', description: 'Scraper ID to sync' })
+  @ApiResponse({
+    status: 200,
+    description: 'Scraper sync completed successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Scraper not found',
+  })
+  async syncScraper(@Param('scraperId') scraperId: string) {
+    this.logger.log(`Syncing scraper: ${scraperId}`);
+
+    const availableScrapers = this.scrapersService.getAvailableScrapers();
+    const scraper = availableScrapers.find((s) => s.source === scraperId);
+
+    if (!scraper) {
+      throw new HttpException('Scraper not found', HttpStatus.NOT_FOUND);
+    }
+
+    try {
+      // Sync data for top 5 tickers
+      const tickers = ['PETR4', 'VALE3', 'ITUB4', 'BBAS3', 'ABEV3'];
+      const results = await Promise.allSettled(
+        tickers.map((ticker) => this.scrapersService.scrapeFundamentalData(ticker)),
+      );
+
+      const successful = results.filter((r) => r.status === 'fulfilled').length;
+      const failed = results.filter((r) => r.status === 'rejected').length;
+
+      return {
+        success: true,
+        scraperId,
+        message: `Scraper ${scraperId} synced successfully`,
+        tickersProcessed: tickers.length,
+        successful,
+        failed,
+        syncedAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      this.logger.error(`Failed to sync scraper ${scraperId}: ${error.message}`);
+      throw new HttpException(
+        `Failed to sync scraper: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

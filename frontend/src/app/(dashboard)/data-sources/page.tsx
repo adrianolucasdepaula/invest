@@ -80,6 +80,8 @@ const getTypeColor = (type: string) => {
 
 export default function DataSourcesPage() {
   const [filter, setFilter] = useState<'all' | 'fundamental' | 'technical' | 'options' | 'prices'>('all');
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
   const { data: dataSources, isLoading, error, refetch } = useDataSources();
   const { toast } = useToast();
 
@@ -103,6 +105,81 @@ export default function DataSourcesPage() {
     avgSuccessRate: sources.length > 0
       ? (sources.reduce((acc, s) => acc + s.successRate, 0) / sources.length).toFixed(1)
       : '0.0',
+  };
+
+  const handleTest = async (scraperId: string) => {
+    setTestingId(scraperId);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/scrapers/test/${scraperId}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao testar scraper');
+      }
+
+      toast({
+        title: 'Teste concluído com sucesso',
+        description: `${data.message}. Fontes: ${data.sourcesCount}, Confiança: ${(data.confidence * 100).toFixed(1)}%`,
+      });
+
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao testar scraper',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setTestingId(null);
+    }
+  };
+
+  const handleSync = async (scraperId: string) => {
+    setSyncingId(scraperId);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/scrapers/sync/${scraperId}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao sincronizar scraper');
+      }
+
+      toast({
+        title: 'Sincronização concluída',
+        description: `${data.message}. Processados: ${data.tickersProcessed}, Sucesso: ${data.successful}, Falhas: ${data.failed}`,
+      });
+
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao sincronizar scraper',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncingId(null);
+    }
+  };
+
+  const handleSettings = (scraperId: string) => {
+    toast({
+      title: 'Configurações',
+      description: `Configurações para ${scraperId} em desenvolvimento`,
+    });
   };
 
   if (isLoading) {
@@ -253,15 +330,38 @@ export default function DataSourcesPage() {
               </div>
 
               <div className="flex items-center space-x-2 ml-4">
-                <Button variant="outline" size="sm">
-                  <Play className="mr-2 h-4 w-4" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleTest(source.id)}
+                  disabled={testingId === source.id || syncingId === source.id}
+                >
+                  {testingId === source.id ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Play className="mr-2 h-4 w-4" />
+                  )}
                   Testar
                 </Button>
-                <Button variant="outline" size="sm">
-                  <RefreshCw className="mr-2 h-4 w-4" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSync(source.id)}
+                  disabled={testingId === source.id || syncingId === source.id}
+                >
+                  {syncingId === source.id ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                  )}
                   Sincronizar
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSettings(source.id)}
+                  disabled={testingId === source.id || syncingId === source.id}
+                >
                   <Settings className="h-4 w-4" />
                 </Button>
               </div>
