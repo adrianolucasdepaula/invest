@@ -334,11 +334,11 @@ CREATE INDEX idx_analyses_user_created ON analyses(user_id, created_at);
 
 ### Estatísticas Gerais
 - **Total de Fontes Planejadas:** 31
-- **Implementadas:** 4 (12.90%)
+- **Implementadas:** 6 (19.35%)
 - **Em Desenvolvimento:** 0
-- **Planejadas:** 27 (87.10%)
+- **Planejadas:** 25 (80.65%)
 
-### 1. Análise Fundamentalista (6 fontes - 66.67% completo)
+### 1. Análise Fundamentalista (6 fontes - 100% completo) ✅
 
 | Fonte | Tipo | Login | Status | Scraper |
 |-------|------|-------|--------|---------|
@@ -346,8 +346,8 @@ CREATE INDEX idx_analyses_user_created ON analyses(user_id, created_at);
 | **BRAPI** | API Pública | Token | ✅ Implementado | brapi.scraper.ts |
 | **Status Invest** | Privado | Google | ✅ Implementado | statusinvest.scraper.ts |
 | **Investidor10** | Privado | Google | ✅ Implementado | investidor10.scraper.ts |
-| Fundamentei | Privado | Google | 🔜 Planejado | - |
-| Investsite | Público | Não | 🔜 Planejado | - |
+| **Fundamentei** | Privado | Google | ✅ Implementado | fundamentei.scraper.ts |
+| **Investsite** | Público | Não | ✅ Implementado | investsite.scraper.ts |
 
 ### 2. Análise Geral do Mercado (3 fontes - 0% completo)
 
@@ -381,13 +381,15 @@ CREATE INDEX idx_analyses_user_created ON analyses(user_id, created_at);
 
 ### Cross-Validation
 
-O sistema coleta dados de **4 fontes fundamentalistas** simultaneamente e faz:
+O sistema coleta dados de **6 fontes fundamentalistas** simultaneamente e faz:
 
 1. **Merge de dados**: Combina dados de todas as fontes
 2. **Detecção de discrepâncias**: Identifica valores divergentes (threshold 10%)
 3. **Cálculo de confiança**: Score de 0.0 a 1.0 baseado em consenso
 4. **Priorização**:
-   - 4 fontes concordam: 1.0
+   - 6 fontes concordam: 1.0
+   - 5 fontes concordam: 0.92
+   - 4 fontes concordam: 0.83
    - 3 fontes concordam: 0.75
    - 2 fontes concordam: 0.5
    - Menos de 2: 0.0
@@ -396,6 +398,14 @@ O sistema coleta dados de **4 fontes fundamentalistas** simultaneamente e faz:
 - Orquestrador: `backend/src/scrapers/scrapers.service.ts`
 - API REST: `backend/src/scrapers/scrapers.controller.ts`
 - Frontend: `frontend/src/app/(dashboard)/data-sources/page.tsx`
+
+**Fontes Implementadas:**
+1. Fundamentus (público, sem auth)
+2. BRAPI (API token)
+3. Status Invest (OAuth Google via cookies)
+4. Investidor10 (OAuth Google via cookies)
+5. Fundamentei (OAuth Google via cookies) ⭐ NOVO
+6. Investsite (público, sem auth) ⭐ NOVO
 
 ---
 
