@@ -5,6 +5,9 @@ import { Providers } from '@/components/providers'
 export const metadata: Metadata = {
   title: 'B3 AI Analysis Platform',
   description: 'Plataforma completa de análise de investimentos B3 com Inteligência Artificial',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({
