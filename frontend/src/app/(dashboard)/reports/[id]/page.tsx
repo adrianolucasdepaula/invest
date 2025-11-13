@@ -58,7 +58,7 @@ export default function ReportDetailPage() {
     );
   }
 
-  const { asset, recommendation, confidenceScore, summary, analysis } = report;
+  const { asset, recommendation, confidenceScore, summary, analysis, currentPrice, changePercent } = report;
 
   const getRecommendationBadge = () => {
     const badges = {
@@ -126,7 +126,7 @@ export default function ReportDetailPage() {
           <div>
             <p className="text-sm text-muted-foreground">Preço Atual</p>
             <p className="text-2xl font-bold mt-1">
-              R$ {analysis?.currentPrice?.toFixed(2) || 'N/A'}
+              {currentPrice ? `R$ ${Number(currentPrice).toFixed(2)}` : 'N/A'}
             </p>
           </div>
           <div>

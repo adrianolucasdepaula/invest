@@ -440,10 +440,28 @@ export class AnalysisService {
   }
 
   async findById(id: string) {
-    return this.analysisRepository.findOne({
+    const analysis = await this.analysisRepository.findOne({
       where: { id },
       relations: ['asset'],
     });
+
+    if (!analysis) {
+      throw new NotFoundException('Analysis not found');
+    }
+
+    // Buscar preço mais recente do ativo
+    const latestPrice = await this.assetPriceRepository.findOne({
+      where: { assetId: analysis.assetId },
+      order: { date: 'DESC' },
+    });
+
+    // Retornar análise com preço atual
+    return {
+      ...analysis,
+      currentPrice: latestPrice?.close,
+      currentPriceDate: latestPrice?.date,
+      changePercent: latestPrice?.changePercent,
+    };
   }
 
   async deleteAnalysis(id: string, userId: string) {
