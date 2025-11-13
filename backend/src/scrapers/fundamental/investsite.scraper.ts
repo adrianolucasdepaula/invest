@@ -1,0 +1,190 @@
+import { Injectable } from '@nestjs/common';
+import { AbstractScraper } from '../base/abstract-scraper';
+import * as cheerio from 'cheerio';
+
+export interface InvestsiteData {
+  ticker: string;
+  companyName: string;
+  price: number;
+  pl: number;              // P/L
+  pvp: number;             // P/VP
+  roe: number;             // ROE
+  dy: number;              // Dividend Yield
+  evEbitda: number;        // EV/EBITDA
+  liquidezCorrente: number; // Liquidez Corrente
+  margemLiquida: number;   // Margem Líquida
+  margemBruta: number;     // Margem Bruta
+  margemOperacional: number; // Margem Operacional
+  receitaLiquida: number;  // Receita Líquida
+  lucroLiquido: number;    // Lucro Líquido
+  patrimonioLiquido: number; // Patrimônio Líquido
+}
+
+@Injectable()
+export class InvestsiteScraper extends AbstractScraper<InvestsiteData> {
+  readonly name = 'Investsite Scraper';
+  readonly source = 'investsite';
+  readonly requiresLogin = false; // Site público
+
+  protected async scrapeData(ticker: string): Promise<InvestsiteData> {
+    // URL do Investsite - formato: principais_indicadores.php?cod_negociacao=TICKER
+    const url = `https://www.investsite.com.br/principais_indicadores.php?cod_negociacao=${ticker.toUpperCase()}`;
+
+    try {
+      // Navegar para a página do ativo
+      await this.page.goto(url, { waitUntil: 'networkidle2', timeout: this.config.timeout });
+
+      // Aguardar conteúdo carregar
+      await this.page.waitForSelector('table, .tabela, h1', {
+        timeout: 10000
+      }).catch(() => {
+        this.logger.warn('Main content selector not found, continuing anyway');
+      });
+
+      // Obter HTML da página
+      const content = await this.page.content();
+      const $ = cheerio.load(content);
+
+      // Função auxiliar para extrair valores numéricos
+      const getValue = (selector: string, attr?: string): number => {
+        let text: string;
+        if (attr) {
+          text = $(selector).attr(attr) || '0';
+        } else {
+          text = $(selector).text().trim();
+        }
+
+        // Limpar texto
+        text = text
+          .replace(/\./g, '')           // Remover pontos (milhares)
+          .replace(',', '.')            // Vírgula para ponto decimal
+          .replace('%', '')             // Remover %
+          .replace('R$', '')            // Remover R$
+          .replace(/[^\d.-]/g, '')      // Remover caracteres não numéricos
+          .trim();
+
+        return parseFloat(text) || 0;
+      };
+
+      // Função para buscar valor em tabela por label de linha
+      const getValueFromTable = (label: string): number => {
+        // Investsite usa tabelas HTML tradicionais
+        // Procurar <td> ou <th> contendo o label e pegar o próximo <td>
+        const labelCell = $(`td:contains("${label}"), th:contains("${label}")`).first();
+        if (labelCell.length > 0) {
+          const valueCell = labelCell.next('td');
+          if (valueCell.length > 0) {
+            return getValue(valueCell.text());
+          }
+        }
+
+        // Tentar formato alternativo: <tr> com label e valor
+        const row = $(`tr:contains("${label}")`).first();
+        if (row.length > 0) {
+          const cells = row.find('td');
+          if (cells.length >= 2) {
+            // Assumir que valor está na segunda célula
+            return getValue(cells.eq(1).text());
+          }
+        }
+
+        return 0;
+      };
+
+      // Extrair nome da empresa (geralmente está no título ou cabeçalho)
+      const companyName =
+        $('h1').first().text().trim().replace(ticker.toUpperCase(), '').trim() ||
+        $('h2').first().text().trim() ||
+        $('.nome-empresa').text().trim() ||
+        ticker.toUpperCase();
+
+      // Extrair preço (pode estar em destaque)
+      const price =
+        getValueFromTable('Cotação') ||
+        getValueFromTable('Preço') ||
+        getValueFromTable('Último') ||
+        getValue('.preco-atual') ||
+        getValue('.cotacao') ||
+        0;
+
+      // Construir objeto de dados
+      const data: InvestsiteData = {
+        ticker: ticker.toUpperCase(),
+        companyName,
+        price,
+
+        // Indicadores de Valuation
+        pl: getValueFromTable('P/L') ||
+            getValueFromTable('P / L') ||
+            getValueFromTable('Preço/Lucro'),
+
+        pvp: getValueFromTable('P/VP') ||
+             getValueFromTable('P / VP') ||
+             getValueFromTable('Preço/Valor Patrimonial'),
+
+        evEbitda: getValueFromTable('EV/EBITDA') ||
+                  getValueFromTable('EV / EBITDA') ||
+                  getValueFromTable('Enterprise Value / EBITDA'),
+
+        // Indicadores de Rentabilidade
+        roe: getValueFromTable('ROE') ||
+             getValueFromTable('Return on Equity') ||
+             getValueFromTable('Retorno sobre Patrimônio'),
+
+        margemLiquida: getValueFromTable('Margem Líquida') ||
+                       getValueFromTable('Margem Liq.') ||
+                       getValueFromTable('ML'),
+
+        margemBruta: getValueFromTable('Margem Bruta') ||
+                     getValueFromTable('MB'),
+
+        margemOperacional: getValueFromTable('Margem Operacional') ||
+                           getValueFromTable('Margem EBIT') ||
+                           getValueFromTable('MO'),
+
+        // Indicadores de Dividendos
+        dy: getValueFromTable('Dividend Yield') ||
+            getValueFromTable('DY') ||
+            getValueFromTable('Rendimento de Dividendos'),
+
+        // Indicadores de Liquidez
+        liquidezCorrente: getValueFromTable('Liquidez Corrente') ||
+                          getValueFromTable('Liq. Corrente') ||
+                          getValueFromTable('LC'),
+
+        // Indicadores Financeiros (valores absolutos)
+        receitaLiquida: getValueFromTable('Receita Líquida') ||
+                        getValueFromTable('Receita') ||
+                        getValueFromTable('Faturamento'),
+
+        lucroLiquido: getValueFromTable('Lucro Líquido') ||
+                      getValueFromTable('Lucro') ||
+                      getValueFromTable('LL'),
+
+        patrimonioLiquido: getValueFromTable('Patrimônio Líquido') ||
+                           getValueFromTable('PL') ||
+                           getValueFromTable('Equity'),
+      };
+
+      this.logger.log(`Successfully scraped ${ticker} from Investsite`);
+      return data;
+
+    } catch (error) {
+      this.logger.error(`Failed to scrape ${ticker} from Investsite: ${error.message}`);
+      throw error;
+    }
+  }
+
+  validate(data: InvestsiteData): boolean {
+    // Validação básica - verificar se obtivemos pelo menos alguns dados
+    return (
+      data.ticker !== '' &&
+      (data.price > 0 || data.pl !== 0 || data.pvp !== 0 || data.roe !== 0)
+    );
+  }
+
+  protected async login(): Promise<void> {
+    // Investsite é um site público, não requer login
+    this.logger.log('Investsite scraper running without login (public site)');
+  }
+}

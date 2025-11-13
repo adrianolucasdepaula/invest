@@ -89,6 +89,32 @@ export class ScrapersController {
         avgResponseTime: 1890,
         requiresAuth: true,
       },
+      {
+        id: 'fundamentei',
+        name: 'Fundamentei',
+        url: 'https://fundamentei.com',
+        type: 'fundamental',
+        status: 'active',
+        lastSync: new Date().toISOString(),
+        successRate: 94.0,
+        totalRequests: 0,
+        failedRequests: 0,
+        avgResponseTime: 2300,
+        requiresAuth: true,
+      },
+      {
+        id: 'investsite',
+        name: 'Investsite',
+        url: 'https://www.investsite.com.br',
+        type: 'fundamental',
+        status: 'active',
+        lastSync: new Date().toISOString(),
+        successRate: 97.5,
+        totalRequests: 0,
+        failedRequests: 0,
+        avgResponseTime: 1550,
+        requiresAuth: false,
+      },
     ];
 
     return sources;

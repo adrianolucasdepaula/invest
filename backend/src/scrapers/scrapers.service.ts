@@ -4,6 +4,8 @@ import { FundamentusScraper } from './fundamental/fundamentus.scraper';
 import { BrapiScraper } from './fundamental/brapi.scraper';
 import { StatusInvestScraper } from './fundamental/statusinvest.scraper';
 import { Investidor10Scraper } from './fundamental/investidor10.scraper';
+import { FundamenteiScraper } from './fundamental/fundamentei.scraper';
+import { InvestsiteScraper } from './fundamental/investsite.scraper';
 import { OpcoesScraper } from './options/opcoes.scraper';
 import { ScraperResult } from './base/base-scraper.interface';
 
@@ -27,6 +29,8 @@ export class ScrapersService {
     private brapiScraper: BrapiScraper,
     private statusInvestScraper: StatusInvestScraper,
     private investidor10Scraper: Investidor10Scraper,
+    private fundamenteiScraper: FundamenteiScraper,
+    private investsiteScraper: InvestsiteScraper,
     private opcoesScraper: OpcoesScraper,
   ) {
     this.minSources = this.configService.get<number>('MIN_DATA_SOURCES', 3);
@@ -43,6 +47,8 @@ export class ScrapersService {
       this.brapiScraper.scrape(ticker),
       this.statusInvestScraper.scrape(ticker),
       this.investidor10Scraper.scrape(ticker),
+      this.fundamenteiScraper.scrape(ticker),
+      this.investsiteScraper.scrape(ticker),
     ]);
 
     const successfulResults = results
@@ -212,6 +218,16 @@ export class ScrapersService {
         name: this.investidor10Scraper.name,
         source: this.investidor10Scraper.source,
         requiresLogin: this.investidor10Scraper.requiresLogin,
+      },
+      {
+        name: this.fundamenteiScraper.name,
+        source: this.fundamenteiScraper.source,
+        requiresLogin: this.fundamenteiScraper.requiresLogin,
+      },
+      {
+        name: this.investsiteScraper.name,
+        source: this.investsiteScraper.source,
+        requiresLogin: this.investsiteScraper.requiresLogin,
       },
       {
         name: this.opcoesScraper.name,

@@ -3,6 +3,8 @@ import { FundamentusScraper } from './fundamental/fundamentus.scraper';
 import { BrapiScraper } from './fundamental/brapi.scraper';
 import { StatusInvestScraper } from './fundamental/statusinvest.scraper';
 import { Investidor10Scraper } from './fundamental/investidor10.scraper';
+import { FundamenteiScraper } from './fundamental/fundamentei.scraper';
+import { InvestsiteScraper } from './fundamental/investsite.scraper';
 import { OpcoesScraper } from './options/opcoes.scraper';
 import { ScrapersService } from './scrapers.service';
 import { ScrapersController } from './scrapers.controller';
@@ -14,6 +16,8 @@ import { ScrapersController } from './scrapers.controller';
     BrapiScraper,
     StatusInvestScraper,
     Investidor10Scraper,
+    FundamenteiScraper,
+    InvestsiteScraper,
     OpcoesScraper,
     ScrapersService,
   ],
@@ -22,6 +26,8 @@ import { ScrapersController } from './scrapers.controller';
     BrapiScraper,
     StatusInvestScraper,
     Investidor10Scraper,
+    FundamenteiScraper,
+    InvestsiteScraper,
     OpcoesScraper,
     ScrapersService,
   ],
