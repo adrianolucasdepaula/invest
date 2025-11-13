@@ -131,7 +131,7 @@ export class ReportsService {
           let daysSinceLastAnalysis: number | undefined;
           let isAnalysisRecent = false;
           let isAnalysisOutdated = false;
-          let canRequestAnalysis = true;
+          let canRequestAnalysis = true; // Sempre permitir solicitar nova análise
 
           if (lastAnalysis) {
             const analysisDate = new Date(lastAnalysis.createdAt);
@@ -140,7 +140,7 @@ export class ReportsService {
 
             isAnalysisRecent = daysSinceLastAnalysis < 7;
             isAnalysisOutdated = daysSinceLastAnalysis > 30;
-            canRequestAnalysis = daysSinceLastAnalysis > 7; // Pode solicitar se >7 dias
+            // canRequestAnalysis permanece true - usuário pode solicitar análise a qualquer momento
           }
 
           // Montar DTO

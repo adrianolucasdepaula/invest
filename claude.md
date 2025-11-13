@@ -664,7 +664,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Botões de ação (Update/Edit/Remove) 100% funcionais
 - Fix pointer-events interception nas progress bars
 
-### FASE 3: Refatoração Sistema Reports ✅ 100% COMPLETO (FASES 1-4)
+### FASE 3: Refatoração Sistema Reports ✅ 100% COMPLETO (FASES 1-6)
 - [x] FASE 1: Limpeza de Dados (Backend) ✅
   - Script cleanup-analyses.ts criado
   - 102 análises pending travadas removidas
@@ -752,18 +752,41 @@ Co-Authored-By: Claude <noreply@anthropic.com>
   - **Testes Realizados:**
     - PDF download: ✅ PETR4 análise (13581de4) - 129KB, 2 páginas
     - JSON download: ✅ Estrutura completa com 3 fontes de dados
-- [ ] FASE 6: Testes e Validação Final
+- [x] FASE 6: Testes E2E e Validação Final ✅ **100% COMPLETO (2025-11-13)**
+  - **Testes Realizados (8/8):**
+    - ✅ FASE 6.1: Análise em Massa (Dialog + Cancelamento)
+    - ✅ FASE 6.2: Análise Individual (+ Bug #1 corrigido)
+    - ✅ FASE 6.3: Navegação (Listagem → Detalhes)
+    - ✅ FASE 6.4: Downloads (PDF 128KB + JSON 1.2KB)
+    - ✅ FASE 6.5: Badges de Status (Recente/Desatualizada)
+    - ✅ FASE 6.6: Busca e Filtros (case-insensitive, ticker+nome)
+    - ✅ FASE 6.7: Performance (55 ativos, < 2s)
+    - ✅ FASE 6.8: Console Validation (0 erros, 0 warnings)
+  - **Bugs Críticos Corrigidos (2):**
+    - 🔴 **BUG #1**: Botões "Solicitar Análise" desabilitam TODOS quando clica em UM
+      - **Solução**: Estado local `processingTicker` ao invés de `isPending` global
+      - **Arquivo**: `frontend/src/app/(dashboard)/reports/page.tsx:92,107-114,437-451,463-477`
+    - 🔴 **BUG #2**: Botão "Solicitar Análise" desaparece após análise
+      - **Solução**: Remover cooldown de 7 dias - `canRequestAnalysis = true` sempre
+      - **Arquivo**: `backend/src/api/reports/reports.service.ts:134-144`
+  - **Métricas de Qualidade:**
+    - TypeScript: 0 erros ✅
+    - Build: 0 erros ✅
+    - Console: 0 erros, 0 warnings ✅
+    - Docker Restarts: 2 (frontend + backend) ✅
+    - Screenshots: 3 evidências ✅
 
 **Referências:**
 - Planejamento: `REFATORACAO_SISTEMA_REPORTS.md`
 - Validação FASE 3: `VALIDACAO_FASE_3_REPORTS_REFATORADO.md`
 - Validação FASE 4: `VALIDACAO_FASE_4_REPORTS_DETAIL.md`
-- **Validação FASE 5:** `fase-5-after-fixes-complete.txt` (evidências de teste)
+- Validação FASE 5: `fase-5-after-fixes-complete.txt`
+- **Validação FASE 6:** `VALIDACAO_FASE_6_REPORTS_COMPLETA.md` ⭐ **COMPLETO**
 - Problemas FASE 4: `PROBLEMAS_CRITICOS_FASE_4_VALIDACAO.md`
 - Investigação Scrapers: `INVESTIGACAO_PROBLEMA_2_SCRAPERS.md`
 - Correção currentPrice: `CORRECAO_PROBLEMA_1_CURRENT_PRICE.md`
 - Resumo Final: `RESUMO_VALIDACAO_FASE_4_PROBLEMAS_E_SOLUCOES.md`
-- **Correções FASE 5:** `CORRECOES_FASE_4_CRITICAS.md` (handlebars helpers fix)
+- Correções FASE 5: `CORRECOES_FASE_4_CRITICAS.md`
 
 **Commits:**
 - `0321c58`: feat: Implementar FASE 1 e 2 da refatoração do sistema de Reports
@@ -775,9 +798,10 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - `1412420`: fix(scrapers): Corrigir autenticação BRAPI - usar query parameter
 - `79ec012`: docs: Atualizar RESUMO_VALIDACAO_FASE_4 com correções aplicadas
 - `2825897`: chore: Adicionar *.tsbuildinfo ao .gitignore
-- [pending] feat: Implementar FASE 5 - Downloads PDF/JSON (PdfGeneratorService + template)
+- `340b910`: feat: Implementar FASE 5 - Downloads PDF/JSON para Reports
+- [pending] fix: FASE 6 - Corrigir bugs críticos de botões no sistema Reports
 
-**Status:** ✅ **5/6 fases completas (83%)** - FASE 5 100% VALIDADA e funcional
+**Status:** ✅ **6/6 fases completas (100%)** - Sistema Reports 100% VALIDADO E FUNCIONAL ⭐
 
 ### FASE 23: Dados Históricos BRAPI 🔜 PLANEJADO
 - [ ] Pesquisar endpoints BRAPI para histórico

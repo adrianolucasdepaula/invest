@@ -89,6 +89,7 @@ const getConfidenceColor = (confidence?: number) => {
 export default function ReportsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showBulkDialog, setShowBulkDialog] = useState(false);
+  const [processingTicker, setProcessingTicker] = useState<string | null>(null);
 
   // Hooks
   const { data: assets, isLoading, error } = useReportsAssets();
@@ -104,7 +105,12 @@ export default function ReportsPage() {
 
   // Handlers
   const handleRequestAnalysis = (ticker: string) => {
-    requestAnalysis.mutate(ticker);
+    setProcessingTicker(ticker);
+    requestAnalysis.mutate(ticker, {
+      onSettled: () => {
+        setProcessingTicker(null);
+      },
+    });
   };
 
   const handleRequestBulkAnalysis = () => {
@@ -431,9 +437,9 @@ export default function ReportsPage() {
                       <Button
                         variant="secondary"
                         onClick={() => handleRequestAnalysis(asset.ticker)}
-                        disabled={requestAnalysis.isPending}
+                        disabled={processingTicker === asset.ticker}
                       >
-                        {requestAnalysis.isPending ? (
+                        {processingTicker === asset.ticker ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <>
@@ -457,9 +463,9 @@ export default function ReportsPage() {
                   <Button
                     variant="default"
                     onClick={() => handleRequestAnalysis(asset.ticker)}
-                    disabled={requestAnalysis.isPending}
+                    disabled={processingTicker === asset.ticker}
                   >
-                    {requestAnalysis.isPending ? (
+                    {processingTicker === asset.ticker ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <>
