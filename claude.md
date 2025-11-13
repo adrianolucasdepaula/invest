@@ -943,7 +943,63 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 **Commit:** `f80da85` - fix: Implementar funcionalidades faltantes na página de login
 **Screenshots:** `login-page-after-fixes.png`, `login-forgot-password-dialog.png`
 
-### FASE 23: Dados Históricos BRAPI 🔜 PLANEJADO
+### FASE 23: Sistema de Métricas de Scrapers ✅ 100% COMPLETO (2025-11-13)
+Sistema completo de métricas reais para monitoramento de scrapers, substituindo dados hardcoded por dados persistidos no banco.
+
+**Backend Implementado:**
+- [x] **Migration:** `1762906000000-CreateScraperMetrics.ts` (95 linhas)
+  - Tabela `scraper_metrics` com campos: id, scraper_id, operation_type, ticker, success, response_time, error_message, created_at
+  - 3 indexes para performance (scraper_id, created_at, scraper_operation)
+- [x] **Entity:** `scraper-metric.entity.ts` (32 linhas)
+  - TypeORM entity com decorators
+  - Tipos: operationType ('test' | 'sync'), ticker nullable
+- [x] **Service:** `scraper-metrics.service.ts` (150 linhas)
+  - `saveMetric()`: Salva cada execução de teste/sync
+  - `getMetricsSummary()`: Calcula métricas agregadas (últimos 30 dias)
+  - `getAllMetricsSummaries()`: Retorna métricas de todos os scrapers
+  - `cleanupOldMetrics()`: Auto-limpeza (90 dias)
+- [x] **Controller:** Atualizações em `scrapers.controller.ts`
+  - Endpoint `/status`: Agora retorna métricas reais do banco (substituiu hardcoded)
+  - Endpoint `/test/:scraperId`: Salva métricas de cada teste (responseTime, success, error)
+  - Endpoint `/sync/:scraperId`: REMOVIDO (sincronização será por página)
+- [x] **Module:** `scrapers.module.ts` - Registro do ScraperMetricsService
+- [x] **App Module:** `app.module.ts` - Adição de ScraperMetric ao array de entities
+
+**Frontend Refatorado:**
+- [x] **Página:** `/data-sources/page.tsx` (refatoração -34 linhas)
+  - Removido botão "Sincronizar" e função `handleSync()`
+  - Removido estado `syncingId`
+  - Adicionado Tooltip explicativo no botão "Testar"
+  - Trocado "Última Sincronização" → "Último Teste"
+  - Campo `lastTest` exibido (formato: DD/MM/YYYY, HH:MM:SS ou "Nunca testado")
+  - Integração 100% com métricas reais do backend
+
+**Validação Completa:**
+- ✅ **TypeScript:** 0 erros (backend + frontend)
+- ✅ **Build:** Success (ambos)
+- ✅ **Database:** Tabela criada, indexes OK, métrica salva corretamente
+- ✅ **Endpoints:** GET /status (métricas reais), POST /test/:id (salva métrica), POST /sync/:id (404)
+- ✅ **Console:** 0 erros, 0 warnings
+- ✅ **MCP Triplo:** Chrome DevTools ✅, Playwright ✅, Selenium (não-autenticado)
+- ✅ **Tooltip:** Funcional e explicativo
+- ✅ **Métricas Reais:** Fundamentus (100% sucesso, 1 req, 4778ms, 13/11/2025 18:42:18)
+
+**Commits:**
+- `1df6f61` - feat: Implementar sistema de métricas reais para scrapers
+- `bbedb44` - fix: Adicionar entidade ScraperMetric ao app.module.ts
+- `aab4d66` - feat: Refatorar página /data-sources - remover sync, adicionar tooltips e métricas reais
+
+**Screenshots:**
+- `validation-screenshots/playwright-data-sources.png` (Playwright MCP)
+- Chrome DevTools (inline screenshot com Tooltip visível)
+
+**Decisões Técnicas:**
+- ❌ **Removido endpoint /sync:** Sincronização será responsabilidade de cada página específica
+- ✅ **Métricas agregadas:** Cálculo de successRate, avgResponseTime, totalRequests baseado em últimos 30 dias
+- ✅ **Auto-cleanup:** Métricas antigas (>90 dias) removidas automaticamente
+- ✅ **Indexes otimizados:** Queries rápidas para dashboard de métricas
+
+### FASE 24: Dados Históricos BRAPI 🔜 PLANEJADO
 - [ ] Pesquisar endpoints BRAPI para histórico
 - [ ] Verificar períodos disponíveis (diário, semanal, mensal, anual, 3-10 anos)
 - [ ] Comparar com Investing.com
@@ -951,7 +1007,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - [ ] Planejar endpoint backend
 - [ ] Planejar componente frontend
 
-### FASE 24: Refatoração Botão "Solicitar Análises" ⏳ AGUARDANDO APROVAÇÃO
+### FASE 25: Refatoração Botão "Solicitar Análises" ⏳ AGUARDANDO APROVAÇÃO
 - [ ] Remover botão de /assets
 - [ ] Adicionar botão em /analysis (função já existe)
 - [ ] Adicionar Tooltip sobre coleta multi-fonte
@@ -960,7 +1016,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 **Referência:** `REFATORACAO_BOTAO_SOLICITAR_ANALISES.md`
 
-### FASE 25+: Features Futuras 🔮
+### FASE 26+: Features Futuras 🔮
 - [ ] Implementar scrapers: Fundamentei, Investsite
 - [ ] Sistema de alertas e notificações
 - [ ] Análise de opções (vencimentos, IV, greeks)
