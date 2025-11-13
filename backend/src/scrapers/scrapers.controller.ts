@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Param, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ScrapersService } from './scrapers.service';
+import { ScraperMetricsService } from './scraper-metrics.service';
 
 export interface DataSourceStatusDto {
   id: string;
@@ -8,6 +9,7 @@ export interface DataSourceStatusDto {
   url: string;
   type: 'fundamental' | 'technical' | 'options' | 'prices' | 'news';
   status: 'active' | 'inactive' | 'error';
+  lastTest: string | null;
   lastSync: string | null;
   successRate: number;
   totalRequests: number;
@@ -22,7 +24,10 @@ export interface DataSourceStatusDto {
 export class ScrapersController {
   private readonly logger = new Logger(ScrapersController.name);
 
-  constructor(private readonly scrapersService: ScrapersService) {}
+  constructor(
+    private readonly scrapersService: ScrapersService,
+    private readonly scraperMetricsService: ScraperMetricsService,
+  ) {}
 
   @Get('status')
   @ApiOperation({ summary: 'Get status of all data sources' })
@@ -31,91 +36,70 @@ export class ScrapersController {
     description: 'Returns status of all configured data sources',
   })
   async getDataSourcesStatus(): Promise<DataSourceStatusDto[]> {
-    this.logger.log('Fetching data sources status');
+    this.logger.log('Fetching data sources status with real metrics');
 
-    // TODO: Implement real metrics from database
-    // For now, returning static info about configured scrapers
+    // Fetch real metrics from database
+    const metricsMap = await this.scraperMetricsService.getAllMetricsSummaries();
 
-    const sources: DataSourceStatusDto[] = [
+    // Static scraper configurations
+    const scraperConfigs = [
       {
         id: 'fundamentus',
         name: 'Fundamentus',
         url: 'https://fundamentus.com.br',
-        type: 'fundamental',
-        status: 'active',
-        lastSync: new Date().toISOString(),
-        successRate: 98.5,
-        totalRequests: 0, // TODO: Get from metrics table
-        failedRequests: 0,
-        avgResponseTime: 1250,
         requiresAuth: false,
       },
       {
         id: 'brapi',
         name: 'BRAPI',
         url: 'https://brapi.dev',
-        type: 'fundamental',
-        status: 'active',
-        lastSync: new Date().toISOString(),
-        successRate: 99.2,
-        totalRequests: 0,
-        failedRequests: 0,
-        avgResponseTime: 850,
         requiresAuth: true,
       },
       {
         id: 'statusinvest',
         name: 'Status Invest',
         url: 'https://statusinvest.com.br',
-        type: 'fundamental',
-        status: 'active',
-        lastSync: new Date().toISOString(),
-        successRate: 96.8,
-        totalRequests: 0,
-        failedRequests: 0,
-        avgResponseTime: 2100,
         requiresAuth: true,
       },
       {
         id: 'investidor10',
         name: 'Investidor10',
         url: 'https://investidor10.com.br',
-        type: 'fundamental',
-        status: 'active',
-        lastSync: new Date().toISOString(),
-        successRate: 95.3,
-        totalRequests: 0,
-        failedRequests: 0,
-        avgResponseTime: 1890,
         requiresAuth: true,
       },
       {
         id: 'fundamentei',
         name: 'Fundamentei',
         url: 'https://fundamentei.com',
-        type: 'fundamental',
-        status: 'active',
-        lastSync: new Date().toISOString(),
-        successRate: 94.0,
-        totalRequests: 0,
-        failedRequests: 0,
-        avgResponseTime: 2300,
         requiresAuth: true,
       },
       {
         id: 'investsite',
         name: 'Investsite',
         url: 'https://www.investsite.com.br',
-        type: 'fundamental',
-        status: 'active',
-        lastSync: new Date().toISOString(),
-        successRate: 97.5,
-        totalRequests: 0,
-        failedRequests: 0,
-        avgResponseTime: 1550,
         requiresAuth: false,
       },
     ];
+
+    // Combine static config with real metrics
+    const sources: DataSourceStatusDto[] = scraperConfigs.map((config) => {
+      const metrics = metricsMap.get(config.id);
+
+      return {
+        id: config.id,
+        name: config.name,
+        url: config.url,
+        type: 'fundamental' as const,
+        status: metrics && metrics.totalRequests > 0 ? 'active' : ('inactive' as const),
+        lastTest: metrics?.lastTest?.toISOString() || null,
+        lastSync: metrics?.lastSync?.toISOString() || null,
+        successRate: metrics?.successRate || 0,
+        totalRequests: metrics?.totalRequests || 0,
+        failedRequests: metrics?.failedRequests || 0,
+        avgResponseTime: metrics?.avgResponseTime || 0,
+        requiresAuth: config.requiresAuth,
+      };
+    });
 
     return sources;
   }
@@ -141,9 +125,23 @@ export class ScrapersController {
       throw new HttpException('Scraper not found', HttpStatus.NOT_FOUND);
     }
 
+    const testTicker = 'PETR4';
+    const startTime = Date.now();
+
     try {
       // Test ONLY this specific scraper with PETR4 as default ticker
-      const result = await this.scrapersService.testSingleScraper(scraperId, 'PETR4');
+      const result = await this.scrapersService.testSingleScraper(scraperId, testTicker);
+      const responseTime = Date.now() - startTime;
+
+      // Save metrics to database
+      await this.scraperMetricsService.saveMetric(
+        scraperId,
+        'test',
+        testTicker,
+        result.success,
+        responseTime,
+        result.success ? null : result.error,
+      );
 
       return {
         success: result.success,
@@ -153,9 +151,22 @@ export class ScrapersController {
           : `Scraper ${scraperId} test failed: ${result.error}`,
         data: result.data,
         source: result.source,
+        responseTime,
         testedAt: new Date().toISOString(),
       };
     } catch (error) {
+      const responseTime = Date.now() - startTime;
+
+      // Save failed test metric
+      await this.scraperMetricsService.saveMetric(
+        scraperId,
+        'test',
+        testTicker,
+        false,
+        responseTime,
+        error.message,
+      );
+
       this.logger.error(`Failed to test scraper ${scraperId}: ${error.message}`);
       throw new HttpException(
         `Failed to test scraper: ${error.message}`,
@@ -164,48 +175,4 @@ export class ScrapersController {
     }
   }
 
-  @Post('sync/:scraperId')
-  @ApiOperation({ summary: 'Sync data from a specific scraper' })
-  @ApiParam({ name: 'scraperId', description: 'Scraper ID to sync' })
-  @ApiResponse({
-    status: 200,
-    description: 'Scraper sync completed successfully',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Scraper not found',
-  })
-  async syncScraper(@Param('scraperId') scraperId: string) {
-    this.logger.log(`Syncing scraper: ${scraperId}`);
-
-    const availableScrapers = this.scrapersService.getAvailableScrapers();
-    const scraper = availableScrapers.find((s) => s.source === scraperId);
-
-    if (!scraper) {
-      throw new HttpException('Scraper not found', HttpStatus.NOT_FOUND);
-    }
-
-    try {
-      // Sync ONLY this specific scraper for top 5 tickers
-      const tickers = ['PETR4', 'VALE3', 'ITUB4', 'BBAS3', 'ABEV3'];
-      const result = await this.scrapersService.syncSingleScraper(scraperId, tickers);
-
-      return {
-        success: true,
-        scraperId: result.scraperId,
-        message: `Scraper ${scraperId} synced successfully`,
-        tickersProcessed: tickers.length,
-        successful: result.successful,
-        failed: result.failed,
-        details: result.results,
-        syncedAt: new Date().toISOString(),
-      };
-    } catch (error) {
-      this.logger.error(`Failed to sync scraper ${scraperId}: ${error.message}`);
-      throw new HttpException(
-        `Failed to sync scraper: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
 }

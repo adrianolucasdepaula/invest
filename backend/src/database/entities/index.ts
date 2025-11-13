@@ -8,3 +8,4 @@ export { DataSource, DataSourceType, DataSourceStatus } from './data-source.enti
 export { ScrapedData } from './scraped-data.entity';
 export { Analysis, AnalysisType, AnalysisStatus, Recommendation } from './analysis.entity';
 export { UpdateLog, UpdateStatus, UpdateTrigger } from './update-log.entity';
+export { ScraperMetric } from './scraper-metric.entity';
