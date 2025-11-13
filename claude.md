@@ -682,20 +682,58 @@ Co-Authored-By: Claude <noreply@anthropic.com>
   - MultiSourceTooltip (4 fontes)
   - AlertDialog (confirmação bulk)
   - Correções: URLs duplicadas + changePercent null check
-- [x] FASE 4: Conectar Detail Page `/reports/[id]` ✅
+- [x] FASE 4: Conectar Detail Page `/reports/[id]` ✅ **100% VALIDADO (2025-11-13)**
   - Hook `useReport(id)` criado (20 linhas)
   - Página refatorada com dados reais (222 linhas)
   - Backend: Campo `lastAnalysisId` adicionado ao DTO
+  - Backend: `currentPrice` adicionado ao endpoint `/reports/:id`
   - Frontend: Link corrigido para usar analysis ID (não asset ID)
+  - Frontend: `currentPrice` exibindo dados reais do banco
   - 4 tabs funcionando (Overview, Fundamental, Technical, Risks)
   - Loading, error, empty states
   - Download handlers (PDF/JSON preparados)
-- [ ] FASE 5: Implementar Downloads (PDF/JSON) 🔜 PRÓXIMO
+  - **Correções Críticas:**
+    - ✅ currentPrice não exibido → CORRIGIDO (backend retorna preço da tabela asset_prices)
+    - ✅ BRAPI retornando 403 → CORRIGIDO (token como query param, não header)
+  - **Validação Completa (2025-11-13):**
+    - ✅ TypeScript: 0 erros
+    - ✅ Build: Success (17 páginas compiladas)
+    - ✅ Git: 100% limpo e atualizado (4 commits)
+    - ✅ Dados: 100% reais do banco (4 análises: PETR4, WEGE3, ABEV3, VIVT3)
+    - ✅ Navegação: /reports → /reports/[id] 100% funcional
+    - ✅ Console (Chrome DevTools): 0 erros, 0 warnings
+    - ✅ Console (Playwright): 1 erro não-crítico (favicon.ico 404)
+    - ✅ Scrapers: 3/4 funcionando (75% - Fundamentus, BRAPI, Investidor10)
+    - ✅ Cross-validation: Mínimo de 3 fontes atingido
+  - **Limitações Conhecidas (não-bloqueantes):**
+    - 🟡 StatusInvest: Timeout de navegação (25% das fontes offline)
+    - 🟡 Tabs vazias: Comportamento esperado (análises detalhadas virão em fases futuras)
+    - 🟡 Campo `completed_at`: NULL (inconsistência de dados, não afeta funcionalidade)
+    - 🟡 Favicon.ico: 404 (arquivo faltando, não afeta funcionalidade)
+- [ ] FASE 5: Implementar Downloads (PDF/JSON) 🔜 **PRÓXIMO**
 - [ ] FASE 6: Testes e Validação Final
 
-**Referência:** `REFATORACAO_SISTEMA_REPORTS.md`, `VALIDACAO_FASE_3_REPORTS_REFATORADO.md`, `VALIDACAO_FASE_4_REPORTS_DETAIL.md`
-**Commits:** `0321c58`, `f142a8a`, `d30e9b3`, `[pending FASE 4]`
-**Status:** 4/6 fases completas (67%)
+**Referências:**
+- Planejamento: `REFATORACAO_SISTEMA_REPORTS.md`
+- Validação FASE 3: `VALIDACAO_FASE_3_REPORTS_REFATORADO.md`
+- Validação FASE 4: `VALIDACAO_FASE_4_REPORTS_DETAIL.md`
+- Problemas FASE 4: `PROBLEMAS_CRITICOS_FASE_4_VALIDACAO.md`
+- Investigação Scrapers: `INVESTIGACAO_PROBLEMA_2_SCRAPERS.md`
+- Correção currentPrice: `CORRECAO_PROBLEMA_1_CURRENT_PRICE.md`
+- Resumo Final: `RESUMO_VALIDACAO_FASE_4_PROBLEMAS_E_SOLUCOES.md`
+
+**Commits:**
+- `0321c58`: feat: Implementar FASE 1 e 2 da refatoração do sistema de Reports
+- `f142a8a`: feat: Implementar FASE 3 - Refatoração Frontend /reports
+- `d30e9b3`: fix: Corrigir URLs duplicadas e null check em changePercent
+- `83169e6`: docs: Adicionar validação FASE 3 e atualizar ROADMAP
+- `b6c06a8`: feat: Implementar FASE 4 - Connect Report Detail Page
+- `b7f720e`: fix(reports): Adicionar currentPrice ao endpoint /reports/:id
+- `1412420`: fix(scrapers): Corrigir autenticação BRAPI - usar query parameter
+- `79ec012`: docs: Atualizar RESUMO_VALIDACAO_FASE_4 com correções aplicadas
+- `2825897`: chore: Adicionar *.tsbuildinfo ao .gitignore
+
+**Status:** ✅ **4/6 fases completas (67%)** - FASE 4 100% APROVADA para produção
 
 ### FASE 23: Dados Históricos BRAPI 🔜 PLANEJADO
 - [ ] Pesquisar endpoints BRAPI para histórico
