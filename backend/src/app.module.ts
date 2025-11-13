@@ -31,6 +31,7 @@ import {
   ScrapedData,
   Analysis,
   UpdateLog,
+  ScraperMetric,
 } from './database/entities';
 
 @Module({
@@ -62,6 +63,7 @@ import {
           ScrapedData,
           Analysis,
           UpdateLog,
+          ScraperMetric,
         ],
         synchronize: configService.get('DB_SYNCHRONIZE', false),
         logging: configService.get('DB_LOGGING', false),
