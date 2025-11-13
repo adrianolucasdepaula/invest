@@ -753,13 +753,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>
     - ✅ Puppeteer: Headless Chrome rodando em Docker (--no-sandbox)
     - ✅ Path resolution: process.cwd() + dist/templates (Docker-compatible)
     - ✅ Logs: 0 erros durante geração de PDF
+  - **Frontend - Botões Download (Correções 2025-11-13):**
+    - Fix: URL duplicada (/api/v1/api/v1) → removida duplicação
+    - Fix: Erro 401 Unauthorized → extração de JWT token do cookie
+    - Implementação: fetch() + Authorization Bearer + Blob download
+    - Nome dinâmico: relatorio-{ticker}-{data}.{ext}
   - **Problemas Resolvidos:**
     - 🟢 Handlebars parse error (linha 328): Registrado helper `gt` para comparações
     - 🟢 Template not found: Corrigido path resolution (__dirname → process.cwd())
     - 🟢 TypeScript errors: targetPrice → targetPrices, format → fileFormat
+    - 🟢 URL duplicada: NEXT_PUBLIC_API_URL já contém /api/v1
+    - 🟢 Erro 401: Backend requer JWT Bearer token, não cookies
   - **Testes Realizados:**
     - PDF download: ✅ PETR4 análise (13581de4) - 129KB, 2 páginas
     - JSON download: ✅ Estrutura completa com 3 fontes de dados
+    - Autenticação: ✅ JWT token extraído e enviado corretamente
+    - Consistência: ✅ 100% dos dados entre PDF e JSON
 - [x] FASE 6: Testes E2E e Validação Final ✅ **100% COMPLETO (2025-11-13)**
   - **Testes Realizados (8/8):**
     - ✅ FASE 6.1: Análise em Massa (Dialog + Cancelamento)
