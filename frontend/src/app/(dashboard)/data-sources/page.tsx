@@ -4,11 +4,16 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Database,
   CheckCircle2,
   XCircle,
   AlertCircle,
-  RefreshCw,
   Settings,
   Play,
   TrendingUp,
@@ -81,7 +86,6 @@ const getTypeColor = (type: string) => {
 export default function DataSourcesPage() {
   const [filter, setFilter] = useState<'all' | 'fundamental' | 'technical' | 'options' | 'prices'>('all');
   const [testingId, setTestingId] = useState<string | null>(null);
-  const [syncingId, setSyncingId] = useState<string | null>(null);
   const { data: dataSources, isLoading, error, refetch } = useDataSources();
   const { toast } = useToast();
 
@@ -142,40 +146,6 @@ export default function DataSourcesPage() {
       });
     } finally {
       setTestingId(null);
-    }
-  };
-
-  const handleSync = async (scraperId: string) => {
-    setSyncingId(scraperId);
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/scrapers/sync/${scraperId}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Erro ao sincronizar scraper');
-      }
-
-      toast({
-        title: 'Sincronização concluída',
-        description: `${data.message}. Processados: ${data.tickersProcessed}, Sucesso: ${data.successful}, Falhas: ${data.failed}`,
-      });
-
-      refetch();
-    } catch (error: any) {
-      toast({
-        title: 'Erro ao sincronizar scraper',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setSyncingId(null);
     }
   };
 
@@ -325,46 +295,42 @@ export default function DataSourcesPage() {
                     <p className="text-xl font-bold">{source.avgResponseTime}ms</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Última Sincronização</p>
+                    <p className="text-sm text-muted-foreground">Último Teste</p>
                     <p className="text-sm font-medium">
-                      {new Date(source.lastSync).toLocaleString('pt-BR')}
+                      {source.lastTest ? new Date(source.lastTest).toLocaleString('pt-BR') : 'Nunca testado'}
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center space-x-2 ml-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleTest(source.id)}
-                  disabled={testingId === source.id || syncingId === source.id}
-                >
-                  {testingId === source.id ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Play className="mr-2 h-4 w-4" />
-                  )}
-                  Testar
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSync(source.id)}
-                  disabled={testingId === source.id || syncingId === source.id}
-                >
-                  {syncingId === source.id ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                  )}
-                  Sincronizar
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleTest(source.id)}
+                        disabled={testingId === source.id}
+                      >
+                        {testingId === source.id ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Play className="mr-2 h-4 w-4" />
+                        )}
+                        Testar
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Testa a conexão com a fonte e coleta dados de PETR4 para validar o funcionamento do scraper</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleSettings(source.id)}
-                  disabled={testingId === source.id || syncingId === source.id}
+                  disabled={testingId === source.id}
                 >
                   <Settings className="h-4 w-4" />
                 </Button>
