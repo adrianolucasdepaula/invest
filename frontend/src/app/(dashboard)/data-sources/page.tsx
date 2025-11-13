@@ -12,76 +12,11 @@ import {
   Settings,
   Play,
   TrendingUp,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const mockDataSources = [
-  {
-    id: '1',
-    name: 'Fundamentus',
-    url: 'https://fundamentus.com.br',
-    type: 'fundamental',
-    status: 'active',
-    lastSync: '2024-01-15T10:30:00',
-    successRate: 98.5,
-    totalRequests: 12543,
-    failedRequests: 188,
-    avgResponseTime: 1250,
-    requiresAuth: false,
-  },
-  {
-    id: '2',
-    name: 'BRAPI',
-    url: 'https://brapi.dev',
-    type: 'fundamental',
-    status: 'active',
-    lastSync: '2024-01-15T10:25:00',
-    successRate: 99.2,
-    totalRequests: 8932,
-    failedRequests: 71,
-    avgResponseTime: 850,
-    requiresAuth: true,
-  },
-  {
-    id: '3',
-    name: 'Status Invest',
-    url: 'https://statusinvest.com.br',
-    type: 'fundamental',
-    status: 'active',
-    lastSync: '2024-01-15T10:20:00',
-    successRate: 96.8,
-    totalRequests: 15234,
-    failedRequests: 487,
-    avgResponseTime: 2100,
-    requiresAuth: true,
-  },
-  {
-    id: '4',
-    name: 'Investidor10',
-    url: 'https://investidor10.com.br',
-    type: 'fundamental',
-    status: 'active',
-    lastSync: '2024-01-15T10:15:00',
-    successRate: 95.3,
-    totalRequests: 9876,
-    failedRequests: 464,
-    avgResponseTime: 1890,
-    requiresAuth: true,
-  },
-  {
-    id: '5',
-    name: 'Opcoes.net.br',
-    url: 'https://opcoes.net.br',
-    type: 'options',
-    status: 'active',
-    lastSync: '2024-01-15T10:10:00',
-    successRate: 97.1,
-    totalRequests: 3421,
-    failedRequests: 99,
-    avgResponseTime: 1650,
-    requiresAuth: false,
-  },
-];
+import { useDataSources } from '@/lib/hooks/useDataSources';
+import { useToast } from '@/components/ui/use-toast';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -145,18 +80,39 @@ const getTypeColor = (type: string) => {
 
 export default function DataSourcesPage() {
   const [filter, setFilter] = useState<'all' | 'fundamental' | 'technical' | 'options' | 'prices'>('all');
+  const { data: dataSources, isLoading, error, refetch } = useDataSources();
+  const { toast } = useToast();
 
-  const filteredSources = mockDataSources.filter(
-    (source) => filter === 'all' || source.type === filter,
+  if (error) {
+    toast({
+      title: 'Erro ao carregar fontes de dados',
+      description: 'Não foi possível carregar o status das fontes de dados.',
+      variant: 'destructive',
+    });
+  }
+
+  const sources = (dataSources ?? []) as any[];
+
+  const filteredSources = sources.filter(
+    (source: any) => filter === 'all' || source.type === filter,
   );
 
   const stats = {
-    total: mockDataSources.length,
-    active: mockDataSources.filter((s) => s.status === 'active').length,
-    avgSuccessRate: (
-      mockDataSources.reduce((acc, s) => acc + s.successRate, 0) / mockDataSources.length
-    ).toFixed(1),
+    total: sources.length,
+    active: sources.filter((s) => s.status === 'active').length,
+    avgSuccessRate: sources.length > 0
+      ? (sources.reduce((acc, s) => acc + s.successRate, 0) / sources.length).toFixed(1)
+      : '0.0',
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-3 text-lg text-muted-foreground">Carregando fontes de dados...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
