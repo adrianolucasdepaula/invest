@@ -710,17 +710,60 @@ Co-Authored-By: Claude <noreply@anthropic.com>
     - 🟡 Tabs vazias: Comportamento esperado (análises detalhadas virão em fases futuras)
     - 🟡 Campo `completed_at`: NULL (inconsistência de dados, não afeta funcionalidade)
     - 🟡 Favicon.ico: 404 (arquivo faltando, não afeta funcionalidade)
-- [ ] FASE 5: Implementar Downloads (PDF/JSON) 🔜 **PRÓXIMO**
+- [x] FASE 5: Implementar Downloads (PDF/JSON) ✅ **100% COMPLETO (2025-11-13)**
+  - **Dependências Instaladas:**
+    - handlebars@4.7.8
+    - @types/handlebars@4.1.0
+    - puppeteer@23.11.1 (já existente)
+  - **Backend - PdfGeneratorService (315 linhas):**
+    - `generatePdf(analysisId)`: Gera PDF profissional usando Puppeteer
+    - `generateJson(analysisId)`: Gera JSON estruturado com metadata completa
+    - `prepareReportData()`: Formata dados de análise para o template
+    - `loadTemplate()`: Carrega e compila template Handlebars com cache
+    - `registerHandlebarsHelpers()`: Registra 9 helpers customizados
+      - Formatação: formatNumber, formatPercent, formatDate
+      - Comparação: eq, gt, lt, gte, lte
+    - `getFileName()`: Gera nome do arquivo (formato: relatorio-ticker-data.ext)
+  - **Backend - Template HTML (371 linhas):**
+    - Design profissional com gradientes e cores corporativas
+    - 2 páginas A4 com margens adequadas (20mm/15mm)
+    - Seções: Header, Asset Info, Recommendation, Summary, Fundamental Analysis, Risks, Data Sources, Footer
+    - Responsivo para impressão (print-color-adjust, page-break-inside)
+    - Aviso legal e disclaimer obrigatório
+  - **Backend - Reports Controller:**
+    - Endpoint: `GET /reports/:id/download?format=pdf|json`
+    - Headers corretos (Content-Type, Content-Disposition, Content-Length)
+    - Validação de análise existente e asset data
+    - Error handling completo (404, 400, 500)
+  - **Backend - nest-cli.json:**
+    - Configuração de assets para copiar templates (*.hbs) para dist/
+  - **Validação Completa (2025-11-13):**
+    - ✅ TypeScript: 0 erros
+    - ✅ PDF: Gerado com sucesso (129KB, 2 páginas, v1.4)
+    - ✅ JSON: Estruturado com metadata, asset, analysis, currentPrice, risks
+    - ✅ Template: Handlebars helpers (gt, lt) funcionando 100%
+    - ✅ Puppeteer: Headless Chrome rodando em Docker (--no-sandbox)
+    - ✅ Path resolution: process.cwd() + dist/templates (Docker-compatible)
+    - ✅ Logs: 0 erros durante geração de PDF
+  - **Problemas Resolvidos:**
+    - 🟢 Handlebars parse error (linha 328): Registrado helper `gt` para comparações
+    - 🟢 Template not found: Corrigido path resolution (__dirname → process.cwd())
+    - 🟢 TypeScript errors: targetPrice → targetPrices, format → fileFormat
+  - **Testes Realizados:**
+    - PDF download: ✅ PETR4 análise (13581de4) - 129KB, 2 páginas
+    - JSON download: ✅ Estrutura completa com 3 fontes de dados
 - [ ] FASE 6: Testes e Validação Final
 
 **Referências:**
 - Planejamento: `REFATORACAO_SISTEMA_REPORTS.md`
 - Validação FASE 3: `VALIDACAO_FASE_3_REPORTS_REFATORADO.md`
 - Validação FASE 4: `VALIDACAO_FASE_4_REPORTS_DETAIL.md`
+- **Validação FASE 5:** `fase-5-after-fixes-complete.txt` (evidências de teste)
 - Problemas FASE 4: `PROBLEMAS_CRITICOS_FASE_4_VALIDACAO.md`
 - Investigação Scrapers: `INVESTIGACAO_PROBLEMA_2_SCRAPERS.md`
 - Correção currentPrice: `CORRECAO_PROBLEMA_1_CURRENT_PRICE.md`
 - Resumo Final: `RESUMO_VALIDACAO_FASE_4_PROBLEMAS_E_SOLUCOES.md`
+- **Correções FASE 5:** `CORRECOES_FASE_4_CRITICAS.md` (handlebars helpers fix)
 
 **Commits:**
 - `0321c58`: feat: Implementar FASE 1 e 2 da refatoração do sistema de Reports
@@ -732,8 +775,9 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - `1412420`: fix(scrapers): Corrigir autenticação BRAPI - usar query parameter
 - `79ec012`: docs: Atualizar RESUMO_VALIDACAO_FASE_4 com correções aplicadas
 - `2825897`: chore: Adicionar *.tsbuildinfo ao .gitignore
+- [pending] feat: Implementar FASE 5 - Downloads PDF/JSON (PdfGeneratorService + template)
 
-**Status:** ✅ **4/6 fases completas (67%)** - FASE 4 100% APROVADA para produção
+**Status:** ✅ **5/6 fases completas (83%)** - FASE 5 100% VALIDADA e funcional
 
 ### FASE 23: Dados Históricos BRAPI 🔜 PLANEJADO
 - [ ] Pesquisar endpoints BRAPI para histórico

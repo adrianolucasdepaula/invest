@@ -4,6 +4,7 @@ import { Asset, Analysis, AssetPrice } from '@database/entities';
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
 import { AIReportService } from './ai-report.service';
+import { PdfGeneratorService } from './pdf-generator.service';
 import { AnalysisModule } from '../analysis/analysis.module';
 
 @Module({
@@ -12,7 +13,7 @@ import { AnalysisModule } from '../analysis/analysis.module';
     AnalysisModule,
   ],
   controllers: [ReportsController],
-  providers: [ReportsService, AIReportService],
-  exports: [ReportsService, AIReportService],
+  providers: [ReportsService, AIReportService, PdfGeneratorService],
+  exports: [ReportsService, AIReportService, PdfGeneratorService],
 })
 export class ReportsModule {}
