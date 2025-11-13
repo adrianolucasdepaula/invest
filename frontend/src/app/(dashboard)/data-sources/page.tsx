@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -85,13 +85,16 @@ export default function DataSourcesPage() {
   const { data: dataSources, isLoading, error, refetch } = useDataSources();
   const { toast } = useToast();
 
-  if (error) {
-    toast({
-      title: 'Erro ao carregar fontes de dados',
-      description: 'Não foi possível carregar o status das fontes de dados.',
-      variant: 'destructive',
-    });
-  }
+  // FIX: Move toast() to useEffect to prevent infinite loop
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: 'Erro ao carregar fontes de dados',
+        description: 'Não foi possível carregar o status das fontes de dados.',
+        variant: 'destructive',
+      });
+    }
+  }, [error, toast]);
 
   const sources = (dataSources ?? []) as any[];
 
