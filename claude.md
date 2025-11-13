@@ -332,20 +332,56 @@ CREATE INDEX idx_analyses_user_created ON analyses(user_id, created_at);
 
 ## 📊 FONTES DE DADOS
 
-### Análise Fundamentalista (4 fontes implementadas)
+### Estatísticas Gerais
+- **Total de Fontes Planejadas:** 31
+- **Implementadas:** 4 (12.90%)
+- **Em Desenvolvimento:** 0
+- **Planejadas:** 27 (87.10%)
+
+### 1. Análise Fundamentalista (6 fontes - 66.67% completo)
 
 | Fonte | Tipo | Login | Status | Scraper |
 |-------|------|-------|--------|---------|
 | **Fundamentus** | Público | Não | ✅ Implementado | fundamentus.scraper.ts |
-| **BRAPI** | API Pública | Não | ✅ Implementado | brapi.scraper.ts |
-| **StatusInvest** | Privado | Google | ✅ Implementado | statusinvest.scraper.ts |
+| **BRAPI** | API Pública | Token | ✅ Implementado | brapi.scraper.ts |
+| **Status Invest** | Privado | Google | ✅ Implementado | statusinvest.scraper.ts |
 | **Investidor10** | Privado | Google | ✅ Implementado | investidor10.scraper.ts |
 | Fundamentei | Privado | Google | 🔜 Planejado | - |
 | Investsite | Público | Não | 🔜 Planejado | - |
 
+### 2. Análise Geral do Mercado (3 fontes - 0% completo)
+
+| Fonte | Tipo | Login | Status | Scraper |
+|-------|------|-------|--------|---------|
+| Investing.com | Privado | Google | 🔜 Planejado | - |
+| ADVFN | Privado | Google | 🔜 Planejado | - |
+| Google Finance | Privado | Google | 🔜 Planejado | - |
+
+### 3. Análise Gráfica/Técnica (1 fonte - 0% completo)
+
+| Fonte | Tipo | Login | Status | Scraper |
+|-------|------|-------|--------|---------|
+| TradingView | Privado | Google | 🔜 Planejado | - |
+
+### 4. Análise de Opções (1 fonte - 0% completo)
+
+| Fonte | Tipo | Login | Status | Scraper |
+|-------|------|-------|--------|---------|
+| Opcoes.net.br | Privado | Usuário/Senha | 🔜 Planejado | - |
+
+### 5. Outras Categorias (20 fontes - 0% completo)
+
+- **Criptomoedas:** CoinMarketCap (1)
+- **Insiders:** Griffin (1)
+- **Relatórios:** BTG, XP, Estadão, Mais Retorno (4)
+- **Oficial/IA:** B3, BCB, Google, ChatGPT, DeepSeek, Gemini, Claude, Grok (8)
+- **Notícias:** Google News, Bloomberg, Investing, Valor, Exame, InfoMoney (6)
+
+**Documentação Completa:** `DOCUMENTACAO_SCRAPERS_COMPLETA.md`
+
 ### Cross-Validation
 
-O sistema coleta dados de **todas as 4 fontes** simultaneamente e faz:
+O sistema coleta dados de **4 fontes fundamentalistas** simultaneamente e faz:
 
 1. **Merge de dados**: Combina dados de todas as fontes
 2. **Detecção de discrepâncias**: Identifica valores divergentes (threshold 10%)
@@ -356,7 +392,10 @@ O sistema coleta dados de **todas as 4 fontes** simultaneamente e faz:
    - 2 fontes concordam: 0.5
    - Menos de 2: 0.0
 
-**Arquivo:** `backend/src/scrapers/scrapers.service.ts`
+**Arquivos:**
+- Orquestrador: `backend/src/scrapers/scrapers.service.ts`
+- API REST: `backend/src/scrapers/scrapers.controller.ts`
+- Frontend: `frontend/src/app/(dashboard)/data-sources/page.tsx`
 
 ---
 
