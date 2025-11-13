@@ -1,13 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, X } from 'lucide-react';
 import { api } from '@/lib/api';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,6 +23,17 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+
+  // Carregar email salvo do localStorage ao montar o componente
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +41,14 @@ export default function LoginPage() {
 
     try {
       await api.login(email, password);
+
+      // Se "Lembrar-me" estiver marcado, salvar email no localStorage
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', email);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+      }
+
       toast({
         title: 'Login realizado!',
         description: 'Bem-vindo à plataforma B3 AI Analysis.',
@@ -33,6 +60,33 @@ export default function LoginPage() {
       toast({
         title: 'Erro no login',
         description: 'Email ou senha incorretos. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      // Chamar API de recuperação de senha
+      await api.post('/auth/forgot-password', { email });
+
+      toast({
+        title: 'Email enviado!',
+        description: 'Verifique sua caixa de entrada para instruções de recuperação.',
+        variant: 'default',
+      });
+
+      setShowForgotPassword(false);
+      setEmail('');
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao enviar email',
+        description: error.response?.data?.message || 'Tente novamente mais tarde.',
         variant: 'destructive',
       });
     } finally {
@@ -100,15 +154,18 @@ export default function LoginPage() {
               <input
                 type="checkbox"
                 className="rounded border-gray-300"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
               />
               <span className="text-muted-foreground">Lembrar-me</span>
             </label>
-            <a
-              href="#"
+            <button
+              type="button"
+              onClick={() => setShowForgotPassword(true)}
               className="text-primary hover:underline"
             >
               Esqueceu a senha?
-            </a>
+            </button>
           </div>
 
           <Button
@@ -119,6 +176,50 @@ export default function LoginPage() {
             {isLoading ? 'Entrando...' : 'Entrar'}
           </Button>
         </form>
+
+        {/* Dialog de Recuperação de Senha */}
+        <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Recuperar Senha</DialogTitle>
+              <DialogDescription>
+                Digite seu email para receber instruções de recuperação de senha.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="forgot-email" className="text-sm font-medium">
+                  Email
+                </label>
+                <Input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  autoFocus
+                />
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowForgotPassword(false)}
+                  disabled={isLoading}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? 'Enviando...' : 'Enviar Email'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
