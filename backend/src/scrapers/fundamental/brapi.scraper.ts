@@ -48,9 +48,6 @@ export class BrapiScraper {
     this.apiKey = this.configService.get<string>('BRAPI_API_KEY');
     this.client = axios.create({
       baseURL: 'https://brapi.dev/api',
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-      },
       timeout: 30000,
     });
   }
@@ -63,6 +60,7 @@ export class BrapiScraper {
 
       const response = await this.client.get(`/quote/${ticker}`, {
         params: {
+          token: this.apiKey,  // BRAPI requires token as query param, not header
           range,
           interval: '1d',
           fundamental: true,
