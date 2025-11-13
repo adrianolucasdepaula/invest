@@ -187,3 +187,4 @@ response.json
 
 # Duplicate/legacy directories
 invest-claude-web/
+*.tsbuildinfo
