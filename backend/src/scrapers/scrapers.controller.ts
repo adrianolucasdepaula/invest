@@ -142,15 +142,17 @@ export class ScrapersController {
     }
 
     try {
-      // Test with PETR4 as default ticker
-      const result = await this.scrapersService.scrapeFundamentalData('PETR4');
+      // Test ONLY this specific scraper with PETR4 as default ticker
+      const result = await this.scrapersService.testSingleScraper(scraperId, 'PETR4');
 
       return {
-        success: true,
+        success: result.success,
         scraperId,
-        message: `Scraper ${scraperId} tested successfully`,
-        sourcesCount: result.sourcesCount,
-        confidence: result.confidence,
+        message: result.success
+          ? `Scraper ${scraperId} tested successfully`
+          : `Scraper ${scraperId} test failed: ${result.error}`,
+        data: result.data,
+        source: result.source,
         testedAt: new Date().toISOString(),
       };
     } catch (error) {
@@ -184,22 +186,18 @@ export class ScrapersController {
     }
 
     try {
-      // Sync data for top 5 tickers
+      // Sync ONLY this specific scraper for top 5 tickers
       const tickers = ['PETR4', 'VALE3', 'ITUB4', 'BBAS3', 'ABEV3'];
-      const results = await Promise.allSettled(
-        tickers.map((ticker) => this.scrapersService.scrapeFundamentalData(ticker)),
-      );
-
-      const successful = results.filter((r) => r.status === 'fulfilled').length;
-      const failed = results.filter((r) => r.status === 'rejected').length;
+      const result = await this.scrapersService.syncSingleScraper(scraperId, tickers);
 
       return {
         success: true,
-        scraperId,
+        scraperId: result.scraperId,
         message: `Scraper ${scraperId} synced successfully`,
         tickersProcessed: tickers.length,
-        successful,
-        failed,
+        successful: result.successful,
+        failed: result.failed,
+        details: result.results,
         syncedAt: new Date().toISOString(),
       };
     } catch (error) {

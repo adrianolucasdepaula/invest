@@ -128,8 +128,9 @@ export default function DataSourcesPage() {
       }
 
       toast({
-        title: 'Teste concluído com sucesso',
-        description: `${data.message}. Fontes: ${data.sourcesCount}, Confiança: ${(data.confidence * 100).toFixed(1)}%`,
+        title: data.success ? 'Teste concluído com sucesso' : 'Teste concluído com falha',
+        description: `${data.message}`,
+        variant: data.success ? 'default' : 'destructive',
       });
 
       refetch();

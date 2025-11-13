@@ -65,6 +65,97 @@ export class ScrapersService {
   }
 
   /**
+   * Test a single scraper
+   */
+  async testSingleScraper(scraperId: string, ticker: string): Promise<ScraperResult> {
+    this.logger.log(`Testing single scraper ${scraperId} for ticker ${ticker}`);
+
+    const scraperMap: Record<string, any> = {
+      fundamentus: this.fundamentusScraper,
+      brapi: this.brapiScraper,
+      statusinvest: this.statusInvestScraper,
+      investidor10: this.investidor10Scraper,
+      fundamentei: this.fundamenteiScraper,
+      investsite: this.investsiteScraper,
+    };
+
+    const scraper = scraperMap[scraperId];
+    if (!scraper) {
+      throw new Error(`Scraper ${scraperId} not found`);
+    }
+
+    try {
+      const result = await scraper.scrape(ticker);
+      this.logger.log(`Scraper ${scraperId} test completed: ${result.success ? 'SUCCESS' : 'FAILED'}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`Scraper ${scraperId} test failed: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Sync data from a single scraper for multiple tickers
+   */
+  async syncSingleScraper(scraperId: string, tickers: string[]): Promise<{
+    scraperId: string;
+    results: Array<{ ticker: string; success: boolean; data?: any; error?: string }>;
+    successful: number;
+    failed: number;
+  }> {
+    this.logger.log(`Syncing scraper ${scraperId} for ${tickers.length} tickers`);
+
+    const scraperMap: Record<string, any> = {
+      fundamentus: this.fundamentusScraper,
+      brapi: this.brapiScraper,
+      statusinvest: this.statusInvestScraper,
+      investidor10: this.investidor10Scraper,
+      fundamentei: this.fundamenteiScraper,
+      investsite: this.investsiteScraper,
+    };
+
+    const scraper = scraperMap[scraperId];
+    if (!scraper) {
+      throw new Error(`Scraper ${scraperId} not found`);
+    }
+
+    const results = await Promise.allSettled(
+      tickers.map(async (ticker) => {
+        try {
+          const result = await scraper.scrape(ticker);
+          return {
+            ticker,
+            success: result.success,
+            data: result.data,
+          };
+        } catch (error) {
+          return {
+            ticker,
+            success: false,
+            error: error.message,
+          };
+        }
+      }),
+    );
+
+    const processedResults = results.map((r) =>
+      r.status === 'fulfilled' ? r.value : { ticker: 'unknown', success: false, error: 'Promise rejected' },
+    );
+
+    const successful = processedResults.filter((r) => r.success).length;
+    const failed = processedResults.filter((r) => !r.success).length;
+
+    this.logger.log(`Sync completed for ${scraperId}: ${successful} successful, ${failed} failed`);
+
+    return {
+      scraperId,
+      results: processedResults,
+      successful,
+      failed,
+    };
+  }
+
+  /**
    * Cross-validate data from multiple sources
    */
   private crossValidateData(results: ScraperResult[]): CrossValidationResult {
