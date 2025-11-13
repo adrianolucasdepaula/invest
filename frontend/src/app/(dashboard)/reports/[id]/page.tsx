@@ -71,11 +71,45 @@ export default function ReportDetailPage() {
     return badges[recommendation as keyof typeof badges] || null;
   };
 
-  const handleDownload = (format: 'pdf' | 'json') => {
-    window.open(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101'}/api/v1/reports/${reportId}/download?format=${format}`,
-      '_blank',
-    );
+  const handleDownload = async (format: 'pdf' | 'json') => {
+    try {
+      // Get JWT token from cookie
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('access_token='))
+        ?.split('=')[1];
+
+      if (!token) {
+        throw new Error('Token de autenticação não encontrado');
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api/v1'}/reports/${reportId}/download?format=${format}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `relatorio-${report?.asset?.ticker?.toLowerCase()}-${new Date().toISOString().split('T')[0]}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert(`Erro ao fazer download: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
   };
 
   return (
