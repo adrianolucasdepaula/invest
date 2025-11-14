@@ -41,7 +41,9 @@ Coletar dados de múltiplas fontes públicas e privadas, realizar cross-validati
 
 ## 🏗️ ARQUITETURA
 
-### Arquitetura Geral
+**📚 Documentação Completa:** Ver `ARCHITECTURE.md` para arquitetura detalhada, stack tecnológica, estrutura de pastas e fluxos de dados.
+
+### Arquitetura Geral (Resumo)
 
 ```
 ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
