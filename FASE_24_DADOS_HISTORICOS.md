@@ -512,7 +512,117 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 **Tecnologias:**
 - Backend: NestJS 10.x + TypeORM + class-validator
 - Frontend: Next.js 14 + React Query + Shadcn/ui
-- Biblioteca de Gráficos: Recharts 2.10.4
+- Biblioteca de Gráficos: Lightweight Charts 4.2.3 (TradingView) - substituiu Recharts
+
+---
+
+## 🔄 CORREÇÃO: Gráfico de Candles (Candlestick Chart)
+
+**Data:** 2025-11-14 (mesmo dia da implementação)
+**Problema Identificado:** Gráfico usava linhas (Line Chart) em vez de candles japonesas, padrão do mercado financeiro.
+
+### Análise do Problema
+
+**Componente Original:** `PriceChart` (Recharts)
+- ❌ Usava 3 linhas separadas: close (azul), high (verde tracejada), low (vermelha tracejada)
+- ❌ Não seguia padrão visual do mercado (TradingView, Status Invest, etc.)
+- ❌ Difícil visualizar movimentação intraday (open/close)
+
+### Solução Implementada
+
+**Novo Componente:** `CandlestickChart` (Lightweight Charts 4.2.3)
+
+**Arquivo Criado:** `frontend/src/components/charts/candlestick-chart.tsx` (139 linhas)
+
+**Características:**
+```typescript
+- ✅ Candlestick Series: corpo retangular mostrando open/close
+- ✅ Cores padrão mercado:
+  * Verde (#22c55e) quando close > open (alta)
+  * Vermelho (#ef4444) quando close < open (baixa)
+- ✅ Volume integrado: barras no rodapé (20% altura)
+  * Verde transparente para velas de alta
+  * Vermelho transparente para velas de baixa
+- ✅ Wicklines (pavios): mostram high/low do período
+- ✅ Dark mode: tema integrado com Shadcn/ui
+- ✅ Responsivo: ajusta automaticamente ao resize
+- ✅ Tooltip interativo: mostra OHLCV ao passar mouse
+```
+
+**Tecnologia Escolhida:**
+- Lightweight Charts 4.2.3 (by TradingView) - já estava instalado
+- Motivo: biblioteca profissional usada em sites de trading reais
+- Performance: otimizada para grandes volumes de dados
+- Features: zoom, pan, crosshair, múltiplas séries
+
+### Arquivos Modificados
+
+1. **CRIADO:** `frontend/src/components/charts/candlestick-chart.tsx` (+139 linhas)
+   - Componente React usando lightweight-charts
+   - Suporte a OHLCV (Open, High, Low, Close, Volume)
+   - Configuração dark mode
+   - Auto-resize handler
+
+2. **MODIFICADO:** `frontend/src/app/(dashboard)/assets/[ticker]/page.tsx` (+2/-2 linhas)
+   - Linha 23: Import alterado de `PriceChart` para `CandlestickChart`
+   - Linha 196: Componente trocado no JSX
+
+### Validação
+
+```bash
+# TypeScript
+cd frontend && npx tsc --noEmit
+# ✅ 0 erros
+
+# Build
+npm run build
+# ✅ Compilado com sucesso - 17 páginas estáticas + 2 dinâmicas
+
+# Comparação Visual
+# ✅ Usuário validará comparando com Status Invest, TradingView
+```
+
+### Comparação: Antes vs Depois
+
+**ANTES (PriceChart - Recharts):**
+```
+┌─────────────────────────────────┐
+│   [Linha azul: close]           │
+│   [Linha verde tracejada: high] │
+│   [Linha vermelha tracejada: low]│
+│   [Barras cinzas: volume]       │
+└─────────────────────────────────┘
+```
+
+**DEPOIS (CandlestickChart - Lightweight Charts):**
+```
+┌─────────────────────────────────┐
+│   ▌▐ ▌▐ ▌▐  ← Candles (verde/vermelho)
+│   ││ ││ ││  ← Wicklines (high/low)
+│   ▁▁▁▁▁▁▁  ← Volume (rodapé, colorido)
+└─────────────────────────────────┘
+```
+
+### Benefícios
+
+1. **Padrão Mercado:** Agora usa visualização idêntica a TradingView, Status Invest
+2. **Mais Informação:** Candle mostra 4 preços (OHLC) vs linha mostra 1 (close)
+3. **Análise Técnica:** Suporta padrões de candles (doji, hammer, engulfing, etc.)
+4. **UX Profissional:** Tooltip mostra OHLCV completo ao passar mouse
+5. **Performance:** lightweight-charts é mais rápido que Recharts para time series
+
+### Integração com FASE 24
+
+**Compatibilidade Total:**
+- ✅ Seletor de range continua funcionando (1mo, 3mo, 6mo, 1y, 2y, 5y, max)
+- ✅ Backend OHLCV já retorna dados corretos
+- ✅ Cache inteligente não afetado
+- ✅ Lazy loading mantido (performance)
+
+**Código Reutilizado:**
+- Mesma interface `data: Array<{ date, open, high, low, close, volume }>`
+- Mesma prop drilling: `useAssetPrices` → `CandlestickChart`
+- Mesma estrutura de Suspense + Skeleton
 
 ---
 

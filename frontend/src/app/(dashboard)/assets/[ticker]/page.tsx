@@ -20,7 +20,7 @@ import { useAsset, useAssetPrices, useAssetFundamentals } from '@/lib/hooks/use-
 import { useAnalysis, useRequestAnalysis } from '@/lib/hooks/use-analysis';
 
 // Lazy load heavy components for better LCP
-const PriceChart = lazy(() => import('@/components/charts/price-chart').then(mod => ({ default: mod.PriceChart })));
+const CandlestickChart = lazy(() => import('@/components/charts/candlestick-chart').then(mod => ({ default: mod.CandlestickChart })));
 
 export default function AssetDetailPage({
   params,
@@ -193,7 +193,7 @@ export default function AssetDetailPage({
           <Skeleton className="h-[400px] w-full" />
         ) : priceHistory && priceHistory.length > 0 ? (
           <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-            <PriceChart data={priceHistory} />
+            <CandlestickChart data={priceHistory} />
           </Suspense>
         ) : (
           <div className="flex items-center justify-center h-[400px] text-muted-foreground">
