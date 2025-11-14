@@ -543,25 +543,32 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 ## 🚨 ISSUES CONSOLIDADAS
 
-### Issue #1: Password Hash Exposto (CRÍTICO) 🔴
+### Issue #1: Password Hash Exposto (CRÍTICO) ✅ RESOLVIDA
 
 **Onde:** GET /api/v1/auth/me
 **Descoberta:** FASE 15.2 (Dashboard)
 **Problema:** Response body retorna campo `password` com bcrypt hash
 **Risco:** Exposição desnecessária no frontend
 **Prioridade:** ALTA (Security)
-**Status:** 🔴 ABERTO
+**Status:** ✅ **RESOLVIDA** (2025-11-14 01:30 UTC)
 
-**Solução Recomendada:**
+**Solução Aplicada:**
 ```typescript
-// backend/src/api/auth/user.entity.ts
+// backend/src/database/entities/user.entity.ts
 import { Exclude } from 'class-transformer';
 
 export class User {
-  @Exclude()
+  @Exclude()  // ← Decorator adicionado
+  @Column({ nullable: true })
   password: string;
 }
+
+// backend/src/main.ts
+app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 ```
+
+**Validação:** ✅ Testado com Chrome DevTools - password field ausente no response
+**Commit:** `7f1fde7` - fix: Remover exposição de password hash em GET /auth/me
 
 ---
 
@@ -579,17 +586,25 @@ Padronizar Brotli em todas as responses (15-25% ganho uniforme)
 
 ---
 
-### Issue #3: Confiança 0.00 nas Análises (DADOS) 🟡
+### Issue #3: Confiança 0.00 nas Análises (DADOS) ✅ INVESTIGADA
 
 **Onde:** GET /api/v1/analysis
 **Descoberta:** FASE 15.4 (Analysis)
 **Problema:** confidenceScore = "0.00" apesar de 4 fontes
 **Impacto:** Dados de análise não confiáveis
-**Prioridade:** MÉDIA
-**Status:** 🟡 INVESTIGAR
+**Prioridade:** MÉDIA (Qualidade de Dados)
+**Status:** ✅ **INVESTIGADA** (2025-11-14 01:40 UTC)
 
-**Investigação Necessária:**
-Verificar cálculo de confiança no backend (scrapers.service.ts)
+**Causa Raiz Identificada:**
+- Código de cálculo: ✅ CORRETO
+- Dados dos scrapers: ❌ RUINS (valores absurdos)
+- `lucroLiquido`: 7.752 × 10^21 (multiplicado por ~10^10)
+- `receitaLiquida`: 4.914 × 10^23 (valores impossíveis)
+- Desvios entre fontes > 100% → Confidence zerada conforme esperado
+
+**Documentação:** `ISSUE_3_CONFIANCA_ZERO_ANALISE.md` (200+ linhas)
+**Classificação:** Problema crônico de qualidade de dados dos scrapers
+**Ação Futura:** Refatorar scrapers (FASE separada)
 
 ---
 
@@ -632,11 +647,12 @@ Verificar cálculo de confiança no backend (scrapers.service.ts)
 
 ### Recomendações
 
-1. **Corrigir Issue #1 imediatamente** (password hash)
-2. Padronizar Brotli em todas as responses
-3. Investigar cálculo de confiança (Issue #3)
-4. Manter monitoramento contínuo de network
-5. Continuar com FASE 16 (Console Messages)
+1. ✅ ~~Corrigir Issue #1 imediatamente~~ **COMPLETO** (commit 7f1fde7)
+2. 🟡 Padronizar Brotli em todas as responses (Issue #2 - OPCIONAL)
+3. ✅ ~~Investigar cálculo de confiança~~ **COMPLETO** (Issue #3 - documentada)
+4. 🔜 Corrigir scrapers (Issue #3 - FASE futura, problema crônico)
+5. ✅ Manter monitoramento contínuo de network
+6. 🔜 Continuar com FASE 16 (Console Messages) - **APÓS ANÁLISE DE BLOQUEANTES**
 
 ---
 
