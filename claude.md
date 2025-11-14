@@ -1292,7 +1292,9 @@ CLAUDE.md: Seção completa com arquivos, validações, impacto
 
 ## 🗺️ ROADMAP
 
-### FASE 1-10: Backend Core ✅ COMPLETO
+**📚 Documentação Completa:** Ver `ROADMAP.md` para histórico completo de todas as fases, estatísticas do projeto e planejamento futuro.
+
+### FASE 1-10: Backend Core ✅ COMPLETO (Resumo)
 - [x] Setup inicial (Docker, PostgreSQL, NestJS)
 - [x] Entidades básicas (Assets, AssetPrices)
 - [x] Scrapers fundamentalistas (4 fontes)

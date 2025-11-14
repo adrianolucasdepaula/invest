@@ -115,6 +115,7 @@ Para informações detalhadas sobre o projeto, consulte:
 
 - **`ARCHITECTURE.md`** - Arquitetura completa do sistema, stack tecnológica e fluxos de dados
 - **`DATABASE_SCHEMA.md`** - Schema completo do banco de dados, relacionamentos, indexes e queries comuns
+- **`ROADMAP.md`** - Histórico completo de desenvolvimento, fases concluídas e planejamento futuro
 - **`claude.md`** - Instruções completas para Claude Code, convenções e workflows
 - **`CHECKLIST_TODO_MASTER.md`** - Checklist e TODO master do projeto
 
