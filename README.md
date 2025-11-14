@@ -695,6 +695,10 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 8. ❌ **NUNCA** implementar sem planejar (exceto tarefas triviais)
 9. ❌ **NUNCA** commitar sem validar (TypeScript + Build)
 10. ❌ **NUNCA** pular etapas do checklist
+11. ✅ **SEMPRE** validar arquivos reais antes de confiar na documentação (doc pode estar desatualizada)
+12. ✅ **SEMPRE** verificar se é necessário reiniciar serviços (backend/frontend/Docker) antes de testar com MCPs
+
+**Nota sobre Regras 11-12:** Ver detalhamento completo em `CLAUDE.md` seção "Regras de Ouro" (inclui exemplos reais).
 
 ### 8. Métricas de Qualidade Esperadas
 
