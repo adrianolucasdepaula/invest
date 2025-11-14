@@ -127,19 +127,55 @@ Coletar dados de múltiplas fontes públicas e privadas, realizar cross-validati
 - **Parsing**: BeautifulSoup4, lxml
 
 ### MCPs (Model Context Protocol)
-- **Sequential Thinking**: Raciocínio estruturado e análise profunda
-  - Instalado: 2025-11-14
-  - Transporte: stdio
-  - Comando: `npx -y @modelcontextprotocol/server-sequential-thinking`
-  - Propósito: Auxilia Claude em tarefas complexas que requerem pensamento sequencial e estruturado
-  - Repositório: [@modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking)
-- **Playwright MCP**: Automação de browser para testes E2E
-- **Chrome DevTools MCP**: Inspeção e debugging de aplicações web
-- **Selenium MCP**: Automação web alternativa
+Sistema completo de 8 servidores MCP instalados para estender capacidades do Claude Code.
+
+**MCPs Principais:**
+1. **Sequential Thinking** - Raciocínio estruturado e análise profunda
+   - Comando: `npx -y @modelcontextprotocol/server-sequential-thinking`
+   - Propósito: Auxilia em tarefas complexas que requerem pensamento sequencial
+   - Repositório: [@modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking)
+   - Status: ✓ Connected
+
+2. **Filesystem MCP** - Leitura/escrita segura de arquivos do projeto
+   - Comando: `npx -y @modelcontextprotocol/server-filesystem <workspace>`
+   - Propósito: Permite operações de I/O seguras no workspace do projeto
+   - Repositório: [@modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem)
+   - Status: ✓ Connected
+
+3. **Shell MCP** - Execução de comandos PowerShell/CMD com restrições
+   - Comando: `npx -y shell-mcp-server`
+   - Propósito: Permite executar comandos de shell de forma controlada
+   - Status: ✓ Connected
+
+4. **A11y MCP** - Auditoria WCAG automatizada via axe-core
+   - Comando: `npx a11y-mcp`
+   - Propósito: Testes de acessibilidade web (WCAG) em páginas locais
+   - Repositório: [priyankark/a11y-mcp](https://github.com/priyankark/a11y-mcp)
+   - Status: ✓ Connected
+
+5. **Context7 MCP** - Documentação atualizada de frameworks
+   - Comando: `npx -y @upstash/context7-mcp@latest`
+   - Propósito: Acesso a docs atualizadas via infraestrutura Upstash
+   - Status: ✓ Connected
+
+**MCPs de Automação Web:**
+6. **Playwright MCP** - Automação de browser para testes E2E
+   - Comando: `npx @playwright/mcp@latest`
+   - Status: ✓ Connected
+
+7. **Chrome DevTools MCP** - Inspeção e debugging de aplicações web
+   - Comando: `npx chrome-devtools-mcp@latest`
+   - Status: ✓ Connected
+
+8. **Selenium MCP** - Automação web alternativa
+   - Comando: `npx -y @angiejones/mcp-selenium`
+   - Status: ✓ Connected
 
 **Configuração:**
 - Arquivo: `C:\Users\adria\.claude.json`
 - Escopo: Projeto (invest-claude-web)
+- Instalados: 2025-11-14
+- Total: 8 MCPs (100% Connected)
 - Gerenciamento: `claude mcp list`, `claude mcp add`, `claude mcp remove`
 
 ---
