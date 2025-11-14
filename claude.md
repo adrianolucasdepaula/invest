@@ -980,6 +980,21 @@ Resultado: ✅ 100% COMPLETO
 13. ❌ **NUNCA** commitar com build quebrado
 14. ❌ **NUNCA** pular validações do checklist
 15. ❌ **NUNCA** deixar todos em `in_progress` simultaneamente
+16. ✅ **SEMPRE** validar arquivos reais antes de confiar na documentação (documentação pode estar desatualizada)
+17. ✅ **SEMPRE** verificar se é necessário reiniciar serviços (backend/frontend/Docker) antes de testar com MCPs
+
+**Detalhamento das Novas Regras:**
+
+**Regra 16 - Documentação pode estar desatualizada:**
+- ❌ **ERRADO:** Ler apenas CLAUDE.md e implementar baseado nisso
+- ✅ **CORRETO:** Ler CLAUDE.md → Ler arquivos fonte → Comparar → Identificar divergências → Atualizar documentação
+- **Exemplo Real:** Bug análise duplicada (commit 5e8b602) estava no código fonte mas documentação indicava não resolvido
+
+**Regra 17 - Reiniciar serviços antes de testar:**
+- ❌ **ERRADO:** Fazer correção no código → Testar imediatamente com MCP → "Não funcionou"
+- ✅ **CORRETO:** Fazer correção → Verificar uptime dos serviços → Reiniciar se necessário → Aguardar healthy → Testar com MCP
+- **Exemplo Real:** Bug análise duplicada - frontend rodando por 7h com código antigo, após restart funcionou perfeitamente
+- **Comando para verificar:** `docker ps --format "{{.Names}}\t{{.Status}}"` → se uptime > tempo do commit, reiniciar
 
 ---
 
