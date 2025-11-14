@@ -7,571 +7,36 @@
 
 ---
 
-## 📑 ÍNDICE
+## 📚 DOCUMENTAÇÃO TÉCNICA
 
-1. [Visão Geral](#visão-geral)
-2. [Arquitetura](#arquitetura)
-3. [Stack Tecnológica](#stack-tecnológica)
-4. [Estrutura de Pastas](#estrutura-de-pastas)
-5. [Portas e Serviços](#portas-e-serviços)
-6. [Banco de Dados](#banco-de-dados)
-7. [Fontes de Dados](#fontes-de-dados)
-8. [Convenções de Código](#convenções-de-código)
-9. [Fluxos Principais](#fluxos-principais)
-10. [Decisões Técnicas](#decisões-técnicas)
-11. [Roadmap](#roadmap)
-12. [Troubleshooting](#troubleshooting)
+Este arquivo contém **APENAS** instruções e metodologia para Claude Code. Toda documentação técnica foi organizada em arquivos dedicados:
+
+- **`INSTALL.md`** - Instalação completa, portas, serviços, variáveis de ambiente
+- **`ARCHITECTURE.md`** - Arquitetura, stack tecnológica, estrutura de pastas, fluxos
+- **`DATABASE_SCHEMA.md`** - Schema completo, relacionamentos, indexes, queries
+- **`ROADMAP.md`** - Histórico de desenvolvimento (53 fases, 98.1% completo)
+- **`TROUBLESHOOTING.md`** - 16+ problemas comuns com soluções detalhadas
+- **`CONTRIBUTING.md`** - Convenções de código, Git workflow, decisões técnicas
+
+**📌 IMPORTANTE:** Sempre consulte os arquivos acima para detalhes técnicos do projeto. Este arquivo foca exclusivamente na metodologia de trabalho.
 
 ---
 
-## 🎯 VISÃO GERAL
+## 🎯 VISÃO GERAL DO PROJETO
 
-Plataforma completa de análise de investimentos B3 com Inteligência Artificial para análise fundamentalista, técnica, macroeconômica e gestão de portfólio.
+Plataforma completa de análise de investimentos B3 com IA para análise fundamentalista, técnica, macroeconômica e gestão de portfólio.
 
-### Objetivo
-Coletar dados de múltiplas fontes públicas e privadas, realizar cross-validation, e gerar análises precisas usando IA para auxiliar na tomada de decisão de investimentos.
-
-### Princípios
+**Princípios:**
 - ✅ **Precisão**: Cross-validation de múltiplas fontes (mínimo 3)
 - ✅ **Transparência**: Logs detalhados de todas as operações
-- ✅ **Escalabilidade**: Arquitetura modular e distribuída
+- ✅ **Escalabilidade**: Arquitetura modular (NestJS + Next.js + PostgreSQL)
 - ✅ **Manutenibilidade**: Código limpo, documentado e testado
 
----
-
-## 🏗️ ARQUITETURA
-
-**📚 Documentação Completa:** Ver `ARCHITECTURE.md` para arquitetura detalhada, stack tecnológica, estrutura de pastas e fluxos de dados.
-
-### Arquitetura Geral (Resumo)
-
-```
-┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-│   Next.js   │ ←──→ │   NestJS    │ ←──→ │ PostgreSQL  │
-│  Frontend   │      │   Backend   │      │  Database   │
-│   :3100     │      │    :3101    │      │   :5532     │
-└─────────────┘      └─────────────┘      └─────────────┘
-                            ↓
-                     ┌─────────────┐
-                     │   BullMQ    │
-                     │   + Redis   │
-                     │    :6479    │
-                     └─────────────┘
-                            ↓
-                     ┌─────────────┐
-                     │  Python     │
-                     │  Scrapers   │
-                     │  (Selenium) │
-                     └─────────────┘
-```
-
-### Camadas da Aplicação
-
-**Frontend (Next.js 14 App Router)**
-- Páginas: `/dashboard`, `/assets`, `/analysis`, `/portfolio`, `/reports`
-- Componentes: Shadcn/ui + TailwindCSS
-- Estado: React Query + Context API
-- Comunicação: REST API + WebSocket (real-time)
-
-**Backend (NestJS)**
-- Controllers: Rotas REST
-- Services: Lógica de negócio
-- Repositories: Acesso a dados (TypeORM)
-- Queue: BullMQ para tarefas assíncronas
-- WebSocket: Eventos em tempo real
-
-**Scrapers (Python + Selenium)**
-- Playwright para sites autenticados
-- Requests para APIs públicas
-- Cross-validation entre fontes
-
-**Banco de Dados (PostgreSQL)**
-- Entidades: Assets, AssetPrices, Analyses, Portfolios, Users
-- Migrations: TypeORM
-- Indexes: Otimizados para queries frequentes
-
----
-
-## 💻 STACK TECNOLÓGICA
-
-### Backend
-- **Framework**: NestJS 10.x (Node.js 20.x)
-- **Linguagem**: TypeScript 5.x
-- **ORM**: TypeORM 0.3.x
-- **Validação**: class-validator, class-transformer
-- **Queue**: BullMQ + Redis
-- **WebSocket**: Socket.io
-- **API Docs**: Swagger/OpenAPI
-
-### Frontend
-- **Framework**: Next.js 14.x (App Router)
-- **Linguagem**: TypeScript 5.x
-- **UI**: Shadcn/ui + TailwindCSS 3.x
-- **Estado**: React Query (TanStack Query)
-- **Forms**: React Hook Form + Zod
-- **Charts**: Recharts
-- **WebSocket**: Socket.io-client
-
-### Database
-- **RDBMS**: PostgreSQL 16.x
-- **Cache**: Redis 7.x
-- **Admin**: PgAdmin 4
-
-### DevOps
-- **Containers**: Docker + Docker Compose
-- **VCS**: Git + GitHub
-- **CI/CD**: (A implementar)
-
-### Scrapers
-- **Python**: 3.11.x
-- **Browser Automation**: Playwright
-- **HTTP**: Requests, HTTPX
-- **Parsing**: BeautifulSoup4, lxml
-
-### MCPs (Model Context Protocol)
-Sistema completo de 8 servidores MCP instalados para estender capacidades do Claude Code.
-
-**MCPs Principais:**
-1. **Sequential Thinking** - Raciocínio estruturado e análise profunda
-   - Comando: `npx -y @modelcontextprotocol/server-sequential-thinking`
-   - Propósito: Auxilia em tarefas complexas que requerem pensamento sequencial
-   - Repositório: [@modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking)
-   - Status: ✓ Connected
-
-2. **Filesystem MCP** - Leitura/escrita segura de arquivos do projeto
-   - Comando: `npx -y @modelcontextprotocol/server-filesystem <workspace>`
-   - Propósito: Permite operações de I/O seguras no workspace do projeto
-   - Repositório: [@modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem)
-   - Status: ✓ Connected
-
-3. **Shell MCP** - Execução de comandos PowerShell/CMD com restrições
-   - Comando: `npx -y shell-mcp-server`
-   - Propósito: Permite executar comandos de shell de forma controlada
-   - Status: ✓ Connected
-
-4. **A11y MCP** - Auditoria WCAG automatizada via axe-core
-   - Comando: `npx a11y-mcp`
-   - Propósito: Testes de acessibilidade web (WCAG) em páginas locais
-   - Repositório: [priyankark/a11y-mcp](https://github.com/priyankark/a11y-mcp)
-   - Status: ✓ Connected
-
-5. **Context7 MCP** - Documentação atualizada de frameworks
-   - Comando: `npx -y @upstash/context7-mcp@latest`
-   - Propósito: Acesso a docs atualizadas via infraestrutura Upstash
-   - Status: ✓ Connected
-
-**MCPs de Automação Web:**
-6. **Playwright MCP** - Automação de browser para testes E2E
-   - Comando: `npx @playwright/mcp@latest`
-   - Status: ✓ Connected
-
-7. **Chrome DevTools MCP** - Inspeção e debugging de aplicações web
-   - Comando: `npx chrome-devtools-mcp@latest`
-   - Status: ✓ Connected
-
-8. **Selenium MCP** - Automação web alternativa
-   - Comando: `npx -y @angiejones/mcp-selenium`
-   - Status: ✓ Connected
-
-**Configuração:**
-- Arquivo: `C:\Users\adria\.claude.json`
-- Escopo: Projeto (invest-claude-web)
-- Instalados: 2025-11-14
-- Total: 8 MCPs (100% Connected)
-- Gerenciamento: `claude mcp list`, `claude mcp add`, `claude mcp remove`
-
-**Documentação Completa:**
-- `MCPS_USAGE_GUIDE.md` (855 linhas) - Guia técnico completo de todos os 8 MCPs
-  - Especificações técnicas (pacotes, repositórios, licenças)
-  - Ferramentas disponíveis (ex: Filesystem tem 12 tools)
-  - Parâmetros e exemplos de uso
-  - 4 workflows completos (Refactoring, Bug Fix, WCAG, Dependency Updates)
-  - Checklists e melhores práticas
-- `METODOLOGIA_MCPS_INTEGRADA.md` (1128 linhas) - Integração MCPs com Ultra-Thinking + TodoWrite
-  - Integração nos 5 pilares da metodologia
-  - 8 novas regras (18-25) para uso de MCPs
-  - 3 workflows completos com MCPs
-  - Matrizes de decisão (quando usar cada MCP)
-  - Anti-patterns específicos de MCPs
-  - Checklist expandido de validação
-
-**Integração com Metodologia (OBRIGATÓRIO):**
-
-Os 8 MCPs foram integrados à metodologia existente Ultra-Thinking + TodoWrite através de 8 novas regras:
-
-- **Regra 18**: ✅ SEMPRE usar Sequential Thinking para análise complexa (> 5 decisões)
-- **Regra 19**: ✅ SEMPRE usar Filesystem MCP para operações multi-arquivo (> 3 arquivos)
-- **Regra 20**: ✅ SEMPRE usar Shell MCP para validações obrigatórias (tsc --noEmit, npm run build)
-- **Regra 21**: ✅ SEMPRE usar A11y MCP para validar acessibilidade de novas páginas frontend
-- **Regra 22**: ✅ SEMPRE usar Context7 para consultar documentação atualizada de frameworks
-- **Regra 23**: ✅ SEMPRE usar Playwright/Chrome DevTools para validação completa frontend
-- **Regra 24**: ✅ SEMPRE combinar Sequential Thinking + Filesystem em refatorações grandes
-- **Regra 25**: ❌ NUNCA usar MCPs para SUBSTITUIR Ultra-Thinking/TodoWrite (apenas APOIAR)
-
-**Princípio Fundamental:**
-```
-MCPs são ferramentas de APOIO, não de SUBSTITUIÇÃO.
-Ultra-Thinking + TodoWrite continuam OBRIGATÓRIOS.
-```
-
-**Quando o Claude Code LER esses documentos:**
-- `MCPS_USAGE_GUIDE.md`: Consultar quando precisar de detalhes técnicos de um MCP específico
-- `METODOLOGIA_MCPS_INTEGRADA.md`: Consultar quando planejar workflow de implementação ou correção
-
-**IMPORTANTE:** Esses arquivos são grandes (48KB e 21KB). Claude Code mostrará "too large to include" no system-reminder. Isso é ESPERADO. Use `Read` tool com offset/limit quando precisar consultar seções específicas.
-
----
-
-## 📁 ESTRUTURA DE PASTAS
-
-```
-invest-claude-web/
-├── backend/                        # Backend NestJS
-│   ├── src/
-│   │   ├── api/                   # Controllers e DTOs
-│   │   │   ├── analysis/          # Análises (fundamental, técnica, completa)
-│   │   │   ├── assets/            # Ativos (CRUD, sync, update)
-│   │   │   ├── auth/              # Autenticação OAuth
-│   │   │   ├── portfolio/         # Gestão de portfólio
-│   │   │   └── reports/           # Relatórios
-│   │   ├── database/              # TypeORM
-│   │   │   ├── entities/          # Modelos de dados
-│   │   │   ├── migrations/        # Migrations SQL
-│   │   │   └── seeds/             # Seeds de dados
-│   │   ├── scrapers/              # Serviços de scraping
-│   │   │   ├── fundamental/       # Scrapers fundamentalistas
-│   │   │   ├── news/              # Scrapers de notícias
-│   │   │   └── options/           # Scrapers de opções
-│   │   ├── queue/                 # BullMQ
-│   │   │   ├── jobs/              # Definição de jobs
-│   │   │   └── processors/        # Processadores de jobs
-│   │   ├── websocket/             # Gateway WebSocket
-│   │   ├── app.module.ts          # Módulo raiz
-│   │   └── main.ts                # Entry point
-│   ├── test/                      # Testes E2E
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── frontend/                       # Frontend Next.js
-│   ├── src/
-│   │   ├── app/                   # App Router
-│   │   │   ├── (dashboard)/       # Rotas autenticadas
-│   │   │   │   ├── analysis/
-│   │   │   │   ├── assets/
-│   │   │   │   ├── portfolio/
-│   │   │   │   └── reports/
-│   │   │   ├── auth/              # Rotas de autenticação
-│   │   │   └── layout.tsx         # Layout raiz
-│   │   ├── components/            # Componentes React
-│   │   │   ├── ui/                # Shadcn/ui base
-│   │   │   ├── dashboard/         # Componentes do dashboard
-│   │   │   ├── analysis/          # Componentes de análise
-│   │   │   └── assets/            # Componentes de ativos
-│   │   ├── lib/                   # Utilitários
-│   │   │   ├── api.ts             # Cliente API
-│   │   │   ├── hooks/             # Custom hooks
-│   │   │   └── utils.ts           # Funções auxiliares
-│   │   └── contexts/              # Context API
-│   ├── public/                    # Assets estáticos
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── api-service/                    # Serviço Python (FastAPI)
-│   ├── app/
-│   │   ├── scrapers/              # Scrapers Python
-│   │   ├── services/              # Serviços
-│   │   └── main.py                # Entry point
-│   └── requirements.txt
-│
-├── docker-compose.yml              # Orquestração de serviços
-├── .gitignore
-├── README.md                       # Documentação pública
-└── claude.md                       # Este arquivo
-```
-
----
-
-## 🔌 PORTAS E SERVIÇOS
-
-**📚 Documentação Completa:** Ver `INSTALL.md` para guia completo de instalação, configuração de variáveis de ambiente e troubleshooting.
-
-### Tabela de Portas (Resumo)
-
-| Serviço | Porta Host | Porta Container | URL |
-|---------|-----------|----------------|-----|
-| **Frontend Next.js** | 3100 | 3000 | http://localhost:3100 |
-| **Backend NestJS** | 3101 | 3101 | http://localhost:3101/api/v1 |
-| **API Service (Python/FastAPI)** | 8000 | 8000 | http://localhost:8000 |
-| **PostgreSQL** | 5532 | 5432 | localhost:5532 |
-| **Redis** | 6479 | 6379 | localhost:6479 |
-| **PgAdmin** | 5150 | 80 | http://localhost:5150 |
-| **Redis Commander** | 8181 | 8081 | http://localhost:8181 |
-| **VNC Direct** | 5900 | 5900 | vnc://localhost:5900 |
-| **noVNC Web** | 6080 | 6080 | http://localhost:6080 |
-
-### Credenciais Padrão
-
-**PostgreSQL:**
-- User: `invest_user`
-- Password: `invest_password`
-- Database: `invest_db`
-
-**PgAdmin:**
-- Email: `admin@invest.com`
-- Password: `admin`
-
----
-
-## 🗄️ BANCO DE DADOS
-
-**📚 Documentação Completa:** Ver `DATABASE_SCHEMA.md` para schema detalhado, relacionamentos, indexes, migrations e queries comuns.
-
-### Entidades Principais (Resumo)
-
-**1. Assets (Ativos)**
-```typescript
-{
-  id: UUID
-  ticker: string (UNIQUE)           // Ex: PETR4, VALE3
-  name: string                       // Nome completo
-  type: AssetType                    // stock, fii, etf, crypto
-  sector: string
-  subsector: string
-  isActive: boolean
-  metadata: JSON                     // Dados extras
-  createdAt: timestamp
-  updatedAt: timestamp
-}
-```
-
-**2. AssetPrices (Preços)**
-```typescript
-{
-  id: UUID
-  assetId: UUID (FK -> Assets)
-  date: date
-  open: decimal(18,2)
-  high: decimal(18,2)
-  low: decimal(18,2)
-  close: decimal(18,2)
-  adjustedClose: decimal(18,2)
-  volume: bigint
-  marketCap: decimal(18,2)
-  change: decimal(18,2)              // Variação absoluta
-  changePercent: decimal(10,4)       // Variação percentual
-  collectedAt: timestamp             // Quando foi coletado
-  createdAt: timestamp
-}
-```
-
-**3. Analyses (Análises)**
-```typescript
-{
-  id: UUID
-  assetId: UUID (FK -> Assets)
-  userId: UUID (FK -> Users)
-  type: AnalysisType                 // fundamental, technical, complete
-  status: AnalysisStatus             // pending, processing, completed, failed
-  analysis: JSON                     // Dados da análise
-  dataSources: string[]              // Fontes utilizadas
-  sourcesCount: number               // Quantidade de fontes
-  confidenceScore: decimal(5,4)      // 0.0000 - 1.0000
-  recommendation: Recommendation     // buy, hold, sell
-  targetPrice: decimal(18,2)
-  errorMessage: string
-  completedAt: timestamp
-  createdAt: timestamp
-}
-```
-
-**4. Portfolios (Portfólios)**
-```typescript
-{
-  id: UUID
-  userId: UUID (FK -> Users)
-  name: string
-  description: string
-  totalValue: decimal(18,2)
-  totalCost: decimal(18,2)
-  totalProfitLoss: decimal(18,2)
-  isActive: boolean
-  createdAt: timestamp
-  updatedAt: timestamp
-}
-```
-
-**5. PortfolioPositions (Posições)**
-```typescript
-{
-  id: UUID
-  portfolioId: UUID (FK -> Portfolios)
-  assetId: UUID (FK -> Assets)
-  quantity: decimal(18,8)
-  averagePrice: decimal(18,2)
-  currentPrice: decimal(18,2)
-  totalCost: decimal(18,2)
-  totalValue: decimal(18,2)
-  profitLoss: decimal(18,2)
-  profitLossPercent: decimal(10,4)
-  createdAt: timestamp
-  updatedAt: timestamp
-}
-```
-
-### Indexes Importantes
-
-```sql
--- Performance crítica para queries frequentes
-CREATE INDEX idx_asset_prices_date ON asset_prices(date);
-CREATE INDEX idx_asset_prices_asset_date ON asset_prices(asset_id, date);
-CREATE INDEX idx_analyses_asset_type ON analyses(asset_id, type);
-CREATE INDEX idx_analyses_user_created ON analyses(user_id, created_at);
-```
-
----
-
-## 📊 FONTES DE DADOS
-
-### Estatísticas Gerais
-- **Total de Fontes Planejadas:** 31
-- **Implementadas:** 6 (19.35%)
-- **Em Desenvolvimento:** 0
-- **Planejadas:** 25 (80.65%)
-
-### 1. Análise Fundamentalista (6 fontes - 100% completo) ✅
-
-| Fonte | Tipo | Login | Status | Scraper |
-|-------|------|-------|--------|---------|
-| **Fundamentus** | Público | Não | ✅ Implementado | fundamentus.scraper.ts |
-| **BRAPI** | API Pública | Token | ✅ Implementado | brapi.scraper.ts |
-| **Status Invest** | Privado | Google | ✅ Implementado | statusinvest.scraper.ts |
-| **Investidor10** | Privado | Google | ✅ Implementado | investidor10.scraper.ts |
-| **Fundamentei** | Privado | Google | ✅ Implementado | fundamentei.scraper.ts |
-| **Investsite** | Público | Não | ✅ Implementado | investsite.scraper.ts |
-
-### 2. Análise Geral do Mercado (3 fontes - 0% completo)
-
-| Fonte | Tipo | Login | Status | Scraper |
-|-------|------|-------|--------|---------|
-| Investing.com | Privado | Google | 🔜 Planejado | - |
-| ADVFN | Privado | Google | 🔜 Planejado | - |
-| Google Finance | Privado | Google | 🔜 Planejado | - |
-
-### 3. Análise Gráfica/Técnica (1 fonte - 0% completo)
-
-| Fonte | Tipo | Login | Status | Scraper |
-|-------|------|-------|--------|---------|
-| TradingView | Privado | Google | 🔜 Planejado | - |
-
-### 4. Análise de Opções (1 fonte - 0% completo)
-
-| Fonte | Tipo | Login | Status | Scraper |
-|-------|------|-------|--------|---------|
-| Opcoes.net.br | Privado | Usuário/Senha | 🔜 Planejado | - |
-
-### 5. Outras Categorias (20 fontes - 0% completo)
-
-- **Criptomoedas:** CoinMarketCap (1)
-- **Insiders:** Griffin (1)
-- **Relatórios:** BTG, XP, Estadão, Mais Retorno (4)
-- **Oficial/IA:** B3, BCB, Google, ChatGPT, DeepSeek, Gemini, Claude, Grok (8)
-- **Notícias:** Google News, Bloomberg, Investing, Valor, Exame, InfoMoney (6)
-
-**Documentação Completa:** `DOCUMENTACAO_SCRAPERS_COMPLETA.md`
-
-### Cross-Validation
-
-O sistema coleta dados de **6 fontes fundamentalistas** simultaneamente e faz:
-
-1. **Merge de dados**: Combina dados de todas as fontes
-2. **Detecção de discrepâncias**: Identifica valores divergentes (threshold 10%)
-3. **Cálculo de confiança**: Score de 0.0 a 1.0 baseado em consenso
-4. **Priorização**:
-   - 6 fontes concordam: 1.0
-   - 5 fontes concordam: 0.92
-   - 4 fontes concordam: 0.83
-   - 3 fontes concordam: 0.75
-   - 2 fontes concordam: 0.5
-   - Menos de 2: 0.0
-
-**Arquivos:**
-- Orquestrador: `backend/src/scrapers/scrapers.service.ts`
-- API REST: `backend/src/scrapers/scrapers.controller.ts`
-- Frontend: `frontend/src/app/(dashboard)/data-sources/page.tsx`
-
-**Fontes Implementadas:**
-1. Fundamentus (público, sem auth)
-2. BRAPI (API token)
-3. Status Invest (OAuth Google via cookies)
-4. Investidor10 (OAuth Google via cookies)
-5. Fundamentei (OAuth Google via cookies) ⭐ NOVO
-6. Investsite (público, sem auth) ⭐ NOVO
-
----
-
-## 📝 CONVENÇÕES DE CÓDIGO
-
-**📚 Documentação Completa:** Ver `CONTRIBUTING.md` para convenções detalhadas de código, Git workflow, decisões técnicas e como contribuir.
-
-### TypeScript (Resumo)
-
-**Nomenclatura:**
-- Classes: `PascalCase` (ex: `AssetService`)
-- Interfaces: `PascalCase` com prefixo `I` opcional (ex: `IAssetRepository` ou `AssetRepository`)
-- Enums: `PascalCase` (ex: `AssetType`)
-- Variáveis/funções: `camelCase` (ex: `findAssetByTicker`)
-- Constantes: `UPPER_SNAKE_CASE` (ex: `MAX_RETRY_COUNT`)
-- Arquivos: `kebab-case` (ex: `asset.service.ts`)
-
-**Imports:**
-- Absolutos usando `@` aliases (configurado em `tsconfig.json`)
-```typescript
-import { AssetService } from '@api/assets/asset.service';
-import { Asset } from '@database/entities';
-```
-
-**DTOs:**
-- Sempre usar `class-validator` para validação
-- Sempre usar `class-transformer` para transformação
-```typescript
-export class CreateAssetDto {
-  @IsString()
-  @IsNotEmpty()
-  ticker: string;
-
-  @IsOptional()
-  @IsString()
-  name?: string;
-}
-```
-
-### Git
-
-**Branches:**
-- `main`: Produção
-- `develop`: Desenvolvimento
-- `feature/nome-feature`: Features
-- `fix/nome-bug`: Correções
-
-**Commits:**
-Seguir Conventional Commits:
-```
-feat: Adicionar endpoint de análise completa
-fix: Corrigir cálculo de variação de preço
-docs: Atualizar README com novas fontes
-refactor: Refatorar serviço de scrapers
-test: Adicionar testes unitários para AssetService
-chore: Atualizar dependências do projeto
-```
-
-**Pull Requests:**
-- Sempre incluir descrição detalhada
-- Sempre linkar issue relacionada
-- Sempre solicitar review
-- Sempre incluir co-autoria do Claude:
-```
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
+**Stack Principal:**
+- Backend: NestJS 10.x + TypeScript 5.x + PostgreSQL 16 + TypeORM
+- Frontend: Next.js 14 App Router + Shadcn/ui + TailwindCSS
+- Queue: BullMQ + Redis
+- Scrapers: Python 3.11 + Playwright
 
 ---
 
@@ -579,537 +44,139 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ### Visão Geral
 
-Este projeto segue uma metodologia rigorosa de **Ultra-Thinking + TodoWrite + Validação Contínua** estabelecida como **PADRÃO OBRIGATÓRIO** para todas as sessões de trabalho com Claude Code (Sonnet 4.5).
-
-### Pilares da Metodologia
+**PADRÃO OBRIGATÓRIO** para todas as sessões: **Ultra-Thinking + TodoWrite + Validação Contínua**
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                    METODOLOGIA CLAUDE                     │
-├──────────────────────────────────────────────────────────┤
-│                                                           │
-│  1. ULTRA-THINKING         ┌───────────────────┐         │
-│     (Análise Profunda)     │  Ler contexto     │         │
-│                            │  Analisar impacto │         │
-│                            │  Planejar         │         │
-│                            │  Validar deps     │         │
-│                            └─────────┬─────────┘         │
-│                                      │                    │
-│  2. TODOWRITE              ┌─────────▼─────────┐         │
-│     (Organização)          │  Etapa 1 → ✅     │         │
-│                            │  Etapa 2 → ✅     │         │
-│                            │  Etapa 3 → ✅     │         │
-│                            └─────────┬─────────┘         │
-│                                      │                    │
-│  3. IMPLEMENTAÇÃO          ┌─────────▼─────────┐         │
-│     (Execução)             │  Código           │         │
-│                            │  Testes           │         │
-│                            │  Validação        │         │
-│                            └─────────┬─────────┘         │
-│                                      │                    │
-│  4. DOCUMENTAÇÃO           ┌─────────▼─────────┐         │
-│     (Registro)             │  CLAUDE.md        │         │
-│                            │  Arquivo específico│        │
-│                            │  Commit detalhado │         │
-│                            └───────────────────┘         │
-│                                                           │
-└──────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────┐
+│           METODOLOGIA CLAUDE (4 PILARES)       │
+├────────────────────────────────────────────────┤
+│ 1. ULTRA-THINKING     → Análise profunda       │
+│ 2. TODOWRITE          → Organização em etapas  │
+│ 3. IMPLEMENTAÇÃO      → Execução com validação │
+│ 4. DOCUMENTAÇÃO       → Registro detalhado     │
+└────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 1. Ultra-Thinking Mode (Análise Profunda)
+### 1. Ultra-Thinking (Análise Profunda)
 
-#### Definição
-**Ultra-Thinking** é o processo de análise detalhada e planejamento ANTES de qualquer implementação. Garante que todas as decisões técnicas sejam fundamentadas e que não haja regressões.
-
-#### Quando Aplicar (OBRIGATÓRIO)
-- ✅ Implementação de features (> 10 linhas)
-- ✅ Correção de bugs complexos
+**Quando Aplicar (OBRIGATÓRIO):**
+- ✅ Features > 10 linhas
+- ✅ Bugs complexos
 - ✅ Refatorações
-- ✅ Mudanças em arquivos críticos (types, entities, services principais)
+- ✅ Mudanças em arquivos críticos (entities, services, hooks)
 - ✅ Mudanças que afetam múltiplos arquivos
-- ✅ Mudanças em APIs públicas (endpoints, hooks, componentes reutilizáveis)
 
-#### Quando NÃO Aplicar (Exceções)
-- ❌ Typos e correções de formatação
-- ❌ Comentários e documentação inline
-- ❌ Ajustes de espaçamento/indentação
-- ❌ Mudanças < 5 linhas isoladas
-
-#### Processo de Ultra-Thinking
-
-**Passo 1: Leitura de Contexto**
-```typescript
-// SEMPRE ler ANTES de modificar:
-1. Arquivo principal (componente/service/controller)
-2. Tipos/Interfaces relacionados (DTOs, Entities)
-3. Hooks customizados (se frontend)
-4. Dependências diretas (imports)
-5. Testes existentes (se houver)
-```
-
-**Passo 2: Análise de Impacto**
-```typescript
-// Identificar TODOS os arquivos afetados:
-- Arquivos que importam o arquivo modificado
-- Componentes/Services que usam a funcionalidade
-- Hooks que dependem da API modificada
-- Testes que precisam ser atualizados
-```
-
-**Passo 3: Planejamento**
-```typescript
-// Criar documento (quando > 100 linhas de mudança):
-NOME_DOCUMENTO_PLANEJAMENTO.md:
-  - Problema identificado
-  - Solução proposta (com código ANTES/DEPOIS)
-  - Arquivos afetados (lista completa)
-  - Checklist de implementação
-  - Checklist de validação
-  - Estimativa de tempo
-```
-
-**Passo 4: Validação de Dependências**
-```bash
-# Verificar antes de implementar:
-cd frontend && npx tsc --noEmit  # Tipos corretos
-cd backend && npx tsc --noEmit   # Tipos corretos
-grep -r "importName" src/         # Onde é usado
-```
-
-**Passo 5: Prevenção de Regressões**
-```typescript
-// Verificar padrões similares no código:
-- Buscar implementações similares no codebase
-- Validar se padrão existente deve ser seguido
-- Identificar testes que cobrem funcionalidade
-```
+**Processo:**
+1. **Ler contexto**: Arquivo principal + tipos + dependências + testes
+2. **Analisar impacto**: Identificar TODOS os arquivos afetados
+3. **Planejar**: Criar documento se > 100 linhas de mudança
+4. **Validar deps**: `tsc --noEmit` + `grep -r "importName"`
+5. **Prevenir regressões**: Buscar padrões similares no codebase
 
 ---
 
-### 2. TodoWrite (Organização em Etapas)
+### 2. TodoWrite (Organização)
 
-#### Definição
-**TodoWrite** é a ferramenta de rastreamento de progresso que divide tarefas complexas em etapas menores e gerenciáveis.
+**Regras:**
+1. **Granularidade**: Etapas atômicas (não genéricas)
+2. **Ordem Sequencial**: Lógica de execução
+3. **Apenas 1 in_progress**: Foco em uma tarefa por vez
+4. **Completar imediatamente**: Marcar `completed` assim que concluir
 
-#### Regras de Uso
-
-**Regra 1: Granularidade**
-```typescript
-// ✅ BOM - Etapas atômicas e claras
-{content: "Adicionar estado isSubmitting", status: "pending", ...}
-{content: "Importar Loader2", status: "pending", ...}
-{content: "Atualizar botão com feedback visual", status: "pending", ...}
-
-// ❌ RUIM - Etapas muito genéricas
-{content: "Implementar feature", status: "pending", ...}
-{content: "Corrigir bugs", status: "pending", ...}
-```
-
-**Regra 2: Ordem Sequencial**
-```typescript
-// ✅ BOM - Ordem lógica de execução
-1. Criar interface
-2. Implementar service
-3. Criar controller
-4. Adicionar testes
-5. Validar TypeScript
-6. Build de produção
-
-// ❌ RUIM - Ordem aleatória
-1. Build de produção
-2. Criar interface
-3. Validar TypeScript
-4. Implementar service
-```
-
-**Regra 3: Apenas 1 in_progress**
-```typescript
-// ✅ BOM - Foco em uma tarefa
-[
-  {content: "Etapa 1", status: "completed", ...},
-  {content: "Etapa 2", status: "in_progress", ...}, // Apenas 1
-  {content: "Etapa 3", status: "pending", ...},
-]
-
-// ❌ RUIM - Múltiplas in_progress
-[
-  {content: "Etapa 1", status: "in_progress", ...}, // Múltiplas
-  {content: "Etapa 2", status: "in_progress", ...}, // Não permitido
-]
-```
-
-**Regra 4: Completar Antes de Prosseguir**
-```typescript
-// Marcar completed IMEDIATAMENTE após concluir etapa
-// NÃO acumular várias etapas antes de marcar
-```
-
-#### Estrutura Padrão de Etapas
-
-**Para Implementação de Feature:**
+**Estrutura Padrão (Feature):**
 ```typescript
 [
   {content: "1. Criar DTO/Interface", status: "pending", ...},
   {content: "2. Implementar Service/Hook", status: "pending", ...},
   {content: "3. Criar Controller/Component", status: "pending", ...},
-  {content: "4. Adicionar validações", status: "pending", ...},
-  {content: "5. Validar TypeScript", status: "pending", ...},
-  {content: "6. Build de produção", status: "pending", ...},
-  {content: "7. Atualizar CLAUDE.md", status: "pending", ...},
-  {content: "8. Criar commit", status: "pending", ...},
-]
-```
-
-**Para Correção de Bug:**
-```typescript
-[
-  {content: "1. Ler arquivo afetado", status: "pending", ...},
-  {content: "2. Identificar causa raiz", status: "pending", ...},
-  {content: "3. Implementar correção", status: "pending", ...},
   {content: "4. Validar TypeScript", status: "pending", ...},
   {content: "5. Build de produção", status: "pending", ...},
-  {content: "6. Testar bug específico", status: "pending", ...},
-  {content: "7. Atualizar CLAUDE.md", status: "pending", ...},
-  {content: "8. Criar commit", status: "pending", ...},
+  {content: "6. Atualizar documentação", status: "pending", ...},
+  {content: "7. Commit e push", status: "pending", ...},
 ]
 ```
 
 ---
 
-### 3. Checklist de Validação (OBRIGATÓRIO)
+### 3. Validação (Checklist Obrigatório)
 
-#### Validações Mínimas (SEMPRE)
+**SEMPRE executar antes de commit:**
 
 ```bash
-# Backend
+# TypeScript (0 erros obrigatório)
 cd backend && npx tsc --noEmit
-# Resultado esperado: 0 erros
-
-# Frontend
 cd frontend && npx tsc --noEmit
-# Resultado esperado: 0 erros
 
-# Build Backend (se mudou backend)
-cd backend && npm run build
-# Resultado esperado: Compiled successfully
+# Build (se modificou código)
+cd backend && npm run build   # Compiled successfully
+cd frontend && npm run build  # 17 páginas compiladas
 
-# Build Frontend (se mudou frontend)
-cd frontend && npm run build
-# Resultado esperado: 17 páginas compiladas
-
-# Git Status
+# Git Status (apenas arquivos intencionais)
 git status
-# Resultado esperado: Apenas arquivos intencionalmente modificados
 ```
 
-#### Validações Adicionais (Quando Aplicável)
-
-```bash
-# Testes Backend
-cd backend && npm run test
-# Resultado esperado: All tests pass
-
-# Testes E2E Frontend
-cd frontend && npx playwright test
-# Resultado esperado: All tests pass
-
-# Lint Backend
-cd backend && npm run lint
-# Resultado esperado: 0 problems
-
-# Lint Frontend
-cd frontend && npm run lint
-# Resultado esperado: 0 problems
-
-# Console Validation (Manual)
-# Abrir http://localhost:3100 e verificar:
-# - 0 erros no console
-# - 0 warnings no console
-# - Funcionalidade testada manualmente
-```
+**Validações Adicionais (quando aplicável):**
+- Testes: `npm run test`
+- E2E: `npx playwright test`
+- Lint: `npm run lint`
+- Console: Abrir app e verificar 0 erros
 
 ---
 
-### 4. Padrão de Documentação
+### 4. Documentação
 
-#### 4.1. CLAUDE.md (Atualização Obrigatória)
+**Quando atualizar:**
+- ✅ Após implementar feature
+- ✅ Após corrigir bug crítico
+- ✅ Após refatoração importante
+- ✅ Após completar fase de projeto
 
-**Quando Atualizar:**
-- ✅ SEMPRE após implementar feature
-- ✅ SEMPRE após corrigir bug crítico
-- ✅ SEMPRE após refatoração importante
-- ✅ SEMPRE após completar fase de projeto
-
-**O que Atualizar:**
-```markdown
-### FASE X: Nome da Fase ✅ **STATUS ATUAL (DATA)**
-
-**Descrição:**
-- Breve descrição do que foi feito
-
-**Arquivos Modificados:**
-- arquivo.ts (+X linhas)
-
-**Validação:**
-- ✅ TypeScript: 0 erros
-- ✅ Build: Success
-- ✅ Testes: Passando (se aplicável)
-
-**Impacto:**
-- Descrever impacto técnico/usuário
-
-**Documentação:**
-- Link para arquivo detalhado (se criado)
-
-**Commits:**
-- hash: mensagem curta
-```
-
-#### 4.2. Arquivo Específico (Quando > 100 linhas)
-
-**Formato Padrão:**
-```markdown
-# VALIDACAO_FASE_X_NOME.md
-
-**Data:** YYYY-MM-DD
-**Responsável:** Claude Code (Sonnet 4.5)
-**Contexto:** Projeto - Fase X
-**Status:** ✅ COMPLETO / 🔄 EM ANDAMENTO / 📋 PLANEJADO
+**Onde atualizar:**
+- Arquivo técnico relevante (ARCHITECTURE.md, ROADMAP.md, etc)
+- Criar novo .md se mudança > 100 linhas
+- Sempre incluir: problema, solução, arquivos afetados, validação, impacto
 
 ---
 
-## 📋 RESUMO EXECUTIVO
-(3-5 parágrafos com estatísticas principais)
+## 📋 REGRAS DE OURO (NÃO NEGOCIÁVEL)
 
-## 🎯 OBJETIVOS DA FASE
-1. ✅ Objetivo 1
-2. ✅ Objetivo 2
-...
+**✅ SEMPRE:**
+1. Ler contexto antes de implementar
+2. Usar TodoWrite para tarefas ≥ 3 etapas
+3. Validar TypeScript (0 erros) antes de commit
+4. Validar Build (Success) antes de commit
+5. Ter apenas 1 todo `in_progress` por vez
+6. Marcar `completed` imediatamente após concluir
+7. Atualizar documentação após implementação
+8. Incluir `Co-Authored-By: Claude <noreply@anthropic.com>` em commits
+9. Documentar decisões técnicas importantes
+10. Criar arquivo específico quando mudança > 100 linhas
+11. Validar arquivos reais (documentação pode estar desatualizada)
+12. Verificar se precisa reiniciar serviços antes de testar
 
-## 📁 ARQUIVOS CRIADOS/MODIFICADOS
-### 1. Arquivo 1 (CRIADO/MODIFICADO)
-**Arquivo:** `caminho/completo.ts`
-**Tamanho:** X linhas
-**Status:** ✅ COMPLETO
-
-**Funcionalidades:**
-- ✅ Funcionalidade 1
-- ✅ Funcionalidade 2
-
-**Código-Chave:**
-```typescript
-// Trecho relevante
-```
-
-## 🔍 VALIDAÇÃO TÉCNICA
-### 1. TypeScript Validation
-**Comando:** `npx tsc --noEmit`
-**Resultado:** ✅ **0 ERROS**
-
-### 2. Build de Produção
-**Comando:** `npm run build`
-**Resultado:** ✅ **COMPILADO COM SUCESSO**
-
-**Estatísticas:**
-- 17 páginas geradas
-- Bundle size: X kB
-
-## ✅ CONCLUSÕES
-### Resultados Principais
-1. ✅ Item 1
-2. ✅ Item 2
-
-### Qualidade do Código
-- ✅ TypeScript: 0 erros
-- ✅ Build: Success
-- ✅ Naming conventions: Adequadas
-
-### Impacto no Sistema
-- ✅ Descrição do impacto
+**❌ NUNCA:**
+1. Implementar sem planejar (exceto < 5 linhas triviais)
+2. Commitar com erros TypeScript
+3. Commitar com build quebrado
+4. Pular validações do checklist
+5. Deixar múltiplos `in_progress` simultaneamente
 
 ---
 
-**Validado por:** Claude Code (Sonnet 4.5)
-**Data de Validação:** YYYY-MM-DD HH:MM:SS
-**Status Final:** ✅ FASE X - 100% COMPLETA E VALIDADA
-```
-
----
-
-### 5. Padrão de Commits
-
-#### Estrutura Obrigatória
-
-```bash
-<tipo>: <descrição curta (max 72 caracteres)>
-
-<corpo detalhado (opcional mas recomendado):
-- Problema identificado
-- Solução implementada
-- Arquivos modificados (lista)
-- Validações realizadas (checklist)
-- Impacto (técnico/usuário)>
-
-**Arquivos Modificados:**
-- arquivo1.ts (+X linhas)
-- arquivo2.tsx (-Y linhas)
-
-**Validação:**
-- ✅ TypeScript: 0 erros
-- ✅ Build: Success
-- ✅ Testes: Passando (se aplicável)
-
-**Documentação:**
-- VALIDACAO_FASE_X.md (criado/atualizado)
-- CLAUDE.md (atualizado)
-
-**Tempo de Implementação:** X minutos/horas
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
-#### Tipos de Commit (Conventional Commits)
-
-| Tipo | Uso | Exemplo |
-|------|-----|---------|
-| `feat` | Nova funcionalidade | `feat: Implementar Multi-Source Tooltip` |
-| `fix` | Correção de bug | `fix: Corrigir análises duplicadas` |
-| `docs` | Documentação | `docs: Adicionar VALIDACAO_FASE_3` |
-| `refactor` | Refatoração sem mudança de comportamento | `refactor: Extrair lógica de validação` |
-| `test` | Adição/correção de testes | `test: Adicionar testes para useReport` |
-| `chore` | Manutenção/config | `chore: Atualizar dependências` |
-| `perf` | Melhoria de performance | `perf: Otimizar query de análises` |
-| `style` | Formatação (sem lógica) | `style: Formatar código com prettier` |
-| `ci` | CI/CD | `ci: Adicionar workflow de testes` |
-| `build` | Build system | `build: Configurar esbuild` |
-
----
-
-### 6. Métricas de Qualidade
-
-#### Métricas Obrigatórias (ZERO Tolerance)
-
-```
-TypeScript Errors: 0
-Build Errors: 0
-Console Errors: 0 (páginas principais)
-Lint Problems: 0 (critical)
-Breaking Changes: 0 (sem aprovação)
-```
-
-#### Métricas Esperadas
-
-```
-Documentação: 100% (CLAUDE.md + arquivo específico se > 100 linhas)
-Testes de Validação: 100% (checklist completo)
-Commits com Co-autoria: 100%
-Code Review: Autocheck via checklist
-```
-
----
-
-### 7. Workflow Completo (Exemplo Real)
-
-**Tarefa:** Implementar FASE 3 - Refatoração Frontend /reports
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ ETAPA 1: Ultra-Thinking                                     │
-├─────────────────────────────────────────────────────────────┤
-│ ✅ Ler REFATORACAO_SISTEMA_REPORTS.md (planejamento)        │
-│ ✅ Ler use-reports-assets.ts (hooks existentes)             │
-│ ✅ Ler api.ts (verificar métodos faltantes)                 │
-│ ✅ Ler reports/page.tsx (validar implementação)             │
-│ ✅ Identificar impacto: 3 arquivos (api, component, docs)   │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│ ETAPA 2: TodoWrite                                          │
-├─────────────────────────────────────────────────────────────┤
-│ [                                                            │
-│   {content: "1. Validar hooks existentes", ...},            │
-│   {content: "2. Adicionar métodos API", ...},               │
-│   {content: "3. Criar MultiSourceTooltip", ...},            │
-│   {content: "4. Validar TypeScript", ...},                  │
-│   {content: "5. Build de produção", ...},                   │
-│   {content: "6. Atualizar CLAUDE.md", ...},                 │
-│   {content: "7. Criar commit", ...},                        │
-│ ]                                                            │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│ ETAPA 3: Implementação (Sequencial)                         │
-├─────────────────────────────────────────────────────────────┤
-│ ✅ 1. Hooks validados (já existiam - 125 linhas)            │
-│ ✅ 2. Métodos adicionados (requestCompleteAnalysis + get...) │
-│ ✅ 3. MultiSourceTooltip criado (59 linhas)                 │
-│ ✅ 4. TypeScript validado (0 erros)                         │
-│ ✅ 5. Build realizado (Success - 17 páginas)                │
-│ ✅ 6. CLAUDE.md atualizado (seção FASE 3)                   │
-│ ✅ 7. Commit criado (hash: b2767eb)                         │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│ ETAPA 4: Documentação                                       │
-├─────────────────────────────────────────────────────────────┤
-│ ✅ VALIDACAO_FASE_3_REPORTS_REFATORADO.md (criado)          │
-│ ✅ CLAUDE.md (seção FASE 3 adicionada)                      │
-│ ✅ Commit message (detalhado com checklist)                 │
-└─────────────────────────────────────────────────────────────┘
-
-Tempo Total: 30 minutos (estimativa: 1h 40min)
-Resultado: ✅ 100% COMPLETO
-```
-
----
-
-### 8. Regras de Ouro (NÃO NEGOCIÁVEL)
-
-1. ✅ **SEMPRE** ler contexto antes de implementar
-2. ✅ **SEMPRE** usar TodoWrite para tarefas não-triviais (≥ 3 etapas)
-3. ✅ **SEMPRE** validar TypeScript (0 erros) antes de commitar
-4. ✅ **SEMPRE** validar Build (Success) antes de commitar
-5. ✅ **SEMPRE** ter apenas 1 todo `in_progress` por vez
-6. ✅ **SEMPRE** marcar `completed` imediatamente após concluir
-7. ✅ **SEMPRE** atualizar CLAUDE.md após implementação
-8. ✅ **SEMPRE** incluir co-autoria `Co-Authored-By: Claude` em commits
-9. ✅ **SEMPRE** documentar decisões técnicas importantes
-10. ✅ **SEMPRE** criar arquivo específico quando mudança > 100 linhas
-11. ❌ **NUNCA** implementar sem planejar (exceto tarefas triviais < 5 linhas)
-12. ❌ **NUNCA** commitar com erros TypeScript
-13. ❌ **NUNCA** commitar com build quebrado
-14. ❌ **NUNCA** pular validações do checklist
-15. ❌ **NUNCA** deixar todos em `in_progress` simultaneamente
-16. ✅ **SEMPRE** validar arquivos reais antes de confiar na documentação (documentação pode estar desatualizada)
-17. ✅ **SEMPRE** verificar se é necessário reiniciar serviços (backend/frontend/Docker) antes de testar com MCPs
-
-**Detalhamento das Novas Regras:**
-
-**Regra 16 - Documentação pode estar desatualizada:**
-- ❌ **ERRADO:** Ler apenas CLAUDE.md e implementar baseado nisso
-- ✅ **CORRETO:** Ler CLAUDE.md → Ler arquivos fonte → Comparar → Identificar divergências → Atualizar documentação
-- **Exemplo Real:** Bug análise duplicada (commit 5e8b602) estava no código fonte mas documentação indicava não resolvido
-
-**Regra 17 - Reiniciar serviços antes de testar:**
-- ❌ **ERRADO:** Fazer correção no código → Testar imediatamente com MCP → "Não funcionou"
-- ✅ **CORRETO:** Fazer correção → Verificar uptime dos serviços → Reiniciar se necessário → Aguardar healthy → Testar com MCP
-- **Exemplo Real:** Bug análise duplicada - frontend rodando por 7h com código antigo, após restart funcionou perfeitamente
-- **Comando para verificar:** `docker ps --format "{{.Names}}\t{{.Status}}"` → se uptime > tempo do commit, reiniciar
-
----
-
-### 9. Anti-Patterns (Evitar)
+## 🚫 ANTI-PATTERNS
 
 ```typescript
 // ❌ ANTI-PATTERN 1: Implementar sem ler contexto
 "Criar componente X" → IMPLEMENTA DIRETO
+
 // ✅ CORRETO:
-"Criar componente X" → LER arquivos relacionados → PLANEJAR → IMPLEMENTAR
+"Criar componente X" → LER arquivos → PLANEJAR → IMPLEMENTAR
 
 // ❌ ANTI-PATTERN 2: TodoWrite genérico
 [{content: "Fazer tudo", status: "in_progress"}]
+
 // ✅ CORRETO:
 [
   {content: "Etapa 1", status: "completed"},
@@ -1118,1059 +185,113 @@ Resultado: ✅ 100% COMPLETO
 ]
 
 // ❌ ANTI-PATTERN 3: Commitar sem validar
-git commit -m "fix: algo" (sem rodar tsc --noEmit)
+git commit -m "fix: algo" (sem tsc --noEmit)
+
 // ✅ CORRETO:
 npx tsc --noEmit → 0 erros → git commit
-
-// ❌ ANTI-PATTERN 4: Documentação incompleta
-CLAUDE.md: "feat: X implementado"
-// ✅ CORRETO:
-CLAUDE.md: Seção completa com arquivos, validações, impacto
 ```
 
 ---
 
-### 10. Referências de Implementações Exemplares
+## 🎯 PADRÃO DE COMMITS (Conventional Commits)
 
-**Exemplos neste projeto que seguiram metodologia corretamente:**
+```bash
+<tipo>: <descrição curta (max 72 chars)>
 
-1. **FASE 3 - Refatoração Reports** (`b2767eb`)
-   - Ultra-Thinking: Leitura de 4 arquivos relacionados
-   - TodoWrite: 9 etapas bem definidas
-   - Validação: TypeScript + Build + Documentação
-   - Resultado: 30min (60% mais rápido que estimado)
-
-2. **FIX - Bug Análise Duplicada** (`5e8b602`)
-   - Ultra-Thinking: Análise de causa raiz (falta isSubmitting)
-   - TodoWrite: 10 etapas sequenciais
-   - Documentação: CORRECAO_BUG_ANALISE_DUPLICADA.md (400+ linhas)
-   - Resultado: 45min, 0 regressões
-
-3. **FASE 1 - Limpeza de Dados** (`6beacb1`)
-   - Ultra-Thinking: Verificação de script existente
-   - TodoWrite: 6 etapas (validação SQL incluída)
-   - Documentação: VALIDACAO_FASE_1_LIMPEZA.md (358 linhas)
-   - Resultado: 0 análises removidas (banco saudável)
-
----
-
-## 🔄 FLUXOS PRINCIPAIS
-
-### 1. Fluxo de Sincronização de Ativos (BRAPI)
-
-```
-1. User clica "Sincronizar" no frontend
-2. Frontend chama POST /api/v1/assets/sync
-3. Backend (AssetsService):
-   - Busca dados da BRAPI para cada ticker
-   - Para cada ativo:
-     a. Verifica se já existe no DB
-     b. Se existe: Atualiza dados (nome, setor, etc)
-     c. Se não existe: Cria novo ativo
-   - Para cada preço:
-     a. Verifica se já existe para a data
-     b. Se existe: Atualiza com dados mais recentes
-     c. Se não existe: Insere novo registro
-   - Salva: price, change, changePercent, volume, marketCap
-4. Retorna resumo: total, created, updated, failed
-5. Frontend mostra toast com resultado
-```
-
-**Arquivo:** `backend/src/api/assets/assets.service.ts:180-280`
-
-### 2. Fluxo de Análise Fundamentalista
-
-```
-1. User clica "Solicitar Análise" para PETR4
-2. Frontend chama POST /api/v1/analysis/fundamental/PETR4
-3. Backend (AnalysisService):
-   - Cria registro de análise com status=PROCESSING
-   - Chama ScrapersService.scrapeFundamentalData('PETR4')
-4. ScrapersService:
-   - Executa 4 scrapers em paralelo (Promise.allSettled):
-     a. FundamentusScraper
-     b. BrapiScraper
-     c. StatusInvestScraper
-     d. Investidor10Scraper
-   - Cross-validation:
-     a. Merge de dados
-     b. Detecção de discrepâncias
-     c. Cálculo de confiança
-5. AnalysisService:
-   - Atualiza análise: status=COMPLETED, analysis=data, confidence=score
-   - Define recomendação baseada em confiança:
-     - >= 0.8: BUY
-     - >= 0.6: HOLD
-     - < 0.6: SELL
-6. Frontend recebe análise completa e exibe
-```
-
-**Arquivos:**
-- `backend/src/api/analysis/analysis.service.ts:20-62`
-- `backend/src/scrapers/scrapers.service.ts:38-62`
-
-### 3. Fluxo de Análise em Massa (Bulk Analysis)
-
-```
-1. User clica "Solicitar Análises em Massa" na página /analysis
-2. Frontend chama POST /api/v1/analysis/bulk/request
-   Body: { type: 'complete' }
-3. Backend (AnalysisService.requestBulkAnalysis):
-   - Busca todos os ativos ativos (isActive=true)
-   - Para cada ativo:
-     a. Verifica se análise recente existe (< 7 dias)
-     b. Se existe: Pula (skipped)
-     c. Se não existe: Cria análise com status=PENDING
-   - Retorna: total, requested, skipped
-4. Queue (BullMQ) processa análises PENDING:
-   - Job: process-pending-analysis
-   - Processa 1 análise por vez
-   - Emite WebSocket event a cada conclusão
-5. Frontend recebe eventos WebSocket e atualiza lista em tempo real
-```
-
-**Arquivo:** `backend/src/api/analysis/analysis.service.ts:465-536`
-
----
-
-## 🧩 DECISÕES TÉCNICAS
-
-### 1. Por que NestJS no backend?
-
-**Motivos:**
-- ✅ Arquitetura modular e escalável
-- ✅ TypeScript nativo com decorators
-- ✅ Integração fácil com TypeORM
-- ✅ Swagger/OpenAPI automático
-- ✅ Dependency Injection robusto
-- ✅ Ecosystem maduro (Queue, WebSocket, etc)
-
-### 2. Por que Next.js 14 App Router?
-
-**Motivos:**
-- ✅ Server Components para performance
-- ✅ Roteamento file-based intuitivo
-- ✅ SSR e SSG nativos
-- ✅ TypeScript first-class
-- ✅ Integração com Shadcn/ui
-- ✅ Otimizações automáticas (image, font, etc)
-
-### 3. Por que PostgreSQL?
-
-**Motivos:**
-- ✅ ACID compliant (confiabilidade)
-- ✅ JSON support para campos flexíveis
-- ✅ Indexes avançados (GIN, GiST)
-- ✅ Window functions para análises
-- ✅ Extensões (pg_stat_statements, etc)
-- ✅ Grátis e open-source
-
-### 4. Por que BullMQ + Redis?
-
-**Motivos:**
-- ✅ Queue distribuída e escalável
-- ✅ Retry automático em falhas
-- ✅ Rate limiting nativo
-- ✅ Dashboard de monitoramento
-- ✅ Priorização de jobs
-- ✅ Agendamento de tarefas (cron)
-
-### 5. Por que Python para scrapers?
-
-**Motivos:**
-- ✅ Playwright melhor que Puppeteer
-- ✅ BeautifulSoup para parsing HTML
-- ✅ Ecosystem rico para scraping
-- ✅ Requests/HTTPX para APIs
-- ✅ Fácil integração com NestJS via API
-
-### 6. Por que TypeORM?
-
-**Motivos:**
-- ✅ TypeScript nativo
-- ✅ Migrations automáticas
-- ✅ Decorators para entidades
-- ✅ QueryBuilder type-safe
-- ✅ Relacionamentos complexos
-- ✅ Integração perfeita com NestJS
-
----
-
-## 🗺️ ROADMAP
-
-**📚 Documentação Completa:** Ver `ROADMAP.md` para histórico completo de todas as fases, estatísticas do projeto e planejamento futuro.
-
-### FASE 1-10: Backend Core ✅ COMPLETO (Resumo)
-- [x] Setup inicial (Docker, PostgreSQL, NestJS)
-- [x] Entidades básicas (Assets, AssetPrices)
-- [x] Scrapers fundamentalistas (4 fontes)
-- [x] Cross-validation de dados
-- [x] Análise fundamentalista
-- [x] Análise técnica
-- [x] Análise completa
-- [x] Sistema de portfólio
-- [x] Autenticação OAuth
-- [x] WebSocket real-time
-
-### FASE 11: Frontend Core ✅ EM ANDAMENTO
-- [x] Dashboard principal
-- [x] Página de ativos (/assets)
-- [x] Página de análises (/analysis)
-- [x] Página de portfólio (/portfolio)
-- [ ] Página de relatórios (/reports)
-- [ ] Página de configurações (/settings)
-
-### FASE 12-21: Validação Frontend ✅ **100% COMPLETO** 🎉
-- [x] FASE 12: Responsividade (mobile, tablet, desktop) - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 13: Navegação (links, breadcrumbs, sidebar) - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 14: Performance (loading, lazy, caching) - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 15: Network (requests, errors, retries) - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 16: Console (0 erros, 0 warnings) - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 17: Browser Compatibility (Chrome, Firefox, Edge) - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 18: TypeScript (0 erros, strict mode) - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 19: Integrações Complexas (WebSocket, OAuth) - ✅ 80% COMPLETO (2025-11-13)
-- [x] FASE 20: Estados e Transições (loading, success, error) - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 21: Acessibilidade (a11y, ARIA, keyboard) - ✅ 100% COMPLETO (2025-11-13) ⭐ **FINAL**
-
-**Fases Concluídas:**
-- [x] FASE 4: Dashboard (/dashboard) - ✅ 100% COMPLETO (2025-11-12)
-- [x] FASE 5: Portfolio (/portfolio) - ✅ 100% COMPLETO (2025-11-12)
-- [x] FASE 6: Analysis (/analysis) - ✅ 100% COMPLETO (2025-11-12)
-- [x] FASE 7: Reports (/reports) - ✅ 100% REVALIDADO (2025-11-12)
-- [x] FASE 8: Data Sources (/data-sources) - ✅ 100% COMPLETO (2025-11-12)
-- [x] FASE 9: OAuth Manager (/oauth-manager) - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 10: Settings (/settings) - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 12: Responsividade - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 13: Navegação - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 14: Performance - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 15: Network - ✅ 100% COMPLETO + ISSUE #1 CORRIGIDA (2025-11-14)
-  - 130 itens validados (13 seções)
-  - 6 páginas testadas (Chrome DevTools + Playwright)
-  - 99 network requests capturados
-  - 0 console errors
-  - 0 CORS issues
-  - Issue #1: Password hash exposto → CORRIGIDA ✅
-  - Issue #3: Confiança 0.00 → INVESTIGADA (dados ruins dos scrapers)
-- [x] FASE 16: Console - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 17: Browser Compatibility - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 18: TypeScript - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 19: Integrações Complexas - ✅ 80% COMPLETO (2025-11-13)
-- [x] FASE 20: Estados e Transições - ✅ 100% COMPLETO (2025-11-13)
-- [x] FASE 21: Acessibilidade - ✅ 100% COMPLETO (2025-11-13) ⭐ **FINAL** 🎉
-
-**Referência:** `VALIDACAO_FRONTEND_COMPLETA.md`
-**Documentação FASE 7:** `VALIDACAO_FASE_7_REPORTS.md` (64 testes)
-**Documentação FASE 8:** `VALIDACAO_FASE_8_DATA_SOURCES.md` (86 testes)
-**Documentação FASE 9:** `VALIDACAO_FASE_9_OAUTH_MANAGER.md` (5 componentes validados)
-**Documentação FASE 10:** `VALIDACAO_FASE_10_SETTINGS.md` (4 tabs, 13 inputs, 7 checkboxes validados)
-**Documentação FASE 12:** `VALIDACAO_FASE_12_RESPONSIVIDADE.md` (3 resoluções, 2 páginas validadas)
-**Documentação FASE 13:** `VALIDACAO_FASE_13_NAVEGACAO.md` (7 páginas, browser navigation validado)
-**Documentação FASE 14:** `VALIDACAO_FASE_14_PERFORMANCE.md` (load 1.5s, bundle 87.6kB, React Query configurado)
-**Documentação FASE 15:** `VALIDACAO_FASE_15_NETWORK.md` (19 requests, CORS, security headers, retry logic validados)
-**Documentação FASE 16:** `VALIDACAO_FASE_16_CONSOLE.md` (7 páginas, 0 erros críticos, console 100% limpo)
-**Documentação FASE 17:** `VALIDACAO_FASE_17_BROWSERS.md` (Chrome + Firefox testados, 5 screenshots, 100% compatível)
-**Documentação FASE 18:** `VALIDACAO_FASE_18_TYPESCRIPT.md` (0 erros TS, strict mode, build 8.7s)
-**Documentação FASE 19:** `VALIDACAO_FASE_19_INTEGRACOES.md` (WebSocket + OAuth, 80% implementação, 13 eventos)
-**Documentação FASE 20:** `VALIDACAO_FASE_20_ESTADOS_TRANSICOES.md` (Loading + Error + Empty + Success, 100% implementado)
-**Documentação FASE 21:** `VALIDACAO_FASE_21_ACESSIBILIDADE.md` (Keyboard, Semantic HTML, ARIA, Focus, Forms, Contrast, WCAG AA) ⭐ **FINAL** 🎉
-**Screenshots:** fase-7 (3), fase-8 (1), fase-9 (2), fase-10 (5), fase-12 (5), fase-13 (7), fase-14 (2), fase-15 (1), fase-16 (1), fase-17 (5), fase-20 (6), fase-21 (2) ⭐ **ATUALIZADO**
-**Progresso Total:** 339/345+ testes aprovados (98.3%) - **PROJETO 100% VALIDADO** ⭐ **COMPLETO** 🎉
-
-### FASE 22: Sistema de Atualização de Ativos ✅ 100% COMPLETO
-- [x] Entidades (UpdateLog)
-- [x] Migrations
-- [x] AssetsUpdateService (574 linhas)
-- [x] AssetsUpdateController (279 linhas)
-- [x] Jobs BullMQ (daily, single, retry, batch) + Processor (175 linhas)
-- [x] WebSocket events (6 eventos)
-- [x] Frontend components (AssetUpdateButton, BatchUpdateControls, OutdatedBadge, UpdateProgressBar)
-- [x] Integração Portfolio Page
-- [x] Testes Visuais (Validados 2025-11-12)
-
-**Referência:** `ROADMAP_SISTEMA_ATUALIZACAO_ATIVOS.md`
-**Status:** Sistema 100% implementado e funcional
-**Validação:** TypeScript 0 erros, Build OK, Componentes UI testados
-
-### FASE 22.5: Correções e Melhorias do Portfólio ✅ 100% COMPLETO
-- [x] Bug: Quantidade com zeros excessivos (100.00000000 → 100)
-- [x] Bug: Grid com sobreposição de colunas (grid-cols-12 → minmax customizado)
-- [x] Feature: Preço atual no formulário "Adicionar Posição"
-- [x] Feature: Campo "Data de Compra" obrigatório
-- [x] Backend: Campo firstBuyDate salvo e retornado corretamente
-- [x] Frontend: Lógica de comparação de datas corrigida
-- [x] Bug: "Ganho do Dia" incorreto (timezone) - ✅ RESOLVIDO
-- [x] Bug: Botões de ação (Update/Edit/Remove) não clicáveis - ✅ RESOLVIDO
-- [x] UX: Layout reorganizado (Distribuição abaixo das Posições) - ✅ IMPLEMENTADO
-- [x] Feature: Sidebar toggle (ocultar/mostrar menu lateral) - ✅ IMPLEMENTADO
-
-**Referência:**
-- `CORRECOES_PORTFOLIO_2025-11-12.md` (documentação completa)
-- `BUG_GANHO_DO_DIA_EM_INVESTIGACAO.md` (investigação técnica)
-- `SOLUCAO_BUG_GANHO_DO_DIA.md` (solução completa)
-- `VALIDACAO_GANHO_DO_DIA_MULTIPLAS_DATAS.md` (validação completa multi-data)
-**Commits:** `43cb96d`, `a5b31f6`, `0c6143b`, `31c1c1c`, `e430264`, `bed85a1`
-**Status:** ✅ 10/10 itens completos - FASE 100% concluída e VALIDADA
-**Validação:** TypeScript 0 erros, Build OK, 5 posições testadas (3 hoje + 2 antigas), cálculo 100% correto
-**Screenshots:**
-- `portfolio-ganho-dia-corrigido.png` (R$ 0,00 para VALE3 comprada hoje ✅)
-- `portfolio-validacao-ganho-dia-completa.png` (5 posições, Ganho do Dia R$ 2,00 ✅)
-- `portfolio-validacao-posicoes-completas.png` (evidências visuais)
-- `portfolio-sidebar-open.png` (sidebar visível ✅)
-- `portfolio-sidebar-closed.png` (sidebar oculta, largura completa ✅)
-- `portfolio-sidebar-toggled-back.png` (toggle funcionando bidirecionalmente ✅)
-**Teste Final:** 5 posições (VALE3, PETR4, ITUB4, MGLU3, BBAS3) - Cálculo: -R$ 10 + R$ 12 + R$ 0 + R$ 0 + R$ 0 = R$ 2,00 ✅
-**Features Novas:**
-- Toggle sidebar com animação suave (300ms transition)
-- Estado persistido em localStorage
-- Layout vertical (Distribuição abaixo) para melhor aproveitamento de espaço
-- Botões de ação (Update/Edit/Remove) 100% funcionais
-- Fix pointer-events interception nas progress bars
-
-### FASE 3: Refatoração Sistema Reports ✅ 100% COMPLETO (FASES 1-6)
-- [x] FASE 1: Limpeza de Dados (Backend) ✅ **100% VALIDADO (2025-11-13)**
-  - Script cleanup-analyses.ts (344 linhas) - JÁ EXISTIA e estava completo
-  - Backup criado: backup-analyses-20251113-224703.sql (11KB)
-  - Limpeza executada: 0 análises removidas (banco estava limpo e saudável)
-  - Resultado: 10 análises completed, 0 inválidas, 0 travadas
-  - Validação SQL: 4/4 queries confirmaram integridade
-  - Frontend testado: /reports e /analysis (0 erros no console)
-  - Documentação: VALIDACAO_FASE_1_LIMPEZA.md
-- [x] FASE 2: Novo Endpoint Backend ✅ **100% VALIDADO (2025-11-13)**
-  - DTO: AssetWithAnalysisStatusDto (141 linhas) - JÁ EXISTIA com enums tipados e Swagger docs
-  - Service: getAssetsWithAnalysisStatus() (86 linhas) - JÁ EXISTIA com lógica robusta
-  - Controller: GET /assets-status (12 linhas) - JÁ EXISTIA protegido com JWT
-  - Hook Frontend: useReportsAssets() (125 linhas) - 3 hooks implementados
-  - Endpoint testado: 200/304, 55 ativos, < 1s response time
-  - TypeScript: 0 erros (backend + frontend)
-  - Integração: useReportsAssets usado em /reports page (linha 95)
-  - Documentação: VALIDACAO_FASE_2_ENDPOINT.md
-- [x] FASE 3: Refatorar Frontend /reports ✅ **100% VALIDADO (2025-11-13)**
-  - **Métodos API:** 2 métodos adicionados (requestCompleteAnalysis, getReportsAssetsStatus)
-  - **MultiSourceTooltip:** Componente criado (59 linhas) com 4 fontes + cross-validation
-  - **Página /reports:** 486 linhas - JÁ ESTAVA 100% IMPLEMENTADA (apenas corrigido import)
-  - **Hooks:** 3 hooks validados (useReportsAssets, useRequestAnalysis, useRequestBulkAnalysis)
-  - **Funcionalidades:**
-    - Header com MultiSourceTooltip integrado
-    - Botão "Analisar Todos os Ativos" (bulk analysis)
-    - AlertDialog de confirmação
-    - Barra de busca (ticker ou nome, case-insensitive)
-    - Lista de 55 ativos com cards hover effect
-    - Status de análise: Recente/Desatualizada/Normal (badges coloridos)
-    - Recomendação: Compra/Manter/Venda (badges com ícones)
-    - Score de confiança: 0-100% (cores verde/amarelo/vermelho)
-    - Botões: Visualizar Relatório, Nova Análise, Solicitar Análise
-    - Estados: Loading (skeletons), Error (retry), Empty (2 variantes)
-  - **Validação:**
-    - TypeScript: 0 erros
-    - Build: Success (17 páginas, 6.63 kB gzipped)
-    - Lint: Passed
-  - **Documentação:** VALIDACAO_FASE_3_REPORTS_REFATORADO.md
-- [x] FASE 4: Conectar Detail Page `/reports/[id]` ✅ **100% VALIDADO (2025-11-13)**
-  - Hook `useReport(id)` criado (20 linhas)
-  - Página refatorada com dados reais (222 linhas)
-  - Backend: Campo `lastAnalysisId` adicionado ao DTO
-  - Backend: `currentPrice` adicionado ao endpoint `/reports/:id`
-  - Frontend: Link corrigido para usar analysis ID (não asset ID)
-  - Frontend: `currentPrice` exibindo dados reais do banco
-  - 4 tabs funcionando (Overview, Fundamental, Technical, Risks)
-  - Loading, error, empty states
-  - Download handlers (PDF/JSON preparados)
-  - **Correções Críticas:**
-    - ✅ currentPrice não exibido → CORRIGIDO (backend retorna preço da tabela asset_prices)
-    - ✅ BRAPI retornando 403 → CORRIGIDO (token como query param, não header)
-  - **Validação Completa (2025-11-13):**
-    - ✅ TypeScript: 0 erros
-    - ✅ Build: Success (17 páginas compiladas)
-    - ✅ Git: 100% limpo e atualizado (4 commits)
-    - ✅ Dados: 100% reais do banco (4 análises: PETR4, WEGE3, ABEV3, VIVT3)
-    - ✅ Navegação: /reports → /reports/[id] 100% funcional
-    - ✅ Console (Chrome DevTools): 0 erros, 0 warnings
-    - ✅ Console (Playwright): 1 erro não-crítico (favicon.ico 404)
-    - ✅ Scrapers: 3/4 funcionando (75% - Fundamentus, BRAPI, Investidor10)
-    - ✅ Cross-validation: Mínimo de 3 fontes atingido
-  - **Limitações Conhecidas (não-bloqueantes):**
-    - 🟡 StatusInvest: Timeout de navegação (25% das fontes offline)
-    - 🟡 Tabs vazias: Comportamento esperado (análises detalhadas virão em fases futuras)
-    - 🟡 Campo `completed_at`: NULL (inconsistência de dados, não afeta funcionalidade)
-    - 🟡 Favicon.ico: 404 (arquivo faltando, não afeta funcionalidade)
-- [x] FASE 5: Implementar Downloads (PDF/JSON) ✅ **100% COMPLETO (2025-11-13)**
-  - **Dependências Instaladas:**
-    - handlebars@4.7.8
-    - @types/handlebars@4.1.0
-    - puppeteer@23.11.1 (já existente)
-  - **Backend - PdfGeneratorService (315 linhas):**
-    - `generatePdf(analysisId)`: Gera PDF profissional usando Puppeteer
-    - `generateJson(analysisId)`: Gera JSON estruturado com metadata completa
-    - `prepareReportData()`: Formata dados de análise para o template
-    - `loadTemplate()`: Carrega e compila template Handlebars com cache
-    - `registerHandlebarsHelpers()`: Registra 9 helpers customizados
-      - Formatação: formatNumber, formatPercent, formatDate
-      - Comparação: eq, gt, lt, gte, lte
-    - `getFileName()`: Gera nome do arquivo (formato: relatorio-ticker-data.ext)
-  - **Backend - Template HTML (371 linhas):**
-    - Design profissional com gradientes e cores corporativas
-    - 2 páginas A4 com margens adequadas (20mm/15mm)
-    - Seções: Header, Asset Info, Recommendation, Summary, Fundamental Analysis, Risks, Data Sources, Footer
-    - Responsivo para impressão (print-color-adjust, page-break-inside)
-    - Aviso legal e disclaimer obrigatório
-  - **Backend - Reports Controller:**
-    - Endpoint: `GET /reports/:id/download?format=pdf|json`
-    - Headers corretos (Content-Type, Content-Disposition, Content-Length)
-    - Validação de análise existente e asset data
-    - Error handling completo (404, 400, 500)
-  - **Backend - nest-cli.json:**
-    - Configuração de assets para copiar templates (*.hbs) para dist/
-  - **Validação Completa (2025-11-13):**
-    - ✅ TypeScript: 0 erros
-    - ✅ PDF: Gerado com sucesso (129KB, 2 páginas, v1.4)
-    - ✅ JSON: Estruturado com metadata, asset, analysis, currentPrice, risks
-    - ✅ Template: Handlebars helpers (gt, lt) funcionando 100%
-    - ✅ Puppeteer: Headless Chrome rodando em Docker (--no-sandbox)
-    - ✅ Path resolution: process.cwd() + dist/templates (Docker-compatible)
-    - ✅ Logs: 0 erros durante geração de PDF
-  - **Frontend - Botões Download (Correções 2025-11-13):**
-    - Fix: URL duplicada (/api/v1/api/v1) → removida duplicação
-    - Fix: Erro 401 Unauthorized → extração de JWT token do cookie
-    - Implementação: fetch() + Authorization Bearer + Blob download
-    - Nome dinâmico: relatorio-{ticker}-{data}.{ext}
-  - **Problemas Resolvidos:**
-    - 🟢 Handlebars parse error (linha 328): Registrado helper `gt` para comparações
-    - 🟢 Template not found: Corrigido path resolution (__dirname → process.cwd())
-    - 🟢 TypeScript errors: targetPrice → targetPrices, format → fileFormat
-    - 🟢 URL duplicada: NEXT_PUBLIC_API_URL já contém /api/v1
-    - 🟢 Erro 401: Backend requer JWT Bearer token, não cookies
-  - **Testes Realizados:**
-    - PDF download: ✅ PETR4 análise (13581de4) - 129KB, 2 páginas
-    - JSON download: ✅ Estrutura completa com 3 fontes de dados
-    - Autenticação: ✅ JWT token extraído e enviado corretamente
-    - Consistência: ✅ 100% dos dados entre PDF e JSON
-- [x] FASE 6: Testes E2E e Validação Final ✅ **100% COMPLETO (2025-11-13)**
-  - **Testes Realizados (8/8):**
-    - ✅ FASE 6.1: Análise em Massa (Dialog + Cancelamento)
-    - ✅ FASE 6.2: Análise Individual (+ Bug #1 corrigido)
-    - ✅ FASE 6.3: Navegação (Listagem → Detalhes)
-    - ✅ FASE 6.4: Downloads (PDF 128KB + JSON 1.2KB)
-    - ✅ FASE 6.5: Badges de Status (Recente/Desatualizada)
-    - ✅ FASE 6.6: Busca e Filtros (case-insensitive, ticker+nome)
-    - ✅ FASE 6.7: Performance (55 ativos, < 2s)
-    - ✅ FASE 6.8: Console Validation (0 erros, 0 warnings)
-  - **Bugs Críticos Corrigidos (2):**
-    - 🔴 **BUG #1**: Botões "Solicitar Análise" desabilitam TODOS quando clica em UM
-      - **Solução**: Estado local `processingTicker` ao invés de `isPending` global
-      - **Arquivo**: `frontend/src/app/(dashboard)/reports/page.tsx:92,107-114,437-451,463-477`
-    - 🔴 **BUG #2**: Botão "Solicitar Análise" desaparece após análise
-      - **Solução**: Remover cooldown de 7 dias - `canRequestAnalysis = true` sempre
-      - **Arquivo**: `backend/src/api/reports/reports.service.ts:134-144`
-  - **Métricas de Qualidade:**
-    - TypeScript: 0 erros ✅
-    - Build: 0 erros ✅
-    - Console: 0 erros, 0 warnings ✅
-    - Docker Restarts: 2 (frontend + backend) ✅
-    - Screenshots: 3 evidências ✅
-
-**Referências:**
-- Planejamento: `REFATORACAO_SISTEMA_REPORTS.md`
-- Validação FASE 3: `VALIDACAO_FASE_3_REPORTS_REFATORADO.md`
-- Validação FASE 4: `VALIDACAO_FASE_4_REPORTS_DETAIL.md`
-- Validação FASE 5: `fase-5-after-fixes-complete.txt`
-- **Validação FASE 6:** `VALIDACAO_FASE_6_REPORTS_COMPLETA.md` ⭐ **COMPLETO**
-- Problemas FASE 4: `PROBLEMAS_CRITICOS_FASE_4_VALIDACAO.md`
-- Investigação Scrapers: `INVESTIGACAO_PROBLEMA_2_SCRAPERS.md`
-- Correção currentPrice: `CORRECAO_PROBLEMA_1_CURRENT_PRICE.md`
-- Resumo Final: `RESUMO_VALIDACAO_FASE_4_PROBLEMAS_E_SOLUCOES.md`
-- Correções FASE 5: `CORRECOES_FASE_4_CRITICAS.md`
-
-**Commits:**
-- `0321c58`: feat: Implementar FASE 1 e 2 da refatoração do sistema de Reports
-- `f142a8a`: feat: Implementar FASE 3 - Refatoração Frontend /reports
-- `d30e9b3`: fix: Corrigir URLs duplicadas e null check em changePercent
-- `83169e6`: docs: Adicionar validação FASE 3 e atualizar ROADMAP
-- `b6c06a8`: feat: Implementar FASE 4 - Connect Report Detail Page
-- `b7f720e`: fix(reports): Adicionar currentPrice ao endpoint /reports/:id
-- `1412420`: fix(scrapers): Corrigir autenticação BRAPI - usar query parameter
-- `79ec012`: docs: Atualizar RESUMO_VALIDACAO_FASE_4 com correções aplicadas
-- `2825897`: chore: Adicionar *.tsbuildinfo ao .gitignore
-- `340b910`: feat: Implementar FASE 5 - Downloads PDF/JSON para Reports
-- [pending] fix: FASE 6 - Corrigir bugs críticos de botões no sistema Reports
-
-**Status:** ✅ **6/6 fases completas (100%)** - Sistema Reports 100% VALIDADO E FUNCIONAL ⭐
-
-### FIX: Bug Análise Duplicada - Múltiplos Cliques ✅ **100% IMPLEMENTADO (2025-11-13)**
-**Prioridade:** 🔴 ALTA (Bug crítico de UX + Duplicação de dados)
-**Página Afetada:** `/analysis` - Dialog "Nova Análise"
-**Arquivo:** `frontend/src/components/analysis/new-analysis-dialog.tsx`
-
-**Problema Identificado:**
-- ❌ Botão "Solicitar Análise" permite múltiplos cliques durante requisição
-- ❌ Cada clique cria uma nova requisição POST
-- ❌ Resultado: Múltiplas análises duplicadas do mesmo ativo no banco
-- ❌ Sem feedback visual de que requisição está em andamento
-- ❌ Usuário não sabe se sistema está processando
-
-**Solução Implementada:**
-1. ✅ Adicionado estado `isSubmitting` para controlar loading (linha 34)
-2. ✅ Botão desabilita imediatamente após clique (`disabled={isSubmitting}`) (linha 200)
-3. ✅ Ícone Play trocado por Loader2 animado durante requisição (linhas 201-211)
-4. ✅ Texto muda de "Solicitar Análise" para "Solicitando..." (linha 204)
-5. ✅ Prevenção de múltiplos cliques com `if (isSubmitting) return;` (linhas 40-43)
-6. ✅ Estado resetado no `finally` para permitir retry (linhas 130-132)
-7. ✅ Botão "Cancelar" desabilitado durante submissão (linha 196)
+<corpo detalhado:
+- Problema identificado
+- Solução implementada
+- Arquivos modificados (+X/-Y linhas)
+- Validações realizadas (checklist)>
 
 **Arquivos Modificados:**
-- `frontend/src/components/analysis/new-analysis-dialog.tsx` (+18 linhas modificadas)
-  - Linha 24: Import Loader2
-  - Linha 34: Estado isSubmitting
-  - Linhas 40-43: Prevenção de múltiplos cliques
-  - Linha 54: setIsSubmitting(true)
-  - Linhas 130-132: finally { setIsSubmitting(false); }
-  - Linhas 192-213: Botões com loading states
+- arquivo1.ts (+X linhas)
 
-**Validação Completa:**
+**Validação:**
 - ✅ TypeScript: 0 erros
-- ✅ Build: Success (17 páginas, /analysis: 8.77 kB)
-- ✅ Lint: Passed
-- 🔄 Teste funcional: Aguardando teste em ambiente local
-  - Validar: Botão desabilita imediatamente
-  - Validar: Spinner aparece
-  - Validar: Apenas 1 análise criada (não duplica)
-  - Validar: Toast de erro + botão volta ao normal em caso de falha
-
-**Impacto:**
-- ✅ Previne duplicação de análises no banco de dados
-- ✅ Melhora feedback visual (usuário sabe que requisição está em andamento)
-- ✅ Reduz desperdício de recursos de scraping (4 fontes por análise)
-- ✅ Melhora experiência do usuário (UX)
-
-**Tempo de Implementação:** 45 minutos (estimativa inicial: 1h 40min)
-**Documentação:** `CORRECAO_BUG_ANALISE_DUPLICADA.md` (planejamento completo)
-
-### FASE 9: OAuth Manager - Validação Frontend ✅ 100% COMPLETO (2025-11-13)
-- [x] Página `/oauth-manager` compilada e funcional (8 kB)
-- [x] Componentes UI validados:
-  - VncViewer (30 linhas) - Iframe VNC + header dinâmico
-  - OAuthProgress (66 linhas) - Progress bar + lista de 19 sites com ícones de status
-- [x] Hook `useOAuthSession` (328 linhas) - Gerenciamento completo de estado OAuth
-- [x] Integração com API FastAPI (porta 8000)
-- [x] Health check OAuth API: ✅ Funcional
-- [x] Error handling completo (Toast + Alert)
-- [x] Dialog de recuperação funcional
-- [x] Auto-refresh de status (3s)
-- [x] Loading states em todos os botões
-- [x] TypeScript: 0 erros
-- [x] Console: 0 erros críticos (apenas favicon 404)
-
-**Funcionalidades Validadas:**
-- ✅ Botão "Iniciar Renovação" chama API
-- ✅ Error handling captura falhas
-- ✅ Toast notifications funcionais
-- ✅ Dialog abre/fecha corretamente
-- ✅ Componentes renderizam sem erros
-
-**Limitação Conhecida (não-bloqueante):**
-- ⚠️ VNC/Chrome não configurado no ambiente de teste
-- ⚠️ Fluxo completo E2E será testado em produção
-
-**Arquivos Validados:**
-- `oauth-manager/page.tsx` (183 linhas)
-- `oauth-manager/components/VncViewer.tsx` (30 linhas)
-- `oauth-manager/components/OAuthProgress.tsx` (66 linhas)
-- `hooks/useOAuthSession.ts` (328 linhas)
-- `lib/api.ts` (módulo oauth ~100 linhas)
-
-**Documentação:** `VALIDACAO_FASE_9_OAUTH_MANAGER.md`
-**Screenshots:** `fase-9-oauth-manager-initial.png`, `fase-9-oauth-manager-error-expected.png`
-
-### FIX: Página de Login - Funcionalidades Faltantes ✅ 100% COMPLETO (2025-11-13)
-- [x] Checkbox "Lembrar-me" implementado:
-  - Estado `rememberMe` com useState
-  - Email salvo em localStorage (chave: 'rememberedEmail')
-  - useEffect para carregar email salvo
-  - Email removido ao desmarcar
-- [x] Link "Esqueceu a senha?" implementado:
-  - Trocado `<a href="#">` por `<button>` (semântica correta)
-  - Dialog modal com Shadcn/ui
-  - Handler `handleForgotPassword()` com API call
-  - Endpoint: `POST /auth/forgot-password`
-  - Toast de sucesso/erro
-  - Botões "Cancelar" e "Enviar Email"
-- [x] Validação completa:
-  - TypeScript: 0 erros
-  - Build: Success
-  - Console: 0 erros
-  - Testes UI: Checkbox + Dialog funcionais
-
-**Arquivo Modificado:** `frontend/src/app/login/page.tsx` (+106 linhas)
-**Commit:** `f80da85` - fix: Implementar funcionalidades faltantes na página de login
-**Screenshots:** `login-page-after-fixes.png`, `login-forgot-password-dialog.png`
-
-### FASE 23: Sistema de Métricas de Scrapers ✅ 100% COMPLETO (2025-11-13)
-Sistema completo de métricas reais para monitoramento de scrapers, substituindo dados hardcoded por dados persistidos no banco.
-
-**Backend Implementado:**
-- [x] **Migration:** `1762906000000-CreateScraperMetrics.ts` (95 linhas)
-  - Tabela `scraper_metrics` com campos: id, scraper_id, operation_type, ticker, success, response_time, error_message, created_at
-  - 3 indexes para performance (scraper_id, created_at, scraper_operation)
-- [x] **Entity:** `scraper-metric.entity.ts` (32 linhas)
-  - TypeORM entity com decorators
-  - Tipos: operationType ('test' | 'sync'), ticker nullable
-- [x] **Service:** `scraper-metrics.service.ts` (150 linhas)
-  - `saveMetric()`: Salva cada execução de teste/sync
-  - `getMetricsSummary()`: Calcula métricas agregadas (últimos 30 dias)
-  - `getAllMetricsSummaries()`: Retorna métricas de todos os scrapers
-  - `cleanupOldMetrics()`: Auto-limpeza (90 dias)
-- [x] **Controller:** Atualizações em `scrapers.controller.ts`
-  - Endpoint `/status`: Agora retorna métricas reais do banco (substituiu hardcoded)
-  - Endpoint `/test/:scraperId`: Salva métricas de cada teste (responseTime, success, error)
-  - Endpoint `/sync/:scraperId`: REMOVIDO (sincronização será por página)
-- [x] **Module:** `scrapers.module.ts` - Registro do ScraperMetricsService
-- [x] **App Module:** `app.module.ts` - Adição de ScraperMetric ao array de entities
-
-**Frontend Refatorado:**
-- [x] **Página:** `/data-sources/page.tsx` (refatoração -34 linhas)
-  - Removido botão "Sincronizar" e função `handleSync()`
-  - Removido estado `syncingId`
-  - Adicionado Tooltip explicativo no botão "Testar"
-  - Trocado "Última Sincronização" → "Último Teste"
-  - Campo `lastTest` exibido (formato: DD/MM/YYYY, HH:MM:SS ou "Nunca testado")
-  - Integração 100% com métricas reais do backend
-
-**Validação Completa:**
-- ✅ **TypeScript:** 0 erros (backend + frontend)
-- ✅ **Build:** Success (ambos)
-- ✅ **Database:** Tabela criada, indexes OK, métrica salva corretamente
-- ✅ **Endpoints:** GET /status (métricas reais), POST /test/:id (salva métrica), POST /sync/:id (404)
-- ✅ **Console:** 0 erros, 0 warnings
-- ✅ **MCP Triplo:** Chrome DevTools ✅, Playwright ✅, Selenium (não-autenticado)
-- ✅ **Tooltip:** Funcional e explicativo
-- ✅ **Métricas Reais:** Fundamentus (100% sucesso, 1 req, 4778ms, 13/11/2025 18:42:18)
-
-**Commits:**
-- `1df6f61` - feat: Implementar sistema de métricas reais para scrapers
-- `bbedb44` - fix: Adicionar entidade ScraperMetric ao app.module.ts
-- `aab4d66` - feat: Refatorar página /data-sources - remover sync, adicionar tooltips e métricas reais
-
-**Screenshots:**
-- `validation-screenshots/playwright-data-sources.png` (Playwright MCP)
-- Chrome DevTools (inline screenshot com Tooltip visível)
-
-**Decisões Técnicas:**
-- ❌ **Removido endpoint /sync:** Sincronização será responsabilidade de cada página específica
-- ✅ **Métricas agregadas:** Cálculo de successRate, avgResponseTime, totalRequests baseado em últimos 30 dias
-- ✅ **Auto-cleanup:** Métricas antigas (>90 dias) removidas automaticamente
-- ✅ **Indexes otimizados:** Queries rápidas para dashboard de métricas
-
-### Validação MCP Triplo Completa ✅ 100% COMPLETO (2025-11-14)
-Validação abrangente de todo o sistema (frontend, backend e database) usando metodologia MCP Triplo antes de avançar para próxima fase de desenvolvimento.
-
-**Escopo da Validação:**
-- [x] **7 Páginas Frontend** - Validadas com 3 MCPs cada (Playwright + Chrome DevTools + Selenium)
-  - /dashboard ✅ - 0 erros (Ibovespa chart, estatísticas, R$ 21.431,50)
-  - /assets ✅ - 0 erros (55 ativos listados)
-  - /analysis ✅ - 0 erros (4 análises: PETR4, VALE3, WEGE3, ITUB4)
-  - /portfolio ✅ - 0 erros (5 posições, ganho do dia R$ 2,00)
-  - /reports ✅ - 0 erros (55 ativos, 4 análises disponíveis)
-  - /data-sources ✅ - 0 erros (6 fontes, 63.3% taxa de sucesso)
-  - /settings ✅ - 0 erros (4 tabs: Perfil, Notificações, Integrações API, Segurança)
-
-- [x] **6 Endpoints REST** - Testados com curl
-  - GET /health → 200 OK ✅
-  - GET /assets → 200 OK ✅
-  - GET /scrapers/status → 200 OK + JSON válido ✅
-  - GET /analysis → 401 Protected ✅
-  - GET /portfolio → 401 Protected ✅
-  - GET /reports/assets-status → 401 Protected ✅
-
-- [x] **Database PostgreSQL** - Verificação completa via SQL
-  - 12 tabelas criadas ✅
-  - 6 migrations aplicadas ✅
-  - 1.418 registros totais (55 assets + 1298 prices + 11 analyses + 7 users + 4 portfolios + 6 positions + 24 metrics + 22 logs) ✅
-  - Dados recentes (14/11/2025 14:41:28) ✅
-  - Campo `change_percent` populado corretamente (-1.39% a +2.46%) ✅
-
-**Metodologia MCP Triplo:**
-1. **Playwright MCP:** Navegação automatizada + screenshot + console errors
-2. **Chrome DevTools MCP:** DevTools protocol + console messages + warnings
-3. **Selenium MCP:** WebDriver + validação de carregamento básico
-
-**Critério de Aprovação:** 0 console errors + 0 warnings em TODOS os 3 MCPs
-
-**Resultados:**
-- ✅ **Console Errors:** 0
-- ✅ **Console Warnings:** 0
-- ✅ **TypeScript Errors:** 0
-- ✅ **Testes Executados:** 21 (3 MCPs × 7 páginas)
-- ✅ **Screenshots:** 14 capturados como evidência
-- ✅ **Taxa de Sucesso:** 100%
+- ✅ Build: Success
 
 **Documentação:**
-- `VALIDACAO_MCP_TRIPLO_COMPLETA.md` (675 linhas) - Validação completa com metodologia, resultados detalhados, problemas conhecidos, melhorias implementadas e próximos passos
+- ARQUIVO.md (criado/atualizado)
 
-**Commit:**
-- `45fbee2` - docs: Adicionar validação MCP Triplo completa - 100% aprovado
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
 
-**Status:** ✅ **SISTEMA 100% VALIDADO - APROVADO PARA PRÓXIMA FASE**
-
-### FIX: Bug Ticker Hardcoded em Endpoint de Teste ✅ 100% COMPLETO (2025-11-14)
-Correção crítica que permitia testar scrapers com qualquer ticker ao invés de sempre usar PETR4.
-
-**Problema Identificado:**
-- ❌ Endpoint `POST /scrapers/test/:scraperId` sempre usava PETR4 hardcoded (linha 128)
-- ❌ Impossível testar scrapers com outros tickers (VALE3, ITUB4, WEGE3, etc)
-- ❌ Falsa impressão de que scrapers estavam quebrados quando na verdade funcionavam
-- ❌ Impossível avaliar taxa de sucesso real de cada scraper
-
-**Solução Implementada:**
-- ✅ Adicionado parâmetro opcional `ticker` no body da requisição
-- ✅ Importado decorator `@Body()` do `@nestjs/common`
-- ✅ Lógica: `const testTicker = body?.ticker || 'PETR4';` (usa ticker do body ou default PETR4)
-- ✅ Backward compatible (se não enviar ticker, usa PETR4)
-
-**Arquivo Modificado:**
-- `backend/src/scrapers/scrapers.controller.ts` (+2 linhas)
-  - Linha 1: Adicionado `Body` ao import
-  - Linha 120: Adicionado `@Body() body?: { ticker?: string }`
-  - Linha 135: `const testTicker = body?.ticker || 'PETR4';`
-
-**Validação Completa:**
-- ✅ TypeScript: 0 erros
-- ✅ Build: Success (8.7s)
-- ✅ Backend restart: Sem erros
-- ✅ Testes com múltiplos tickers:
-  - VALE3: Success (5.0s) → Dados corretos (companyName: "VALE")
-  - ITUB4: Success (2.9s) → Dados corretos (companyName: "ITAUUNIBANCO")
-  - WEGE3: Success (3.1s) → Dados corretos (companyName: "WEG")
-- ✅ Logs confirmam ticker correto sendo usado:
-  ```
-  [InvestsiteScraper] Scraping VALE3 from investsite
-  [InvestsiteScraper] Scraping ITUB4 from investsite
-  [InvestsiteScraper] Scraping WEGE3 from investsite
-  ```
-
-**Métricas do Investsite (Antes vs Depois):**
-- **Antes da correção CSS:** 16.7% sucesso (1/6 testes) - Erros "Unmatched selector"
-- **Depois da correção CSS:** 61.54% sucesso (8/13 testes) - 7 testes recentes OK
-- **Conclusão:** Scraper estava funcionando, problema era parsing CSS (já corrigido)
-
-**Impacto:**
-- ✅ Permite testar scrapers com qualquer ticker via `{"ticker": "VALE3"}`
-- ✅ Melhora debugging de scrapers (pode isolar problemas por ticker)
-- ✅ Identificou que Investsite está funcionando bem (61.54% taxa de sucesso)
-- ✅ Métricas salvas corretamente no banco com ticker real
-- ✅ Facilita validação de novos scrapers
-
-**Commit:**
-- `6d16d69` - fix: Corrigir bug de ticker hardcoded no endpoint de teste de scrapers
-
-**Tempo de Implementação:** 15 minutos
-
-### FASE 26: Manutenção de Scrapers - Correção de Problemas Não-Bloqueantes ✅ 100% COMPLETO (2025-11-14)
-Correção definitiva de 3 problemas não-bloqueantes identificados na Validação MCP Triplo, garantindo taxa de sucesso >70% para todos os scrapers.
-
-**Problemas Identificados (Validação MCP Triplo):**
-1. **Fundamentei:** 0.0% taxa de sucesso (8/8 falhas) - Validação muito restritiva
-2. **Fundamentus:** avgResponseTime 1263123ms (21 minutos) - Outliers no cálculo
-3. **Investsite:** 61.5% taxa de sucesso (8/13) - Melhorou naturalmente para 100%
-
-**Correções Implementadas:**
-
-**1. Fundamentus - avgResponseTime (Problema 2)** ✅ CORRIGIDO
-- **Causa Raiz:** Database tinha entry com `response_time = 3780495ms` (63 minutos) skewing average
-- **Arquivo:** `backend/src/scrapers/scraper-metrics.service.ts` (linhas 94-104)
-- **Solução:** Filtrar outliers antes do cálculo
-  ```typescript
-  // ANTES (linha 94-99):
-  const successfulMetrics = metrics.filter((m) => m.success && m.responseTime !== null);
-  const avgResponseTime = successfulMetrics.reduce(...) / successfulMetrics.length;
-
-  // DEPOIS (linha 94-104):
-  const responseTimes = metrics
-    .filter((m) => m.success && m.responseTime !== null)
-    .map((m) => m.responseTime)
-    .filter((time) => time > 0 && time < 60000) // Outliers: > 0ms e < 60s
-    .sort((a, b) => a - b);
-  const avgResponseTime = Math.round(responseTimes.reduce(...) / responseTimes.length);
-  ```
-- **Resultado:**
-  - **Antes:** `avgResponseTime: 1263123ms` (21 minutos) ❌
-  - **Depois:** `avgResponseTime: 4267ms` (4.2 segundos) ✅
-
-**2. Fundamentei - Validação (Problema 1)** ✅ CORRIGIDO
-- **Causa Raiz:** Validação exigia apenas `price > 0 || pl !== 0 || pvp !== 0 || roe !== 0`, rejeitando dados com outros campos válidos
-- **Arquivo:** `backend/src/scrapers/fundamental/fundamentei.scraper.ts` (linhas 198-214)
-- **Solução:** Validação relaxada - aceita se ≥3 campos estão preenchidos
-  ```typescript
-  // ANTES (linha 198-204):
-  validate(data: FundamenteiData): boolean {
-    return (
-      data.ticker !== '' &&
-      (data.price > 0 || data.pl !== 0 || data.pvp !== 0 || data.roe !== 0)
-    );
-  }
-
-  // DEPOIS (linha 198-214):
-  validate(data: FundamenteiData): boolean {
-    const filledFields = [
-      data.price > 0, data.pl !== 0, data.pvp !== 0, data.roe !== 0,
-      data.dy !== 0, data.dividaLiquidaEbitda !== 0, data.margemLiquida !== 0,
-      data.valorMercado > 0, data.receitaLiquida > 0, data.lucroLiquido !== 0
-    ].filter(Boolean).length;
-    return data.ticker !== '' && filledFields >= 3;
-  }
-  ```
-- **Observação:** OAuth não configurado (comportamento esperado), validação corrigida para aceitar dados parciais
-
-**3. Investsite - Taxa de Sucesso (Problema 3)** ✅ RESOLVIDO NATURALMENTE
-- **Análise Temporal:**
-  - Últimas 7 execuções (14/11 18:18-19:00): **7/7 sucesso = 100%** ✅
-  - Últimas 13 execuções (desde 13/11): 8/13 sucesso = 61.5% (taxa histórica)
-  - Erros antigos: "Unmatched selector: $ 32,49" (parser de moeda)
-- **Conclusão:** Site estabilizou, scrapers agora capturam corretamente, **não requer correção**
-
-**Validação Completa:**
-- ✅ TypeScript: 0 erros (backend)
-- ✅ Backend restart: Healthy status
-- ✅ Testes via API (5/6 scrapers funcionando):
-  - Fundamentus: ✅ 4118ms (4.1s) - 100% completo
-  - BRAPI: ✅ 350ms (0.3s) - 100% completo + histórico
-  - StatusInvest: ⚠️ 10348ms (10.3s) - Apenas price (outros = 0)
-  - Investidor10: ✅ 13190ms (13.2s) - ~70% dos campos
-  - Investsite: ✅ 5215ms (5.2s) - ~60% dos campos
-  - Fundamentei: ❌ OAuth required (comportamento esperado)
-- ✅ MCP Triplo (Playwright + Chrome DevTools):
-  - /data-sources: 0 console errors, 0 warnings
-  - Taxa de Sucesso Média: 74.0% (exibida corretamente)
-  - Screenshots capturados como evidência
-
-**Métricas Finais:**
-| Scraper | Taxa Sucesso | Avg Response Time | Status |
-|---------|--------------|-------------------|--------|
-| Fundamentus | 100.0% | 4230ms | ✅ Ótimo |
-| BRAPI | 100.0% | 221ms | ✅ Excelente |
-| StatusInvest | 80.0% | 10863ms | ⚠️ Lento mas ok |
-| Investidor10 | 100.0% | 15663ms | ⚠️ Lento mas ok |
-| Fundamentei | 0.0% | 0ms | ❌ OAuth required |
-| Investsite | 64.3% | 4192ms | ✅ Bom (100% recente) |
-
-**Arquivos Modificados:**
-- `backend/src/scrapers/scraper-metrics.service.ts` (+10 linhas) - Filtro de outliers
-- `backend/src/scrapers/fundamental/fundamentei.scraper.ts` (+16 linhas) - Validação relaxada
-
-**Documentação:**
-- `FASE_26_MANUTENCAO_SCRAPERS.md` (677 linhas) - Planejamento completo com investigação, análise e soluções
-
-**Screenshots:**
-- `validation-screenshots/playwright-data-sources-fase26.png` (Playwright MCP)
-- `validation-screenshots/chrome-devtools-data-sources-fase26.png` (Chrome DevTools MCP)
-
-**Impacto:**
-- ✅ Fundamentus agora mostra tempo médio real (4.2s ao invés de 21min)
-- ✅ Fundamentei aceita dados parciais (3+ campos), aumentando taxa de sucesso
-- ✅ Investsite confirmado funcionando bem (100% nos últimos testes)
-- ✅ Dashboard de métricas reflete dados precisos e confiáveis
-- ✅ Sistema 100% pronto para produção
-
-**Tempo de Implementação:** 2 horas (investigação + correções + validação)
-
-### FASE 24: Dados Históricos BRAPI 🔜 PLANEJADO
-- [ ] Pesquisar endpoints BRAPI para histórico
-- [ ] Verificar períodos disponíveis (diário, semanal, mensal, anual, 3-10 anos)
-- [ ] Comparar com Investing.com
-- [ ] Planejar estrutura de tabela
-- [ ] Planejar endpoint backend
-- [ ] Planejar componente frontend
-
-### FASE 25: Refatoração Botão "Solicitar Análises" ⏳ AGUARDANDO APROVAÇÃO
-- [ ] Remover botão de /assets
-- [ ] Adicionar botão em /analysis (função já existe)
-- [ ] Adicionar Tooltip sobre coleta multi-fonte
-- [ ] Validar backend coleta de TODAS as fontes
-- [ ] Testes de funcionalidade
-
-**Referência:** `REFATORACAO_BOTAO_SOLICITAR_ANALISES.md`
-
-### FASE 26+: Features Futuras 🔮
-- [ ] Implementar scrapers: Fundamentei, Investsite
-- [ ] Sistema de alertas e notificações
-- [ ] Análise de opções (vencimentos, IV, greeks)
-- [ ] Análise de insiders
-- [ ] Análise de dividendos
-- [ ] Análise macroeconômica
-- [ ] Análise de correlações
-- [ ] Integração com IAs (ChatGPT, Claude, Gemini)
-- [ ] Importação de portfólios (Kinvo, B3, MyProfit, etc)
-- [ ] Mobile app (React Native)
-- [ ] CI/CD completo
-- [ ] Testes automatizados (>80% coverage)
+**Tipos:**
+- `feat`: Nova funcionalidade
+- `fix`: Correção de bug
+- `docs`: Documentação
+- `refactor`: Refatoração (sem mudança de comportamento)
+- `test`: Testes
+- `chore`: Manutenção/config
+- `perf`: Performance
 
 ---
 
-## 🔧 TROUBLESHOOTING
+## 📊 MÉTRICAS DE QUALIDADE (Zero Tolerance)
 
-**📚 Documentação Completa:** Ver `TROUBLESHOOTING.md` para soluções detalhadas de 16+ problemas comuns de backend, frontend, scrapers, database, Docker e WebSocket.
-
-### Problema: Backend não compila (Resumo)
-
-**Sintomas:**
 ```
-Error: Cannot find module '@api/assets/assets.service'
-```
-
-**Solução:**
-1. Verificar `tsconfig.json` tem paths configurados:
-```json
-{
-  "compilerOptions": {
-    "paths": {
-      "@api/*": ["src/api/*"],
-      "@database/*": ["src/database/*"],
-      "@scrapers/*": ["src/scrapers/*"]
-    }
-  }
-}
-```
-
-2. Reiniciar TypeScript server no VSCode: `Ctrl+Shift+P` → `TypeScript: Restart TS Server`
-
----
-
-### Problema: Frontend não conecta ao backend
-
-**Sintomas:**
-```
-Error: Network Error - ERR_CONNECTION_REFUSED
-```
-
-**Solução:**
-1. Verificar se backend está rodando: `docker ps | grep invest_backend`
-2. Verificar variável de ambiente: `NEXT_PUBLIC_API_URL=http://localhost:3101`
-3. Verificar CORS no backend (`main.ts`):
-```typescript
-app.enableCors({
-  origin: 'http://localhost:3100',
-  credentials: true,
-});
+TypeScript Errors: 0 ✅
+Build Errors: 0 ✅
+Console Errors: 0 ✅ (páginas principais)
+Lint Problems: 0 ✅ (critical)
+Breaking Changes: 0 ✅ (sem aprovação)
+Documentação: 100% ✅
+Co-autoria em Commits: 100% ✅
 ```
 
 ---
 
-### Problema: Scraper retorna dados vazios
+## 🔗 REFERÊNCIAS RÁPIDAS
 
-**Sintomas:**
-```
-ScraperResult { data: {}, confidence: 0.0 }
-```
+**Arquivos de Configuração:**
+- `docker-compose.yml` - Orquestração de serviços
+- `backend/tsconfig.json` - TypeScript config backend
+- `frontend/tsconfig.json` - TypeScript config frontend
+- `.gitignore` - Arquivos ignorados pelo Git
 
-**Solução:**
-1. Verificar se site mudou estrutura HTML
-2. Rodar scraper manualmente para debug:
+**Portas Principais:**
+- Frontend: http://localhost:3100
+- Backend: http://localhost:3101/api/v1
+- PostgreSQL: localhost:5532
+- Redis: localhost:6479
+
+**Comandos Essenciais:**
 ```bash
-cd backend
-npm run test:scraper -- PETR4
-```
-3. Verificar logs do scraper:
-```bash
-docker logs invest_backend | grep "Scraper"
-```
-4. Atualizar seletores CSS/XPath no scraper
+# Docker
+docker-compose up -d          # Iniciar todos os serviços
+docker-compose down           # Parar todos os serviços
+docker-compose logs -f <srv>  # Ver logs de serviço
 
----
+# Validação
+cd backend && npx tsc --noEmit && cd ../frontend && npx tsc --noEmit
 
-### Problema: Migration falha
+# Build
+npm run build                 # Em backend/ ou frontend/
 
-**Sintomas:**
-```
-QueryFailedError: column "change" already exists
-```
-
-**Solução:**
-1. Verificar migrations executadas:
-```sql
-SELECT * FROM migrations ORDER BY timestamp DESC;
-```
-
-2. Reverter migration:
-```bash
-cd backend
-npm run migration:revert
-```
-
-3. Corrigir migration e re-executar:
-```bash
-npm run migration:run
+# Migrations
+cd backend && npm run migration:run
 ```
 
 ---
 
-### Problema: WebSocket não conecta
+## 📚 DOCUMENTAÇÃO ADICIONAL
 
-**Sintomas:**
-```
-WebSocket connection failed
-```
+**Guias Técnicos:**
+- `MCPS_USAGE_GUIDE.md` - 8 MCPs instalados (Sequential Thinking, Filesystem, etc)
+- `METODOLOGIA_MCPS_INTEGRADA.md` - Integração MCPs com metodologia
+- `DOCUMENTACAO_SCRAPERS_COMPLETA.md` - 31 fontes de dados planejadas (6 implementadas)
 
-**Solução:**
-1. Verificar URL do WebSocket: `http://localhost:3101` (mesma porta do backend)
-2. Verificar variável: `NEXT_PUBLIC_WS_URL=http://localhost:3101`
-3. Verificar backend tem Gateway configurado:
-```typescript
-@WebSocketGateway({
-  cors: {
-    origin: 'http://localhost:3100',
-    credentials: true,
-  },
-})
-```
+**Validações de Fases:**
+- `VALIDACAO_FRONTEND_COMPLETA.md` - 21 fases frontend (100% completo)
+- `VALIDACAO_MCP_TRIPLO_COMPLETA.md` - Validação com 3 MCPs (Playwright + Chrome DevTools + Selenium)
 
----
-
-### Problema: Docker container não inicia
-
-**Sintomas:**
-```
-Error: Container invest_postgres exited with code 1
-```
-
-**Solução:**
-1. Verificar logs:
-```bash
-docker logs invest_postgres
-```
-
-2. Verificar volume:
-```bash
-docker volume inspect invest_postgres_data
-```
-
-3. Recriar container:
-```bash
-docker-compose down
-docker volume rm invest_postgres_data
-docker-compose up -d
-```
-
----
-
-## 📚 REFERÊNCIAS
-
-### Documentação Oficial
-- NestJS: https://docs.nestjs.com
-- Next.js: https://nextjs.org/docs
-- TypeORM: https://typeorm.io
-- BullMQ: https://docs.bullmq.io
-- Shadcn/ui: https://ui.shadcn.com
-
-### Documentos do Projeto
-- `README.md`: Documentação pública
-- `VALIDACAO_FRONTEND_COMPLETA.md`: Plano de validação frontend (24 fases)
-- `ROADMAP_SISTEMA_ATUALIZACAO_ATIVOS.md`: Sistema de atualização
-- `REFATORACAO_BOTAO_SOLICITAR_ANALISES.md`: Refatoração planejada
-- `CORRECAO_VARIACAO_ATIVOS.md`: Correção de variação BRAPI
-
-### Commits Importantes
-- `43b197d`: Correção de variação (BRAPI)
-- `c6ba377`: Correção OAuth Google
-- `7531bc9`: Autenticação com Cookie
+**Planejamentos:**
+- `REFATORACAO_SISTEMA_REPORTS.md` - Sistema de relatórios (6 fases)
+- `ROADMAP_SISTEMA_ATUALIZACAO_ATIVOS.md` - Sistema de atualização
 
 ---
 
 **Fim do claude.md**
+
+> **Lembre-se:** Este arquivo é para **Claude Code**, não para usuários finais. Para documentação do projeto, veja `README.md` e os arquivos de documentação listados no início deste arquivo.
