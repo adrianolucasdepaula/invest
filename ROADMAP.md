@@ -520,19 +520,42 @@ useEffect(() => {
 
 ## 🔄 FASES EM ANDAMENTO
 
-### FASE 24: Dados Históricos BRAPI 🔜 PLANEJADO
+### FASE 24: Dados Históricos BRAPI com Range Configurável ✅ 100% COMPLETO (2025-11-14)
 
-Implementar coleta de dados históricos de preços via BRAPI.
+Sistema de dados históricos de preços com range configurável.
 
-**Planejamento:**
-- [ ] Pesquisar endpoints BRAPI para histórico
-- [ ] Verificar períodos disponíveis (diário, semanal, mensal, anual, 3-10 anos)
-- [ ] Comparar com Investing.com
-- [ ] Planejar estrutura de tabela
-- [ ] Planejar endpoint backend
-- [ ] Planejar componente frontend
+**Backend:**
+- [x] DTO HistoricalPricesQueryDto com enum PriceRange (11 valores: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max)
+- [x] Controller modificado para usar DTO via @Query()
+- [x] Service refatorado:
+  - syncAsset(): Parâmetro `range` (default '1y')
+  - Removido `slice(0, 30)` - salva TODOS os dados históricos
+  - getPriceHistory(): Cache inteligente
+  - 4 métodos auxiliares: rangeToStartDate, getYTDDays, shouldRefetchData, getExpectedDays
 
-**Status:** 🔜 **PLANEJADO**
+**Frontend:**
+- [x] Hook useAssetPrices: Adicionar parâmetro `range`
+- [x] API client: Passar `range` para backend
+- [x] Página /assets/[ticker]: Seletor visual com 7 botões (1mo, 3mo, 6mo, 1y, 2y, 5y, max)
+- [x] Título dinâmico mostra range selecionado
+
+**Funcionalidades:**
+- ✅ Cache inteligente: Não busca BRAPI se dados < 24h e completos
+- ✅ Suporte a 11 ranges diferentes (compatível com BRAPI)
+- ✅ Backward compatible: startDate/endDate ainda funcionam
+- ✅ Default '1y' se nenhum parâmetro fornecido
+- ✅ UX intuitiva: botões estilizados + React Query auto-refetch
+
+**Arquivos Modificados:** 6 arquivos (+215 linhas, -23 linhas)
+**Commits:** 2 commits (`aae3618`, `745a5b8`)
+**Documentação:** `FASE_24_DADOS_HISTORICOS.md`, `PLANO_FASE_24_DADOS_HISTORICOS.md`
+**Validação:**
+- ✅ TypeScript: 0 erros (backend + frontend)
+- ✅ Build: Success (ambos)
+- ✅ Testes manuais: curl + UI funcionando
+- ✅ Containers: Todos healthy
+
+**Status:** ✅ **100% COMPLETO E VALIDADO**
 
 ---
 
