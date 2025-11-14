@@ -482,6 +482,37 @@ xterm \  # Adicionado para terminal VNC
 
 **Commits:**
 - `477e031` - fix: Corrigir OAuth Manager - network_mode sharing + DISPLAY env + VNC menu
+- `f43e7d7` - fix: Corrigir erro "Já existe uma sessão OAuth ativa" (auto-load session)
+
+**Fix Adicional (2025-11-14):**
+**Problema:** Erro "Já existe uma sessão OAuth ativa" ao clicar "Iniciar Renovação"
+- Frontend não carregava sessões existentes (orphaned sessions)
+- Botão "Iniciar" visível mesmo com sessão ativa no backend
+- Usuário forçado a cancelar manualmente via API
+
+**Solução:** Auto-load de sessão existente
+```typescript
+// useOAuthSession.ts - useEffect adicionado
+useEffect(() => {
+  const loadExistingSession = async () => {
+    const result = await api.oauth.getSessionStatus();
+    if (result.success && result.session) {
+      const activeStatuses = ['waiting_user', 'in_progress', 'processing'];
+      if (activeStatuses.includes(result.session.status)) {
+        setSession(result.session);
+        setVncUrl(result.session.vnc_url);
+      }
+    }
+  };
+  loadExistingSession();
+}, []); // Executa ao montar
+```
+
+**Resultado:**
+- ✅ Sessões existentes carregadas automaticamente
+- ✅ Estado frontend sincronizado com backend
+- ✅ Botão "Cancelar Sessão" acessível
+- ✅ UX melhorada (continuar sessão interrompida)
 
 **Status:** ✅ **100% COMPLETO E VALIDADO**
 
