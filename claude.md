@@ -752,10 +752,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
   - Validação SQL: 4/4 queries confirmaram integridade
   - Frontend testado: /reports e /analysis (0 erros no console)
   - Documentação: VALIDACAO_FASE_1_LIMPEZA.md
-- [x] FASE 2: Novo Endpoint Backend ✅
-  - DTO: AssetWithAnalysisStatusDto (asset + status análise)
-  - Endpoint: GET /api/v1/reports/assets-status
-  - Retorna: 55 ativos com flags (isAnalysisRecent, isAnalysisOutdated, canRequestAnalysis)
+- [x] FASE 2: Novo Endpoint Backend ✅ **100% VALIDADO (2025-11-13)**
+  - DTO: AssetWithAnalysisStatusDto (141 linhas) - JÁ EXISTIA com enums tipados e Swagger docs
+  - Service: getAssetsWithAnalysisStatus() (86 linhas) - JÁ EXISTIA com lógica robusta
+  - Controller: GET /assets-status (12 linhas) - JÁ EXISTIA protegido com JWT
+  - Hook Frontend: useReportsAssets() (125 linhas) - 3 hooks implementados
+  - Endpoint testado: 200/304, 55 ativos, < 1s response time
+  - TypeScript: 0 erros (backend + frontend)
+  - Integração: useReportsAssets usado em /reports page (linha 95)
+  - Documentação: VALIDACAO_FASE_2_ENDPOINT.md
 - [x] FASE 3: Refatorar Frontend /reports ✅
   - Página redesenhada (540 linhas)
   - Lista de TODOS os ativos (55) com status de análise
