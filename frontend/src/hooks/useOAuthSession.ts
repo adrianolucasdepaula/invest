@@ -293,6 +293,34 @@ export function useOAuthSession(): UseOAuthSessionReturn {
     currentSite !== null &&
     currentSite.status === 'waiting_user';
 
+  // Carregar sessão existente ao montar componente
+  useEffect(() => {
+    let mounted = true;
+
+    const loadExistingSession = async () => {
+      try {
+        const result = await api.oauth.getSessionStatus();
+
+        if (mounted && result.success && result.session) {
+          // Só atualiza se há uma sessão ativa no backend
+          const activeStatuses = ['waiting_user', 'in_progress', 'processing'];
+          if (activeStatuses.includes(result.session.status)) {
+            setSession(result.session);
+            setVncUrl(result.session.vnc_url);
+          }
+        }
+      } catch (err) {
+        // Ignora erro (não há sessão ativa)
+      }
+    };
+
+    loadExistingSession();
+
+    return () => {
+      mounted = false;
+    };
+  }, []); // Executa apenas uma vez ao montar
+
   // Auto-refresh status quando sessão está ativa (após computed properties)
   useEffect(() => {
     if (!session || !isSessionActive) return;
