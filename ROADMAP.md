@@ -390,6 +390,103 @@ Correção de 3 problemas não-bloqueantes identificados na Validação MCP Trip
 
 ---
 
+### FASE 27: OAuth Manager - Correção Crítica ✅ 100% COMPLETO (2025-11-14)
+
+Correção de bug crítico que impedia OAuth Manager de iniciar sessões de autenticação via VNC.
+
+**Problema Crítico:**
+- ❌ Botão "Iniciar Renovação" retornando erro: `"Falha ao iniciar navegador Chrome"`
+- ❌ OAuth Manager ausente na sidebar (inacessível para usuários)
+- ❌ VNC sem menu/ícone para abrir Chrome manualmente
+
+**Análise Técnica:**
+```
+Erro Selenium: "Chrome instance exited. Examine ChromeDriver verbose log"
+Causa Raiz: DISPLAY environment variable NÃO CONFIGURADA no container api-service
+Problema Arquitetural: Xvfb roda em invest_scrapers mas OAuth roda em invest_api_service
+```
+
+**Correções Implementadas:**
+
+**1. Docker Network Sharing** ✅ CRÍTICO
+```yaml
+# docker-compose.yml
+api-service:
+  environment:
+    - DISPLAY=:99  # ADICIONADO
+  network_mode: "service:scrapers"  # Compartilhar rede com scrapers
+  # ports REMOVIDO (conflito com network_mode)
+
+scrapers:
+  ports:
+    - "8000:8000"  # API Service (movido de api-service)
+```
+
+**2. Python Environment Variable** ✅ CRÍTICO
+```python
+# oauth_session_manager.py:148-168
+def start_chrome(self) -> bool:
+    import os
+    os.environ['DISPLAY'] = self.DISPLAY  # :99
+    # Chrome argument --display removido (duplicado)
+```
+
+**3. Frontend Sidebar** ✅ UX
+```typescript
+// sidebar.tsx:8,26
+import { Shield } from 'lucide-react';
+{ name: 'OAuth Manager', href: '/oauth-manager', icon: Shield }
+```
+
+**4. VNC Fluxbox Menu** ✅ UX
+```bash
+# vnc-startup.sh:34-44
+cat > ~/.fluxbox/menu << 'EOF'
+[begin] (B3 AI Analysis)
+  [exec] (Google Chrome) {google-chrome --no-sandbox}
+  [exec] (Terminal) {xterm}
+[end]
+EOF
+```
+
+**5. Dockerfile Dependencies** ✅
+```dockerfile
+# Dockerfile:38
+xterm \  # Adicionado para terminal VNC
+```
+
+**Validação Completa:**
+- ✅ **MCP Triplo:** Playwright ✅ + Chrome DevTools ✅ + Selenium (não-auth)
+- ✅ **Console:** 0 erros, 0 warnings (apenas INFO: React DevTools)
+- ✅ **Funcionalidade:** 4 sites coletados (Google, Fundamentei, Investidor10, StatusInvest)
+- ✅ **Cookies:** 56 cookies totais (21% progresso)
+- ✅ **Screenshots:** 3 capturas de validação
+- ✅ **Integração:** frontend ↔ api-service ↔ scrapers ✅
+
+**Métricas de Sucesso:**
+| Métrica | Antes | Depois |
+|---------|-------|--------|
+| OAuth Sessions | ❌ Erro | ✅ Funcionando |
+| Sites Coletados | 0/19 | 4/19 (21%) |
+| Cookies | 0 | 56 |
+| Console Errors | 1 erro | 0 erros |
+| Sidebar Visibility | ❌ Ausente | ✅ Visível |
+| VNC Menu | ❌ Sem atalhos | ✅ Chrome + Terminal |
+
+**Arquivos Modificados:** 5 arquivos
+- `docker-compose.yml` (+4 linhas, -2 linhas)
+- `backend/python-scrapers/oauth_session_manager.py` (+3 linhas, -1 linha)
+- `frontend/src/components/layout/sidebar.tsx` (+2 linhas)
+- `backend/python-scrapers/docker/vnc-startup.sh` (+11 linhas)
+- `backend/python-scrapers/Dockerfile` (+1 linha)
+
+**Commits:**
+- `477e031` - fix: Corrigir OAuth Manager - network_mode sharing + DISPLAY env + VNC menu
+
+**Status:** ✅ **100% COMPLETO E VALIDADO**
+
+---
+
 ## 🔄 FASES EM ANDAMENTO
 
 ### FASE 24: Dados Históricos BRAPI 🔜 PLANEJADO
