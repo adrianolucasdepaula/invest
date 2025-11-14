@@ -150,6 +150,10 @@ class OAuthSessionManager:
         try:
             logger.info("Iniciando Chrome para sessão OAuth...")
 
+            # Configurar variável de ambiente DISPLAY
+            import os
+            os.environ['DISPLAY'] = self.DISPLAY
+
             chrome_options = Options()
 
             # NÃO usar headless - queremos visualizar via VNC
@@ -160,8 +164,8 @@ class OAuthSessionManager:
             chrome_options.add_argument("--disable-dev-shm-usage")
             chrome_options.add_argument("--disable-gpu")
 
-            # Display virtual
-            chrome_options.add_argument(f"--display={self.DISPLAY}")
+            # Display virtual (removido argumento duplicado - variável ambiente já definida acima)
+            # chrome_options.add_argument(f"--display={self.DISPLAY}")
 
             # Tamanho da janela
             chrome_options.add_argument("--window-size=1920,1080")

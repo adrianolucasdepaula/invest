@@ -13,6 +13,7 @@ import {
   Database,
   Settings,
   BarChart3,
+  Shield,
 } from 'lucide-react';
 
 const navigation = [
@@ -22,6 +23,7 @@ const navigation = [
   { name: 'Portfólio', href: '/portfolio', icon: Briefcase },
   { name: 'Relatórios', href: '/reports', icon: FileText },
   { name: 'Fontes de Dados', href: '/data-sources', icon: Database },
+  { name: 'OAuth Manager', href: '/oauth-manager', icon: Shield },
   { name: 'Configurações', href: '/settings', icon: Settings },
 ];
 

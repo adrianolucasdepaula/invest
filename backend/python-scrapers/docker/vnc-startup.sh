@@ -31,6 +31,18 @@ if ! ps -p $XVFB_PID > /dev/null; then
 fi
 echo "✓ Xvfb started (PID: $XVFB_PID)"
 
+# Configure Fluxbox menu with Chrome shortcut
+echo "Configuring Fluxbox menu..."
+mkdir -p ~/.fluxbox
+cat > ~/.fluxbox/menu << 'EOF'
+[begin] (B3 AI Analysis)
+  [exec] (Google Chrome) {google-chrome --no-sandbox --disable-dev-shm-usage}
+  [exec] (Terminal) {xterm}
+  [separator]
+  [exit] (Exit Fluxbox)
+[end]
+EOF
+
 # Start Fluxbox window manager (optional, helps with some apps)
 echo "Starting Fluxbox..."
 fluxbox -display :99 &

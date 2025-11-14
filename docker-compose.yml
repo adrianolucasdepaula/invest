@@ -186,6 +186,7 @@ services:
     ports:
       - "5900:5900"  # VNC direct connection
       - "6080:6080"  # noVNC web interface
+      - "8000:8000"  # API Service (compartilhado via network_mode)
     volumes:
       - ./backend/python-scrapers:/app
       - ./browser-profiles:/app/browser-profiles
@@ -241,8 +242,10 @@ services:
       - API_HOST=0.0.0.0
       - API_PORT=8000
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    ports:
-      - "8000:8000"
+
+      # VNC/Display Configuration (compartilhado via network_mode com scrapers)
+      - DISPLAY=:99
+    # ports removido - porta 8000 exposta no service scrapers
     volumes:
       - ./backend/api-service:/app
       - ./backend/python-scrapers:/app/python-scrapers
@@ -254,8 +257,7 @@ services:
         condition: service_healthy
       scrapers:
         condition: service_started
-    networks:
-      - invest_network
+    network_mode: "service:scrapers"  # Compartilhar rede com scrapers para acessar X11
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
