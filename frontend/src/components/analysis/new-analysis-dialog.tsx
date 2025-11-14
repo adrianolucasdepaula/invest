@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { Play } from 'lucide-react';
+import { Play, Loader2 } from 'lucide-react';
 
 interface NewAnalysisDialogProps {
   children?: React.ReactNode;
@@ -31,10 +31,16 @@ export function NewAnalysisDialog({ children }: NewAnalysisDialogProps) {
   const [open, setOpen] = useState(false);
   const [ticker, setTicker] = useState('');
   const [type, setType] = useState<'fundamental' | 'technical' | 'complete'>('complete');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Prevenir múltiplos cliques
+    if (isSubmitting) {
+      return;
+    }
 
     if (!ticker) {
       toast({
@@ -44,6 +50,8 @@ export function NewAnalysisDialog({ children }: NewAnalysisDialogProps) {
       });
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       // Buscar token do cookie
@@ -119,6 +127,8 @@ export function NewAnalysisDialog({ children }: NewAnalysisDialogProps) {
         description: error.message || 'Ocorreu um erro ao solicitar a análise. Tente novamente.',
         variant: 'destructive',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -183,12 +193,22 @@ export function NewAnalysisDialog({ children }: NewAnalysisDialogProps) {
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
+              disabled={isSubmitting}
             >
               Cancelar
             </Button>
-            <Button type="submit">
-              <Play className="mr-2 h-4 w-4" />
-              Solicitar Análise
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Solicitando...
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  Solicitar Análise
+                </>
+              )}
             </Button>
           </DialogFooter>
         </form>
