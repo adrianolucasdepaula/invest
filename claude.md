@@ -293,6 +293,10 @@ invest-claude-web/
 
 ## 🔌 PORTAS E SERVIÇOS
 
+**📚 Documentação Completa:** Ver `INSTALL.md` para guia completo de instalação, configuração de variáveis de ambiente e troubleshooting.
+
+### Tabela de Portas (Resumo)
+
 | Serviço | Porta Host | Porta Container | URL |
 |---------|-----------|----------------|-----|
 | **Frontend Next.js** | 3100 | 3000 | http://localhost:3100 |

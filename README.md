@@ -113,6 +113,7 @@ invest/
 
 Para informações detalhadas sobre o projeto, consulte:
 
+- **`INSTALL.md`** - Guia completo de instalação e configuração do ambiente (portas, serviços, variáveis de ambiente)
 - **`ARCHITECTURE.md`** - Arquitetura completa do sistema, stack tecnológica e fluxos de dados
 - **`DATABASE_SCHEMA.md`** - Schema completo do banco de dados, relacionamentos, indexes e queries comuns
 - **`ROADMAP.md`** - Histórico completo de desenvolvimento, fases concluídas e planejamento futuro
