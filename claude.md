@@ -178,6 +178,46 @@ Sistema completo de 8 servidores MCP instalados para estender capacidades do Cla
 - Total: 8 MCPs (100% Connected)
 - Gerenciamento: `claude mcp list`, `claude mcp add`, `claude mcp remove`
 
+**Documentação Completa:**
+- `MCPS_USAGE_GUIDE.md` (855 linhas) - Guia técnico completo de todos os 8 MCPs
+  - Especificações técnicas (pacotes, repositórios, licenças)
+  - Ferramentas disponíveis (ex: Filesystem tem 12 tools)
+  - Parâmetros e exemplos de uso
+  - 4 workflows completos (Refactoring, Bug Fix, WCAG, Dependency Updates)
+  - Checklists e melhores práticas
+- `METODOLOGIA_MCPS_INTEGRADA.md` (1128 linhas) - Integração MCPs com Ultra-Thinking + TodoWrite
+  - Integração nos 5 pilares da metodologia
+  - 8 novas regras (18-25) para uso de MCPs
+  - 3 workflows completos com MCPs
+  - Matrizes de decisão (quando usar cada MCP)
+  - Anti-patterns específicos de MCPs
+  - Checklist expandido de validação
+
+**Integração com Metodologia (OBRIGATÓRIO):**
+
+Os 8 MCPs foram integrados à metodologia existente Ultra-Thinking + TodoWrite através de 8 novas regras:
+
+- **Regra 18**: ✅ SEMPRE usar Sequential Thinking para análise complexa (> 5 decisões)
+- **Regra 19**: ✅ SEMPRE usar Filesystem MCP para operações multi-arquivo (> 3 arquivos)
+- **Regra 20**: ✅ SEMPRE usar Shell MCP para validações obrigatórias (tsc --noEmit, npm run build)
+- **Regra 21**: ✅ SEMPRE usar A11y MCP para validar acessibilidade de novas páginas frontend
+- **Regra 22**: ✅ SEMPRE usar Context7 para consultar documentação atualizada de frameworks
+- **Regra 23**: ✅ SEMPRE usar Playwright/Chrome DevTools para validação completa frontend
+- **Regra 24**: ✅ SEMPRE combinar Sequential Thinking + Filesystem em refatorações grandes
+- **Regra 25**: ❌ NUNCA usar MCPs para SUBSTITUIR Ultra-Thinking/TodoWrite (apenas APOIAR)
+
+**Princípio Fundamental:**
+```
+MCPs são ferramentas de APOIO, não de SUBSTITUIÇÃO.
+Ultra-Thinking + TodoWrite continuam OBRIGATÓRIOS.
+```
+
+**Quando o Claude Code LER esses documentos:**
+- `MCPS_USAGE_GUIDE.md`: Consultar quando precisar de detalhes técnicos de um MCP específico
+- `METODOLOGIA_MCPS_INTEGRADA.md`: Consultar quando planejar workflow de implementação ou correção
+
+**IMPORTANTE:** Esses arquivos são grandes (48KB e 21KB). Claude Code mostrará "too large to include" no system-reminder. Isso é ESPERADO. Use `Read` tool com offset/limit quando precisar consultar seções específicas.
+
 ---
 
 ## 📁 ESTRUTURA DE PASTAS
