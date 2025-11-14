@@ -109,6 +109,14 @@ invest/
 └── docs/                       # Documentação
 ```
 
+## 📚 Documentação Técnica
+
+Para informações detalhadas sobre o projeto, consulte:
+
+- **`DATABASE_SCHEMA.md`** - Schema completo do banco de dados, relacionamentos, indexes e queries comuns
+- **`claude.md`** - Instruções completas para Claude Code, convenções e workflows
+- **`CHECKLIST_TODO_MASTER.md`** - Checklist e TODO master do projeto
+
 ## 🛠️ Tecnologias
 
 ### Backend

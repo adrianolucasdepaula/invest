@@ -1,0 +1,449 @@
+# 🗄️ DATABASE SCHEMA - B3 AI Analysis Platform
+
+**Projeto:** B3 AI Analysis Platform
+**Banco de Dados:** PostgreSQL 16.x
+**ORM:** TypeORM 0.3.x
+**Última Atualização:** 2025-11-14
+
+---
+
+## 📋 ÍNDICE
+
+1. [Visão Geral](#visão-geral)
+2. [Entidades Principais](#entidades-principais)
+3. [Relacionamentos](#relacionamentos)
+4. [Indexes e Performance](#indexes-e-performance)
+5. [Migrations](#migrations)
+6. [Queries Comuns](#queries-comuns)
+7. [Diagrama ER](#diagrama-er)
+
+---
+
+## 🎯 VISÃO GERAL
+
+O banco de dados PostgreSQL armazena dados de ativos financeiros da B3, análises fundamentalistas/técnicas realizadas por IA, portfólios de usuários e métricas de scrapers.
+
+### Estatísticas Gerais
+
+- **Total de Tabelas:** 12
+- **Total de Registros (aprox.):** 1.418
+  - Assets: 55
+  - AssetPrices: 1.298
+  - Analyses: 11
+  - Users: 7
+  - Portfolios: 4
+  - PortfolioPositions: 6
+  - ScraperMetrics: 24
+  - UpdateLogs: 22
+
+### Convenções
+
+- **Primary Keys:** UUID (gerado automaticamente)
+- **Foreign Keys:** Relacionamentos explícitos com CASCADE/RESTRICT
+- **Timestamps:** `createdAt`, `updatedAt` (automáticos via TypeORM)
+- **Soft Delete:** Campo `isActive` (não usar DELETE físico)
+- **Decimal:** Precision adequada (18,2 para valores monetários, 10,4 para percentuais)
+
+---
+
+## 📊 ENTIDADES PRINCIPAIS
+
+### 1. Assets (Ativos)
+
+Armazena ativos financeiros da B3 (ações, FIIs, ETFs, criptomoedas).
+
+**Schema:**
+```typescript
+{
+  id: UUID                      // Primary Key
+  ticker: string (UNIQUE)       // Ex: PETR4, VALE3, ITUB4
+  name: string                  // Nome completo (ex: "Petróleo Brasileiro S.A.")
+  type: AssetType               // ENUM: stock, fii, etf, crypto
+  sector: string                // Setor econômico (ex: "Petróleo e Gás")
+  subsector: string             // Subsetor (ex: "Exploração e Produção")
+  isActive: boolean             // Soft delete (true = ativo, false = inativo)
+  metadata: JSON                // Dados extras flexíveis
+  createdAt: timestamp          // Data de criação (automático)
+  updatedAt: timestamp          // Data de atualização (automático)
+}
+```
+
+**Constraints:**
+- `ticker` UNIQUE NOT NULL
+- `name` NOT NULL
+- `type` NOT NULL
+- `isActive` DEFAULT true
+
+**Exemplo:**
+```json
+{
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "ticker": "PETR4",
+  "name": "Petróleo Brasileiro S.A.",
+  "type": "stock",
+  "sector": "Petróleo e Gás",
+  "subsector": "Exploração e Produção",
+  "isActive": true,
+  "metadata": {
+    "isin": "BRPETRACNPR6",
+    "exchange": "B3",
+    "listingSegment": "Novo Mercado"
+  },
+  "createdAt": "2025-11-10T10:00:00Z",
+  "updatedAt": "2025-11-14T15:30:00Z"
+}
+```
+
+---
+
+### 2. AssetPrices (Preços)
+
+Armazena histórico de preços diários de ativos (OHLCV + variação).
+
+**Schema:**
+```typescript
+{
+  id: UUID                      // Primary Key
+  assetId: UUID                 // Foreign Key -> Assets.id
+  date: date                    // Data de referência (ex: 2025-11-14)
+  open: decimal(18,2)           // Preço de abertura
+  high: decimal(18,2)           // Preço máximo do dia
+  low: decimal(18,2)            // Preço mínimo do dia
+  close: decimal(18,2)          // Preço de fechamento
+  adjustedClose: decimal(18,2)  // Preço ajustado (splits, dividendos)
+  volume: bigint                // Volume negociado
+  marketCap: decimal(18,2)      // Valor de mercado
+  change: decimal(18,2)         // Variação absoluta (R$)
+  changePercent: decimal(10,4)  // Variação percentual (%)
+  collectedAt: timestamp        // Quando foi coletado dos scrapers
+  createdAt: timestamp          // Data de criação (automático)
+}
+```
+
+**Constraints:**
+- `assetId` FOREIGN KEY REFERENCES assets(id) ON DELETE CASCADE
+- `date` NOT NULL
+- `close` NOT NULL
+- UNIQUE (assetId, date) - Um preço por ativo por dia
+
+**Exemplo:**
+```json
+{
+  "id": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+  "assetId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "date": "2025-11-14",
+  "open": 39.50,
+  "high": 40.20,
+  "low": 39.30,
+  "close": 40.00,
+  "adjustedClose": 40.00,
+  "volume": 25000000,
+  "marketCap": 534000000000.00,
+  "change": 0.50,
+  "changePercent": 1.2658,
+  "collectedAt": "2025-11-14T18:00:00Z",
+  "createdAt": "2025-11-14T18:05:00Z"
+}
+```
+
+---
+
+### 3. Analyses (Análises)
+
+Armazena análises fundamentalistas/técnicas realizadas por IA com cross-validation de múltiplas fontes.
+
+**Schema:**
+```typescript
+{
+  id: UUID                         // Primary Key
+  assetId: UUID                    // Foreign Key -> Assets.id
+  userId: UUID                     // Foreign Key -> Users.id
+  type: AnalysisType               // ENUM: fundamental, technical, complete
+  status: AnalysisStatus           // ENUM: pending, processing, completed, failed
+  analysis: JSON                   // Dados da análise (estrutura flexível)
+  dataSources: string[]            // Fontes utilizadas (ex: ["Fundamentus", "BRAPI"])
+  sourcesCount: number             // Quantidade de fontes (ex: 6)
+  confidenceScore: decimal(5,4)    // Score de confiança (0.0000 - 1.0000)
+  recommendation: Recommendation   // ENUM: buy, hold, sell
+  targetPrice: decimal(18,2)       // Preço-alvo estimado
+  errorMessage: string             // Mensagem de erro (se status=failed)
+  completedAt: timestamp           // Data de conclusão
+  createdAt: timestamp             // Data de criação (automático)
+}
+```
+
+**Constraints:**
+- `assetId` FOREIGN KEY REFERENCES assets(id) ON DELETE CASCADE
+- `userId` FOREIGN KEY REFERENCES users(id) ON DELETE SET NULL
+- `type` NOT NULL
+- `status` NOT NULL DEFAULT 'pending'
+
+**Exemplo:**
+```json
+{
+  "id": "c3d4e5f6-a7b8-9012-cdef-345678901234",
+  "assetId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "userId": "d4e5f6a7-b8c9-0123-def4-56789012345",
+  "type": "complete",
+  "status": "completed",
+  "analysis": {
+    "fundamentals": { "pl": 8.5, "pvp": 1.2, "roe": 15.3 },
+    "technicals": { "sma20": 39.5, "sma50": 38.2, "rsi": 62 }
+  },
+  "dataSources": ["Fundamentus", "BRAPI", "StatusInvest", "Investidor10", "Fundamentei", "Investsite"],
+  "sourcesCount": 6,
+  "confidenceScore": 0.9167,
+  "recommendation": "buy",
+  "targetPrice": 45.00,
+  "errorMessage": null,
+  "completedAt": "2025-11-14T16:30:00Z",
+  "createdAt": "2025-11-14T16:25:00Z"
+}
+```
+
+---
+
+### 4. Portfolios (Portfólios)
+
+Armazena portfólios de investimento dos usuários.
+
+**Schema:**
+```typescript
+{
+  id: UUID                      // Primary Key
+  userId: UUID                  // Foreign Key -> Users.id
+  name: string                  // Nome do portfólio (ex: "Carteira Conservadora")
+  description: string           // Descrição opcional
+  totalValue: decimal(18,2)     // Valor total atual (calculado)
+  totalCost: decimal(18,2)      // Custo total investido (calculado)
+  totalProfitLoss: decimal(18,2) // Lucro/prejuízo total (calculado)
+  isActive: boolean             // Soft delete
+  createdAt: timestamp          // Data de criação (automático)
+  updatedAt: timestamp          // Data de atualização (automático)
+}
+```
+
+**Constraints:**
+- `userId` FOREIGN KEY REFERENCES users(id) ON DELETE CASCADE
+- `name` NOT NULL
+- `isActive` DEFAULT true
+
+---
+
+### 5. PortfolioPositions (Posições)
+
+Armazena posições (ativos) dentro de cada portfólio.
+
+**Schema:**
+```typescript
+{
+  id: UUID                         // Primary Key
+  portfolioId: UUID                // Foreign Key -> Portfolios.id
+  assetId: UUID                    // Foreign Key -> Assets.id
+  quantity: decimal(18,8)          // Quantidade de ações/cotas
+  averagePrice: decimal(18,2)      // Preço médio de compra
+  currentPrice: decimal(18,2)      // Preço atual (atualizado periodicamente)
+  totalCost: decimal(18,2)         // Custo total (quantity * averagePrice)
+  totalValue: decimal(18,2)        // Valor total (quantity * currentPrice)
+  profitLoss: decimal(18,2)        // Lucro/prejuízo (totalValue - totalCost)
+  profitLossPercent: decimal(10,4) // Lucro/prejuízo percentual
+  createdAt: timestamp             // Data de criação (automático)
+  updatedAt: timestamp             // Data de atualização (automático)
+}
+```
+
+**Constraints:**
+- `portfolioId` FOREIGN KEY REFERENCES portfolios(id) ON DELETE CASCADE
+- `assetId` FOREIGN KEY REFERENCES assets(id) ON DELETE RESTRICT
+- `quantity` > 0
+- UNIQUE (portfolioId, assetId) - Um ativo por portfólio
+
+---
+
+## 🔗 RELACIONAMENTOS
+
+```mermaid
+erDiagram
+    USERS ||--o{ PORTFOLIOS : "possui"
+    USERS ||--o{ ANALYSES : "solicita"
+    ASSETS ||--o{ ASSET_PRICES : "tem"
+    ASSETS ||--o{ ANALYSES : "analisado em"
+    ASSETS ||--o{ PORTFOLIO_POSITIONS : "compõe"
+    PORTFOLIOS ||--o{ PORTFOLIO_POSITIONS : "contém"
+
+    USERS {
+        UUID id PK
+        string email
+        string name
+    }
+
+    ASSETS {
+        UUID id PK
+        string ticker UK
+        string name
+        AssetType type
+    }
+
+    ASSET_PRICES {
+        UUID id PK
+        UUID assetId FK
+        date date
+        decimal close
+    }
+
+    ANALYSES {
+        UUID id PK
+        UUID assetId FK
+        UUID userId FK
+        AnalysisType type
+    }
+
+    PORTFOLIOS {
+        UUID id PK
+        UUID userId FK
+        string name
+    }
+
+    PORTFOLIO_POSITIONS {
+        UUID id PK
+        UUID portfolioId FK
+        UUID assetId FK
+        decimal quantity
+    }
+```
+
+---
+
+## ⚡ INDEXES E PERFORMANCE
+
+### Indexes Críticos
+
+```sql
+-- Performance crítica para queries frequentes
+CREATE INDEX idx_asset_prices_date ON asset_prices(date);
+CREATE INDEX idx_asset_prices_asset_date ON asset_prices(asset_id, date);
+CREATE INDEX idx_analyses_asset_type ON analyses(asset_id, type);
+CREATE INDEX idx_analyses_user_created ON analyses(user_id, created_at);
+CREATE INDEX idx_portfolio_positions_portfolio ON portfolio_positions(portfolio_id);
+CREATE INDEX idx_assets_ticker ON assets(ticker);
+```
+
+### Queries Otimizadas
+
+**1. Buscar preço mais recente de um ativo:**
+```sql
+SELECT * FROM asset_prices
+WHERE asset_id = 'uuid-do-ativo'
+ORDER BY date DESC
+LIMIT 1;
+-- Usa: idx_asset_prices_asset_date
+```
+
+**2. Buscar análises de um usuário (mais recentes primeiro):**
+```sql
+SELECT * FROM analyses
+WHERE user_id = 'uuid-do-usuario'
+ORDER BY created_at DESC;
+-- Usa: idx_analyses_user_created
+```
+
+**3. Buscar posições de um portfólio com dados do ativo:**
+```sql
+SELECT pp.*, a.ticker, a.name, ap.close as current_price
+FROM portfolio_positions pp
+JOIN assets a ON pp.asset_id = a.id
+JOIN LATERAL (
+  SELECT close FROM asset_prices
+  WHERE asset_id = pp.asset_id
+  ORDER BY date DESC LIMIT 1
+) ap ON true
+WHERE pp.portfolio_id = 'uuid-do-portfolio';
+-- Usa: idx_portfolio_positions_portfolio + idx_asset_prices_asset_date
+```
+
+---
+
+## 🔄 MIGRATIONS
+
+**Localização:** `backend/src/database/migrations/`
+
+**Migrations Aplicadas:**
+1. `1762906000000-CreateScraperMetrics.ts` - Sistema de métricas de scrapers
+2. `1762905000000-CreateUpdateLogs.ts` - Sistema de atualização de ativos
+3. `1762904000000-InitialSchema.ts` - Schema inicial (Assets, Prices, Analyses, etc)
+
+**Comandos:**
+```bash
+# Criar nova migration
+npm run migration:create -- src/database/migrations/NomeDaMigration
+
+# Executar migrations pendentes
+npm run migration:run
+
+# Reverter última migration
+npm run migration:revert
+```
+
+---
+
+## 📚 QUERIES COMUNS
+
+### Análise de Performance de Ativos
+
+```sql
+-- Top 10 ativos com maior variação nos últimos 30 dias
+SELECT
+  a.ticker,
+  a.name,
+  ap1.close as current_price,
+  ap30.close as price_30d_ago,
+  ((ap1.close - ap30.close) / ap30.close * 100) as variation_30d
+FROM assets a
+JOIN asset_prices ap1 ON a.id = ap1.asset_id AND ap1.date = CURRENT_DATE
+JOIN asset_prices ap30 ON a.id = ap30.asset_id AND ap30.date = CURRENT_DATE - INTERVAL '30 days'
+WHERE a.is_active = true
+ORDER BY variation_30d DESC
+LIMIT 10;
+```
+
+### Cross-Validation de Análises
+
+```sql
+-- Análises com alta confiança (>= 90%)
+SELECT
+  a.ticker,
+  an.type,
+  an.recommendation,
+  an.confidence_score,
+  an.sources_count,
+  an.completed_at
+FROM analyses an
+JOIN assets a ON an.asset_id = a.id
+WHERE an.status = 'completed'
+  AND an.confidence_score >= 0.9
+ORDER BY an.completed_at DESC;
+```
+
+### Performance de Portfólios
+
+```sql
+-- Resumo de portfólio com lucro/prejuízo
+SELECT
+  p.name,
+  COUNT(pp.id) as total_positions,
+  SUM(pp.total_cost) as total_invested,
+  SUM(pp.total_value) as total_current_value,
+  SUM(pp.profit_loss) as total_profit_loss,
+  (SUM(pp.profit_loss) / SUM(pp.total_cost) * 100) as profit_loss_percent
+FROM portfolios p
+LEFT JOIN portfolio_positions pp ON p.id = pp.portfolio_id
+WHERE p.is_active = true
+GROUP BY p.id, p.name;
+```
+
+---
+
+**Documentação complementar:**
+- Ver `ARCHITECTURE.md` para fluxos de dados
+- Ver `claude.md` para convenções de código TypeORM
+- Ver `TROUBLESHOOTING.md` para problemas comuns de banco de dados
