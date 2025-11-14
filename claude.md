@@ -1,7 +1,7 @@
 # Claude.md - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-12
+**Última Atualização:** 2025-11-14
 **Versão:** 1.0.0
 **Mantenedor:** Claude Code (Sonnet 4.5)
 
@@ -125,6 +125,22 @@ Coletar dados de múltiplas fontes públicas e privadas, realizar cross-validati
 - **Browser Automation**: Playwright
 - **HTTP**: Requests, HTTPX
 - **Parsing**: BeautifulSoup4, lxml
+
+### MCPs (Model Context Protocol)
+- **Sequential Thinking**: Raciocínio estruturado e análise profunda
+  - Instalado: 2025-11-14
+  - Transporte: stdio
+  - Comando: `npx -y @modelcontextprotocol/server-sequential-thinking`
+  - Propósito: Auxilia Claude em tarefas complexas que requerem pensamento sequencial e estruturado
+  - Repositório: [@modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking)
+- **Playwright MCP**: Automação de browser para testes E2E
+- **Chrome DevTools MCP**: Inspeção e debugging de aplicações web
+- **Selenium MCP**: Automação web alternativa
+
+**Configuração:**
+- Arquivo: `C:\Users\adria\.claude.json`
+- Escopo: Projeto (invest-claude-web)
+- Gerenciamento: `claude mcp list`, `claude mcp add`, `claude mcp remove`
 
 ---
 
