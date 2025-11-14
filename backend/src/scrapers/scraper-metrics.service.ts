@@ -33,18 +33,27 @@ export class ScraperMetricsService {
     responseTime: number | null,
     errorMessage: string | null = null,
   ): Promise<ScraperMetric> {
+    // Validate responseTime - should not be negative
+    const validResponseTime = responseTime !== null && responseTime < 0 ? null : responseTime;
+
+    if (responseTime !== null && responseTime < 0) {
+      this.logger.warn(
+        `Invalid negative response time (${responseTime}ms) for ${scraperId} - setting to null`,
+      );
+    }
+
     const metric = this.scraperMetricsRepository.create({
       scraperId,
       operationType,
       ticker,
       success,
-      responseTime,
+      responseTime: validResponseTime,
       errorMessage,
     });
 
     const saved = await this.scraperMetricsRepository.save(metric);
     this.logger.log(
-      `Metric saved: ${scraperId} ${operationType} ${ticker || 'general'} - ${success ? 'SUCCESS' : 'FAIL'} (${responseTime}ms)`,
+      `Metric saved: ${scraperId} ${operationType} ${ticker || 'general'} - ${success ? 'SUCCESS' : 'FAIL'} (${validResponseTime}ms)`,
     );
     return saved;
   }

@@ -70,12 +70,25 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
       const $ = cheerio.load(content);
 
       // Função auxiliar para extrair valores numéricos
-      const getValue = (selector: string, attr?: string): number => {
+      const getValue = (textOrElement: string | cheerio.Cheerio<any>, attr?: string): number => {
         let text: string;
-        if (attr) {
-          text = $(selector).attr(attr) || '0';
-        } else {
-          text = $(selector).text().trim();
+
+        // Se recebeu um texto diretamente
+        if (typeof textOrElement === 'string') {
+          text = textOrElement;
+        }
+        // Se recebeu um elemento Cheerio
+        else {
+          try {
+            if (attr) {
+              text = textOrElement.attr(attr) || '0';
+            } else {
+              text = textOrElement.text().trim();
+            }
+          } catch (error) {
+            // Se falhar, retornar 0
+            return 0;
+          }
         }
 
         // Limpar texto
@@ -93,17 +106,27 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
       // Função para buscar valor por label
       const getValueByLabel = (label: string): number => {
         // Tentar múltiplos seletores comuns do Fundamentei
-        const selectors = [
-          `dt:contains("${label}") + dd`,
-          `.indicator:contains("${label}") .value`,
-          `[data-label="${label}"] .value`,
-          `.metric-${label.toLowerCase().replace(/\s+/g, '-')} .value`,
-        ];
+        // Procurar elementos que contenham o label no texto
+        const elements = $('dt, div, span, td, th').filter(function() {
+          return $(this).text().trim() === label ||
+                 $(this).text().trim().includes(label);
+        });
 
-        for (const selector of selectors) {
-          const value = getValue(selector);
-          if (value !== 0) {
-            return value;
+        if (elements.length > 0) {
+          // Tentar pegar o próximo elemento (irmão ou filho)
+          const nextElement = elements.first().next();
+          if (nextElement.length > 0) {
+            const text = nextElement.text().trim();
+            const value = getValue(text);
+            if (value !== 0) return value;
+          }
+
+          // Tentar pegar elemento filho com classe .value
+          const valueChild = elements.first().find('.value, [class*="value"]');
+          if (valueChild.length > 0) {
+            const text = valueChild.text().trim();
+            const value = getValue(text);
+            if (value !== 0) return value;
           }
         }
 

@@ -46,12 +46,25 @@ export class InvestsiteScraper extends AbstractScraper<InvestsiteData> {
       const $ = cheerio.load(content);
 
       // Função auxiliar para extrair valores numéricos
-      const getValue = (selector: string, attr?: string): number => {
+      const getValue = (textOrElement: string | cheerio.Cheerio<any>, attr?: string): number => {
         let text: string;
-        if (attr) {
-          text = $(selector).attr(attr) || '0';
-        } else {
-          text = $(selector).text().trim();
+
+        // Se recebeu um texto diretamente
+        if (typeof textOrElement === 'string') {
+          text = textOrElement;
+        }
+        // Se recebeu um seletor CSS ou elemento Cheerio
+        else {
+          try {
+            if (attr) {
+              text = textOrElement.attr(attr) || '0';
+            } else {
+              text = textOrElement.text().trim();
+            }
+          } catch (error) {
+            // Se falhar, retornar 0
+            return 0;
+          }
         }
 
         // Limpar texto
@@ -69,22 +82,32 @@ export class InvestsiteScraper extends AbstractScraper<InvestsiteData> {
       // Função para buscar valor em tabela por label de linha
       const getValueFromTable = (label: string): number => {
         // Investsite usa tabelas HTML tradicionais
-        // Procurar <td> ou <th> contendo o label e pegar o próximo <td>
-        const labelCell = $(`td:contains("${label}"), th:contains("${label}")`).first();
-        if (labelCell.length > 0) {
-          const valueCell = labelCell.next('td');
+        // Procurar células que contenham o label no texto
+        const labelCells = $('td, th').filter(function() {
+          const text = $(this).text().trim();
+          return text === label || text.includes(label);
+        });
+
+        if (labelCells.length > 0) {
+          // Tentar pegar o próximo <td>
+          const valueCell = labelCells.first().next('td');
           if (valueCell.length > 0) {
-            return getValue(valueCell.text());
+            const text = valueCell.text().trim();
+            return getValue(text);
           }
         }
 
-        // Tentar formato alternativo: <tr> com label e valor
-        const row = $(`tr:contains("${label}")`).first();
-        if (row.length > 0) {
-          const cells = row.find('td');
+        // Tentar formato alternativo: procurar <tr> que contenha o label
+        const rows = $('tr').filter(function() {
+          return $(this).text().includes(label);
+        });
+
+        if (rows.length > 0) {
+          const cells = rows.first().find('td');
           if (cells.length >= 2) {
             // Assumir que valor está na segunda célula
-            return getValue(cells.eq(1).text());
+            const text = cells.eq(1).text().trim();
+            return getValue(text);
           }
         }
 
