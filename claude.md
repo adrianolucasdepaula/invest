@@ -912,6 +912,43 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 **Status:** ✅ **6/6 fases completas (100%)** - Sistema Reports 100% VALIDADO E FUNCIONAL ⭐
 
+### FIX: Bug Análise Duplicada - Múltiplos Cliques 🔴 PLANEJADO (2025-11-13)
+**Prioridade:** 🔴 ALTA (Bug crítico de UX + Duplicação de dados)
+**Página Afetada:** `/analysis` - Dialog "Nova Análise"
+**Arquivo:** `frontend/src/components/analysis/new-analysis-dialog.tsx`
+
+**Problema Identificado:**
+- ❌ Botão "Solicitar Análise" permite múltiplos cliques durante requisição
+- ❌ Cada clique cria uma nova requisição POST
+- ❌ Resultado: Múltiplas análises duplicadas do mesmo ativo no banco
+- ❌ Sem feedback visual de que requisição está em andamento
+- ❌ Usuário não sabe se sistema está processando
+
+**Solução Planejada:**
+1. ✅ Adicionar estado `isSubmitting` para controlar loading
+2. ✅ Desabilitar botão imediatamente após clique (`disabled={isSubmitting}`)
+3. ✅ Trocar ícone Play por Loader2 animado durante requisição
+4. ✅ Mudar texto de "Solicitar Análise" para "Solicitando..." durante requisição
+5. ✅ Prevenir múltiplos cliques com `if (isSubmitting) return;`
+6. ✅ Resetar estado no `finally` para permitir retry em caso de erro
+7. ✅ (Opcional) Desabilitar botão "Cancelar" durante submissão
+8. ✅ (Recomendado) Substituir `window.location.reload()` por `queryClient.invalidateQueries()`
+
+**Arquivos Afetados:**
+- `frontend/src/components/analysis/new-analysis-dialog.tsx` (~15 linhas modificadas)
+
+**Validação Necessária:**
+- [ ] TypeScript: 0 erros
+- [ ] Build: Success
+- [ ] Teste funcional: Clicar múltiplas vezes durante requisição
+- [ ] Validar: Botão desabilita imediatamente
+- [ ] Validar: Spinner aparece
+- [ ] Validar: Apenas 1 análise criada (não duplica)
+- [ ] Validar: Toast de erro + botão volta ao normal em caso de falha
+
+**Estimativa:** 1h 40min (sem opcionais) | 2h 10min (com opcionais)
+**Documentação:** `CORRECAO_BUG_ANALISE_DUPLICADA.md` (planejamento completo)
+
 ### FASE 9: OAuth Manager - Validação Frontend ✅ 100% COMPLETO (2025-11-13)
 - [x] Página `/oauth-manager` compilada e funcional (8 kB)
 - [x] Componentes UI validados:
