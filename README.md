@@ -712,6 +712,66 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
+## 🔧 Model Context Protocol (MCP) - Ferramentas Avançadas
+
+O projeto utiliza **8 servidores MCP** integrados ao Claude Code para estender capacidades de análise, automação e validação. Os MCPs foram **integrados à metodologia Ultra-Thinking + TodoWrite** através de 8 novas regras (18-25).
+
+### MCPs Instalados (8/8 - 100% Connected)
+
+**Análise e Desenvolvimento:**
+1. **Sequential Thinking** - Raciocínio estruturado para análises complexas (> 5 decisões)
+2. **Filesystem MCP** - Operações seguras multi-arquivo (> 3 arquivos)
+3. **Shell MCP** - Validações obrigatórias (tsc, build, tests)
+4. **Context7 MCP** - Documentação atualizada de frameworks (Next.js, NestJS, React)
+
+**Validação Frontend:**
+5. **Playwright MCP** - Testes E2E e automação de browser
+6. **Chrome DevTools MCP** - DevTools protocol para debugging
+7. **Selenium MCP** - Automação web alternativa
+
+**Acessibilidade:**
+8. **A11y MCP** - Auditoria WCAG automatizada via axe-core
+
+### Integração com Metodologia
+
+Os MCPs foram integrados através de **8 novas regras (18-25)** que complementam as 17 regras existentes:
+
+- **Regra 18**: ✅ SEMPRE usar Sequential Thinking para análise complexa (> 5 decisões)
+- **Regra 19**: ✅ SEMPRE usar Filesystem MCP para operações multi-arquivo (> 3 arquivos)
+- **Regra 20**: ✅ SEMPRE usar Shell MCP para validações obrigatórias
+- **Regra 21**: ✅ SEMPRE usar A11y MCP para validar acessibilidade de novas páginas
+- **Regra 22**: ✅ SEMPRE usar Context7 para documentação de frameworks
+- **Regra 23**: ✅ SEMPRE usar Playwright/Chrome DevTools para validação frontend
+- **Regra 24**: ✅ SEMPRE combinar Sequential Thinking + Filesystem em refatorações
+- **Regra 25**: ❌ NUNCA usar MCPs para SUBSTITUIR Ultra-Thinking/TodoWrite
+
+**Princípio Fundamental:**
+```
+MCPs são ferramentas de APOIO, não de SUBSTITUIÇÃO.
+Ultra-Thinking + TodoWrite continuam OBRIGATÓRIOS.
+```
+
+### Documentação MCP Completa
+
+- **`MCPS_USAGE_GUIDE.md`** (855 linhas) - Guia técnico detalhado
+  - Especificações técnicas de todos os 8 MCPs
+  - Ferramentas disponíveis (ex: Filesystem tem 12 tools)
+  - Parâmetros e exemplos de uso
+  - 4 workflows completos (Refactoring, Bug Fix, WCAG, Updates)
+  - Checklists e melhores práticas
+
+- **`METODOLOGIA_MCPS_INTEGRADA.md`** (1128 linhas) - Metodologia integrada
+  - Integração MCPs nos 5 pilares da metodologia
+  - 8 novas regras (18-25) detalhadas
+  - 3 workflows completos com MCPs
+  - Matrizes de decisão (quando usar cada MCP)
+  - Anti-patterns específicos de MCPs
+  - Checklist expandido de validação
+
+**Consulte `CLAUDE.md`** (seção MCPs) para resumo executivo e instruções de leitura dos documentos completos.
+
+---
+
 ## 🗺️ Roadmap Original
 
 ### ✅ Completo
