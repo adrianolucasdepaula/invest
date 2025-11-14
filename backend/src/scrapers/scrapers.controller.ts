@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ScrapersService } from './scrapers.service';
 import { ScraperMetricsService } from './scraper-metrics.service';
@@ -115,7 +115,10 @@ export class ScrapersController {
     status: 404,
     description: 'Scraper not found',
   })
-  async testScraper(@Param('scraperId') scraperId: string) {
+  async testScraper(
+    @Param('scraperId') scraperId: string,
+    @Body() body?: { ticker?: string },
+  ) {
     this.logger.log(`Testing scraper: ${scraperId}`);
 
     const availableScrapers = this.scrapersService.getAvailableScrapers();
@@ -125,11 +128,12 @@ export class ScrapersController {
       throw new HttpException('Scraper not found', HttpStatus.NOT_FOUND);
     }
 
-    const testTicker = 'PETR4';
+    // Use ticker from body if provided, otherwise default to PETR4
+    const testTicker = body?.ticker || 'PETR4';
     const startTime = Date.now();
 
     try {
-      // Test ONLY this specific scraper with PETR4 as default ticker
+      // Test ONLY this specific scraper with the specified ticker
       const result = await this.scrapersService.testSingleScraper(scraperId, testTicker);
       const responseTime = Date.now() - startTime;
 
