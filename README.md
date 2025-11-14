@@ -117,6 +117,7 @@ Para informações detalhadas sobre o projeto, consulte:
 - **`DATABASE_SCHEMA.md`** - Schema completo do banco de dados, relacionamentos, indexes e queries comuns
 - **`ROADMAP.md`** - Histórico completo de desenvolvimento, fases concluídas e planejamento futuro
 - **`TROUBLESHOOTING.md`** - Guia completo de resolução de problemas comuns (16+ soluções)
+- **`CONTRIBUTING.md`** - Convenções de código, Git workflow, decisões técnicas e como contribuir
 - **`claude.md`** - Instruções completas para Claude Code, convenções e workflows
 - **`CHECKLIST_TODO_MASTER.md`** - Checklist e TODO master do projeto
 

@@ -507,7 +507,9 @@ O sistema coleta dados de **6 fontes fundamentalistas** simultaneamente e faz:
 
 ## 📝 CONVENÇÕES DE CÓDIGO
 
-### TypeScript
+**📚 Documentação Completa:** Ver `CONTRIBUTING.md` para convenções detalhadas de código, Git workflow, decisões técnicas e como contribuir.
+
+### TypeScript (Resumo)
 
 **Nomenclatura:**
 - Classes: `PascalCase` (ex: `AssetService`)
