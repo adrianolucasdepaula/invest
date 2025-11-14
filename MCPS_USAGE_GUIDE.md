@@ -40,6 +40,10 @@
 
 ### Configuração
 
+⚠️ **IMPORTANTE - Windows:** No Windows, MCPs que usam `npx` requerem o wrapper `cmd /c` para funcionar corretamente.
+
+**Configuração Correta para Windows:**
+
 ```json
 // C:\Users\adria\.claude.json
 {
@@ -48,34 +52,61 @@
       "mcpServers": {
         "sequential-thinking": {
           "type": "stdio",
-          "command": "npx",
-          "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+          "command": "cmd",
+          "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-sequential-thinking"]
         },
         "filesystem": {
           "type": "stdio",
-          "command": "npx",
-          "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:\\Users\\adria\\Dropbox\\PC (2)\\Downloads\\Python - Projetos\\invest-claude-web"]
+          "command": "cmd",
+          "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-filesystem", "C:\\Users\\adria\\Dropbox\\PC (2)\\Downloads\\Python - Projetos\\invest-claude-web"]
         },
         "shell": {
           "type": "stdio",
-          "command": "npx",
-          "args": ["-y", "shell-mcp-server"]
+          "command": "cmd",
+          "args": ["/c", "npx", "-y", "shell-mcp-server"]
         },
         "a11y": {
           "type": "stdio",
-          "command": "npx",
-          "args": ["a11y-mcp"]
+          "command": "cmd",
+          "args": ["/c", "npx", "a11y-mcp"]
         },
         "context7": {
           "type": "stdio",
-          "command": "npx",
-          "args": ["-y", "@upstash/context7-mcp@latest"]
+          "command": "cmd",
+          "args": ["/c", "npx", "-y", "@upstash/context7-mcp@latest"]
         }
       }
     }
   }
 }
 ```
+
+**Configuração .mcp.json (Projeto):**
+
+```json
+// .mcp.json
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "cmd",
+      "args": ["/c", "npx", "@playwright/mcp@latest"],
+      "env": {}
+    },
+    "chrome-devtools": {
+      "command": "cmd",
+      "args": ["/c", "npx", "chrome-devtools-mcp@latest"],
+      "env": {}
+    },
+    "selenium": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@angiejones/mcp-selenium"],
+      "env": {}
+    }
+  }
+}
+```
+
+**Nota para Linux/Mac:** Use `command: "npx"` diretamente sem `cmd /c`.
 
 ---
 
