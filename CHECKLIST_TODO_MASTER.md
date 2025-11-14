@@ -114,7 +114,7 @@ SEMPRE verificar ANTES de qualquer mudança:
 ### 5. Melhores Práticas do Mercado
 
 ```
-✅ Pesquisar melhores práticas ANTES de implementar
+✅ Pesquisar melhores práticas ANTES de implementar (desenvolvimento e troubleshooting)
 ✅ Usar soluções comprovadas e modernas
 ✅ Simplicidade > Complexidade
 ✅ Arquitetura definida > Improvisação
@@ -340,6 +340,7 @@ PRÉ-MUDANÇA:
 □ Ler arquivos relacionados (imports, dependências)
 □ Verificar se funcionalidade já existe no sistema (evitar duplicação)
 □ Buscar implementações similares existentes no codebase
+□ Avaliar se é melhor melhorar código existente ao invés de criar novo (refatorar > criar)
 □ Verificar documentação relacionada
 □ Comparar código vs documentação (identificar divergências)
 □ Identificar todos os arquivos afetados
