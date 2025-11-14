@@ -2000,7 +2000,9 @@ Correção definitiva de 3 problemas não-bloqueantes identificados na Validaç�
 
 ## 🔧 TROUBLESHOOTING
 
-### Problema: Backend não compila
+**📚 Documentação Completa:** Ver `TROUBLESHOOTING.md` para soluções detalhadas de 16+ problemas comuns de backend, frontend, scrapers, database, Docker e WebSocket.
+
+### Problema: Backend não compila (Resumo)
 
 **Sintomas:**
 ```
