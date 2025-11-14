@@ -17,6 +17,7 @@ Este arquivo contém **APENAS** instruções e metodologia para Claude Code. Tod
 - **`ROADMAP.md`** - Histórico de desenvolvimento (53 fases, 98.1% completo)
 - **`TROUBLESHOOTING.md`** - 16+ problemas comuns com soluções detalhadas
 - **`CONTRIBUTING.md`** - Convenções de código, Git workflow, decisões técnicas
+- **`CHECKLIST_TODO_MASTER.md`** - Checklist ultra-robusto e TODO master (OBRIGATÓRIO antes de cada fase)
 
 **📌 IMPORTANTE:** Sempre consulte os arquivos acima para detalhes técnicos do projeto. Este arquivo foca exclusivamente na metodologia de trabalho.
 

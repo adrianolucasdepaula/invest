@@ -89,6 +89,7 @@ Para informações detalhadas sobre o projeto, consulte:
 - **`ROADMAP.md`** - Histórico de desenvolvimento (53 fases, 98.1% completo)
 - **`TROUBLESHOOTING.md`** - Guia de resolução de problemas (16+ soluções)
 - **`CONTRIBUTING.md`** - Convenções de código, Git workflow e como contribuir
+- **`CHECKLIST_TODO_MASTER.md`** - Checklist e TODO master (obrigatório antes de cada fase)
 - **`claude.md`** - Instruções para Claude Code (metodologia e padrões)
 
 ---
