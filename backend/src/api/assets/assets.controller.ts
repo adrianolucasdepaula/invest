@@ -2,6 +2,7 @@ import { Controller, Get, Post, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AssetsService } from './assets.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { HistoricalPricesQueryDto } from './dto/historical-prices-query.dto';
 
 @ApiTags('assets')
 @Controller('assets')
@@ -21,13 +22,15 @@ export class AssetsController {
   }
 
   @Get(':ticker/price-history')
-  @ApiOperation({ summary: 'Get asset price history' })
+  @ApiOperation({
+    summary: 'Get asset price history with configurable range',
+    description: 'Fetches historical price data for a ticker. Supports BRAPI ranges (1mo, 3mo, 1y, etc.) or custom date ranges.'
+  })
   async getPriceHistory(
     @Param('ticker') ticker: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
+    @Query() query: HistoricalPricesQueryDto,
   ) {
-    return this.assetsService.getPriceHistory(ticker, startDate, endDate);
+    return this.assetsService.getPriceHistory(ticker, query);
   }
 
   @Post(':ticker/sync')

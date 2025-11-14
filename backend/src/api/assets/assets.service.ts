@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Asset, AssetType, AssetPrice, FundamentalData } from '@database/entities';
 import { ScrapersService } from '../../scrapers/scrapers.service';
 import { BrapiScraper } from '../../scrapers/fundamental/brapi.scraper';
+import { HistoricalPricesQueryDto, PriceRange } from './dto/historical-prices-query.dto';
 
 @Injectable()
 export class AssetsService {
@@ -163,27 +164,146 @@ export class AssetsService {
     };
   }
 
-  async getPriceHistory(ticker: string, startDate?: string, endDate?: string) {
+  async getPriceHistory(ticker: string, query: HistoricalPricesQueryDto) {
     const asset = await this.findByTicker(ticker);
 
-    const query = this.assetPriceRepository
+    // 1. Determine date range
+    let { startDate, endDate, range } = query;
+
+    // If range provided, convert to startDate/endDate
+    if (range && !startDate) {
+      startDate = this.rangeToStartDate(range);
+      endDate = endDate || new Date().toISOString().split('T')[0];
+    }
+
+    // Default to 1 year if no params provided
+    if (!startDate && !endDate && !range) {
+      range = PriceRange.ONE_YEAR;
+      startDate = this.rangeToStartDate(range);
+      endDate = new Date().toISOString().split('T')[0];
+    }
+
+    // 2. Query database for existing prices
+    const queryBuilder = this.assetPriceRepository
       .createQueryBuilder('price')
       .where('price.assetId = :assetId', { assetId: asset.id })
-      .orderBy('price.date', 'DESC');
+      .orderBy('price.date', 'ASC'); // ASC for chronological order
 
     if (startDate) {
-      query.andWhere('price.date >= :startDate', { startDate });
+      queryBuilder.andWhere('price.date >= :startDate', { startDate });
     }
 
     if (endDate) {
-      query.andWhere('price.date <= :endDate', { endDate });
+      queryBuilder.andWhere('price.date <= :endDate', { endDate });
     }
 
-    return query.getMany();
+    const prices = await queryBuilder.getMany();
+
+    // 3. Check if we need to fetch fresh data from BRAPI
+    const shouldFetch = this.shouldRefetchData(prices, range || '1y');
+
+    if (shouldFetch) {
+      this.logger.log(`Fetching fresh data from BRAPI for ${ticker} (range: ${range || 'custom'})`);
+      await this.syncAsset(ticker, range || '1y');
+
+      // Re-query database after sync
+      return queryBuilder.getMany();
+    }
+
+    this.logger.log(`Returning ${prices.length} cached prices for ${ticker}`);
+    return prices;
   }
 
-  async syncAsset(ticker: string) {
-    this.logger.log(`Starting sync for ${ticker}`);
+  /**
+   * Convert BRAPI range to start date
+   */
+  private rangeToStartDate(range: string): string {
+    const now = new Date();
+    const daysMap: Record<string, number> = {
+      '1d': 1,
+      '5d': 5,
+      '1mo': 30,
+      '3mo': 90,
+      '6mo': 180,
+      '1y': 365,
+      '2y': 730,
+      '5y': 1825,
+      '10y': 3650,
+      'ytd': this.getYTDDays(),
+      'max': 7300, // ~20 years
+    };
+
+    const days = daysMap[range] || 365;
+    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    return startDate.toISOString().split('T')[0];
+  }
+
+  /**
+   * Calculate days since start of year (for YTD range)
+   */
+  private getYTDDays(): number {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    return Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+  }
+
+  /**
+   * Determine if we should refetch data from BRAPI
+   * Based on data freshness and completeness
+   */
+  private shouldRefetchData(prices: AssetPrice[], range: string): boolean {
+    // If no data exists, definitely fetch
+    if (!prices || prices.length === 0) {
+      return true;
+    }
+
+    // Check data freshness - if latest data is > 24h old, fetch
+    const latestPrice = prices[prices.length - 1]; // Last element (most recent date due to ASC order)
+    const latestDate = new Date(latestPrice.date);
+    const now = new Date();
+    const hoursSinceLatest = (now.getTime() - latestDate.getTime()) / (1000 * 60 * 60);
+
+    if (hoursSinceLatest > 24) {
+      this.logger.log(`Data is stale (${hoursSinceLatest.toFixed(1)}h old), refetching...`);
+      return true;
+    }
+
+    // Check data completeness - if we have significantly less data than expected, fetch
+    const expectedDays = this.getExpectedDays(range);
+    const actualDays = prices.length;
+
+    if (actualDays < expectedDays * 0.5) {
+      this.logger.log(`Data incomplete (${actualDays}/${expectedDays} expected), refetching...`);
+      return true;
+    }
+
+    // Data is fresh and complete, use cache
+    return false;
+  }
+
+  /**
+   * Get expected number of trading days for a given range
+   */
+  private getExpectedDays(range: string): number {
+    const daysMap: Record<string, number> = {
+      '1d': 1,
+      '5d': 5,
+      '1mo': 20, // ~20 trading days
+      '3mo': 60,
+      '6mo': 120,
+      '1y': 250, // ~250 trading days
+      '2y': 500,
+      '5y': 1250,
+      '10y': 2500,
+      'ytd': Math.floor(this.getYTDDays() * 0.7), // ~70% are trading days
+      'max': 5000,
+    };
+
+    return daysMap[range] || 250;
+  }
+
+  async syncAsset(ticker: string, range: string = '1y') {
+    this.logger.log(`Starting sync for ${ticker} (range: ${range})`);
 
     try {
       // 1. Find asset in database
@@ -196,7 +316,7 @@ export class AssetsService {
       }
 
       // 2. Fetch data from BRAPI scraper (includes price + historical data)
-      const result = await this.brapiScraper.scrape(ticker, '1mo'); // Get last month of data
+      const result = await this.brapiScraper.scrape(ticker, range); // Get data for specified range
 
       if (!result.success || !result.data) {
         this.logger.warn(`Failed to fetch data for ${ticker}: ${result.error || 'unknown error'}`);
@@ -273,7 +393,7 @@ export class AssetsService {
         let savedCount = 0;
         const collectedAt = new Date(); // Mesmo timestamp para todos os históricos
 
-        for (const histPrice of brapiData.historicalPrices.slice(0, 30)) { // Last 30 days
+        for (const histPrice of brapiData.historicalPrices) { // Save all historical data from range
           const priceDate = new Date(histPrice.date);
           priceDate.setHours(0, 0, 0, 0);
 
