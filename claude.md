@@ -1798,6 +1798,59 @@ Validação abrangente de todo o sistema (frontend, backend e database) usando m
 
 **Status:** ✅ **SISTEMA 100% VALIDADO - APROVADO PARA PRÓXIMA FASE**
 
+### FIX: Bug Ticker Hardcoded em Endpoint de Teste ✅ 100% COMPLETO (2025-11-14)
+Correção crítica que permitia testar scrapers com qualquer ticker ao invés de sempre usar PETR4.
+
+**Problema Identificado:**
+- ❌ Endpoint `POST /scrapers/test/:scraperId` sempre usava PETR4 hardcoded (linha 128)
+- ❌ Impossível testar scrapers com outros tickers (VALE3, ITUB4, WEGE3, etc)
+- ❌ Falsa impressão de que scrapers estavam quebrados quando na verdade funcionavam
+- ❌ Impossível avaliar taxa de sucesso real de cada scraper
+
+**Solução Implementada:**
+- ✅ Adicionado parâmetro opcional `ticker` no body da requisição
+- ✅ Importado decorator `@Body()` do `@nestjs/common`
+- ✅ Lógica: `const testTicker = body?.ticker || 'PETR4';` (usa ticker do body ou default PETR4)
+- ✅ Backward compatible (se não enviar ticker, usa PETR4)
+
+**Arquivo Modificado:**
+- `backend/src/scrapers/scrapers.controller.ts` (+2 linhas)
+  - Linha 1: Adicionado `Body` ao import
+  - Linha 120: Adicionado `@Body() body?: { ticker?: string }`
+  - Linha 135: `const testTicker = body?.ticker || 'PETR4';`
+
+**Validação Completa:**
+- ✅ TypeScript: 0 erros
+- ✅ Build: Success (8.7s)
+- ✅ Backend restart: Sem erros
+- ✅ Testes com múltiplos tickers:
+  - VALE3: Success (5.0s) → Dados corretos (companyName: "VALE")
+  - ITUB4: Success (2.9s) → Dados corretos (companyName: "ITAUUNIBANCO")
+  - WEGE3: Success (3.1s) → Dados corretos (companyName: "WEG")
+- ✅ Logs confirmam ticker correto sendo usado:
+  ```
+  [InvestsiteScraper] Scraping VALE3 from investsite
+  [InvestsiteScraper] Scraping ITUB4 from investsite
+  [InvestsiteScraper] Scraping WEGE3 from investsite
+  ```
+
+**Métricas do Investsite (Antes vs Depois):**
+- **Antes da correção CSS:** 16.7% sucesso (1/6 testes) - Erros "Unmatched selector"
+- **Depois da correção CSS:** 61.54% sucesso (8/13 testes) - 7 testes recentes OK
+- **Conclusão:** Scraper estava funcionando, problema era parsing CSS (já corrigido)
+
+**Impacto:**
+- ✅ Permite testar scrapers com qualquer ticker via `{"ticker": "VALE3"}`
+- ✅ Melhora debugging de scrapers (pode isolar problemas por ticker)
+- ✅ Identificou que Investsite está funcionando bem (61.54% taxa de sucesso)
+- ✅ Métricas salvas corretamente no banco com ticker real
+- ✅ Facilita validação de novos scrapers
+
+**Commit:**
+- `6d16d69` - fix: Corrigir bug de ticker hardcoded no endpoint de teste de scrapers
+
+**Tempo de Implementação:** 15 minutos
+
 ### FASE 24: Dados Históricos BRAPI 🔜 PLANEJADO
 - [ ] Pesquisar endpoints BRAPI para histórico
 - [ ] Verificar períodos disponíveis (diário, semanal, mensal, anual, 3-10 anos)
