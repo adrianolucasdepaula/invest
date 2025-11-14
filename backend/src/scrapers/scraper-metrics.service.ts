@@ -91,11 +91,16 @@ export class ScraperMetricsService {
     const failedRequests = totalRequests - successful;
     const successRate = (successful / totalRequests) * 100;
 
-    // Calculate average response time (only successful requests)
-    const successfulMetrics = metrics.filter((m) => m.success && m.responseTime !== null);
+    // Calculate average response time (only successful requests, filter outliers)
+    const responseTimes = metrics
+      .filter((m) => m.success && m.responseTime !== null)
+      .map((m) => m.responseTime)
+      .filter((time) => time > 0 && time < 60000) // Filter outliers: must be > 0ms and < 60s
+      .sort((a, b) => a - b);
+
     const avgResponseTime =
-      successfulMetrics.length > 0
-        ? successfulMetrics.reduce((sum, m) => sum + (m.responseTime || 0), 0) / successfulMetrics.length
+      responseTimes.length > 0
+        ? Math.round(responseTimes.reduce((sum, t) => sum + t, 0) / responseTimes.length)
         : 0;
 
     // Get last test and last sync

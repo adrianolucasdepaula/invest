@@ -196,11 +196,21 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
   }
 
   validate(data: FundamenteiData): boolean {
-    // Validação básica - verificar se obtivemos pelo menos alguns dados
-    return (
-      data.ticker !== '' &&
-      (data.price > 0 || data.pl !== 0 || data.pvp !== 0 || data.roe !== 0)
-    );
+    // Validação relaxada - verificar se obtivemos pelo menos 3 campos válidos (além do ticker)
+    const filledFields = [
+      data.price > 0,
+      data.pl !== 0,
+      data.pvp !== 0,
+      data.roe !== 0,
+      data.dy !== 0,
+      data.dividaLiquidaEbitda !== 0,
+      data.margemLiquida !== 0,
+      data.valorMercado > 0,
+      data.receitaLiquida > 0,
+      data.lucroLiquido !== 0
+    ].filter(Boolean).length;
+
+    return data.ticker !== '' && filledFields >= 3;
   }
 
   protected async login(): Promise<void> {
