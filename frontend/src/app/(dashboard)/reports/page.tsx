@@ -36,7 +36,7 @@ import {
   useRequestAnalysis,
   useRequestBulkAnalysis,
 } from '@/lib/hooks/use-reports-assets';
-import { MultiSourceTooltip } from '@/components/reports/MultiSourceTooltip';
+import { MultiSourceTooltip } from '@/components/reports/multi-source-tooltip';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';

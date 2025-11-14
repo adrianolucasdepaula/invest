@@ -122,6 +122,11 @@ class ApiClient {
     return response.data;
   }
 
+  async requestCompleteAnalysis(ticker: string) {
+    const response = await this.client.post(`/analysis/${ticker}/complete`);
+    return response.data;
+  }
+
   // Portfolio endpoints
   async getPortfolios() {
     const response = await this.client.get('/portfolio');
@@ -202,6 +207,11 @@ class ApiClient {
       params: { format },
       responseType: 'blob',
     });
+    return response.data;
+  }
+
+  async getReportsAssetsStatus() {
+    const response = await this.client.get('/reports/assets-status');
     return response.data;
   }
 
