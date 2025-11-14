@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useUser } from '@/hooks/useUser';
 import {
   LayoutDashboard,
   TrendingUp,
@@ -67,22 +68,9 @@ export function Sidebar() {
 }
 
 function UserProfile() {
-  const [user, setUser] = React.useState<any>(null);
+  const { user, loading } = useUser();
 
-  React.useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const { api } = await import('@/lib/api');
-        const userData = await api.getProfile();
-        setUser(userData);
-      } catch (error) {
-        console.error('Erro ao buscar perfil:', error);
-      }
-    };
-    fetchUser();
-  }, []);
-
-  if (!user) {
+  if (loading || !user) {
     return (
       <div className="flex items-center space-x-3">
         <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-purple-600 animate-pulse" />

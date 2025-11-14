@@ -6,27 +6,14 @@ import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
-import { useEffect, useState } from 'react';
 import { useSidebar } from '@/contexts/sidebar-context';
+import { useUser } from '@/hooks/useUser';
 
 export function Header() {
   const router = useRouter();
   const { toast } = useToast();
   const { toggle } = useSidebar();
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    // Buscar dados do usuário
-    const fetchUser = async () => {
-      try {
-        const userData = await api.getProfile();
-        setUser(userData);
-      } catch (error) {
-        console.error('Erro ao buscar perfil:', error);
-      }
-    };
-    fetchUser();
-  }, []);
+  const { user } = useUser();
 
   const handleLogout = async () => {
     try {
