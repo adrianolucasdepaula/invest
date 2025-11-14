@@ -20,7 +20,7 @@ export abstract class AbstractScraper<T = any> implements BaseScraper<T> {
   constructor(config?: ScraperConfig) {
     this.logger = new Logger(this.constructor.name);
     this.config = {
-      timeout: 30000,
+      timeout: 60000, // Aumentado de 30s para 60s para evitar timeouts
       retries: 3,
       headless: true,
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -34,6 +34,7 @@ export abstract class AbstractScraper<T = any> implements BaseScraper<T> {
 
       this.browser = await puppeteerExtra.default.launch({
         headless: this.config.headless,
+        protocolTimeout: 60000, // Timeout para operações do protocolo CDP
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -47,6 +48,7 @@ export abstract class AbstractScraper<T = any> implements BaseScraper<T> {
       this.page = await this.browser.newPage();
       await this.page.setUserAgent(this.config.userAgent);
       await this.page.setViewport({ width: 1920, height: 1080 });
+      this.page.setDefaultNavigationTimeout(60000); // Timeout padrão para navegação
 
       if (this.requiresLogin) {
         await this.login();
