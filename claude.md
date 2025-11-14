@@ -473,6 +473,570 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
+## 🤖 METODOLOGIA CLAUDE CODE
+
+### Visão Geral
+
+Este projeto segue uma metodologia rigorosa de **Ultra-Thinking + TodoWrite + Validação Contínua** estabelecida como **PADRÃO OBRIGATÓRIO** para todas as sessões de trabalho com Claude Code (Sonnet 4.5).
+
+### Pilares da Metodologia
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                    METODOLOGIA CLAUDE                     │
+├──────────────────────────────────────────────────────────┤
+│                                                           │
+│  1. ULTRA-THINKING         ┌───────────────────┐         │
+│     (Análise Profunda)     │  Ler contexto     │         │
+│                            │  Analisar impacto │         │
+│                            │  Planejar         │         │
+│                            │  Validar deps     │         │
+│                            └─────────┬─────────┘         │
+│                                      │                    │
+│  2. TODOWRITE              ┌─────────▼─────────┐         │
+│     (Organização)          │  Etapa 1 → ✅     │         │
+│                            │  Etapa 2 → ✅     │         │
+│                            │  Etapa 3 → ✅     │         │
+│                            └─────────┬─────────┘         │
+│                                      │                    │
+│  3. IMPLEMENTAÇÃO          ┌─────────▼─────────┐         │
+│     (Execução)             │  Código           │         │
+│                            │  Testes           │         │
+│                            │  Validação        │         │
+│                            └─────────┬─────────┘         │
+│                                      │                    │
+│  4. DOCUMENTAÇÃO           ┌─────────▼─────────┐         │
+│     (Registro)             │  CLAUDE.md        │         │
+│                            │  Arquivo específico│        │
+│                            │  Commit detalhado │         │
+│                            └───────────────────┘         │
+│                                                           │
+└──────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 1. Ultra-Thinking Mode (Análise Profunda)
+
+#### Definição
+**Ultra-Thinking** é o processo de análise detalhada e planejamento ANTES de qualquer implementação. Garante que todas as decisões técnicas sejam fundamentadas e que não haja regressões.
+
+#### Quando Aplicar (OBRIGATÓRIO)
+- ✅ Implementação de features (> 10 linhas)
+- ✅ Correção de bugs complexos
+- ✅ Refatorações
+- ✅ Mudanças em arquivos críticos (types, entities, services principais)
+- ✅ Mudanças que afetam múltiplos arquivos
+- ✅ Mudanças em APIs públicas (endpoints, hooks, componentes reutilizáveis)
+
+#### Quando NÃO Aplicar (Exceções)
+- ❌ Typos e correções de formatação
+- ❌ Comentários e documentação inline
+- ❌ Ajustes de espaçamento/indentação
+- ❌ Mudanças < 5 linhas isoladas
+
+#### Processo de Ultra-Thinking
+
+**Passo 1: Leitura de Contexto**
+```typescript
+// SEMPRE ler ANTES de modificar:
+1. Arquivo principal (componente/service/controller)
+2. Tipos/Interfaces relacionados (DTOs, Entities)
+3. Hooks customizados (se frontend)
+4. Dependências diretas (imports)
+5. Testes existentes (se houver)
+```
+
+**Passo 2: Análise de Impacto**
+```typescript
+// Identificar TODOS os arquivos afetados:
+- Arquivos que importam o arquivo modificado
+- Componentes/Services que usam a funcionalidade
+- Hooks que dependem da API modificada
+- Testes que precisam ser atualizados
+```
+
+**Passo 3: Planejamento**
+```typescript
+// Criar documento (quando > 100 linhas de mudança):
+NOME_DOCUMENTO_PLANEJAMENTO.md:
+  - Problema identificado
+  - Solução proposta (com código ANTES/DEPOIS)
+  - Arquivos afetados (lista completa)
+  - Checklist de implementação
+  - Checklist de validação
+  - Estimativa de tempo
+```
+
+**Passo 4: Validação de Dependências**
+```bash
+# Verificar antes de implementar:
+cd frontend && npx tsc --noEmit  # Tipos corretos
+cd backend && npx tsc --noEmit   # Tipos corretos
+grep -r "importName" src/         # Onde é usado
+```
+
+**Passo 5: Prevenção de Regressões**
+```typescript
+// Verificar padrões similares no código:
+- Buscar implementações similares no codebase
+- Validar se padrão existente deve ser seguido
+- Identificar testes que cobrem funcionalidade
+```
+
+---
+
+### 2. TodoWrite (Organização em Etapas)
+
+#### Definição
+**TodoWrite** é a ferramenta de rastreamento de progresso que divide tarefas complexas em etapas menores e gerenciáveis.
+
+#### Regras de Uso
+
+**Regra 1: Granularidade**
+```typescript
+// ✅ BOM - Etapas atômicas e claras
+{content: "Adicionar estado isSubmitting", status: "pending", ...}
+{content: "Importar Loader2", status: "pending", ...}
+{content: "Atualizar botão com feedback visual", status: "pending", ...}
+
+// ❌ RUIM - Etapas muito genéricas
+{content: "Implementar feature", status: "pending", ...}
+{content: "Corrigir bugs", status: "pending", ...}
+```
+
+**Regra 2: Ordem Sequencial**
+```typescript
+// ✅ BOM - Ordem lógica de execução
+1. Criar interface
+2. Implementar service
+3. Criar controller
+4. Adicionar testes
+5. Validar TypeScript
+6. Build de produção
+
+// ❌ RUIM - Ordem aleatória
+1. Build de produção
+2. Criar interface
+3. Validar TypeScript
+4. Implementar service
+```
+
+**Regra 3: Apenas 1 in_progress**
+```typescript
+// ✅ BOM - Foco em uma tarefa
+[
+  {content: "Etapa 1", status: "completed", ...},
+  {content: "Etapa 2", status: "in_progress", ...}, // Apenas 1
+  {content: "Etapa 3", status: "pending", ...},
+]
+
+// ❌ RUIM - Múltiplas in_progress
+[
+  {content: "Etapa 1", status: "in_progress", ...}, // Múltiplas
+  {content: "Etapa 2", status: "in_progress", ...}, // Não permitido
+]
+```
+
+**Regra 4: Completar Antes de Prosseguir**
+```typescript
+// Marcar completed IMEDIATAMENTE após concluir etapa
+// NÃO acumular várias etapas antes de marcar
+```
+
+#### Estrutura Padrão de Etapas
+
+**Para Implementação de Feature:**
+```typescript
+[
+  {content: "1. Criar DTO/Interface", status: "pending", ...},
+  {content: "2. Implementar Service/Hook", status: "pending", ...},
+  {content: "3. Criar Controller/Component", status: "pending", ...},
+  {content: "4. Adicionar validações", status: "pending", ...},
+  {content: "5. Validar TypeScript", status: "pending", ...},
+  {content: "6. Build de produção", status: "pending", ...},
+  {content: "7. Atualizar CLAUDE.md", status: "pending", ...},
+  {content: "8. Criar commit", status: "pending", ...},
+]
+```
+
+**Para Correção de Bug:**
+```typescript
+[
+  {content: "1. Ler arquivo afetado", status: "pending", ...},
+  {content: "2. Identificar causa raiz", status: "pending", ...},
+  {content: "3. Implementar correção", status: "pending", ...},
+  {content: "4. Validar TypeScript", status: "pending", ...},
+  {content: "5. Build de produção", status: "pending", ...},
+  {content: "6. Testar bug específico", status: "pending", ...},
+  {content: "7. Atualizar CLAUDE.md", status: "pending", ...},
+  {content: "8. Criar commit", status: "pending", ...},
+]
+```
+
+---
+
+### 3. Checklist de Validação (OBRIGATÓRIO)
+
+#### Validações Mínimas (SEMPRE)
+
+```bash
+# Backend
+cd backend && npx tsc --noEmit
+# Resultado esperado: 0 erros
+
+# Frontend
+cd frontend && npx tsc --noEmit
+# Resultado esperado: 0 erros
+
+# Build Backend (se mudou backend)
+cd backend && npm run build
+# Resultado esperado: Compiled successfully
+
+# Build Frontend (se mudou frontend)
+cd frontend && npm run build
+# Resultado esperado: 17 páginas compiladas
+
+# Git Status
+git status
+# Resultado esperado: Apenas arquivos intencionalmente modificados
+```
+
+#### Validações Adicionais (Quando Aplicável)
+
+```bash
+# Testes Backend
+cd backend && npm run test
+# Resultado esperado: All tests pass
+
+# Testes E2E Frontend
+cd frontend && npx playwright test
+# Resultado esperado: All tests pass
+
+# Lint Backend
+cd backend && npm run lint
+# Resultado esperado: 0 problems
+
+# Lint Frontend
+cd frontend && npm run lint
+# Resultado esperado: 0 problems
+
+# Console Validation (Manual)
+# Abrir http://localhost:3100 e verificar:
+# - 0 erros no console
+# - 0 warnings no console
+# - Funcionalidade testada manualmente
+```
+
+---
+
+### 4. Padrão de Documentação
+
+#### 4.1. CLAUDE.md (Atualização Obrigatória)
+
+**Quando Atualizar:**
+- ✅ SEMPRE após implementar feature
+- ✅ SEMPRE após corrigir bug crítico
+- ✅ SEMPRE após refatoração importante
+- ✅ SEMPRE após completar fase de projeto
+
+**O que Atualizar:**
+```markdown
+### FASE X: Nome da Fase ✅ **STATUS ATUAL (DATA)**
+
+**Descrição:**
+- Breve descrição do que foi feito
+
+**Arquivos Modificados:**
+- arquivo.ts (+X linhas)
+
+**Validação:**
+- ✅ TypeScript: 0 erros
+- ✅ Build: Success
+- ✅ Testes: Passando (se aplicável)
+
+**Impacto:**
+- Descrever impacto técnico/usuário
+
+**Documentação:**
+- Link para arquivo detalhado (se criado)
+
+**Commits:**
+- hash: mensagem curta
+```
+
+#### 4.2. Arquivo Específico (Quando > 100 linhas)
+
+**Formato Padrão:**
+```markdown
+# VALIDACAO_FASE_X_NOME.md
+
+**Data:** YYYY-MM-DD
+**Responsável:** Claude Code (Sonnet 4.5)
+**Contexto:** Projeto - Fase X
+**Status:** ✅ COMPLETO / 🔄 EM ANDAMENTO / 📋 PLANEJADO
+
+---
+
+## 📋 RESUMO EXECUTIVO
+(3-5 parágrafos com estatísticas principais)
+
+## 🎯 OBJETIVOS DA FASE
+1. ✅ Objetivo 1
+2. ✅ Objetivo 2
+...
+
+## 📁 ARQUIVOS CRIADOS/MODIFICADOS
+### 1. Arquivo 1 (CRIADO/MODIFICADO)
+**Arquivo:** `caminho/completo.ts`
+**Tamanho:** X linhas
+**Status:** ✅ COMPLETO
+
+**Funcionalidades:**
+- ✅ Funcionalidade 1
+- ✅ Funcionalidade 2
+
+**Código-Chave:**
+```typescript
+// Trecho relevante
+```
+
+## 🔍 VALIDAÇÃO TÉCNICA
+### 1. TypeScript Validation
+**Comando:** `npx tsc --noEmit`
+**Resultado:** ✅ **0 ERROS**
+
+### 2. Build de Produção
+**Comando:** `npm run build`
+**Resultado:** ✅ **COMPILADO COM SUCESSO**
+
+**Estatísticas:**
+- 17 páginas geradas
+- Bundle size: X kB
+
+## ✅ CONCLUSÕES
+### Resultados Principais
+1. ✅ Item 1
+2. ✅ Item 2
+
+### Qualidade do Código
+- ✅ TypeScript: 0 erros
+- ✅ Build: Success
+- ✅ Naming conventions: Adequadas
+
+### Impacto no Sistema
+- ✅ Descrição do impacto
+
+---
+
+**Validado por:** Claude Code (Sonnet 4.5)
+**Data de Validação:** YYYY-MM-DD HH:MM:SS
+**Status Final:** ✅ FASE X - 100% COMPLETA E VALIDADA
+```
+
+---
+
+### 5. Padrão de Commits
+
+#### Estrutura Obrigatória
+
+```bash
+<tipo>: <descrição curta (max 72 caracteres)>
+
+<corpo detalhado (opcional mas recomendado):
+- Problema identificado
+- Solução implementada
+- Arquivos modificados (lista)
+- Validações realizadas (checklist)
+- Impacto (técnico/usuário)>
+
+**Arquivos Modificados:**
+- arquivo1.ts (+X linhas)
+- arquivo2.tsx (-Y linhas)
+
+**Validação:**
+- ✅ TypeScript: 0 erros
+- ✅ Build: Success
+- ✅ Testes: Passando (se aplicável)
+
+**Documentação:**
+- VALIDACAO_FASE_X.md (criado/atualizado)
+- CLAUDE.md (atualizado)
+
+**Tempo de Implementação:** X minutos/horas
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+#### Tipos de Commit (Conventional Commits)
+
+| Tipo | Uso | Exemplo |
+|------|-----|---------|
+| `feat` | Nova funcionalidade | `feat: Implementar Multi-Source Tooltip` |
+| `fix` | Correção de bug | `fix: Corrigir análises duplicadas` |
+| `docs` | Documentação | `docs: Adicionar VALIDACAO_FASE_3` |
+| `refactor` | Refatoração sem mudança de comportamento | `refactor: Extrair lógica de validação` |
+| `test` | Adição/correção de testes | `test: Adicionar testes para useReport` |
+| `chore` | Manutenção/config | `chore: Atualizar dependências` |
+| `perf` | Melhoria de performance | `perf: Otimizar query de análises` |
+| `style` | Formatação (sem lógica) | `style: Formatar código com prettier` |
+| `ci` | CI/CD | `ci: Adicionar workflow de testes` |
+| `build` | Build system | `build: Configurar esbuild` |
+
+---
+
+### 6. Métricas de Qualidade
+
+#### Métricas Obrigatórias (ZERO Tolerance)
+
+```
+TypeScript Errors: 0
+Build Errors: 0
+Console Errors: 0 (páginas principais)
+Lint Problems: 0 (critical)
+Breaking Changes: 0 (sem aprovação)
+```
+
+#### Métricas Esperadas
+
+```
+Documentação: 100% (CLAUDE.md + arquivo específico se > 100 linhas)
+Testes de Validação: 100% (checklist completo)
+Commits com Co-autoria: 100%
+Code Review: Autocheck via checklist
+```
+
+---
+
+### 7. Workflow Completo (Exemplo Real)
+
+**Tarefa:** Implementar FASE 3 - Refatoração Frontend /reports
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ETAPA 1: Ultra-Thinking                                     │
+├─────────────────────────────────────────────────────────────┤
+│ ✅ Ler REFATORACAO_SISTEMA_REPORTS.md (planejamento)        │
+│ ✅ Ler use-reports-assets.ts (hooks existentes)             │
+│ ✅ Ler api.ts (verificar métodos faltantes)                 │
+│ ✅ Ler reports/page.tsx (validar implementação)             │
+│ ✅ Identificar impacto: 3 arquivos (api, component, docs)   │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ ETAPA 2: TodoWrite                                          │
+├─────────────────────────────────────────────────────────────┤
+│ [                                                            │
+│   {content: "1. Validar hooks existentes", ...},            │
+│   {content: "2. Adicionar métodos API", ...},               │
+│   {content: "3. Criar MultiSourceTooltip", ...},            │
+│   {content: "4. Validar TypeScript", ...},                  │
+│   {content: "5. Build de produção", ...},                   │
+│   {content: "6. Atualizar CLAUDE.md", ...},                 │
+│   {content: "7. Criar commit", ...},                        │
+│ ]                                                            │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ ETAPA 3: Implementação (Sequencial)                         │
+├─────────────────────────────────────────────────────────────┤
+│ ✅ 1. Hooks validados (já existiam - 125 linhas)            │
+│ ✅ 2. Métodos adicionados (requestCompleteAnalysis + get...) │
+│ ✅ 3. MultiSourceTooltip criado (59 linhas)                 │
+│ ✅ 4. TypeScript validado (0 erros)                         │
+│ ✅ 5. Build realizado (Success - 17 páginas)                │
+│ ✅ 6. CLAUDE.md atualizado (seção FASE 3)                   │
+│ ✅ 7. Commit criado (hash: b2767eb)                         │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ ETAPA 4: Documentação                                       │
+├─────────────────────────────────────────────────────────────┤
+│ ✅ VALIDACAO_FASE_3_REPORTS_REFATORADO.md (criado)          │
+│ ✅ CLAUDE.md (seção FASE 3 adicionada)                      │
+│ ✅ Commit message (detalhado com checklist)                 │
+└─────────────────────────────────────────────────────────────┘
+
+Tempo Total: 30 minutos (estimativa: 1h 40min)
+Resultado: ✅ 100% COMPLETO
+```
+
+---
+
+### 8. Regras de Ouro (NÃO NEGOCIÁVEL)
+
+1. ✅ **SEMPRE** ler contexto antes de implementar
+2. ✅ **SEMPRE** usar TodoWrite para tarefas não-triviais (≥ 3 etapas)
+3. ✅ **SEMPRE** validar TypeScript (0 erros) antes de commitar
+4. ✅ **SEMPRE** validar Build (Success) antes de commitar
+5. ✅ **SEMPRE** ter apenas 1 todo `in_progress` por vez
+6. ✅ **SEMPRE** marcar `completed` imediatamente após concluir
+7. ✅ **SEMPRE** atualizar CLAUDE.md após implementação
+8. ✅ **SEMPRE** incluir co-autoria `Co-Authored-By: Claude` em commits
+9. ✅ **SEMPRE** documentar decisões técnicas importantes
+10. ✅ **SEMPRE** criar arquivo específico quando mudança > 100 linhas
+11. ❌ **NUNCA** implementar sem planejar (exceto tarefas triviais < 5 linhas)
+12. ❌ **NUNCA** commitar com erros TypeScript
+13. ❌ **NUNCA** commitar com build quebrado
+14. ❌ **NUNCA** pular validações do checklist
+15. ❌ **NUNCA** deixar todos em `in_progress` simultaneamente
+
+---
+
+### 9. Anti-Patterns (Evitar)
+
+```typescript
+// ❌ ANTI-PATTERN 1: Implementar sem ler contexto
+"Criar componente X" → IMPLEMENTA DIRETO
+// ✅ CORRETO:
+"Criar componente X" → LER arquivos relacionados → PLANEJAR → IMPLEMENTAR
+
+// ❌ ANTI-PATTERN 2: TodoWrite genérico
+[{content: "Fazer tudo", status: "in_progress"}]
+// ✅ CORRETO:
+[
+  {content: "Etapa 1", status: "completed"},
+  {content: "Etapa 2", status: "in_progress"},
+  {content: "Etapa 3", status: "pending"},
+]
+
+// ❌ ANTI-PATTERN 3: Commitar sem validar
+git commit -m "fix: algo" (sem rodar tsc --noEmit)
+// ✅ CORRETO:
+npx tsc --noEmit → 0 erros → git commit
+
+// ❌ ANTI-PATTERN 4: Documentação incompleta
+CLAUDE.md: "feat: X implementado"
+// ✅ CORRETO:
+CLAUDE.md: Seção completa com arquivos, validações, impacto
+```
+
+---
+
+### 10. Referências de Implementações Exemplares
+
+**Exemplos neste projeto que seguiram metodologia corretamente:**
+
+1. **FASE 3 - Refatoração Reports** (`b2767eb`)
+   - Ultra-Thinking: Leitura de 4 arquivos relacionados
+   - TodoWrite: 9 etapas bem definidas
+   - Validação: TypeScript + Build + Documentação
+   - Resultado: 30min (60% mais rápido que estimado)
+
+2. **FIX - Bug Análise Duplicada** (`5e8b602`)
+   - Ultra-Thinking: Análise de causa raiz (falta isSubmitting)
+   - TodoWrite: 10 etapas sequenciais
+   - Documentação: CORRECAO_BUG_ANALISE_DUPLICADA.md (400+ linhas)
+   - Resultado: 45min, 0 regressões
+
+3. **FASE 1 - Limpeza de Dados** (`6beacb1`)
+   - Ultra-Thinking: Verificação de script existente
+   - TodoWrite: 6 etapas (validação SQL incluída)
+   - Documentação: VALIDACAO_FASE_1_LIMPEZA.md (358 linhas)
+   - Resultado: 0 análises removidas (banco saudável)
+
+---
+
 ## 🔄 FLUXOS PRINCIPAIS
 
 ### 1. Fluxo de Sincronização de Ativos (BRAPI)
