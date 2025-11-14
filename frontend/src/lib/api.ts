@@ -79,7 +79,7 @@ class ApiClient {
     return response.data;
   }
 
-  async getAssetPrices(ticker: string, params?: { startDate?: string; endDate?: string }) {
+  async getAssetPrices(ticker: string, params?: { range?: string; startDate?: string; endDate?: string }) {
     const response = await this.client.get(`/assets/${ticker}/price-history`, { params });
     return response.data;
   }

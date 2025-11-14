@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, lazy, Suspense } from 'react';
+import { useMemo, lazy, Suspense, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,13 +28,14 @@ export default function AssetDetailPage({
   params: { ticker: string };
 }) {
   const ticker = params.ticker;
+  const [selectedRange, setSelectedRange] = useState<string>('1y');
 
   // Fetch critical data first (for LCP optimization)
   const { data: asset, isLoading: assetLoading, error: assetError } = useAsset(ticker);
 
   // Defer non-critical data to improve LCP - fetch in parallel after critical data
   const { data: priceHistory, isLoading: pricesLoading } = useAssetPrices(ticker, {
-    startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    range: selectedRange,
   });
 
   // TODO: Fundamentals API not implemented yet - temporarily disabled to avoid 404 errors
@@ -165,11 +166,28 @@ export default function AssetDetailPage({
 
       {/* Price Chart - Lazy loaded for better LCP */}
       <Card className="p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold">Gráfico de Preços - Últimos 90 dias</h3>
-          <p className="text-sm text-muted-foreground">
-            Evolução do preço com volume negociado
-          </p>
+        <div className="mb-4 flex items-start justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">
+              Gráfico de Preços - {selectedRange.toUpperCase()}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Evolução do preço com volume negociado
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground mr-2">Período:</span>
+            {['1mo', '3mo', '6mo', '1y', '2y', '5y', 'max'].map((range) => (
+              <Button
+                key={range}
+                variant={selectedRange === range ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedRange(range)}
+              >
+                {range.toUpperCase()}
+              </Button>
+            ))}
+          </div>
         </div>
         {pricesLoading ? (
           <Skeleton className="h-[400px] w-full" />
