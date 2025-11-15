@@ -148,7 +148,11 @@ class OAuthSessionManager:
     def start_chrome(self) -> bool:
         """Iniciar Chrome em modo visual (VNC)"""
         try:
-            logger.info("Iniciando Chrome para sessão OAuth...")
+            start_time = time.time()
+            logger.info("=" * 80)
+            logger.info(f"[START_CHROME] Iniciando Chrome para sessão OAuth...")
+            logger.debug(f"[START_CHROME] Timestamp: {datetime.now().isoformat()}")
+            logger.debug(f"[START_CHROME] Display virtual: {self.DISPLAY}")
 
             # Configurar variável de ambiente DISPLAY
             import os
@@ -192,18 +196,25 @@ class OAuthSessionManager:
             chrome_options.add_experimental_option("prefs", prefs)
 
             # Criar driver
+            logger.debug(f"[START_CHROME] Criando WebDriver com chromedriver...")
             service = Service("/usr/local/bin/chromedriver")
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
 
             # Configurar timeouts
             self.driver.set_page_load_timeout(60)
             self.driver.implicitly_wait(5)
+            logger.debug(f"[START_CHROME] Timeouts configurados: page_load=60s, implicit_wait=5s")
 
-            logger.success("Chrome iniciado com sucesso em modo visual (VNC)")
+            elapsed = time.time() - start_time
+            logger.success(f"[START_CHROME] Chrome iniciado com sucesso em {elapsed:.2f}s")
+            logger.debug(f"[START_CHROME] Session ID: {self.driver.session_id}")
+            logger.info("=" * 80)
             return True
 
         except Exception as e:
-            logger.error(f"Erro ao iniciar Chrome: {e}")
+            elapsed = time.time() - start_time
+            logger.error(f"[START_CHROME] Erro ao iniciar Chrome após {elapsed:.2f}s: {e}")
+            logger.exception(e)  # Stack trace completo
             if self.current_session:
                 self.current_session.status = SessionStatus.ERROR
                 self.current_session.error_message = f"Falha ao iniciar Chrome: {str(e)}"
@@ -220,14 +231,29 @@ class OAuthSessionManager:
             True se navegação foi bem-sucedida
         """
         if not self.driver or not self.current_session:
-            logger.error("Sessão não iniciada ou driver não disponível")
+            logger.error("[NAVIGATE] Sessão não iniciada ou driver não disponível")
             return False
+
+        navigation_start = time.time()
+        site_config = None
+        site_progress = None
 
         try:
             site_config = get_site_by_id(site_id)
             site_progress = next(sp for sp in self.current_session.sites_progress if sp.site_id == site_id)
 
-            logger.info(f"Navegando para {site_config['name']} ({site_config['url']})...")
+            logger.info("=" * 80)
+            logger.info(f"[NAVIGATE] Site #{self.current_session.current_site_index + 1}/{len(self.current_session.sites_progress)}: {site_config['name']}")
+            logger.debug(f"[NAVIGATE] Timestamp início: {datetime.now().isoformat()}")
+            logger.debug(f"[NAVIGATE] URL destino: {site_config['url']}")
+            logger.debug(f"[NAVIGATE] Site ID: {site_id}")
+
+            # Verificar estado do Chrome antes de navegar
+            try:
+                current_url = self.driver.current_url
+                logger.debug(f"[NAVIGATE] URL atual do Chrome: {current_url}")
+            except Exception as e:
+                logger.warning(f"[NAVIGATE] Não foi possível obter URL atual: {e}")
 
             # Atualizar status
             site_progress.status = SiteStatus.IN_PROGRESS
@@ -235,24 +261,35 @@ class OAuthSessionManager:
             self.current_session.status = SessionStatus.NAVIGATING
 
             # Navegar
+            logger.info(f"[NAVIGATE] Iniciando navegação para {site_config['name']}...")
+            nav_start = time.time()
             self.driver.get(site_config["url"])
+            nav_elapsed = time.time() - nav_start
 
-            # Aguardar carregamento
+            logger.info(f"[NAVIGATE] Página carregada em {nav_elapsed:.2f}s")
+
+            # Verificar se navegação demorou muito
+            if nav_elapsed > 30:
+                logger.warning(f"[NAVIGATE] ⚠️ Navegação LENTA: {nav_elapsed:.2f}s (limite esperado: 30s)")
+
+            # Aguardar carregamento adicional
+            logger.debug(f"[NAVIGATE] Aguardando 3s para carregamento completo...")
             await asyncio.sleep(3)
 
             # Tentar clicar no botão OAuth automaticamente se configurado
             if site_config.get("auto_click_oauth") and site_config.get("oauth_button"):
                 try:
-                    logger.info(f"Tentando clicar automaticamente no botão OAuth...")
+                    logger.info(f"[NAVIGATE] Tentando clicar automaticamente no botão OAuth...")
+                    logger.debug(f"[NAVIGATE] XPath do botão: {site_config['oauth_button']}")
                     wait = WebDriverWait(self.driver, 10)
                     oauth_button = wait.until(
                         EC.element_to_be_clickable((By.XPATH, site_config["oauth_button"]))
                     )
                     oauth_button.click()
-                    logger.success("Botão OAuth clicado automaticamente")
+                    logger.success(f"[NAVIGATE] Botão OAuth clicado automaticamente")
                     await asyncio.sleep(2)
                 except (TimeoutException, NoSuchElementException) as e:
-                    logger.warning(f"Não foi possível clicar automaticamente: {e}")
+                    logger.warning(f"[NAVIGATE] Não foi possível clicar automaticamente: {e}")
                     # Não é erro crítico, usuário pode clicar manualmente
 
             # Marcar como aguardando ação do usuário
@@ -260,14 +297,22 @@ class OAuthSessionManager:
             site_progress.user_action_required = True
             self.current_session.status = SessionStatus.WAITING_USER
 
-            logger.info(f"✓ Navegação concluída. Aguardando ação do usuário...")
+            total_elapsed = time.time() - navigation_start
+            logger.success(f"[NAVIGATE] ✓ Navegação concluída em {total_elapsed:.2f}s. Aguardando ação do usuário...")
+            logger.info("=" * 80)
             return True
 
         except Exception as e:
-            logger.error(f"Erro ao navegar para {site_id}: {e}")
+            total_elapsed = time.time() - navigation_start
+            logger.error(f"[NAVIGATE] ❌ Erro ao navegar para {site_id} após {total_elapsed:.2f}s")
+            logger.error(f"[NAVIGATE] Erro: {e}")
+            logger.exception(e)  # Stack trace completo
+
             if site_progress:
                 site_progress.status = SiteStatus.FAILED
                 site_progress.error_message = str(e)
+
+            logger.info("=" * 80)
             return False
 
     async def collect_cookies_from_current_site(self) -> int:
@@ -278,18 +323,32 @@ class OAuthSessionManager:
             Número de cookies coletados
         """
         if not self.driver or not self.current_session:
+            logger.error("[COLLECT] Driver ou sessão não disponível")
             return 0
+
+        collect_start = time.time()
 
         try:
             current_site_progress = self.current_session.sites_progress[self.current_session.current_site_index]
             site_config = get_site_by_id(current_site_progress.site_id)
 
-            logger.info(f"Coletando cookies de {site_config['name']}...")
+            logger.info("=" * 80)
+            logger.info(f"[COLLECT] Coletando cookies de {site_config['name']}...")
+            logger.debug(f"[COLLECT] Timestamp: {datetime.now().isoformat()}")
 
             self.current_session.status = SessionStatus.COLLECTING
 
+            # Verificar URL atual
+            try:
+                current_url = self.driver.current_url
+                logger.debug(f"[COLLECT] URL atual: {current_url}")
+            except Exception as e:
+                logger.warning(f"[COLLECT] Não foi possível obter URL: {e}")
+
             # Coletar todos os cookies
+            logger.debug(f"[COLLECT] Executando driver.get_cookies()...")
             cookies = self.driver.get_cookies()
+            logger.debug(f"[COLLECT] {len(cookies)} cookies obtidos do navegador")
 
             # Armazenar cookies do site
             site_name = site_config["name"]
@@ -301,25 +360,37 @@ class OAuthSessionManager:
             current_site_progress.completed_at = datetime.now()
             current_site_progress.user_action_required = False
 
-            logger.success(f"✓ {len(cookies)} cookies coletados de {site_name}")
+            elapsed = time.time() - collect_start
+            logger.success(f"[COLLECT] ✓ {len(cookies)} cookies coletados de {site_name} em {elapsed:.2f}s")
+            logger.info("=" * 80)
 
             return len(cookies)
 
         except Exception as e:
-            logger.error(f"Erro ao coletar cookies: {e}")
+            elapsed = time.time() - collect_start
+            logger.error(f"[COLLECT] ❌ Erro ao coletar cookies após {elapsed:.2f}s: {e}")
+            logger.exception(e)
+            logger.info("=" * 80)
             return 0
 
     def skip_current_site(self, reason: str = "Usuário optou por pular"):
         """Pular site atual"""
         if not self.current_session:
+            logger.warning("[SKIP] Nenhuma sessão ativa")
             return
 
         current_site_progress = self.current_session.sites_progress[self.current_session.current_site_index]
+
+        logger.info("=" * 80)
+        logger.info(f"[SKIP] Pulando site: {current_site_progress.site_name}")
+        logger.info(f"[SKIP] Motivo: {reason}")
+        logger.debug(f"[SKIP] Timestamp: {datetime.now().isoformat()}")
+
         current_site_progress.status = SiteStatus.SKIPPED
         current_site_progress.error_message = reason
         current_site_progress.completed_at = datetime.now()
 
-        logger.info(f"Site {current_site_progress.site_name} pulado: {reason}")
+        logger.info("=" * 80)
 
     async def move_to_next_site(self) -> bool:
         """
@@ -329,16 +400,24 @@ class OAuthSessionManager:
             True se há mais sites, False se terminou
         """
         if not self.current_session:
+            logger.warning("[NEXT_SITE] Nenhuma sessão ativa")
             return False
+
+        logger.info("=" * 80)
+        logger.info(f"[NEXT_SITE] Avançando para próximo site...")
+        logger.debug(f"[NEXT_SITE] Índice atual: {self.current_session.current_site_index}")
 
         self.current_session.current_site_index += 1
 
         if self.current_session.current_site_index >= len(self.current_session.sites_progress):
-            logger.info("Todos os sites foram processados")
+            logger.info(f"[NEXT_SITE] 🎉 Todos os sites foram processados!")
+            logger.info(f"[NEXT_SITE] Total: {len(self.current_session.sites_progress)} sites")
+            logger.info("=" * 80)
             return False
 
         next_site = self.current_session.sites_progress[self.current_session.current_site_index]
-        logger.info(f"Movendo para próximo site: {next_site.site_name}")
+        logger.info(f"[NEXT_SITE] Próximo site: {next_site.site_name} (índice {self.current_session.current_site_index})")
+        logger.info("=" * 80)
 
         # Navegar automaticamente para o próximo
         await self.navigate_to_site(next_site.site_id)
@@ -347,18 +426,25 @@ class OAuthSessionManager:
 
     async def save_cookies_to_file(self) -> bool:
         """Salvar cookies coletados em arquivo pickle"""
+        save_start = time.time()
+
         try:
-            logger.info("Salvando cookies em arquivo...")
+            logger.info("=" * 80)
+            logger.info("[SAVE] Salvando cookies em arquivo...")
+            logger.debug(f"[SAVE] Timestamp: {datetime.now().isoformat()}")
 
             if not self.current_session:
+                logger.error("[SAVE] Nenhuma sessão ativa")
                 return False
 
             self.current_session.status = SessionStatus.SAVING
 
             # Criar diretório se não existir
+            logger.debug(f"[SAVE] Criando diretório: {self.COOKIES_FILE.parent}")
             self.COOKIES_FILE.parent.mkdir(parents=True, exist_ok=True)
 
             # Salvar cookies
+            logger.debug(f"[SAVE] Gravando arquivo: {self.COOKIES_FILE}")
             with open(self.COOKIES_FILE, 'wb') as f:
                 pickle.dump(self.collected_cookies, f)
 
@@ -368,42 +454,61 @@ class OAuthSessionManager:
             self.current_session.status = SessionStatus.COMPLETED
             self.current_session.completed_at = datetime.now()
 
-            logger.success(f"✓ Cookies salvos com sucesso!")
-            logger.success(f"  Arquivo: {self.COOKIES_FILE}")
-            logger.success(f"  Total de sites: {len(self.collected_cookies)}")
-            logger.success(f"  Total de cookies: {total_cookies}")
+            elapsed = time.time() - save_start
+            logger.success(f"[SAVE] ✓ Cookies salvos com sucesso em {elapsed:.2f}s!")
+            logger.success(f"[SAVE]   Arquivo: {self.COOKIES_FILE}")
+            logger.success(f"[SAVE]   Total de sites: {len(self.collected_cookies)}")
+            logger.success(f"[SAVE]   Total de cookies: {total_cookies}")
 
             # Resumo por site
+            logger.info("[SAVE] Resumo por site:")
             for site_name, cookies in self.collected_cookies.items():
-                logger.info(f"  {site_name}: {len(cookies)} cookies")
+                logger.info(f"[SAVE]   {site_name}: {len(cookies)} cookies")
 
+            logger.info("=" * 80)
             return True
 
         except Exception as e:
-            logger.error(f"Erro ao salvar cookies: {e}")
+            elapsed = time.time() - save_start
+            logger.error(f"[SAVE] ❌ Erro ao salvar cookies após {elapsed:.2f}s: {e}")
+            logger.exception(e)
             if self.current_session:
                 self.current_session.status = SessionStatus.ERROR
                 self.current_session.error_message = f"Falha ao salvar cookies: {str(e)}"
+            logger.info("=" * 80)
             return False
 
     def cleanup(self):
         """Limpar recursos (fechar Chrome)"""
         try:
             if self.driver:
-                logger.info("Fechando navegador...")
+                logger.info("=" * 80)
+                logger.info("[CLEANUP] Fechando navegador...")
+                logger.debug(f"[CLEANUP] Timestamp: {datetime.now().isoformat()}")
+
                 self.driver.quit()
                 self.driver = None
-                logger.success("Navegador fechado")
+
+                logger.success("[CLEANUP] Navegador fechado com sucesso")
+                logger.info("=" * 80)
         except Exception as e:
-            logger.error(f"Erro ao fechar navegador: {e}")
+            logger.error(f"[CLEANUP] ❌ Erro ao fechar navegador: {e}")
+            logger.exception(e)
+            logger.info("=" * 80)
 
     def cancel_session(self):
         """Cancelar sessão atual"""
+        logger.info("=" * 80)
+        logger.warning("[CANCEL] Sessão cancelada pelo usuário")
+        logger.debug(f"[CANCEL] Timestamp: {datetime.now().isoformat()}")
+
         if self.current_session:
             self.current_session.status = SessionStatus.CANCELLED
             self.current_session.completed_at = datetime.now()
-            logger.warning("Sessão cancelada pelo usuário")
+            logger.info(f"[CANCEL] Session ID: {self.current_session.session_id}")
+
         self.cleanup()
+        logger.info("=" * 80)
 
     def get_session_status(self) -> Optional[Dict[str, Any]]:
         """Obter status da sessão atual"""

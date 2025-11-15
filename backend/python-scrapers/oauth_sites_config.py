@@ -50,7 +50,7 @@ OAUTH_SITES_CONFIG: List[Dict[str, Any]] = [
         "url": "https://fundamentei.com.br/login",
         "login_type": "oauth",  # Login via OAuth Google
         "login_selector": "//a[contains(@href, '/logout')]",
-        "oauth_button": "//button[contains(text(), 'Google')]",
+        "oauth_button": "//button[contains(., 'Logar com o Google')]",  # XPath corrigido
         "instructions": "Clique em 'Continuar com Google' se solicitado. A maioria dos sites usará sua sessão Google automaticamente.",
         "wait_time": 20,
         "order": 2,
