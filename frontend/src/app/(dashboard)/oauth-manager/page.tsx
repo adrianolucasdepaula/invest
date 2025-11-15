@@ -116,7 +116,7 @@ export default function OAuthManagerPage() {
       <div>
         <h1 className="text-3xl font-bold">Gerenciamento OAuth</h1>
         <p className="text-muted-foreground mt-2">
-          Renove os cookies de autenticação dos 19 sites de forma integrada via interface web
+          Renove os cookies de autenticação dos 21 sites de forma integrada via interface web
         </p>
       </div>
 
@@ -177,8 +177,8 @@ export default function OAuthManagerPage() {
           <CardHeader>
             <CardTitle>Iniciar Renovação de Cookies</CardTitle>
             <CardDescription>
-              Este processo irá abrir um navegador Chrome via VNC e guiá-lo através do login em 19 sites.
-              Tempo estimado: 15-20 minutos
+              Este processo irá abrir um navegador Chrome via VNC e guiá-lo através do login em 21 sites.
+              Tempo estimado: 18-22 minutos
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -204,7 +204,7 @@ export default function OAuthManagerPage() {
               <CardHeader>
                 <CardTitle className="text-lg">Processamento Automático</CardTitle>
                 <CardDescription>
-                  Processa todos os 19 sites automaticamente. Aguarda 90s por site e pula em caso de timeout.
+                  Processa todos os 21 sites automaticamente. Aguarda 90s por site e pula em caso de timeout.
                 </CardDescription>
               </CardHeader>
               <CardContent>

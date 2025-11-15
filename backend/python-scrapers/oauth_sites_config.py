@@ -1,6 +1,6 @@
 """
 OAuth Sites Configuration
-Configuração dos 19 sites que requerem autenticação OAuth/Google
+Configuração dos 21 sites que requerem autenticação OAuth/Google
 
 Ordem estratégica:
 1. Google primeiro (base para SSO)
@@ -8,6 +8,7 @@ Ordem estratégica:
 3. Sites internacionais (mercado)
 4. Sites de AI
 5. Sites de notícias
+6. Sites de gestão de portfólio
 """
 
 from typing import List, Dict, Any
@@ -21,9 +22,10 @@ class SiteCategory(str, Enum):
     MARKET = "market"  # Análise de mercado
     AI = "ai"  # Análise com AI
     NEWS = "news"  # Notícias e reports
+    PORTFOLIO = "portfolio"  # Gestão de portfólio
 
 
-# Configuração completa dos 19 sites
+# Configuração completa dos 21 sites
 OAUTH_SITES_CONFIG: List[Dict[str, Any]] = [
     # 1. GOOGLE (BASE PARA OAUTH)
     {
@@ -319,6 +321,38 @@ OAUTH_SITES_CONFIG: List[Dict[str, Any]] = [
         "auto_click_oauth": False,
         "verification_url": "https://news.google.com/",
     },
+
+    # 20-21. PORTFOLIO MANAGEMENT
+    {
+        "id": "myprofit",
+        "name": "MyProfit Web",
+        "category": SiteCategory.PORTFOLIO,
+        "url": "https://myprofitweb.com/Login.aspx",
+        "login_type": "credentials",  # Login com email/senha próprio
+        "login_selector": "//a[contains(@href, 'Logout')]",
+        "oauth_button": None,  # Não tem OAuth Google
+        "instructions": "Faça login com suas credenciais do MyProfit Web. Se não tiver conta, pode pular.",
+        "wait_time": 25,
+        "order": 20,
+        "required": False,  # Opcional
+        "auto_click_oauth": False,
+        "verification_url": "https://myprofitweb.com/",
+    },
+    {
+        "id": "kinvo",
+        "name": "Kinvo",
+        "category": SiteCategory.PORTFOLIO,
+        "url": "https://app.kinvo.com.br/login",
+        "login_type": "oauth",  # Pode ter OAuth Google
+        "login_selector": "//a[contains(@href, '/logout')]",
+        "oauth_button": "//button[contains(., 'Google')]",  # Tentar clicar no botão Google se existir
+        "instructions": "Faça login com Google ou credenciais Kinvo. Se não tiver conta, pode pular.",
+        "wait_time": 25,
+        "order": 21,
+        "required": False,  # Opcional
+        "auto_click_oauth": True,  # Tentar clicar automaticamente se encontrar botão Google
+        "verification_url": "https://app.kinvo.com.br/",
+    },
 ]
 
 
@@ -361,6 +395,7 @@ OAUTH_CONFIG_METADATA = {
         "market": len(get_sites_by_category(SiteCategory.MARKET)),
         "ai": len(get_sites_by_category(SiteCategory.AI)),
         "news": len(get_sites_by_category(SiteCategory.NEWS)),
+        "portfolio": len(get_sites_by_category(SiteCategory.PORTFOLIO)),
     },
-    "estimated_time_minutes": 15,  # Tempo estimado total
+    "estimated_time_minutes": 18,  # Tempo estimado total (21 sites)
 }

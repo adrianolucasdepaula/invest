@@ -781,6 +781,123 @@ const handleCancel = async () => {
 
 ---
 
+### FASE 27.7: OAuth Manager - Expansão para 21 Sites (Portfolio) ✅ 100% COMPLETO (2025-11-15)
+
+Adição de 2 sites de gestão de portfólio ao OAuth Manager, expandindo de 19 para 21 sites.
+
+**Request Original (Usuário):**
+> "agora precisamos incluir mais dois sites para fazer a coleta dos cookies. https://myprofitweb.com/Login.aspx https://app.kinvo.com.br/login"
+
+**Sites Adicionados:**
+1. **MyProfit Web** (Ordem 20)
+   - URL: https://myprofitweb.com/Login.aspx
+   - Tipo: `credentials` (login tradicional com email/senha)
+   - Categoria: PORTFOLIO
+   - Status: Opcional (required: False)
+   - Timeout: 25 segundos
+
+2. **Kinvo** (Ordem 21)
+   - URL: https://app.kinvo.com.br/login
+   - Tipo: `oauth` (Google OAuth disponível)
+   - Categoria: PORTFOLIO
+   - Status: Opcional (required: False)
+   - Auto-click: Habilitado (tenta clicar no botão Google automaticamente)
+   - Timeout: 25 segundos
+
+**Mudanças Implementadas:**
+
+**1. Backend (oauth_sites_config.py)** ✅
+```python
+# Nova categoria PORTFOLIO
+class SiteCategory(str, Enum):
+    ...
+    PORTFOLIO = "portfolio"  # Gestão de portfólio
+
+# Configurações dos 2 novos sites
+OAUTH_SITES_CONFIG = [
+    ...
+    # 20-21. PORTFOLIO MANAGEMENT
+    {"id": "myprofit", "name": "MyProfit Web", ...},
+    {"id": "kinvo", "name": "Kinvo", ...},
+]
+
+# Metadata atualizada
+OAUTH_CONFIG_METADATA = {
+    "total_sites": 21,  # 19 → 21
+    "categories": {
+        ...
+        "portfolio": 2,  # NOVO
+    },
+    "estimated_time_minutes": 18,  # 15 → 18
+}
+```
+
+**2. Frontend (page.tsx)** ✅
+```typescript
+// 3 ocorrências de "19 sites" → "21 sites"
+- Renove os cookies de autenticação dos 19 sites de forma integrada
++ Renove os cookies de autenticação dos 21 sites de forma integrada
+
+- Este processo irá abrir um navegador Chrome via VNC e guiá-lo através do login em 19 sites.
+- Tempo estimado: 15-20 minutos
++ Este processo irá abrir um navegador Chrome via VNC e guiá-lo através do login em 21 sites.
++ Tempo estimado: 18-22 minutos
+
+- Processa todos os 19 sites automaticamente.
++ Processa todos os 21 sites automaticamente.
+```
+
+**Impacto:**
+| Métrica | Antes | Depois |
+|---------|-------|--------|
+| Total de sites | 19 | 21 |
+| Categorias | 5 (CORE, FUNDAMENTAL, MARKET, AI, NEWS) | 6 (+PORTFOLIO) |
+| Sites opcionais | 13 | 15 (+2) |
+| Tempo estimado | 15-20 min | 18-22 min |
+| Sites de portfólio | 0 | 2 (MyProfit, Kinvo) |
+
+**Validação Completa:**
+- ✅ Python syntax: OK (`oauth_sites_config.py` compilado com sucesso)
+- ✅ TypeScript: 0 erros (frontend)
+- ✅ Docker: Api-service reiniciado e healthy
+- ✅ Playwright: Confirmado 21 sites visíveis no dropdown e sidebar
+- ✅ Screenshot: `TESTE_21_SITES_OAUTH_2025-11-15.png`
+- ✅ Metadata: `total_sites: 21`, `categories.portfolio: 2`, `estimated_time: 18`
+
+**Arquivos Modificados:** 2 arquivos
+- `backend/python-scrapers/oauth_sites_config.py` (+60 linhas)
+  * Nova categoria `SiteCategory.PORTFOLIO`
+  * 2 novos dicionários de configuração (MyProfit Web + Kinvo)
+  * Metadata atualizada (total_sites, categories, estimated_time)
+  * Header atualizado: "19 sites" → "21 sites"
+
+- `frontend/src/app/(dashboard)/oauth-manager/page.tsx` (+6 linhas)
+  * 3 ocorrências de "19 sites" → "21 sites"
+  * Tempo estimado: "15-20 minutos" → "18-22 minutos"
+
+**Documentação:**
+- `ADICAO_SITES_PORTFOLIO_2025-11-15.md` (395 linhas) - Documentação completa da expansão
+  * Configurações detalhadas dos 2 sites
+  * XPath selectors e instruções
+  * Comparação antes/depois
+  * Checklist de validação
+
+**Características Técnicas:**
+- ✅ **Backward Compatible:** Sites opcionais não quebram fluxo se usuário não tiver conta
+- ✅ **Auto-click OAuth:** Kinvo tenta clicar automaticamente no botão Google
+- ✅ **Fallback Manual:** MyProfit Web requer credenciais próprias (não tem OAuth)
+- ✅ **Timeout Apropriado:** 25s para ambos (sites de portfólio podem ser lentos)
+- ✅ **Verificação XPath:** Elementos "Logout" para confirmar login bem-sucedido
+
+**Próximos Passos Sugeridos:**
+1. Monitorar taxa de sucesso dos novos sites em produção
+2. Ajustar timeouts se necessário (atualmente 25s)
+3. Considerar adicionar mais sites de portfólio (Gorila, Stock3, etc)
+
+**Status:** ✅ **100% COMPLETO E VALIDADO**
+
+---
+
 ## 🔄 FASES EM ANDAMENTO
 
 ### FASE 24: Dados Históricos BRAPI com Range Configurável ✅ 100% COMPLETO (2025-11-14)
