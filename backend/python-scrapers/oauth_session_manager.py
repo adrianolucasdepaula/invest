@@ -201,9 +201,10 @@ class OAuthSessionManager:
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
 
             # Configurar timeouts
-            self.driver.set_page_load_timeout(60)
+            # IMPORTANTE: 120s para sites pesados (ADVFN, etc) que demoram > 60s
+            self.driver.set_page_load_timeout(120)
             self.driver.implicitly_wait(5)
-            logger.debug(f"[START_CHROME] Timeouts configurados: page_load=60s, implicit_wait=5s")
+            logger.debug(f"[START_CHROME] Timeouts configurados: page_load=120s, implicit_wait=5s")
 
             elapsed = time.time() - start_time
             logger.success(f"[START_CHROME] Chrome iniciado com sucesso em {elapsed:.2f}s")
@@ -263,14 +264,23 @@ class OAuthSessionManager:
             # Navegar
             logger.info(f"[NAVIGATE] Iniciando navegação para {site_config['name']}...")
             nav_start = time.time()
-            self.driver.get(site_config["url"])
-            nav_elapsed = time.time() - nav_start
 
-            logger.info(f"[NAVIGATE] Página carregada em {nav_elapsed:.2f}s")
+            try:
+                self.driver.get(site_config["url"])
+                nav_elapsed = time.time() - nav_start
+                logger.info(f"[NAVIGATE] Página carregada em {nav_elapsed:.2f}s")
 
-            # Verificar se navegação demorou muito
-            if nav_elapsed > 30:
-                logger.warning(f"[NAVIGATE] ⚠️ Navegação LENTA: {nav_elapsed:.2f}s (limite esperado: 30s)")
+                # Verificar se navegação demorou muito
+                if nav_elapsed > 60:
+                    logger.warning(f"[NAVIGATE] ⚠️ Navegação MUITO LENTA: {nav_elapsed:.2f}s (> 60s)")
+                elif nav_elapsed > 30:
+                    logger.warning(f"[NAVIGATE] ⚠️ Navegação LENTA: {nav_elapsed:.2f}s (> 30s)")
+
+            except Exception as nav_error:
+                nav_elapsed = time.time() - nav_start
+                logger.warning(f"[NAVIGATE] ⚠️ Timeout/Erro durante carregamento após {nav_elapsed:.2f}s: {nav_error}")
+                logger.warning(f"[NAVIGATE] ⚠️ Continuando mesmo assim - site pode ter carregado parcialmente")
+                # NÃO lançar exceção - vamos tentar coletar cookies mesmo assim
 
             # Aguardar carregamento adicional
             logger.debug(f"[NAVIGATE] Aguardando 3s para carregamento completo...")

@@ -113,8 +113,8 @@ OAUTH_SITES_CONFIG: List[Dict[str, Any]] = [
         "login_type": "credentials",  # Pode requerer credenciais próprias
         "login_selector": "//a[contains(text(), 'Logout')]",
         "oauth_button": None,
-        "instructions": "ADVFN pode requerer credenciais próprias. Se não tiver, pode pular.",
-        "wait_time": 20,
+        "instructions": "ADVFN pode requerer credenciais próprias. Se não tiver, pode pular. Site pesado pode demorar até 120s.",
+        "wait_time": 30,  # Site pesado, pode demorar mais
         "order": 6,
         "required": False,  # Opcional
         "auto_click_oauth": False,

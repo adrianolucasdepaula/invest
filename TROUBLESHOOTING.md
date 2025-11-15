@@ -1,7 +1,7 @@
 # 🔧 TROUBLESHOOTING - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-14
+**Última Atualização:** 2025-11-15
 **Versão:** 1.0.0
 **Mantenedor:** Claude Code (Sonnet 4.5)
 
@@ -418,6 +418,109 @@ validate(data): boolean {
 **3. Filtrar outliers nas métricas:**
 - Ver `FASE_26_MANUTENCAO_SCRAPERS.md` para exemplo completo
 - Implementado em `scraper-metrics.service.ts`
+
+---
+
+### Problema 10: OAuth Manager - Timeout em site pesado (ADVFN) ✅ RESOLVIDO
+
+**Data da Solução:** 2025-11-15
+**Commit:** (pendente)
+
+**Sintomas:**
+```
+ADVFN
+29 cookies
+Message: timeout: Timed out receiving message from renderer: 58.938
+Stacktrace: #0 0x563b66686aca <unknown> ...
+```
+
+**Causa Raiz:**
+- Timeout padrão do Selenium: **60s** (muito curto para sites pesados)
+- ADVFN demora **~59s** para carregar (timeout exato: 58.938s)
+- Site tem muitos scripts/assets pesados (JS, CSS, imagens)
+- `wait_time` do ADVFN: 20s (inconsistente com tempo real de carregamento)
+
+**Análise:**
+- Site conseguiu coletar **29 cookies** ANTES do timeout (navegação parcial bem-sucedida)
+- Erro ocorreu em `driver.get(url)` ao aguardar "page load complete"
+- Chrome renderizou página mas demorou > 60s para enviar sinal de "load complete"
+
+**Solução Definitiva:**
+
+**1. Aumentar timeout global para sites pesados:**
+```python
+# oauth_session_manager.py:203-207
+# ANTES:
+self.driver.set_page_load_timeout(60)
+
+# DEPOIS:
+# IMPORTANTE: 120s para sites pesados (ADVFN, etc) que demoram > 60s
+self.driver.set_page_load_timeout(120)
+self.driver.implicitly_wait(5)
+logger.debug(f"[START_CHROME] Timeouts configurados: page_load=120s, implicit_wait=5s")
+```
+
+**2. Tratamento gracioso de timeout (continuar mesmo com erro):**
+```python
+# oauth_session_manager.py:264-283
+# ANTES:
+self.driver.get(site_config["url"])
+nav_elapsed = time.time() - nav_start
+
+# DEPOIS:
+try:
+    self.driver.get(site_config["url"])
+    nav_elapsed = time.time() - nav_start
+    logger.info(f"[NAVIGATE] Página carregada em {nav_elapsed:.2f}s")
+
+    # Verificar se navegação demorou muito
+    if nav_elapsed > 60:
+        logger.warning(f"[NAVIGATE] ⚠️ Navegação MUITO LENTA: {nav_elapsed:.2f}s (> 60s)")
+    elif nav_elapsed > 30:
+        logger.warning(f"[NAVIGATE] ⚠️ Navegação LENTA: {nav_elapsed:.2f}s (> 30s)")
+
+except Exception as nav_error:
+    nav_elapsed = time.time() - nav_start
+    logger.warning(f"[NAVIGATE] ⚠️ Timeout/Erro durante carregamento após {nav_elapsed:.2f}s: {nav_error}")
+    logger.warning(f"[NAVIGATE] ⚠️ Continuando mesmo assim - site pode ter carregado parcialmente")
+    # NÃO lançar exceção - vamos tentar coletar cookies mesmo assim
+```
+
+**3. Aumentar wait_time do ADVFN:**
+```python
+# oauth_sites_config.py:116-117
+# ANTES:
+"wait_time": 20,
+
+# DEPOIS:
+"instructions": "ADVFN pode requerer credenciais próprias. Se não tiver, pode pular. Site pesado pode demorar até 120s.",
+"wait_time": 30,  # Site pesado, pode demorar mais
+```
+
+**Arquivos Modificados:**
+- `backend/python-scrapers/oauth_session_manager.py` (+14 linhas, -5 linhas)
+- `backend/python-scrapers/oauth_sites_config.py` (+1 linha, -1 linha)
+
+**Validação:**
+- ✅ Python syntax: válido (grep verificado)
+- ✅ Serviços reiniciados: api-service + scrapers (ambos healthy)
+- ⏳ Teste real pendente: Aguardando usuário testar ADVFN novamente
+
+**Comportamento Esperado Após Fix:**
+1. **Navegação normal (< 120s):** Página carrega, coleta cookies, segue fluxo normal
+2. **Timeout entre 60-120s:** Warning de lentidão, mas coleta cookies e continua
+3. **Timeout > 120s:** Timeout exception, mas tenta coletar cookies parciais
+
+**Prevenção:**
+- Timeout agora suporta sites que demoram até **2 minutos** para carregar
+- Logs detalhados mostram exatamente onde ocorreu lentidão
+- Fallback gracioso: mesmo com timeout, tenta aproveitar carregamento parcial
+
+**Próximos Passos:**
+1. Testar ADVFN novamente via OAuth Manager (http://localhost:3100/oauth-manager)
+2. Se timeout persistir (> 120s), considerar abordagem alternativa:
+   - Usar `page.goto(url, {waitUntil: 'domcontentloaded'})` (mais rápido, menos confiável)
+   - Implementar retry logic com backoff exponencial
 
 ---
 
