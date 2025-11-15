@@ -415,11 +415,11 @@ class OAuthSessionManager:
 
     def find_next_pending_site(self) -> Optional[int]:
         """
-        Encontrar o próximo site pendente ou com falha (máximo 3 tentativas)
+        Encontrar o próximo site pendente, aguardando usuário ou com falha (máximo 3 tentativas)
 
         Busca em toda a lista de sites (não apenas posteriores ao índice atual)
         e retorna o índice do primeiro site que atenda aos critérios:
-        - Status PENDING ou FAILED
+        - Status PENDING, WAITING_USER ou FAILED
         - Tentativas < 3 (se FAILED)
 
         Returns:
@@ -433,6 +433,11 @@ class OAuthSessionManager:
             # Site ainda não processado
             if site_progress.status == SiteStatus.PENDING:
                 logger.debug(f"[FIND_PENDING] Site pendente encontrado: {site_progress.site_name} (índice {i})")
+                return i
+
+            # Site aguardando ação do usuário (IMPORTANTE: não pular esses!)
+            if site_progress.status == SiteStatus.WAITING_USER:
+                logger.debug(f"[FIND_PENDING] Site aguardando usuário encontrado: {site_progress.site_name} (índice {i})")
                 return i
 
             # Site com falha mas ainda pode tentar novamente

@@ -7,6 +7,11 @@ export interface VncViewerProps {
 }
 
 export function VncViewer({ vncUrl, currentSiteName, instructions }: VncViewerProps) {
+  // Adicionar parâmetros para auto-conectar e ajustar resolução
+  const vncUrlWithParams = vncUrl.includes('?')
+    ? `${vncUrl}&autoconnect=true&resize=remote`
+    : `${vncUrl}?autoconnect=true&resize=remote`;
+
   return (
     <div className="border rounded-lg overflow-hidden bg-background">
       <div className="bg-muted p-4 border-b">
@@ -18,7 +23,7 @@ export function VncViewer({ vncUrl, currentSiteName, instructions }: VncViewerPr
 
       <div className="relative w-full" style={{ height: '600px' }}>
         <iframe
-          src={vncUrl}
+          src={vncUrlWithParams}
           className="w-full h-full"
           allow="fullscreen"
           title="VNC Viewer - Chrome OAuth"
