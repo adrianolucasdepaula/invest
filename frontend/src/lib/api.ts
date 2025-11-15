@@ -365,6 +365,13 @@ class ApiClient {
       return response.data;
     },
 
+    // Go back to previous site
+    goBack: async () => {
+      const client = this.getOAuthClient();
+      const response = await client.post('/api/oauth/session/go-back');
+      return response.data;
+    },
+
     // Health check
     healthCheck: async () => {
       const client = this.getOAuthClient();

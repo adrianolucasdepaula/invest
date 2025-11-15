@@ -45,11 +45,15 @@ export interface UseOAuthSessionReturn {
   saveCookies: () => Promise<void>;
   cancelSession: () => Promise<void>;
   refreshStatus: () => Promise<void>;
+  goBack: () => Promise<void>;
+  navigateToSite: (siteId: string) => Promise<void>;
+  clearError: () => void;
 
   // Computed
   currentSite: SiteProgress | null;
   isSessionActive: boolean;
   canProceed: boolean;
+  canGoBack: boolean;
 }
 
 /**
@@ -281,6 +285,86 @@ export function useOAuthSession(): UseOAuthSessionReturn {
     }
   }, [toast]);
 
+  /**
+   * Voltar para o site anterior
+   */
+  const goBack = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await api.oauth.goBack();
+
+      if (result.success) {
+        toast({
+          title: 'Voltou ao site anterior',
+          description: result.message || 'Navegando de volta',
+        });
+
+        // Atualizar status
+        await refreshStatus();
+      } else {
+        throw new Error(result.error || 'Falha ao voltar');
+      }
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.detail || err.message || 'Erro ao voltar ao site anterior';
+      setError(errorMsg);
+
+      toast({
+        title: 'Erro',
+        description: errorMsg,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast, refreshStatus]);
+
+  /**
+   * Navegar para um site específico
+   */
+  const navigateToSite = useCallback(
+    async (siteId: string) => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const result = await api.oauth.navigateToSite(siteId);
+
+        if (result.success) {
+          toast({
+            title: 'Navegando para site',
+            description: result.message || `Navegando para ${siteId}`,
+          });
+
+          // Atualizar status
+          await refreshStatus();
+        } else {
+          throw new Error(result.error || 'Falha ao navegar para site');
+        }
+      } catch (err: any) {
+        const errorMsg = err.response?.data?.detail || err.message || 'Erro ao navegar para site';
+        setError(errorMsg);
+
+        toast({
+          title: 'Erro',
+          description: errorMsg,
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [toast, refreshStatus]
+  );
+
+  /**
+   * Limpar erro
+   */
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   // Computed properties
   const currentSite = session?.sites_progress[session.current_site_index] || null;
 
@@ -292,6 +376,11 @@ export function useOAuthSession(): UseOAuthSessionReturn {
     isSessionActive &&
     currentSite !== null &&
     currentSite.status === 'waiting_user';
+
+  const canGoBack =
+    isSessionActive &&
+    session !== null &&
+    session.current_site_index > 0;
 
   // Carregar sessão existente ao montar componente
   useEffect(() => {
@@ -346,10 +435,14 @@ export function useOAuthSession(): UseOAuthSessionReturn {
     saveCookies,
     cancelSession,
     refreshStatus,
+    goBack,
+    navigateToSite,
+    clearError,
 
     // Computed
     currentSite,
     isSessionActive,
     canProceed,
+    canGoBack,
   };
 }

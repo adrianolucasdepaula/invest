@@ -133,6 +133,32 @@ async def skip_site(request: SkipSiteRequest):
     return result
 
 
+@router.post("/session/go-back")
+async def go_back():
+    """
+    Voltar para o site anterior
+
+    **Uso:** Quando usuário quer reprocessar site anterior
+
+    **Ação:**
+    1. Decrementa current_site_index
+    2. Navega para o site anterior
+    3. Marca site como "in_progress" novamente
+
+    **Returns:**
+    - previous_site: Nome do site anterior
+    - current_index: Novo índice atual
+    """
+    logger.info("API: Voltando para site anterior")
+
+    result = await OAuthController.go_back()
+
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result.get("error", "Erro ao voltar"))
+
+    return result
+
+
 @router.post("/session/save")
 async def save_cookies():
     """

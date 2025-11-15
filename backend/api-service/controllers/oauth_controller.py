@@ -268,6 +268,59 @@ class OAuthController:
             }
 
     @staticmethod
+    async def go_back() -> Dict[str, Any]:
+        """
+        Voltar para o site anterior
+
+        Returns:
+            Resultado da operação
+        """
+        try:
+            manager = get_session_manager()
+
+            if not manager.current_session:
+                return {
+                    "success": False,
+                    "error": "Nenhuma sessão OAuth ativa"
+                }
+
+            # Verificar se não está no primeiro site
+            if manager.current_session.current_site_index == 0:
+                return {
+                    "success": False,
+                    "error": "Já está no primeiro site"
+                }
+
+            # Decrementar índice
+            manager.current_session.current_site_index -= 1
+
+            # Obter site anterior
+            previous_site = manager.current_session.sites_progress[manager.current_session.current_site_index]
+
+            # Marcar site como "in_progress" novamente
+            previous_site.status = SiteStatus.IN_PROGRESS
+            previous_site.user_action_required = False
+
+            logger.info(f"Voltando para site anterior: {previous_site.site_name}")
+
+            # Navegar para site anterior
+            await manager.navigate_to_site(previous_site.site_id)
+
+            return {
+                "success": True,
+                "message": f"Voltou para {previous_site.site_name}",
+                "previous_site": previous_site.site_name,
+                "current_index": manager.current_session.current_site_index
+            }
+
+        except Exception as e:
+            logger.error(f"Erro ao voltar para site anterior: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    @staticmethod
     async def save_cookies() -> Dict[str, Any]:
         """
         Salvar cookies coletados e finalizar sessão
