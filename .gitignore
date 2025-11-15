@@ -188,3 +188,8 @@ response.json
 # Duplicate/legacy directories
 invest-claude-web/
 *.tsbuildinfo
+
+# Temporary test files
+oauth_test_logs.txt
+oauth_test_summary.txt
+temp_logs.txt
