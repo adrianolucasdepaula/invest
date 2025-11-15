@@ -64,6 +64,7 @@ class SiteProgress:
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     user_action_required: bool = False
+    attempts: int = 0  # Contador de tentativas (máximo 3)
 
 
 @dataclass
@@ -94,6 +95,7 @@ class OAuthSession:
                     "cookies_count": sp.cookies_count,
                     "error_message": sp.error_message,
                     "user_action_required": sp.user_action_required,
+                    "attempts": sp.attempts,
                 }
                 for sp in self.sites_progress
             ],
@@ -262,10 +264,13 @@ class OAuthSessionManager:
             except Exception as e:
                 logger.warning(f"[NAVIGATE] Não foi possível obter URL atual: {e}")
 
-            # Atualizar status
+            # Atualizar status e incrementar tentativas
             site_progress.status = SiteStatus.IN_PROGRESS
             site_progress.started_at = datetime.now()
+            site_progress.attempts += 1  # Incrementar contador de tentativas
             self.current_session.status = SessionStatus.NAVIGATING
+
+            logger.debug(f"[NAVIGATE] Tentativa #{site_progress.attempts} para {site_config['name']}")
 
             # Navegar
             logger.info(f"[NAVIGATE] Iniciando navegação para {site_config['name']}...")
@@ -408,9 +413,42 @@ class OAuthSessionManager:
 
         logger.info("=" * 80)
 
+    def find_next_pending_site(self) -> Optional[int]:
+        """
+        Encontrar o próximo site pendente ou com falha (máximo 3 tentativas)
+
+        Busca em toda a lista de sites (não apenas posteriores ao índice atual)
+        e retorna o índice do primeiro site que atenda aos critérios:
+        - Status PENDING ou FAILED
+        - Tentativas < 3 (se FAILED)
+
+        Returns:
+            Índice do próximo site pendente ou None se todos foram processados
+        """
+        if not self.current_session:
+            return None
+
+        # Buscar sites pendentes/falhados em toda a lista
+        for i, site_progress in enumerate(self.current_session.sites_progress):
+            # Site ainda não processado
+            if site_progress.status == SiteStatus.PENDING:
+                logger.debug(f"[FIND_PENDING] Site pendente encontrado: {site_progress.site_name} (índice {i})")
+                return i
+
+            # Site com falha mas ainda pode tentar novamente
+            if site_progress.status == SiteStatus.FAILED and site_progress.attempts < 3:
+                logger.debug(f"[FIND_PENDING] Site com falha encontrado: {site_progress.site_name} (índice {i}, tentativa {site_progress.attempts}/3)")
+                return i
+
+        logger.debug("[FIND_PENDING] Nenhum site pendente encontrado")
+        return None
+
     async def move_to_next_site(self) -> bool:
         """
-        Mover para o próximo site
+        Mover para o próximo site PENDENTE (não apenas sequencial)
+
+        Busca o próximo site com status PENDING ou FAILED (com < 3 tentativas)
+        em TODA a lista, não apenas posteriores ao índice atual.
 
         Returns:
             True se há mais sites, False se terminou
@@ -420,19 +458,34 @@ class OAuthSessionManager:
             return False
 
         logger.info("=" * 80)
-        logger.info(f"[NEXT_SITE] Avançando para próximo site...")
+        logger.info(f"[NEXT_SITE] Buscando próximo site pendente...")
         logger.debug(f"[NEXT_SITE] Índice atual: {self.current_session.current_site_index}")
 
-        self.current_session.current_site_index += 1
+        # Buscar próximo site pendente
+        next_index = self.find_next_pending_site()
 
-        if self.current_session.current_site_index >= len(self.current_session.sites_progress):
-            logger.info(f"[NEXT_SITE] 🎉 Todos os sites foram processados!")
+        if next_index is None:
+            logger.info(f"[NEXT_SITE] 🎉 Todos os sites foram processados (ou máximo de tentativas atingido)!")
             logger.info(f"[NEXT_SITE] Total: {len(self.current_session.sites_progress)} sites")
+
+            # Estatísticas
+            completed = sum(1 for sp in self.current_session.sites_progress if sp.status == SiteStatus.COMPLETED)
+            skipped = sum(1 for sp in self.current_session.sites_progress if sp.status == SiteStatus.SKIPPED)
+            failed = sum(1 for sp in self.current_session.sites_progress if sp.status == SiteStatus.FAILED)
+            logger.info(f"[NEXT_SITE] ✓ Concluídos: {completed}, ⊘ Pulados: {skipped}, ✗ Falhados: {failed}")
             logger.info("=" * 80)
             return False
 
-        next_site = self.current_session.sites_progress[self.current_session.current_site_index]
-        logger.info(f"[NEXT_SITE] Próximo site: {next_site.site_name} (índice {self.current_session.current_site_index})")
+        # Atualizar índice para o site encontrado
+        self.current_session.current_site_index = next_index
+        next_site = self.current_session.sites_progress[next_index]
+
+        logger.info(f"[NEXT_SITE] Próximo site: {next_site.site_name} (índice {next_index})")
+
+        # Se for retry, logar tentativa
+        if next_site.status == SiteStatus.FAILED:
+            logger.info(f"[NEXT_SITE] ⚠️ Tentativa {next_site.attempts + 1}/3 (site com falha anterior)")
+
         logger.info("=" * 80)
 
         # Navegar automaticamente para o próximo
