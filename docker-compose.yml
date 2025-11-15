@@ -227,15 +227,16 @@ services:
       dockerfile: Dockerfile
     container_name: invest_api_service
     environment:
-      # Database
-      - DB_HOST=postgres
+      # Database - Using IP because network_mode breaks DNS resolution
+      # NOTE: IPs are from invest_network, may change if network is recreated
+      - DB_HOST=172.25.0.2
       - DB_PORT=5432
       - DB_USERNAME=invest_user
       - DB_PASSWORD=invest_password
       - DB_DATABASE=invest_db
 
-      # Redis
-      - REDIS_HOST=redis
+      # Redis - Using IP because network_mode breaks DNS resolution
+      - REDIS_HOST=172.25.0.3
       - REDIS_PORT=6379
 
       # API Configuration

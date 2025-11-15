@@ -292,7 +292,7 @@ class ApiClient {
   private getOAuthClient() {
     return axios.create({
       baseURL: OAUTH_BASE_URL,
-      timeout: 60000, // OAuth operations can take longer
+      timeout: 150000, // OAuth operations can take longer (150s for heavy sites like ADVFN)
       headers: {
         'Content-Type': 'application/json',
       },

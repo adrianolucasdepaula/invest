@@ -861,6 +861,152 @@ docker stats invest_backend
 
 ---
 
+### Problema 17: OAuth Manager - DNS resolution quebrada (api-service) ✅ RESOLVIDO
+
+**Sintomas:**
+```
+Frontend: Network Error
+Console: Failed to load resource: net::ERR_EMPTY_RESPONSE
+api-service logs: could not translate host name "postgres" to address: Temporary failure in name resolution
+```
+
+**Causa Raiz:**
+- **`docker-compose.yml` (linha 260):** `network_mode: "service:scrapers"`
+- Compartilhamento de stack de rede quebra resolução DNS do Docker
+- api-service não consegue resolver hostnames "postgres" e "redis"
+
+**Diagnóstico:**
+```bash
+# Scrapers consegue resolver:
+$ docker exec invest_scrapers sh -c "getent hosts postgres"
+172.25.0.2      postgres
+
+# api-service NÃO consegue:
+$ docker exec invest_api_service sh -c "getent hosts postgres"
+Exit code 2  # Falha na resolução
+```
+
+**Solução Definitiva:**
+
+Usar IPs diretos ao invés de hostnames:
+
+```yaml
+# docker-compose.yml
+api-service:
+  environment:
+    # Database - Using IP because network_mode breaks DNS resolution
+    # NOTE: IPs are from invest_network, may change if network is recreated
+    - DB_HOST=172.25.0.2  # ANTES: postgres
+    - DB_PORT=5432
+    - DB_USERNAME=invest_user
+    - DB_PASSWORD=invest_password
+    - DB_DATABASE=invest_db
+
+    # Redis - Using IP because network_mode breaks DNS resolution
+    - REDIS_HOST=172.25.0.3  # ANTES: redis
+    - REDIS_PORT=6379
+```
+
+**Obter IPs da rede:**
+```bash
+docker network inspect invest-claude-web_invest_network --format='{{range .Containers}}{{.Name}}: {{.IPv4Address}} {{end}}'
+
+# Resultado:
+# invest_postgres: 172.25.0.2/16
+# invest_redis: 172.25.0.3/16
+# invest_backend: 172.25.0.4/16
+# invest_scrapers: 172.25.0.5/16
+```
+
+**Validação:**
+```bash
+docker-compose restart api-service
+docker-compose logs api-service | grep -E "Database|Redis"
+# ✅ Connected to database: 172.25.0.2:5432/invest_db
+# ✅ Connected to Redis: 172.25.0.3:6379
+```
+
+**Comportamento Esperado Após Fix:**
+- ✅ api-service conecta ao PostgreSQL via IP
+- ✅ api-service conecta ao Redis via IP
+- ✅ Health check HTTP 200 OK
+- ✅ 27 scrapers registered
+
+**Notas Importantes:**
+- **IPs são fixos dentro da rede Docker** (mesmo após restart dos containers)
+- **IPs só mudam se a rede for recriada** (`docker-compose down -v`)
+- Se IPs mudarem, atualizar `docker-compose.yml` e reiniciar api-service
+
+---
+
+### Problema 18: OAuth Manager - Timeout frontend (60s HTTP request) ✅ RESOLVIDO
+
+**Sintomas:**
+```
+Frontend Alert: "timeout of 60000ms exceeded"
+Backend logs: [NAVIGATE] ✓ Navegação concluída em 67.74s
+```
+
+**Causa Raiz:**
+- **Backend timeout**: 120s (Selenium - fix aplicado no commit 8115ce1)
+- **Frontend timeout**: 60s (axios HTTP request)
+- **ADVFN carregamento**: 67.74s
+- **Resultado**: Backend sucesso, mas frontend dá timeout aos 60s
+
+**Timeline do Problema:**
+1. Backend inicia navegação ADVFN
+2. Backend carrega página em 64.67s
+3. Backend aguarda 3s → Total: 67.74s
+4. Frontend timeout axios aos 60s → **ERRO**
+5. Backend retorna resposta **depois** do timeout frontend
+
+**Solução Definitiva:**
+
+Aumentar timeout axios para 150s:
+
+```typescript
+// frontend/src/lib/api.ts (linha 295)
+private getOAuthClient() {
+  return axios.create({
+    baseURL: OAUTH_BASE_URL,
+    timeout: 150000, // ANTES: 60000 (60s)
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+}
+```
+
+**Justificativa 150s:**
+- Backend timeout Selenium: 120s
+- ADVFN tempo real: ~67s
+- Margem de segurança: +30s
+- **Total**: 150s
+
+**Validação:**
+```bash
+cd frontend && npx tsc --noEmit
+# ✅ 0 erros
+
+docker-compose restart frontend
+# ✅ Container healthy
+```
+
+**Comportamento Esperado Após Fix:**
+- ✅ Frontend aguarda até 150s
+- ✅ ADVFN (67s) carrega sem timeout
+- ✅ Sites lentos (até 120s) funcionam
+- ✅ Sem erro "timeout of 60000ms exceeded"
+
+**Tabela Comparativa:**
+| Métrica | ANTES | DEPOIS |
+|---------|-------|--------|
+| Backend timeout | 120s | 120s (sem mudança) |
+| Frontend timeout | 60s | 150s |
+| ADVFN carregamento | 67s (timeout frontend) | 67s (sucesso) |
+
+---
+
 ## 📚 RECURSOS ADICIONAIS
 
 ### Documentação do Projeto
