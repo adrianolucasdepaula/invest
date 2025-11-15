@@ -1112,6 +1112,96 @@ Criação de seed automático para usuário admin e documentação completa de t
 
 ---
 
+### FASE 28.6: Correção Regressão Crítica - Dados Fundamentalistas ✅ 100% COMPLETO (2025-11-15)
+
+Correção de regressão crítica onde dados fundamentalistas não apareciam no dialog "Ver Detalhes" após FASE 28.
+
+**Problema (Regressão Crítica):**
+- ❌ Dados fundamentalistas não apareciam no dialog "Ver Detalhes" após FASE 28
+- ❌ Impacto: 100% usuários não conseguiam visualizar dados formatados
+- ❌ Apenas JSON bruto aparecia, sem seções visuais (Valuation, Rentabilidade, Margens, Múltiplos, Dados Financeiros)
+
+**Causa Raiz:**
+- FASE 28 mudou estrutura da API de análises (análise combinada)
+- **ANTES:** `analysis: { cotacao, pl, pvp, ... }`
+- **DEPOIS:** `analysis: { fundamental: { data: { cotacao, pl, pvp, ... } } }`
+- Frontend não foi atualizado para nova estrutura
+
+**Solução Implementada:**
+
+**1. Frontend - Fallback Retrocompatível** ✅
+- ✅ `frontend/src/app/(dashboard)/analysis/page.tsx` (+162 linhas refatoradas)
+- ✅ Fallback: `analysis.fundamental?.data || analysis` (suporta estrutura antiga E nova)
+- ✅ IIFE para calcular `fundamentalData` com fallback automático
+- ✅ Todas as 5 seções agora renderizam corretamente:
+  * Valuation (Cotação, P/L, P/VP, P/SR)
+  * Rentabilidade (Dividend Yield, ROE, ROIC)
+  * Margens (Margem EBIT, Margem Líquida)
+  * Múltiplos (EV/EBIT, EV/EBITDA, P/EBIT, P/Ativo)
+  * Dados Financeiros (Patrimônio Líquido, Dívida Bruta, Disponibilidades, Lucro Líquido)
+
+**2. System Manager - Python Service** ✅
+- ✅ `system-manager.ps1` (+4 locais atualizados)
+- ✅ Adicionar "python-service" ao `Wait-ForHealthy` (linha 324)
+- ✅ Adicionar "python-service" ao `Get-SystemStatus` (linha 737)
+- ✅ Adicionar health check HTTP do Python Service (linhas 779-789, porta 8001)
+- ✅ Adicionar documentação do serviço no `Show-Help` (linha 882)
+- **Motivo:** Pendência identificada em `CHECKLIST_VALIDACAO_FASE_28.md`
+
+**Arquivos Criados (2):**
+- `REGRESSAO_DADOS_FUNDAMENTALISTAS_2025-11-15.md` (390 linhas)
+  * Investigação detalhada (causa raiz, análise API, análise frontend)
+  * Solução aplicada com código antes/depois
+  * Validação completa (TypeScript, Build, Docker, Testes Manuais, Console)
+  * Screenshots (ANTES e DEPOIS)
+  * Lições aprendidas (5 pontos)
+  * Checklist de correção
+- `CHECKLIST_FASE_29_GRAFICOS_INDICADORES.md` (670 linhas)
+  * Preparação para próxima fase (gráficos avançados)
+  * 32 tarefas organizadas em 6 fases
+  * Detalhamento completo de cada tarefa
+
+**Arquivos Modificados (2):**
+- `frontend/src/app/(dashboard)/analysis/page.tsx` (+162 linhas refatoradas, linhas 670-826)
+- `system-manager.ps1` (+4 locais atualizados)
+
+**Validação (Metodologia Zero Tolerance):**
+- ✅ TypeScript frontend: 0 erros
+- ✅ Build frontend: Success (17 páginas compiladas)
+- ✅ Docker frontend: Reiniciado (healthy)
+- ✅ Testes Manuais: Todas as 5 seções aparecem formatadas
+- ✅ Console: 0 erros, 0 warnings
+- ✅ Screenshots: ANTES (problema) e DEPOIS (solução) documentados
+
+**Screenshots:**
+- `validation-screenshots/REGRESSAO_DADOS_FUNDAMENTALISTAS_VALE3_2025-11-15.png` (ANTES)
+- `validation-screenshots/CORRECAO_SUCESSO_DADOS_FUNDAMENTALISTAS_VALE3_2025-11-15.png` (DEPOIS)
+
+**Impacto:**
+```
+ANTES: Dialog só mostra JSON bruto (sem seções visuais)
+DEPOIS: Dialog mostra 5 seções formatadas + JSON bruto (collapse)
+        Valuation: Cotação R$ 65.27, P/L 9.81, P/VP 1.36, P/SR 1.39
+        Rentabilidade: DY 7%, ROE 13.8%, ROIC 16.7%
+        Margens: EBIT 33.1%, Líquida 13.7%
+        Múltiplos: EV/EBIT 4.12, P/EBIT 4.2, P/Ativo 0.61
+        Financeiros: PL R$ 218.127M, Dívida R$ 98.622M, etc.
+```
+
+**Lições Aprendidas:**
+1. **Breaking Changes Devem Ser Documentados** - Mudanças na API devem ter migration guide
+2. **Testes E2E Poderiam Ter Detectado** - Asserções sobre elementos DOM específicos
+3. **Retrocompatibilidade É Essencial** - Sempre usar fallbacks quando possível
+4. **Validação Imediata Após Breaking Change** - Testar TODAS as páginas que consomem endpoint
+5. **system-manager.ps1 Deve Ser Atualizado Junto com Novos Serviços** - Incluir health checks apropriados
+
+**Commit:** `05768b6`
+**Total:** 2 criados, 2 modificados (+1.552/-134 linhas)
+**Tempo de Correção:** 30 minutos (investigação + correção + validação)
+**Status:** ✅ **100% COMPLETO E VALIDADO**
+
+---
+
 ### FASE 25: Refatoração Botão "Solicitar Análises" ⏳ AGUARDANDO APROVAÇÃO
 
 Reorganizar botão de análise em massa.
