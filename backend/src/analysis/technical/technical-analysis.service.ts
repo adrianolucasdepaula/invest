@@ -32,10 +32,10 @@ export class TechnicalAnalysisService {
   /**
    * Perform complete technical analysis
    */
-  analyze(ticker: string, priceHistory: PriceData[]): TechnicalAnalysisResult {
+  async analyze(ticker: string, priceHistory: PriceData[]): Promise<TechnicalAnalysisResult> {
     this.logger.log(`Performing technical analysis for ${ticker}`);
 
-    const indicators = this.technicalIndicators.calculateIndicators(priceHistory);
+    const indicators = await this.technicalIndicators.calculateIndicators(ticker, priceHistory);
     const currentPrice = priceHistory[priceHistory.length - 1].close;
 
     // Analyze signals

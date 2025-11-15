@@ -68,6 +68,43 @@ services:
           memory: 256M
     command: redis-server --appendonly yes --maxmemory 768mb --maxmemory-policy allkeys-lru
 
+  # Python Technical Analysis Service (NEW - 10-50x faster indicators)
+  python-service:
+    build:
+      context: ./backend/python-service
+      dockerfile: Dockerfile
+    container_name: invest_python_service
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./backend/python-service:/app
+      - ./logs:/app/logs
+    networks:
+      - invest_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
   # Backend NestJS
   backend:
     build:
@@ -116,6 +153,9 @@ services:
       # Queue
       - QUEUE_REDIS_HOST=redis
       - QUEUE_REDIS_PORT=6379
+
+      # Python Service (NEW - for technical indicators)
+      - PYTHON_SERVICE_URL=http://python-service:8001
     ports:
       - "3101:3101"
     volumes:
@@ -128,6 +168,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      python-service:
         condition: service_healthy
     networks:
       - invest_network

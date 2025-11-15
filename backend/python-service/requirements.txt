@@ -1,0 +1,37 @@
+# Python Service - Technical Analysis
+# Versão: 1.0.0
+# Descrição: Dependências para cálculo de indicadores técnicos com pandas_ta
+
+# FastAPI (Web Framework)
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Data Processing
+pandas==2.2.0
+numpy==1.26.3
+
+# Technical Analysis
+pandas-ta==0.3.14b0
+ta-lib==0.4.28  # Opcional - requer compilação C
+
+# Utils
+python-dateutil==2.8.2
+python-dotenv==1.0.0
+
+# Performance
+numba==0.59.0  # JIT compilation para pandas_ta
+
+# Monitoring
+prometheus-client==0.19.0  # Opcional - métricas
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+httpx==0.26.0  # Para testar endpoints FastAPI
+
+# Development
+black==24.1.1  # Code formatter
+flake8==7.0.0  # Linter
+mypy==1.8.0    # Type checker
