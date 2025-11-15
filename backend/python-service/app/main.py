@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # Create FastAPI app
 app = FastAPI(
     title="Python Technical Analysis Service",
-    description="High-performance technical indicators calculation using pandas_ta",
+    description="High-performance technical indicators calculation using pandas_ta_classic",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -90,9 +90,9 @@ async def root():
         service="python-technical-analysis",
         version="1.0.0",
         dependencies={
-            "pandas": "2.2.0",
-            "pandas_ta": "0.3.14b0",
-            "numpy": "1.26.3",
+            "pandas": "2.2.2",
+            "pandas_ta_classic": "0.3.37",
+            "numpy": "2.0.0",
         },
     )
 
@@ -103,14 +103,14 @@ async def health_check():
     Health check endpoint
     """
     try:
-        # Test pandas_ta import
-        import pandas_ta as ta
+        # Test pandas_ta_classic import
+        import pandas_ta_classic as ta
 
         return HealthResponse(
             status="healthy",
             service="python-technical-analysis",
             version="1.0.0",
-            dependencies={"pandas_ta": "available"},
+            dependencies={"pandas_ta_classic": "available"},
         )
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
@@ -197,7 +197,7 @@ async def startup_event():
     Startup event - Initialize resources
     """
     logger.info("🚀 Python Technical Analysis Service starting...")
-    logger.info("📊 pandas_ta loaded successfully")
+    logger.info("📊 pandas_ta_classic loaded successfully")
     logger.info("✅ Service ready to accept requests")
 
 

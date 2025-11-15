@@ -321,7 +321,7 @@ export class AnalysisService {
   }
 
   async generateCompleteAnalysis(ticker: string, userId?: string) {
-    this.logger.log(`Generating complete analysis for ${ticker}`);
+    this.logger.log(`Generating COMPLETE analysis (Fundamental + Technical) for ${ticker}`);
 
     // Get asset ID from ticker
     const asset = await this.assetRepository.findOne({
@@ -365,28 +365,96 @@ export class AnalysisService {
     this.logger.log(`Analysis created with ID: ${analysis.id}`);
 
     try {
-      // Scrape fundamental data
+      const startTime = Date.now();
+
+      // ✅ STEP 1: FUNDAMENTAL ANALYSIS (multi-source scraping)
+      this.logger.log(`[Complete] Step 1/3: Scraping fundamental data from 6 sources...`);
       const fundamentalResult = await this.scrapersService.scrapeFundamentalData(ticker);
+      this.logger.log(`[Complete] Fundamental analysis complete: ${fundamentalResult.sourcesCount} sources, ${(fundamentalResult.confidence * 100).toFixed(1)}% confidence`);
 
-      // Update analysis with results
-      analysis.status = AnalysisStatus.COMPLETED;
-      analysis.analysis = fundamentalResult.data;
-      analysis.dataSources = fundamentalResult.sources;
-      analysis.sourcesCount = fundamentalResult.sourcesCount;
-      analysis.confidenceScore = fundamentalResult.confidence;
+      // ✅ STEP 2: TECHNICAL ANALYSIS (indicators from price data)
+      this.logger.log(`[Complete] Step 2/3: Calculating technical indicators...`);
+      let technicalAnalysis: any = null;
+      let technicalRecommendation: Recommendation | null = null;
+      let technicalConfidence = 0;
 
-      // Set recommendation based on confidence score
-      if (fundamentalResult.confidence >= 0.8) {
-        analysis.recommendation = Recommendation.BUY;
-      } else if (fundamentalResult.confidence >= 0.6) {
-        analysis.recommendation = Recommendation.HOLD;
+      const prices = await this.assetPriceRepository.find({
+        where: { assetId: asset.id },
+        order: { date: 'DESC' },
+        take: 200,
+      });
+
+      if (prices.length >= 20) {
+        prices.reverse(); // Chronological order for calculations
+        const indicators = this.calculateTechnicalIndicators(prices);
+        technicalRecommendation = this.generateRecommendation(indicators);
+        technicalConfidence = this.calculateConfidence(indicators);
+
+        technicalAnalysis = {
+          recommendation: technicalRecommendation,
+          confidence: technicalConfidence,
+          indicators,
+          summary: this.generateSummary(indicators, technicalRecommendation),
+          signals: this.identifySignals(indicators),
+          trends: this.identifyTrends(indicators),
+        };
+
+        this.logger.log(`[Complete] Technical analysis complete: ${technicalRecommendation}, ${(technicalConfidence * 100).toFixed(1)}% confidence`);
       } else {
-        analysis.recommendation = Recommendation.SELL;
+        this.logger.warn(`[Complete] Insufficient price data (${prices.length} days), skipping technical analysis (minimum 20 required)`);
       }
+
+      // ✅ STEP 3: COMBINE RESULTS (60% fundamental + 40% technical)
+      this.logger.log(`[Complete] Step 3/3: Combining fundamental and technical analysis...`);
+
+      const combinedAnalysis = {
+        fundamental: {
+          data: fundamentalResult.data,
+          sources: fundamentalResult.sources,
+          sourcesCount: fundamentalResult.sourcesCount,
+          confidence: fundamentalResult.confidence,
+        },
+        technical: technicalAnalysis ? {
+          recommendation: technicalAnalysis.recommendation,
+          confidence: technicalAnalysis.confidence,
+          indicators: technicalAnalysis.indicators,
+          summary: technicalAnalysis.summary,
+          signals: technicalAnalysis.signals,
+          trends: technicalAnalysis.trends,
+        } : null,
+        combined: {
+          recommendation: this.combineRecommendations(fundamentalResult.data, technicalRecommendation),
+          confidence: technicalAnalysis
+            ? this.combinedConfidence(fundamentalResult.confidence, technicalConfidence)
+            : fundamentalResult.confidence, // Fallback to fundamental only if no technical data
+          explanation: this.generateCombinedExplanation(
+            fundamentalResult.confidence,
+            technicalRecommendation,
+            technicalConfidence,
+          ),
+        },
+      };
+
+      // Update analysis with combined results
+      analysis.status = AnalysisStatus.COMPLETED;
+      analysis.analysis = combinedAnalysis;
+      analysis.recommendation = combinedAnalysis.combined.recommendation;
+      analysis.confidenceScore = combinedAnalysis.combined.confidence;
+      analysis.dataSources = [
+        ...fundamentalResult.sources,
+        ...(technicalAnalysis ? ['database'] : []),
+      ];
+      analysis.sourcesCount = analysis.dataSources.length;
+      analysis.processingTime = Date.now() - startTime;
+      analysis.completedAt = new Date();
 
       await this.analysisRepository.save(analysis);
 
-      this.logger.log(`Complete analysis finished for ${ticker}: ${analysis.recommendation}`);
+      this.logger.log(
+        `[Complete] ✓ Complete analysis finished for ${ticker} in ${analysis.processingTime}ms: ` +
+        `${analysis.recommendation} (${(analysis.confidenceScore * 100).toFixed(1)}% confidence, ${analysis.sourcesCount} sources)`,
+      );
+
       return analysis;
     } catch (error) {
       this.logger.error(`Error generating complete analysis: ${error.message}`);
@@ -395,6 +463,131 @@ export class AnalysisService {
       await this.analysisRepository.save(analysis);
       throw error;
     }
+  }
+
+  /**
+   * Combine fundamental data and technical recommendation into final recommendation
+   * Weight: 60% fundamental, 40% technical
+   */
+  private combineRecommendations(
+    fundamentalData: any,
+    technicalRecommendation?: Recommendation | null,
+  ): Recommendation {
+    // If no technical data, base on fundamental indicators only
+    if (!technicalRecommendation) {
+      this.logger.debug('[Combine] No technical recommendation, using fundamental indicators');
+      return this.recommendationFromFundamentals(fundamentalData);
+    }
+
+    // Score fundamental indicators (-2 to +2)
+    const fundamentalScore = this.scoreFundamentals(fundamentalData);
+
+    // Score technical recommendation (-2 to +2)
+    const technicalScore = this.scoreRecommendation(technicalRecommendation);
+
+    // Weighted average: 60% fundamental + 40% technical
+    const combinedScore = (fundamentalScore * 0.6) + (technicalScore * 0.4);
+
+    this.logger.debug(
+      `[Combine] Fundamental score: ${fundamentalScore}, Technical score: ${technicalScore}, Combined: ${combinedScore.toFixed(2)}`,
+    );
+
+    // Convert combined score to recommendation
+    if (combinedScore >= 1.5) return Recommendation.STRONG_BUY;
+    if (combinedScore >= 0.5) return Recommendation.BUY;
+    if (combinedScore <= -1.5) return Recommendation.STRONG_SELL;
+    if (combinedScore <= -0.5) return Recommendation.SELL;
+    return Recommendation.HOLD;
+  }
+
+  /**
+   * Score fundamental data (-2 to +2)
+   */
+  private scoreFundamentals(data: any): number {
+    let score = 0;
+
+    // P/L (Price to Earnings)
+    if (data.pl) {
+      if (data.pl < 10) score += 1; // Undervalued
+      else if (data.pl > 25) score -= 1; // Overvalued
+    }
+
+    // P/VP (Price to Book Value)
+    if (data.pvp) {
+      if (data.pvp < 1.5) score += 1; // Undervalued
+      else if (data.pvp > 3) score -= 1; // Overvalued
+    }
+
+    // ROE (Return on Equity)
+    if (data.roe) {
+      if (data.roe > 15) score += 1; // Good profitability
+      else if (data.roe < 5) score -= 1; // Poor profitability
+    }
+
+    // Dividend Yield
+    if (data.dividendYield || data.dy) {
+      const dy = data.dividendYield || data.dy;
+      if (dy > 6) score += 0.5; // Good dividend payer
+    }
+
+    return Math.max(-2, Math.min(2, score)); // Clamp to [-2, 2]
+  }
+
+  /**
+   * Convert recommendation enum to numeric score (-2 to +2)
+   */
+  private scoreRecommendation(rec: Recommendation): number {
+    switch (rec) {
+      case Recommendation.STRONG_BUY: return 2;
+      case Recommendation.BUY: return 1;
+      case Recommendation.HOLD: return 0;
+      case Recommendation.SELL: return -1;
+      case Recommendation.STRONG_SELL: return -2;
+      default: return 0;
+    }
+  }
+
+  /**
+   * Generate recommendation from fundamental data only (fallback)
+   */
+  private recommendationFromFundamentals(data: any): Recommendation {
+    const score = this.scoreFundamentals(data);
+
+    if (score >= 1.5) return Recommendation.STRONG_BUY;
+    if (score >= 0.5) return Recommendation.BUY;
+    if (score <= -1.5) return Recommendation.STRONG_SELL;
+    if (score <= -0.5) return Recommendation.SELL;
+    return Recommendation.HOLD;
+  }
+
+  /**
+   * Calculate combined confidence score (weighted average)
+   * Weight: 60% fundamental + 40% technical
+   */
+  private combinedConfidence(fundamentalConf: number, technicalConf: number): number {
+    const combined = (fundamentalConf * 0.6) + (technicalConf * 0.4);
+    this.logger.debug(
+      `[Confidence] Combined: ${(combined * 100).toFixed(1)}% (Fundamental: ${(fundamentalConf * 100).toFixed(1)}%, Technical: ${(technicalConf * 100).toFixed(1)}%)`,
+    );
+    return combined;
+  }
+
+  /**
+   * Generate explanation of how recommendation was combined
+   */
+  private generateCombinedExplanation(
+    fundamentalConf: number,
+    technicalRec: Recommendation | null,
+    technicalConf: number,
+  ): string {
+    if (!technicalRec) {
+      return `Baseado apenas em análise fundamentalista (${(fundamentalConf * 100).toFixed(0)}% confiança). ` +
+             `Dados técnicos insuficientes (mínimo 20 dias de preços necessário).`;
+    }
+
+    return `Análise combinada: 60% fundamentalista (${(fundamentalConf * 100).toFixed(0)}% confiança) + ` +
+           `40% técnica (${(technicalConf * 100).toFixed(0)}% confiança, recomendação: ${technicalRec}). ` +
+           `Confiança final: ${((fundamentalConf * 0.6 + technicalConf * 0.4) * 100).toFixed(0)}%.`;
   }
 
   async findAll(

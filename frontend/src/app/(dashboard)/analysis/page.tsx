@@ -372,10 +372,16 @@ export default function AnalysisPage() {
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-xs">
                 <p className="font-semibold mb-1">Análise em Massa com Multi-Fonte</p>
-                <p className="text-xs text-muted-foreground">
-                  Coleta dados de <strong>4 fontes</strong> (Fundamentus, BRAPI, StatusInvest, Investidor10)
-                  e realiza validação cruzada para garantir máxima precisão nas análises.
+                <p className="text-xs text-muted-foreground mb-2">
+                  Coleta dados de <strong>6 fontes</strong> (Fundamentus, BRAPI, StatusInvest,
+                  Investidor10, Fundamentei, InvestSite) e realiza validação cruzada para
+                  garantir máxima precisão nas análises.
                 </p>
+                <div className="text-xs space-y-1 mt-2 pt-2 border-t border-border">
+                  <p>✓ Cross-validation automática</p>
+                  <p>✓ Detecção de discrepâncias</p>
+                  <p>✓ Score de confiança baseado em concordância</p>
+                </div>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -529,12 +535,35 @@ export default function AnalysisPage() {
 
                   <div className="grid grid-cols-6 gap-4">
                     {analysis.confidenceScore && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Confiança</p>
-                        <p className={cn('text-2xl font-bold', getScoreColor(analysis.confidenceScore * 100))}>
-                          {(analysis.confidenceScore * 100).toFixed(0)}
-                        </p>
-                      </div>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="cursor-help">
+                              <p className="text-sm text-muted-foreground">Confiança</p>
+                              <p className={cn('text-2xl font-bold', getScoreColor(analysis.confidenceScore * 100))}>
+                                {(analysis.confidenceScore * 100).toFixed(0)}%
+                              </p>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-xs">
+                            <p className="font-semibold mb-2">Como é calculado?</p>
+                            <div className="text-xs space-y-1">
+                              <p>✓ <strong>Fontes:</strong> {analysis.sourcesCount || 0} fontes consultadas</p>
+                              <p>✓ <strong>Cross-Validation:</strong> Dados comparados entre fontes</p>
+                              <p>✓ <strong>Concordância:</strong> {(analysis.confidenceScore * 100).toFixed(0)}% de concordância</p>
+                              <p className="mt-2 pt-2 border-t border-border text-muted-foreground">
+                                <strong>Metodologia:</strong> 6 fontes = 100%, penalidade apenas para
+                                discrepâncias significativas (&gt;20%), mínimo 40% se ≥3 fontes.
+                              </p>
+                              {analysis.dataSources && analysis.dataSources.length > 0 && (
+                                <p className="mt-2 pt-2 border-t border-border">
+                                  <strong>Fontes usadas:</strong> {analysis.dataSources.join(', ')}
+                                </p>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                     {analysis.sourcesCount > 0 && (
                       <div>

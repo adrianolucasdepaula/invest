@@ -1,12 +1,13 @@
 """
 Technical Analysis Service
-Descrição: Cálculo de indicadores técnicos usando pandas_ta
+Descrição: Cálculo de indicadores técnicos usando pandas_ta_classic
 Performance: 10-50x mais rápido que implementação TypeScript
 Precisão: 100% - bibliotecas validadas pela comunidade
+IMPORTANTE: pandas-ta foi descontinuado, usar pandas_ta_classic (fork oficial)
 """
 
 import pandas as pd
-import pandas_ta as ta
+import pandas_ta_classic as ta
 import numpy as np
 from typing import List, Dict, Any
 from datetime import datetime

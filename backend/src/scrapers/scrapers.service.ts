@@ -255,19 +255,48 @@ export class ScrapersService {
 
   /**
    * Calculate confidence score based on source count and discrepancies
+   *
+   * Methodology:
+   * - Base score: number of sources (6 sources = 100%)
+   * - Penalty: only for significant discrepancies (> 20%)
+   * - Minimum: 40% if >= 3 sources (never returns 0)
    */
   private calculateConfidence(results: ScraperResult[], discrepancies: any[]): number {
-    // Base confidence on number of sources
-    let confidence = Math.min(results.length / this.minSources, 1.0);
-
-    // Reduce confidence based on discrepancies
-    if (discrepancies.length > 0) {
-      const avgDeviation =
-        discrepancies.reduce((sum, d) => sum + d.maxDeviation, 0) / discrepancies.length;
-      confidence *= Math.max(0, 1 - avgDeviation / 100);
+    if (results.length === 0) {
+      this.logger.warn('[Confidence] No results available, confidence = 0');
+      return 0;
     }
 
-    return confidence;
+    // ✅ BASE SCORE: 6 sources = 100%, proportional scaling
+    const sourcesScore = Math.min(results.length / 6, 1.0);
+    this.logger.debug(`[Confidence] Base score from ${results.length} sources: ${(sourcesScore * 100).toFixed(1)}%`);
+
+    // ✅ PENALTY: Only for significant discrepancies (> 20%)
+    let discrepancyPenalty = 0;
+    if (discrepancies.length > 0) {
+      // Filter only significant discrepancies (normal variance is expected)
+      const significantDiscrepancies = discrepancies.filter(d => d.maxDeviation > 20);
+
+      if (significantDiscrepancies.length > 0) {
+        const avgDeviation = significantDiscrepancies.reduce((sum, d) => sum + d.maxDeviation, 0) / significantDiscrepancies.length;
+        // Maximum penalty of 30% (not 100%)
+        discrepancyPenalty = Math.min(avgDeviation / 200, 0.3);
+        this.logger.debug(`[Confidence] ${significantDiscrepancies.length} significant discrepancies (avg ${avgDeviation.toFixed(1)}%), penalty: ${(discrepancyPenalty * 100).toFixed(1)}%`);
+      } else {
+        this.logger.debug(`[Confidence] ${discrepancies.length} discrepancies but all < 20% (acceptable variance)`);
+      }
+    }
+
+    // ✅ FINAL CONFIDENCE: Apply penalty
+    const confidence = sourcesScore * (1 - discrepancyPenalty);
+
+    // ✅ MINIMUM GUARANTEE: 40% if >= minSources (never return 0 with valid data)
+    const minConfidence = results.length >= this.minSources ? 0.4 : 0;
+    const finalConfidence = Math.max(confidence, minConfidence);
+
+    this.logger.log(`[Confidence] Final: ${(finalConfidence * 100).toFixed(1)}% (${results.length} sources, ${discrepancies.length} discrepancies)`);
+
+    return finalConfidence;
   }
 
   /**

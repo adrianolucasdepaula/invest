@@ -9,19 +9,20 @@ pydantic==2.5.3
 pydantic-settings==2.1.0
 
 # Data Processing
-pandas==2.2.0
-numpy==1.26.3
+pandas==2.2.2
+numpy==2.0.0
 
 # Technical Analysis
-pandas-ta==0.3.14b0
-ta-lib==0.4.28  # Opcional - requer compilação C
+# IMPORTANTE: pandas-ta foi descontinuado, usar pandas-ta-classic (fork oficial)
+pandas-ta-classic==0.3.37  # 141 indicators + 62 TA-Lib patterns
+# ta-lib==0.4.28  # Opcional - requer compilação C (comentado - difícil instalação)
 
 # Utils
 python-dateutil==2.8.2
 python-dotenv==1.0.0
 
 # Performance
-numba==0.59.0  # JIT compilation para pandas_ta
+numba==0.61.0  # JIT compilation (compatible with numpy 2.0)
 
 # Monitoring
 prometheus-client==0.19.0  # Opcional - métricas
