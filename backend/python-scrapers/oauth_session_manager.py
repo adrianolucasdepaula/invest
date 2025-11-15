@@ -243,6 +243,12 @@ class OAuthSessionManager:
             site_config = get_site_by_id(site_id)
             site_progress = next(sp for sp in self.current_session.sites_progress if sp.site_id == site_id)
 
+            # FIX: Atualizar current_site_index para o site navegado manualmente
+            # Encontrar índice do site na lista de progresso
+            site_index = next(i for i, sp in enumerate(self.current_session.sites_progress) if sp.site_id == site_id)
+            self.current_session.current_site_index = site_index
+            logger.debug(f"[NAVIGATE] current_site_index atualizado para {site_index} ({site_id})")
+
             logger.info("=" * 80)
             logger.info(f"[NAVIGATE] Site #{self.current_session.current_site_index + 1}/{len(self.current_session.sites_progress)}: {site_config['name']}")
             logger.debug(f"[NAVIGATE] Timestamp início: {datetime.now().isoformat()}")
