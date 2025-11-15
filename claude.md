@@ -1,7 +1,7 @@
 # Claude.md - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-14
+**Última Atualização:** 2025-11-15
 **Versão:** 1.0.0
 **Mantenedor:** Claude Code (Sonnet 4.5)
 
@@ -18,6 +18,7 @@ Este arquivo contém **APENAS** instruções e metodologia para Claude Code. Tod
 - **`TROUBLESHOOTING.md`** - 16+ problemas comuns com soluções detalhadas
 - **`CONTRIBUTING.md`** - Convenções de código, Git workflow, decisões técnicas
 - **`CHECKLIST_TODO_MASTER.md`** - Checklist ultra-robusto e TODO master (OBRIGATÓRIO antes de cada fase)
+- **`.claude/agents/README.md`** - Sub-agents especializados (Backend, Frontend, Scrapers, Charts, TypeScript)
 
 **📌 IMPORTANTE:** Sempre consulte os arquivos acima para detalhes técnicos do projeto. Este arquivo foca exclusivamente na metodologia de trabalho.
 
@@ -240,6 +241,47 @@ Breaking Changes: 0 ✅ (sem aprovação)
 Documentação: 100% ✅
 Co-autoria em Commits: 100% ✅
 ```
+
+---
+
+## 🤖 SUB-AGENTS ESPECIALIZADOS
+
+Claude Code possui **6 sub-agents especializados** criados especificamente para este projeto:
+
+1. **backend-api-expert** - NestJS + TypeORM + PostgreSQL + Migrations
+2. **frontend-components-expert** - Next.js 14 + React + Shadcn/ui + TailwindCSS
+3. **scraper-development-expert** - Playwright + OAuth + Web Scraping + VNC Viewer
+4. **chart-analysis-expert** - Recharts + lightweight-charts + Candlestick + OHLC
+5. **typescript-validation-expert** - TypeScript 5.x + Type Safety + Error Resolution
+6. **queue-management-expert** - BullMQ + Redis + Job Scheduling + Retry Logic
+
+### Quando Usar Sub-Agents
+
+**✅ SEMPRE usar sub-agents para:**
+- Tarefas complexas (> 50 linhas de código)
+- Múltiplos arquivos afetados (5+)
+- Domínio específico (scrapers, charts, DB migrations)
+- Análise profunda necessária
+- Tarefas que podem ser executadas em paralelo
+
+**❌ NÃO usar sub-agents para:**
+- Tarefas triviais (< 10 linhas)
+- Mudanças em 1-2 arquivos conhecidos
+- Fixes simples (typo, import)
+
+### Como Invocar
+
+**Automático** (Claude detecta):
+```
+Criar endpoint GET /api/v1/assets/:ticker/dividends
+```
+
+**Explícito**:
+```
+Use the backend-api-expert to create GET /api/v1/assets/:ticker/dividends endpoint
+```
+
+📚 **Documentação completa:** `.claude/agents/README.md`
 
 ---
 
