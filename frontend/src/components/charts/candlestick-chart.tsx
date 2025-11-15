@@ -35,21 +35,21 @@ export function CandlestickChart({ data }: CandlestickChartProps) {
     const chart = createChart(chartContainerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: 'hsl(var(--muted-foreground))',
+        textColor: '#a1a1aa', // zinc-400 for dark mode
       },
       grid: {
-        vertLines: { color: 'hsl(var(--border))' },
-        horzLines: { color: 'hsl(var(--border))' },
+        vertLines: { color: '#27272a' }, // zinc-800
+        horzLines: { color: '#27272a' }, // zinc-800
       },
       width: chartContainerRef.current.clientWidth,
       height: 400,
       timeScale: {
-        borderColor: 'hsl(var(--border))',
+        borderColor: '#27272a', // zinc-800
         timeVisible: true,
         secondsVisible: false,
       },
       rightPriceScale: {
-        borderColor: 'hsl(var(--border))',
+        borderColor: '#27272a', // zinc-800
       },
       crosshair: {
         mode: 1,
@@ -72,7 +72,7 @@ export function CandlestickChart({ data }: CandlestickChartProps) {
 
     // Add volume series (histogram below)
     const volumeSeries = chart.addHistogramSeries({
-      color: 'hsl(var(--muted))',
+      color: '#3f3f46', // zinc-700 for volume bars
       priceFormat: {
         type: 'volume',
       },
@@ -89,8 +89,12 @@ export function CandlestickChart({ data }: CandlestickChartProps) {
       },
     });
 
-    // Transform and set data
-    const candlestickData: CandlestickData[] = data.map((d) => ({
+    // Transform and set data - MUST be sorted ascending by time
+    const sortedData = [...data].sort((a, b) =>
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    const candlestickData: CandlestickData[] = sortedData.map((d) => ({
       time: d.date as Time,
       open: Number(d.open),
       high: Number(d.high),
@@ -98,7 +102,7 @@ export function CandlestickChart({ data }: CandlestickChartProps) {
       close: Number(d.close),
     }));
 
-    const volumeData: HistogramData[] = data.map((d) => ({
+    const volumeData: HistogramData[] = sortedData.map((d) => ({
       time: d.date as Time,
       value: Number(d.volume),
       color:

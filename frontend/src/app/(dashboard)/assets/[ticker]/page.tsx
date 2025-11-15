@@ -47,18 +47,33 @@ export default function AssetDetailPage({
   const { data: technicalAnalysis, isLoading: technicalLoading } = useAnalysis(ticker, 'technical');
   const requestAnalysis = useRequestAnalysis();
 
-  // Calculate 52-week high/low from price history
-  const weekStats = useMemo(() => {
+  // Calculate period high/low from price history
+  const periodStats = useMemo(() => {
     if (!priceHistory || priceHistory.length === 0) {
-      return { high52w: null, low52w: null };
+      return { high: null, low: null };
     }
 
     const prices = priceHistory.map((p: any) => Number(p.close));
     return {
-      high52w: Math.max(...prices),
-      low52w: Math.min(...prices),
+      high: Math.max(...prices),
+      low: Math.min(...prices),
     };
   }, [priceHistory]);
+
+  // Get period label for display
+  const periodLabel = useMemo(() => {
+    const labels: Record<string, string> = {
+      '1d': '1 dia',
+      '1mo': '1 mês',
+      '3mo': '3 meses',
+      '6mo': '6 meses',
+      '1y': '1 ano',
+      '2y': '2 anos',
+      '5y': '5 anos',
+      'max': 'histórico',
+    };
+    return labels[selectedRange] || selectedRange;
+  }, [selectedRange]);
 
   // Handle request technical analysis
   const handleRequestAnalysis = () => {
@@ -147,15 +162,15 @@ export default function AssetDetailPage({
               icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
             />
             <StatCard
-              title="Máxima 52 semanas"
-              value={weekStats.high52w ?? 0}
+              title={`Máxima ${periodLabel}`}
+              value={periodStats.high ?? 0}
               change={undefined}
               format="currency"
               icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
             />
             <StatCard
-              title="Mínima 52 semanas"
-              value={weekStats.low52w ?? 0}
+              title={`Mínima ${periodLabel}`}
+              value={periodStats.low ?? 0}
               change={undefined}
               format="currency"
               icon={<TrendingDown className="h-4 w-4 text-muted-foreground" />}
@@ -177,7 +192,7 @@ export default function AssetDetailPage({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground mr-2">Período:</span>
-            {['1mo', '3mo', '6mo', '1y', '2y', '5y', 'max'].map((range) => (
+            {['1d', '1mo', '3mo', '6mo', '1y', '2y', '5y', 'max'].map((range) => (
               <Button
                 key={range}
                 variant={selectedRange === range ? 'default' : 'outline'}
