@@ -1,1541 +1,1105 @@
-# CHECKLIST & TODO MASTER - B3 AI Analysis Platform
+# ✅ CHECKLIST TODO MASTER - B3 AI Analysis Platform
 
-**Data de Criação:** 2025-11-14
-**Responsável:** Claude Code (Sonnet 4.5)
-**Versão:** 1.1.0
-**Status:** ✅ COMPLETO COM CORREÇÕES
+**Projeto:** B3 AI Analysis Platform (invest-claude-web)
+**Versão:** 2.0.0 (Ultra-Robusto)
+**Criado:** 2025-11-15
+**Mantenedor:** Claude Code (Sonnet 4.5)
+**Status:** 🔴 **OBRIGATÓRIO ANTES DE CADA FASE/ETAPA**
 
 ---
 
 ## 📋 ÍNDICE
 
-1. [Documentação Relacionada](#documentação-relacionada)
-2. [Princípios Obrigatórios](#princípios-obrigatórios)
-3. [Estado Atual do Sistema](#estado-atual-do-sistema)
-4. [Planejamentos Ativos](#planejamentos-ativos)
-5. [Checklist de Validação Universal](#checklist-de-validação-universal)
-6. [TODO - Reorganização Documentação (ATUAL)](#todo-reorganização-documentação)
-7. [TODO - Sistema Reports (PRÓXIMO)](#todo-sistema-reports)
-8. [TODO - Validação Frontend (PRÓXIMO)](#todo-validação-frontend)
-9. [Workflows de Validação](#workflows-de-validação)
-10. [Comandos Rápidos](#comandos-rápidos)
-11. [Lições Aprendidas](#lições-aprendidas)
-12. [Decisões Arquiteturais](#decisões-arquiteturais)
+1. [Visão Geral](#visão-geral)
+2. [Princípios Fundamentais](#princípios-fundamentais)
+3. [Checklist Pré-Implementação](#checklist-pré-implementação)
+4. [Checklist Durante Implementação](#checklist-durante-implementação)
+5. [Checklist Pré-Commit](#checklist-pré-commit)
+6. [Checklist Pós-Commit](#checklist-pós-commit)
+7. [Validação Ultra-Robusta (MCP Triplo)](#validação-ultra-robusta-mcp-triplo)
+8. [Troubleshooting e Correções Definitivas](#troubleshooting-e-correções-definitivas)
+9. [Gestão de Documentação](#gestão-de-documentação)
+10. [TODO Master (Próximas Fases)](#todo-master-próximas-fases)
 
 ---
 
-## 📚 DOCUMENTAÇÃO RELACIONADA
+## 🎯 VISÃO GERAL
 
-Este checklist faz parte de um ecossistema de documentação integrado. Consulte os documentos relacionados conforme necessário:
+Este documento é o **guia definitivo** para garantir 100% de qualidade em todas as fases de desenvolvimento do projeto B3 AI Analysis Platform.
 
-### Metodologia e MCPs
-- **`METODOLOGIA_MCPS_INTEGRADA.md`** (1128 linhas) - Integração completa MCPs + Ultra-Thinking + TodoWrite
-  - 5 pilares da metodologia
-  - 25 regras de ouro (incluindo 8 regras de MCPs)
-  - 3 workflows completos
-  - Matrizes de decisão
-  - Anti-patterns
+### 🚫 ZERO TOLERANCE POLICY
 
-- **`MCPS_USAGE_GUIDE.md`** (855 linhas) - Guia técnico completo dos 8 MCPs
-  - Especificações técnicas (pacotes, repositórios)
-  - 12 ferramentas do Filesystem MCP
-  - 4 workflows completos (Refactoring, Bug Fix, WCAG, Updates)
-  - Checklists e melhores práticas
+```
+TypeScript Errors:     0 ✅ OBRIGATÓRIO
+Build Errors:          0 ✅ OBRIGATÓRIO
+Console Errors:        0 ✅ OBRIGATÓRIO (páginas principais)
+Lint Critical:         0 ✅ OBRIGATÓRIO
+Breaking Changes:      0 ✅ (sem aprovação explícita)
+Documentação:      100% ✅ SEMPRE ATUALIZADA
+Git Status:        100% ✅ SEMPRE LIMPO (branch main)
+Co-Autoria Commits: 100% ✅ Claude <noreply@anthropic.com>
+```
 
-### Planejamentos
-- **`PLANO_REORGANIZACAO_CLAUDE_README.md`** (527 linhas) - Reorganização de documentação (ATUAL)
-  - Reduzir claude.md de 2001 → 200 linhas (90%)
-  - Reduzir README.md de 799 → 600 linhas (25%)
-  - Criar 6 arquivos separados
-  - 9 fases detalhadas
+### 🔴 REGRA DE OURO
 
-- **`REFATORACAO_SISTEMA_REPORTS.md`** - Sistema de Reports (COMPLETO)
-  - 6 fases implementadas e validadas
-  - Download PDF/JSON funcional
-  - 2 bugs críticos corrigidos
-
-### Validações Recentes
-- **`VALIDACAO_MCP_TRIPLO_COMPLETA.md`** (2025-11-14) - Validação com 3 MCPs simultâneos
-- **`VALIDACAO_FASE_21_ACESSIBILIDADE.md`** (2025-11-13) - WCAG AA validado
-- **`VALIDACAO_FASE_6_REPORTS_COMPLETA.md`** - Sistema Reports 100% validado
-
-**Total de Validações:** 34 arquivos documentados
+**NUNCA avançar para próxima fase/etapa enquanto a fase anterior não estiver 100% COMPLETA:**
+- ✅ 0 erros TypeScript
+- ✅ 0 erros Build
+- ✅ 0 warnings críticos
+- ✅ 0 bugs conhecidos
+- ✅ 0 divergências
+- ✅ 0 inconsistências
+- ✅ 0 não-bloqueantes
+- ✅ 0 oportunidades de melhoria críticas
+- ✅ 0 itens não desenvolvidos ou incompletos
+- ✅ Documentação 100% atualizada
+- ✅ Git 100% atualizado (branch main)
 
 ---
 
-## ⚖️ PRINCÍPIOS OBRIGATÓRIOS
+## 🧭 PRINCÍPIOS FUNDAMENTAIS
 
-### 1. Regra de Ouro: NÃO AVANÇAR COM PROBLEMAS
+### 1. Verdade dos Arquivos > Documentação
 
-```
-❌ PROIBIDO avançar para próxima fase/etapa se a atual tiver:
-   - Erros
-   - Falhas
-   - Warnings
-   - Bugs
-   - Divergências
-   - Inconsistências
-   - Problemas não-bloqueantes
-   - Oportunidades de melhoria não implementadas
-   - Itens incompletos
+**SEMPRE verificar arquivos reais antes de implementar:**
 
-✅ OBRIGATÓRIO: 100% de completude antes de avançar
+```bash
+# ❌ ERRADO: Confiar cegamente na documentação
+"Documentação diz que useAssetPrices() aceita range" → IMPLEMENTA DIRETO
+
+# ✅ CORRETO: Validar arquivos reais primeiro
+1. Ler frontend/src/hooks/useAssetPrices.ts (código atual)
+2. Verificar interface do hook (parâmetros reais)
+3. Comparar com documentação
+4. Se divergir → atualizar docs + planejar implementação
 ```
 
-### 2. Validação Antes de Mudança
+**Por quê?**
+- Documentação pode estar desatualizada (2-3 commits atrás)
+- Código é a **única fonte de verdade**
+- Evita retrabalho e bugs de integração
 
+### 2. Análise de Dependências e Integrações
+
+**SEMPRE verificar impacto antes de mudanças:**
+
+```bash
+# Antes de modificar qualquer arquivo, executar:
+
+# 1. Encontrar todos os imports deste arquivo
+grep -r "from.*useAssetPrices" frontend/src
+grep -r "import.*useAssetPrices" frontend/src
+
+# 2. Encontrar todos os usages da função/classe
+grep -r "useAssetPrices(" frontend/src
+
+# 3. Verificar TypeScript types
+npx tsc --noEmit  # Detecta quebras de contrato
+
+# 4. Analisar arquivos relacionados
+- Testes: frontend/src/hooks/__tests__/useAssetPrices.test.ts
+- Tipos: frontend/src/types/assets.ts
+- APIs: frontend/src/lib/api.ts
 ```
-SEMPRE verificar ANTES de qualquer mudança:
-✅ Dependências (imports, relacionamentos)
-✅ Integrações (API calls, WebSocket, Database)
-✅ Arquivos relacionados (componentes, hooks, services)
-✅ Documentação existente (pode estar desatualizada)
-✅ Código fonte (verdade absoluta vs docs)
-```
+
+**Pergunta Crítica:**
+"Se eu mudar este arquivo, QUAIS OUTROS ARQUIVOS PODEM QUEBRAR?"
 
 ### 3. Git Sempre Atualizado
 
-```
-✅ Branch main sempre sincronizada
-✅ Commits detalhados com co-autoria Claude
-✅ Push após cada fase completa
-✅ Ready para deploy no Claude Code Web a qualquer momento
-```
-
-### 4. Documentação Sempre Atualizada
-
-```
-✅ claude.md - Instruções para Claude Code
-✅ README.md - Documentação pública
-✅ Arquivos de validação - Criar após cada fase
-✅ Screenshots - Evidências visuais
-```
-
-### 5. Melhores Práticas do Mercado
-
-```
-✅ Pesquisar melhores práticas ANTES de implementar (desenvolvimento e troubleshooting)
-✅ Usar soluções comprovadas e modernas
-✅ Simplicidade > Complexidade
-✅ Arquitetura definida > Improvisação
-```
-
-### 6. Validação Ultra-Robusta
-
-```
-✅ MCP Triplo: Playwright + Chrome DevTools + Sequential Thinking
-✅ React Developer Tools
-✅ Testes minuciosos e detalhados
-✅ Screenshots de todas as validações
-```
-
-### 7. Dados Reais (Não Mocks)
-
-```
-✅ SEMPRE usar dados coletados dos scrapers
-❌ NUNCA usar dados mockados/hardcoded
-✅ Validar que scrapers estão funcionando
-```
-
-### 8. System Manager
-
-```
-✅ Usar system-manager.ps1 para gerenciar ambiente
-✅ Atualizar script se necessário
-✅ Manter completo e funcional
-```
-
-### 9. Problemas Crônicos
-
-```
-✅ Corrigir em definitivo
-✅ Seguir arquitetura definida
-✅ Não criar workarounds temporários
-✅ Documentar solução aplicada
-```
-
-### 10. Verificar Código Fonte > Documentação
-
-```
-⚠️ Documentação pode estar desatualizada
-✅ SEMPRE ler arquivos reais antes de planejar
-✅ Comparar código vs documentação
-✅ Atualizar docs se divergentes
-```
-
-### 11. Reiniciar Serviços Antes de Testar
-
-```
-✅ Verificar uptime dos containers
-✅ Reiniciar backend se mudou código backend
-✅ Reiniciar frontend se mudou código frontend
-✅ Aguardar status "healthy" antes de testar
-```
-
-### 12. Postura Profissional e Ética
-
-```
-✅ SEMPRE ser transparente sobre limitações
-✅ SEMPRE reportar problemas identificados (não ocultar)
-✅ SEMPRE tomar tempo necessário para fazer corretamente
-✅ SEMPRE validar completamente antes de marcar como concluído
-❌ NUNCA mentir sobre status de validações
-❌ NUNCA ter pressa e criar bugs/regressões
-❌ NUNCA quebrar funcionalidades existentes sem reverter imediatamente
-❌ NUNCA ocultar erros ou problemas encontrados
-```
-
-**Princípio Fundamental:** *"Qualidade > Velocidade. Sempre."*
-
----
-
-## 🔍 ESTADO ATUAL DO SISTEMA
-
-### Git Status (2025-11-14 16:34)
-
-```
-Branch: main
-Status: Up to date with origin/main
-Último commit: 6f4d8d8 - docs: Corrigir 4 gaps e adicionar 2 melhorias no CHECKLIST_TODO_MASTER.md
-Working tree: Clean
-```
-
-**Ação Necessária:** ✅ Nenhuma - Branch sincronizada e limpa
-
----
-
-### Docker Containers Status (Snapshot: 2025-11-14 16:34)
-
-| Container | Status | Uptime | Observação |
-|-----------|--------|--------|------------|
-| invest_backend | ✅ healthy | 41 minutos | ✅ OK |
-| invest_frontend | ✅ healthy | 21 minutos | ✅ OK |
-| invest_postgres | ✅ healthy | 2 dias | ✅ OK |
-| invest_redis | ✅ healthy | 2 dias | ✅ OK |
-| invest_scrapers | ✅ healthy | 2 dias | ✅ OK |
-| invest_api_service | ✅ healthy | 2 dias | ✅ OK |
-| invest_orchestrator | ✅ healthy | 2 dias | ✅ OK |
-
-**Observação:** Frontend reiniciado há 21 minutos. Backend reiniciado há 41 minutos. Todos os containers estão estáveis e healthy.
-
-**Ação Necessária:** ✅ Nenhuma - Todos os containers estão operacionais.
-
-**Nota:** Use `docker ps` para obter status em tempo real.
-
----
-
-### Arquivos de Planejamento Existentes
-
-**Total:** 34 arquivos de validação + 3 arquivos de planejamento
-
-**Planejamentos Ativos:**
-1. ✅ **PLANO_REORGANIZACAO_CLAUDE_README.md** (NOVO - criado hoje)
-   - Reorganizar claude.md (2001 → 200 linhas)
-   - Reorganizar README.md (799 → 600 linhas)
-   - Criar 6 novos arquivos separados
-
-2. ⏸️ **REFATORACAO_SISTEMA_REPORTS.md**
-   - Status: FASES 1-6 completas (100%)
-   - Última validação: VALIDACAO_FASE_6_REPORTS_COMPLETA.md
-
-3. ⏸️ **REFATORACAO_BOTAO_SOLICITAR_ANALISES.md**
-   - Status: Planejado, não iniciado
-
-**Validações Recentes:**
-- VALIDACAO_FASE_21_ACESSIBILIDADE.md (2025-11-13) ✅ FINAL
-- VALIDACAO_FASE_20_ESTADOS_TRANSICOES.md (2025-11-13) ✅
-- VALIDACAO_FASE_19_INTEGRACOES.md (2025-11-13) ✅ 80%
-- VALIDACAO_FASE_18_TYPESCRIPT.md (2025-11-13) ✅
-- VALIDACAO_MCP_TRIPLO_COMPLETA.md (2025-11-14) ✅ 100%
-
----
-
-### Fases do Roadmap (claude.md)
-
-**Fases Completas:**
-- ✅ FASE 1-21: Frontend validado 100% (12-21 = Validação completa)
-- ✅ FASE 22: Sistema de Atualização de Ativos 100%
-- ✅ FASE 22.5: Correções Portfolio 100%
-- ✅ FASE 3: Refatoração Reports (Fases 1-6) 100%
-- ✅ FASE 23: Sistema de Métricas de Scrapers 100%
-- ✅ Validação MCP Triplo 100%
-
-**Fases Planejadas:**
-- 📋 FASE 24: Dados Históricos BRAPI (planejado)
-- 📋 FASE 25: Refatoração Botão "Solicitar Análises" (aguardando aprovação)
-- 📋 FASE 26+: Features futuras
-
----
-
-## 📚 PLANEJAMENTOS ATIVOS
-
-### 1. PLANO_REORGANIZACAO_CLAUDE_README.md (PRIORIDADE MÁXIMA)
-
-**Objetivo:** Reorganizar claude.md e README.md seguindo melhores práticas oficiais
-
-**Problema Crítico:**
-- claude.md: 2001 linhas (10x acima do recomendado de 100-200)
-- README.md: 799 linhas (pode melhorar organização)
-
-**Solução:**
-- Reduzir claude.md para ~200 linhas (90% de redução)
-- Criar 6 arquivos separados (DATABASE_SCHEMA.md, ARCHITECTURE.md, ROADMAP.md, etc.)
-- Melhorar README.md (badges, screenshots, estrutura)
-
-**Status:** 📋 PLANEJADO, NÃO INICIADO
-
----
-
-### 2. REFATORACAO_SISTEMA_REPORTS.md (COMPLETO)
-
-**Status:** ✅ FASES 1-6 COMPLETAS (100%)
-
-**Fases:**
-- ✅ FASE 1: Limpeza de Dados (Backend) - 100%
-- ✅ FASE 2: Novo Endpoint Backend - 100%
-- ✅ FASE 3: Refatorar Frontend /reports - 100%
-- ✅ FASE 4: Connect Detail Page /reports/[id] - 100%
-- ✅ FASE 5: Downloads (PDF/JSON) - 100%
-- ✅ FASE 6: Testes E2E e Validação Final - 100%
-
-**Última Validação:** VALIDACAO_FASE_6_REPORTS_COMPLETA.md
-
-**Bugs Corrigidos:**
-- BUG #1: Botões "Solicitar Análise" desabilitam todos ✅
-- BUG #2: Botão desaparece após análise ✅
-
-**Ação:** ✅ COMPLETO - Nenhuma ação pendente
-
----
-
-### 3. VALIDACAO_FRONTEND_COMPLETA.md (COMPLETO)
-
-**Status:** ✅ FASES 12-21 COMPLETAS (100%)
-
-**Fases Validadas:**
-- ✅ FASE 12: Responsividade (mobile, tablet, desktop)
-- ✅ FASE 13: Navegação (links, breadcrumbs, sidebar)
-- ✅ FASE 14: Performance (loading, lazy, caching)
-- ✅ FASE 15: Network (requests, errors, retries)
-- ✅ FASE 16: Console (0 erros, 0 warnings)
-- ✅ FASE 17: Browser Compatibility (Chrome, Firefox, Edge)
-- ✅ FASE 18: TypeScript (0 erros, strict mode)
-- ✅ FASE 19: Integrações Complexas (WebSocket, OAuth) - 80%
-- ✅ FASE 20: Estados e Transições (loading, success, error)
-- ✅ FASE 21: Acessibilidade (WCAG AA) ⭐ FINAL
-
-**Páginas Validadas:** 7 (Dashboard, Assets, Analysis, Portfolio, Reports, Data Sources, Settings)
-
-**Ação:** ✅ COMPLETO - Nenhuma ação pendente
-
----
-
-## ✅ CHECKLIST DE VALIDAÇÃO UNIVERSAL
-
-### Antes de QUALQUER mudança (OBRIGATÓRIO)
-
-```
-PRÉ-MUDANÇA:
-□ Ler arquivo(s) a ser(em) modificado(s)
-□ Ler arquivos relacionados (imports, dependências)
-□ Verificar se funcionalidade já existe no sistema (evitar duplicação)
-□ Buscar implementações similares existentes no codebase
-□ Avaliar se é melhor melhorar código existente ao invés de criar novo (refatorar > criar)
-□ Verificar documentação relacionada
-□ Comparar código vs documentação (identificar divergências)
-□ Identificar todos os arquivos afetados
-□ Verificar integrações (API, DB, WebSocket)
-□ Pesquisar melhores práticas (se aplicável)
-□ Criar planejamento (se > 100 linhas ou > 3 arquivos)
-```
-
-### Durante implementação (OBRIGATÓRIO)
-
-```
-ULTRA-THINKING:
-□ Analisar impacto completo
-□ Planejar mudanças (documento se necessário)
-□ Validar dependências
-
-TODOWRITE:
-□ Criar TODO com etapas granulares
-□ Manter apenas 1 etapa in_progress
-□ Marcar completed imediatamente após concluir
-□ NUNCA acumular etapas antes de marcar
-
-IMPLEMENTAÇÃO:
-□ Seguir arquitetura definida
-□ Usar dados reais (não mocks)
-□ Código limpo e documentado
-```
-
-### Após implementação (OBRIGATÓRIO)
-
-```
-VALIDAÇÃO TÉCNICA:
-□ TypeScript (backend): npx tsc --noEmit → 0 erros
-□ TypeScript (frontend): npx tsc --noEmit → 0 erros
-□ Build (backend): npm run build → Success
-□ Build (frontend): npm run build → Success (17 páginas)
-□ Lint: 0 problemas críticos
-□ Testes unitários: Passando (se aplicável)
-□ Testes E2E: Passando (se aplicável)
-```
-
-### Validação Frontend (OBRIGATÓRIO se mudou UI)
-
-```
-REINICIAR SERVIÇOS:
-□ Verificar uptime containers (docker ps)
-□ Se backend mudou: docker restart invest_backend
-□ Se frontend mudou: docker restart invest_frontend
-□ Aguardar status "healthy" (30-60s)
-
-MCP TRIPLO (3 janelas paralelas):
-□ Janela 1: Playwright MCP (navegação + screenshots)
-□ Janela 2: Chrome DevTools MCP (console + network)
-□ Janela 3: Sequential Thinking MCP (análise profunda)
-
-VALIDAÇÕES:
-□ Console: 0 erros, 0 warnings
-□ Network: Requests OK, CORS OK, Status codes corretos
-□ Visual: Layout OK, Responsivo OK
-□ Funcional: Botões OK, Forms OK, Navigation OK
-□ Performance: Load time < 2s
-□ Acessibilidade: WCAG AA (se nova página)
-
-REACT DEV TOOLS:
-□ Component tree OK
-□ Props OK
-□ State OK
-□ Hooks OK
-
-SCREENSHOTS:
-□ Tirar screenshots de TODAS as validações
-□ Salvar em validation-screenshots/
-□ Nomear: fase-X-descricao.png
-```
-
-### Documentação (OBRIGATÓRIO)
-
-```
-ATUALIZAR:
-□ claude.md (se mudou arquitetura, workflow, comandos)
-□ README.md (se mudou features, instalação, uso)
-□ Arquivo de validação (VALIDACAO_FASE_X.md)
-□ Screenshots (evidências visuais)
-□ ROADMAP (atualizar status de fases)
-```
-
-### Git (OBRIGATÓRIO)
-
-```
-COMMIT:
-□ git add (arquivos modificados)
-□ git commit -m "tipo: descrição\n\n<corpo detalhado>\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
-□ Mensagem detalhada (problema, solução, arquivos, validação, impacto)
-
-PUSH:
-□ git status → working tree clean
-□ git log → commit aparece
-□ git push → sucesso
-□ Verificar GitHub → branch atualizada
-```
-
-### Validação Final (OBRIGATÓRIO)
-
-```
-CHECKLIST FINAL:
-□ 0 erros TypeScript
-□ 0 erros Build
-□ 0 erros Console (páginas principais)
-□ 0 warnings críticos
-□ 0 problemas não-bloqueantes
-□ 0 itens incompletos
-□ 100% de funcionalidades testadas
-□ Documentação 100% atualizada
-□ Git 100% sincronizado
-□ Screenshots 100% salvos
-
-CRITÉRIO DE APROVAÇÃO:
-□ Tudo acima = ✅ (SIM) → Pode avançar para próxima fase
-□ Qualquer item = ❌ (NÃO) → Corrigir ANTES de avançar
-```
-
----
-
-## 📋 TODO - REORGANIZAÇÃO DOCUMENTAÇÃO (PRIORIDADE MÁXIMA)
-
-### Status Geral
-- **Fase Atual:** PRÉ-FASE 1
-- **Progresso:** 0% (Planejamento criado, implementação não iniciada)
-- **Estimativa:** 3-4 horas (total de todas as fases)
-
----
-
-### PRÉ-FASE 1: Preparação e Validação Inicial
-
-**Objetivo:** Garantir ambiente limpo e pronto para reorganização
-
-```
-□ Commit PLANO_REORGANIZACAO_CLAUDE_README.md
-□ Push branch main
-□ Verificar git status clean
-□ Verificar containers healthy
-□ Criar backup de claude.md (cp claude.md claude.md.backup)
-□ Criar backup de README.md (cp README.md README.md.backup)
-□ Validar TypeScript (backend + frontend) → 0 erros
-□ Validar Build (backend + frontend) → Success
-```
-
-**Critério de Aprovação:** ✅ Todos os itens acima concluídos
-
----
-
-### FASE 1: Criar Arquivos Separados (DATABASE_SCHEMA.md)
-
-**Objetivo:** Extrair schema de banco do claude.md para arquivo separado
-
-**Análise Prévia (OBRIGATÓRIO):**
-```
-□ Ler claude.md linhas 319-424 (seção completa)
-□ Identificar conteúdo exato a ser extraído
-□ Verificar se há referências a essa seção em outros arquivos
-□ Planejar estrutura de DATABASE_SCHEMA.md
-```
-
-**Implementação:**
-```
-□ Criar DATABASE_SCHEMA.md
-  - Seções: Entidades, Relacionamentos, Indexes, Migrations, Seeds
-  - Incluir exemplos de queries
-  - Incluir diagrama ER (texto ou mermaid)
-□ Copiar conteúdo de claude.md linhas 319-424
-□ Formatar e melhorar estrutura
-□ Adicionar informações extras se necessário
-```
-
-**Validação:**
-```
-□ DATABASE_SCHEMA.md criado (estimar ~150-200 linhas)
-□ Conteúdo completo e bem formatado
-□ Markdown válido (sem erros de sintaxe)
-□ Leitura clara e navegável
-```
-
-**Documentação:**
-```
-□ Adicionar referência em claude.md: "Ver DATABASE_SCHEMA.md"
-□ Adicionar em README.md seção "Documentação Técnica"
-```
-
-**Git:**
-```
-□ git add DATABASE_SCHEMA.md claude.md README.md
-□ git commit -m "docs: Criar DATABASE_SCHEMA.md - extrair schema do claude.md"
-□ git push
-```
-
-**Critério de Aprovação:** ✅ Arquivo criado, referenciado, commitado e pushed
-
----
-
-### FASE 2: Criar Arquivos Separados (ARCHITECTURE.md)
-
-**Objetivo:** Extrair arquitetura e fluxos do claude.md
-
-**Análise Prévia (OBRIGATÓRIO):**
-```
-□ Ler claude.md linhas 42-92 (Arquitetura Geral + Camadas)
-□ Ler claude.md linhas 563-625 (Fluxos Principais)
-□ Identificar conteúdo exato a ser extraído
-□ Verificar referências em outros arquivos
-□ Planejar estrutura de ARCHITECTURE.md
-```
-
-**Implementação:**
-```
-□ Criar ARCHITECTURE.md
-  - Seções: Visão Geral, Arquitetura Geral, Camadas, Fluxos, Integrações
-  - Incluir diagramas (mermaid ou ASCII art)
-  - Incluir exemplos de fluxos (sync, analysis, bulk)
-□ Copiar e adaptar conteúdo relevante
-□ Melhorar estrutura e adicionar detalhes
-```
-
-**Validação:**
-```
-□ ARCHITECTURE.md criado (estimar ~300-400 linhas)
-□ Conteúdo completo com diagramas
-□ Markdown válido
-□ Leitura clara e navegável
-```
-
-**Documentação:**
-```
-□ Adicionar referência em claude.md
-□ Adicionar em README.md
-```
-
-**Git:**
-```
-□ git add ARCHITECTURE.md claude.md README.md
-□ git commit -m "docs: Criar ARCHITECTURE.md - extrair arquitetura do claude.md"
-□ git push
-```
-
-**Critério de Aprovação:** ✅ Arquivo criado, referenciado, commitado e pushed
-
----
-
-### FASE 3: Criar Arquivos Separados (ROADMAP.md)
-
-**Objetivo:** Extrair roadmap completo do claude.md
-
-**Análise Prévia (OBRIGATÓRIO):**
-```
-□ Ler claude.md linhas 802-1400 (Roadmap completo)
-□ Identificar todas as fases (1-26+)
-□ Verificar documentos de validação existentes (34 arquivos)
-□ Planejar estrutura de ROADMAP.md
-```
-
-**Implementação:**
-```
-□ Criar ROADMAP.md
-  - Seções: Índice, Status Geral, Fases Completas (1-23), Fases Planejadas (24-26+)
-  - Incluir links para documentos de validação
-  - Incluir métricas de progresso
-  - Incluir timeline
-□ Copiar todo o roadmap de claude.md
-□ Organizar por categoria (Backend, Frontend, Validação, etc.)
-□ Adicionar badges de status (✅, 🔄, 📋)
-```
-
-**Validação:**
-```
-□ ROADMAP.md criado (estimar ~600-800 linhas)
-□ Todas as 26+ fases documentadas
-□ Links para documentos de validação funcionando
-□ Markdown válido
-```
-
-**Documentação:**
-```
-□ Adicionar referência em claude.md
-□ Adicionar em README.md
-```
-
-**Git:**
-```
-□ git add ROADMAP.md claude.md README.md
-□ git commit -m "docs: Criar ROADMAP.md - extrair roadmap do claude.md"
-□ git push
-```
-
-**Critério de Aprovação:** ✅ Arquivo criado, referenciado, commitado e pushed
-
----
-
-### FASE 4: Criar Arquivos Separados (TROUBLESHOOTING.md)
-
-**Objetivo:** Extrair troubleshooting do claude.md
-
-**Análise Prévia (OBRIGATÓRIO):**
-```
-□ Ler claude.md linhas 1400-1550 (Troubleshooting)
-□ Identificar todos os problemas documentados (6+)
-□ Verificar se há outros problemas em issues/commits
-□ Planejar estrutura de TROUBLESHOOTING.md
-```
-
-**Implementação:**
-```
-□ Criar TROUBLESHOOTING.md
-  - Seções: Índice, Backend, Frontend, Docker, Scrapers, Database
-  - Para cada problema: Sintomas, Causa, Solução passo-a-passo
-  - Incluir comandos de debug
-□ Copiar problemas de claude.md
-□ Adicionar novos problemas (se identificados)
-□ Melhorar soluções com comandos específicos
-```
-
-**Validação:**
-```
-□ TROUBLESHOOTING.md criado (estimar ~200-300 linhas)
-□ Todos os problemas documentados
-□ Soluções testáveis e claras
-□ Markdown válido
-```
-
-**Documentação:**
-```
-□ Adicionar referência em claude.md
-□ Adicionar em README.md
-```
-
-**Git:**
-```
-□ git add TROUBLESHOOTING.md claude.md README.md
-□ git commit -m "docs: Criar TROUBLESHOOTING.md - extrair troubleshooting do claude.md"
-□ git push
-```
-
-**Critério de Aprovação:** ✅ Arquivo criado, referenciado, commitado e pushed
-
----
-
-### FASE 5: Criar Arquivos Separados (CONTRIBUTING.md)
-
-**Objetivo:** Criar guia de contribuição (extrair metodologia do README.md)
-
-**Análise Prévia (OBRIGATÓRIO):**
-```
-□ Ler README.md linhas 515-713 (Metodologia)
-□ Ler METODOLOGIA_MCPS_INTEGRADA.md (metodologia completa)
-□ Identificar conteúdo para CONTRIBUTING.md
-□ Planejar estrutura
-```
-
-**Implementação:**
-```
-□ Criar CONTRIBUTING.md
-  - Seções: Como Contribuir, Metodologia, Code Style, Git Workflow, Pull Requests
-  - Incluir resumo de Ultra-Thinking + TodoWrite + MCPs
-  - Incluir 25 regras de ouro
-  - Incluir checklist de validação
-□ Adaptar conteúdo de README.md
-□ Resumir METODOLOGIA_MCPS_INTEGRADA.md
-□ Adicionar exemplos práticos
-```
-
-**Validação:**
-```
-□ CONTRIBUTING.md criado (estimar ~300-400 linhas)
-□ Conteúdo claro para novos contribuidores
-□ Markdown válido
-```
-
-**Documentação:**
-```
-□ Adicionar referência em claude.md
-□ Adicionar em README.md
-```
-
-**Git:**
-```
-□ git add CONTRIBUTING.md claude.md README.md
-□ git commit -m "docs: Criar CONTRIBUTING.md - guia de contribuição"
-□ git push
-```
-
-**Critério de Aprovação:** ✅ Arquivo criado, referenciado, commitado e pushed
-
----
-
-### FASE 6: Criar Arquivos Separados (INSTALL.md)
-
-**Objetivo:** Criar guia de instalação detalhado (extrair do README.md)
-
-**Análise Prévia (OBRIGATÓRIO):**
-```
-□ Ler README.md linhas 171-282 (Getting Started)
-□ Verificar system-manager.ps1 (comandos de instalação)
-□ Identificar todos os métodos de instalação
-□ Planejar estrutura de INSTALL.md
-```
-
-**Implementação:**
-```
-□ Criar INSTALL.md
-  - Seções: Requisitos, Instalação (Docker/Local), Configuração, Troubleshooting
-  - Incluir 3 métodos: Script automatizado, Docker manual, Local
-  - Incluir verificação de instalação
-  - Incluir primeiros passos
-□ Expandir conteúdo de README.md
-□ Adicionar troubleshooting de instalação
-```
-
-**Validação:**
-```
-□ INSTALL.md criado (estimar ~250-350 linhas)
-□ 3 métodos de instalação documentados
-□ Comandos testáveis
-□ Markdown válido
-```
-
-**Documentação:**
-```
-□ Adicionar referência em claude.md
-□ Adicionar em README.md
-```
-
-**Git:**
-```
-□ git add INSTALL.md claude.md README.md
-□ git commit -m "docs: Criar INSTALL.md - guia de instalação detalhado"
-□ git push
-```
-
-**Critério de Aprovação:** ✅ Arquivo criado, referenciado, commitado e pushed
-
----
-
-### FASE 7: Reescrever claude.md (2001 → 200 linhas)
-
-**Objetivo:** Reescrever claude.md seguindo melhores práticas Anthropic (100-200 linhas)
-
-**Análise Prévia (OBRIGATÓRIO):**
-```
-□ Revisar PLANO_REORGANIZACAO_CLAUDE_README.md (estrutura proposta)
-□ Verificar todos os 6 arquivos criados (DATABASE_SCHEMA, ARCHITECTURE, ROADMAP, TROUBLESHOOTING, CONTRIBUTING, INSTALL)
-□ Confirmar que TODO conteúdo foi extraído
-□ Planejar nova estrutura de claude.md
-```
-
-**Implementação:**
-```
-□ Criar claude.md.new (nova versão)
-  - Seção 1: Quick Reference (Tech Stack, Structure, Ports) - ~30 linhas
-  - Seção 2: Quick Commands (Dev, Testing, Validation) - ~40 linhas
-  - Seção 3: Code Style & Conventions (Naming, Git) - ~30 linhas
-  - Seção 4: Metodologia OBRIGATÓRIA (Ultra-Thinking + TodoWrite + MCPs) - ~50 linhas
-  - Seção 5: Documentação Detalhada (Links para arquivos) - ~20 linhas
-  - Seção 6: DO NOT / Restrictions - ~20 linhas
-  - Seção 7: Current Project Status - ~10 linhas
-□ Manter APENAS informações que impactam decisões de código
-□ Usar ênfase: "IMPORTANT", "YOU MUST", "NEVER"
-□ Testar leitura (simular Claude Code)
-```
-
-**Validação:**
-```
-□ claude.md.new criado (150-200 linhas ✅)
-□ Conteúdo conciso e acionável
-□ Todas as seções obrigatórias presentes
-□ Markdown válido
-□ Fácil leitura (< 2 minutos)
-```
-
-**Testes:**
-```
-□ Comparar claude.md vs claude.md.new
-□ Verificar que TODO conteúdo importante está em claude.md.new OU em arquivos separados
-□ Ler claude.md.new como se fosse Claude Code
-□ Identificar gaps (informações faltantes)
-```
-
-**Implementação Final:**
-```
-□ Renomear claude.md → claude.md.old
-□ Renomear claude.md.new → claude.md
-```
-
-**Git:**
-```
-□ git add claude.md claude.md.old
-□ git commit -m "refactor: Reorganizar claude.md seguindo best practices Anthropic - reduzir de 2001 para 200 linhas"
-□ git push
-```
-
-**Critério de Aprovação:**
-```
-✅ claude.md tem 150-200 linhas
-✅ TODO conteúdo importante preservado (em claude.md ou arquivos separados)
-✅ Fácil leitura e navegação
-✅ Commitado e pushed
-```
-
----
-
-### FASE 8: Melhorar README.md (799 → 600 linhas)
-
-**Objetivo:** Melhorar README.md seguindo melhores práticas GitHub
-
-**Análise Prévia (OBRIGATÓRIO):**
-```
-□ Ler README.md completo
-□ Verificar CONTRIBUTING.md e INSTALL.md criados
-□ Planejar melhorias (badges, screenshots, simplificação)
-```
-
-**Implementação - Parte 1: Badges**
-```
-□ Adicionar badges no topo:
-  - Build Status
-  - TypeScript Version
-  - Next.js Version
-  - NestJS Version
-  - License
-  - Node Version
-```
-
-**Implementação - Parte 2: Screenshots**
-```
-□ Criar pasta docs/screenshots/ (se não existe)
-□ Tirar screenshots:
-  - Dashboard principal
-  - Portfolio page
-  - Analysis page
-  - Reports page
-  - Data Sources page
-□ Adicionar seção "Screenshots" após "Características"
-```
-
-**Implementação - Parte 3: Simplificar Getting Started**
-```
-□ Manter apenas "Quick Start" (Docker comando único)
-□ Remover instalação detalhada (já está em INSTALL.md)
-□ Adicionar link: "Ver INSTALL.md para instalação completa"
-```
-
-**Implementação - Parte 4: Resumir Metodologia**
-```
-□ Remover detalhes de metodologia (linhas 515-713)
-□ Adicionar resumo curto (3-4 parágrafos)
-□ Adicionar link: "Ver CONTRIBUTING.md para metodologia completa"
-```
-
-**Implementação - Parte 5: Reorganizar Estrutura**
-```
-□ Estrutura final:
-  - Título + Badges
-  - Descrição (O que é, diferencial)
-  - Screenshots
-  - Características
-  - Quick Start (Docker)
-  - Documentação (Links organizados)
-  - Tecnologias (Stack resumido)
-  - Status do Projeto (Métricas)
-  - Contribuindo (Link para CONTRIBUTING.md)
-  - Licença
-  - Suporte
-```
-
-**Validação:**
-```
-□ README.md atualizado (~600 linhas)
-□ Badges adicionados e funcionando
-□ Screenshots adicionados (5+)
-□ Links para CONTRIBUTING.md e INSTALL.md funcionando
-□ Markdown válido
-```
-
-**Git:**
-```
-□ git add README.md docs/screenshots/
-□ git commit -m "docs: Reorganizar README.md - adicionar badges, screenshots e simplificar estrutura"
-□ git push
-```
-
-**Critério de Aprovação:**
-```
-✅ README.md melhorado (~600 linhas)
-✅ Badges visíveis
-✅ Screenshots presentes
-✅ Links funcionando
-✅ Commitado e pushed
-```
-
----
-
-### FASE 9: Validação Final e Documentação
-
-**Objetivo:** Validar reorganização completa e criar documento de validação
-
-**Validação Técnica:**
-```
-□ TypeScript (backend): npx tsc --noEmit → 0 erros
-□ TypeScript (frontend): npx tsc --noEmit → 0 erros
-□ Build (backend): npm run build → Success
-□ Build (frontend): npm run build → Success (17 páginas)
-□ Git status: working tree clean
-□ Git log: todos os commits presentes
-□ GitHub: branch sincronizada
-```
-
-**Validação de Arquivos:**
-```
-□ DATABASE_SCHEMA.md existe e está completo
-□ ARCHITECTURE.md existe e está completo
-□ ROADMAP.md existe e está completo
-□ TROUBLESHOOTING.md existe e está completo
-□ CONTRIBUTING.md existe e está completo
-□ INSTALL.md existe e está completo
-□ claude.md tem 150-200 linhas
-□ README.md tem ~600 linhas
-□ Todos os links entre documentos funcionando
-```
-
-**Validação de Conteúdo:**
-```
-□ Comparar claude.md.old vs claude.md.new
-□ Verificar que NADA foi perdido
-□ Verificar que conteúdo está em arquivos corretos
-□ Testar navegação entre documentos
-```
-
-**Criar Documento de Validação:**
-```
-□ Criar VALIDACAO_REORGANIZACAO_DOCUMENTACAO.md
-  - Resumo executivo
-  - Arquivos criados (6)
-  - Arquivos modificados (2)
-  - Comparação antes/depois (linhas, organização)
-  - Validação técnica (TypeScript, Build, Git)
-  - Screenshots dos novos arquivos
-  - Conclusões
-```
-
-**Git Final:**
-```
-□ git add VALIDACAO_REORGANIZACAO_DOCUMENTACAO.md
-□ git commit -m "docs: Validação completa da reorganização de documentação"
-□ git push
-```
-
-**Critério de Aprovação:**
-```
-✅ Todos os itens de validação acima = ✅
-✅ Documento de validação criado
-✅ 0 erros em TODAS as validações
-✅ Git 100% sincronizado
-```
-
----
-
-### RESUMO FASE REORGANIZAÇÃO DOCUMENTAÇÃO
-
-**Total de Fases:** 9
-**Arquivos Criados:** 7 (6 novos + 1 validação)
-**Arquivos Modificados:** 2 (claude.md, README.md)
-**Estimativa Total:** 3-4 horas
-**Redução Total:** 2800 → 800 linhas (71%)
-
-**Progresso Atual:**
-- [ ] PRÉ-FASE 1: Preparação (0%)
-- [ ] FASE 1: DATABASE_SCHEMA.md (0%)
-- [ ] FASE 2: ARCHITECTURE.md (0%)
-- [ ] FASE 3: ROADMAP.md (0%)
-- [ ] FASE 4: TROUBLESHOOTING.md (0%)
-- [ ] FASE 5: CONTRIBUTING.md (0%)
-- [ ] FASE 6: INSTALL.md (0%)
-- [ ] FASE 7: Reescrever claude.md (0%)
-- [ ] FASE 8: Melhorar README.md (0%)
-- [ ] FASE 9: Validação Final (0%)
-
-**Status Geral:** 📋 PLANEJADO - Aguardando aprovação para iniciar
-
----
-
-## 📋 TODO - SISTEMA REPORTS (COMPLETO - REFERÊNCIA)
-
-**Status:** ✅ 100% COMPLETO
-**Última Validação:** VALIDACAO_FASE_6_REPORTS_COMPLETA.md
-
-Todas as 6 fases foram concluídas e validadas. Nenhuma ação pendente.
-
----
-
-## 📋 TODO - VALIDAÇÃO FRONTEND (COMPLETO - REFERÊNCIA)
-
-**Status:** ✅ 100% COMPLETO
-**Última Validação:** VALIDACAO_FASE_21_ACESSIBILIDADE.md
-
-Todas as 10 fases (12-21) foram concluídas e validadas. Nenhuma ação pendente.
-
----
-
-## 🔧 WORKFLOWS DE VALIDAÇÃO
-
-### Workflow 1: Validação Rápida (Após mudança pequena)
+**Estado do Git DEVE estar limpo antes de cada fase:**
 
 ```bash
-# 1. TypeScript
-cd backend && npx tsc --noEmit
-cd frontend && npx tsc --noEmit
-
-# 2. Git status
+# ✅ Estado IDEAL antes de começar nova fase:
 git status
+# On branch main
+# Your branch is up to date with 'origin/main'.
+# nothing to commit, working tree clean
 
-# 3. Resultado esperado:
-# - 0 erros TypeScript
-# - Working tree clean (ou apenas arquivos intencionais)
+# ❌ Estado PROIBIDO para iniciar nova fase:
+git status
+# Changes not staged for commit:
+#   modified: 8 files
+# Untracked files:
+#   TEMP_*.md (6 arquivos)
 ```
 
-**Tempo:** ~2 minutos
-**Quando usar:** Mudanças < 50 linhas, 1-2 arquivos
+**Workflow Obrigatório:**
+1. Terminar fase atual
+2. Commitar TUDO (código + docs + testes)
+3. Verificar `git status` → working tree clean
+4. Push para origin/main
+5. **SÓ ENTÃO** iniciar próxima fase
+
+### 4. Verificar Necessidade de Reiniciar Serviços
+
+**SEMPRE verificar se mudanças exigem restart antes de testar:**
+
+| Arquivo Modificado | Serviço a Reiniciar | Comando |
+|-------------------|---------------------|---------|
+| `backend/**/*.py` | api-service + scrapers | `docker-compose restart api-service scrapers` |
+| `frontend/src/**/*.ts(x)` | frontend (desenvolvimento) | `docker-compose restart frontend` (se rodando em Docker) |
+| `docker-compose.yml` | TODOS os serviços | `docker-compose down && docker-compose up -d` |
+| `.env` ou `.env.template` | Serviço específico | Ver qual serviço usa a variável |
+| `backend/package.json` | api-service | `docker-compose restart api-service` |
+| Migrations (`*.ts`) | api-service | `docker-compose restart api-service && npm run migration:run` |
+
+**Checklist Restart:**
+```bash
+# 1. Identificar serviços afetados
+# 2. Reiniciar serviços
+docker-compose restart <service>
+
+# 3. Verificar health
+docker-compose ps  # Status = Up (healthy)
+
+# 4. Verificar logs (sem erros)
+docker-compose logs -f <service> --tail=50
+
+# 5. SÓ ENTÃO iniciar testes MCP
+```
+
+### 5. Correções Definitivas de Problemas Crônicos
+
+**NUNCA aplicar "fix temporário" ou "workaround":**
+
+```bash
+# ❌ ERRADO: Fix superficial
+"OAuth dando erro" → Reinicia container → "Funcionou!"
+
+# ✅ CORRETO: Análise de causa raiz
+1. Ler logs completos: docker-compose logs api-service --tail=200
+2. Identificar CAUSA RAIZ: "DISPLAY environment variable not set"
+3. Analisar arquitetura: Xvfb em scrapers, OAuth em api-service
+4. Solução definitiva: network_mode sharing + DISPLAY env
+5. Validar fix: 3 testes completos sem erro
+6. Documentar: TROUBLESHOOTING.md + commit message detalhado
+```
+
+**Problema Crônico = Problema Arquitetural**
+- Investir tempo para consertar de vez
+- Documentar solução no TROUBLESHOOTING.md
+- Adicionar validação preventiva no CI/CD (futuro)
+
+### 6. Dados Reais > Mocks
+
+**SEMPRE usar dados reais coletados dos scrapers:**
+
+```typescript
+// ❌ ERRADO: Dados mockados
+const mockAsset = {
+  ticker: "PETR4",
+  price: 35.50,  // Inventado
+  lastUpdate: new Date()
+}
+
+// ✅ CORRETO: Dados reais via API
+const asset = await api.assets.getByTicker("PETR4");
+// Dados vêm do PostgreSQL (scrapers coletaram)
+```
+
+**Exceções Permitidas:**
+1. **Testes Unitários**: Pode mockar para isolar lógica
+2. **Storybook**: Componentes visuais isolados
+3. **Desenvolvimento Offline**: Usar dados previamente coletados (cache)
+
+**Nunca em Produção/Staging:**
+- Charts com dados fake
+- Análises com valores inventados
+- Relatórios com placeholders
 
 ---
 
-### Workflow 2: Validação Média (Após mudança média)
+## 📝 CHECKLIST PRÉ-IMPLEMENTAÇÃO
+
+**Executar ANTES de escrever qualquer linha de código:**
+
+### 1. Leitura de Contexto ✅
 
 ```bash
-# 1. TypeScript
-cd backend && npx tsc --noEmit
-cd frontend && npx tsc --noEmit
+# 1.1. Ler documentação técnica relevante
+- [ ] CLAUDE.md (metodologia)
+- [ ] ARCHITECTURE.md (se mudança arquitetural)
+- [ ] DATABASE_SCHEMA.md (se mudança em entities)
+- [ ] ROADMAP.md (para entender fase atual)
+- [ ] TROUBLESHOOTING.md (problemas conhecidos)
 
-# 2. Build
-cd backend && npm run build
-cd frontend && npm run build
+# 1.2. Ler arquivos de código relacionados
+- [ ] Arquivo principal a ser modificado
+- [ ] Interfaces/Types usados
+- [ ] Testes existentes
+- [ ] Arquivos que importam este módulo (grep -r)
 
-# 3. Git
-git status
-
-# 4. Resultado esperado:
-# - 0 erros TypeScript
-# - Build success (backend)
-# - Build success (frontend, 17 páginas)
-# - Working tree clean
+# 1.3. Verificar divergências docs vs código
+- [ ] Se documentação divergir → ATUALIZAR DOCS PRIMEIRO
+- [ ] Se código divergir → PLANEJAR REFATORAÇÃO
 ```
 
-**Tempo:** ~5 minutos
-**Quando usar:** Mudanças 50-200 linhas, 3-5 arquivos
+### 2. Análise de Impacto ✅
+
+```bash
+# 2.1. Identificar TODOS os arquivos afetados
+- [ ] Frontend: componentes, hooks, types, APIs
+- [ ] Backend: controllers, services, entities, DTOs
+- [ ] Database: migrations necessárias?
+- [ ] Testes: quais testes quebrarão?
+
+# 2.2. Verificar dependências
+grep -r "importPath" <diretório>  # Quem importa este módulo?
+npx tsc --noEmit                  # TypeScript detecta quebras
+
+# 2.3. Estimar complexidade
+- [ ] < 10 linhas → Trivial (não precisa TodoWrite)
+- [ ] 10-50 linhas → Simples (TodoWrite com 3-5 etapas)
+- [ ] 50-100 linhas → Médio (TodoWrite + Ultra-Thinking)
+- [ ] > 100 linhas → Complexo (Documento de planejamento dedicado)
+```
+
+### 3. Planejamento (TodoWrite + Ultra-Thinking) ✅
+
+```bash
+# 3.1. Se mudança > 10 linhas → Criar TodoWrite
+[
+  {content: "Ler contexto (arquivos X, Y, Z)", status: "pending", activeForm: "..."},
+  {content: "Criar/Atualizar DTOs e Interfaces", status: "pending", activeForm: "..."},
+  {content: "Implementar Service/Hook", status: "pending", activeForm: "..."},
+  {content: "Implementar Controller/Component", status: "pending", activeForm: "..."},
+  {content: "Escrever/Atualizar testes", status: "pending", activeForm: "..."},
+  {content: "Validar TypeScript (0 erros)", status: "pending", activeForm: "..."},
+  {content: "Validar Build (Success)", status: "pending", activeForm: "..."},
+  {content: "Reiniciar serviços se necessário", status: "pending", activeForm: "..."},
+  {content: "Testar manualmente (MCP Triplo)", status: "pending", activeForm: "..."},
+  {content: "Atualizar documentação", status: "pending", activeForm: "..."},
+  {content: "Commit + Push", status: "pending", activeForm: "..."},
+]
+
+# 3.2. Se mudança > 100 linhas → Criar documento de planejamento
+PLANO_FASE_X_NOME_FEATURE.md
+- Problema a resolver
+- Solução proposta (3 alternativas consideradas)
+- Arquitetura (diagramas se necessário)
+- Arquivos afetados (lista completa)
+- Riscos e mitigações
+- Validação (critérios de sucesso)
+
+# 3.3. Se mudança complexa → Usar Ultra-Thinking (MCP Sequential Thinking)
+- Análise profunda do problema
+- Exploração de alternativas
+- Identificação de edge cases
+- Prevenção de regressões
+```
+
+### 4. Verificar Pré-Requisitos ✅
+
+```bash
+# 4.1. Git limpo?
+git status  # working tree clean? ✅
+
+# 4.2. Serviços rodando?
+docker-compose ps  # Todos Up (healthy)? ✅
+
+# 4.3. Dependências instaladas?
+cd backend && npm install
+cd frontend && npm install
+
+# 4.4. Migrations aplicadas?
+cd backend && npm run migration:run
+
+# 4.5. TypeScript atual sem erros?
+cd backend && npx tsc --noEmit   # 0 erros? ✅
+cd frontend && npx tsc --noEmit  # 0 erros? ✅
+```
 
 ---
 
-### Workflow 3: Validação Completa (Após mudança grande ou nova feature)
+## 🛠️ CHECKLIST DURANTE IMPLEMENTAÇÃO
+
+**Executar DURANTE a escrita de código:**
+
+### 1. Marcar TodoWrite (1 in_progress) ✅
 
 ```bash
-# 1. Verificar containers
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.RunningFor}}"
+# REGRA DE OURO: Apenas 1 tarefa in_progress por vez
 
-# 2. Reiniciar se necessário (se mudou código backend/frontend)
-docker restart invest_backend
-docker restart invest_frontend
-# Aguardar 30-60s até status "healthy"
+# ❌ ERRADO: Múltiplas tarefas in_progress
+[
+  {content: "Criar DTO", status: "in_progress", ...},
+  {content: "Criar Service", status: "in_progress", ...},  # PROIBIDO
+]
 
-# 3. TypeScript
-cd backend && npx tsc --noEmit
-cd frontend && npx tsc --noEmit
+# ✅ CORRETO: Foco em uma tarefa
+[
+  {content: "Criar DTO", status: "completed", ...},
+  {content: "Criar Service", status: "in_progress", ...},  # ÚNICA
+  {content: "Criar Controller", status: "pending", ...},
+]
 
-# 4. Build
-cd backend && npm run build
-cd frontend && npm run build
+# Fluxo:
+1. Marcar tarefa como in_progress
+2. Implementar COMPLETAMENTE
+3. Marcar como completed IMEDIATAMENTE
+4. Passar para próxima tarefa
+```
 
-# 5. MCP Triplo (3 janelas paralelas)
-# Janela 1: Playwright MCP
-# - Navegar páginas afetadas
-# - Tirar screenshots
-# - Validar funcionalidades
+### 2. Validação Incremental ✅
 
-# Janela 2: Chrome DevTools MCP
-# - Abrir console
-# - Verificar erros/warnings
-# - Validar network requests
+```bash
+# A cada arquivo modificado/criado, validar:
 
-# Janela 3: Sequential Thinking MCP
-# - Analisar mudanças profundamente
-# - Identificar possíveis problemas
-# - Validar arquitetura
+# 2.1. TypeScript (incremental)
+npx tsc --noEmit <arquivo>.ts  # 0 erros neste arquivo?
 
-# 6. React Dev Tools
-# - Abrir em http://localhost:3100
-# - Verificar component tree
-# - Validar props e state
+# 2.2. Imports corretos?
+# Verificar se imports estão resolvendo
+# VSCode deve mostrar autocomplete
 
-# 7. Screenshots
-# - Salvar em validation-screenshots/
-# - Nomear: fase-X-descricao.png
+# 2.3. Linter (críticos apenas)
+npm run lint <arquivo>  # Erros críticos?
 
-# 8. Git
-git status
+# 2.4. Salvar frequentemente
+# Git add + commit intermediário se mudança > 50 linhas
 git add .
-git commit -m "tipo: descrição\n\n<corpo>\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
-git push
-
-# 9. Criar documento de validação
-# - VALIDACAO_FASE_X_NOME.md
-# - Incluir: resumo, arquivos modificados, validações, screenshots, conclusões
+git commit -m "wip: implementando feature X - parte 1/3"
 ```
 
-**Tempo:** ~30-60 minutos
-**Quando usar:**
-- Mudanças > 200 linhas
-- > 5 arquivos
-- Nova feature completa
-- Refatoração grande
-- Correção de bug crítico
+### 3. Seguir Padrões de Código ✅
+
+**Backend (NestJS + TypeORM):**
+```typescript
+// ✅ CORRETO: Padrão NestJS
+
+// 1. DTOs com class-validator
+export class CreateAssetDto {
+  @IsString()
+  @IsNotEmpty()
+  ticker: string;
+
+  @IsNumber()
+  @IsOptional()
+  price?: number;
+}
+
+// 2. Services com injeção de dependência
+@Injectable()
+export class AssetsService {
+  constructor(
+    @InjectRepository(Asset)
+    private assetsRepository: Repository<Asset>,
+  ) {}
+
+  async findByTicker(ticker: string): Promise<Asset> {
+    return this.assetsRepository.findOne({ where: { ticker } });
+  }
+}
+
+// 3. Controllers com decorators corretos
+@Controller('assets')
+export class AssetsController {
+  constructor(private readonly assetsService: AssetsService) {}
+
+  @Get(':ticker')
+  async getAsset(@Param('ticker') ticker: string) {
+    return this.assetsService.findByTicker(ticker);
+  }
+}
+```
+
+**Frontend (Next.js 14 + React):**
+```typescript
+// ✅ CORRETO: Padrão Next.js App Router
+
+// 1. Componentes Server (default)
+export default async function AssetPage({ params }: { params: { ticker: string } }) {
+  const asset = await getAsset(params.ticker);  // Fetch direto
+  return <AssetDetails asset={asset} />;
+}
+
+// 2. Componentes Client (quando necessário)
+'use client';
+
+import { useState } from 'react';
+
+export function AssetChart({ ticker }: { ticker: string }) {
+  const [range, setRange] = useState('1y');
+  const { data, isLoading } = useAssetPrices(ticker, range);  // React Query
+
+  return (
+    <div className="grid gap-4">
+      <RangeSelector value={range} onChange={setRange} />
+      <Chart data={data} loading={isLoading} />
+    </div>
+  );
+}
+
+// 3. Hooks customizados com React Query
+export function useAssetPrices(ticker: string, range: string) {
+  return useQuery({
+    queryKey: ['asset-prices', ticker, range],
+    queryFn: () => api.assets.getPrices(ticker, { range }),
+    staleTime: 5 * 60 * 1000,  // 5 minutos
+  });
+}
+```
+
+**Scrapers (Python + Playwright):**
+```python
+# ✅ CORRETO: Padrão Playwright + OAuth
+
+from loguru import logger
+from playwright.sync_api import sync_playwright
+
+class GoogleScraper:
+    def __init__(self, cookies: dict):
+        self.cookies = cookies
+
+    def scrape_portfolio(self, ticker: str) -> dict:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context()
+
+            # Injetar cookies OAuth
+            context.add_cookies(self.cookies)
+
+            page = context.new_page()
+
+            try:
+                page.goto(f"https://site.com/portfolio/{ticker}")
+                page.wait_for_selector(".portfolio-data", timeout=30000)
+
+                data = page.locator(".portfolio-data").text_content()
+
+                logger.success(f"Scraped {ticker}: {data}")
+                return {"ticker": ticker, "data": data}
+
+            except Exception as e:
+                logger.error(f"Erro ao scrape {ticker}: {e}")
+                raise
+            finally:
+                browser.close()
+```
 
 ---
 
-## ⚡ COMANDOS RÁPIDOS
+## ✅ CHECKLIST PRÉ-COMMIT
 
-### Validação TypeScript (Obrigatória)
+**Executar ANTES de fazer commit (OBRIGATÓRIO):**
+
+### 1. Validação TypeScript ✅ OBRIGATÓRIO
 
 ```bash
-# Backend
-cd backend && npx tsc --noEmit
+# 1.1. Backend
+cd backend
+npx tsc --noEmit
 
-# Frontend
-cd frontend && npx tsc --noEmit
+# RESULTADO ESPERADO:
+# (silêncio = sucesso)
 
-# Ambos (sequential)
-cd backend && npx tsc --noEmit && cd ../frontend && npx tsc --noEmit && echo "✅ TypeScript OK"
+# RESULTADO PROIBIDO:
+# error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+
+# Se QUALQUER erro → CORRIGIR antes de commit
+
+# 1.2. Frontend
+cd frontend
+npx tsc --noEmit
+
+# MESMO critério: 0 erros
 ```
 
-### Build (Obrigatório antes de commit)
+**❌ NUNCA commitar com erros TypeScript**
+**❌ NUNCA commitar com warnings críticos**
+
+### 2. Validação Build ✅ OBRIGATÓRIO
 
 ```bash
-# Backend
-cd backend && npm run build
+# 2.1. Backend Build
+cd backend
+npm run build
 
-# Frontend
-cd frontend && npm run build
+# RESULTADO ESPERADO:
+# Build complete. The output was saved to "dist" folder
+# (sem erros)
 
-# Ambos (sequential)
-cd backend && npm run build && cd ../frontend && npm run build && echo "✅ Build OK"
+# RESULTADO PROIBIDO:
+# ERROR in src/services/assets.service.ts
+# Module not found: Error: Can't resolve '@types/lodash'
+
+# 2.2. Frontend Build
+cd frontend
+npm run build
+
+# RESULTADO ESPERADO:
+# Route (app)                              Size     First Load JS
+# ✓ /                                      5.2 kB          100 kB
+# ✓ /assets                                8.1 kB          103 kB
+# ...
+# ○  (Static)  prerendered as static content
+# ƒ  (Dynamic)  server-rendered on demand
+
+# RESULTADO PROIBIDO:
+# Error: Type error: Property 'range' does not exist on type 'AssetPricesQuery'.
 ```
 
-### Git (Workflow padrão)
+**❌ NUNCA commitar com build quebrado**
+
+### 3. Git Status ✅
 
 ```bash
-# Status
+# 3.1. Ver arquivos modificados
 git status
 
-# Add + Commit (com co-autoria)
-git add . && git commit -m "tipo: descrição
+# VERIFICAR:
+- [ ] Apenas arquivos intencionais?
+- [ ] Sem arquivos temporários? (.env, node_modules, dist, .next)
+- [ ] Sem logs de debug? (temp_logs.txt, debug_*.txt)
 
-<corpo detalhado>
+# 3.2. Ver diff completo
+git diff --stat
 
-Co-Authored-By: Claude <noreply@anthropic.com>"
+# VERIFICAR:
+- [ ] Mudanças fazem sentido?
+- [ ] Sem linhas comentadas esquecidas?
+- [ ] Sem console.log() de debug?
+- [ ] Sem código morto?
 
-# Push
-git push
-
-# Verificar sincronização
-git log --oneline -5
+# 3.3. Ver arquivos a serem commitados
+git add <arquivos>
 git status
+
+# VERIFICAR:
+- [ ] Todos os arquivos novos adicionados?
+- [ ] Documentação incluída?
 ```
 
-### Docker (Gerenciamento de containers)
+### 4. Documentação ✅
 
 ```bash
-# Ver status
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.RunningFor}}"
+# 4.1. CLAUDE.md atualizado?
+- [ ] Se mudança metodologia → atualizar CLAUDE.md
+- [ ] Se nova regra → adicionar em "Regras de Ouro"
 
-# Reiniciar backend
-docker restart invest_backend
+# 4.2. README.md atualizado?
+- [ ] Se novo serviço → atualizar README.md
+- [ ] Se nova porta → atualizar README.md
+- [ ] Se novo pré-requisito → atualizar README.md
 
-# Reiniciar frontend
-docker restart invest_frontend
+# 4.3. ROADMAP.md atualizado?
+- [ ] Se fase concluída → adicionar/atualizar ROADMAP.md
+- [ ] Se nova fase iniciada → documentar em ROADMAP.md
 
-# Reiniciar todos
-docker restart invest_backend invest_frontend
+# 4.4. Arquivo técnico específico criado/atualizado?
+- [ ] Se mudança > 100 linhas → criar FASE_X_NOME.md
+- [ ] Se bug crítico corrigido → atualizar TROUBLESHOOTING.md
+- [ ] Se decisão arquitetural → atualizar ARCHITECTURE.md
 
-# Ver logs (últimas 50 linhas)
-docker logs invest_backend --tail 50
-docker logs invest_frontend --tail 50
-
-# Ver logs em tempo real
-docker logs invest_backend -f
-docker logs invest_frontend -f
+# 4.5. Commit message detalhado?
+- [ ] Tipo correto (feat, fix, docs, refactor, test, chore)?
+- [ ] Descrição curta < 72 chars?
+- [ ] Corpo detalhado (problema, solução, arquivos, validação)?
+- [ ] Co-autoria Claude incluída?
 ```
 
-### System Manager (Gerenciamento completo)
+### 5. Reiniciar Serviços (se necessário) ✅
 
 ```bash
-# Iniciar ambiente
-.\system-manager.ps1 start
+# 5.1. Identificar serviços afetados
+- [ ] Modificou backend/**/*.py → api-service + scrapers
+- [ ] Modificou frontend/src/**/*.ts(x) → frontend
+- [ ] Modificou docker-compose.yml → TODOS
+- [ ] Modificou migrations → api-service
 
-# Parar ambiente
-.\system-manager.ps1 stop
+# 5.2. Reiniciar serviços
+docker-compose restart <service>
 
-# Ver status
-.\system-manager.ps1 status
+# 5.3. Verificar health
+docker-compose ps
+# Todos devem estar Up (healthy)
 
-# Restart completo
-.\system-manager.ps1 restart
+# 5.4. Verificar logs (sem erros)
+docker-compose logs -f <service> --tail=50
+```
 
-# Limpeza (volumes)
-.\system-manager.ps1 clean
+### 6. Teste Manual Básico ✅
+
+```bash
+# 6.1. Backend API (se modificou backend)
+curl http://localhost:3101/api/v1/health
+# Deve retornar 200 OK
+
+curl http://localhost:3101/api/v1/assets/PETR4
+# Deve retornar JSON com dados do ativo
+
+# 6.2. Frontend (se modificou frontend)
+# Abrir http://localhost:3100 no navegador
+- [ ] Página carrega sem erro 500?
+- [ ] Sidebar funciona?
+- [ ] Navegação funciona?
+
+# 6.3. Console (F12 → Console)
+- [ ] 0 erros no console?
+- [ ] Apenas INFO/WARN não-críticos?
+
+# Se QUALQUER erro → CORRIGIR antes de commit
 ```
 
 ---
 
-## 📊 MÉTRICAS DE QUALIDADE (ZERO TOLERANCE)
+## 🚀 CHECKLIST PÓS-COMMIT
 
-```
-TypeScript Errors: 0 ✅
-Build Errors: 0 ✅
-Console Errors: 0 ✅ (páginas principais)
-Warnings Críticos: 0 ✅
-Lint Problems: 0 ✅ (critical)
-Breaking Changes: 0 ✅ (sem aprovação)
-Problemas Não-Bloqueantes: 0 ✅
-Itens Incompletos: 0 ✅
-Documentação Desatualizada: 0 ✅
-Git Desincronizado: 0 ✅
-```
+**Executar DEPOIS de fazer commit:**
 
-**Critério de Aprovação para Próxima Fase:**
-```
-TODOS os itens acima = 0 (ZERO) → ✅ Pode avançar
-QUALQUER item > 0 → ❌ CORRIGIR ANTES de avançar
-```
+### 1. Commit Message Detalhado ✅
 
----
+**Template Obrigatório:**
 
-## 🎯 PRÓXIMOS PASSOS RECOMENDADOS
+```bash
+git commit -m "$(cat <<'EOF'
+<tipo>(<escopo>): <descrição curta max 72 chars>
 
-### Agora (Prioridade Máxima)
-
-1. ✅ **Aprovar este TODO/Checklist** - Aguardando aprovação do usuário
-2. ✅ **Commit PLANO_REORGANIZACAO_CLAUDE_README.md + este arquivo** - CONCLUÍDO (commits 8ea114b e 6f4d8d8)
-3. ✅ **Push para sincronizar branch** - CONCLUÍDO (branch up to date)
-4. 📋 **Iniciar PRÉ-FASE 1** (preparação) - Próximo passo após aprovação
-5. 📋 **Executar FASES 1-9** (reorganização documentação) - Próximo passo após PRÉ-FASE 1
-
-### Depois (Após reorganização completa)
-
-1. ⏸️ Analisar REFATORACAO_BOTAO_SOLICITAR_ANALISES.md
-2. ⏸️ Planejar FASE 24 (Dados Históricos BRAPI)
-3. ⏸️ Continuar desenvolvimento de novas features
-
----
-
-## 📚 LIÇÕES APRENDIDAS
-
-### Bug Análise Duplicada (commit 5e8b602 - 2025-11-13)
-
-**Problema:** Múltiplos cliques no botão "Solicitar Análise" criavam análises duplicadas do mesmo ativo
-**Causa Raiz:** Falta de estado `isSubmitting` para prevenir múltiplos cliques durante requisição assíncrona
-**Solução Implementada:**
-- Estado local `isSubmitting` por ticker
-- Prevenção de múltiplos cliques: `if (isSubmitting) return;`
-- Feedback visual: Botão desabilita + Loader2 animado
-- Texto muda: "Solicitar Análise" → "Solicitando..."
-- Reset em `finally` para permitir retry
-
-**Lição Aprendida:**
-```
-✅ SEMPRE prevenir múltiplos cliques em ações assíncronas
-✅ SEMPRE adicionar feedback visual durante loading
-✅ SEMPRE usar estado local (não global) para controle de loading individual
-```
-
-**Arquivo:** `frontend/src/components/analysis/new-analysis-dialog.tsx`
-**Documentação:** `VALIDACAO_BUG_ANALISE_DUPLICADA_COMPLETA.md`
-
----
-
-### Ganho do Dia Incorreto (commit bed85a1 - 2025-11-12)
-
-**Problema:** Cálculo de "Ganho do Dia" incluía ativos comprados hoje (deveria mostrar R$ 0,00)
-**Causa Raiz:** Comparação de datas sem considerar timezone - usava `===` em strings de data
-**Solução Implementada:**
-- Campo `firstBuyDate` adicionado ao modelo
-- Uso de `moment().isSame(firstBuyDate, 'day')` para comparação correta
-- Lógica: Se comprado hoje → não calcular variação
-
-**Lição Aprendida:**
-```
-✅ SEMPRE validar lógica de datas com múltiplos cenários
-✅ SEMPRE usar bibliotecas de data (moment/dayjs) para comparações
-✅ NUNCA comparar datas usando === em strings
-✅ SEMPRE testar com dados de diferentes datas (hoje, ontem, 1 mês atrás)
-```
-
-**Arquivo:** `backend/src/api/portfolio/positions.service.ts`
-**Documentação:** `SOLUCAO_BUG_GANHO_DO_DIA.md`, `VALIDACAO_GANHO_DO_DIA_MULTIPLAS_DATAS.md`
-
----
-
-### Backend Rodando com Código Antigo (commit 6d16d69 - 2025-11-14)
-
-**Problema:** Após correção de bug, testes continuavam falhando - bug "não estava corrigido"
-**Causa Raiz:** Backend rodando há 7 horas com código antigo (último restart antes do fix)
-**Solução Implementada:**
-- Verificar uptime: `docker ps --format "{{.Names}}\t{{.Status}}\t{{.RunningFor}}"`
-- Se uptime > tempo do commit: restart obrigatório
-- `docker restart invest_backend` + aguardar "healthy"
-
-**Lição Aprendida:**
-```
-✅ SEMPRE verificar uptime dos containers antes de testar
-✅ SEMPRE reiniciar serviço se mudou código backend/frontend
-✅ SEMPRE aguardar status "healthy" (30-60s) antes de testar
-❌ NUNCA confiar que código está rodando sem verificar uptime
-```
-
-**Princípio #11 (Adicionado):** "Reiniciar Serviços Antes de Testar"
-
----
-
-### Documentação Desatualizada - Reports (commit d30e9b3 - 2025-11-13)
-
-**Problema:** CLAUDE.md indicava que sistema Reports estava "planejado", mas código mostrava 100% implementado
-**Causa Raiz:** Documentação não foi atualizada após implementação das fases 1-6
-**Solução Implementada:**
-- SEMPRE ler arquivos fonte ANTES de planejar (não confiar só em docs)
-- Comparar código vs documentação
-- Atualizar docs imediatamente após implementação
-
-**Lição Aprendida:**
-```
-✅ SEMPRE validar arquivos reais antes de confiar na documentação
-✅ SEMPRE comparar código-fonte vs docs
-✅ SEMPRE atualizar docs IMEDIATAMENTE após mudanças
-❌ NUNCA planejar baseado apenas em documentação
-```
-
-**Princípio #10 (Adicionado):** "Verificar Código Fonte > Documentação"
-
----
-
-### Princípio Fundamental das Lições
-
-**"Aprender com erros passados para nunca repeti-los."**
-
-Cada bug crítico corrigido vira um princípio obrigatório. Cada problema crônico identificado deve ser resolvido em definitivo, não com workarounds temporários.
-
----
-
-## 🏗️ DECISÕES ARQUITETURAIS
-
-### Reorganização claude.md (2001 → 200 linhas)
-
-**Decisão:** Extrair conteúdo para 6 arquivos separados (DATABASE_SCHEMA, ARCHITECTURE, ROADMAP, TROUBLESHOOTING, CONTRIBUTING, INSTALL)
-
-**Justificativa:**
-- Anthropic Best Practices recomendam 100-200 linhas como "sweet spot"
-- Arquivo de 2001 linhas consome tokens excessivamente
-- Informações organizadas por contexto são mais fáceis de navegar
-- Redução de 90% no tamanho do arquivo principal
-
-**Impacto:**
-- ✅ Consumo de tokens reduzido em 90%
-- ✅ Melhor manutenibilidade (cada arquivo tem propósito único)
-- ✅ Navegação mais fácil (links entre documentos)
-- ✅ Claude Code lê contexto relevante mais rapidamente
-
-**Referência:** `PLANO_REORGANIZACAO_CLAUDE_README.md`
-
-**Data da Decisão:** 2025-11-14
-
----
-
-### MCP Triplo para Validação Frontend
-
-**Decisão:** Usar 3 MCPs simultâneos (Playwright + Chrome DevTools + Sequential Thinking) em janelas paralelas
-
-**Justificativa:**
-- Playwright MCP: Navegação automatizada + screenshots + testes E2E
-- Chrome DevTools MCP: Console errors + network requests + performance
-- Sequential Thinking MCP: Análise lógica profunda de problemas encontrados
-- Cobertura tripla reduz falsos positivos (se os 3 aprovam → confiança 99%)
-
-**Impacto:**
-- ✅ Bugs ocultos são encontrados (ex: console errors que passariam despercebidos)
-- ✅ Validação 99% confiável (tripla checagem)
-- ✅ Screenshots como evidência (rastreabilidade)
-- ✅ Problemas de performance identificados (DevTools)
-
-**Referência:** `VALIDACAO_MCP_TRIPLO_COMPLETA.md`
-
-**Data da Decisão:** 2025-11-14
-
-**Critério de Aprovação:** 0 console errors + 0 warnings em TODOS os 3 MCPs
-
----
-
-### System-manager.ps1 como Ferramenta Central
-
-**Decisão:** Usar `system-manager.ps1` como ferramenta única para gerenciar ambiente (start, stop, status, restart, clean)
-
-**Justificativa:**
-- Automatiza verificações de saúde dos containers
-- Detecta problemas automaticamente (containers unhealthy)
-- Oferece limpeza de volumes corrompidos
-- Mostra status em tempo real durante inicialização
-- Reduz erros humanos (comandos docker-compose complexos)
-
-**Impacto:**
-- ✅ Operações de ambiente 80% mais rápidas
-- ✅ Menos erros de digitação em comandos
-- ✅ Limpeza automática de problemas
-- ✅ Logs consolidados e claros
-
-**Referência:** `system-manager.ps1`, `README.md` (seção Getting Started)
-
-**Data da Decisão:** 2025-11-12 (durante validação completa)
-
----
-
-### Zero Tolerance para Erros TypeScript/Build
-
-**Decisão:** NUNCA permitir commit com erros TypeScript ou build failures
-
-**Justificativa:**
-- Erros TypeScript indicam bugs potenciais em runtime
-- Build failures impedem deploy em produção
-- Commits quebrados dificultam debug no futuro
-- Git bisect fica inútil se commits intermediários estão quebrados
-
-**Impacto:**
-- ✅ Branch main SEMPRE deployável
-- ✅ Commits são pontos de restore confiáveis
-- ✅ Git bisect funciona perfeitamente para debug
-- ✅ Qualidade de código garantida
-
-**Métricas Obrigatórias:**
-```
-TypeScript Errors: 0
-Build Errors: 0
-Console Errors: 0 (páginas principais)
-```
-
-**Referência:** Princípio #1 (Regra de Ouro), Métricas de Qualidade
-
-**Data da Decisão:** 2025-11-12 (estabelecido como padrão)
-
----
-
-### Convenção de Commits: Conventional Commits + Co-autoria Claude
-
-**Decisão:** Todos os commits devem seguir Conventional Commits + incluir co-autoria do Claude
-
-**Justificativa:**
-- Conventional Commits permite changelog automático
-- Co-autoria rastreia que trabalho foi feito com IA
-- Formato padronizado facilita navegação no histórico
-- Corpo detalhado documenta decisões técnicas
-
-**Formato Obrigatório:**
-```
-<tipo>: <descrição curta>
-
-<corpo detalhado com:
+<corpo detalhado em bullet points:
 - Problema identificado
 - Solução implementada
-- Arquivos modificados
+- Arquivos modificados (+X/-Y linhas)
 - Validações realizadas>
 
+**Problema:**
+<Descrição do problema que esta mudança resolve>
+
+**Solução:**
+<Descrição da solução implementada>
+
+**Arquivos Modificados:**
+- arquivo1.ts (+X linhas)
+- arquivo2.py (-Y linhas)
+
+**Validação:**
+- ✅ TypeScript: 0 erros (backend + frontend)
+- ✅ Build: Success (ambos)
+- ✅ Testes: X/Y passing
+- ✅ Services: Todos healthy
+- ✅ Console: 0 erros
+
+**Documentação:**
+- ARQUIVO.md (criado/atualizado)
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
 Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"
 ```
 
-**Tipos:** feat, fix, docs, refactor, test, chore, perf, style, ci, build
+**Tipos:**
+- `feat`: Nova funcionalidade
+- `fix`: Correção de bug
+- `docs`: Apenas documentação
+- `refactor`: Refatoração (sem mudança de comportamento)
+- `test`: Adicionar/modificar testes
+- `chore`: Manutenção (deps, config)
+- `perf`: Melhoria de performance
 
-**Referência:** Seção "Convenções de Código" em `CLAUDE.md`
+### 2. Verificar Commit ✅
 
-**Data da Decisão:** 2025-11-12
+```bash
+# 2.1. Ver último commit
+git log -1 --stat
+
+# VERIFICAR:
+- [ ] Mensagem detalhada?
+- [ ] Co-autoria incluída?
+- [ ] Arquivos corretos commitados?
+
+# 2.2. Ver diff do commit
+git show HEAD
+
+# VERIFICAR:
+- [ ] Mudanças fazem sentido?
+- [ ] Sem mudanças acidentais?
+```
+
+### 3. Push para Origin ✅
+
+```bash
+# 3.1. Push
+git push origin main
+
+# 3.2. Verificar GitHub (se aplicável)
+- [ ] Commit apareceu no GitHub?
+- [ ] CI/CD passou? (se configurado)
+- [ ] Branch main está ahead?
+```
 
 ---
 
-## 📈 HISTÓRICO DE DECISÕES
+## 🔬 VALIDAÇÃO ULTRA-ROBUSTA (MCP TRIPLO)
 
-| Data | Decisão | Justificativa | Status |
-|------|---------|---------------|--------|
-| 2025-11-14 | Reorganizar claude.md (2001 → 200) | Melhores práticas Anthropic | ✅ Planejado |
-| 2025-11-14 | MCP Triplo para validação | Cobertura máxima + 99% confiança | ✅ Implementado |
-| 2025-11-12 | System-manager.ps1 central | Automatizar ambiente | ✅ Implementado |
-| 2025-11-12 | Zero Tolerance TypeScript | Branch main sempre deployável | ✅ Implementado |
-| 2025-11-12 | Conventional Commits + Co-autoria | Changelog automático + rastreabilidade IA | ✅ Implementado |
+**Metodologia de validação usando 3 MCPs em paralelo:**
+
+### 1. Quando Aplicar ✅
+
+**OBRIGATÓRIO para:**
+- ✅ Páginas frontend completas (OAuth Manager, Assets, Dashboard)
+- ✅ Fluxos críticos (autenticação, pagamento, análise)
+- ✅ Integrações complexas (WebSocket, OAuth, API externa)
+- ✅ Funcionalidades com estado (loading, error, success)
+- ✅ Antes de marcar fase como 100% COMPLETO
+
+**OPCIONAL para:**
+- ⏩ Mudanças triviais (< 10 linhas)
+- ⏩ Apenas documentação
+- ⏩ Configuração (docker-compose.yml, tsconfig.json)
+
+### 2. Setup (3 Janelas Separadas) ✅
+
+**IMPORTANTE: Rodar cada MCP em janela separada do navegador para evitar conflitos**
+
+```bash
+# Janela 1: Playwright MCP
+# URL: http://localhost:3100/<página>
+# Uso: Navegação, screenshots, network requests
+
+# Janela 2: Chrome DevTools MCP
+# URL: http://localhost:3100/<página>
+# Uso: Console, performance, accessibility snapshot
+
+# Janela 3: Selenium MCP (se necessário)
+# URL: http://localhost:3100/<página>
+# Uso: Interações complexas, upload de arquivo
+```
+
+### 3. Playwright MCP ✅
+
+**Objetivo:** Validar funcionalidade e capturar evidências visuais
+
+```typescript
+// 3.1. Navegar
+await mcp__playwright__browser_navigate({
+  url: "http://localhost:3100/oauth-manager"
+});
+
+// 3.2. Capturar snapshot (a11y tree)
+await mcp__playwright__browser_snapshot();
+
+// VERIFICAR:
+- [ ] Página carregou completamente?
+- [ ] Todos os elementos visíveis?
+- [ ] Textos corretos?
+- [ ] Botões com labels acessíveis?
+
+// 3.3. Screenshot para documentação
+await mcp__playwright__browser_take_screenshot({
+  filename: "oauth_manager_validation.png",
+  fullPage: true
+});
+
+// 3.4. Testar interações
+await mcp__playwright__browser_click({
+  element: "Botão Iniciar Renovação",
+  ref: "<ref do snapshot>"
+});
+
+await mcp__playwright__browser_wait_for({
+  text: "Sessão OAuth iniciada com sucesso"
+});
+
+// 3.5. Verificar network requests
+await mcp__playwright__browser_network_requests();
+
+// VERIFICAR:
+- [ ] Requests retornaram 200 OK?
+- [ ] Sem requests 404/500?
+- [ ] Payloads corretos?
+```
+
+### 4. Chrome DevTools MCP ✅
+
+**Objetivo:** Validar console, performance e acessibilidade
+
+```typescript
+// 4.1. Navegar
+await mcp__chrome-devtools__navigate_page({
+  type: "url",
+  url: "http://localhost:3100/oauth-manager"
+});
+
+// 4.2. Capturar snapshot (a11y)
+await mcp__chrome-devtools__take_snapshot({
+  verbose: true
+});
+
+// VERIFICAR:
+- [ ] Elementos com roles corretos?
+- [ ] Labels acessíveis?
+- [ ] Hierarquia correta?
+
+// 4.3. Verificar console
+await mcp__chrome-devtools__list_console_messages({
+  types: ["error", "warn"]
+});
+
+// VERIFICAR:
+- [ ] 0 erros no console?
+- [ ] Warnings apenas não-críticos?
+- [ ] INFO permitidos (React DevTools)
+
+// 4.4. Analisar network
+await mcp__chrome-devtools__list_network_requests({
+  resourceTypes: ["fetch", "xhr"]
+});
+
+// VERIFICAR:
+- [ ] Requests para endpoints corretos?
+- [ ] Sem duplicação de requests?
+- [ ] Timing aceitável (< 1s)?
+
+// 4.5. Screenshot
+await mcp__chrome-devtools__take_screenshot({
+  filePath: "oauth_manager_devtools.png",
+  fullPage: true
+});
+```
 
 ---
 
-**Criado por:** Claude Code (Sonnet 4.5)
-**Data:** 2025-11-14
-**Última Atualização:** 2025-11-14 16:34
-**Versão:** 1.1.0
-**Status:** ✅ COMPLETO COM CORREÇÕES - Revisão Ultra-Robusta Aprovada
+## 🔧 TROUBLESHOOTING E CORREÇÕES DEFINITIVAS
+
+### 1. Metodologia de Troubleshooting ✅
+
+**SEMPRE seguir este fluxo para problemas:**
+
+```bash
+# PASSO 1: REPRODUZIR
+- [ ] Consegue reproduzir o problema consistentemente?
+- [ ] Quais passos exatos causam o problema?
+- [ ] Problema ocorre em todos os ambientes (dev, staging)?
+
+# PASSO 2: COLETAR LOGS
+- [ ] Logs do serviço afetado (últimas 200 linhas)
+docker-compose logs <service> --tail=200 > debug_logs.txt
+
+- [ ] Console do navegador (F12 → Console)
+Copiar TODOS os erros e warnings
+
+- [ ] Network requests (F12 → Network)
+Identificar requests com status 4xx/5xx
+
+- [ ] Git status e branch
+git status
+git log -3
+
+# PASSO 3: IDENTIFICAR CAUSA RAIZ
+- [ ] Ler stack trace completo (não só primeira linha)
+- [ ] Buscar erro no Google: site:stackoverflow.com "erro exato"
+- [ ] Verificar TROUBLESHOOTING.md (problema conhecido?)
+- [ ] Verificar mudanças recentes: git log --since="2 days ago" --oneline
+
+# PASSO 4: HIPÓTESES
+- [ ] Listar 3 hipóteses de causa raiz (mais provável → menos provável)
+- [ ] Para cada hipótese, definir teste para validar/invalidar
+
+# PASSO 5: TESTAR HIPÓTESES
+- [ ] Testar hipótese 1
+- [ ] Se falhar, testar hipótese 2
+- [ ] Se falhar, testar hipótese 3
+- [ ] Se todas falharem → pedir ajuda (GitHub issue, Stack Overflow)
+
+# PASSO 6: APLICAR CORREÇÃO DEFINITIVA
+- [ ] Implementar correção (não workaround!)
+- [ ] Adicionar testes para prevenir regressão (se possível)
+- [ ] Documentar em TROUBLESHOOTING.md
+- [ ] Commit detalhado com causa raiz + solução
+
+# PASSO 7: VALIDAR CORREÇÃO
+- [ ] Reproduzir problema original → deve estar resolvido
+- [ ] Reiniciar serviços e testar novamente
+- [ ] Testar por 3 vezes (garantir consistência)
+```
+
+---
+
+## 📚 GESTÃO DE DOCUMENTAÇÃO
+
+### 1. Hierarquia de Documentação ✅
+
+```
+DOCUMENTAÇÃO DO PROJETO
+│
+├── NÍVEL 1: ESSENCIAL (leitura obrigatória)
+│   ├── README.md                    # Visão geral, instalação, quick start
+│   ├── CLAUDE.md                    # Metodologia Claude Code
+│   ├── CHECKLIST_TODO_MASTER.md     # Este arquivo (checklist + TODO)
+│   └── ROADMAP.md                   # Histórico + fases + TODO master
+│
+├── NÍVEL 2: TÉCNICO (referência frequente)
+│   ├── ARCHITECTURE.md              # Arquitetura, stack, fluxos
+│   ├── DATABASE_SCHEMA.md           # Schema PostgreSQL completo
+│   ├── INSTALL.md                   # Instalação detalhada
+│   ├── TROUBLESHOOTING.md           # 16+ problemas conhecidos
+│   └── CONTRIBUTING.md              # Convenções de código, Git workflow
+│
+├── NÍVEL 3: ESPECÍFICO (consulta pontual)
+│   ├── FASE_X_<NOME>.md             # Documentação de fase específica
+│   ├── PLANO_FASE_X_<NOME>.md       # Planejamento de fase
+│   ├── VALIDACAO_FASE_X_<NOME>.md   # Validação de fase
+│   └── <FEATURE>_<DATA>.md          # Documentação de feature específica
+│
+└── NÍVEL 4: GUIAS (uso ocasional)
+    ├── MCPS_USAGE_GUIDE.md          # 8 MCPs instalados
+    ├── METODOLOGIA_MCPS_INTEGRADA.md # Integração MCPs
+    └── DOCUMENTACAO_SCRAPERS_COMPLETA.md # 31 fontes de dados
+```
+
+### 2. Quando Atualizar Cada Documento ✅
+
+| Documento | Quando Atualizar |
+|-----------|------------------|
+| **README.md** | • Novo serviço/porta<br>• Novo pré-requisito<br>• Mudança no Quick Start |
+| **CLAUDE.md** | • Nova regra de metodologia<br>• Novo padrão identificado<br>• Mudança em Zero Tolerance Policy |
+| **CHECKLIST_TODO_MASTER.md** | • Nova validação necessária<br>• Novo problema crônico resolvido<br>• Nova fase concluída (atualizar TODO Master) |
+| **ROADMAP.md** | • Fase concluída (100%)<br>• Nova fase iniciada<br>• Mudança em planejamento |
+| **ARCHITECTURE.md** | • Novo serviço/container<br>• Nova integração<br>• Mudança arquitetural |
+| **DATABASE_SCHEMA.md** | • Nova entity<br>• Nova migration<br>• Mudança em relacionamentos |
+| **TROUBLESHOOTING.md** | • Novo problema resolvido<br>• Solução definitiva encontrada |
+| **CONTRIBUTING.md** | • Nova convenção de código<br>• Mudança em Git workflow |
+
+---
+
+## 📋 TODO MASTER (PRÓXIMAS FASES)
+
+**Status Atual do Projeto:** 52.8% COMPLETO (28.5 fases concluídas de 54 planejadas)
+
+### ✅ Fases Recentemente Concluídas
+
+#### FASE 27: Sub-Agents Especializados ✅ 100% COMPLETO (2025-11-14)
+
+**Concluído:**
+- ✅ 6 sub-agents criados (backend, frontend, scrapers, charts, typescript, queue)
+- ✅ `.claude/agents/README.md` com guia completo
+- ✅ CLAUDE.md atualizado com seção sub-agents
+- ✅ Validação ultra-robusta (Task tool análise)
+- ✅ Commits: 4178528 (sub-agents)
+
+**Documentação:**
+- ✅ `FASE_27_SUB_AGENTS_ESPECIALIZADOS.md`
+- ✅ `.claude/agents/README.md`
+- ✅ 6 arquivos .md (1 por sub-agent)
+
+---
+
+#### FASE 27.5: OAuth Manager - Melhorias de UX ✅ 100% COMPLETO (2025-11-15)
+
+**Concluído:**
+- ✅ 5 melhorias implementadas (salvar parcial, voltar, seletor, loop, sessão órfã)
+- ✅ +541 linhas (frontend + backend)
+- ✅ Validação TypeScript (0 erros)
+- ✅ Validação Build (Success)
+- ✅ Validação MCP (Chrome DevTools)
+- ✅ ROADMAP.md atualizado (FASE 27.5)
+- ✅ Commits: 4172d9a + 114a811 + 7789115
+
+**Documentação:**
+- ✅ `OAUTH_MANAGER_MELHORIAS_2025-11-15.md`
+- ✅ ROADMAP.md atualizado
+- ✅ Screenshot: `oauth_manager_validation_screenshot.png`
+
+---
+
+### 📌 Próximas Fases (Prioridade Alta)
+
+#### FASE 28: Refatoração Sistema de Relatórios (PLANEJADO)
+
+**Objetivo:** Reorganizar sistema de relatórios para melhor UX e manutenibilidade
+
+**Contexto:**
+- Atualmente relatórios estão misturados em `/reports` e `/analysis`
+- Falta padronização de visualização (cards, tabelas, charts)
+- Oportunidade de implementar templates reutilizáveis
+
+**Status:** ⏳ AGUARDANDO APROVAÇÃO
+
+**Documentação:** `REFATORACAO_SISTEMA_REPORTS.md` (já existe)
+
+---
+
+#### FASE 29: Sistema de Atualização Automática de Ativos (PLANEJADO)
+
+**Objetivo:** Implementar sistema robusto de atualização automática de preços e dados fundamentalistas
+
+**Componentes:**
+- Backend: BullMQ jobs (daily-update, weekly-fundamentals)
+- Frontend: Dashboard de jobs (`/admin/jobs`)
+- Retry logic + WebSocket notifications
+
+**Status:** ⏳ PLANEJADO (depende FASE 28)
+
+**Documentação:** `ROADMAP_SISTEMA_ATUALIZACAO_ATIVOS.md` (já existe)
+
+---
+
+#### FASE 30: Implementar Testes E2E (Playwright) (PLANEJADO)
+
+**Objetivo:** Criar suite completa de testes E2E para páginas principais
+
+**Componentes:**
+- Setup Playwright
+- 50+ testes (dashboard, assets, analysis, portfolio, reports, oauth-manager)
+- CI/CD integration (GitHub Actions)
+
+**Status:** ⏳ PLANEJADO (depende FASE 28 + 29)
+
+---
+
+### 🎯 Fases Futuras (Prioridade Média)
+
+- **FASE 31:** Sistema de Notificações (8-10h)
+- **FASE 32:** Dashboard de Admin com Métricas (6-8h)
+- **FASE 33:** Sistema de Alertas (10-12h)
+
+### 🚀 Fases Futuras (Prioridade Baixa)
+
+- **FASE 34:** Backup Automático (4-6h)
+- **FASE 35:** Caching Redis (6-8h)
+- **FASE 36:** Rate Limiting API (4-6h)
+- **FASE 37:** Deploy Produção AWS/GCP (15-20h)
+
+---
+
+## 🎓 CONCLUSÃO
+
+Este **CHECKLIST TODO MASTER** é o documento definitivo para garantir 100% de qualidade em todas as fases de desenvolvimento.
+
+### ✅ Princípios Fundamentais (SEMPRE LEMBRAR):
+
+1. **Verdade dos Arquivos > Documentação** - Sempre validar código real
+2. **Análise de Dependências** - Verificar impacto antes de mudanças
+3. **Git Sempre Atualizado** - Working tree clean antes de nova fase
+4. **Reiniciar Serviços** - Verificar necessidade antes de testar
+5. **Correções Definitivas** - Nunca "workaround", sempre causa raiz
+6. **Dados Reais > Mocks** - Usar dados dos scrapers sempre que possível
+7. **Zero Tolerance** - 0 erros TypeScript, 0 erros Build, 0 console errors
+8. **Documentação 100%** - Atualizar docs junto com código (mesmo commit)
+9. **MCP Triplo** - Validação robusta antes de marcar fase como 100%
+10. **TodoWrite Disciplina** - Apenas 1 in_progress, completar imediatamente
+
+### 🚫 Anti-Patterns (NUNCA FAZER):
+
+1. ❌ Implementar sem ler contexto
+2. ❌ Commitar com erros TypeScript
+3. ❌ Commitar com build quebrado
+4. ❌ Pular validações do checklist
+5. ❌ Múltiplos todos in_progress
+6. ❌ Avançar fase com fase anterior incompleta
+7. ❌ Confiar cegamente na documentação
+8. ❌ Aplicar fix temporário para problema crônico
+9. ❌ Testar sem reiniciar serviços modificados
+10. ❌ Usar dados mockados em produção/staging
+
+---
+
+**Última Atualização:** 2025-11-15
+**Mantenedor:** Claude Code (Sonnet 4.5)
+**Versão:** 2.0.0 (Ultra-Robusto)
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>

@@ -333,6 +333,24 @@ cd backend && npm run migration:run
 - `REFATORACAO_SISTEMA_REPORTS.md` - Sistema de relatórios (6 fases)
 - `ROADMAP_SISTEMA_ATUALIZACAO_ATIVOS.md` - Sistema de atualização
 
+**OAuth Manager (2025-11-15):**
+- `OAUTH_MANAGER_MELHORIAS_2025-11-15.md` - 5 features críticas implementadas
+- `OAUTH_VALIDACAO_COMPLETA_2025-11-15.md` - Validação completa com screenshots
+- `CHECKLIST_OAUTH_MANAGER_VALIDACAO_COMPLETA.md` - Checklist ultra-robusto
+
+**Funcionalidades OAuth Manager:**
+1. ✅ **Fix Sessão Órfã** - Cancelar sessões ativas órfãs (problema crônico resolvido)
+2. ✅ **Botão Voltar** - Navegar para site anterior
+3. ✅ **Seletor Individual** - Pular direto para site específico (útil para erros)
+4. ✅ **Processamento Automático** - Loop inteligente com timeout 90s/site
+5. ✅ **Salvar Cookies Parcial** - Aceita progresso parcial (ex: 17/19 sites)
+
+**Validação:**
+- ✅ TypeScript: 0 erros (frontend + backend)
+- ✅ Build: 100% success (17 páginas compiladas)
+- ✅ Testes: 4 screenshots + validação Playwright
+- ✅ Commit: `4172d9a` (893 linhas adicionadas)
+
 ---
 
 **Fim do claude.md**
