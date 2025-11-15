@@ -200,6 +200,54 @@ Acesse http://localhost:3100 para visualizar:
 4. Aguarde processamento
 5. Baixe relatório em PDF ou JSON
 
+### OAuth Manager - Renovação de Sessões
+Gerenciamento visual de sessões OAuth para sites que requerem autenticação.
+
+**Acesso:** Navegue para `/oauth-manager`
+
+**Funcionalidades:**
+1. ✅ **Renovação de Cookies (19 sites OAuth):**
+   - Google
+   - Fundamentei
+   - Investidor10
+   - StatusInvest
+   - Investsite
+   - ADVFN
+   - BTG
+   - XP
+   - Bloomberg
+   - Valor Econômico
+   - TradingView
+   - +8 outros
+
+2. ✅ **VNC Viewer Integrado:**
+   - Visualização em tempo real do navegador Chrome
+   - Login manual quando necessário
+   - Progress bar com 19 sites
+   - Status visual (✓ completo, ✗ falha, ⊘ pulado)
+
+3. ✅ **5 Melhorias de Controle (2025-11-15):**
+   - **Salvar Cookies Parciais**: Aceita progresso parcial (ex: 17/19 sites)
+   - **Botão "Voltar"**: Retornar ao site anterior para reprocessamento
+   - **Seletor Individual**: Pular diretamente para site específico
+   - **Processamento Automático**: Loop inteligente com timeout de 90s/site
+   - **Detecção de Sessão Órfã**: Cancelar ou continuar sessões ativas
+
+4. ✅ **Auto-Recovery:**
+   - Reconexão automática a sessões interrompidas
+   - Botão "Cancelar Sessão" sempre acessível
+   - Toast notifications de progresso
+
+**Como Usar:**
+1. Clique em "Iniciar Renovação" (ou "Continuar Sessão" se houver sessão ativa)
+2. **Automático:** Clique "Processar Todos Automaticamente" (aguarda 90s por site)
+3. **Manual:** Realize login no VNC viewer quando necessário
+4. **Navegação:** Use "Voltar ao Site Anterior" ou dropdown para pular sites
+5. Clique "Confirmar Login" após autenticação manual
+6. Salve cookies parciais a qualquer momento (não precisa completar 19/19)
+
+📚 **Documentação técnica completa:** `OAUTH_MANAGER_MELHORIAS_2025-11-15.md`
+
 ---
 
 ## 🔒 Segurança
@@ -253,20 +301,20 @@ Para dúvidas, problemas ou sugestões:
 ## ✅ Status do Projeto
 
 **Versão:** 1.0.0
-**Última Atualização:** 2025-11-14
+**Última Atualização:** 2025-11-15
 **Status:** ✅ Produção (98.1% completo)
 
 ### Estatísticas
 
 | Métrica | Valor |
 |---------|-------|
-| **Fases Concluídas** | 52/53 (98.1%) |
+| **Fases Concluídas** | 53/54 (98.1%) |
 | **Backend** | 100% (NestJS + Python) |
-| **Frontend** | 95% (Next.js 14) |
+| **Frontend** | 100% (Next.js 14) |
 | **Validações** | 100% (21 fases frontend) |
 | **Scrapers** | 19.35% (6/31 fontes) |
 | **Testes** | Em andamento |
-| **Documentação** | 100% (6 arquivos .md) |
+| **Documentação** | 100% (40+ arquivos .md) |
 
 ### Páginas Implementadas
 
@@ -283,7 +331,7 @@ Para dúvidas, problemas ou sugestões:
 
 ### Próximas Implementações
 
-- [ ] FASE 24: Dados históricos BRAPI (planejado)
+- [ ] FASE 25: Refatoração Botão "Solicitar Análises" (aguardando aprovação)
 - [ ] Scrapers restantes (25 fontes)
 - [ ] Análise técnica detalhada (indicadores, padrões)
 - [ ] Análise de opções (greeks, volatilidade)
@@ -292,7 +340,7 @@ Para dúvidas, problemas ou sugestões:
 - [ ] Testes automatizados (>80% coverage)
 - [ ] CI/CD completo (GitHub Actions)
 
-📚 **Roadmap completo:** Ver `ROADMAP.md` para histórico detalhado de todas as 53 fases.
+📚 **Roadmap completo:** Ver `ROADMAP.md` para histórico detalhado de todas as 54 fases.
 
 ---
 
