@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
 import { seedDataSources } from './data-sources.seed';
+import { seedAdminUser } from './admin-user.seed';
 
 // Load environment variables
 config();
@@ -28,6 +29,7 @@ async function runSeeds() {
 
     // Run seeds
     await seedDataSources(AppDataSource);
+    await seedAdminUser(AppDataSource);
 
     console.log('\n=== Database seeding completed successfully! ===\n');
 

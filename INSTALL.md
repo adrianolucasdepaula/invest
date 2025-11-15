@@ -506,26 +506,23 @@ docker-compose logs frontend --tail 50
 
 ### 1. Criar Usuário Admin
 
-```bash
-# Executar seed de usuário (se existir)
-docker exec invest_backend npm run seed:create-admin
+**✅ AUTOMÁTICO:** O seed já cria um usuário admin por padrão.
 
-# OU criar manualmente via psql
-docker exec -it invest_postgres psql -U invest_user -d invest_db
+```bash
+# Rodar seed (cria usuário admin + data sources)
+docker exec invest_backend npm run seed
 ```
 
-```sql
-INSERT INTO users (id, email, name, password, role, "isActive", "createdAt", "updatedAt")
-VALUES (
-  gen_random_uuid(),
-  'admin@invest.com',
-  'Admin',
-  '$2b$10$hashed_password_here', -- Use bcrypt para gerar hash
-  'admin',
-  true,
-  NOW(),
-  NOW()
-);
+**📧 Credenciais Padrão:**
+- Email: `admin@invest.com`
+- Senha: `Admin@123`
+
+**📚 Documentação Completa:** Ver `TESTING.md` para instruções detalhadas de teste e troubleshooting.
+
+**Verificar se foi criado:**
+```bash
+docker exec invest_postgres psql -U invest_user -d invest_db \
+  -c "SELECT email, first_name, last_name, is_active FROM users WHERE email = 'admin@invest.com';"
 ```
 
 ---
