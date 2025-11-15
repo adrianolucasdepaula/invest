@@ -666,152 +666,163 @@ export default function AnalysisPage() {
                   <h4 className="text-sm font-semibold mb-2">Dados da Análise</h4>
                   <Card className="p-4">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {/* Valuation */}
-                      {(selectedAnalysis.analysis.cotacao || selectedAnalysis.analysis.pl || selectedAnalysis.analysis.pvp) && (
-                        <div className="col-span-2 md:col-span-3">
-                          <h5 className="text-xs font-semibold text-muted-foreground mb-2">Valuation</h5>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {selectedAnalysis.analysis.cotacao && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">Cotação</p>
-                                <p className="font-medium">R$ {Number(selectedAnalysis.analysis.cotacao).toFixed(2)}</p>
-                              </div>
-                            )}
-                            {selectedAnalysis.analysis.pl && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">P/L</p>
-                                <p className="font-medium">{Number(selectedAnalysis.analysis.pl).toFixed(2)}</p>
-                              </div>
-                            )}
-                            {selectedAnalysis.analysis.pvp && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">P/VP</p>
-                                <p className="font-medium">{Number(selectedAnalysis.analysis.pvp).toFixed(2)}</p>
-                              </div>
-                            )}
-                            {selectedAnalysis.analysis.psr && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">P/SR</p>
-                                <p className="font-medium">{Number(selectedAnalysis.analysis.psr).toFixed(2)}</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                      {/* Fundamental Data - Suporte para estrutura antiga e nova */}
+                      {(() => {
+                        // Suporte para estrutura nova (FASE 28+): analysis.fundamental.data
+                        // Suporte para estrutura antiga (pré-FASE 28): analysis.cotacao, analysis.pl, etc.
+                        const fundamentalData = selectedAnalysis.analysis.fundamental?.data || selectedAnalysis.analysis;
 
-                      {/* Dividendos e Rentabilidade */}
-                      {(selectedAnalysis.analysis.dividendYield || selectedAnalysis.analysis.roe || selectedAnalysis.analysis.roic) && (
-                        <div className="col-span-2 md:col-span-3">
-                          <h5 className="text-xs font-semibold text-muted-foreground mb-2">Rentabilidade</h5>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {selectedAnalysis.analysis.dividendYield && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">Dividend Yield</p>
-                                <p className="font-medium">{Number(selectedAnalysis.analysis.dividendYield).toFixed(2)}%</p>
+                        return (
+                          <>
+                            {/* Valuation */}
+                            {(fundamentalData.cotacao || fundamentalData.pl || fundamentalData.pvp) && (
+                              <div className="col-span-2 md:col-span-3">
+                                <h5 className="text-xs font-semibold text-muted-foreground mb-2">Valuation</h5>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                  {fundamentalData.cotacao && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Cotação</p>
+                                      <p className="font-medium">R$ {Number(fundamentalData.cotacao).toFixed(2)}</p>
+                                    </div>
+                                  )}
+                                  {fundamentalData.pl && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">P/L</p>
+                                      <p className="font-medium">{Number(fundamentalData.pl).toFixed(2)}</p>
+                                    </div>
+                                  )}
+                                  {fundamentalData.pvp && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">P/VP</p>
+                                      <p className="font-medium">{Number(fundamentalData.pvp).toFixed(2)}</p>
+                                    </div>
+                                  )}
+                                  {fundamentalData.psr && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">P/SR</p>
+                                      <p className="font-medium">{Number(fundamentalData.psr).toFixed(2)}</p>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )}
-                            {selectedAnalysis.analysis.roe && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">ROE</p>
-                                <p className="font-medium">{Number(selectedAnalysis.analysis.roe).toFixed(2)}%</p>
-                              </div>
-                            )}
-                            {selectedAnalysis.analysis.roic && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">ROIC</p>
-                                <p className="font-medium">{Number(selectedAnalysis.analysis.roic).toFixed(2)}%</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
 
-                      {/* Margens */}
-                      {(selectedAnalysis.analysis.margemEbit || selectedAnalysis.analysis.margemLiquida) && (
-                        <div className="col-span-2 md:col-span-3">
-                          <h5 className="text-xs font-semibold text-muted-foreground mb-2">Margens</h5>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {selectedAnalysis.analysis.margemEbit && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">Margem EBIT</p>
-                                <p className="font-medium">{Number(selectedAnalysis.analysis.margemEbit).toFixed(2)}%</p>
+                            {/* Dividendos e Rentabilidade */}
+                            {(fundamentalData.dividendYield || fundamentalData.roe || fundamentalData.roic) && (
+                              <div className="col-span-2 md:col-span-3">
+                                <h5 className="text-xs font-semibold text-muted-foreground mb-2">Rentabilidade</h5>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                  {fundamentalData.dividendYield && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Dividend Yield</p>
+                                      <p className="font-medium">{Number(fundamentalData.dividendYield).toFixed(2)}%</p>
+                                    </div>
+                                  )}
+                                  {fundamentalData.roe && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">ROE</p>
+                                      <p className="font-medium">{Number(fundamentalData.roe).toFixed(2)}%</p>
+                                    </div>
+                                  )}
+                                  {fundamentalData.roic && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">ROIC</p>
+                                      <p className="font-medium">{Number(fundamentalData.roic).toFixed(2)}%</p>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )}
-                            {selectedAnalysis.analysis.margemLiquida && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">Margem Líquida</p>
-                                <p className="font-medium">{Number(selectedAnalysis.analysis.margemLiquida).toFixed(2)}%</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
 
-                      {/* Indicadores de Valor */}
-                      {(selectedAnalysis.analysis.evEbit || selectedAnalysis.analysis.pEbit) && (
-                        <div className="col-span-2 md:col-span-3">
-                          <h5 className="text-xs font-semibold text-muted-foreground mb-2">Múltiplos</h5>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {selectedAnalysis.analysis.evEbit && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">EV/EBIT</p>
-                                <p className="font-medium">{Number(selectedAnalysis.analysis.evEbit).toFixed(2)}</p>
+                            {/* Margens */}
+                            {(fundamentalData.margemEbit || fundamentalData.margemLiquida) && (
+                              <div className="col-span-2 md:col-span-3">
+                                <h5 className="text-xs font-semibold text-muted-foreground mb-2">Margens</h5>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                  {fundamentalData.margemEbit && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Margem EBIT</p>
+                                      <p className="font-medium">{Number(fundamentalData.margemEbit).toFixed(2)}%</p>
+                                    </div>
+                                  )}
+                                  {fundamentalData.margemLiquida && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Margem Líquida</p>
+                                      <p className="font-medium">{Number(fundamentalData.margemLiquida).toFixed(2)}%</p>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )}
-                            {selectedAnalysis.analysis.evEbitda && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">EV/EBITDA</p>
-                                <p className="font-medium">{Number(selectedAnalysis.analysis.evEbitda).toFixed(2)}</p>
-                              </div>
-                            )}
-                            {selectedAnalysis.analysis.pEbit && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">P/EBIT</p>
-                                <p className="font-medium">{Number(selectedAnalysis.analysis.pEbit).toFixed(2)}</p>
-                              </div>
-                            )}
-                            {selectedAnalysis.analysis.pAtivo && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">P/Ativo</p>
-                                <p className="font-medium">{Number(selectedAnalysis.analysis.pAtivo).toFixed(2)}</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
 
-                      {/* Dados Financeiros */}
-                      {(selectedAnalysis.analysis.patrimonioLiquido || selectedAnalysis.analysis.dividaBruta || selectedAnalysis.analysis.disponibilidades) && (
-                        <div className="col-span-2 md:col-span-3">
-                          <h5 className="text-xs font-semibold text-muted-foreground mb-2">Dados Financeiros</h5>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {selectedAnalysis.analysis.patrimonioLiquido && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">Patrimônio Líquido</p>
-                                <p className="font-medium">R$ {(Number(selectedAnalysis.analysis.patrimonioLiquido) / 1000000).toFixed(0)}M</p>
+                            {/* Indicadores de Valor */}
+                            {(fundamentalData.evEbit || fundamentalData.pEbit) && (
+                              <div className="col-span-2 md:col-span-3">
+                                <h5 className="text-xs font-semibold text-muted-foreground mb-2">Múltiplos</h5>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                  {fundamentalData.evEbit && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">EV/EBIT</p>
+                                      <p className="font-medium">{Number(fundamentalData.evEbit).toFixed(2)}</p>
+                                    </div>
+                                  )}
+                                  {fundamentalData.evEbitda && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">EV/EBITDA</p>
+                                      <p className="font-medium">{Number(fundamentalData.evEbitda).toFixed(2)}</p>
+                                    </div>
+                                  )}
+                                  {fundamentalData.pEbit && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">P/EBIT</p>
+                                      <p className="font-medium">{Number(fundamentalData.pEbit).toFixed(2)}</p>
+                                    </div>
+                                  )}
+                                  {fundamentalData.pAtivo && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">P/Ativo</p>
+                                      <p className="font-medium">{Number(fundamentalData.pAtivo).toFixed(2)}</p>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )}
-                            {selectedAnalysis.analysis.dividaBruta && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">Dívida Bruta</p>
-                                <p className="font-medium">R$ {(Number(selectedAnalysis.analysis.dividaBruta) / 1000000).toFixed(0)}M</p>
+
+                            {/* Dados Financeiros */}
+                            {(fundamentalData.patrimonioLiquido || fundamentalData.dividaBruta || fundamentalData.disponibilidades) && (
+                              <div className="col-span-2 md:col-span-3">
+                                <h5 className="text-xs font-semibold text-muted-foreground mb-2">Dados Financeiros</h5>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                  {fundamentalData.patrimonioLiquido && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Patrimônio Líquido</p>
+                                      <p className="font-medium">R$ {(Number(fundamentalData.patrimonioLiquido) / 1000000).toFixed(0)}M</p>
+                                    </div>
+                                  )}
+                                  {fundamentalData.dividaBruta && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Dívida Bruta</p>
+                                      <p className="font-medium">R$ {(Number(fundamentalData.dividaBruta) / 1000000).toFixed(0)}M</p>
+                                    </div>
+                                  )}
+                                  {fundamentalData.disponibilidades && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Disponibilidades</p>
+                                      <p className="font-medium">R$ {(Number(fundamentalData.disponibilidades) / 1000000).toFixed(0)}M</p>
+                                    </div>
+                                  )}
+                                  {fundamentalData.lucroLiquido && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Lucro Líquido</p>
+                                      <p className="font-medium">R$ {(Number(fundamentalData.lucroLiquido) / 1000000).toFixed(0)}M</p>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )}
-                            {selectedAnalysis.analysis.disponibilidades && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">Disponibilidades</p>
-                                <p className="font-medium">R$ {(Number(selectedAnalysis.analysis.disponibilidades) / 1000000).toFixed(0)}M</p>
-                              </div>
-                            )}
-                            {selectedAnalysis.analysis.lucroLiquido && (
-                              <div>
-                                <p className="text-xs text-muted-foreground">Lucro Líquido</p>
-                                <p className="font-medium">R$ {(Number(selectedAnalysis.analysis.lucroLiquido) / 1000000).toFixed(0)}M</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                          </>
+                        );
+                      })()}
                     </div>
 
                     {/* JSON completo em collapse */}

@@ -321,7 +321,7 @@ function Build-DockerImages {
 function Wait-ForHealthy {
     param(
         [int]$MaxWaitSeconds = 120,
-        [array]$Services = @("postgres", "redis", "backend", "frontend", "scrapers")
+        [array]$Services = @("postgres", "redis", "python-service", "backend", "frontend", "scrapers")
     )
 
     Print-Info "Aguardando serviços ficarem prontos (timeout: ${MaxWaitSeconds}s)..."
@@ -734,7 +734,7 @@ function Get-SystemStatus {
     Write-Host ""
 
     # Check service health
-    $services = @("postgres", "redis", "backend", "frontend", "scrapers")
+    $services = @("postgres", "redis", "python-service", "backend", "frontend", "scrapers")
 
     foreach ($service in $services) {
         $status = docker-compose ps -q $service
@@ -774,6 +774,18 @@ function Get-HealthCheck {
         Print-Success "Redis: OK"
     } else {
         Print-Error "Redis: FALHOU"
+    }
+
+    # Check Python Service
+    try {
+        $response = Invoke-WebRequest -Uri "http://localhost:8001/health" -TimeoutSec 5 -UseBasicParsing
+        if ($response.StatusCode -eq 200) {
+            Print-Success "Python Service: OK"
+        } else {
+            Print-Warning "Python Service: Resposta inesperada ($($response.StatusCode))"
+        }
+    } catch {
+        Print-Error "Python Service: FALHOU"
     }
 
     # Check Backend
@@ -867,6 +879,7 @@ function Show-Help {
     Write-Host "Serviços disponíveis:"
     Write-Host "  - postgres      (Banco de dados PostgreSQL + TimescaleDB)"
     Write-Host "  - redis         (Cache e filas)"
+    Write-Host "  - python-service (Serviço Python para análise técnica)"
     Write-Host "  - backend       (API NestJS)"
     Write-Host "  - frontend      (Interface Next.js)"
     Write-Host "  - scrapers      (Coletores Python)"
