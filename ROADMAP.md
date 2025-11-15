@@ -1,7 +1,7 @@
 # 🗺️ ROADMAP - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-14
+**Última Atualização:** 2025-11-15
 **Versão:** 1.0.0
 **Mantenedor:** Claude Code (Sonnet 4.5)
 
@@ -513,6 +513,166 @@ useEffect(() => {
 - ✅ Estado frontend sincronizado com backend
 - ✅ Botão "Cancelar Sessão" acessível
 - ✅ UX melhorada (continuar sessão interrompida)
+
+**Status:** ✅ **100% COMPLETO E VALIDADO**
+
+---
+
+### FASE 27.5: OAuth Manager - 5 Melhorias de UX ✅ 100% COMPLETO (2025-11-15)
+
+Melhorias significativas de usabilidade e controle no OAuth Manager.
+
+**Problema:**
+- ❌ Botão "Salvar Cookies" desabilitado se sessão incompleta (não aceita 17/19 sites)
+- ❌ Impossível voltar ao site anterior após erro
+- ❌ Navegação entre sites apenas sequencial (próximo/próximo/próximo)
+- ❌ Processamento manual site por site (19 cliques para completar)
+- ❌ Erro "Já existe uma sessão OAuth ativa" sem opção de cancelar/retomar
+
+**Funcionalidades Implementadas:**
+
+**1. Salvar Cookies Parciais** ✅ CRÍTICO
+```typescript
+// page.tsx:169
+<Button disabled={!session || session.status === 'error'}>
+  Salvar Cookies {session ? `(${completedCount}/${totalCount})` : ''}
+</Button>
+```
+- Aceita progresso parcial (17/19, 15/19, etc)
+- Mostra contador de progresso no botão
+- Desabilitado apenas em erro ou sem sessão
+
+**2. Botão "Voltar ao Site Anterior"** ✅ UX
+```typescript
+// useOAuthSession.ts:116-137
+async goBack() {
+  const result = await api.oauth.goBack();
+  if (result.success) {
+    await this.checkStatus();  // Recarregar estado
+  }
+}
+
+// Backend: oauth_routes.py:POST /api/oauth/session/go-back
+manager.current_session.current_site_index -= 1;
+await manager.navigate_to_site(previous_site.site_id);
+```
+- Validação: não permite voltar se index = 0
+- Marca site anterior como `IN_PROGRESS`
+- Permite reprocessar sites com erro
+
+**3. Seletor de Site Individual** ✅ UX
+```typescript
+// page.tsx:214-229
+<Select onValueChange={handleSiteSelect}>
+  <SelectContent>
+    {session.sites_progress.map((site) => (
+      <SelectItem value={site.site_id}>
+        {getStatusIcon(site.status)} {site.site_name}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+```
+- Dropdown com 19 sites e ícones de status
+- Permite pular para qualquer site diretamente
+- Útil para retomar após erro específico
+
+**4. Processamento Automático (Loop)** ✅ AUTOMAÇÃO
+```typescript
+// page.tsx:96-111
+const handleAutomaticProcessing = async () => {
+  setIsAutoProcessing(true);
+
+  while (session && session.status === 'in_progress') {
+    await new Promise(resolve => setTimeout(resolve, 90000)); // 90s timeout
+
+    const result = await nextSite();
+    if (!result.success || result.completed) break;
+  }
+
+  setIsAutoProcessing(false);
+};
+```
+- Loop com timeout de 90s por site
+- Para automaticamente ao completar ou erro
+- Evita 19 cliques manuais
+
+**5. Detectar Sessão Órfã** ✅ FIX CRÍTICO
+```typescript
+// page.tsx:54-76
+useEffect(() => {
+  const checkOrphanedSession = async () => {
+    const result = await api.oauth.getSessionStatus();
+    if (result.session && !session) {
+      // Sessão existe no backend mas não no frontend
+      setOrphanedSession(result.session);
+    }
+  };
+}, []);
+
+// Card de alerta com 2 botões:
+<Button onClick={clearError}>Cancelar Sessão</Button>
+<Button onClick={() => setSession(orphanedSession)}>Continuar Sessão</Button>
+```
+
+**Arquivos Modificados:** 8 arquivos (+541 linhas)
+
+**Frontend:**
+- `src/app/(dashboard)/oauth-manager/page.tsx` (+260 linhas)
+  * Card de detecção de sessão órfã
+  * Botão "Voltar ao Site Anterior" (condicional `canGoBack`)
+  * Card "Processamento Automático" com loop inteligente
+  * Card "Navegação Manual" com Select de 19 sites
+  * Botão "Salvar Cookies" sempre visível
+
+- `src/hooks/useOAuthSession.ts` (+93 linhas)
+  * Método `goBack()` - voltar ao site anterior
+  * Método `navigateToSite(siteId)` - pular para site específico
+  * Método `clearError()` - limpar mensagens de erro
+  * Computed property `canGoBack`
+
+- `src/lib/api.ts` (+7 linhas)
+  * `api.oauth.goBack()` endpoint
+
+**Backend:**
+- `controllers/oauth_controller.py` (+52 linhas)
+  * `OAuthController.go_back()` implementado completo
+  * Validações (não está no primeiro site, sessão ativa)
+  * Decrementar índice + navegar + marcar como `in_progress`
+
+- `routes/oauth_routes.py` (+26 linhas)
+  * `POST /api/oauth/session/go-back` endpoint
+
+- `oauth_session_manager.py` (+135 linhas logs detalhados)
+  * Logs estruturados com timestamps e elapsed time
+  * Prefixos `[START_CHROME]`, `[NAVIGATE]` para rastreamento
+  * Warning se navegação > 30s
+
+- `oauth_sites_config.py` (1 linha)
+  * Fix XPath Fundamentei: `"Google"` → `"Logar com o Google"`
+
+**Documentação:**
+- `OAUTH_MANAGER_MELHORIAS_2025-11-15.md` (novo, 487 linhas)
+
+**Validação:**
+- ✅ **TypeScript:** 0 erros (frontend + backend)
+- ✅ **Build:** Success (ambos)
+- ✅ **Services:** api-service + frontend healthy
+- ✅ **MCP Validation:** Chrome DevTools - navegação bem-sucedida
+- ✅ **Screenshot:** `oauth_manager_validation_screenshot.png`
+
+**Métricas de Impacto:**
+| Métrica | Antes | Depois |
+|---------|-------|--------|
+| Salvar parcial | ❌ Não aceita 17/19 | ✅ Aceita qualquer progresso |
+| Voltar site | ❌ Impossível | ✅ Botão "Voltar" |
+| Navegação | ⏭️ Apenas próximo | ✅ Dropdown 19 sites |
+| Automação | 🖱️ 19 cliques manuais | ✅ Loop 90s/site |
+| Sessão órfã | ❌ Erro sem opção | ✅ Cancelar/Continuar |
+
+**Commits:**
+- `4172d9a` - feat(oauth): Adicionar 5 melhorias ao OAuth Manager + fix sessão órfã
+- `114a811` - fix(oauth): Melhorar logging detalhado e fix XPath Fundamentei
 
 **Status:** ✅ **100% COMPLETO E VALIDADO**
 
