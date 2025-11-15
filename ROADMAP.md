@@ -1071,9 +1071,44 @@ Antes: Confiança = 0%, Análise Completa = Só Fundamental, Tooltip = "4 fontes
 Depois: Confiança = 40-100%, Análise Completa = Fundamental + Técnica, Tooltip = "6 fontes" com explicação
 ```
 
-**Commit:** (pendente)
+**Commit:** `63a587e`
 **Total:** 9 arquivos modificados (+307/-51 linhas)
 **Status:** ✅ **100% COMPLETO E VALIDADO**
+
+---
+
+### FASE 28.5: Seed Usuário Admin + Documentação Testes ✅ 100% COMPLETO (2025-11-15)
+
+Criação de seed automático para usuário admin e documentação completa de testes.
+
+**Problema:**
+- ❌ Não havia usuário padrão após instalação
+- ❌ Faltava documentação de como testar a aplicação
+- ❌ Desenvolvedores tinham que criar usuário manualmente
+
+**Solução:**
+- ✅ Seed automático de usuário admin (email: admin@invest.com, senha: Admin@123)
+- ✅ TESTING.md completo (362 linhas) com credenciais, testes manuais, E2E, troubleshooting
+- ✅ INSTALL.md atualizado com referência ao seed
+
+**Arquivos Criados (2):**
+- `backend/src/database/seeds/admin-user.seed.ts` (56 linhas)
+- `TESTING.md` (362 linhas)
+
+**Arquivos Modificados (2):**
+- `backend/src/database/seeds/seed.ts` (+2 linhas - importar seedAdminUser)
+- `INSTALL.md` (~20 linhas - documentar credenciais padrão)
+
+**Validação:**
+- ✅ TypeScript backend: 0 erros
+- ✅ Seed executado: Usuário admin criado no banco
+- ✅ Docker: 7/7 serviços healthy
+- ✅ Python Service: pandas_ta_classic available
+- ✅ Login testado: Admin@123 funciona
+
+**Commit:** `136edfc`
+**Total:** 2 criados, 2 modificados (+440 linhas)
+**Status:** ✅ **100% COMPLETO**
 
 ---
 
