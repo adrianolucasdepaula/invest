@@ -385,6 +385,15 @@ class OAuthSessionManager:
             logger.success(f"[COLLECT] ✓ {len(cookies)} cookies coletados de {site_name} em {elapsed:.2f}s")
             logger.info("=" * 80)
 
+            # ✅ SALVAMENTO AUTOMÁTICO: Salvar cookies imediatamente (sem finalizar sessão)
+            # Isso garante que os cookies não serão perdidos em caso de crash/erro
+            logger.info(f"[COLLECT] Salvando cookies automaticamente...")
+            save_success = await self.save_cookies_to_file(finalize_session=False)
+            if save_success:
+                logger.debug(f"[COLLECT] Cookies de {site_name} salvos no arquivo")
+            else:
+                logger.warning(f"[COLLECT] ⚠️ Falha ao salvar cookies de {site_name} (continuando...)")
+
             return len(cookies)
 
         except Exception as e:
@@ -498,19 +507,29 @@ class OAuthSessionManager:
 
         return True
 
-    async def save_cookies_to_file(self) -> bool:
-        """Salvar cookies coletados em arquivo pickle"""
+    async def save_cookies_to_file(self, finalize_session: bool = True) -> bool:
+        """
+        Salvar cookies coletados em arquivo pickle
+
+        Args:
+            finalize_session: Se True, marca sessão como COMPLETED. Se False, apenas salva cookies incrementalmente.
+
+        Returns:
+            True se salvou com sucesso, False caso contrário
+        """
         save_start = time.time()
 
         try:
             logger.info("=" * 80)
-            logger.info("[SAVE] Salvando cookies em arquivo...")
+            logger.info(f"[SAVE] Salvando cookies em arquivo... (finalize={finalize_session})")
             logger.debug(f"[SAVE] Timestamp: {datetime.now().isoformat()}")
 
             if not self.current_session:
                 logger.error("[SAVE] Nenhuma sessão ativa")
                 return False
 
+            # Guardar status anterior
+            previous_status = self.current_session.status
             self.current_session.status = SessionStatus.SAVING
 
             # Criar diretório se não existir
@@ -525,8 +544,14 @@ class OAuthSessionManager:
             # Atualizar estatísticas
             total_cookies = sum(len(cookies) for cookies in self.collected_cookies.values())
             self.current_session.total_cookies = total_cookies
-            self.current_session.status = SessionStatus.COMPLETED
-            self.current_session.completed_at = datetime.now()
+
+            # Apenas finalizar sessão se solicitado
+            if finalize_session:
+                self.current_session.status = SessionStatus.COMPLETED
+                self.current_session.completed_at = datetime.now()
+            else:
+                # Restaurar status anterior (ex: WAITING_USER, NAVIGATING)
+                self.current_session.status = previous_status
 
             elapsed = time.time() - save_start
             logger.success(f"[SAVE] ✓ Cookies salvos com sucesso em {elapsed:.2f}s!")
@@ -535,9 +560,12 @@ class OAuthSessionManager:
             logger.success(f"[SAVE]   Total de cookies: {total_cookies}")
 
             # Resumo por site
-            logger.info("[SAVE] Resumo por site:")
-            for site_name, cookies in self.collected_cookies.items():
-                logger.info(f"[SAVE]   {site_name}: {len(cookies)} cookies")
+            if finalize_session:
+                logger.info("[SAVE] Resumo por site:")
+                for site_name, cookies in self.collected_cookies.items():
+                    logger.info(f"[SAVE]   {site_name}: {len(cookies)} cookies")
+            else:
+                logger.debug(f"[SAVE] Salvamento incremental - sessão continua ativa")
 
             logger.info("=" * 80)
             return True

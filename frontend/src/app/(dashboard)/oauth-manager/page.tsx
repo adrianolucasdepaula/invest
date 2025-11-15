@@ -47,7 +47,7 @@ export default function OAuthManagerPage() {
   };
 
   const handleCancel = async () => {
-    if (confirm('Tem certeza que deseja cancelar? Os cookies não serão salvos.')) {
+    if (confirm('Tem certeza que deseja encerrar a sessão? Os cookies já coletados foram salvos automaticamente.')) {
       await cancelSession();
     }
   };
@@ -313,8 +313,14 @@ export default function OAuthManagerPage() {
               </div>
             </div>
 
-            {/* Botão Salvar Cookies - SEMPRE HABILITADO */}
-            <div className="mt-4">
+            {/* Botão Concluir Renovação - Cookies já salvos automaticamente */}
+            <div className="mt-4 space-y-2">
+              <Alert className="bg-muted border-muted-foreground/20">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  💾 Cookies salvos automaticamente após cada site
+                </AlertDescription>
+              </Alert>
               <Button
                 onClick={handleSave}
                 disabled={isLoading}
@@ -322,8 +328,8 @@ export default function OAuthManagerPage() {
                 className="w-full"
                 variant="default"
               >
-                <Save className="mr-2 h-5 w-5" />
-                Salvar Cookies e Finalizar
+                <CheckCircle className="mr-2 h-5 w-5" />
+                Concluir Renovação
                 {session.completed_sites > 0 && ` (${session.completed_sites}/${session.total_sites} sites)`}
               </Button>
             </div>
