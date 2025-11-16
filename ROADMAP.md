@@ -1392,6 +1392,76 @@ PostgreSQL (TimescaleDB)
 
 ---
 
+### FIX CRÍTICO: Modo Avançado - Arrays Históricos de Indicadores ✅ 100% COMPLETO (2025-11-16)
+
+Correção crítica de bug que impedia Modo Avançado de renderizar gráficos técnicos.
+
+**Problema:**
+- ❌ Python Service retornava single values ao invés de arrays
+  - Exemplo: `rsi: 65.999` (número único) ❌
+  - Esperado: `rsi: [50.2, 51.3, ..., 65.999]` (array completo) ✅
+- ❌ Frontend: `TypeError: rsiValues.map is not a function`
+- ❌ Impacto: Modo Avançado 100% quebrado (VALE3, PETR4)
+
+**Causa Raiz:**
+- Python Service calculava indicadores corretamente mas `_series_to_list()` não era chamado
+- Backend retornava apenas último valor de cada indicador
+- Frontend esperava arrays históricos completos (251 elementos para 1Y)
+
+**Solução Implementada:**
+
+**1. Backend (Python Service) - Retornar Arrays Completos:**
+```python
+# models.py - Aceitar None em arrays
+class MACDIndicator(BaseModel):
+    macd: List[Optional[float]]      # ← List[Optional[float]] (antes: List[float])
+    signal: List[Optional[float]]
+    histogram: List[Optional[float]]
+
+# technical_analysis.py - Retornar arrays completos
+def _calculate_sma(self, df: pd.DataFrame, period: int) -> List[float]:
+    sma = ta.sma(df["close"], length=period)
+    return self._series_to_list(sma)  # ← Retorna array completo (não só último valor)
+```
+
+**2. Frontend (page.tsx) - Transformar Property Names:**
+```typescript
+// Transformar snake_case → camelCase
+const transformedData = {
+  ...data,
+  indicators: {
+    sma20: data.indicators.sma_20,   // ← snake_case → camelCase
+    sma50: data.indicators.sma_50,
+    sma200: data.indicators.sma_200,
+    macd: {
+      line: data.indicators.macd.macd,  // ← macd.macd → macd.line
+      signal: data.indicators.macd.signal,
+      histogram: data.indicators.macd.histogram,
+    },
+    // ... outros indicadores
+  },
+};
+```
+
+**Arquivos Modificados:**
+- `backend/python-service/app/models.py` (+15 linhas)
+- `backend/python-service/app/services/technical_analysis.py` (+35 linhas)
+- `frontend/src/app/(dashboard)/assets/[ticker]/page.tsx` (+45 linhas)
+
+**Validação:**
+- ✅ TypeScript: 0 erros (frontend + backend)
+- ✅ Frontend reiniciado: `docker restart invest_frontend`
+- ✅ VALE3: 0 console errors, charts renderizando ✅
+- ✅ PETR4: 0 console errors, charts renderizando ✅
+- ✅ Commit: `352bddd`
+
+**Documentação:**
+- ✅ `validations/BUG_CRITICO_MODO_AVANCADO.md` (root cause analysis completo)
+
+**Status:** ✅ **100% COMPLETO E VALIDADO**
+
+---
+
 ### FASE 25: Refatoração Botão "Solicitar Análises" ⏳ AGUARDANDO APROVAÇÃO
 
 Reorganizar botão de análise em massa.
@@ -1487,11 +1557,12 @@ Reorganizar botão de análise em massa.
 - **`claude.md`** - Instruções para Claude Code
 - **`README.md`** - Documentação pública
 - **`CHECKLIST_TODO_MASTER.md`** - Checklist e TODO master
+- **`PROXIMO_PASSO_APOS_FASE_30.md`** - Análise e planejamento de próximas fases ⭐ NOVO
 - **`VALIDACAO_FRONTEND_COMPLETA.md`** - Plano de validação frontend (24 fases)
 - **`ROADMAP_SISTEMA_ATUALIZACAO_ATIVOS.md`** - Sistema de atualização
 - **`REFATORACAO_SISTEMA_REPORTS.md`** - Refatoração reports
 
 ---
 
-**Última atualização:** 2025-11-15
+**Última atualização:** 2025-11-16
 **Mantido por:** Claude Code (Sonnet 4.5)

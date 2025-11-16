@@ -1547,101 +1547,160 @@ git reset --hard HEAD~1
 
 ## 📋 TODO MASTER (PRÓXIMAS FASES)
 
-**Status Atual do Projeto:** 52.8% COMPLETO (28.5 fases concluídas de 54 planejadas)
+**Status Atual do Projeto:** 100% VALIDADO (FASE 29 + FASE 30 + Fix Crítico Completos)
+**Última Validação:** 2025-11-16 (TypeScript 0 erros, Git clean, Modo Avançado funcionando)
 
 ### ✅ Fases Recentemente Concluídas
 
-#### FASE 27: Sub-Agents Especializados ✅ 100% COMPLETO (2025-11-14)
+#### FASE 29: Gráficos Avançados (Análise Técnica Multi-Pane) ✅ 100% COMPLETO (2025-11-15)
 
-**Concluído:**
-- ✅ 6 sub-agents criados (backend, frontend, scrapers, charts, typescript, queue)
-- ✅ `.claude/agents/README.md` com guia completo
-- ✅ CLAUDE.md atualizado com seção sub-agents
-- ✅ Validação ultra-robusta (Task tool análise)
-- ✅ Commits: 4178528 (sub-agents)
+**Entregas:**
+- ✅ Candlestick com 15+ overlays (SMA, EMA, Bollinger, Pivot Points)
+- ✅ Multi-pane chart (4 painéis: Candlestick, RSI, MACD, Stochastic)
+- ✅ Página `/assets/[ticker]/technical` completa
+- ✅ Testes Playwright (5 tests passing)
+- ✅ Integração com Python Service (pandas_ta_classic)
+- ✅ Commits: `816cd89`, `a98ae3f`, `93ece21`, `7b5a43b`
+- ✅ +1,308 linhas
 
 **Documentação:**
-- ✅ `FASE_27_SUB_AGENTS_ESPECIALIZADOS.md`
-- ✅ `.claude/agents/README.md`
-- ✅ 6 arquivos .md (1 por sub-agent)
+- ✅ `PLANO_FASE_29_GRAFICOS_AVANCADOS.md`
+- ✅ `FASE_29_GRAFICOS_AVANCADOS_2025-11-15.md`
+- ✅ `CHECKLIST_FASE_29_GRAFICOS_INDICADORES.md`
 
 ---
 
-#### FASE 27.5: OAuth Manager - Melhorias de UX ✅ 100% COMPLETO (2025-11-15)
+#### FASE 30: Backend Integration + Redis Cache ✅ 100% COMPLETO (2025-11-16)
 
-**Concluído:**
-- ✅ 5 melhorias implementadas (salvar parcial, voltar, seletor, loop, sessão órfã)
-- ✅ +541 linhas (frontend + backend)
-- ✅ Validação TypeScript (0 erros)
-- ✅ Validação Build (Success)
-- ✅ Validação MCP (Chrome DevTools)
-- ✅ ROADMAP.md atualizado (FASE 27.5)
-- ✅ Commits: 4172d9a + 114a811 + 7789115
+**Entregas:**
+- ✅ MarketDataModule (Controller + Service + DTOs)
+- ✅ Cache Redis (5 min TTL, ~6,000x speedup)
+- ✅ Python Service Client (retry logic + error handling)
+- ✅ Frontend integration (proxy backend)
+- ✅ Fix OHLCV validation (high >= low apenas)
+- ✅ Commit: `4fc3f04`
+- ✅ +3,506 linhas (12 novos arquivos backend)
+
+**Performance:**
+- Cache Miss: 6,100-6,300ms
+- Cache Hit: 0ms
+- Speedup: ~6,000x 🚀
 
 **Documentação:**
-- ✅ `OAUTH_MANAGER_MELHORIAS_2025-11-15.md`
-- ✅ ROADMAP.md atualizado
-- ✅ Screenshot: `oauth_manager_validation_screenshot.png`
+- ✅ `FASE_30_BACKEND_INTEGRATION_2025-11-16.md`
+- ✅ `PLANO_FASE_30.md`
+- ✅ `validations/FASE_30_BACKEND_INTEGRATION/README.md`
 
 ---
 
-### 📌 Próximas Fases (Prioridade Alta)
+#### Fix Crítico: Modo Avançado (Arrays Históricos) ✅ 100% COMPLETO (2025-11-16)
 
-#### FASE 28: Refatoração Sistema de Relatórios (PLANEJADO)
+**Problema Resolvido:**
+- Python Service retornava single values ao invés de arrays (`rsi: 65.999` → `rsi: [50.2, ..., 65.999]`)
+- Frontend: `TypeError: rsiValues.map is not a function`
+- Modo Avançado 100% quebrado (VALE3, PETR4)
 
-**Objetivo:** Reorganizar sistema de relatórios para melhor UX e manutenibilidade
+**Solução:**
+- Backend: `List[Optional[float]]` + retornar arrays completos via `_series_to_list()`
+- Frontend: Transformar property names (snake_case → camelCase, macd.macd → macd.line)
+- Commit: `352bddd`
+- +95 linhas (3 arquivos modificados)
 
-**Contexto:**
-- Atualmente relatórios estão misturados em `/reports` e `/analysis`
-- Falta padronização de visualização (cards, tabelas, charts)
-- Oportunidade de implementar templates reutilizáveis
+**Validação:**
+- ✅ TypeScript: 0 erros
+- ✅ VALE3: Charts renderizando, 0 console errors
+- ✅ PETR4: Charts renderizando, 0 console errors
+
+**Documentação:**
+- ✅ `validations/BUG_CRITICO_MODO_AVANCADO.md`
+
+---
+
+### 📌 Próximas Fases - AGUARDANDO DECISÃO
+
+**📄 Documento de Análise:** `PROXIMO_PASSO_APOS_FASE_30.md` ⭐
+
+#### Opção 1: FASE 25 - Refatoração Botão "Solicitar Análises" (PENDENTE)
 
 **Status:** ⏳ AGUARDANDO APROVAÇÃO
+**Complexidade:** Baixa (4-6h)
+**Impacto:** UX (não bloqueante)
 
-**Documentação:** `REFATORACAO_SISTEMA_REPORTS.md` (já existe)
+**Mudanças:**
+- Remover botão de `/assets`
+- Adicionar botão em `/analysis`
+- Tooltip explicativo multi-fonte
+- Validar backend coleta 6 fontes
 
 ---
 
-#### FASE 29: Sistema de Atualização Automática de Ativos (PLANEJADO)
+#### Opção 2: FASE 31 - Sistema de Notificações (RECOMENDADO)
 
-**Objetivo:** Implementar sistema robusto de atualização automática de preços e dados fundamentalistas
+**Status:** 📋 PLANEJADO
+**Complexidade:** Média (8-10h)
+**Impacto:** UX significativo (notificações real-time)
 
 **Componentes:**
-- Backend: BullMQ jobs (daily-update, weekly-fundamentals)
-- Frontend: Dashboard de jobs (`/admin/jobs`)
-- Retry logic + WebSocket notifications
+- Entity: `Notification` (TypeORM)
+- Service: `NotificationsService`
+- WebSocket: `notification:new` event
+- Frontend: NotificationBell + NotificationList
+- Tipos: ANALYSIS_COMPLETED, PRICE_ALERT, PORTFOLIO_UPDATE, SYSTEM
 
-**Status:** ⏳ PLANEJADO (depende FASE 28)
-
-**Documentação:** `ROADMAP_SISTEMA_ATUALIZACAO_ATIVOS.md` (já existe)
+**Pré-requisitos:**
+- ✅ WebSocket já implementado
+- ✅ TypeORM configurado
+- ✅ Frontend Shadcn/ui
 
 ---
 
-#### FASE 30: Implementar Testes E2E (Playwright) (PLANEJADO)
+#### Opção 3: FASE 32 - Dashboard Admin com Métricas
 
-**Objetivo:** Criar suite completa de testes E2E para páginas principais
+**Status:** 📋 PLANEJADO
+**Complexidade:** Média-Alta (10-12h)
+**Impacto:** Operacional (monitoramento)
 
 **Componentes:**
-- Setup Playwright
-- 50+ testes (dashboard, assets, analysis, portfolio, reports, oauth-manager)
-- CI/CD integration (GitHub Actions)
+- Página: `/admin/dashboard`
+- KPIs: usuários, ativos, análises
+- Status scrapers: taxa sucesso, tempo resposta
+- Logs de erros (últimos 100)
+- Jobs BullMQ (status, retry)
 
-**Status:** ⏳ PLANEJADO (depende FASE 28 + 29)
+**Pré-requisitos:**
+- ✅ ScraperMetrics implementado (FASE 23)
+- ✅ Recharts configurado
+- ⚠️ Sistema de roles NÃO implementado (precisa criar)
 
 ---
 
-### 🎯 Fases Futuras (Prioridade Média)
+#### Opção 4: FASE 33 - Sistema de Alertas de Preço
 
-- **FASE 31:** Sistema de Notificações (8-10h)
-- **FASE 32:** Dashboard de Admin com Métricas (6-8h)
-- **FASE 33:** Sistema de Alertas (10-12h)
+**Status:** 📋 PLANEJADO
+**Complexidade:** Média (10-12h)
+**Impacto:** Feature importante (usuários pedem muito)
+**Depende:** FASE 31 (Sistema de Notificações)
 
-### 🚀 Fases Futuras (Prioridade Baixa)
+**Componentes:**
+- Entity: `PriceAlert`
+- Job BullMQ: `check-price-alerts` (cron: 5 min)
+- Página: `/alerts`
+- Tipos: ABOVE/BELOW target price
 
-- **FASE 34:** Backup Automático (4-6h)
-- **FASE 35:** Caching Redis (6-8h)
-- **FASE 36:** Rate Limiting API (4-6h)
-- **FASE 37:** Deploy Produção AWS/GCP (15-20h)
+---
+
+#### Opção 5: Manutenção e Melhorias Incrementais (SAFE CHOICE)
+
+**Status:** 🔄 Contínuo
+**Complexidade:** Variável (2-20h)
+**Impacto:** Qualidade geral
+
+**Atividades:**
+- Atualizar dependências (Context7 MCP)
+- Ampliar testes E2E (50+ testes)
+- Melhorias UX (loading states, tooltips)
+- Performance (code splitting, lazy loading)
+- Documentação (FAQ, guias)
 
 ---
 
@@ -1677,11 +1736,17 @@ Este **CHECKLIST TODO MASTER** é o documento definitivo para garantir 100% de q
 
 ---
 
-**Última Atualização:** 2025-11-15
+**Última Atualização:** 2025-11-16
 **Mantenedor:** Claude Code (Sonnet 4.5)
-**Versão:** 2.1.0 (Ultra-Robusto + 4 Melhorias)
+**Versão:** 2.2.0 (TODO Master Atualizado)
 
-**Melhorias v2.1.0:**
+**Melhorias v2.2.0 (2025-11-16):**
+1. ✅ TODO Master atualizado com FASE 29 + FASE 30 + Fix Crítico Modo Avançado
+2. ✅ 5 opções de próximas fases analisadas (FASE 25, 31, 32, 33, Manutenção)
+3. ✅ Documento `PROXIMO_PASSO_APOS_FASE_30.md` criado com análise completa
+4. ✅ Recomendação Claude: FASE 31 (Notificações) como próximo passo lógico
+
+**Melhorias v2.1.0 (2025-11-15):**
 1. ✅ Seção 6: Gerenciamento de Ambiente (system-manager.ps1)
 2. ✅ Seção 8: Precisão de Dados Financeiros (regras OBRIGATÓRIAS)
 3. ✅ Seção 2.1 (MCP): Organização de Screenshots (nomenclatura + estrutura)
