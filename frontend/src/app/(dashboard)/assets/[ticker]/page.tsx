@@ -97,7 +97,7 @@ export default function AssetDetailPage({
         // Frontend: sma20, sma50, sma200, ema9, ema21, bollinger, macd.line
         const transformedData = {
           ...data,
-          indicators: {
+          indicators: data.indicators ? {
             // Moving Averages (snake_case to camelCase)
             sma20: data.indicators.sma_20,
             sma50: data.indicators.sma_50,
@@ -127,14 +127,14 @@ export default function AssetDetailPage({
             pivot: data.indicators.pivot,
             trend: data.indicators.trend,
             trend_strength: data.indicators.trend_strength,
-          },
+          } : null,
         };
 
         setTechnicalData(transformedData);
 
         // Log metadata (cache hit/miss, duration, errors)
         console.log('Technical data metadata:', data.metadata);
-        console.log('Transformed indicators keys:', Object.keys(transformedData.indicators));
+        console.log('Transformed indicators keys:', transformedData.indicators ? Object.keys(transformedData.indicators) : 'null');
 
         // Show warning if insufficient data
         if (data.metadata.error === 'INSUFFICIENT_DATA') {
