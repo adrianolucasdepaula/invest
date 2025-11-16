@@ -80,6 +80,7 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 **Páginas Principais:**
 - `/dashboard` - Overview de portfólio e mercado
 - `/assets` - Listagem e gerenciamento de ativos
+- `/assets/[ticker]/technical` - Análise técnica avançada com gráficos multi-pane (FASE 29)
 - `/analysis` - Solicitação e visualização de análises
 - `/portfolio` - Gestão de portfólio
 - `/reports` - Relatórios e análises detalhadas
@@ -89,8 +90,15 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 
 **Componentes:**
 - Shadcn/ui + TailwindCSS
-- Charts: Recharts
+- Charts: Recharts (dashboard, portfolio) + lightweight-charts 4.1.3 (análise técnica)
 - Icons: Lucide React
+
+**Componentes de Charts (FASE 29):**
+- `candlestick-chart-with-overlays.tsx` - Candlestick com 15+ overlays (SMA, EMA, Bollinger, Pivot Points)
+- `rsi-chart.tsx` - RSI indicator (linhas 70/30)
+- `macd-chart.tsx` - MACD Line + Signal + Histogram
+- `stochastic-chart.tsx` - Stochastic oscillator (%K + %D, linhas 80/20)
+- `multi-pane-chart.tsx` - Orquestrador de 4 painéis sincronizados
 
 **Estado:**
 - React Query (cache, refetch, mutations)
