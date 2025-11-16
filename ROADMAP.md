@@ -1550,6 +1550,120 @@ Reorganizar botão de análise em massa.
 
 ---
 
+## 🔄 COMO SEGUIR PARA PRÓXIMA FASE
+
+**OBRIGATÓRIO:** Seguir este workflow antes de avançar para qualquer nova fase.
+
+### 1. Validar 100% Completude da Fase Atual
+
+```bash
+# Checklist de validação (CHECKLIST_TODO_MASTER.md)
+- [ ] TypeScript: 0 erros (backend + frontend)
+- [ ] Build: Success (ambos)
+- [ ] Console: 0 erros (páginas principais)
+- [ ] Testes: Passing (se aplicável)
+- [ ] Documentação: 100% atualizada
+- [ ] Git: Working tree clean
+- [ ] Commits: Todos pushed para origin/main
+```
+
+### 2. Verificar Git Status
+
+```bash
+git status
+# Resultado esperado:
+# On branch main
+# Your branch is up to date with 'origin/main'.
+# nothing to commit, working tree clean
+```
+
+**Se working tree NÃO estiver clean:**
+- ❌ **NÃO avançar para próxima fase**
+- ✅ Commitar mudanças pendentes
+- ✅ Atualizar documentação
+- ✅ Push para origin/main
+
+### 3. Consultar Próximas Fases
+
+**Localização:** ROADMAP.md → Seção "Fases Planejadas"
+
+**Opções disponíveis:**
+- **FASE 25:** Refatoração Botão "Solicitar Análises" (⏳ AGUARDANDO APROVAÇÃO)
+- **FASE 31:** Sistema de Notificações (📋 PLANEJADO - RECOMENDADO)
+- **FASE 32:** Dashboard Admin com Métricas (📋 PLANEJADO)
+- **FASE 33:** Sistema de Alertas de Preço (📋 PLANEJADO)
+- **Manutenção:** Melhorias Incrementais (🔄 Contínuo)
+
+**Documento de Análise:** `PROXIMO_PASSO_APOS_FASE_30.md` ⭐
+
+### 4. Criar Planejamento Detalhado (se > 100 linhas)
+
+**Quando criar:**
+- ✅ Mudança > 100 linhas de código
+- ✅ Afeta múltiplos arquivos (5+)
+- ✅ Mudança arquitetural (novos módulos, entities, serviços)
+- ✅ Integração complexa (APIs externas, WebSocket, OAuth)
+
+**Estrutura do documento:**
+```markdown
+# PLANO_FASE_X_NOME_FEATURE.md
+
+## 1. Problema a Resolver
+## 2. Solução Proposta (3 alternativas consideradas)
+## 3. Arquitetura (diagramas se necessário)
+## 4. Arquivos Afetados (lista completa)
+## 5. Riscos e Mitigações
+## 6. Validação (critérios de sucesso)
+```
+
+### 5. Obter Aprovação do Usuário (se ambíguo)
+
+**Quando pedir aprovação:**
+- ⚠️ Múltiplas abordagens válidas
+- ⚠️ Requisitos não claros
+- ⚠️ Decisão de arquitetura importante
+- ⚠️ Breaking changes potenciais
+
+**Como pedir:**
+- Usar `AskUserQuestion` tool
+- Apresentar opções claras (2-4 alternativas)
+- Explicar trade-offs de cada opção
+- Recomendar solução preferida
+
+### 6. Executar Fase com TodoWrite
+
+**Criar TODO list com:**
+- Etapas atômicas (não genéricas)
+- Ordem sequencial lógica
+- Apenas 1 `in_progress` por vez
+- Marcar `completed` imediatamente após concluir
+
+**Exemplo:**
+```typescript
+[
+  {content: "1. Ler contexto e arquivos relacionados", status: "pending", ...},
+  {content: "2. Criar DTOs e Interfaces", status: "pending", ...},
+  {content: "3. Implementar Service/Hook", status: "pending", ...},
+  {content: "4. Implementar Controller/Component", status: "pending", ...},
+  {content: "5. Escrever testes", status: "pending", ...},
+  {content: "6. Validar TypeScript (0 erros)", status: "pending", ...},
+  {content: "7. Validar Build (Success)", status: "pending", ...},
+  {content: "8. Testar manualmente (MCP Triplo se necessário)", status: "pending", ...},
+  {content: "9. Atualizar documentação", status: "pending", ...},
+  {content: "10. Commit + Push", status: "pending", ...},
+]
+```
+
+### 7. Ao Concluir Fase
+
+- ✅ Marcar fase como **100% COMPLETO** no ROADMAP.md
+- ✅ Atualizar estatísticas de progresso
+- ✅ Criar/atualizar documento de validação
+- ✅ Adicionar commits na seção da fase
+- ✅ Push final para origin/main
+
+---
+
 ## 🔗 DOCUMENTAÇÃO RELACIONADA
 
 - **`ARCHITECTURE.md`** - Arquitetura completa do sistema

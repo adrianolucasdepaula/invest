@@ -61,6 +61,190 @@ Plataforma completa de análise de investimentos B3 com IA para análise fundame
 
 ---
 
+## 📚 MELHORES PRÁTICAS DO MERCADO
+
+**Princípio:** Sempre usar práticas validadas, modernas e comprovadamente eficazes do mercado.
+
+### Quando Consultar
+
+**OBRIGATÓRIO consultar melhores práticas:**
+- ✅ Antes de implementar feature nova (> 100 linhas)
+- ✅ Antes de escolher biblioteca/framework
+- ✅ Antes de decisões arquiteturais importantes
+- ✅ Antes de refatorações grandes (> 200 linhas)
+- ✅ Quando enfrentar problema técnico complexo
+- ✅ Ao atualizar dependências críticas (major versions)
+
+### Como Consultar
+
+#### 1. WebSearch (Práticas Atualizadas 2025)
+
+```bash
+# Formato de busca
+"best practices [tecnologia] 2025"
+"[tecnologia] production ready checklist"
+"[problema] solution 2025 stack overflow"
+```
+
+**Exemplos:**
+- "best practices NestJS authentication 2025"
+- "React Server Components production ready checklist"
+- "TypeScript strict mode migration 2025"
+
+**Critérios de validação:**
+- ✅ Publicado nos últimos 2 anos (2023+)
+- ✅ Fonte confiável (blog oficial, Medium top authors, dev.to)
+- ✅ Exemplos de código funcionais
+- ✅ Comentários/upvotes positivos
+
+#### 2. Context7 MCP (Documentação Oficial)
+
+```typescript
+// 1. Resolver library ID
+mcp__context7__resolve-library-id({ libraryName: "nestjs" })
+
+// 2. Obter documentação atualizada
+mcp__context7__get-library-docs({
+  context7CompatibleLibraryID: "/nestjs/docs",
+  topic: "authentication best practices",
+  tokens: 5000
+})
+```
+
+**Vantagens:**
+- ✅ Documentação oficial sempre atualizada
+- ✅ Code snippets validados
+- ✅ Breaking changes documentados
+- ✅ Migration guides disponíveis
+
+#### 3. GitHub (Repositórios Populares)
+
+**Critérios de seleção:**
+- ✅ Stars: > 10.000 (muito popular) ou > 1.000 (nicho específico)
+- ✅ Commits recentes (última semana/mês)
+- ✅ Issues respondidas (< 7 dias)
+- ✅ PRs mergeados regularmente
+- ✅ Maintainers ativos
+- ✅ CI/CD configurado (GitHub Actions)
+- ✅ TypeScript support (se aplicável)
+
+**Exemplos de busca:**
+- `language:typescript stars:>1000 topic:nestjs`
+- `language:typescript stars:>5000 topic:react`
+
+#### 4. Stack Overflow (Soluções Validadas)
+
+**Critérios:**
+- ✅ Upvotes: > 100 (problema comum, solução validada)
+- ✅ Aceita como resposta (✓ green checkmark)
+- ✅ Comentários confirmando solução (últimos 2 anos)
+- ✅ Versão da tecnologia mencionada (verificar compatibilidade)
+
+### Critérios de Seleção de Tecnologias
+
+**Ao escolher biblioteca/framework, priorizar:**
+
+| Critério | Peso | Exemplo |
+|----------|------|---------|
+| **Type Safety** | 🔥 CRÍTICO | TypeScript > JavaScript |
+| **Comunidade Ativa** | 🔥 CRÍTICO | > 1k stars, commits semanais |
+| **Documentação Completa** | 🔥 CRÍTICO | Examples + API Reference + Migration Guides |
+| **Performance Comprovada** | ⚠️ IMPORTANTE | Benchmarks públicos, lighthouse scores |
+| **Manutenibilidade** | ⚠️ IMPORTANTE | Código limpo, testes, CI/CD |
+| **Tamanho Bundle** | ⚡ DESEJÁVEL | < 50kb gzipped (frontend) |
+| **Licença Permissiva** | ⚡ DESEJÁVEL | MIT, Apache 2.0 (evitar GPL) |
+| **Atualidade** | ⚡ DESEJÁVEL | Última release < 6 meses |
+
+### Princípios de Simplicidade (KISS)
+
+**Keep It Simple, Stupid** - Preferir solução simples sobre complexa.
+
+**Regras:**
+- ✅ Evitar over-engineering (não criar arquitetura para problema futuro)
+- ✅ Código legível > código "inteligente" (clareza > brevidade)
+- ✅ Bibliotecas maduras > implementação própria (não reinventar roda)
+- ✅ Convenções > configurações (convention over configuration)
+- ✅ Menos código = menos bugs (delete code quando possível)
+
+**Exemplos:**
+
+```typescript
+// ❌ COMPLEXO (over-engineering)
+class UserServiceFactory {
+  static create(env: string): IUserService {
+    if (env === 'prod') return new ProductionUserService();
+    if (env === 'dev') return new DevelopmentUserService();
+    throw new Error('Invalid environment');
+  }
+}
+
+// ✅ SIMPLES (direto ao ponto)
+@Injectable()
+export class UserService {
+  // Lógica unificada, configuração via .env
+}
+```
+
+```typescript
+// ❌ COMPLEXO (regex desnecessário)
+const isEmail = (str: string) => /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(str);
+
+// ✅ SIMPLES (biblioteca validada)
+import { isEmail } from 'class-validator';
+```
+
+### Checklist de Validação
+
+Antes de implementar solução, verificar:
+
+- [ ] **Pesquisou 3+ fontes** (WebSearch, Context7, GitHub, Stack Overflow)?
+- [ ] **Biblioteca escolhida:**
+  - [ ] TypeScript support nativo?
+  - [ ] > 1k stars (ou nicho comprovado)?
+  - [ ] Commits nos últimos 30 dias?
+  - [ ] Documentação completa com exemplos?
+- [ ] **Solução é a mais simples possível** (princípio KISS)?
+- [ ] **Compatível com stack atual** (Next.js 14, NestJS 10, TypeScript 5)?
+- [ ] **Performance aceitável** (< 100ms para operações críticas)?
+- [ ] **Testável** (fácil escrever testes unitários)?
+
+### Exemplo Completo de Workflow
+
+**Cenário:** Precisamos adicionar cache Redis no backend.
+
+**1. WebSearch:**
+```
+"nestjs redis cache best practices 2025"
+→ Encontrar: @nestjs/cache-manager, ioredis, node-cache
+```
+
+**2. Context7:**
+```typescript
+mcp__context7__resolve-library-id({ libraryName: "@nestjs/cache-manager" })
+mcp__context7__get-library-docs({
+  context7CompatibleLibraryID: "/nestjs/cache-manager",
+  topic: "redis setup production",
+  tokens: 5000
+})
+```
+
+**3. GitHub:**
+```
+Pesquisar: nestjs/cache-manager (oficial)
+Verificar: Stars (4.2k ✅), Last commit (3 days ago ✅), TypeScript (✅)
+```
+
+**4. Decisão:**
+```
+✅ Escolher @nestjs/cache-manager (oficial NestJS)
+✅ Backend: ioredis (driver maduro, 14k stars)
+❌ Rejeitar node-cache (in-memory apenas, não escala)
+```
+
+**5. Implementar seguindo documentação oficial + TodoWrite**
+
+---
+
 ### 1. Ultra-Thinking (Análise Profunda)
 
 **Quando Aplicar (OBRIGATÓRIO):**

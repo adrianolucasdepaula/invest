@@ -464,6 +464,19 @@ export class Asset {
 # 1.3. Verificar divergências docs vs código
 - [ ] Se documentação divergir → ATUALIZAR DOCS PRIMEIRO
 - [ ] Se código divergir → PLANEJAR REFATORAÇÃO
+
+# 1.4. Verificar se já existe (ANTI-DUPLICAÇÃO) ✅
+# OBRIGATÓRIO: Antes de criar novo componente/service/entity
+- [ ] Buscar no código por nome similar:
+      grep -r "NomeSimilar" backend/src
+      grep -r "NomeSimilar" frontend/src
+- [ ] Buscar por padrão similar:
+      grep -r "PatternProcurado" <diretório>
+- [ ] Consultar ARCHITECTURE.md → "Onde Armazenar Novos Dados"
+- [ ] Consultar DATABASE_SCHEMA.md → Entities existentes
+- [ ] Consultar CONTRIBUTING.md → Convenções de nomenclatura
+- [ ] Se encontrou similar → REAPROVEITAR/MELHORAR (não recriar)
+- [ ] Se não encontrou → CRIAR seguindo padrões do projeto
 ```
 
 ### 2. Análise de Impacto ✅
@@ -1170,6 +1183,84 @@ await mcp__chrome-devtools__take_screenshot({
 });
 ```
 
+### 5. React Developer Tools (se necessário) ⚡
+
+**Objetivo:** Inspecionar hierarquia de componentes React, props, state e performance.
+
+**Quando Usar:**
+- ⚠️ Investigar re-renders desnecessários
+- ⚠️ Verificar props/state de componentes específicos
+- ⚠️ Debugar hierarquia de componentes complexa
+- ⚠️ Profiling de performance (Component Profiler)
+
+**Setup:**
+```bash
+# 1. Instalar extensão React DevTools no Chrome
+# URL: https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi
+
+# 2. Abrir DevTools → Components tab (novo ícone React)
+# F12 → Components
+```
+
+**Checklist de Validação:**
+
+```bash
+# 5.1. Verificar hierarquia de componentes
+- [ ] Abrir DevTools → Components tab
+- [ ] Navegar até componente alvo (ex: OAuthManagerPage)
+- [ ] Verificar se componente aparece na árvore
+- [ ] Verificar children corretos
+
+# 5.2. Inspecionar props
+- [ ] Selecionar componente na árvore
+- [ ] Painel direito → "props" section
+- [ ] Verificar props esperadas estão presentes
+- [ ] Verificar valores das props corretos
+- [ ] Verificar props não-undefined quando não deveria
+
+# 5.3. Inspecionar state
+- [ ] Selecionar componente na árvore
+- [ ] Painel direito → "hooks" section
+- [ ] Verificar useState correto
+- [ ] Verificar valores de state consistentes
+- [ ] Verificar useEffect executando conforme esperado
+
+# 5.4. Profiling de performance (se necessário)
+- [ ] DevTools → Profiler tab
+- [ ] Clicar "Record" → Executar ação → Clicar "Stop"
+- [ ] Verificar flamegraph (componentes que mais renderizam)
+- [ ] Identificar re-renders desnecessários (mesmas props/state)
+- [ ] Otimizar com React.memo, useMemo, useCallback se necessário
+
+# 5.5. Verificar Context
+- [ ] Selecionar componente que usa context
+- [ ] Painel direito → "contexts" section
+- [ ] Verificar valores de context corretos
+- [ ] Verificar context providers corretos na hierarquia
+```
+
+**Exemplo de Uso:**
+
+```typescript
+// Cenário: Botão "Adicionar ao Portfólio" não funciona
+
+// 1. Abrir DevTools → Components
+// 2. Buscar componente "AddToPortfolioButton"
+// 3. Verificar props:
+//    - ticker: "PETR4" ✅
+//    - onAdd: function ✅
+//    - disabled: true ❌ (deveria ser false)
+// 4. Rastrear de onde vem disabled:
+//    - Parent component: PortfolioCard
+//    - State: isLoading: true (problema encontrado!)
+// 5. Corrigir lógica de isLoading
+```
+
+**Notas:**
+- ⚠️ React DevTools **NÃO substitui** MCPs (Playwright, Chrome DevTools)
+- ✅ Usar como ferramenta **complementar** para debug específico de React
+- ✅ Chrome DevTools Console já mostra erros críticos (suficiente para validação geral)
+
 ---
 
 ## 🔧 TROUBLESHOOTING E CORREÇÕES DEFINITIVAS
@@ -1284,6 +1375,85 @@ DOCUMENTAÇÃO DO PROJETO
 - [ ] Nova versão major de biblioteca crítica (Next.js 15, NestJS 11, React 19)
 - [ ] Mensalmente (manutenção preventiva - 1ª semana do mês)
 - [ ] Biblioteca deprecada ou EOL (End of Life)
+```
+
+**Cronograma Recomendado (Atualizações Periódicas):**
+
+| Frequência | Escopo | Comandos | Quando Executar |
+|------------|--------|----------|-----------------|
+| **📅 Semanal** | Patches críticos | `npm update` (patch versions) | Segunda-feira, 9h |
+| **📅 Mensal** | Minor versions | `npm outdated` → Context7 MCP → `npm update` | 1ª semana do mês |
+| **📅 Trimestral** | Major versions (planejadas) | Context7 MCP + Planejamento | Após fase importante |
+| **📅 Emergencial** | Vulnerabilidades críticas | `npm audit fix` | Imediato (< 24h) |
+| **📅 Pós-Fase** | Consolidação técnica | Atualizar deps desatualizadas | Após fase 30, 35, 40... |
+
+**Detalhamento do Cronograma:**
+
+```bash
+# ⏰ SEMANAL (patches críticos)
+# Segunda-feira, 9h (10 minutos)
+cd backend && npm update
+cd frontend && npm update
+npx tsc --noEmit  # Validar 0 erros
+npm run build     # Validar success
+
+# 📆 MENSAL (minor/patch de todas as deps)
+# 1ª segunda-feira do mês (1-2 horas)
+# Ver seção completa "PASSO 1-7" abaixo
+
+# 📈 TRIMESTRAL (major versions planejadas)
+# Após FASE 30, 35, 40, 45, 50...
+# 1. Listar major versions disponíveis:
+npm outdated | grep -E "wanted.*major"
+# 2. Usar Context7 MCP para ver breaking changes
+# 3. Criar PLANO_ATUALIZACAO_MAJOR_DEPS.md
+# 4. Executar com TodoWrite + validação completa
+
+# 🚨 EMERGENCIAL (vulnerabilidades críticas)
+# Imediato (< 24h após identificação)
+npm audit        # Identificar CVEs
+npm audit fix    # Aplicar fixes automáticos
+# Se não resolver automaticamente:
+# - Consultar Context7 MCP para versão corrigida
+# - Atualizar manualmente
+# - Validar + Commit + Push + Deploy
+
+# 🏁 PÓS-FASE (consolidação técnica)
+# Após completar FASE importante (30, 35, 40...)
+# 1. Revisar deps desatualizadas: npm outdated
+# 2. Priorizar atualizações críticas (security, performance)
+# 3. Criar planejamento se > 10 deps a atualizar
+# 4. Executar atualizações + validação completa
+```
+
+**Exemplo de Log de Atualizações:**
+
+```markdown
+## LOG DE ATUALIZAÇÕES - 2025-11
+
+### 2025-11-04 (Mensal)
+- **Executado:** ✅ npm outdated + Context7 MCP
+- **Atualizações:**
+  - @nestjs/core: 10.2.10 → 10.3.0 (minor)
+  - next: 14.0.3 → 14.0.4 (patch)
+  - react-query: 4.35.3 → 4.36.0 (minor)
+- **Validação:**
+  - ✅ TypeScript: 0 erros
+  - ✅ Build: Success (ambos)
+  - ✅ Tests: 98 passing
+- **Commit:** `c885e0a` (2025-11-04)
+
+### 2025-11-08 (Semanal)
+- **Executado:** ✅ npm update
+- **Atualizações:** 3 patches (axios, lodash, date-fns)
+- **Validação:** ✅ 0 erros
+- **Commit:** `f43e7d7` (2025-11-08)
+
+### 2025-11-15 (Emergencial)
+- **Trigger:** npm audit → CVE-2025-12345 (axios < 1.6.5)
+- **Ação:** npm audit fix → axios 1.6.5
+- **Validação:** ✅ 0 erros
+- **Commit:** `05768b6` (2025-11-15)
 ```
 
 **Processo de Atualização (7 Passos):**

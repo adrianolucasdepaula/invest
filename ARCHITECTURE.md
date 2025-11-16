@@ -201,6 +201,167 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 
 ---
 
+## 🗂️ ONDE ARMAZENAR NOVOS DADOS
+
+**Guia de decisão:** Use esta tabela para determinar onde armazenar novos tipos de dados.
+
+### Mapeamento: Tipo de Dado → Entity/Tabela
+
+| Tipo de Dado | Entity/Tabela | Localização | Exemplo de Uso |
+|--------------|---------------|-------------|----------------|
+| **Ativos (ticker, nome, setor)** | `Asset` | `backend/src/database/entities/asset.entity.ts` | PETR4, VALE3, ITUB4 |
+| **Preços históricos (OHLCV)** | `AssetPrices` | `backend/src/database/entities/asset-price.entity.ts` | Open, High, Low, Close, Volume + variação |
+| **Análises fundamentalistas** | `Analysis` (type='fundamental') | `backend/src/database/entities/analysis.entity.ts` | P/L, P/VP, ROE, ROIC, Dividend Yield |
+| **Análises técnicas** | `Analysis` (type='technical') | `backend/src/database/entities/analysis.entity.ts` | RSI, MACD, Bollinger, SMA |
+| **Análises completas** | `Analysis` (type='complete') | `backend/src/database/entities/analysis.entity.ts` | Combinação Fundamentalista + Técnica |
+| **Portfólios de usuários** | `Portfolio` | `backend/src/database/entities/portfolio.entity.ts` | Carteiras de investimento |
+| **Posições em portfólio** | `PortfolioPosition` | `backend/src/database/entities/portfolio-position.entity.ts` | Ticker + quantidade + preço médio |
+| **Usuários** | `User` | `backend/src/database/entities/user.entity.ts` | Autenticação, perfil |
+| **Métricas de scrapers** | `ScraperMetrics` | `backend/src/database/entities/scraper-metric.entity.ts` | Taxa de sucesso, response time, errors |
+| **Logs de atualização** | `UpdateLog` | `backend/src/database/entities/update-log.entity.ts` | Histórico de atualizações de preços |
+| **Notificações** ⚠️ | `Notification` (criar) | `backend/src/database/entities/notification.entity.ts` | Alertas, sistema, análises completas |
+| **Alertas de preço** ⚠️ | `PriceAlert` (criar) | `backend/src/database/entities/price-alert.entity.ts` | Target price, condição (above/below) |
+| **Dados de scrapers (raw)** | Campo `metadata` JSON | Coluna JSON nas entities existentes | Dados brutos de fontes específicas |
+| **Configurações de usuário** | Campo `settings` JSON | `User` entity | Preferências, temas, notificações |
+| **Dividendos** ⚠️ | `Dividend` (criar) | `backend/src/database/entities/dividend.entity.ts` | Data pagamento, valor por ação, tipo |
+| **Proventos (JCP)** ⚠️ | `Provento` (criar) | `backend/src/database/entities/provento.entity.ts` | Juros sobre capital próprio |
+| **Eventos corporativos** ⚠️ | `CorporateEvent` (criar) | `backend/src/database/entities/corporate-event.entity.ts` | Splits, grupamentos, fusões |
+
+**Legenda:**
+- ✅ Entity existente (use diretamente)
+- ⚠️ Entity NÃO existe (precisa criar)
+
+### Workflow para Criar Nova Entity
+
+**1. Criar Entity:**
+```bash
+cd backend/src/database/entities
+# Criar arquivo: <nome>.entity.ts
+```
+
+**Exemplo (Notification):**
+```typescript
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+
+@Entity('notifications')
+export class Notification {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column()
+  userId: string;
+
+  @Column()
+  type: string; // 'ANALYSIS_COMPLETED', 'PRICE_ALERT', 'SYSTEM'
+
+  @Column()
+  title: string;
+
+  @Column('text')
+  message: string;
+
+  @Column({ default: false })
+  read: boolean;
+
+  @CreateDateColumn()
+  createdAt: Date;
+}
+```
+
+**2. Criar Migration:**
+```bash
+cd backend
+npm run migration:generate -- -n CreateNotification
+```
+
+**3. Registrar Entity no Module:**
+```typescript
+// backend/src/database/database.module.ts
+import { Notification } from './entities/notification.entity';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      Asset,
+      AssetPrice,
+      Analysis,
+      // ... outras entities
+      Notification, // ← Adicionar aqui
+    ]),
+  ],
+})
+```
+
+**4. Criar Repository/Service:**
+```bash
+# Service
+cd backend/src/api
+mkdir notifications
+cd notifications
+# Criar: notifications.service.ts, notifications.controller.ts, dto/
+```
+
+**5. Executar Migration:**
+```bash
+cd backend
+npm run migration:run
+```
+
+### Decisão: Nova Entity vs Campo JSON
+
+**Usar Nova Entity quando:**
+- ✅ Dados estruturados e previsíveis (schema fixo)
+- ✅ Precisa de queries complexas (filtros, joins, agregações)
+- ✅ Precisa de relacionamentos (foreign keys)
+- ✅ Precisa de indexes para performance
+- ✅ Dados crescem significativamente (> 1000 registros)
+
+**Usar Campo JSON (`metadata`) quando:**
+- ✅ Dados semi-estruturados ou variáveis
+- ✅ Schema pode mudar frequentemente
+- ✅ Não precisa de queries complexas (apenas leitura/escrita)
+- ✅ Dados auxiliares/opcionais (não críticos)
+- ✅ Poucos registros (< 1000)
+
+**Exemplos:**
+
+```typescript
+// ✅ CORRETO: Nova Entity para dados estruturados
+@Entity('price_alerts')
+export class PriceAlert {
+  @Column() ticker: string;
+  @Column('decimal') targetPrice: number;
+  @Column() condition: 'above' | 'below';
+}
+
+// ✅ CORRETO: JSON para dados variáveis
+@Entity('analyses')
+export class Analysis {
+  @Column('jsonb')
+  metadata: {
+    source?: string;
+    rawData?: any;
+    scrapedAt?: Date;
+  };
+}
+```
+
+### Checklist de Validação
+
+Antes de criar nova entity, verificar:
+
+- [ ] Tipo de dado não se encaixa em entity existente?
+- [ ] Pesquisou no código se já existe? (`grep -r "NomeSimilar"`)
+- [ ] Consultou `DATABASE_SCHEMA.md` para ver entities existentes?
+- [ ] Definiu relacionamentos (foreign keys)?
+- [ ] Definiu indexes necessários (performance)?
+- [ ] Criou migration completa (up + down)?
+- [ ] Registrou entity no `database.module.ts`?
+- [ ] Criou service + controller + DTOs?
+- [ ] Documentou no `DATABASE_SCHEMA.md`?
+
+---
+
 ### Queue (BullMQ + Redis)
 
 **Responsabilidades:**
