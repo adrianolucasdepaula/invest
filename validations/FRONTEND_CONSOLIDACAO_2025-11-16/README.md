@@ -231,24 +231,37 @@ TypeError: rsiValues.map is not a function
 
 ## 📸 Evidências (Screenshots)
 
+**Convenção de Nomenclatura:**
+```
+{numero}_{ferramenta}_{pagina}_{variacao}.png
+```
+
+**Diretório:** `validations/FRONTEND_CONSOLIDACAO_2025-11-16/`
+
+**Ferramentas:**
+- `playwright` - Screenshots Playwright MCP (viewport/full-page)
+- `chrome_devtools` - Screenshots Chrome DevTools MCP (full-page)
+
+---
+
 ### /analysis - Tab "Por Análise"
-1. `1_playwright_analysis_tab_por_analise.png` (Playwright full-page)
-2. `1_chrome_devtools_analysis_por_analise.png` (Chrome DevTools full-page)
-3. `1_chrome_devtools_analysis_por_analise_snapshot.txt` (DOM snapshot)
+1. `1_analysis_tab_por_analise.png` (Playwright, 116 KB)
+2. `1_chrome_devtools_analysis_por_analise.png` (Chrome DevTools, 244 KB)
+3. `1_chrome_devtools_analysis_por_analise_snapshot.txt` (DOM snapshot, 3.7 KB)
 
 ### /analysis - Tab "Por Ativo"
-1. `2_playwright_analysis_tab_por_ativo.png` (Playwright full-page)
-2. `2_chrome_devtools_analysis_por_ativo.png` (Chrome DevTools full-page)
-3. `2_chrome_devtools_analysis_por_ativo_snapshot.txt` (DOM snapshot)
+1. `2_playwright_analysis_tab_por_ativo.png` (Playwright, 137 KB)
+2. `2_chrome_devtools_analysis_por_ativo.png` (Chrome DevTools, 244 KB)
+3. `2_chrome_devtools_analysis_por_ativo_snapshot.txt` (DOM snapshot, 3.7 KB)
 
 ### /assets/VALE3 - Modo Básico
-1. `3_playwright_vale3_modo_basico.png` (Playwright full-page)
-2. `3_chrome_devtools_vale3_basico.png` (Chrome DevTools full-page)
-3. `3_chrome_devtools_vale3_basico_snapshot.txt` (DOM snapshot)
-4. `5_vale3_modo_basico_sem_grafico.png` (Confirmação visual)
+1. `3_playwright_vale3_modo_basico.png` (Playwright, 132 KB)
+2. `3_chrome_devtools_vale3_basico.png` (Chrome DevTools, 195 KB)
+3. `3_chrome_devtools_vale3_basico_snapshot.txt` (DOM snapshot, 3.3 KB)
+4. `5_vale3_modo_basico_sem_grafico.png` (Confirmação visual, 132 KB)
 
 ### /assets/VALE3 - Modo Avançado (BUG)
-1. `4_playwright_vale3_error_modal.png` (Modal de erro)
+1. `4_playwright_vale3_error_modal.png` (Modal de erro, 84 KB)
 
 ---
 
@@ -378,24 +391,32 @@ Modificar backend para retornar arrays históricos ao invés de valores únicos.
 
 ## 📦 Arquivos Gerados
 
-**Screenshots (8 arquivos):**
-- `1_playwright_analysis_tab_por_analise.png` (100 KB)
-- `1_chrome_devtools_analysis_por_analise.png` (156 KB)
-- `2_playwright_analysis_tab_por_ativo.png` (200+ KB)
-- `2_chrome_devtools_analysis_por_ativo.png` (200+ KB)
-- `3_playwright_vale3_modo_basico.png` (100 KB)
-- `3_chrome_devtools_vale3_basico.png` (100 KB)
-- `4_playwright_vale3_error_modal.png` (50 KB)
-- `5_vale3_modo_basico_sem_grafico.png` (100 KB)
+### Screenshots (8 arquivos PNG - Total: 1.3 MB)
+| Arquivo | Ferramenta | Tamanho | Descrição |
+|---------|-----------|---------|-----------|
+| `1_analysis_tab_por_analise.png` | Playwright | 116 KB | Tab "Por Análise" |
+| `1_chrome_devtools_analysis_por_analise.png` | Chrome DevTools | 244 KB | Tab "Por Análise" |
+| `2_playwright_analysis_tab_por_ativo.png` | Playwright | 137 KB | Tab "Por Ativo" |
+| `2_chrome_devtools_analysis_por_ativo.png` | Chrome DevTools | 244 KB | Tab "Por Ativo" |
+| `3_playwright_vale3_modo_basico.png` | Playwright | 132 KB | VALE3 Modo Básico |
+| `3_chrome_devtools_vale3_basico.png` | Chrome DevTools | 195 KB | VALE3 Modo Básico |
+| `4_playwright_vale3_error_modal.png` | Playwright | 84 KB | VALE3 Error Modal |
+| `5_vale3_modo_basico_sem_grafico.png` | Playwright | 132 KB | Confirmação visual |
 
-**Snapshots (3 arquivos):**
-- `1_chrome_devtools_analysis_por_analise_snapshot.txt` (3.4 KB)
-- `2_chrome_devtools_analysis_por_ativo_snapshot.txt` (15+ KB)
-- `3_chrome_devtools_vale3_basico_snapshot.txt` (5 KB)
+### Snapshots (3 arquivos TXT - Total: 10.7 KB)
+| Arquivo | Tamanho | Descrição |
+|---------|---------|-----------|
+| `1_chrome_devtools_analysis_por_analise_snapshot.txt` | 3.7 KB | DOM Tab "Por Análise" |
+| `2_chrome_devtools_analysis_por_ativo_snapshot.txt` | 3.7 KB | DOM Tab "Por Ativo" |
+| `3_chrome_devtools_vale3_basico_snapshot.txt` | 3.3 KB | DOM VALE3 Básico |
 
-**Documentação (2 arquivos):**
-- `README.md` (este arquivo)
-- `BUG_CRITICO_MODO_AVANCADO.md` (16 KB)
+### Documentação (2 arquivos MD - Total: 20.4 KB)
+| Arquivo | Tamanho | Descrição |
+|---------|---------|-----------|
+| `README.md` | 12.7 KB | Relatório completo de validação |
+| `BUG_CRITICO_MODO_AVANCADO.md` | 7.7 KB | Análise detalhada do bug |
+
+**Total:** 13 arquivos, ~1.33 MB
 
 ---
 
