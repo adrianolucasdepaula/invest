@@ -48,6 +48,29 @@ class CotahistService:
         """Inicializa o service com HTTP client configurado."""
         self.client = httpx.AsyncClient(timeout=self.TIMEOUT, follow_redirects=True)
 
+    def _safe_int(self, value: str, divisor: float = 1.0) -> float:
+        """
+        Converte string para int/float com segurança (trata campos vazios).
+
+        Campos COTAHIST podem conter apenas espaços (valores nullable).
+        Esta função evita ValueError ao fazer conversão.
+
+        Args:
+            value: String extraída do layout COTAHIST
+            divisor: Divisor para converter centavos em reais (default: 1.0)
+
+        Returns:
+            Valor convertido ou 0.0 se campo vazio
+
+        Example:
+            >>> self._safe_int("0000001234", 100.0)  # "12.34"
+            12.34
+            >>> self._safe_int("            ", 100.0)  # Campo vazio
+            0.0
+        """
+        cleaned = value.strip()
+        return 0.0 if not cleaned else int(cleaned) / divisor
+
     async def download_year(self, year: int) -> bytes:
         """
         Faz download do arquivo COTAHIST para um ano específico.
@@ -137,17 +160,18 @@ class CotahistService:
             return None
 
         # Extrair preços (dividir por 100 - formato B3)
-        preabe = int(line[56:69]) / 100.0     # Abertura (pos 57-69)
-        premax = int(line[69:82]) / 100.0     # Máxima (pos 70-82)
-        premin = int(line[82:95]) / 100.0     # Mínima (pos 83-95)
-        premed = int(line[95:108]) / 100.0    # Média (pos 96-108) - NOVO
-        preult = int(line[108:121]) / 100.0   # Fechamento (pos 109-121)
-        preofc = int(line[121:134]) / 100.0   # Melhor oferta compra (pos 122-134) - NOVO
-        preofv = int(line[134:147]) / 100.0   # Melhor oferta venda (pos 135-147) - NOVO
+        # Usar _safe_int() para tratar campos nullable (evita ValueError em campos vazios)
+        preabe = self._safe_int(line[56:69], 100.0)     # Abertura (pos 57-69)
+        premax = self._safe_int(line[69:82], 100.0)     # Máxima (pos 70-82)
+        premin = self._safe_int(line[82:95], 100.0)     # Mínima (pos 83-95)
+        premed = self._safe_int(line[95:108], 100.0)    # Média (pos 96-108) - NOVO (nullable)
+        preult = self._safe_int(line[108:121], 100.0)   # Fechamento (pos 109-121)
+        preofc = self._safe_int(line[121:134], 100.0)   # Melhor oferta compra (pos 122-134) - NOVO (nullable)
+        preofv = self._safe_int(line[134:147], 100.0)   # Melhor oferta venda (pos 135-147) - NOVO (nullable)
 
         # Extrair volumes
-        voltot = int(line[152:170])           # Volume total (pos 153-170)
-        quatot = int(line[170:188])           # Quantidade negócios (pos 171-188) - NOVO
+        voltot = int(self._safe_int(line[152:170], 1.0))  # Volume total (pos 153-170)
+        quatot = int(self._safe_int(line[170:188], 1.0))  # Quantidade negócios (pos 171-188) - NOVO (nullable)
 
         # Converter data AAAAMMDD para ISO (YYYY-MM-DD)
         try:
