@@ -1,10 +1,12 @@
 'use client';
 
-import { useMemo, lazy, Suspense, useState } from 'react';
+import { useMemo, lazy, Suspense, useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatCard } from '@/components/dashboard/stat-card';
+import { MultiPaneChart } from '@/components/charts/multi-pane-chart';
 import {
   TrendingUp,
   TrendingDown,
@@ -19,9 +21,6 @@ import Link from 'next/link';
 import { useAsset, useAssetPrices, useAssetFundamentals } from '@/lib/hooks/use-assets';
 import { useAnalysis, useRequestAnalysis } from '@/lib/hooks/use-analysis';
 
-// Lazy load heavy components for better LCP
-const CandlestickChart = lazy(() => import('@/components/charts/candlestick-chart').then(mod => ({ default: mod.CandlestickChart })));
-
 export default function AssetDetailPage({
   params,
 }: {
@@ -33,6 +32,23 @@ export default function AssetDetailPage({
   // Fetch critical data first (for LCP optimization)
   const { data: asset, isLoading: assetLoading, error: assetError } = useAsset(ticker);
 
+  // Technical chart state
+  const [technicalData, setTechnicalData] = useState<any>(null);
+  const [technicalLoading, setTechnicalLoading] = useState(false);
+  const [showAdvancedChart, setShowAdvancedChart] = useState(false);
+  const [showIndicators, setShowIndicators] = useState({
+    sma20: true,
+    sma50: true,
+    sma200: false,
+    ema9: false,
+    ema21: false,
+    bollinger: false,
+    pivotPoints: false,
+    rsi: true,
+    macd: true,
+    stochastic: false,
+  });
+
   // Defer non-critical data to improve LCP - fetch in parallel after critical data
   const { data: priceHistory, isLoading: pricesLoading } = useAssetPrices(ticker, {
     range: selectedRange,
@@ -43,9 +59,59 @@ export default function AssetDetailPage({
   const fundamentals = null;
   const fundamentalsLoading = false;
 
-  // Defer technical analysis (non-critical for LCP)
-  const { data: technicalAnalysis, isLoading: technicalLoading } = useAnalysis(ticker, 'technical');
-  const requestAnalysis = useRequestAnalysis();
+  // Fetch technical data from backend when advanced chart is enabled
+  useEffect(() => {
+    if (!showAdvancedChart) {
+      setTechnicalData(null);
+      return;
+    }
+
+    const fetchTechnicalData = async () => {
+      setTechnicalLoading(true);
+      try {
+        const timeframeMap: Record<string, string> = {
+          '1d': '1D',
+          '1mo': '1MO',
+          '3mo': '3MO',
+          '6mo': '6MO',
+          '1y': '1Y',
+          '2y': '2Y',
+          '5y': '5Y',
+          'max': 'MAX',
+        };
+        const timeframe = timeframeMap[selectedRange] || '1Y';
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/market-data/${ticker}/technical?timeframe=${timeframe}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+
+        if (!response.ok) throw new Error('Failed to fetch technical data');
+
+        const data = await response.json();
+        setTechnicalData(data);
+
+        // Log metadata (cache hit/miss, duration, errors)
+        console.log('Technical data metadata:', data.metadata);
+
+        // Show warning if insufficient data
+        if (data.metadata.error === 'INSUFFICIENT_DATA') {
+          console.warn(
+            `Insufficient data: ${data.metadata.available}/${data.metadata.required} points`
+          );
+        }
+      } catch (error) {
+        console.error('Error fetching technical data:', error);
+      } finally {
+        setTechnicalLoading(false);
+      }
+    };
+
+    fetchTechnicalData();
+  }, [ticker, selectedRange, showAdvancedChart]);
 
   // Calculate period high/low from price history
   const periodStats = useMemo(() => {
@@ -75,9 +141,11 @@ export default function AssetDetailPage({
     return labels[selectedRange] || selectedRange;
   }, [selectedRange]);
 
-  // Handle request technical analysis
-  const handleRequestAnalysis = () => {
-    requestAnalysis.mutate({ ticker, type: 'technical' });
+  const handleIndicatorToggle = (indicator: keyof typeof showIndicators) => {
+    setShowIndicators((prev) => ({
+      ...prev,
+      [indicator]: !prev[indicator],
+    }));
   };
 
   const isLoading = assetLoading || pricesLoading;
@@ -179,15 +247,61 @@ export default function AssetDetailPage({
         )}
       </div>
 
-      {/* Price Chart - Lazy loaded for better LCP */}
+      {/* Advanced Chart Toggle */}
+      <Card className="p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold">Gráfico Avançado com Indicadores Técnicos</h3>
+            <p className="text-xs text-muted-foreground">
+              Habilite para visualizar gráficos multi-pane com RSI, MACD, Stochastic e mais
+            </p>
+          </div>
+          <Button
+            variant={showAdvancedChart ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setShowAdvancedChart(!showAdvancedChart)}
+            disabled={technicalLoading}
+          >
+            {technicalLoading ? 'Carregando...' : showAdvancedChart ? 'Modo Avançado' : 'Ativar Modo Avançado'}
+          </Button>
+        </div>
+      </Card>
+
+      {/* Indicator Toggles (only when advanced chart is active) */}
+      {showAdvancedChart && (
+        <Card className="p-4">
+          <h3 className="text-sm font-semibold mb-3">Indicadores</h3>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {Object.entries(showIndicators).map(([key, value]) => (
+              <div key={key} className="flex items-center space-x-2">
+                <Checkbox
+                  id={key}
+                  checked={value}
+                  onCheckedChange={() => handleIndicatorToggle(key as keyof typeof showIndicators)}
+                />
+                <label
+                  htmlFor={key}
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  {key.toUpperCase().replace(/([A-Z])/g, ' $1').trim()}
+                </label>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Price Chart */}
       <Card className="p-6">
         <div className="mb-4 flex items-start justify-between">
           <div>
             <h3 className="text-lg font-semibold">
-              Gráfico de Preços - {selectedRange.toUpperCase()}
+              {showAdvancedChart ? 'Análise Técnica Avançada' : `Gráfico de Preços - ${selectedRange.toUpperCase()}`}
             </h3>
             <p className="text-sm text-muted-foreground">
-              Evolução do preço com volume negociado
+              {showAdvancedChart
+                ? 'Gráficos multi-pane com indicadores técnicos sincronizados'
+                : 'Evolução do preço com volume negociado'}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -204,15 +318,23 @@ export default function AssetDetailPage({
             ))}
           </div>
         </div>
-        {pricesLoading ? (
+        {isLoading || (showAdvancedChart && technicalLoading) ? (
           <Skeleton className="h-[400px] w-full" />
-        ) : priceHistory && priceHistory.length > 0 ? (
-          <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-            <CandlestickChart data={priceHistory} />
-          </Suspense>
+        ) : showAdvancedChart && technicalData?.prices && technicalData?.indicators ? (
+          <MultiPaneChart
+            data={technicalData.prices}
+            indicators={technicalData.indicators}
+            showIndicators={showIndicators}
+          />
         ) : (
           <div className="flex items-center justify-center h-[400px] text-muted-foreground">
-            <p>Sem dados de histórico de preços disponíveis</p>
+            <p>
+              {showAdvancedChart
+                ? 'Dados insuficientes para gráfico avançado. Tente um período maior.'
+                : priceHistory && priceHistory.length > 0
+                ? 'Habilite o Modo Avançado para visualizar indicadores técnicos'
+                : 'Sem dados de histórico de preços disponíveis'}
+            </p>
           </div>
         )}
       </Card>
@@ -233,26 +355,17 @@ export default function AssetDetailPage({
           </div>
         </Card>
 
-        {/* Technical Analysis */}
+        {/* Technical Analysis Summary */}
         <Card className="p-6">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold">Análise Técnica</h3>
+              <h3 className="text-lg font-semibold">Resumo de Indicadores</h3>
               <p className="text-sm text-muted-foreground">
-                Indicadores técnicos e sinais
+                Valores atuais dos principais indicadores técnicos
               </p>
             </div>
-            {!technicalAnalysis && !technicalLoading && (
-              <Button
-                size="sm"
-                onClick={handleRequestAnalysis}
-                disabled={requestAnalysis.isPending}
-              >
-                {requestAnalysis.isPending ? 'Gerando...' : 'Gerar Análise'}
-              </Button>
-            )}
           </div>
-          {technicalLoading ? (
+          {technicalLoading || (showAdvancedChart && !technicalData) ? (
             <div className="space-y-4">
               <Skeleton className="h-12 w-full" />
               <div className="grid grid-cols-2 gap-4">
@@ -264,62 +377,69 @@ export default function AssetDetailPage({
                 ))}
               </div>
             </div>
-          ) : technicalAnalysis?.indicators ? (
+          ) : showAdvancedChart && technicalData?.indicators ? (
             <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <span className="text-sm font-medium">Sinal Geral</span>
-                <span className={`rounded-full px-3 py-1 text-sm font-semibold ${
-                  technicalAnalysis.recommendation === 'STRONG_BUY' || technicalAnalysis.recommendation === 'BUY'
-                    ? 'bg-success text-success-foreground'
-                    : technicalAnalysis.recommendation === 'STRONG_SELL' || technicalAnalysis.recommendation === 'SELL'
-                    ? 'bg-destructive text-destructive-foreground'
-                    : 'bg-muted text-muted-foreground'
-                }`}>
-                  {technicalAnalysis.recommendation || 'NEUTRO'}
-                </span>
-              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">RSI (14)</p>
-                  <p className="text-xl font-bold">{technicalAnalysis.indicators.rsi?.toFixed(1) ?? 'N/A'}</p>
+                  <p className="text-xl font-bold">
+                    {technicalData.indicators.rsi
+                      ? technicalData.indicators.rsi[technicalData.indicators.rsi.length - 1]?.toFixed(1)
+                      : 'N/A'}
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">MACD</p>
                   <p className="text-xl font-bold">
-                    {technicalAnalysis.indicators.macd?.histogram > 0 ? 'Compra' : 'Venda'}
+                    {technicalData.indicators.macd?.histogram
+                      ? technicalData.indicators.macd.histogram[
+                          technicalData.indicators.macd.histogram.length - 1
+                        ] > 0
+                        ? 'Compra'
+                        : 'Venda'
+                      : 'N/A'}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">SMA 20</p>
                   <p className="text-xl font-bold">
-                    R$ {technicalAnalysis.indicators.sma20?.toFixed(2) ?? 'N/A'}
+                    {technicalData.indicators.sma20
+                      ? `R$ ${technicalData.indicators.sma20[technicalData.indicators.sma20.length - 1]?.toFixed(2)}`
+                      : 'N/A'}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">SMA 50</p>
                   <p className="text-xl font-bold">
-                    R$ {technicalAnalysis.indicators.sma50?.toFixed(2) ?? 'N/A'}
+                    {technicalData.indicators.sma50
+                      ? `R$ ${technicalData.indicators.sma50[technicalData.indicators.sma50.length - 1]?.toFixed(2)}`
+                      : 'N/A'}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">SMA 200</p>
                   <p className="text-xl font-bold">
-                    R$ {technicalAnalysis.indicators.sma200?.toFixed(2) ?? 'N/A'}
+                    {technicalData.indicators.sma200
+                      ? `R$ ${technicalData.indicators.sma200[technicalData.indicators.sma200.length - 1]?.toFixed(2)}`
+                      : 'N/A'}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">EMA 12</p>
                   <p className="text-xl font-bold">
-                    R$ {technicalAnalysis.indicators.ema12?.toFixed(2) ?? 'N/A'}
+                    {technicalData.indicators.ema12
+                      ? `R$ ${technicalData.indicators.ema12[technicalData.indicators.ema12.length - 1]?.toFixed(2)}`
+                      : 'N/A'}
                   </p>
                 </div>
               </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 space-y-2">
-              <p className="text-muted-foreground">Análise técnica não disponível</p>
-              <p className="text-sm text-muted-foreground">
-                Clique em &quot;Gerar Análise&quot; para criar uma nova análise
+              <p className="text-muted-foreground">
+                {showAdvancedChart
+                  ? 'Dados insuficientes para indicadores técnicos'
+                  : 'Habilite o Modo Avançado para visualizar indicadores'}
               </p>
             </div>
           )}

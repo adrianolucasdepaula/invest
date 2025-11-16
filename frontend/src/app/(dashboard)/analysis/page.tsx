@@ -3,10 +3,13 @@
 import { useState, useMemo } from 'react';
 import Cookies from 'js-cookie';
 import { useAnalyses } from '@/lib/hooks/use-analysis';
+import { useReportsAssets, useRequestAnalysis, useRequestBulkAnalysis } from '@/lib/hooks/use-reports-assets';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -20,8 +23,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { NewAnalysisDialog } from '@/components/analysis';
 import { AddPositionDialog } from '@/components/portfolio/add-position-dialog';
+import { MultiSourceTooltip } from '@/components/reports/multi-source-tooltip';
 import {
   Search,
   TrendingUp,
@@ -33,9 +47,19 @@ import {
   Trash2,
   AlertTriangle,
   BarChart3,
+  PlayCircle,
+  Eye,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Minus,
+  FileText,
 } from 'lucide-react';
-import { cn, formatPercent } from '@/lib/utils';
+import { cn, formatPercent, formatCurrency } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
+import Link from 'next/link';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const getSignalColor = (signal?: string) => {
   switch (signal) {
@@ -75,7 +99,46 @@ const getScoreColor = (score: number) => {
   return 'text-destructive';
 };
 
+// Helpers para view "Por Ativo" (mesmo de /reports)
+const getRecommendationColor = (recommendation: string) => {
+  const rec = recommendation?.toUpperCase() || '';
+  if (rec.includes('STRONG_BUY') || rec === 'BUY') {
+    return 'text-green-600 bg-green-50 border-green-200';
+  }
+  if (rec.includes('HOLD')) {
+    return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+  }
+  if (rec.includes('SELL')) {
+    return 'text-red-600 bg-red-50 border-red-200';
+  }
+  return 'text-gray-600 bg-gray-50 border-gray-200';
+};
+
+const getRecommendationLabel = (recommendation: string) => {
+  const rec = recommendation?.toUpperCase() || '';
+  if (rec.includes('STRONG_BUY') || rec === 'BUY') return 'Compra';
+  if (rec.includes('HOLD')) return 'Manter';
+  if (rec.includes('SELL')) return 'Venda';
+  return recommendation || 'N/A';
+};
+
+const getRecommendationIcon = (recommendation: string) => {
+  const rec = recommendation?.toUpperCase() || '';
+  if (rec.includes('BUY')) return <TrendingUp className="h-4 w-4" />;
+  if (rec.includes('HOLD')) return <Minus className="h-4 w-4" />;
+  if (rec.includes('SELL')) return <TrendingDown className="h-4 w-4" />;
+  return null;
+};
+
+const getConfidenceColor = (confidence?: number) => {
+  if (!confidence) return 'text-gray-500';
+  if (confidence >= 0.8) return 'text-green-600';
+  if (confidence >= 0.6) return 'text-yellow-600';
+  return 'text-red-600';
+};
+
 export default function AnalysisPage() {
+  const [activeTab, setActiveTab] = useState('by-analysis');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'fundamental' | 'technical' | 'complete'>('all');
   const [selectedAnalysis, setSelectedAnalysis] = useState<any>(null);
@@ -83,11 +146,18 @@ export default function AnalysisPage() {
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [requestingBulk, setRequestingBulk] = useState(false);
+  const [showBulkDialog, setShowBulkDialog] = useState(false);
+  const [processingTicker, setProcessingTicker] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data: analyses, isLoading, error, refetch } = useAnalyses({
     type: filterType === 'all' ? undefined : filterType,
   });
+
+  // Hooks para view "Por Ativo"
+  const { data: assets, isLoading: assetsLoading, error: assetsError } = useReportsAssets();
+  const requestAnalysis = useRequestAnalysis();
+  const requestBulkAnalysis = useRequestBulkAnalysis();
 
   // Identificar análises duplicadas
   const duplicateMap = useMemo(() => {
@@ -114,6 +184,15 @@ export default function AnalysisPage() {
       return matchesSearch;
     });
   }, [analyses, searchTerm]);
+
+  // Filtrar ativos para view "Por Ativo"
+  const filteredAssets = useMemo(() => {
+    if (!assets) return [];
+    return assets.filter((asset) =>
+      asset.ticker.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      asset.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [assets, searchTerm]);
 
   const hasDuplicates = (analysis: any) => {
     const key = `${analysis.asset?.ticker}-${analysis.type}`;
@@ -265,6 +344,21 @@ export default function AnalysisPage() {
     }
   };
 
+  // Handlers para view "Por Ativo"
+  const handleRequestAssetAnalysis = (ticker: string) => {
+    setProcessingTicker(ticker);
+    requestAnalysis.mutate(ticker, {
+      onSettled: () => {
+        setProcessingTicker(null);
+      },
+    });
+  };
+
+  const handleRequestBulkAssetAnalysis = () => {
+    requestBulkAnalysis.mutate();
+    setShowBulkDialog(false);
+  };
+
   const handleRequestBulkAnalysis = async () => {
     const type = filterType === 'all' ? 'complete' : filterType;
     const typeLabel = type === 'complete' ? 'completa' : type === 'fundamental' ? 'fundamentalista' : 'técnica';
@@ -357,38 +451,84 @@ export default function AnalysisPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={handleRequestBulkAnalysis}
-                  disabled={requestingBulk}
-                  variant="outline"
-                  className="gap-2"
-                >
-                  <BarChart3 className={cn('h-4 w-4', requestingBulk && 'animate-pulse')} />
-                  {requestingBulk ? 'Solicitando...' : 'Solicitar Análises em Massa'}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs">
-                <p className="font-semibold mb-1">Análise em Massa com Multi-Fonte</p>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Coleta dados de <strong>6 fontes</strong> (Fundamentus, BRAPI, StatusInvest,
-                  Investidor10, Fundamentei, InvestSite) e realiza validação cruzada para
-                  garantir máxima precisão nas análises.
-                </p>
-                <div className="text-xs space-y-1 mt-2 pt-2 border-t border-border">
-                  <p>✓ Cross-validation automática</p>
-                  <p>✓ Detecção de discrepâncias</p>
-                  <p>✓ Score de confiança baseado em concordância</p>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {activeTab === 'by-asset' ? (
+            <Button
+              onClick={() => setShowBulkDialog(true)}
+              disabled={requestBulkAnalysis.isPending}
+              size="lg"
+              className="bg-primary hover:bg-primary/90"
+            >
+              {requestBulkAnalysis.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <PlayCircle className="mr-2 h-4 w-4" />
+                  Analisar Todos os Ativos
+                </>
+              )}
+            </Button>
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleRequestBulkAnalysis}
+                    disabled={requestingBulk}
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    <BarChart3 className={cn('h-4 w-4', requestingBulk && 'animate-pulse')} />
+                    {requestingBulk ? 'Solicitando...' : 'Solicitar Análises em Massa'}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <p className="font-semibold mb-1">Análise em Massa com Multi-Fonte</p>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Coleta dados de <strong>6 fontes</strong> (Fundamentus, BRAPI, StatusInvest,
+                    Investidor10, Fundamentei, InvestSite) e realiza validação cruzada para
+                    garantir máxima precisão nas análises.
+                  </p>
+                  <div className="text-xs space-y-1 mt-2 pt-2 border-t border-border">
+                    <p>✓ Cross-validation automática</p>
+                    <p>✓ Detecção de discrepâncias</p>
+                    <p>✓ Score de confiança baseado em concordância</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           <NewAnalysisDialog />
         </div>
       </div>
 
+      {/* Bulk Analysis Confirmation Dialog */}
+      <AlertDialog open={showBulkDialog} onOpenChange={setShowBulkDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Analisar Todos os Ativos?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação irá solicitar análises completas para todos os ativos que não possuem análise recente (&lt;7 dias). Isso pode levar alguns minutos para completar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRequestBulkAssetAnalysis}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="by-analysis">Por Análise</TabsTrigger>
+          <TabsTrigger value="by-asset">Por Ativo</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="by-analysis" className="space-y-4 mt-6">
       <div className="flex items-center space-x-4">
         <Card className="flex-1 p-4">
           <div className="relative">
@@ -894,6 +1034,251 @@ export default function AnalysisPage() {
           )}
         </DialogContent>
       </Dialog>
+        </TabsContent>
+
+        {/* TAB: Por Ativo */}
+        <TabsContent value="by-asset" className="space-y-4 mt-6">
+          {/* Search Bar */}
+          <Card className="p-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por ticker ou nome..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </Card>
+
+          {/* Assets List */}
+          {assetsLoading ? (
+            <div className="grid gap-4">
+              {Array(5).fill(0).map((_, i) => (
+                <Card key={i} className="p-6">
+                  <div className="space-y-3">
+                    <Skeleton className="h-6 w-32" />
+                    <Skeleton className="h-4 w-48" />
+                    <div className="grid grid-cols-4 gap-4">
+                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className="h-12 w-full" />
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : assetsError ? (
+            <Card className="p-12 text-center">
+              <div className="flex flex-col items-center space-y-4">
+                <XCircle className="h-12 w-12 text-destructive" />
+                <h3 className="text-xl font-semibold">Erro ao Carregar Ativos</h3>
+                <p className="text-muted-foreground max-w-md">
+                  {(assetsError as any)?.message || 'Erro desconhecido'}
+                </p>
+                <Button onClick={() => window.location.reload()}>Tentar Novamente</Button>
+              </div>
+            </Card>
+          ) : filteredAssets.length === 0 ? (
+            <Card className="p-12 text-center">
+              <div className="flex flex-col items-center space-y-4">
+                <Search className="h-12 w-12 text-muted-foreground" />
+                <h3 className="text-xl font-semibold">Nenhum Resultado</h3>
+                <p className="text-muted-foreground max-w-md">
+                  Nenhum ativo encontrado com o termo &ldquo;{searchTerm}&rdquo;
+                </p>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {filteredAssets.map((asset) => (
+                <Card key={asset.id} className="p-6 hover:shadow-md transition-shadow">
+                  {/* Asset Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-xl font-bold">{asset.ticker}</h3>
+                        <Badge variant="outline" className="text-xs">
+                          {asset.type}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{asset.name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{asset.sector}</p>
+                    </div>
+
+                    {/* Price Info */}
+                    {asset.currentPrice && (
+                      <div className="text-right">
+                        <p className="text-2xl font-bold">
+                          {formatCurrency(asset.currentPrice)}
+                        </p>
+                        {asset.changePercent !== undefined && asset.changePercent !== null && (
+                          <p
+                            className={cn(
+                              'text-sm font-medium',
+                              asset.changePercent > 0
+                                ? 'text-green-600'
+                                : asset.changePercent < 0
+                                  ? 'text-red-600'
+                                  : 'text-gray-600'
+                            )}
+                          >
+                            {asset.changePercent > 0 ? '+' : ''}
+                            {Number(asset.changePercent).toFixed(2)}%
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Analysis Status */}
+                  {asset.hasAnalysis ? (
+                    <div className="space-y-4">
+                      {/* Analysis Summary */}
+                      <div className="grid grid-cols-4 gap-4">
+                        {/* Recommendation */}
+                        <div className="flex flex-col">
+                          <span className="text-xs text-muted-foreground mb-1">
+                            Recomendação
+                          </span>
+                          <Badge
+                            className={cn(
+                              'inline-flex items-center gap-1',
+                              getRecommendationColor(
+                                asset.lastAnalysisRecommendation || ''
+                              )
+                            )}
+                          >
+                            {getRecommendationIcon(asset.lastAnalysisRecommendation || '')}
+                            {getRecommendationLabel(asset.lastAnalysisRecommendation || '')}
+                          </Badge>
+                        </div>
+
+                        {/* Confidence */}
+                        <div className="flex flex-col">
+                          <span className="text-xs text-muted-foreground mb-1">
+                            Confiança
+                          </span>
+                          <span
+                            className={cn(
+                              'text-sm font-bold',
+                              getConfidenceColor(asset.lastAnalysisConfidence)
+                            )}
+                          >
+                            {asset.lastAnalysisConfidence
+                              ? `${(asset.lastAnalysisConfidence * 100).toFixed(0)}%`
+                              : 'N/A'}
+                          </span>
+                        </div>
+
+                        {/* Last Analysis Date */}
+                        <div className="flex flex-col">
+                          <span className="text-xs text-muted-foreground mb-1">
+                            Última Análise
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-sm">
+                              {asset.lastAnalysisDate
+                                ? formatDistanceToNow(new Date(asset.lastAnalysisDate), {
+                                    addSuffix: true,
+                                    locale: ptBR,
+                                  })
+                                : 'N/A'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="flex flex-col">
+                          <span className="text-xs text-muted-foreground mb-1">Status</span>
+                          {asset.isAnalysisRecent ? (
+                            <Badge className="bg-green-50 text-green-700 border-green-200">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Recente
+                            </Badge>
+                          ) : asset.isAnalysisOutdated ? (
+                            <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Desatualizada
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Normal
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Summary Text */}
+                      {asset.lastAnalysisSummary && (
+                        <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-md">
+                          {asset.lastAnalysisSummary}
+                        </p>
+                      )}
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2">
+                        {/* View Report */}
+                        <Link href={`/reports/${asset.lastAnalysisId}`} className="flex-1">
+                          <Button variant="outline" className="w-full">
+                            <Eye className="mr-2 h-4 w-4" />
+                            Visualizar Relatório
+                          </Button>
+                        </Link>
+
+                        {/* Request New Analysis (if can) */}
+                        {asset.canRequestAnalysis && (
+                          <Button
+                            variant="secondary"
+                            onClick={() => handleRequestAssetAnalysis(asset.ticker)}
+                            disabled={processingTicker === asset.ticker}
+                          >
+                            {processingTicker === asset.ticker ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <PlayCircle className="mr-2 h-4 w-4" />
+                                Nova Análise
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    /* No Analysis Yet */
+                    <div className="flex items-center justify-between bg-muted/30 p-4 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          Nenhuma análise disponível para este ativo
+                        </span>
+                      </div>
+                      <Button
+                        variant="default"
+                        onClick={() => handleRequestAssetAnalysis(asset.ticker)}
+                        disabled={processingTicker === asset.ticker}
+                      >
+                        {processingTicker === asset.ticker ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <PlayCircle className="mr-2 h-4 w-4" />
+                            Solicitar Análise
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
