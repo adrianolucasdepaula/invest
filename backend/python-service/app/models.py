@@ -25,12 +25,13 @@ class PriceDataPoint(BaseModel):
 
     @validator('high')
     def high_must_be_highest(cls, v, values):
+        # Only validate high >= low (strict rule)
+        # Note: high can be < open or < close in real market data due to:
+        # - Decimal rounding (e.g., open=65.20, high=65.19)
+        # - Different data sources
+        # - Adjusted prices (splits, dividends)
         if 'low' in values and v < values['low']:
             raise ValueError('high must be >= low')
-        if 'open' in values and v < values['open']:
-            raise ValueError('high must be >= open')
-        if 'close' in values and v < values['close']:
-            raise ValueError('high must be >= close')
         return v
 
     @validator('low')

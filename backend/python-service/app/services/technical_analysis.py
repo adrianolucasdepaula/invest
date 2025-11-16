@@ -225,9 +225,10 @@ class TechnicalAnalysisService:
         """
         bb_df = ta.bbands(df["close"], length=period, std=std_dev)
 
-        upper = float(bb_df[f"BBU_{period}_{std_dev}"].iloc[-1])
-        middle = float(bb_df[f"BBM_{period}_{std_dev}"].iloc[-1])
-        lower = float(bb_df[f"BBL_{period}_{std_dev}"].iloc[-1])
+        # pandas_ta uses float notation in column names (e.g., "BBU_20_2.0")
+        upper = float(bb_df[f"BBU_{period}_{float(std_dev)}"].iloc[-1])
+        middle = float(bb_df[f"BBM_{period}_{float(std_dev)}"].iloc[-1])
+        lower = float(bb_df[f"BBL_{period}_{float(std_dev)}"].iloc[-1])
 
         # Calculate bandwidth
         bandwidth = ((upper - lower) / middle) * 100

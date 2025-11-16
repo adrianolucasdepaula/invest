@@ -11,6 +11,7 @@ import { DatabaseModule } from './database/database.module';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './api/auth/auth.module';
 import { AssetsModule } from './api/assets/assets.module';
+import { MarketDataModule } from './api/market-data/market-data.module';
 import { AnalysisModule } from './api/analysis/analysis.module';
 import { PortfolioModule } from './api/portfolio/portfolio.module';
 import { ReportsModule } from './api/reports/reports.module';
@@ -107,6 +108,7 @@ import {
     DatabaseModule,
     AuthModule,
     AssetsModule,
+    MarketDataModule,
     AnalysisModule,
     PortfolioModule,
     ReportsModule,

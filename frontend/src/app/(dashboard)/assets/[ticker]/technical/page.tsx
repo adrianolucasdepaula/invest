@@ -34,38 +34,30 @@ export default function TechnicalAnalysisPage() {
     stochastic: false,
   });
 
-  // Fetch price data
+  // Fetch technical data (prices + indicators) from backend
   useEffect(() => {
-    const fetchPriceData = async () => {
+    const fetchTechnicalData = async () => {
       setIsLoading(true);
       try {
-        // Determinar período baseado no timeframe
-        const periodMap: { [key: string]: number } = {
-          '1D': 1,
-          '1MO': 30,
-          '3MO': 90,
-          '6MO': 180,
-          '1Y': 365,
-          '2Y': 730,
-          '5Y': 1825,
-          'MAX': 3650,
-        };
-
-        const days = periodMap[timeframe] || 30;
-
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/market-data/${ticker}/prices?days=${days}`
+          `${process.env.NEXT_PUBLIC_API_URL}/market-data/${ticker}/technical?timeframe=${timeframe}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          }
         );
 
-        if (!response.ok) throw new Error('Failed to fetch price data');
+        if (!response.ok) throw new Error('Failed to fetch technical data');
 
         const data = await response.json();
-        setPriceData(data);
+
+        // Set prices
+        setPriceData(data.prices);
 
         // Set current price and change
-        if (data.length > 0) {
-          const latest = data[data.length - 1];
-          const previous = data[data.length - 2];
+        if (data.prices.length > 0) {
+          const latest = data.prices[data.prices.length - 1];
+          const previous = data.prices[data.prices.length - 2];
           setCurrentPrice(latest.close);
           if (previous) {
             const change = ((latest.close - previous.close) / previous.close) * 100;
@@ -73,54 +65,32 @@ export default function TechnicalAnalysisPage() {
           }
         }
 
-        // Fetch indicators from Python Service
-        await fetchIndicators(data);
+        // Set indicators (may be null if insufficient data or Python Service error)
+        setIndicators(data.indicators);
+
+        // Log metadata (cache hit/miss, duration, errors)
+        console.log('Technical data metadata:', data.metadata);
+
+        // Show warning if insufficient data
+        if (data.metadata.error === 'INSUFFICIENT_DATA') {
+          console.warn(
+            `Insufficient data: ${data.metadata.available}/${data.metadata.required} points`
+          );
+        }
+
+        // Show warning if Python Service error
+        if (data.metadata.error === 'PYTHON_SERVICE_ERROR') {
+          console.warn('Indicators unavailable (Python Service error)');
+        }
       } catch (error) {
-        console.error('Error fetching price data:', error);
+        console.error('Error fetching technical data:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchPriceData();
+    fetchTechnicalData();
   }, [ticker, timeframe]);
-
-  const fetchIndicators = async (prices: any[]) => {
-    try {
-      const response = await fetch('http://localhost:8001/technical-analysis/indicators', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prices: prices.map((p) => ({
-            date: p.date,
-            open: p.open,
-            high: p.high,
-            low: p.low,
-            close: p.close,
-            volume: p.volume,
-          })),
-          indicators: {
-            sma: [20, 50, 200],
-            ema: [9, 21],
-            rsi: { period: 14 },
-            macd: { fast: 12, slow: 26, signal: 9 },
-            bollinger: { period: 20, std: 2 },
-            stochastic: { k_period: 14, d_period: 3 },
-            pivot_points: { type: 'standard' },
-          },
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch indicators');
-
-      const data = await response.json();
-      setIndicators(data);
-    } catch (error) {
-      console.error('Error fetching indicators:', error);
-    }
-  };
 
   const handleIndicatorToggle = (indicator: keyof typeof showIndicators) => {
     setShowIndicators((prev) => ({

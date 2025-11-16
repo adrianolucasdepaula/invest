@@ -29,6 +29,7 @@
     "cleanup:analyses:full": "ts-node src/database/scripts/cleanup-analyses.ts --remove-old"
   },
   "dependencies": {
+    "@nestjs/axios": "^4.0.1",
     "@nestjs/bull": "^11.0.4",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^10.3.0",
@@ -45,7 +46,7 @@
     "@nestjs/websockets": "^10.3.0",
     "@tirke/node-cache-manager-ioredis": "^2.1.0",
     "@types/handlebars": "^4.0.40",
-    "axios": "^1.6.5",
+    "axios": "^1.13.2",
     "bcrypt": "^5.1.1",
     "bull": "^4.16.5",
     "cache-manager": "^7.2.4",
