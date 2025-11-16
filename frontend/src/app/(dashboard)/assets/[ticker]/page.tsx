@@ -32,10 +32,10 @@ export default function AssetDetailPage({
   // Fetch critical data first (for LCP optimization)
   const { data: asset, isLoading: assetLoading, error: assetError } = useAsset(ticker);
 
-  // Technical chart state
+  // Technical chart state (Advanced mode is now DEFAULT)
   const [technicalData, setTechnicalData] = useState<any>(null);
   const [technicalLoading, setTechnicalLoading] = useState(false);
-  const [showAdvancedChart, setShowAdvancedChart] = useState(false);
+  const [technicalError, setTechnicalError] = useState<string | null>(null);
   const [showIndicators, setShowIndicators] = useState({
     sma20: true,
     sma50: true,
@@ -59,15 +59,11 @@ export default function AssetDetailPage({
   const fundamentals = null;
   const fundamentalsLoading = false;
 
-  // Fetch technical data from backend when advanced chart is enabled
+  // Fetch technical data from backend (ALWAYS - advanced mode is default)
   useEffect(() => {
-    if (!showAdvancedChart) {
-      setTechnicalData(null);
-      return;
-    }
-
     const fetchTechnicalData = async () => {
       setTechnicalLoading(true);
+      setTechnicalError(null);
       try {
         const timeframeMap: Record<string, string> = {
           '1d': '1D',
@@ -89,7 +85,10 @@ export default function AssetDetailPage({
           }
         );
 
-        if (!response.ok) throw new Error('Failed to fetch technical data');
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to fetch technical data: ${response.status} - ${errorText}`);
+        }
 
         const data = await response.json();
 
@@ -151,7 +150,7 @@ export default function AssetDetailPage({
     };
 
     fetchTechnicalData();
-  }, [ticker, selectedRange, showAdvancedChart]);
+  }, [ticker, selectedRange]);
 
   // Calculate period high/low from price history
   const periodStats = useMemo(() => {
@@ -287,61 +286,35 @@ export default function AssetDetailPage({
         )}
       </div>
 
-      {/* Advanced Chart Toggle */}
+      {/* Indicator Toggles */}
       <Card className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold">Gráfico Avançado com Indicadores Técnicos</h3>
-            <p className="text-xs text-muted-foreground">
-              Habilite para visualizar gráficos multi-pane com RSI, MACD, Stochastic e mais
-            </p>
-          </div>
-          <Button
-            variant={showAdvancedChart ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setShowAdvancedChart(!showAdvancedChart)}
-            disabled={technicalLoading}
-          >
-            {technicalLoading ? 'Carregando...' : showAdvancedChart ? 'Modo Avançado' : 'Ativar Modo Avançado'}
-          </Button>
+        <h3 className="text-sm font-semibold mb-3">Indicadores Técnicos</h3>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {Object.entries(showIndicators).map(([key, value]) => (
+            <div key={key} className="flex items-center space-x-2">
+              <Checkbox
+                id={key}
+                checked={value}
+                onCheckedChange={() => handleIndicatorToggle(key as keyof typeof showIndicators)}
+              />
+              <label
+                htmlFor={key}
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                {key.toUpperCase().replace(/([A-Z])/g, ' $1').trim()}
+              </label>
+            </div>
+          ))}
         </div>
       </Card>
-
-      {/* Indicator Toggles (only when advanced chart is active) */}
-      {showAdvancedChart && (
-        <Card className="p-4">
-          <h3 className="text-sm font-semibold mb-3">Indicadores</h3>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {Object.entries(showIndicators).map(([key, value]) => (
-              <div key={key} className="flex items-center space-x-2">
-                <Checkbox
-                  id={key}
-                  checked={value}
-                  onCheckedChange={() => handleIndicatorToggle(key as keyof typeof showIndicators)}
-                />
-                <label
-                  htmlFor={key}
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  {key.toUpperCase().replace(/([A-Z])/g, ' $1').trim()}
-                </label>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
 
       {/* Price Chart */}
       <Card className="p-6">
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <h3 className="text-lg font-semibold">
-              {showAdvancedChart ? 'Análise Técnica Avançada' : `Gráfico de Preços - ${selectedRange.toUpperCase()}`}
-            </h3>
+            <h3 className="text-lg font-semibold">Análise Técnica Avançada</h3>
             <p className="text-sm text-muted-foreground">
-              {showAdvancedChart
-                ? 'Gráficos multi-pane com indicadores técnicos sincronizados'
-                : 'Evolução do preço com volume negociado'}
+              Gráficos multi-pane com indicadores técnicos sincronizados
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -358,9 +331,9 @@ export default function AssetDetailPage({
             ))}
           </div>
         </div>
-        {isLoading || (showAdvancedChart && technicalLoading) ? (
+        {isLoading || technicalLoading ? (
           <Skeleton className="h-[400px] w-full" />
-        ) : showAdvancedChart && technicalData?.prices && technicalData?.indicators ? (
+        ) : technicalData?.prices && technicalData?.indicators ? (
           <MultiPaneChart
             data={technicalData.prices}
             indicators={technicalData.indicators}
@@ -368,13 +341,7 @@ export default function AssetDetailPage({
           />
         ) : (
           <div className="flex items-center justify-center h-[400px] text-muted-foreground">
-            <p>
-              {showAdvancedChart
-                ? 'Dados insuficientes para gráfico avançado. Tente um período maior.'
-                : priceHistory && priceHistory.length > 0
-                ? 'Habilite o Modo Avançado para visualizar indicadores técnicos'
-                : 'Sem dados de histórico de preços disponíveis'}
-            </p>
+            <p>Dados insuficientes para gráfico avançado. Tente um período maior.</p>
           </div>
         )}
       </Card>
@@ -405,7 +372,7 @@ export default function AssetDetailPage({
               </p>
             </div>
           </div>
-          {technicalLoading || (showAdvancedChart && !technicalData) ? (
+          {technicalLoading || !technicalData ? (
             <div className="space-y-4">
               <Skeleton className="h-12 w-full" />
               <div className="grid grid-cols-2 gap-4">
@@ -417,7 +384,7 @@ export default function AssetDetailPage({
                 ))}
               </div>
             </div>
-          ) : showAdvancedChart && technicalData?.indicators ? (
+          ) : technicalData?.indicators ? (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
@@ -477,9 +444,7 @@ export default function AssetDetailPage({
           ) : (
             <div className="flex flex-col items-center justify-center py-8 space-y-2">
               <p className="text-muted-foreground">
-                {showAdvancedChart
-                  ? 'Dados insuficientes para indicadores técnicos'
-                  : 'Habilite o Modo Avançado para visualizar indicadores'}
+                Dados insuficientes para indicadores técnicos
               </p>
             </div>
           )}
