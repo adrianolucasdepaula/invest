@@ -17,6 +17,9 @@ numpy==2.0.0
 pandas-ta-classic==0.3.37  # 141 indicators + 62 TA-Lib patterns
 # ta-lib==0.4.28  # Opcional - requer compilação C (comentado - difícil instalação)
 
+# Historical Data
+yfinance==0.2.50  # Yahoo Finance API - unlimited free historical data
+
 # Utils
 python-dateutil==2.8.2
 python-dotenv==1.0.0

@@ -453,8 +453,8 @@ export class AssetsService {
     }
   }
 
-  async syncAllAssets() {
-    this.logger.log('Starting sync for all assets');
+  async syncAllAssets(range: string = '1y') {
+    this.logger.log(`Starting sync for all assets (range: ${range})`);
 
     try {
       // Get all assets from database
@@ -465,6 +465,7 @@ export class AssetsService {
         total: assets.length,
         success: 0,
         failed: 0,
+        range,
         startedAt: new Date(),
         completedAt: null as Date | null,
         assets: [] as any[],
@@ -478,8 +479,8 @@ export class AssetsService {
         await Promise.all(
           batch.map(async (asset) => {
             try {
-              this.logger.log(`Syncing ${asset.ticker}...`);
-              await this.syncAsset(asset.ticker);
+              this.logger.log(`Syncing ${asset.ticker} (range: ${range})...`);
+              await this.syncAsset(asset.ticker, range);
               results.success++;
               results.assets.push({
                 ticker: asset.ticker,

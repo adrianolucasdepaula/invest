@@ -36,9 +36,15 @@ export class AssetsController {
   @Post(':ticker/sync')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Sync asset data from sources' })
-  async syncAsset(@Param('ticker') ticker: string) {
-    return this.assetsService.syncAsset(ticker);
+  @ApiOperation({
+    summary: 'Sync asset data from sources',
+    description: 'Fetches current price and historical data from BRAPI. Supports range parameter: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max. Default: 1y'
+  })
+  async syncAsset(
+    @Param('ticker') ticker: string,
+    @Query('range') range?: string
+  ) {
+    return this.assetsService.syncAsset(ticker, range || '1y');
   }
 
   @Post(':ticker/populate')
@@ -53,8 +59,11 @@ export class AssetsController {
   @Post('sync-all')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Sync all assets data from sources' })
-  async syncAllAssets() {
-    return this.assetsService.syncAllAssets();
+  @ApiOperation({
+    summary: 'Sync all assets data from sources',
+    description: 'Fetches current price and historical data for ALL assets from BRAPI. Supports range parameter: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max. Default: 1y. WARNING: range=max will fetch full historical data (may take several minutes)'
+  })
+  async syncAllAssets(@Query('range') range?: string) {
+    return this.assetsService.syncAllAssets(range || '1y');
   }
 }

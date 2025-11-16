@@ -89,13 +89,17 @@ class ApiClient {
     return response.data;
   }
 
-  async syncAllAssets() {
-    const response = await this.client.post('/assets/sync-all');
+  async syncAllAssets(range: string = '3mo') {
+    const response = await this.client.post('/assets/sync-all', null, {
+      params: { range },
+    });
     return response.data;
   }
 
-  async syncAsset(ticker: string) {
-    const response = await this.client.post(`/assets/${ticker}/sync`);
+  async syncAsset(ticker: string, range: string = '3mo') {
+    const response = await this.client.post(`/assets/${ticker}/sync`, null, {
+      params: { range },
+    });
     return response.data;
   }
 

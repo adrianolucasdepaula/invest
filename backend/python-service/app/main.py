@@ -16,8 +16,10 @@ from app.models import (
     IndicatorsResponse,
     ErrorResponse,
     HealthResponse,
+    HistoricalDataRequest,
+    HistoricalDataResponse,
 )
-from app.services import TechnicalAnalysisService
+from app.services import TechnicalAnalysisService, YFinanceService
 
 # Configure logging
 logging.basicConfig(
@@ -44,8 +46,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize service
+# Initialize services
 technical_analysis_service = TechnicalAnalysisService()
+yfinance_service = YFinanceService()
 
 
 # ============================================================================
@@ -175,6 +178,66 @@ async def calculate_indicators(request: IndicatorsRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to calculate indicators: {str(e)}",
+        )
+
+
+@app.post("/historical-data", response_model=HistoricalDataResponse, status_code=status.HTTP_200_OK)
+async def fetch_historical_data(request: HistoricalDataRequest):
+    """
+    Fetch historical price data from Yahoo Finance
+
+    Args:
+        request: HistoricalDataRequest with ticker, period, and interval
+
+    Returns:
+        HistoricalDataResponse with price data
+
+    Raises:
+        HTTPException 400: If ticker is invalid or no data found
+        HTTPException 500: If fetching fails
+    """
+    start_time = datetime.utcnow()
+    logger.info(f"Fetching historical data for {request.ticker} (period={request.period}, interval={request.interval})")
+
+    try:
+        # Fetch historical data
+        prices = yfinance_service.fetch_historical_data(
+            ticker=request.ticker,
+            period=request.period,
+            interval=request.interval,
+        )
+
+        # Calculate processing time
+        end_time = datetime.utcnow()
+        processing_time_ms = (end_time - start_time).total_seconds() * 1000
+
+        logger.info(
+            f"Historical data fetched successfully for {request.ticker} ({len(prices)} points) in {processing_time_ms:.2f}ms"
+        )
+
+        return HistoricalDataResponse(
+            ticker=request.ticker,
+            timestamp=end_time,
+            period=request.period,
+            interval=request.interval,
+            data_points=len(prices),
+            prices=prices,
+        )
+
+    except ValueError as e:
+        logger.error(f"Validation error for {request.ticker}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
+
+    except Exception as e:
+        logger.error(
+            f"Error fetching historical data for {request.ticker}: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch historical data: {str(e)}",
         )
 
 

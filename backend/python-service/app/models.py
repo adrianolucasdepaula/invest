@@ -163,3 +163,41 @@ class HealthResponse(BaseModel):
     version: str = "1.0.0"
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     dependencies: dict = Field(default_factory=dict)
+
+
+# ============================================================================
+# HISTORICAL DATA MODELS (YFinance)
+# ============================================================================
+
+class HistoricalDataRequest(BaseModel):
+    """
+    Request to fetch historical data from Yahoo Finance
+    """
+    ticker: str = Field(..., min_length=1, max_length=20, description="Asset ticker (B3)")
+    period: str = Field(default="max", description="Data period: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max")
+    interval: str = Field(default="1d", description="Data interval: 1d, 1wk, 1mo")
+
+
+class HistoricalPricePoint(BaseModel):
+    """
+    Single historical price data point from Yahoo Finance
+    """
+    date: str = Field(..., description="ISO date string (YYYY-MM-DD)")
+    open: float = Field(..., description="Opening price")
+    high: float = Field(..., description="Highest price")
+    low: float = Field(..., description="Lowest price")
+    close: float = Field(..., description="Closing price")
+    volume: float = Field(..., description="Trading volume")
+    adjustedClose: float = Field(..., description="Adjusted closing price (splits, dividends)")
+
+
+class HistoricalDataResponse(BaseModel):
+    """
+    Response from /historical-data endpoint
+    """
+    ticker: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    period: str
+    interval: str
+    data_points: int
+    prices: List[HistoricalPricePoint]
