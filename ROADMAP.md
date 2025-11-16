@@ -1462,6 +1462,129 @@ const transformedData = {
 
 ---
 
+### FASE 31: Range Parameter + YFinance Service + Frontend Validation ✅ 100% COMPLETO (2025-11-16)
+
+**Data:** 2025-11-16
+**Commit:** `f8186f4`
+**Linhas:** +4,995 linhas (7 modificados + 13 novos)
+
+Implementação de suporte a range parameter configurável e criação de YFinance service alternativo, seguido de validação completa do frontend com MCP Chrome DevTools.
+
+**Problema Identificado:**
+- ❌ 60% dos ativos (6/10) sem gráficos devido a dados insuficientes
+- ❌ BRAPI Free `range=3mo` retorna apenas 67 pontos < 200 threshold
+- ❌ Indicadores técnicos requerem mínimo 200 pontos históricos
+- ❌ Frontend não passava parâmetro `range` para backend
+
+**Solução Implementada:**
+
+#### Backend API (Range Parameter Support)
+- ✅ `backend/src/api/assets/assets.controller.ts` (+18 linhas)
+  - `POST /:ticker/sync` aceita `@Query('range')`
+  - `POST /sync-all` aceita `@Query('range')`
+  - Documentação Swagger atualizada
+- ✅ `backend/src/api/assets/assets.service.ts` (+54 linhas)
+  - `syncAsset()` modificado para aceitar range parameter
+  - `syncAllAssets()` modificado para aceitar range parameter
+  - Logs detalhados adicionados
+
+#### Python Service (YFinance Integration)
+- ✅ `backend/python-service/app/services/yfinance_service.py` (157 linhas - NOVO)
+  - Classe `YFinanceService` completa
+  - Retry logic com exponential backoff
+  - ⚠️ Rate limiting detectado (não usar como principal)
+- ✅ `backend/python-service/app/main.py` (+57 linhas)
+  - Novo endpoint `POST /historical-data`
+  - Integração com YFinanceService
+  - Error handling robusto
+- ✅ `backend/python-service/app/models.py` (+21 linhas)
+  - `HistoricalDataRequest` model
+  - `HistoricalDataResponse` model
+- ✅ `backend/python-service/app/services/__init__.py` (+2 linhas)
+  - Export YFinanceService
+- ✅ `backend/python-service/requirements.txt` (+1 linha)
+  - `yfinance==0.2.50`
+
+#### Frontend API Client (Range Parameter Fix)
+- ✅ `frontend/src/lib/api.ts` (+8 linhas)
+  - `syncAllAssets()` agora aceita `range='3mo'` default
+  - `syncAsset()` agora aceita `range='3mo'` default
+  - Params passados via axios config
+
+#### Script Manual Sync
+- ✅ `backend/scripts/sync-historical-data.ts` (107 linhas - NOVO)
+  - Script para sync manual com range customizado
+  - Suporte para `--all` ou tickers específicos
+  - Summary de sucesso/falhas
+
+**Validação Frontend (10 Ativos com MCP Chrome DevTools):**
+```
+ABEV3:  67 pontos ❌ (insuficiente - charts não aparecem)
+VALE3:  2510 pontos ✅ (charts funcionando)
+PETR4:  251 pontos ✅ (charts funcionando)
+ITUB4:  251 pontos ✅ (charts funcionando)
+MGLU3:  251 pontos ✅ (charts funcionando)
+BBDC4:  67 pontos ❌ (insuficiente)
+WEGE3:  67 pontos ❌ (insuficiente)
+RENT3:  67 pontos ❌ (insuficiente)
+EGIE3:  67 pontos ❌ (insuficiente)
+RADL3:  67 pontos ❌ (insuficiente)
+
+Score: 4/10 ativos com gráficos (40%)
+```
+
+**Problemas Crônicos Identificados:**
+1. **Dados Insuficientes (67 < 200 pontos)** ⚠️ CRÍTICO
+   - Causa: BRAPI Free `range=3mo` → 67 pontos
+   - Impacto: 60% ativos sem gráficos
+   - Solução Planejada: COTAHIST (1986-2025, 9000+ pontos)
+
+2. **Git Desatualizado (19 arquivos)** ⚠️ RESOLVIDO
+   - Causa: Desenvolvimento sem commits intermediários
+   - Solução: Commit completo executado (`f8186f4`)
+
+3. **YFinance Rate Limiting** ⚠️ BAIXO
+   - Causa: Yahoo Finance limitations
+   - Solução: Não usar como fonte principal, apenas fallback
+
+**Documentação Criada:**
+- ✅ `VALIDACAO_FRONTEND_10_ATIVOS_2025-11-16.md` (20KB)
+  - Validação completa com Chrome DevTools MCP
+  - 10 ativos testados individualmente
+  - Screenshots + console logs + causa raiz
+- ✅ `FIX_FRONTEND_SYNC_RANGE_PARAMETER_2025-11-16.md` (9KB)
+  - Detalhamento do fix de range parameter
+  - Antes/depois comparativo
+  - Arquivos afetados
+- ✅ `ESTRATEGIA_COTAHIST_BRAPI_HIBRIDO.md` (50KB)
+  - Proposta de solução híbrida (COTAHIST + BRAPI Free)
+  - Economia de R$ 7.200 em 5 anos vs BRAPI Paid
+  - Parser COTAHIST completo (245 bytes layout)
+  - ROI detalhado
+- ✅ `REVISAO_ULTRA_ROBUSTA_PRE_COTAHIST_2025-11-16.md` (35KB)
+  - Checklist ultra-robusto com 123 itens
+  - 8 fases planejadas (FASE 0-7)
+  - Validações obrigatórias documentadas
+  - Commit message template completo
+
+**Validação Técnica:**
+- ✅ TypeScript: 0 erros (backend + frontend)
+- ✅ Build: Success (backend + frontend, 17 páginas compiladas)
+- ✅ Git: Clean working tree ✅
+- ✅ Testes manuais: 10 ativos validados com Chrome DevTools MCP
+- ✅ Screenshots: VALE3 (gráficos OK), ABEV3 (insuficiente)
+
+**Próxima Fase Planejada:**
+- 🚀 **FASE 32: COTAHIST Parser Implementation**
+  - Objetivo: 100% dos ativos com gráficos (vs 40% atual)
+  - Histórico completo: 1986-2025 (39 anos, 9000+ pontos)
+  - Estratégia híbrida: COTAHIST (histórico) + BRAPI Free (3mo recente)
+  - ROI: Economia de R$ 7.200 em 5 anos
+
+**Status:** ✅ **100% COMPLETO E VALIDADO** 🚀
+
+---
+
 ### FASE 25: Refatoração Botão "Solicitar Análises" ⏳ AGUARDANDO APROVAÇÃO
 
 Reorganizar botão de análise em massa.

@@ -201,3 +201,57 @@ class HistoricalDataResponse(BaseModel):
     interval: str
     data_points: int
     prices: List[HistoricalPricePoint]
+
+
+# ============================================================================
+# COTAHIST MODELS (B3 Official Historical Data)
+# ============================================================================
+
+class CotahistRequest(BaseModel):
+    """
+    Request to fetch historical data from COTAHIST (B3 official source)
+
+    COTAHIST provides complete historical data from 1986 to present:
+    - Source: https://bvmf.bmfbovespa.com.br/InstDados/SerHist/
+    - Coverage: 2000+ assets (all B3 stocks, FIIs, ETFs)
+    - Cost: 100% FREE
+    """
+    start_year: int = Field(default=1986, ge=1986, le=2024, description="Start year (1986-2024)")
+    end_year: int = Field(default=2024, ge=1986, le=2024, description="End year (1986-2024)")
+    tickers: Optional[List[str]] = Field(default=None, description="List of tickers to filter (optional, all if None)")
+
+    @validator('end_year')
+    def end_year_must_be_after_start(cls, v, values):
+        """Ensure end_year >= start_year"""
+        if 'start_year' in values and v < values['start_year']:
+            raise ValueError('end_year must be >= start_year')
+        return v
+
+
+class CotahistPricePoint(BaseModel):
+    """
+    Single historical price data point from COTAHIST
+
+    Note: COTAHIST prices are NOT adjusted for splits/dividends.
+    For adjusted prices, use BRAPI or YFinance.
+    """
+    ticker: str = Field(..., description="Asset ticker (e.g., ABEV3)")
+    date: str = Field(..., description="ISO date string (YYYY-MM-DD)")
+    open: float = Field(..., description="Opening price (unadjusted)")
+    high: float = Field(..., description="Highest price (unadjusted)")
+    low: float = Field(..., description="Lowest price (unadjusted)")
+    close: float = Field(..., description="Closing price (unadjusted)")
+    volume: int = Field(..., description="Trading volume")
+
+
+class CotahistResponse(BaseModel):
+    """
+    Response from /cotahist/fetch endpoint
+    """
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    start_year: int
+    end_year: int
+    years_processed: int
+    total_records: int
+    tickers_filter: Optional[List[str]]
+    data: List[CotahistPricePoint]

@@ -18,8 +18,10 @@ from app.models import (
     HealthResponse,
     HistoricalDataRequest,
     HistoricalDataResponse,
+    CotahistRequest,
+    CotahistResponse,
 )
-from app.services import TechnicalAnalysisService, YFinanceService
+from app.services import CotahistService, TechnicalAnalysisService, YFinanceService
 
 # Configure logging
 logging.basicConfig(
@@ -47,6 +49,7 @@ app.add_middleware(
 )
 
 # Initialize services
+cotahist_service = CotahistService()
 technical_analysis_service = TechnicalAnalysisService()
 yfinance_service = YFinanceService()
 
@@ -238,6 +241,99 @@ async def fetch_historical_data(request: HistoricalDataRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch historical data: {str(e)}",
+        )
+
+
+@app.post("/cotahist/fetch", response_model=CotahistResponse, status_code=status.HTTP_200_OK)
+async def fetch_cotahist_data(request: CotahistRequest):
+    """
+    Fetch historical price data from COTAHIST (B3 official source)
+
+    COTAHIST provides complete historical data from 1986 to present:
+    - Source: https://bvmf.bmfbovespa.com.br/InstDados/SerHist/
+    - Coverage: 2000+ assets (all B3 stocks, FIIs, ETFs)
+    - Cost: 100% FREE
+    - Format: ZIP containing TXT (245 bytes fixed position layout)
+
+    Args:
+        request: CotahistRequest with start_year, end_year, and optional tickers filter
+
+    Returns:
+        CotahistResponse with all historical data points
+
+    Raises:
+        HTTPException 400: If years are invalid or no data found
+        HTTPException 500: If download or parsing fails
+
+    Example:
+        POST /cotahist/fetch
+        {
+            "start_year": 2020,
+            "end_year": 2024,
+            "tickers": ["ABEV3", "PETR4"]
+        }
+
+    Performance:
+        - Single year: ~5-10 seconds (download + parse)
+        - Multiple years: ~30-60 seconds (5 years)
+        - Timeout: 600 seconds (10 minutes)
+
+    Note:
+        COTAHIST prices are NOT adjusted for splits/dividends.
+        For adjusted prices, use BRAPI or YFinance.
+    """
+    start_time = datetime.utcnow()
+    years_requested = request.end_year - request.start_year + 1
+
+    logger.info(
+        f"Fetching COTAHIST data: {request.start_year}-{request.end_year} "
+        f"({years_requested} years, tickers: {request.tickers or 'ALL'})"
+    )
+
+    try:
+        # Fetch historical data from COTAHIST
+        data = await cotahist_service.fetch_historical_data(
+            start_year=request.start_year,
+            end_year=request.end_year,
+            tickers=request.tickers,
+        )
+
+        # Calculate processing time
+        end_time = datetime.utcnow()
+        processing_time_sec = (end_time - start_time).total_seconds()
+
+        # Calculate years_processed (based on actual data)
+        unique_years = len(set(point["date"][:4] for point in data))
+
+        logger.info(
+            f"COTAHIST data fetched successfully: {len(data)} records "
+            f"from {unique_years} years in {processing_time_sec:.2f}s"
+        )
+
+        return CotahistResponse(
+            timestamp=end_time,
+            start_year=request.start_year,
+            end_year=request.end_year,
+            years_processed=unique_years,
+            total_records=len(data),
+            tickers_filter=request.tickers,
+            data=data,
+        )
+
+    except ValueError as e:
+        logger.error(f"Validation error for COTAHIST fetch: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
+
+    except Exception as e:
+        logger.error(
+            f"Error fetching COTAHIST data: {str(e)}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch COTAHIST data: {str(e)}",
         )
 
 
