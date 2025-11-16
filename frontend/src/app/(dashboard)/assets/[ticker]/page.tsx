@@ -92,10 +92,50 @@ export default function AssetDetailPage({
         if (!response.ok) throw new Error('Failed to fetch technical data');
 
         const data = await response.json();
-        setTechnicalData(data);
+
+        // Transform backend property names (snake_case) to frontend format (camelCase)
+        // Backend: sma_20, sma_50, sma_200, ema_9, ema_21, bollinger_bands, macd.macd
+        // Frontend: sma20, sma50, sma200, ema9, ema21, bollinger, macd.line
+        const transformedData = {
+          ...data,
+          indicators: {
+            // Moving Averages (snake_case to camelCase)
+            sma20: data.indicators.sma_20,
+            sma50: data.indicators.sma_50,
+            sma200: data.indicators.sma_200,
+            ema9: data.indicators.ema_9,
+            ema21: data.indicators.ema_21,
+            // RSI (no transformation needed)
+            rsi: data.indicators.rsi,
+            // MACD (rename macd.macd to macd.line)
+            macd: data.indicators.macd ? {
+              line: data.indicators.macd.macd,
+              signal: data.indicators.macd.signal,
+              histogram: data.indicators.macd.histogram,
+            } : undefined,
+            // Stochastic (no transformation needed)
+            stochastic: data.indicators.stochastic,
+            // Bollinger Bands (rename bollinger_bands to bollinger)
+            bollinger: data.indicators.bollinger_bands ? {
+              upper: data.indicators.bollinger_bands.upper,
+              middle: data.indicators.bollinger_bands.middle,
+              lower: data.indicators.bollinger_bands.lower,
+            } : undefined,
+            // Keep other indicators as-is
+            atr: data.indicators.atr,
+            obv: data.indicators.obv,
+            volume_sma: data.indicators.volume_sma,
+            pivot: data.indicators.pivot,
+            trend: data.indicators.trend,
+            trend_strength: data.indicators.trend_strength,
+          },
+        };
+
+        setTechnicalData(transformedData);
 
         // Log metadata (cache hit/miss, duration, errors)
         console.log('Technical data metadata:', data.metadata);
+        console.log('Transformed indicators keys:', Object.keys(transformedData.indicators));
 
         // Show warning if insufficient data
         if (data.metadata.error === 'INSUFFICIENT_DATA') {

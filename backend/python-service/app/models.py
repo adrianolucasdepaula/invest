@@ -3,7 +3,7 @@ Pydantic Models for Python Service
 Descrição: Schemas para validação de dados de entrada/saída
 """
 
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Union
 from datetime import datetime
 from pydantic import BaseModel, Field, validator
 
@@ -63,23 +63,23 @@ class IndicatorsRequest(BaseModel):
 
 class MACDIndicator(BaseModel):
     """MACD Indicator"""
-    macd: float
-    signal: float
-    histogram: float
+    macd: List[Optional[float]]
+    signal: List[Optional[float]]
+    histogram: List[Optional[float]]
 
 
 class StochasticIndicator(BaseModel):
     """Stochastic Oscillator"""
-    k: float
-    d: float
+    k: List[Optional[float]]
+    d: List[Optional[float]]
 
 
 class BollingerBandsIndicator(BaseModel):
     """Bollinger Bands"""
-    upper: float
-    middle: float
-    lower: float
-    bandwidth: float
+    upper: List[Optional[float]]
+    middle: List[Optional[float]]
+    lower: List[Optional[float]]
+    bandwidth: float  # bandwidth é um valor derivado único, não array
 
 
 class PivotPointsIndicator(BaseModel):
@@ -96,31 +96,33 @@ class PivotPointsIndicator(BaseModel):
 class TechnicalIndicators(BaseModel):
     """
     Complete technical indicators response
+    Note: All moving averages and oscillators return full historical arrays
+    Arrays may contain None for periods where indicators cannot be calculated
     """
-    # Trend Indicators
-    sma_20: float = Field(..., description="Simple Moving Average (20)")
-    sma_50: float = Field(..., description="Simple Moving Average (50)")
-    sma_200: float = Field(..., description="Simple Moving Average (200)")
-    ema_9: float = Field(..., description="Exponential Moving Average (9)")
-    ema_21: float = Field(..., description="Exponential Moving Average (21)")
+    # Trend Indicators (historical arrays)
+    sma_20: List[Optional[float]] = Field(..., description="Simple Moving Average (20) - historical values")
+    sma_50: List[Optional[float]] = Field(..., description="Simple Moving Average (50) - historical values")
+    sma_200: List[Optional[float]] = Field(..., description="Simple Moving Average (200) - historical values")
+    ema_9: List[Optional[float]] = Field(..., description="Exponential Moving Average (9) - historical values")
+    ema_21: List[Optional[float]] = Field(..., description="Exponential Moving Average (21) - historical values")
 
-    # Momentum Indicators
-    rsi: float = Field(..., ge=0, le=100, description="Relative Strength Index (14)")
-    macd: MACDIndicator = Field(..., description="MACD Indicator")
-    stochastic: StochasticIndicator = Field(..., description="Stochastic Oscillator (14)")
+    # Momentum Indicators (historical arrays)
+    rsi: List[Optional[float]] = Field(..., description="Relative Strength Index (14) - historical values")
+    macd: MACDIndicator = Field(..., description="MACD Indicator - historical arrays")
+    stochastic: StochasticIndicator = Field(..., description="Stochastic Oscillator (14) - historical arrays")
 
-    # Volatility Indicators
-    bollinger_bands: BollingerBandsIndicator = Field(..., description="Bollinger Bands (20, 2)")
-    atr: float = Field(..., gt=0, description="Average True Range (14)")
+    # Volatility Indicators (historical arrays)
+    bollinger_bands: BollingerBandsIndicator = Field(..., description="Bollinger Bands (20, 2) - historical arrays")
+    atr: List[Optional[float]] = Field(..., description="Average True Range (14) - historical values")
 
-    # Volume Indicators
-    obv: float = Field(..., description="On-Balance Volume")
-    volume_sma: float = Field(..., ge=0, description="Volume SMA (20)")
+    # Volume Indicators (historical arrays)
+    obv: List[Optional[float]] = Field(..., description="On-Balance Volume - historical values")
+    volume_sma: List[Optional[float]] = Field(..., description="Volume SMA (20) - historical values")
 
-    # Support and Resistance
-    pivot: PivotPointsIndicator = Field(..., description="Pivot Points")
+    # Support and Resistance (latest values only)
+    pivot: PivotPointsIndicator = Field(..., description="Pivot Points - latest calculation")
 
-    # Trend Analysis
+    # Trend Analysis (latest values only)
     trend: Literal['UPTREND', 'DOWNTREND', 'SIDEWAYS'] = Field(..., description="Current trend")
     trend_strength: float = Field(..., ge=0, le=100, description="Trend strength (0-100)")
 

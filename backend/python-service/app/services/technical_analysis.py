@@ -30,6 +30,20 @@ class TechnicalAnalysisService:
     def __init__(self):
         self.min_data_points = 200
 
+    def _series_to_list(self, series: pd.Series) -> List[float]:
+        """
+        Convert pandas Series to List[float], replacing NaN with None and filtering
+
+        Args:
+            series: Pandas Series
+
+        Returns:
+            List of float values (NaN values replaced with None, then filtered out)
+        """
+        # Replace NaN with None, convert to list, then filter out None values
+        # Frontend can handle missing data by not plotting those points
+        return [float(v) if not pd.isna(v) else None for v in series.values]
+
     def calculate_indicators(
         self, ticker: str, prices: List[PriceDataPoint]
     ) -> TechnicalIndicators:
@@ -110,7 +124,7 @@ class TechnicalAnalysisService:
     # TREND INDICATORS
     # ========================================================================
 
-    def _calculate_sma(self, df: pd.DataFrame, period: int) -> float:
+    def _calculate_sma(self, df: pd.DataFrame, period: int) -> List[float]:
         """
         Simple Moving Average using pandas_ta
 
@@ -119,12 +133,12 @@ class TechnicalAnalysisService:
             period: SMA period
 
         Returns:
-            Latest SMA value
+            Historical SMA values (array)
         """
         sma = ta.sma(df["close"], length=period)
-        return float(sma.iloc[-1])
+        return self._series_to_list(sma)
 
-    def _calculate_ema(self, df: pd.DataFrame, period: int) -> float:
+    def _calculate_ema(self, df: pd.DataFrame, period: int) -> List[float]:
         """
         Exponential Moving Average using pandas_ta
 
@@ -133,16 +147,16 @@ class TechnicalAnalysisService:
             period: EMA period
 
         Returns:
-            Latest EMA value
+            Historical EMA values (array)
         """
         ema = ta.ema(df["close"], length=period)
-        return float(ema.iloc[-1])
+        return self._series_to_list(ema)
 
     # ========================================================================
     # MOMENTUM INDICATORS
     # ========================================================================
 
-    def _calculate_rsi(self, df: pd.DataFrame, period: int = 14) -> float:
+    def _calculate_rsi(self, df: pd.DataFrame, period: int = 14) -> List[float]:
         """
         Relative Strength Index using pandas_ta
 
@@ -151,32 +165,32 @@ class TechnicalAnalysisService:
             period: RSI period (default 14)
 
         Returns:
-            Latest RSI value (0-100)
+            Historical RSI values (0-100) as array
         """
         rsi = ta.rsi(df["close"], length=period)
-        return float(rsi.iloc[-1])
+        return self._series_to_list(rsi)
 
     def _calculate_macd(self, df: pd.DataFrame) -> MACDIndicator:
         """
         MACD (Moving Average Convergence Divergence) using pandas_ta
 
-        CORREÇÃO: Agora usa pandas_ta que calcula corretamente:
+        Calculation:
         - MACD Line = EMA(12) - EMA(26)
-        - Signal Line = EMA(9) of MACD Line  ← CORRETO (antes era simplificado)
+        - Signal Line = EMA(9) of MACD Line
         - Histogram = MACD - Signal
 
         Args:
             df: OHLCV DataFrame
 
         Returns:
-            MACDIndicator with macd, signal, histogram
+            MACDIndicator with historical arrays for macd, signal, histogram
         """
         macd_df = ta.macd(df["close"], fast=12, slow=26, signal=9)
 
         return MACDIndicator(
-            macd=float(macd_df[f"MACD_12_26_9"].iloc[-1]),
-            signal=float(macd_df[f"MACDs_12_26_9"].iloc[-1]),
-            histogram=float(macd_df[f"MACDh_12_26_9"].iloc[-1]),
+            macd=self._series_to_list(macd_df[f"MACD_12_26_9"]),
+            signal=self._series_to_list(macd_df[f"MACDs_12_26_9"]),
+            histogram=self._series_to_list(macd_df[f"MACDh_12_26_9"]),
         )
 
     def _calculate_stochastic(
@@ -185,24 +199,24 @@ class TechnicalAnalysisService:
         """
         Stochastic Oscillator using pandas_ta
 
-        CORREÇÃO: Agora usa pandas_ta que calcula corretamente:
+        Calculation:
         - %K = ((Close - Lowest Low) / (Highest High - Lowest Low)) * 100
-        - %D = SMA(3) of %K  ← CORRETO (antes era simplificado)
+        - %D = SMA(3) of %K
 
         Args:
             df: OHLCV DataFrame
             period: Stochastic period (default 14)
 
         Returns:
-            StochasticIndicator with k and d
+            StochasticIndicator with historical arrays for k and d
         """
         stoch_df = ta.stoch(
             df["high"], df["low"], df["close"], k=period, d=3, smooth_k=3
         )
 
         return StochasticIndicator(
-            k=float(stoch_df[f"STOCHk_{period}_3_3"].iloc[-1]),
-            d=float(stoch_df[f"STOCHd_{period}_3_3"].iloc[-1]),
+            k=self._series_to_list(stoch_df[f"STOCHk_{period}_3_3"]),
+            d=self._series_to_list(stoch_df[f"STOCHd_{period}_3_3"]),
         )
 
     # ========================================================================
@@ -221,23 +235,29 @@ class TechnicalAnalysisService:
             std_dev: Standard deviation multiplier (default 2)
 
         Returns:
-            BollingerBandsIndicator with upper, middle, lower, bandwidth
+            BollingerBandsIndicator with historical arrays for upper, middle, lower, and latest bandwidth
         """
         bb_df = ta.bbands(df["close"], length=period, std=std_dev)
 
         # pandas_ta uses float notation in column names (e.g., "BBU_20_2.0")
-        upper = float(bb_df[f"BBU_{period}_{float(std_dev)}"].iloc[-1])
-        middle = float(bb_df[f"BBM_{period}_{float(std_dev)}"].iloc[-1])
-        lower = float(bb_df[f"BBL_{period}_{float(std_dev)}"].iloc[-1])
+        upper_series = bb_df[f"BBU_{period}_{float(std_dev)}"]
+        middle_series = bb_df[f"BBM_{period}_{float(std_dev)}"]
+        lower_series = bb_df[f"BBL_{period}_{float(std_dev)}"]
 
-        # Calculate bandwidth
-        bandwidth = ((upper - lower) / middle) * 100
+        # Calculate bandwidth (latest value only)
+        upper_latest = float(upper_series.iloc[-1])
+        middle_latest = float(middle_series.iloc[-1])
+        lower_latest = float(lower_series.iloc[-1])
+        bandwidth = ((upper_latest - lower_latest) / middle_latest) * 100
 
         return BollingerBandsIndicator(
-            upper=upper, middle=middle, lower=lower, bandwidth=bandwidth
+            upper=self._series_to_list(upper_series),
+            middle=self._series_to_list(middle_series),
+            lower=self._series_to_list(lower_series),
+            bandwidth=bandwidth
         )
 
-    def _calculate_atr(self, df: pd.DataFrame, period: int = 14) -> float:
+    def _calculate_atr(self, df: pd.DataFrame, period: int = 14) -> List[float]:
         """
         Average True Range using pandas_ta
 
@@ -246,16 +266,16 @@ class TechnicalAnalysisService:
             period: ATR period (default 14)
 
         Returns:
-            Latest ATR value
+            Historical ATR values (array)
         """
         atr = ta.atr(df["high"], df["low"], df["close"], length=period)
-        return float(atr.iloc[-1])
+        return self._series_to_list(atr)
 
     # ========================================================================
     # VOLUME INDICATORS
     # ========================================================================
 
-    def _calculate_obv(self, df: pd.DataFrame) -> float:
+    def _calculate_obv(self, df: pd.DataFrame) -> List[float]:
         """
         On-Balance Volume using pandas_ta
 
@@ -263,12 +283,12 @@ class TechnicalAnalysisService:
             df: OHLCV DataFrame
 
         Returns:
-            Latest OBV value
+            Historical OBV values (array)
         """
         obv = ta.obv(df["close"], df["volume"])
-        return float(obv.iloc[-1])
+        return self._series_to_list(obv)
 
-    def _calculate_volume_sma(self, df: pd.DataFrame, period: int = 20) -> float:
+    def _calculate_volume_sma(self, df: pd.DataFrame, period: int = 20) -> List[float]:
         """
         Volume Simple Moving Average
 
@@ -277,10 +297,10 @@ class TechnicalAnalysisService:
             period: SMA period (default 20)
 
         Returns:
-            Latest Volume SMA value
+            Historical Volume SMA values (array)
         """
         volume_sma = ta.sma(df["volume"], length=period)
-        return float(volume_sma.iloc[-1])
+        return self._series_to_list(volume_sma)
 
     # ========================================================================
     # SUPPORT AND RESISTANCE
@@ -332,8 +352,11 @@ class TechnicalAnalysisService:
             Trend direction: 'UPTREND', 'DOWNTREND', or 'SIDEWAYS'
         """
         current_price = float(df["close"].iloc[-1])
-        sma_50 = self._calculate_sma(df, 50)
-        sma_200 = self._calculate_sma(df, 200)
+        # Get latest values from arrays
+        sma_50_array = self._calculate_sma(df, 50)
+        sma_200_array = self._calculate_sma(df, 200)
+        sma_50 = sma_50_array[-1] if sma_50_array else 0
+        sma_200 = sma_200_array[-1] if sma_200_array else 0
 
         if current_price > sma_50 and sma_50 > sma_200:
             return "UPTREND"
