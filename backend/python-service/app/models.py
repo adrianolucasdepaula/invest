@@ -230,18 +230,33 @@ class CotahistRequest(BaseModel):
 
 class CotahistPricePoint(BaseModel):
     """
-    Single historical price data point from COTAHIST
+    Single historical price data point from COTAHIST (16 campos completos)
 
     Note: COTAHIST prices are NOT adjusted for splits/dividends.
-    For adjusted prices, use BRAPI or YFinance.
+    For adjusted prices, use BRAPI.
+
+    Layout completo (245 bytes fixed-position):
+    - 6 campos básicos (compatível PriceDataPoint)
+    - 8 campos exclusivos COTAHIST
     """
-    ticker: str = Field(..., description="Asset ticker (e.g., ABEV3)")
+    # Campos básicos (compatível com PriceDataPoint e BRAPI)
+    ticker: str = Field(..., min_length=1, max_length=12, description="Asset ticker (e.g., ABEV3)")
     date: str = Field(..., description="ISO date string (YYYY-MM-DD)")
-    open: float = Field(..., description="Opening price (unadjusted)")
-    high: float = Field(..., description="Highest price (unadjusted)")
-    low: float = Field(..., description="Lowest price (unadjusted)")
-    close: float = Field(..., description="Closing price (unadjusted)")
-    volume: int = Field(..., description="Trading volume")
+    open: float = Field(..., ge=0, description="Opening price (unadjusted, ÷100)")
+    high: float = Field(..., ge=0, description="Highest price (unadjusted, ÷100)")
+    low: float = Field(..., ge=0, description="Lowest price (unadjusted, ÷100)")
+    close: float = Field(..., ge=0, description="Closing price (unadjusted, ÷100)")
+    volume: int = Field(..., ge=0, description="Trading volume")
+
+    # Campos exclusivos COTAHIST (8 novos)
+    company_name: str = Field(..., max_length=50, description="Company name (NOMRES)")
+    stock_type: str = Field(..., max_length=10, description="Stock type: ON/PN/UNT (ESPECI)")
+    market_type: int = Field(..., ge=0, description="Market type code (TPMERC)")
+    bdi_code: int = Field(..., ge=2, le=96, description="BDI code: 02=Standard, 12=FII, 96=Fractional")
+    average_price: float = Field(..., ge=0, description="Average price (PREMED, ÷100)")
+    best_bid: float = Field(..., ge=0, description="Best bid price (PREOFC, ÷100)")
+    best_ask: float = Field(..., ge=0, description="Best ask price (PREOFV, ÷100)")
+    trades_count: int = Field(..., ge=0, description="Number of trades (QUATOT)")
 
 
 class CotahistResponse(BaseModel):

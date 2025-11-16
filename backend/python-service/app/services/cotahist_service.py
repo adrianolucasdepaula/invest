@@ -81,21 +81,31 @@ class CotahistService:
 
         Filtros aplicados:
         - TIPREG = 01 (cotações, ignora header/trailer)
-        - CODBDI = 02 (lote padrão) ou 12 (FIIs)
+        - CODBDI = 02 (lote padrão), 12 (FIIs), 96 (fracionárias)
 
         Args:
             line: Linha do arquivo TXT (245 bytes, pode incluir \n no final = 246)
 
         Returns:
-            Dict com dados parseados ou None se linha deve ser ignorada
+            Dict com 16 campos parseados ou None se linha deve ser ignorada
             {
-                "ticker": str,
-                "date": str (ISO format YYYY-MM-DD),
-                "open": float,
-                "high": float,
-                "low": float,
-                "close": float,
-                "volume": int
+                "ticker": str,                # CODNEG (12 chars)
+                "date": str,                  # ISO format YYYY-MM-DD
+                "open": float,                # Abertura (÷100)
+                "high": float,                # Máxima (÷100)
+                "low": float,                 # Mínima (÷100)
+                "close": float,               # Fechamento (÷100)
+                "volume": int,                # Volume total
+
+                # Campos exclusivos COTAHIST (8 novos)
+                "company_name": str,          # NOMRES (12 chars)
+                "stock_type": str,            # ESPECI (10 chars)
+                "market_type": int,           # TPMERC (3 digits)
+                "bdi_code": int,              # CODBDI (2 digits)
+                "average_price": float,       # PREMED (÷100)
+                "best_bid": float,            # PREOFC (÷100)
+                "best_ask": float,            # PREOFV (÷100)
+                "trades_count": int,          # QUATOT (quantidade negócios)
             }
         """
         # Validar tamanho da linha (245 ou 246 com \n)
@@ -107,26 +117,37 @@ class CotahistService:
         if line_len == 246:
             line = line.rstrip('\n\r')
 
-        # Extrair campos (posições são 0-indexed, então subtrair 1)
-        tipreg = line[0:2]  # Posições 1-2
-        data_pregao = line[2:10]  # Posições 3-10
-        codbdi = line[10:12]  # Posições 11-12
-        codneg = line[12:24].strip()  # Posições 13-24 (ticker)
+        # Extrair campos básicos (posições 0-indexed, subtrair 1 do layout oficial)
+        tipreg = line[0:2]                    # Tipo registro (sempre "01")
+        data_pregao = line[2:10]              # AAAAMMDD
+        codbdi = line[10:12]                  # Código BDI
+        codneg = line[12:24].strip()          # Ticker (12 chars)
+
+        # Campos exclusivos COTAHIST (novos)
+        tpmerc = line[24:27].strip()          # Tipo mercado (3 chars)
+        nomres = line[27:39].strip()          # Nome empresa (12 chars)
+        especi = line[39:49].strip()          # Especificação ON/PN/UNT (10 chars)
 
         # Filtrar: apenas TIPREG=01 (cotações)
         if tipreg != "01":
             return None
 
-        # Filtrar: apenas CODBDI=02 (lote padrão) ou 12 (FIIs)
-        if codbdi not in ("02", "12"):
+        # Filtrar: CODBDI=02 (lote padrão), 12 (FIIs), 96 (fracionárias)
+        if codbdi not in ("02", "12", "96"):
             return None
 
         # Extrair preços (dividir por 100 - formato B3)
-        preabe = int(line[56:69]) / 100.0  # Posições 57-69 (open)
-        premax = int(line[69:82]) / 100.0  # Posições 70-82 (high)
-        premin = int(line[82:95]) / 100.0  # Posições 83-95 (low)
-        preult = int(line[108:121]) / 100.0  # Posições 109-121 (close)
-        voltot = int(line[152:170])  # Posições 153-170 (volume)
+        preabe = int(line[56:69]) / 100.0     # Abertura (pos 57-69)
+        premax = int(line[69:82]) / 100.0     # Máxima (pos 70-82)
+        premin = int(line[82:95]) / 100.0     # Mínima (pos 83-95)
+        premed = int(line[95:108]) / 100.0    # Média (pos 96-108) - NOVO
+        preult = int(line[108:121]) / 100.0   # Fechamento (pos 109-121)
+        preofc = int(line[121:134]) / 100.0   # Melhor oferta compra (pos 122-134) - NOVO
+        preofv = int(line[134:147]) / 100.0   # Melhor oferta venda (pos 135-147) - NOVO
+
+        # Extrair volumes
+        voltot = int(line[152:170])           # Volume total (pos 153-170)
+        quatot = int(line[170:188])           # Quantidade negócios (pos 171-188) - NOVO
 
         # Converter data AAAAMMDD para ISO (YYYY-MM-DD)
         try:
@@ -137,6 +158,7 @@ class CotahistService:
             return None
 
         return {
+            # Campos básicos (compatível com PriceDataPoint)
             "ticker": codneg,
             "date": date_iso,
             "open": preabe,
@@ -144,6 +166,16 @@ class CotahistService:
             "low": premin,
             "close": preult,
             "volume": voltot,
+
+            # Campos exclusivos COTAHIST (8 novos)
+            "company_name": nomres,
+            "stock_type": especi,
+            "market_type": int(tpmerc) if tpmerc else 0,
+            "bdi_code": int(codbdi),
+            "average_price": premed,
+            "best_bid": preofc,
+            "best_ask": preofv,
+            "trades_count": quatot,
         }
 
     def parse_file(self, zip_content: bytes) -> List[Dict]:
