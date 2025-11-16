@@ -1,8 +1,9 @@
 # ✅ CHECKLIST TODO MASTER - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Versão:** 2.0.0 (Ultra-Robusto)
+**Versão:** 2.1.0 (Ultra-Robusto + 4 Melhorias)
 **Criado:** 2025-11-15
+**Última Atualização:** 2025-11-15 (4 melhorias aplicadas)
 **Mantenedor:** Claude Code (Sonnet 4.5)
 **Status:** 🔴 **OBRIGATÓRIO ANTES DE CADA FASE/ETAPA**
 
@@ -181,7 +182,54 @@ docker-compose logs -f <service> --tail=50
 - Documentar solução no TROUBLESHOOTING.md
 - Adicionar validação preventiva no CI/CD (futuro)
 
-### 6. Dados Reais > Mocks
+### 6. Gerenciamento de Ambiente (system-manager.ps1)
+
+**SEMPRE usar system-manager.ps1 para gerenciar o ambiente:**
+
+```powershell
+# 6.1. Subir ambiente completo
+.\system-manager.ps1 up
+
+# 6.2. Parar ambiente
+.\system-manager.ps1 down
+
+# 6.3. Ver status de todos os serviços
+.\system-manager.ps1 status
+
+# 6.4. Ver logs de serviço específico
+.\system-manager.ps1 logs <service-name>
+
+# Exemplos:
+.\system-manager.ps1 logs api-service
+.\system-manager.ps1 logs scrapers
+.\system-manager.ps1 logs frontend
+```
+
+**Modificações no Script:**
+
+```bash
+# Se novo serviço adicionado ao docker-compose.yml:
+- [ ] Atualizar system-manager.ps1 (adicionar serviço na lista)
+- [ ] Documentar novo serviço no próprio script (comentários)
+
+# Se nova feature necessária:
+- [ ] Adicionar função ao system-manager.ps1
+- [ ] Testar função em ambiente local
+- [ ] Documentar uso no INSTALL.md
+
+# Exemplo de nova feature:
+# .\system-manager.ps1 backup   → Criar backup completo (DB + arquivos)
+# .\system-manager.ps1 restore  → Restaurar backup
+```
+
+**Por quê usar system-manager.ps1?**
+- Comandos padronizados (evita erros de digitação)
+- Gerencia dependências entre serviços
+- Valida pré-requisitos antes de subir ambiente
+- Facilita onboarding de novos desenvolvedores
+- Consistência entre ambientes (local, staging, produção)
+
+### 7. Dados Reais > Mocks
 
 **SEMPRE usar dados reais coletados dos scrapers:**
 
@@ -207,6 +255,189 @@ const asset = await api.assets.getByTicker("PETR4");
 - Charts com dados fake
 - Análises com valores inventados
 - Relatórios com placeholders
+
+### 8. Precisão de Dados Financeiros ✅ OBRIGATÓRIO
+
+**CONTEXTO:**
+Sistema financeiro exige precisão absoluta. NUNCA manipular valores monetários.
+
+**PROIBIÇÕES ABSOLUTAS:**
+
+❌ **NUNCA fazer:**
+
+1. **Arredondar preços, dividendos, ou qualquer valor monetário**
+   ```typescript
+   // ❌ PROIBIDO
+   const price = Math.round(asset.price * 100) / 100;  // 35.4567 → 35.46
+   const price = asset.price.toFixed(2);               // "35.46" (perde precisão)
+   ```
+
+2. **Converter tipos de forma insegura**
+   ```typescript
+   // ❌ PROIBIDO
+   const price = parseFloat(priceString);  // Sem validação
+   const price = Number(priceString);      // Pode retornar NaN
+   ```
+
+3. **Ajustar valores "para caber no chart"**
+   ```typescript
+   // ❌ PROIBIDO
+   const adjustedPrice = price * 0.95;  // "Ajuste" para visualização
+   const scaledPrice = price / 1000;    // "Simplificar" grandes números
+   ```
+
+4. **Truncar decimais importantes**
+   ```typescript
+   // ❌ PROIBIDO
+   const price = Number(asset.price.toFixed(2));  // 35.4567 → 35.46
+   const price = Math.floor(asset.price * 100) / 100;
+   ```
+
+✅ **SEMPRE fazer:**
+
+1. **Usar tipo `number` do TypeScript (precisão IEEE 754)**
+   ```typescript
+   // ✅ CORRETO
+   const price: number = asset.price;  // 35.4567 mantém precisão
+
+   // ✅ CORRETO: Validação de tipo
+   if (typeof price !== 'number' || isNaN(price)) {
+     throw new Error('Preço inválido');
+   }
+   ```
+
+2. **Manter precisão decimal original**
+   ```typescript
+   // ✅ CORRETO: Salvar no DB exatamente como veio do scraper
+   const asset = {
+     ticker: "PETR4",
+     price: 35.4567,  // Exatamente como retornado pela API
+     lastUpdate: new Date()
+   };
+
+   // Database schema deve usar DECIMAL/NUMERIC (não FLOAT)
+   // @Column({ type: 'decimal', precision: 10, scale: 4 })
+   // price: number;
+   ```
+
+3. **Cross-validar com 3+ fontes antes de salvar**
+   ```typescript
+   // ✅ CORRETO: Validar divergências, mas NÃO ajustar valores
+   const prices = await Promise.all([
+     fundamentus.getPrice(ticker),
+     brapi.getPrice(ticker),
+     statusInvest.getPrice(ticker),
+   ]);
+
+   // Calcular divergência
+   const maxPrice = Math.max(...prices);
+   const minPrice = Math.min(...prices);
+   const divergence = ((maxPrice - minPrice) / minPrice) * 100;
+
+   // Se divergência > 1%, logar WARNING (mas NÃO ajustar)
+   if (divergence > 1) {
+     logger.warn(`Divergência de ${divergence.toFixed(2)}% para ${ticker}`, {
+       prices,
+       sources: ['fundamentus', 'brapi', 'statusInvest']
+     });
+   }
+
+   // Salvar valor da fonte mais confiável (definida por prioridade)
+   const finalPrice = prices[0];  // fundamentus (prioridade 1)
+   ```
+
+4. **Logar divergências entre fontes (sem ajustar)**
+   ```typescript
+   // ✅ CORRETO: Transparência total
+   if (Math.abs(price1 - price2) > 0.01) {
+     logger.warn('Divergência de preços detectada', {
+       ticker,
+       fundamentus: price1,
+       brapi: price2,
+       divergence: Math.abs(price1 - price2),
+       percentual: ((Math.abs(price1 - price2) / price1) * 100).toFixed(2) + '%'
+     });
+     // NÃO ajustar, apenas logar
+   }
+   ```
+
+5. **Exibir valores exatos no frontend**
+   ```typescript
+   // ✅ CORRETO: Formatação visual (apenas display)
+   <div className="text-2xl font-bold">
+     {new Intl.NumberFormat('pt-BR', {
+       style: 'currency',
+       currency: 'BRL',
+       minimumFractionDigits: 2,
+       maximumFractionDigits: 4  // Preservar até 4 decimais
+     }).format(asset.price)}
+   </div>
+
+   // Resultado: R$ 35,4567 (preserva precisão original)
+
+   // ❌ ERRADO:
+   // R$ {asset.price.toFixed(2)}  → R$ 35.46 (perde decimais)
+   ```
+
+**Exceções Permitidas:**
+
+1. **Formatação Visual (apenas display, DB mantém precisão):**
+   ```typescript
+   // ✅ PERMITIDO: Display arredondado, DB preserva original
+   const displayPrice = "R$ 35,46";   // Frontend (visual)
+   const dbPrice = 35.4567;            // Database (precisão)
+   ```
+
+2. **Agregações (indicar claramente que são aproximações):**
+   ```typescript
+   // ✅ PERMITIDO: Com indicação clara
+   const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+
+   // Exibir:
+   <span className="text-sm text-muted-foreground">
+     Preço Médio (aprox.): R$ {avgPrice.toFixed(2)}
+   </span>
+   ```
+
+3. **Indicadores Técnicos (natureza aproximada):**
+   ```typescript
+   // ✅ PERMITIDO: Indicadores técnicos são aproximações por natureza
+   const sma20 = prices.slice(-20).reduce((a, b) => a + b, 0) / 20;
+   const rsi = calculateRSI(prices);  // RSI não precisa 8 decimais
+
+   // Mas NUNCA arredondar os preços originais que alimentam os indicadores
+   ```
+
+**Validação:**
+
+```bash
+# Checklist de Precisão Financeira:
+- [ ] Todos os valores monetários salvos com precisão original? (sem toFixed, sem Math.round)
+- [ ] Cross-validation de 3+ fontes implementada?
+- [ ] Divergências logadas (mas não ajustadas automaticamente)?
+- [ ] Frontend exibe valores exatos (Intl.NumberFormat com maxFractionDigits adequado)?
+- [ ] Agregações indicam claramente que são aproximações?
+- [ ] Database usa DECIMAL/NUMERIC (não FLOAT)?
+- [ ] TypeScript valida tipos (typeof === 'number', !isNaN)?
+```
+
+**Database Schema Correto:**
+
+```typescript
+// ✅ CORRETO: Usar DECIMAL para valores monetários
+@Entity()
+export class Asset {
+  @Column({ type: 'decimal', precision: 10, scale: 4 })
+  price: number;  // 35.4567 → salvo exatamente
+
+  @Column({ type: 'decimal', precision: 15, scale: 4 })
+  dividendYield: number;  // 0.0567 → 5.67%
+}
+
+// ❌ ERRADO: FLOAT perde precisão
+// @Column({ type: 'float' })
+// price: number;  // 35.4567 pode virar 35.456699999
+```
 
 ---
 
@@ -767,6 +998,86 @@ git push origin main
 # Uso: Interações complexas, upload de arquivo
 ```
 
+### 2.1. Organização de Screenshots ✅
+
+**Estrutura de Pastas:**
+
+```
+validations/
+├── FASE_XX_NOME/
+│   ├── 1_playwright_page_load.png
+│   ├── 2_playwright_interaction.png
+│   ├── 3_playwright_network_requests.png
+│   ├── 4_chrome_devtools_console.png
+│   ├── 5_chrome_devtools_network.png
+│   └── 6_chrome_devtools_performance.png
+```
+
+**Nomenclatura Padrão:**
+
+```
+{ordem}_{mcp}_{tipo}_{feature}.png
+
+Exemplos:
+- 1_playwright_oauth_manager_initial.png
+- 2_playwright_oauth_manager_after_click.png
+- 3_playwright_network_requests.png
+- 4_chrome_devtools_console_errors.png
+- 5_chrome_devtools_network_fetch.png
+- 6_chrome_devtools_performance_trace.png
+```
+
+**Salvamento de Screenshots:**
+
+```typescript
+// Playwright MCP
+await mcp__playwright__browser_take_screenshot({
+  filename: "validations/FASE_30_BACKEND_INTEGRATION/1_playwright_technical_analysis.png",
+  fullPage: true
+});
+
+// Chrome DevTools MCP
+await mcp__chrome-devtools__take_screenshot({
+  filePath: "validations/FASE_30_BACKEND_INTEGRATION/4_chrome_devtools_console.png",
+  fullPage: true
+});
+```
+
+**Documentação de Screenshots:**
+
+```markdown
+# Em VALIDACAO_FASE_XX.md, sempre incluir seção:
+
+## Screenshots
+
+### Playwright MCP
+
+![1. Page Load](./validations/FASE_30_BACKEND_INTEGRATION/1_playwright_technical_analysis.png)
+*Página carregada com sucesso - todos os elementos visíveis*
+
+![2. Interaction](./validations/FASE_30_BACKEND_INTEGRATION/2_playwright_interaction.png)
+*Após clicar em "Calcular Indicadores" - resultados aparecem*
+
+### Chrome DevTools MCP
+
+![4. Console](./validations/FASE_30_BACKEND_INTEGRATION/4_chrome_devtools_console.png)
+*Console: 0 erros, 2 warnings não-críticos (React DevTools)*
+
+![5. Network](./validations/FASE_30_BACKEND_INTEGRATION/5_chrome_devtools_network.png)
+*Network: 8 requests, todos 200 OK, sem duplicações*
+```
+
+**Checklist de Screenshots:**
+
+```bash
+- [ ] Pasta validations/FASE_XX_NOME/ criada?
+- [ ] Screenshots numerados em ordem lógica?
+- [ ] Nomenclatura segue padrão {ordem}_{mcp}_{tipo}_{feature}.png?
+- [ ] Todos os screenshots incluídos no VALIDACAO_FASE_XX.md?
+- [ ] Captions descritivas para cada screenshot?
+- [ ] Screenshots mostram EVIDÊNCIA de validação (não apenas "página bonita")?
+```
+
 ### 3. Playwright MCP ✅
 
 **Objetivo:** Validar funcionalidade e capturar evidências visuais
@@ -962,6 +1273,276 @@ DOCUMENTAÇÃO DO PROJETO
 | **TROUBLESHOOTING.md** | • Novo problema resolvido<br>• Solução definitiva encontrada |
 | **CONTRIBUTING.md** | • Nova convenção de código<br>• Mudança em Git workflow |
 
+### 3. Atualização de Dependências (Context7 MCP) ✅
+
+**Quando Atualizar:**
+
+```bash
+# Gatilhos para atualização:
+- [ ] Após concluir fase importante (ex: FASE 30, FASE 35)
+- [ ] Vulnerabilidade de segurança identificada (npm audit)
+- [ ] Nova versão major de biblioteca crítica (Next.js 15, NestJS 11, React 19)
+- [ ] Mensalmente (manutenção preventiva - 1ª semana do mês)
+- [ ] Biblioteca deprecada ou EOL (End of Life)
+```
+
+**Processo de Atualização (7 Passos):**
+
+**PASSO 1: Verificar versões atuais**
+
+```bash
+# 1.1. Backend
+cd backend
+npm outdated
+
+# Exemplo de output:
+# Package       Current  Wanted  Latest  Location
+# @nestjs/core  10.2.0   10.3.0  11.0.0  node_modules/@nestjs/core
+# typeorm       0.3.17   0.3.20  0.4.0   node_modules/typeorm
+
+# 1.2. Frontend
+cd frontend
+npm outdated
+
+# Exemplo de output:
+# Package    Current  Wanted  Latest  Location
+# next       14.1.0   14.2.0  15.0.0  node_modules/next
+# react      18.2.0   18.3.0  19.0.0  node_modules/react
+```
+
+**PASSO 2: Consultar Context7 MCP (Breaking Changes)**
+
+```typescript
+// 2.1. Resolver Library ID
+await mcp__context7__resolve-library-id({
+  libraryName: "next"
+});
+
+// Resultado:
+// {
+//   libraryID: "/vercel/next.js",
+//   version: "15.0.0",
+//   benchmarkScore: 98
+// }
+
+// 2.2. Obter documentação de migração
+await mcp__context7__get-library-docs({
+  context7CompatibleLibraryID: "/vercel/next.js/v15.0.0",
+  topic: "migration guide from 14.x",
+  tokens: 8000  // Mais tokens para guias de migração
+});
+
+// 2.3. Verificar breaking changes
+await mcp__context7__get-library-docs({
+  context7CompatibleLibraryID: "/vercel/next.js",
+  topic: "breaking changes v15",
+  tokens: 5000
+});
+```
+
+**PASSO 3: Classificar Atualizações**
+
+```bash
+# Classificação por urgência e risco:
+
+# CRÍTICO (fazer imediatamente):
+- Vulnerabilidades de segurança (npm audit fix)
+- Bibliotecas EOL (End of Life)
+
+# ALTA (fazer na próxima janela de manutenção):
+- Versões minor com features importantes
+- Correções de bugs críticos conhecidos
+
+# MÉDIA (fazer mensalmente):
+- Versões minor com melhorias de performance
+- Versões patch acumuladas
+
+# BAIXA (fazer trimestralmente):
+- Versões major (requerem planejamento)
+- Bibliotecas secundárias (não-críticas)
+```
+
+**PASSO 4: Atualizar package.json**
+
+```bash
+# 4.1. Bibliotecas CRÍTICAS: 1 por vez
+# Exemplo: Next.js 14.1.0 → 14.2.0
+
+cd frontend
+npm install next@14.2.0
+
+# 4.2. Bibliotecas SECUNDÁRIAS: em batch
+# Exemplo: 5-10 libs patch/minor juntas
+
+npm install \
+  @types/node@latest \
+  @types/react@latest \
+  eslint-config-next@latest \
+  lucide-react@latest \
+  date-fns@latest
+
+# 4.3. NUNCA atualizar bibliotecas major sem planejamento
+# Exemplo: React 18 → 19 requer PLANO_MIGRACAO_REACT_19.md
+```
+
+**PASSO 5: Validação Pós-Atualização (OBRIGATÓRIO)**
+
+```bash
+# 5.1. Instalar dependências
+npm install
+
+# VERIFICAR:
+- [ ] npm install sem erros?
+- [ ] Sem peer dependency warnings críticos?
+
+# 5.2. Validar TypeScript
+npx tsc --noEmit
+
+# RESULTADO ESPERADO:
+# (silêncio = sucesso)
+
+# RESULTADO PROIBIDO:
+# error TS2305: Module '"next"' has no exported member 'GetServerSideProps'.
+# → Se erro: reverter atualização, ler migration guide Context7
+
+# 5.3. Validar Build
+npm run build
+
+# RESULTADO ESPERADO:
+# ✓ Compiled successfully
+# Route (app)                Size     First Load JS
+# ...
+
+# RESULTADO PROIBIDO:
+# Error: Module not found: Can't resolve 'next/navigation'
+# → Se erro: reverter atualização, criar PLANO_MIGRACAO_
+
+# 5.4. Testes E2E (MCP Triplo) - OBRIGATÓRIO
+# Rodar testes nas 3 páginas principais:
+- [ ] /dashboard → Playwright + Chrome DevTools
+- [ ] /assets/PETR4 → Playwright + Chrome DevTools
+- [ ] /oauth-manager → Playwright + Chrome DevTools
+
+# 5.5. Teste Manual (Smoke Test)
+# Abrir http://localhost:3100
+- [ ] Página carrega sem erro 500?
+- [ ] Sidebar funciona?
+- [ ] Navegação funciona?
+- [ ] Console: 0 erros?
+```
+
+**PASSO 6: Commit de Atualização**
+
+```bash
+# 6.1. Commit individual para cada biblioteca crítica
+git add package.json package-lock.json
+git commit -m "$(cat <<'EOF'
+chore(deps): atualizar Next.js 14.1.0 → 14.2.0
+
+**Biblioteca:** Next.js
+**Versão Anterior:** 14.1.0
+**Versão Nova:** 14.2.0
+**Tipo:** Minor update
+
+**Breaking Changes:** Nenhum
+**Migration Guide:** https://nextjs.org/docs/app/building-your-application/upgrading
+
+**Validação:**
+- ✅ npm install: Success
+- ✅ TypeScript: 0 erros
+- ✅ Build: Success (17 páginas compiladas)
+- ✅ Tests E2E: 3/3 passing (Playwright + Chrome DevTools)
+- ✅ Console: 0 erros
+
+**Context7 MCP:** Consultado /vercel/next.js/v14.2.0
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+)"
+
+# 6.2. Commit batch para bibliotecas secundárias
+git commit -m "chore(deps): atualizar 8 bibliotecas secundárias (patch/minor)"
+```
+
+**PASSO 7: Rollback (se necessário)**
+
+```bash
+# Se QUALQUER validação falhar:
+
+# 7.1. Reverter commit
+git reset --hard HEAD~1
+
+# 7.2. Reinstalar deps antigas
+npm install
+
+# 7.3. Investigar breaking changes
+# - Ler migration guide (Context7 MCP)
+# - Buscar issues no GitHub da biblioteca
+# - site:stackoverflow.com "biblioteca erro exato"
+
+# 7.4. Se migração complexa → criar documento
+PLANO_MIGRACAO_NEXT_15.md
+- Breaking changes identificados
+- Arquivos afetados (lista completa)
+- Código antes/depois
+- Estratégia de migração (incremental ou big bang)
+- Validação (critérios de sucesso)
+- Rollback plan
+
+# 7.5. Agendar migração para próxima janela de manutenção
+```
+
+**Exemplo Completo (Next.js 14 → 15):**
+
+```bash
+# PASSO 1: Verificar versão atual
+cd frontend
+npm outdated next
+# next  14.2.0  14.2.0  15.0.0
+
+# PASSO 2: Consultar Context7
+mcp__context7__get-library-docs({
+  context7CompatibleLibraryID: "/vercel/next.js/v15.0.0",
+  topic: "migration guide from 14.x",
+  tokens: 10000
+})
+
+# PASSO 3: Criar documento de planejamento
+# PLANO_MIGRACAO_NEXT_15.md (porque é major version)
+
+# PASSO 4: Atualizar (após aprovação do plano)
+npm install next@15.0.0 react@19.0.0 react-dom@19.0.0
+
+# PASSO 5: Validar
+npx tsc --noEmit   # 0 erros
+npm run build      # Success
+# MCP Triplo        # 3/3 passing
+
+# PASSO 6: Commit
+git commit -m "chore(deps): atualizar Next.js 14 → 15 + React 18 → 19"
+
+# PASSO 7: Se falhar, rollback
+git reset --hard HEAD~1
+```
+
+**Checklist de Atualização:**
+
+```bash
+- [ ] npm outdated executado (backend + frontend)?
+- [ ] Context7 MCP consultado para breaking changes?
+- [ ] Bibliotecas classificadas por urgência?
+- [ ] Bibliotecas críticas atualizadas 1 por vez?
+- [ ] npm install sem erros?
+- [ ] npx tsc --noEmit → 0 erros?
+- [ ] npm run build → Success?
+- [ ] Testes E2E (MCP Triplo) → Passing?
+- [ ] Console → 0 erros?
+- [ ] Commit individual para cada lib crítica?
+- [ ] Rollback plan documentado (se major version)?
+```
+
 ---
 
 ## 📋 TODO MASTER (PRÓXIMAS FASES)
@@ -1098,7 +1679,13 @@ Este **CHECKLIST TODO MASTER** é o documento definitivo para garantir 100% de q
 
 **Última Atualização:** 2025-11-15
 **Mantenedor:** Claude Code (Sonnet 4.5)
-**Versão:** 2.0.0 (Ultra-Robusto)
+**Versão:** 2.1.0 (Ultra-Robusto + 4 Melhorias)
+
+**Melhorias v2.1.0:**
+1. ✅ Seção 6: Gerenciamento de Ambiente (system-manager.ps1)
+2. ✅ Seção 8: Precisão de Dados Financeiros (regras OBRIGATÓRIAS)
+3. ✅ Seção 2.1 (MCP): Organização de Screenshots (nomenclatura + estrutura)
+4. ✅ Seção 3 (Docs): Atualização de Dependências (Context7 MCP + 7 passos)
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
