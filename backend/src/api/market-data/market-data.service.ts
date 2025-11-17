@@ -42,6 +42,168 @@ export class MarketDataService {
   ) {}
 
   /**
+   * Calculate date range based on viewing range
+   * @param range Viewing range (1mo, 3mo, 6mo, 1y, 2y, 5y, max)
+   * @returns Start and end dates
+   */
+  private calculateDateRange(range: string): { startDate: Date; endDate: Date } {
+    const endDate = new Date();
+    const startDate = new Date();
+
+    switch (range) {
+      case '1mo':
+        startDate.setMonth(endDate.getMonth() - 1);
+        break;
+      case '3mo':
+        startDate.setMonth(endDate.getMonth() - 3);
+        break;
+      case '6mo':
+        startDate.setMonth(endDate.getMonth() - 6);
+        break;
+      case '1y':
+        startDate.setFullYear(endDate.getFullYear() - 1);
+        break;
+      case '2y':
+        startDate.setFullYear(endDate.getFullYear() - 2);
+        break;
+      case '5y':
+        startDate.setFullYear(endDate.getFullYear() - 5);
+        break;
+      case 'max':
+        startDate.setFullYear(1986); // COTAHIST data starts in 1986
+        break;
+      default:
+        startDate.setFullYear(endDate.getFullYear() - 1);
+    }
+
+    return { startDate, endDate };
+  }
+
+  /**
+   * Get aggregated price data with candle timeframes
+   * FASE 35 - Implementação de Candle Timeframes
+   *
+   * @param ticker Ticker symbol
+   * @param timeframe Candle timeframe (1D, 1W, 1M)
+   * @param range Viewing range (1mo, 3mo, 6mo, 1y, 2y, 5y, max)
+   * @returns Array of aggregated price data points
+   */
+  async getAggregatedPrices(
+    ticker: string,
+    timeframe: string = '1D',
+    range: string = '1y',
+  ): Promise<PriceDataPoint[]> {
+    try {
+      // Find asset
+      const asset = await this.assetRepository.findOne({ where: { ticker } });
+      if (!asset) {
+        throw new InternalServerErrorException(`Asset ${ticker} not found`);
+      }
+
+      const { startDate, endDate } = this.calculateDateRange(range);
+
+      // 1D: Return daily data without aggregation (raw data from DB)
+      if (timeframe === '1D') {
+        const prices = await this.assetPriceRepository
+          .createQueryBuilder('price')
+          .where('price.asset_id = :assetId', { assetId: asset.id })
+          .andWhere('price.date >= :startDate', { startDate })
+          .andWhere('price.date <= :endDate', { endDate })
+          .orderBy('price.date', 'ASC')
+          .getMany();
+
+        return prices.map(p => ({
+          date: p.date instanceof Date ? p.date.toISOString().split('T')[0] : String(p.date),
+          open: parseFloat(String(p.open)),
+          high: parseFloat(String(p.high)),
+          low: parseFloat(String(p.low)),
+          close: parseFloat(String(p.close)),
+          volume: parseFloat(String(p.volume)),
+        }));
+      }
+
+      // 1W: Weekly aggregation
+      if (timeframe === '1W') {
+        const query = `
+          SELECT
+            DATE_TRUNC('week', date)::date as period_start,
+            (array_agg(open ORDER BY date ASC))[1] as open,
+            MAX(high) as high,
+            MIN(low) as low,
+            (array_agg(close ORDER BY date DESC))[1] as close,
+            SUM(volume) as volume,
+            COUNT(*) as trading_days
+          FROM asset_prices
+          WHERE asset_id = $1
+            AND date >= $2
+            AND date <= $3
+          GROUP BY DATE_TRUNC('week', date)
+          ORDER BY period_start ASC
+        `;
+
+        const result = await this.assetPriceRepository.query(query, [
+          asset.id,
+          startDate,
+          endDate,
+        ]);
+
+        return result.map((row: any) => ({
+          date: row.period_start instanceof Date ? row.period_start.toISOString().split('T')[0] : String(row.period_start),
+          open: parseFloat(row.open),
+          high: parseFloat(row.high),
+          low: parseFloat(row.low),
+          close: parseFloat(row.close),
+          volume: parseInt(row.volume),
+        }));
+      }
+
+      // 1M: Monthly aggregation
+      if (timeframe === '1M') {
+        const query = `
+          SELECT
+            DATE_TRUNC('month', date)::date as period_start,
+            (array_agg(open ORDER BY date ASC))[1] as open,
+            MAX(high) as high,
+            MIN(low) as low,
+            (array_agg(close ORDER BY date DESC))[1] as close,
+            SUM(volume) as volume,
+            COUNT(*) as trading_days
+          FROM asset_prices
+          WHERE asset_id = $1
+            AND date >= $2
+            AND date <= $3
+          GROUP BY DATE_TRUNC('month', date)
+          ORDER BY period_start ASC
+        `;
+
+        const result = await this.assetPriceRepository.query(query, [
+          asset.id,
+          startDate,
+          endDate,
+        ]);
+
+        return result.map((row: any) => ({
+          date: row.period_start instanceof Date ? row.period_start.toISOString().split('T')[0] : String(row.period_start),
+          open: parseFloat(row.open),
+          high: parseFloat(row.high),
+          low: parseFloat(row.low),
+          close: parseFloat(row.close),
+          volume: parseInt(row.volume),
+        }));
+      }
+
+      throw new InternalServerErrorException(
+        `Timeframe ${timeframe} not yet implemented`,
+      );
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to fetch aggregated prices for ${ticker}: ${error.message}`,
+      );
+      throw new InternalServerErrorException('Failed to fetch aggregated price data');
+    }
+  }
+
+  /**
    * Get price data for a ticker
    *
    * @param ticker Ticker symbol

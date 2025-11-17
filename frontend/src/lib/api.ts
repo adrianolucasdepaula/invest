@@ -84,6 +84,11 @@ class ApiClient {
     return response.data;
   }
 
+  async getMarketDataPrices(ticker: string, params?: { timeframe?: string; range?: string; days?: number }) {
+    const response = await this.client.get(`/market-data/${ticker}/prices`, { params });
+    return response.data;
+  }
+
   async getAssetFundamentals(ticker: string) {
     const response = await this.client.get(`/assets/${ticker}/fundamentals`);
     return response.data;

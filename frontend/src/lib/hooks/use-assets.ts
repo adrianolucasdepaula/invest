@@ -29,6 +29,18 @@ export function useAssetPrices(
   });
 }
 
+export function useMarketDataPrices(
+  ticker: string,
+  params?: { timeframe?: string; range?: string; days?: number },
+) {
+  return useQuery({
+    queryKey: ['market-data-prices', ticker, params],
+    queryFn: () => api.getMarketDataPrices(ticker, params),
+    enabled: !!ticker,
+    staleTime: 1 * 60 * 1000, // 1 minute
+  });
+}
+
 export function useAssetFundamentals(ticker: string) {
   return useQuery({
     queryKey: ['asset-fundamentals', ticker],

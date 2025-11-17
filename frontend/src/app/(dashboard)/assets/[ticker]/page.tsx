@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { MultiPaneChart } from '@/components/charts/multi-pane-chart';
+import { TimeframeRangePicker, type CandleTimeframe, type ViewingRange } from '@/components/charts/timeframe-range-picker';
 import {
   TrendingUp,
   TrendingDown,
@@ -18,7 +19,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useAsset, useAssetPrices, useAssetFundamentals } from '@/lib/hooks/use-assets';
+import { useAsset, useMarketDataPrices, useAssetFundamentals } from '@/lib/hooks/use-assets';
 import { useAnalysis, useRequestAnalysis } from '@/lib/hooks/use-analysis';
 
 export default function AssetDetailPage({
@@ -27,7 +28,8 @@ export default function AssetDetailPage({
   params: { ticker: string };
 }) {
   const ticker = params.ticker;
-  const [selectedRange, setSelectedRange] = useState<string>('1y');
+  const [selectedTimeframe, setSelectedTimeframe] = useState<CandleTimeframe>('1D');
+  const [selectedRange, setSelectedRange] = useState<ViewingRange>('1y');
 
   // Fetch critical data first (for LCP optimization)
   const { data: asset, isLoading: assetLoading, error: assetError } = useAsset(ticker);
@@ -50,7 +52,8 @@ export default function AssetDetailPage({
   });
 
   // Defer non-critical data to improve LCP - fetch in parallel after critical data
-  const { data: priceHistory, isLoading: pricesLoading } = useAssetPrices(ticker, {
+  const { data: priceHistory, isLoading: pricesLoading } = useMarketDataPrices(ticker, {
+    timeframe: selectedTimeframe,
     range: selectedRange,
   });
 
@@ -65,20 +68,8 @@ export default function AssetDetailPage({
       setTechnicalLoading(true);
       setTechnicalError(null);
       try {
-        const timeframeMap: Record<string, string> = {
-          '1d': '1D',
-          '1mo': '1MO',
-          '3mo': '3MO',
-          '6mo': '6MO',
-          '1y': '1Y',
-          '2y': '2Y',
-          '5y': '5Y',
-          'max': 'MAX',
-        };
-        const timeframe = timeframeMap[selectedRange] || '1Y';
-
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/market-data/${ticker}/technical?timeframe=${timeframe}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/market-data/${ticker}/technical?timeframe=${selectedTimeframe}&range=${selectedRange}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -150,7 +141,7 @@ export default function AssetDetailPage({
     };
 
     fetchTechnicalData();
-  }, [ticker, selectedRange]);
+  }, [ticker, selectedTimeframe, selectedRange]);
 
   // Calculate period high/low from price history
   const periodStats = useMemo(() => {
@@ -167,8 +158,7 @@ export default function AssetDetailPage({
 
   // Get period label for display
   const periodLabel = useMemo(() => {
-    const labels: Record<string, string> = {
-      '1d': '1 dia',
+    const labels: Record<ViewingRange, string> = {
       '1mo': '1 mês',
       '3mo': '3 meses',
       '6mo': '6 meses',
@@ -310,26 +300,19 @@ export default function AssetDetailPage({
 
       {/* Price Chart */}
       <Card className="p-6">
-        <div className="mb-4 flex items-start justify-between">
+        <div className="mb-4 flex flex-col gap-4">
           <div>
             <h3 className="text-lg font-semibold">Análise Técnica Avançada</h3>
             <p className="text-sm text-muted-foreground">
               Gráficos multi-pane com indicadores técnicos sincronizados
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground mr-2">Período:</span>
-            {['1d', '1mo', '3mo', '6mo', '1y', '2y', '5y', 'max'].map((range) => (
-              <Button
-                key={range}
-                variant={selectedRange === range ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedRange(range)}
-              >
-                {range.toUpperCase()}
-              </Button>
-            ))}
-          </div>
+          <TimeframeRangePicker
+            selectedTimeframe={selectedTimeframe}
+            selectedRange={selectedRange}
+            onTimeframeChange={setSelectedTimeframe}
+            onRangeChange={setSelectedRange}
+          />
         </div>
         {isLoading || technicalLoading ? (
           <Skeleton className="h-[400px] w-full" />

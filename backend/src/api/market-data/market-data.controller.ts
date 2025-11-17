@@ -13,20 +13,34 @@ export class MarketDataController {
 
   @Get(':ticker/prices')
   @ApiOperation({
-    summary: 'Get historical price data for a ticker',
-    description: 'Fetches OHLCV price data from database. Supports timeframe or days parameter.',
+    summary: 'Get historical price data for a ticker with candle aggregation',
+    description: 'Fetches OHLCV price data from database with support for daily (1D), weekly (1W), and monthly (1M) candle aggregation. Use timeframe to set candle interval and range to set viewing period.',
   })
   @ApiParam({ name: 'ticker', example: 'VALE3', description: 'Ticker symbol' })
-  @ApiQuery({ name: 'timeframe', required: false, enum: ['1D', '1MO', '3MO', '6MO', '1Y', '2Y', '5Y', 'MAX'] })
-  @ApiQuery({ name: 'days', required: false, type: Number, example: 30 })
+  @ApiQuery({
+    name: 'timeframe',
+    required: false,
+    enum: ['1D', '1W', '1M'],
+    description: 'Candle timeframe: 1D (Daily), 1W (Weekly), 1M (Monthly)',
+    example: '1D'
+  })
+  @ApiQuery({
+    name: 'range',
+    required: false,
+    enum: ['1mo', '3mo', '6mo', '1y', '2y', '5y', 'max'],
+    description: 'Viewing range: how much historical data to return',
+    example: '1y'
+  })
+  @ApiQuery({ name: 'days', required: false, type: Number, example: 30, description: 'Alternative to range: specify exact number of days' })
   @ApiResponse({ status: 200, description: 'Price data retrieved successfully' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async getPrices(
     @Param('ticker') ticker: string,
     @Query() query: GetPricesDto,
   ) {
-    const timeframe = query.timeframe || '1MO';
-    return this.marketDataService.getPrices(ticker, timeframe);
+    const timeframe = query.timeframe || '1D';
+    const range = query.range || '1y';
+    return this.marketDataService.getAggregatedPrices(ticker, timeframe, range);
   }
 
   @Post(':ticker/technical')
