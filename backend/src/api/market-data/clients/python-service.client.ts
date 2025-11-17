@@ -1,6 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom, timeout, retry, timer } from 'rxjs';
 import { PriceDataPoint, TechnicalIndicators } from '../interfaces';
@@ -14,6 +16,7 @@ export class PythonServiceClient {
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {
     this.pythonServiceUrl = this.configService.get<string>(
       'PYTHON_SERVICE_URL',
@@ -130,8 +133,20 @@ export class PythonServiceClient {
   }
 
   /**
-   * Generic POST request to Python Service
+   * Generic POST request to Python Service with Redis cache
    * Used for COTAHIST and other endpoints
+   *
+   * Cache Strategy (Cache-Aside Pattern):
+   * 1. Generate cache key from endpoint + data
+   * 2. Check cache first (CACHE HIT → return immediately)
+   * 3. On CACHE MISS → fetch from Python Service
+   * 4. Store successful response in cache (TTL 24h)
+   * 5. Return data
+   *
+   * Benefits:
+   * - Reduces FTP bandwidth (COTAHIST ZIPs ~10-50MB)
+   * - Improves performance (45s → <1s for cached data)
+   * - Reduces load on Python Service
    *
    * @param endpoint - Endpoint path (ex: '/cotahist/fetch')
    * @param data - Request body
@@ -143,6 +158,28 @@ export class PythonServiceClient {
     data: any,
     timeoutMs: number = 60000, // 60s default (COTAHIST pode demorar)
   ): Promise<T> {
+    // 1. Generate cache key (deterministic hash of endpoint + data)
+    const cacheKey = `python-service:${endpoint}:${JSON.stringify(data)}`;
+
+    // 2. Check cache first (CACHE HIT scenario)
+    try {
+      const cached = await this.cacheManager.get<T>(cacheKey);
+      if (cached) {
+        this.logger.log(
+          `🎯 CACHE HIT: ${endpoint} (instant response)`,
+        );
+        return cached;
+      }
+
+      this.logger.log(`❌ CACHE MISS: ${endpoint} (fetching from Python Service...)`);
+    } catch (cacheError: any) {
+      // Cache read failed (non-critical) - proceed with fetch
+      this.logger.warn(
+        `⚠️ Cache read error for ${endpoint}: ${cacheError.message} (proceeding with fetch)`,
+      );
+    }
+
+    // 3. CACHE MISS: Fetch from Python Service
     const startTime = Date.now();
 
     try {
@@ -166,8 +203,22 @@ export class PythonServiceClient {
       );
 
       const duration = Date.now() - startTime;
-      this.logger.log(`✅ POST ${endpoint} success (${duration}ms)`);
 
+      // 4. Store in cache (TTL 24h = 86400000ms)
+      try {
+        await this.cacheManager.set(cacheKey, response.data, 86400000);
+        this.logger.log(
+          `✅ POST ${endpoint} success (${duration}ms) + CACHED (TTL 24h)`,
+        );
+      } catch (cacheError: any) {
+        // Cache write failed (non-critical) - return data anyway
+        this.logger.warn(
+          `⚠️ Cache write error for ${endpoint}: ${cacheError.message} (data returned)`,
+        );
+        this.logger.log(`✅ POST ${endpoint} success (${duration}ms) [cache unavailable]`);
+      }
+
+      // 5. Return data
       return response.data;
     } catch (error: any) {
       const duration = Date.now() - startTime;

@@ -21,6 +21,7 @@ import { QueueModule } from './queue/queue.module';
 import { AiModule } from './ai/ai.module';
 import { ValidatorsModule } from './validators/validators.module';
 import { WebSocketModule } from './websocket/websocket.module';
+import { RedisModule } from './modules/redis/redis.module';
 import {
   User,
   Asset,
@@ -88,6 +89,9 @@ import {
 
     // Schedule
     ScheduleModule.forRoot(),
+
+    // Redis Cache (FASE 34.2)
+    RedisModule,
 
     // Rate Limiting
     ThrottlerModule.forRootAsync({
