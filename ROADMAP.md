@@ -1927,6 +1927,35 @@ Documentação:
 
 ---
 
+### FASE 34.1: Add Source Column for Data Traceability ✅ 100% COMPLETO (2025-11-17)
+
+**Data:** 2025-11-17
+**Commit:** `1edd1de`
+**Linhas:** +112 / -4 (5 arquivos modificados)
+
+Adiciona coluna `source` (enum: 'cotahist' | 'brapi') na tabela `asset_prices` para rastreabilidade completa de dados históricos, resolvendo bloqueador crítico de compliance FINRA Rule 6140.
+
+**Implementação:**
+1. ✅ Migration AddSourceToAssetPrices (enum + column + index)
+2. ✅ Entity PriceSource enum + source column
+3. ✅ Service: source adicionado em merge logic (COTAHIST + BRAPI)
+4. ✅ Fix: Portas Docker (.env.example: 5532/6479)
+
+**Validação:**
+- ✅ TypeScript: 0 erros
+- ✅ Build: Success (8.3s)
+- ✅ Migration: Applied
+- ✅ Compliance: FINRA Rule 6140 RESOLVIDA
+
+**Bloqueadores Resolvidos:**
+- 🔴 Missing source column → ✅ RESOLVIDO (CRÍTICO)
+- 🔴 FINRA Rule 6140 violation → ✅ RESOLVIDO
+- 🔴 Portas incorretas .env → ✅ RESOLVIDO
+
+**Status:** ✅ **100% COMPLETO E VALIDADO** 🎯
+
+---
+
 ### FASE 35: Candle Timeframes (1D/1W/1M) ✅ 100% COMPLETO (2025-11-17)
 
 **Data:** 2025-11-17
