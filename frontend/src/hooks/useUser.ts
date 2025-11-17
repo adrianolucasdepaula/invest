@@ -81,7 +81,8 @@ export function useUser(): UseUserResult {
 
   useEffect(() => {
     fetchUser();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // fetchUser is stable and doesn't depend on external props/state
 
   const refetch = async () => {
     await fetchUser();

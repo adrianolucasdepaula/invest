@@ -50,7 +50,20 @@ export class MarketDataController {
     description: 'Fetches price data and calculates technical indicators via Python Service. Results are cached for 5 minutes. Returns partial data if Python Service is unavailable or insufficient data points (<200).',
   })
   @ApiParam({ name: 'ticker', example: 'VALE3', description: 'Ticker symbol' })
-  @ApiQuery({ name: 'timeframe', required: false, enum: ['1D', '1MO', '3MO', '6MO', '1Y', '2Y', '5Y', 'MAX'], example: '1MO' })
+  @ApiQuery({
+    name: 'timeframe',
+    required: false,
+    enum: ['1D', '1W', '1M'],
+    description: 'Candle timeframe: 1D (Daily), 1W (Weekly), 1M (Monthly)',
+    example: '1D'
+  })
+  @ApiQuery({
+    name: 'range',
+    required: false,
+    enum: ['1mo', '3mo', '6mo', '1y', '2y', '5y', 'max'],
+    description: 'Viewing range: how much historical data to return',
+    example: '1y'
+  })
   @ApiResponse({
     status: 200,
     description: 'Technical data retrieved successfully',
@@ -61,8 +74,9 @@ export class MarketDataController {
     @Param('ticker') ticker: string,
     @Query() query: GetTechnicalDataDto,
   ): Promise<TechnicalDataResponseDto> {
-    const timeframe = query.timeframe || '1MO';
-    return this.marketDataService.getTechnicalData(ticker, timeframe);
+    const timeframe = query.timeframe || '1D';
+    const range = query.range || '1y';
+    return this.marketDataService.getTechnicalData(ticker, timeframe, range);
   }
 
   @Post('sync-cotahist')

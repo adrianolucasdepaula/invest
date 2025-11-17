@@ -244,10 +244,11 @@ export class MarketDataService {
    */
   async getTechnicalData(
     ticker: string,
-    timeframe: string = '1MO',
+    timeframe: string = '1D',
+    range: string = '1y',
   ): Promise<TechnicalDataResponseDto> {
     const startTime = Date.now();
-    const cacheKey = this.generateCacheKey(ticker, timeframe);
+    const cacheKey = `${ticker}:${timeframe}:${range}:technical`;
 
     // Try cache first
     try {
@@ -255,7 +256,7 @@ export class MarketDataService {
 
       if (cached) {
         const duration = Date.now() - startTime;
-        this.logger.log(`✅ Cache HIT: ${ticker}:${timeframe} (${duration}ms)`);
+        this.logger.log(`✅ Cache HIT: ${ticker}:${timeframe}:${range} (${duration}ms)`);
 
         return {
           ...cached,
@@ -271,9 +272,9 @@ export class MarketDataService {
     }
 
     // Cache miss: fetch fresh data
-    this.logger.debug(`Cache MISS: ${ticker}:${timeframe}, fetching fresh data`);
+    this.logger.debug(`Cache MISS: ${ticker}:${timeframe}:${range}, fetching fresh data`);
 
-    const prices = await this.getPrices(ticker, timeframe);
+    const prices = await this.getAggregatedPrices(ticker, timeframe, range);
 
     // Validate minimum data points
     if (prices.length < MIN_DATA_POINTS_FOR_INDICATORS) {

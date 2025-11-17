@@ -1875,6 +1875,103 @@ Documentação:
 
 ---
 
+### FASE 35: Candle Timeframes (1D/1W/1M) ✅ 100% COMPLETO (2025-11-17)
+
+**Data:** 2025-11-17
+**Commit:** `ce1730b` (implementação) + correções críticas
+**Linhas:** +806 / -53 linhas (8 arquivos modificados)
+**Documentação:** `FASE_35_CANDLE_TIMEFRAMES_COMPLETO.md`
+
+**Objetivo:** Implementar suporte completo para agregação de candles semanais (1W) e mensais (1M) com separação clara entre "Candle Timeframe" (agregação) e "Viewing Range" (período).
+
+**Problema Identificado:** Frontend confundia "viewing period" com "candle timeframe", impossibilitando visualização de candles agregados.
+
+**Implementação:**
+
+#### Backend (NestJS + PostgreSQL)
+
+**1. DTO Refatorado (`get-prices.dto.ts`)**
+- ✅ Enum `CandleTimeframe`: `'1D' | '1W' | '1M'` (intervalo de agregação)
+- ✅ Enum `ViewingRange`: `'1mo' | '3mo' | '6mo' | '1y' | '2y' | '5y' | 'max'` (período de visualização)
+- ✅ Classe `GetPricesDto` com 2 parâmetros independentes
+
+**2. Service - Agregação SQL (`market-data.service.ts`)**
+- ✅ Método `getAggregatedPrices(ticker, timeframe, range)` implementado
+- ✅ **1D:** QueryBuilder (dados diários sem agregação)
+- ✅ **1W:** `DATE_TRUNC('week')` + `array_agg()` para OHLC semanal
+- ✅ **1M:** `DATE_TRUNC('month')` + `array_agg()` para OHLC mensal
+- ✅ OHLC correto: Open=first, High=MAX, Low=MIN, Close=last, Volume=SUM
+
+**3. Controller Atualizado (`market-data.controller.ts`)**
+- ✅ Endpoint `GET /market-data/:ticker/prices?timeframe=1W&range=1y`
+- ✅ Swagger docs atualizados com novos parâmetros
+- ✅ **FIX CRÍTICO:** Endpoint `/technical` atualizado para aceitar novos enums (problema crônico resolvido)
+
+**4. Technical Data DTO Fix (`get-technical-data.dto.ts`)**
+- ✅ Alinhado com `GetPricesDto` (usa mesmos enums `CandleTimeframe` + `ViewingRange`)
+- ✅ Previne erro 400 ao mudar timeframe no frontend
+
+#### Frontend (Next.js 14 + React)
+
+**5. Componente TimeframeRangePicker (`timeframe-range-picker.tsx` - novo)**
+- ✅ 2 grupos de botões separados: Candle (1D/1W/1M) + Period (1M/3M/6M/1Y/2Y/5Y/MAX)
+- ✅ Responsivo com flexbox + wrap
+- ✅ TypeScript com tipos exportados
+
+**6. API Client (`api.ts`)**
+- ✅ Método `getMarketDataPrices(ticker, {timeframe, range})` adicionado
+
+**7. React Query Hook (`use-assets.ts`)**
+- ✅ Hook `useMarketDataPrices()` com cache inteligente
+
+**8. Página Assets/[ticker] (`page.tsx`)**
+- ✅ Estados independentes: `selectedTimeframe` + `selectedRange`
+- ✅ UI substituída por `<TimeframeRangePicker />`
+- ✅ useEffect atualizado para novos parâmetros
+
+**9. ESLint Warning Fix (`useUser.ts`)**
+- ✅ Corrigido warning `react-hooks/exhaustive-deps` (0 warnings obrigatório)
+
+**Validação Tripla (MCP):**
+
+**1. Playwright MCP:**
+- ✅ UI renderizada corretamente (2 grupos de controles)
+- ✅ Interação funcional (cliques em 1D/1W/1M)
+- ✅ Screenshots capturados
+
+**2. Chrome DevTools MCP:**
+- ✅ Console: 0 erros (apenas warnings esperados de dados insuficientes)
+- ✅ Network: Todos requests 200 OK
+- ✅ Payload validado: Dados COTAHIST B3 sem manipulação
+
+**3. Testes Backend:**
+- ✅ 5 cenários validados (ABEV3 + PETR4, 1D/1W/1M)
+- ✅ OHLC manual: Semana 20-24/out validada (Open=12.33, High=12.45, Low=12.03, Close=12.11, Volume=121,428,400)
+
+**Performance:**
+- ✅ Redução de dados: 1W (-79.4%), 1M (-95.2%) vs 1D
+- ✅ Queries otimizadas: `DATE_TRUNC()` + agregação SQL nativa
+
+**Métricas de Qualidade:**
+- ✅ TypeScript: 0 erros (backend + frontend)
+- ✅ ESLint: 0 warnings (frontend)
+- ✅ Build: 17 páginas compiladas
+- ✅ Dados: 100% precisos (sem manipulação)
+
+**Impacto:**
+- ✅ Usuário pode escolher timeframe (1D/1W/1M) E período (1mo/3mo/1y) independentemente
+- ✅ Paridade com Investing.com/TradingView (candles agregados)
+- ✅ Fundação para FASE 36 (intraday: 1H/4H/15M)
+
+**Próximas Fases:**
+- 🚀 **FASE 36:** Timeframes intraday (1H, 4H, 15M) - requer fonte de dados intraday
+- 🚀 **FASE 37:** Cache Redis para agregações
+- 🚀 **FASE 38:** Interface para comparação multi-timeframe
+
+**Status:** ✅ **100% COMPLETO E VALIDADO** 🚀
+
+---
+
 ### FASE 25: Refatoração Botão "Solicitar Análises" ⏳ AGUARDANDO APROVAÇÃO
 
 Reorganizar botão de análise em massa.

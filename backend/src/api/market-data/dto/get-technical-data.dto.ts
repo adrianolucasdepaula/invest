@@ -1,25 +1,35 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional } from 'class-validator';
+import { CandleTimeframe, ViewingRange } from './get-prices.dto';
 
-enum Timeframe {
-  ONE_DAY = '1D',
-  ONE_MONTH = '1MO',
-  THREE_MONTHS = '3MO',
-  SIX_MONTHS = '6MO',
-  ONE_YEAR = '1Y',
-  TWO_YEARS = '2Y',
-  FIVE_YEARS = '5Y',
-  MAX = 'MAX',
-}
-
+/**
+ * DTO para requisição de dados técnicos (prices + indicators)
+ * Usa mesmos enums de GetPricesDto para consistência
+ */
 export class GetTechnicalDataDto {
   @ApiProperty({
-    description: 'Timeframe for technical analysis',
-    enum: Timeframe,
-    example: '1MO',
-    default: '1MO',
+    description: 'Candle timeframe (aggregation interval)',
+    enum: CandleTimeframe,
+    example: '1D',
+    default: '1D',
+    required: false,
   })
   @IsOptional()
-  @IsEnum(Timeframe)
-  timeframe?: Timeframe = Timeframe.ONE_MONTH;
+  @IsEnum(CandleTimeframe, {
+    message: 'Timeframe must be one of: 1D (Daily), 1W (Weekly), 1M (Monthly)',
+  })
+  timeframe?: CandleTimeframe = CandleTimeframe.ONE_DAY;
+
+  @ApiProperty({
+    description: 'Viewing range (how much historical data to return)',
+    enum: ViewingRange,
+    example: '1y',
+    default: '1y',
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(ViewingRange, {
+    message: 'Range must be one of: 1mo, 3mo, 6mo, 1y, 2y, 5y, max',
+  })
+  range?: ViewingRange = ViewingRange.ONE_YEAR;
 }
