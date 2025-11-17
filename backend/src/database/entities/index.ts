@@ -1,6 +1,6 @@
 export { User } from './user.entity';
 export { Asset, AssetType } from './asset.entity';
-export { AssetPrice } from './asset-price.entity';
+export { AssetPrice, PriceSource } from './asset-price.entity';
 export { FundamentalData } from './fundamental-data.entity';
 export { Portfolio } from './portfolio.entity';
 export { PortfolioPosition } from './portfolio-position.entity';

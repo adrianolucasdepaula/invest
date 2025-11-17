@@ -8,7 +8,7 @@ import { PythonServiceClient } from './clients/python-service.client';
 import { PriceDataPoint, TechnicalIndicators } from './interfaces';
 import { TechnicalDataResponseDto } from './dto/technical-data-response.dto';
 import { SyncCotahistResponseDto } from './dto/sync-cotahist.dto';
-import { Asset, AssetPrice } from '../../database/entities';
+import { Asset, AssetPrice, PriceSource } from '../../database/entities';
 
 const CACHE_TTL = {
   TECHNICAL_DATA: 300, // 5 minutes (seconds)
@@ -498,6 +498,7 @@ export class MarketDataService {
         close: data.close,
         volume: data.volume,
         adjustedClose: null, // COTAHIST não tem adjustedClose
+        source: PriceSource.COTAHIST, // Rastreabilidade: dados oficiais B3
       });
     }
 
@@ -532,6 +533,7 @@ export class MarketDataService {
           close: data.close,
           volume: data.volume,
           adjustedClose: data.adjustedClose || data.close, // BRAPI pode não ter adjustedClose
+          source: PriceSource.BRAPI, // Rastreabilidade: dados BRAPI API (com ajuste proventos)
         };
 
         if (existingIdx >= 0) {
@@ -584,6 +586,7 @@ export class MarketDataService {
             close: d.close,
             volume: d.volume,
             adjustedClose: d.adjustedClose,
+            source: d.source, // Preservar source do merge (COTAHIST | BRAPI)
           })
         );
 

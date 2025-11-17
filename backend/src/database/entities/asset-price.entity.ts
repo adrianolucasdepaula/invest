@@ -9,9 +9,23 @@ import {
 } from 'typeorm';
 import { Asset } from './asset.entity';
 
+/**
+ * Enum for data source traceability (FINRA Rule 6140 compliance)
+ *
+ * - cotahist: Official B3 COTAHIST data (1986-2025, 245-byte fixed-width format)
+ * - brapi: BRAPI API data (last 3 months, includes adjustedClose for dividend adjustments)
+ *
+ * Purpose: Track origin of each price record for audit trails and compliance
+ */
+export enum PriceSource {
+  COTAHIST = 'cotahist',
+  BRAPI = 'brapi',
+}
+
 @Entity('asset_prices')
 @Index(['asset', 'date'])
 @Index(['date'])
+@Index(['source'])
 export class AssetPrice {
   @PrimaryGeneratedColumn('uuid')
   @Column({ primary: true })
@@ -44,6 +58,21 @@ export class AssetPrice {
 
   @Column({ type: 'bigint' })
   volume: number;
+
+  /**
+   * Data source for traceability (FINRA Rule 6140 compliance)
+   *
+   * - cotahist: Official B3 historical data (1986-present, no dividend adjustments)
+   * - brapi: Recent API data (last 3 months, with adjustedClose for proventos)
+   *
+   * Enables audit trails: track where each price record originated
+   */
+  @Column({
+    type: 'enum',
+    enum: PriceSource,
+    nullable: false,
+  })
+  source: PriceSource;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, name: 'market_cap', nullable: true })
   marketCap: number;
