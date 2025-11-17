@@ -22,6 +22,7 @@ import { AiModule } from './ai/ai.module';
 import { ValidatorsModule } from './validators/validators.module';
 import { WebSocketModule } from './websocket/websocket.module';
 import { RedisModule } from './modules/redis/redis.module';
+import { CronModule } from './modules/cron/cron.module';
 import {
   User,
   Asset,
@@ -92,6 +93,9 @@ import {
 
     // Redis Cache (FASE 34.2)
     RedisModule,
+
+    // Cron Jobs (FASE 34.3)
+    CronModule,
 
     // Rate Limiting
     ThrottlerModule.forRootAsync({
