@@ -204,7 +204,7 @@ class CotahistService:
 
     def parse_file(self, zip_content: bytes) -> List[Dict]:
         """
-        Descompacta ZIP e parse o arquivo TXT linha por linha.
+        Descompacta ZIP e parse o arquivo TXT (linha por linha).
 
         Args:
             zip_content: Conteúdo do arquivo ZIP em bytes
@@ -213,40 +213,32 @@ class CotahistService:
             Lista de dicionários com dados parseados
         """
         records = []
+        with zipfile.ZipFile(io.BytesIO(zip_content)) as zf:
+            # Arquivos COTAHIST têm apenas 1 TXT dentro do ZIP
+            txt_files = [f for f in zf.namelist() if f.endswith(".TXT")]
 
-        try:
-            # Descompactar ZIP em memória
-            with zipfile.ZipFile(io.BytesIO(zip_content)) as zf:
-                # Arquivos COTAHIST têm apenas 1 TXT dentro do ZIP
-                txt_files = [f for f in zf.namelist() if f.endswith(".TXT")]
+            if not txt_files:
+                logger.error("No TXT file found in ZIP")
+                return []
 
-                if not txt_files:
-                    logger.error("No TXT file found in ZIP")
-                    return []
+            txt_filename = txt_files[0]
+            logger.info(f"Parsing file: {txt_filename}")
 
-                txt_filename = txt_files[0]
-                logger.info(f"Parsing file: {txt_filename}")
+            # Ler TXT e parse linha por linha
+            with zf.open(txt_filename) as txt_file:
+                content = txt_file.read().decode("ISO-8859-1")
+                lines = content.split("\n")
 
-                # Ler TXT e processar linha por linha
-                with zf.open(txt_filename) as txt_file:
-                    # Decodificar ISO-8859-1 (encoding padrão B3)
-                    content = txt_file.read().decode("ISO-8859-1")
-                    lines = content.split("\n")
+                for line in lines:
+                    if not line.strip():
+                        continue
 
-                    for line in lines:
-                        if not line.strip():
-                            continue
+                    parsed = self.parse_line(line)
+                    if parsed:
+                        records.append(parsed)
 
-                        parsed = self.parse_line(line)
-                        if parsed:
-                            records.append(parsed)
-
-            logger.info(f"Parsed {len(records)} records from {txt_filename}")
-            return records
-
-        except Exception as e:
-            logger.error(f"Failed to parse ZIP file: {e}")
-            raise
+        logger.info(f"Parsed {len(records)} records from {txt_filename}")
+        return records
 
     async def fetch_historical_data(
         self,

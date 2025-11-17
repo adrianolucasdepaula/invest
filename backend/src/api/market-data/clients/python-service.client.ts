@@ -128,4 +128,54 @@ export class PythonServiceClient {
       return false;
     }
   }
+
+  /**
+   * Generic POST request to Python Service
+   * Used for COTAHIST and other endpoints
+   *
+   * @param endpoint - Endpoint path (ex: '/cotahist/fetch')
+   * @param data - Request body
+   * @param timeoutMs - Optional timeout (default: 60s for COTAHIST)
+   * @returns Response data
+   */
+  async post<T = any>(
+    endpoint: string,
+    data: any,
+    timeoutMs: number = 60000, // 60s default (COTAHIST pode demorar)
+  ): Promise<T> {
+    const startTime = Date.now();
+
+    try {
+      this.logger.debug(`POST ${endpoint}: ${JSON.stringify(data).substring(0, 100)}...`);
+
+      const response: AxiosResponse<T> = await firstValueFrom(
+        this.httpService
+          .post<T>(`${this.pythonServiceUrl}${endpoint}`, data)
+          .pipe(
+            timeout(timeoutMs),
+            retry({
+              count: 3,
+              delay: (error: any, retryCount: number) => {
+                this.logger.warn(
+                  `Python Service retry ${retryCount}/3 (${endpoint}): ${error.message}`,
+                );
+                return timer(retryCount * 2000); // 2s, 4s, 6s
+              },
+            }),
+          ),
+      );
+
+      const duration = Date.now() - startTime;
+      this.logger.log(`✅ POST ${endpoint} success (${duration}ms)`);
+
+      return response.data;
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `❌ POST ${endpoint} failed (${duration}ms): ${error.message}`,
+      );
+
+      throw error;
+    }
+  }
 }

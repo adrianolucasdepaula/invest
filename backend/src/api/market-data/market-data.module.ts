@@ -6,15 +6,15 @@ import { MarketDataController } from './market-data.controller';
 import { MarketDataService } from './market-data.service';
 import { PythonServiceClient } from './clients/python-service.client';
 import { AssetsModule } from '../assets/assets.module';
-import { AssetPrice } from '../../database/entities';
+import { Asset, AssetPrice } from '../../database/entities';
 
 @Module({
   imports: [
     HttpModule.register({
-      timeout: 30000, // 30s timeout
+      timeout: 300000, // 5min timeout (COTAHIST pode demorar 2-3min)
       maxRedirects: 0,
     }),
-    TypeOrmModule.forFeature([AssetPrice]),
+    TypeOrmModule.forFeature([Asset, AssetPrice]),
     ConfigModule,
     AssetsModule, // Para reutilizar AssetsService
   ],
