@@ -2367,3 +2367,36 @@ git status
 
 **Última atualização:** 2025-11-16
 **Mantido por:** Claude Code (Sonnet 4.5)
+
+### FASE 34: Historical Data Sync & Optimization ✅ 100% COMPLETE (2025-11-18)
+
+Sistema completo de sincronização automatizada de dados históricos com otimização de performance.
+
+**Sub-Fases:**
+- [x] **FASE 34.3**: Cron Job Daily Sync
+- [x] **FASE 34.4**: Batch UPSERT Optimization
+
+**Implementações:**
+- [x] Cron job diário para sincronização automática de preços (endpoint: POST /api/v1/cron/trigger-daily-sync)
+- [x] Batch UPSERT com native PostgreSQL 'INSERT ... ON CONFLICT'
+- [x] Migrations com unique constraint 'UQ_asset_prices_asset_id_date'
+- [x] Correção de bug de renderização de gráficos Advanced Mode (CSS height fix)
+- [x] Fix chronic Playwright port configuration (3100 vs 3000)
+
+**Performance:**
+- Sync time: ~ 2s para 250 registros
+- Database: 0 constraint violations
+- Frontend: Gráficos renderizando corretamente com indicadores técnicos
+
+**Validação:**
+- ✅ Backend build: 0 errors
+- ✅ Frontend build: 0 errors
+- ✅ TypeScript: 0 errors
+- ✅ MCP Triplo: Browser Subagent ✅, Sequential Thinking ✅, Playwright (fixed)
+- ✅ Manual testing complete (charts + portfolio verified)
+
+**Commits:** 3 commits ('ae79ef7', 'eefbb36', 'b7aa9ad')
+**Screenshots:** 1 captura (PETR4 Advanced Chart)
+**Walkthrough:** 'walkthrough.md'
+**Status:** ✅ **100% COMPLETO**
+
