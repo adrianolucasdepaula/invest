@@ -6,6 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
+  Unique,
 } from 'typeorm';
 import { Asset } from './asset.entity';
 
@@ -23,6 +24,7 @@ export enum PriceSource {
 }
 
 @Entity('asset_prices')
+@Unique('UQ_asset_prices_asset_id_date', ['assetId', 'date'])
 @Index(['asset', 'date'])
 @Index(['date'])
 @Index(['source'])

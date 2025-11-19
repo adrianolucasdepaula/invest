@@ -39,7 +39,7 @@ export class MarketDataService {
     private readonly assetRepository: Repository<Asset>,
     @InjectRepository(AssetPrice)
     private readonly assetPriceRepository: Repository<AssetPrice>,
-  ) {}
+  ) { }
 
   /**
    * Calculate date range based on viewing range
@@ -552,6 +552,10 @@ export class MarketDataService {
    * Batch UPSERT no PostgreSQL usando DELETE+INSERT
    * (compatível com TimescaleDB hypertables, não requer UNIQUE constraint)
    */
+  /**
+   * Batch UPSERT no PostgreSQL usando ON CONFLICT (Native UPSERT)
+   * Requer constraint UNIQUE ("asset_id", "date")
+   */
   private async batchUpsertPrices(assetId: string, data: any[]): Promise<void> {
     if (data.length === 0) {
       this.logger.warn('No data to upsert');
@@ -559,46 +563,38 @@ export class MarketDataService {
     }
 
     try {
-      // 1. Deletar registros existentes para este asset (para evitar duplicatas)
-      const dates = data.map(d => new Date(d.date));
-      if (dates.length > 0) {
-        await this.assetPriceRepository.delete({
+      // Preparar entidades
+      const entities = data.map(d =>
+        this.assetPriceRepository.create({
           assetId,
-          date: In(dates), // TypeORM In() operator for array of dates
-        });
-      }
+          date: new Date(d.date),
+          open: d.open,
+          high: d.high,
+          low: d.low,
+          close: d.close,
+          volume: d.volume,
+          adjustedClose: d.adjustedClose,
+          source: d.source,
+        })
+      );
 
-      this.logger.debug(`  Deleted existing records for asset ${assetId}`);
-
-      // 2. Inserir novos registros em batches
+      // Executar Batch UPSERT em chunks para evitar limites de parâmetros
       const batchSize = 1000;
-      for (let i = 0; i < data.length; i += batchSize) {
-        const batch = data.slice(i, i + batchSize);
+      for (let i = 0; i < entities.length; i += batchSize) {
+        const batch = entities.slice(i, i + batchSize);
 
-        // Criar entidades
-        const entities = batch.map(d =>
-          this.assetPriceRepository.create({
-            assetId,
-            date: new Date(d.date),
-            open: d.open,
-            high: d.high,
-            low: d.low,
-            close: d.close,
-            volume: d.volume,
-            adjustedClose: d.adjustedClose,
-            source: d.source, // Preservar source do merge (COTAHIST | BRAPI)
-          })
-        );
-
-        // Batch INSERT
         await this.assetPriceRepository
           .createQueryBuilder()
           .insert()
           .into(AssetPrice)
-          .values(entities)
+          .values(batch)
+          .orUpdate(
+            ['open', 'high', 'low', 'close', 'volume', 'adjusted_close', 'source'],
+            'UQ_asset_prices_asset_id_date', // Explicit constraint name
+          )
           .execute();
 
-        this.logger.debug(`  Batch ${i / batchSize + 1}: ${batch.length} records inserted`);
+        this.logger.debug(`  Batch ${Math.floor(i / batchSize) + 1}: ${batch.length} records upserted`);
       }
 
       this.logger.log(`✅ Batch UPSERT complete: ${data.length} records`);
