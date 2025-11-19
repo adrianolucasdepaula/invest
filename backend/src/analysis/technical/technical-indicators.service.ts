@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PythonClientService } from './python-client.service';
+import { TechnicalIndicators } from '../../api/market-data/interfaces';
 
 export interface PriceData {
   date: Date | string;
@@ -9,55 +10,6 @@ export interface PriceData {
   low: number;
   close: number;
   volume: number;
-}
-
-export interface TechnicalIndicators {
-  // Trend Indicators
-  sma20: number;
-  sma50: number;
-  sma200: number;
-  ema9: number;
-  ema21: number;
-
-  // Momentum Indicators
-  rsi: number;
-  macd: {
-    macd: number;
-    signal: number;
-    histogram: number;
-  };
-  stochastic: {
-    k: number;
-    d: number;
-  };
-
-  // Volatility Indicators
-  bollingerBands: {
-    upper: number;
-    middle: number;
-    lower: number;
-    bandwidth: number;
-  };
-  atr: number;
-
-  // Volume Indicators
-  obv: number;
-  volumeSma: number;
-
-  // Support and Resistance
-  pivot: {
-    pivot: number;
-    r1: number;
-    r2: number;
-    r3: number;
-    s1: number;
-    s2: number;
-    s3: number;
-  };
-
-  // Trend Analysis
-  trend: 'UPTREND' | 'DOWNTREND' | 'SIDEWAYS';
-  trendStrength: number; // 0-100
 }
 
 @Injectable()
@@ -122,26 +74,46 @@ export class TechnicalIndicatorsService {
     const lows = prices.map((p) => p.low);
     const volumes = prices.map((p) => p.volume);
 
+    // Helper to wrap single value in array
+    const toArray = (val: number) => [val];
+
+    const macd = this.macd(closes);
+    const stoch = this.stochastic(highs, lows, closes, 14);
+    const bb = this.bollingerBands(closes, 20, 2);
+    const pivot = this.pivotPoints(
+      highs[highs.length - 1],
+      lows[lows.length - 1],
+      closes[closes.length - 1],
+    );
+
     return {
-      sma20: this.sma(closes, 20),
-      sma50: this.sma(closes, 50),
-      sma200: this.sma(closes, 200),
-      ema9: this.ema(closes, 9),
-      ema21: this.ema(closes, 21),
-      rsi: this.rsi(closes, 14),
-      macd: this.macd(closes),
-      stochastic: this.stochastic(highs, lows, closes, 14),
-      bollingerBands: this.bollingerBands(closes, 20, 2),
-      atr: this.atr(highs, lows, closes, 14),
-      obv: this.obv(closes, volumes),
-      volumeSma: this.sma(volumes, 20),
-      pivot: this.pivotPoints(
-        highs[highs.length - 1],
-        lows[lows.length - 1],
-        closes[closes.length - 1],
-      ),
+      sma_20: toArray(this.sma(closes, 20)),
+      sma_50: toArray(this.sma(closes, 50)),
+      sma_200: toArray(this.sma(closes, 200)),
+      ema_9: toArray(this.ema(closes, 9)),
+      ema_21: toArray(this.ema(closes, 21)),
+      rsi: toArray(this.rsi(closes, 14)),
+      macd: {
+        macd: toArray(macd.macd),
+        signal: toArray(macd.signal),
+        histogram: toArray(macd.histogram),
+      },
+      stochastic: {
+        k: toArray(stoch.k),
+        d: toArray(stoch.d),
+      },
+      bollinger_bands: {
+        upper: toArray(bb.upper),
+        middle: toArray(bb.middle),
+        lower: toArray(bb.lower),
+        bandwidth: bb.bandwidth,
+      },
+      atr: toArray(this.atr(highs, lows, closes, 14)),
+      obv: toArray(this.obv(closes, volumes)),
+      volume_sma: toArray(this.sma(volumes, 20)),
+      pivot: pivot,
       trend: this.detectTrend(closes),
-      trendStrength: this.calculateTrendStrength(closes),
+      trend_strength: this.calculateTrendStrength(closes),
     };
   }
 

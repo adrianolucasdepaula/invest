@@ -383,8 +383,8 @@ export default function AssetDetailPage({
                   <p className="text-xl font-bold">
                     {technicalData.indicators.macd?.histogram
                       ? technicalData.indicators.macd.histogram[
-                          technicalData.indicators.macd.histogram.length - 1
-                        ] > 0
+                        technicalData.indicators.macd.histogram.length - 1
+                      ] > 0
                         ? 'Compra'
                         : 'Venda'
                       : 'N/A'}

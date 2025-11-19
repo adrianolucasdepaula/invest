@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   TechnicalIndicatorsService,
   PriceData,
-  TechnicalIndicators,
 } from './technical-indicators.service';
+import { TechnicalIndicators } from '../../api/market-data/interfaces';
 
 export interface TechnicalAnalysisResult {
   ticker: string;
@@ -27,7 +27,7 @@ export interface TechnicalAnalysisResult {
 export class TechnicalAnalysisService {
   private readonly logger = new Logger(TechnicalAnalysisService.name);
 
-  constructor(private technicalIndicators: TechnicalIndicatorsService) {}
+  constructor(private technicalIndicators: TechnicalIndicatorsService) { }
 
   /**
    * Perform complete technical analysis
@@ -84,25 +84,29 @@ export class TechnicalAnalysisService {
     let buySignals = 0;
     let sellSignals = 0;
 
+    // Helper to get last value
+    const getLast = (val: number | number[] | undefined): number => {
+      if (Array.isArray(val)) return val[val.length - 1] || 0;
+      return val || 0;
+    };
+
+    const sma20 = getLast(indicators.sma_20);
+    const sma50 = getLast(indicators.sma_50);
+    const sma200 = getLast(indicators.sma_200);
+    const ema9 = getLast(indicators.ema_9);
+    const ema21 = getLast(indicators.ema_21);
+
     // Check moving averages
-    if (
-      currentPrice > indicators.sma20 &&
-      currentPrice > indicators.sma50 &&
-      currentPrice > indicators.sma200
-    ) {
+    if (currentPrice > sma20 && currentPrice > sma50 && currentPrice > sma200) {
       buySignals += 2;
-    } else if (
-      currentPrice < indicators.sma20 &&
-      currentPrice < indicators.sma50 &&
-      currentPrice < indicators.sma200
-    ) {
+    } else if (currentPrice < sma20 && currentPrice < sma50 && currentPrice < sma200) {
       sellSignals += 2;
     }
 
     // Check EMA
-    if (currentPrice > indicators.ema9 && currentPrice > indicators.ema21) {
+    if (currentPrice > ema9 && currentPrice > ema21) {
       buySignals++;
-    } else if (currentPrice < indicators.ema9 && currentPrice < indicators.ema21) {
+    } else if (currentPrice < ema9 && currentPrice < ema21) {
       sellSignals++;
     }
 
@@ -125,28 +129,45 @@ export class TechnicalAnalysisService {
     let buySignals = 0;
     let sellSignals = 0;
 
+    // Helper to get last value
+    const getLast = (val: number | number[] | undefined): number => {
+      if (Array.isArray(val)) return val[val.length - 1] || 0;
+      return val || 0;
+    };
+
+    const rsi = getLast(indicators.rsi);
+
+    // MACD
+    const macdHist = getLast(indicators.macd?.histogram);
+    const macdLine = getLast(indicators.macd?.macd);
+    const macdSignal = getLast(indicators.macd?.signal);
+
+    // Stochastic
+    const stochK = getLast(indicators.stochastic?.k);
+    const stochD = getLast(indicators.stochastic?.d);
+
     // RSI
-    if (indicators.rsi < 30) {
+    if (rsi < 30) {
       buySignals += 2; // Oversold
-    } else if (indicators.rsi > 70) {
+    } else if (rsi > 70) {
       sellSignals += 2; // Overbought
-    } else if (indicators.rsi > 50) {
+    } else if (rsi > 50) {
       buySignals++;
-    } else if (indicators.rsi < 50) {
+    } else if (rsi < 50) {
       sellSignals++;
     }
 
     // MACD
-    if (indicators.macd.histogram > 0 && indicators.macd.macd > indicators.macd.signal) {
+    if (macdHist > 0 && macdLine > macdSignal) {
       buySignals++;
-    } else if (indicators.macd.histogram < 0 && indicators.macd.macd < indicators.macd.signal) {
+    } else if (macdHist < 0 && macdLine < macdSignal) {
       sellSignals++;
     }
 
     // Stochastic
-    if (indicators.stochastic.k < 20 && indicators.stochastic.d < 20) {
+    if (stochK < 20 && stochD < 20) {
       buySignals++; // Oversold
-    } else if (indicators.stochastic.k > 80 && indicators.stochastic.d > 80) {
+    } else if (stochK > 80 && stochD > 80) {
       sellSignals++; // Overbought
     }
 
@@ -159,7 +180,7 @@ export class TechnicalAnalysisService {
    * Analyze volatility
    */
   private analyzeVolatility(indicators: TechnicalIndicators): 'LOW' | 'MEDIUM' | 'HIGH' {
-    const bandwidth = indicators.bollingerBands.bandwidth;
+    const bandwidth = indicators.bollinger_bands?.bandwidth || 0;
 
     if (bandwidth < 10) return 'LOW';
     if (bandwidth > 25) return 'HIGH';
@@ -190,8 +211,17 @@ export class TechnicalAnalysisService {
   ): number {
     let strength = 50; // Base strength
 
+    // Helper to get last value
+    const getLast = (val: number | number[] | undefined): number => {
+      if (Array.isArray(val)) return val[val.length - 1] || 0;
+      return val || 0;
+    };
+
+    const rsi = getLast(indicators.rsi);
+    const trendStrength = indicators.trend_strength || 0;
+
     // Add trend strength
-    strength += indicators.trendStrength * 0.3;
+    strength += trendStrength * 0.3;
 
     // Adjust based on signal alignment
     if (trendSignal === momentumSignal && trendSignal !== 'NEUTRAL') {
@@ -199,7 +229,7 @@ export class TechnicalAnalysisService {
     }
 
     // Adjust based on RSI extremes
-    if (indicators.rsi < 20 || indicators.rsi > 80) {
+    if (rsi < 20 || rsi > 80) {
       strength += 10;
     }
 
@@ -214,29 +244,44 @@ export class TechnicalAnalysisService {
 
     const currentPrice = priceHistory[priceHistory.length - 1].close;
 
+    // Helper to get last value
+    const getLast = (val: number | number[] | undefined): number => {
+      if (Array.isArray(val)) return val[val.length - 1] || 0;
+      return val || 0;
+    };
+
+    const bandwidth = indicators.bollinger_bands?.bandwidth || 0;
+    const bbUpper = getLast(indicators.bollinger_bands?.upper);
+    const bbLower = getLast(indicators.bollinger_bands?.lower);
+    const sma50 = getLast(indicators.sma_50);
+    const sma200 = getLast(indicators.sma_200);
+    const macdLine = getLast(indicators.macd?.macd);
+    const macdSignal = getLast(indicators.macd?.signal);
+    const macdHist = getLast(indicators.macd?.histogram);
+
     // Bollinger Bands squeeze
-    if (indicators.bollingerBands.bandwidth < 10) {
+    if (bandwidth < 10) {
       patterns.push('Bollinger Bands Squeeze - Volatility Compression');
     }
 
     // Price touching Bollinger Bands
-    if (currentPrice >= indicators.bollingerBands.upper) {
+    if (currentPrice >= bbUpper) {
       patterns.push('Price at Upper Bollinger Band - Overbought');
-    } else if (currentPrice <= indicators.bollingerBands.lower) {
+    } else if (currentPrice <= bbLower) {
       patterns.push('Price at Lower Bollinger Band - Oversold');
     }
 
     // Golden Cross / Death Cross
-    if (indicators.sma50 > indicators.sma200) {
+    if (sma50 > sma200) {
       patterns.push('Golden Cross - Bullish Long-term');
-    } else if (indicators.sma50 < indicators.sma200) {
+    } else if (sma50 < sma200) {
       patterns.push('Death Cross - Bearish Long-term');
     }
 
     // MACD Crossover
-    if (indicators.macd.macd > indicators.macd.signal && indicators.macd.histogram > 0) {
+    if (macdLine > macdSignal && macdHist > 0) {
       patterns.push('MACD Bullish Crossover');
-    } else if (indicators.macd.macd < indicators.macd.signal && indicators.macd.histogram < 0) {
+    } else if (macdLine < macdSignal && macdHist < 0) {
       patterns.push('MACD Bearish Crossover');
     }
 
@@ -296,6 +341,15 @@ export class TechnicalAnalysisService {
   ): string[] {
     const recommendations: string[] = [];
 
+    // Helper to get last value
+    const getLast = (val: number | number[] | undefined): number => {
+      if (Array.isArray(val)) return val[val.length - 1] || 0;
+      return val || 0;
+    };
+
+    const rsi = getLast(indicators.rsi);
+    const trendStrength = indicators.trend_strength || 0;
+
     // Overall recommendation
     if (signals.overall === 'BUY') {
       recommendations.push(
@@ -310,21 +364,21 @@ export class TechnicalAnalysisService {
     }
 
     // RSI recommendations
-    if (indicators.rsi < 30) {
+    if (rsi < 30) {
       recommendations.push(
-        `📊 RSI em ${indicators.rsi.toFixed(1)} - Ativo sobreven dido, possível reversão de alta`,
+        `📊 RSI em ${rsi.toFixed(1)} - Ativo sobrevendido, possível reversão de alta`,
       );
-    } else if (indicators.rsi > 70) {
+    } else if (rsi > 70) {
       recommendations.push(
-        `📊 RSI em ${indicators.rsi.toFixed(1)} - Ativo sobrecomprado, possível correção`,
+        `📊 RSI em ${rsi.toFixed(1)} - Ativo sobrecomprado, possível correção`,
       );
     }
 
     // Trend recommendations
-    if (indicators.trend === 'UPTREND' && indicators.trendStrength > 70) {
-      recommendations.push(`📈 Tendência de alta forte (${indicators.trendStrength}%)`);
-    } else if (indicators.trend === 'DOWNTREND' && indicators.trendStrength > 70) {
-      recommendations.push(`📉 Tendência de baixa forte (${indicators.trendStrength}%)`);
+    if (indicators.trend === 'UPTREND' && trendStrength > 70) {
+      recommendations.push(`📈 Tendência de alta forte (${trendStrength}%)`);
+    } else if (indicators.trend === 'DOWNTREND' && trendStrength > 70) {
+      recommendations.push(`📉 Tendência de baixa forte (${trendStrength}%)`);
     }
 
     // Volatility recommendations

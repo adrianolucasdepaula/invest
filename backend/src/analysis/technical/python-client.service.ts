@@ -1,7 +1,8 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
-import { PriceData, TechnicalIndicators } from './technical-indicators.service';
+import { PriceData } from './technical-indicators.service';
+import { TechnicalIndicators } from '../../api/market-data/interfaces';
 
 /**
  * Python Service Client
@@ -73,11 +74,11 @@ export class PythonClientService {
 
       return {
         // Trend Indicators
-        sma20: pythonIndicators.sma_20,
-        sma50: pythonIndicators.sma_50,
-        sma200: pythonIndicators.sma_200,
-        ema9: pythonIndicators.ema_9,
-        ema21: pythonIndicators.ema_21,
+        sma_20: pythonIndicators.sma_20,
+        sma_50: pythonIndicators.sma_50,
+        sma_200: pythonIndicators.sma_200,
+        ema_9: pythonIndicators.ema_9,
+        ema_21: pythonIndicators.ema_21,
 
         // Momentum Indicators
         rsi: pythonIndicators.rsi,
@@ -92,7 +93,7 @@ export class PythonClientService {
         },
 
         // Volatility Indicators
-        bollingerBands: {
+        bollinger_bands: {
           upper: pythonIndicators.bollinger_bands.upper,
           middle: pythonIndicators.bollinger_bands.middle,
           lower: pythonIndicators.bollinger_bands.lower,
@@ -102,7 +103,7 @@ export class PythonClientService {
 
         // Volume Indicators
         obv: pythonIndicators.obv,
-        volumeSma: pythonIndicators.volume_sma,
+        volume_sma: pythonIndicators.volume_sma,
 
         // Support and Resistance
         pivot: {
@@ -117,7 +118,7 @@ export class PythonClientService {
 
         // Trend Analysis
         trend: pythonIndicators.trend,
-        trendStrength: pythonIndicators.trend_strength,
+        trend_strength: pythonIndicators.trend_strength,
       };
     } catch (error) {
       const endTime = Date.now();

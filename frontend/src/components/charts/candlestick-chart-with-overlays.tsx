@@ -424,7 +424,7 @@ export function CandlestickChartWithOverlays({
   return (
     <div
       ref={chartContainerRef}
-      className="w-full"
+      className="w-full h-full"
       style={{ position: 'relative' }}
     />
   );
