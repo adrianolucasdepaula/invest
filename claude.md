@@ -1,8 +1,8 @@
 # Claude.md - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-17
-**Versão:** 1.0.1
+**Última Atualização:** 2025-11-20
+**Versão:** 1.1.0
 **Mantenedor:** Claude Code (Sonnet 4.5)
 
 ---
@@ -19,6 +19,7 @@ Este arquivo contém **APENAS** instruções e metodologia para Claude Code. Tod
 - **`CONTRIBUTING.md`** - Convenções de código, Git workflow, decisões técnicas
 - **`CHECKLIST_TODO_MASTER.md`** - Checklist ultra-robusto e TODO master (OBRIGATÓRIO antes de cada fase)
 - **`.claude/agents/README.md`** - Sub-agents especializados (Backend, Frontend, Scrapers, Charts, TypeScript)
+- **`VSCODE_SETUP.md`** - Extensões VSCode otimizadas (104 extensões, FASE 1-4 completas)
 
 **📌 IMPORTANTE:** Sempre consulte os arquivos acima para detalhes técnicos do projeto. Este arquivo foca exclusivamente na metodologia de trabalho.
 
@@ -39,6 +40,11 @@ Plataforma completa de análise de investimentos B3 com IA para análise fundame
 - Frontend: Next.js 14 App Router + Shadcn/ui + TailwindCSS
 - Queue: BullMQ + Redis
 - Scrapers: Python 3.11 + Playwright
+
+**Ambiente de Desenvolvimento:**
+- VSCode: 104 extensões otimizadas (8 críticas + 8 importantes + 4 desejáveis + 84 outras)
+- Performance: ~100MB RAM economizados, 15-20% startup mais rápido
+- Setup completo: Ver `VSCODE_SETUP.md`
 
 ---
 
