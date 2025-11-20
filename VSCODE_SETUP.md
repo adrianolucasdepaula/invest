@@ -33,6 +33,21 @@
 
 **Total instaladas:** 8 extensões críticas ✅
 
+### ✅ Importantes (FASE 2 - Instaladas)
+
+| Extensão | ID | Versão | Descrição |
+|----------|-------|--------|--------------|
+| **Console Ninja** | `wallabyjs.console-ninja` | v1.0.493 | Logs inline no editor (Community Edition) |
+| **QuickType** | `quicktype.quicktype` | v23.0.170 | Gera TypeScript types de JSON/API |
+| **DotENV Official** | `dotenv.dotenv-vscode` | v0.28.1 | Syntax highlighting .env files |
+| **React Refactor** | `planbcoding.vscode-react-refactor` | v1.1.3 | Refactoring automático (extract component) |
+| **Auto Close Tag** | `formulahendry.auto-close-tag` | v0.5.15 | Fecha tags HTML/JSX automaticamente |
+| **Path Intellisense** | `christian-kohler.path-intellisense` | v2.10.0 | Autocomplete para file paths |
+| **Total TypeScript** | `mattpocock.ts-error-translator` | v0.10.1 | Traduz erros TypeScript (inglês simples) |
+| **Import Cost** | `wix.vscode-import-cost` | v3.3.0 | Mostra tamanho inline de imports |
+
+**Total instaladas:** 8 extensões importantes ✅
+
 ---
 
 ## ⚙️ CONFIGURAÇÕES
@@ -99,6 +114,8 @@
 
 ### 1. Instalar Extensões (via terminal)
 
+#### FASE 1: Críticas (8 extensões)
+
 ```bash
 # Navegue para a raiz do projeto
 cd C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web
@@ -112,6 +129,20 @@ code --install-extension imgildev.vscode-nestjs-generator
 code --install-extension rangav.vscode-thunder-client
 code --install-extension formulahendry.auto-rename-tag
 code --install-extension Orta.vscode-jest
+```
+
+#### FASE 2: Importantes (8 extensões)
+
+```bash
+# Instale as 8 extensões importantes
+code --install-extension wallabyjs.console-ninja
+code --install-extension quicktype.quicktype
+code --install-extension dotenv.dotenv-vscode
+code --install-extension planbcoding.vscode-react-refactor
+code --install-extension formulahendry.auto-close-tag
+code --install-extension christian-kohler.path-intellisense
+code --install-extension mattpocock.ts-error-translator
+code --install-extension wix.vscode-import-cost
 ```
 
 **Ou via Command Palette:**
@@ -255,19 +286,9 @@ cat frontend/.prettierrc
 
 ---
 
-## 📊 EXTENSÕES FUTURAS (FASE 2-4)
+## 📊 EXTENSÕES FUTURAS (FASE 3-4)
 
-### FASE 2: Importantes (8 extensões)
-- ESLint
-- GitLens
-- Error Lens
-- Import Cost
-- Better Comments
-- Console Ninja
-- Path Intellisense
-- DotENV
-
-### FASE 3: Desejáveis (5 extensões)
+### FASE 3: Desejáveis (5 extensões - A instalar)
 - Todo Tree
 - REST Client
 - Playwright Test for VSCode
@@ -322,5 +343,5 @@ Ao adicionar novas extensões:
 ---
 
 **Última atualização:** 2025-11-20
-**Versão:** 1.0.0 (FASE 1 completa)
-**Status:** ✅ **8/8 extensões críticas instaladas**
+**Versão:** 2.0.0 (FASE 1 + FASE 2 completas)
+**Status:** ✅ **16/16 extensões instaladas (8 críticas + 8 importantes)**
