@@ -17,7 +17,7 @@
 
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useCallback, useId } from 'react';
 import type { WidgetLoadingStatus, WidgetPerformanceMetrics } from '../types';
 import {
   TRADINGVIEW_SCRIPT_URL,
@@ -66,68 +66,35 @@ export interface UseTradingViewWidgetReturn {
 }
 
 // ============================================================================
-// SCRIPT LOADING (SINGLETON)
+// SCRIPT LOADING (Next.js gerencia via beforeInteractive)
 // ============================================================================
 
-let scriptLoadingPromise: Promise<void> | null = null;
-let scriptLoaded = false;
-
 /**
- * Load TradingView script (singleton pattern - only loads once)
+ * Verificar se TradingView script está disponível
+ * (carregado via next/script no layout.tsx com strategy="beforeInteractive")
  */
 function loadTradingViewScript(): Promise<void> {
-  if (scriptLoaded) {
-    return Promise.resolve();
-  }
-
-  if (scriptLoadingPromise) {
-    return scriptLoadingPromise;
-  }
-
-  scriptLoadingPromise = new Promise((resolve, reject) => {
-    // Check if script already exists in DOM
-    const existingScript = document.querySelector(
-      `script[src="${TRADINGVIEW_SCRIPT_URL}"]`
-    );
-
-    if (existingScript) {
-      // Script already added by another instance
-      if ((window as any).TradingView) {
-        scriptLoaded = true;
-        resolve();
-      } else {
-        // Wait for script to load
-        existingScript.addEventListener('load', () => {
-          scriptLoaded = true;
-          resolve();
-        });
-        existingScript.addEventListener('error', () => {
-          reject(new Error(ERROR_MESSAGES.SCRIPT_LOAD_FAILED));
-        });
-      }
+  return new Promise((resolve, reject) => {
+    // Script já carregado via Next.js (beforeInteractive)
+    if (typeof window !== 'undefined' && (window as any).TradingView) {
+      resolve();
       return;
     }
 
-    // Create and inject script
-    const script = document.createElement('script');
-    script.src = TRADINGVIEW_SCRIPT_URL;
-    script.async = true;
-    script.type = 'text/javascript';
-
-    script.onload = () => {
-      scriptLoaded = true;
-      resolve();
-    };
-
-    script.onerror = () => {
-      scriptLoadingPromise = null; // Reset so we can retry
+    // Aguardar até 5 segundos (caso script esteja carregando)
+    const timeout = setTimeout(() => {
+      clearInterval(checkInterval);
       reject(new Error(ERROR_MESSAGES.SCRIPT_LOAD_FAILED));
-    };
+    }, 5000);
 
-    document.head.appendChild(script);
+    const checkInterval = setInterval(() => {
+      if (typeof window !== 'undefined' && (window as any).TradingView) {
+        clearTimeout(timeout);
+        clearInterval(checkInterval);
+        resolve();
+      }
+    }, 100); // Check a cada 100ms
   });
-
-  return scriptLoadingPromise;
 }
 
 // ============================================================================
@@ -164,11 +131,9 @@ export function useTradingViewWidget<TConfig = any>(
     onLoad,
   } = options;
 
-  // Generate unique container ID if not provided
-  const containerIdRef = useRef(
-    providedContainerId || `tradingview-widget-${widgetName}-${Math.random().toString(36).substr(2, 9)}`
-  );
-  const containerId = containerIdRef.current;
+  // Generate unique container ID if not provided (SSR-safe with useId)
+  const reactId = useId();
+  const containerId = providedContainerId || `tradingview-widget-${widgetName}-${reactId.replace(/:/g, '')}`;
 
   // State
   const [status, setStatus] = useState<WidgetLoadingStatus>('idle');
@@ -184,6 +149,36 @@ export function useTradingViewWidget<TConfig = any>(
    * Create widget instance
    */
   const createWidget = useCallback(async () => {
+    /**
+     * Wait for container to be available in DOM
+     * (fixes race condition between React render and widget creation)
+     * Next.js SSR: Hydration pode levar até 2-3s, então damos timeout generoso
+     */
+    const waitForContainer = (id: string, maxAttempts = 60, interval = 100): Promise<HTMLElement> => {
+      return new Promise((resolve, reject) => {
+        let attempts = 0;
+
+        const checkContainer = () => {
+          const container = document.getElementById(id);
+
+          if (container) {
+            resolve(container);
+            return;
+          }
+
+          attempts++;
+          if (attempts >= maxAttempts) {
+            reject(new Error(`Container #${id} not found after ${maxAttempts * interval}ms`));
+            return;
+          }
+
+          setTimeout(checkContainer, interval);
+        };
+
+        checkContainer();
+      });
+    };
+
     try {
       // Start performance monitoring
       if (enablePerformanceMonitoring) {
@@ -201,11 +196,8 @@ export function useTradingViewWidget<TConfig = any>(
         throw new Error(ERROR_MESSAGES.SCRIPT_LOAD_FAILED);
       }
 
-      // Check if container exists
-      const container = document.getElementById(containerId);
-      if (!container) {
-        throw new Error(`Container #${containerId} not found`);
-      }
+      // ✅ FIX: Wait for container to exist in DOM (retry logic)
+      const container = await waitForContainer(containerId);
 
       // Create widget (with timeout)
       const timeoutPromise = new Promise((_, reject) => {
@@ -314,9 +306,18 @@ export function useTradingViewWidget<TConfig = any>(
   }, [destroyWidget, createWidget]);
 
   // Effect: Create/destroy widget
-  useEffect(() => {
+  // ✅ useLayoutEffect garante que DOM está pronto (container existe)
+  // ⏱️ Delay de 150ms para Next.js hydration completar (SSR)
+  useLayoutEffect(() => {
     if (!lazyLoad) {
-      createWidget();
+      const timer = setTimeout(() => {
+        createWidget();
+      }, 150); // Aguarda hydration Next.js
+
+      return () => {
+        clearTimeout(timer);
+        destroyWidget();
+      };
     }
 
     return () => {

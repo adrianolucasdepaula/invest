@@ -13,22 +13,22 @@ $RESET = "$ESC[0m"
 # Function to print colored output
 function Print-Info {
     param([string]$Message)
-    Write-Host "${BLUE}ℹ${RESET} $Message"
+    Write-Host "${BLUE}[i]${RESET} $Message"
 }
 
 function Print-Success {
     param([string]$Message)
-    Write-Host "${GREEN}✓${RESET} $Message"
+    Write-Host "${GREEN}[OK]${RESET} $Message"
 }
 
 function Print-Warning {
     param([string]$Message)
-    Write-Host "${YELLOW}⚠${RESET} $Message"
+    Write-Host "${YELLOW}[!]${RESET} $Message"
 }
 
 function Print-Error {
     param([string]$Message)
-    Write-Host "${RED}✗${RESET} $Message"
+    Write-Host "${RED}[X]${RESET} $Message"
 }
 
 function Print-Header {
@@ -342,7 +342,7 @@ function Wait-ForHealthy {
 
                 if ($containerState -ne "running") {
                     $allHealthy = $false
-                    $statusMessages += "${YELLOW}⏳${RESET} $service (não rodando)"
+                    $statusMessages += "${YELLOW}[...]${RESET} $service (nao rodando)"
                     continue
                 }
 
@@ -350,20 +350,20 @@ function Wait-ForHealthy {
                 $health = docker inspect --format='{{.State.Health.Status}}' $containerName 2>$null
 
                 if ($health -eq "healthy") {
-                    $statusMessages += "${GREEN}✓${RESET} $service"
+                    $statusMessages += "${GREEN}[OK]${RESET} $service"
                 } elseif ($health -eq "starting") {
                     $allHealthy = $false
-                    $statusMessages += "${YELLOW}⏳${RESET} $service (iniciando)"
+                    $statusMessages += "${YELLOW}[...]${RESET} $service (iniciando)"
                 } elseif ($health -eq "unhealthy") {
                     $allHealthy = $false
-                    $statusMessages += "${RED}✗${RESET} $service (não saudável)"
+                    $statusMessages += "${RED}[X]${RESET} $service (nao saudavel)"
                 } else {
                     # No health check defined, just check if running
-                    $statusMessages += "${CYAN}ℹ${RESET} $service (sem health check)"
+                    $statusMessages += "${CYAN}[i]${RESET} $service (sem health check)"
                 }
             } catch {
                 $allHealthy = $false
-                $statusMessages += "${RED}✗${RESET} $service (erro: $_)"
+                $statusMessages += "${RED}[X]${RESET} $service (erro: $_)"
             }
         }
 
@@ -756,7 +756,7 @@ function Get-SystemStatus {
 # Quick health check
 function Get-HealthCheck {
     Write-Host ""
-    Write-Host "🏥 Health Check Rápido"
+    Write-Host "[+] Health Check Rapido"
     Write-Host "======================="
     Write-Host ""
 
