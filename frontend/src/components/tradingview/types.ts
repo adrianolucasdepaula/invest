@@ -24,7 +24,8 @@ export type TradingViewTheme = 'light' | 'dark';
  */
 export type TradingViewLocale =
   | 'en'
-  | 'pt_BR'
+  | 'pt'        // ✅ Portuguese (IETF tag)
+  | 'pt_BR'     // Legacy (causes RangeError in some widgets)
   | 'es'
   | 'fr'
   | 'de'

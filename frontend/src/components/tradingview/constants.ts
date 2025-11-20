@@ -473,7 +473,7 @@ export const DEFAULT_THEME: TradingViewTheme = 'dark';
 /**
  * Default locale
  */
-export const DEFAULT_LOCALE: TradingViewLocale = 'pt_BR';
+export const DEFAULT_LOCALE: TradingViewLocale = 'pt';  // ✅ FIX: pt não pt_BR (IETF tag)
 
 /**
  * Theme color palettes

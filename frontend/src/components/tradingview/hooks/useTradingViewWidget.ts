@@ -207,11 +207,25 @@ export function useTradingViewWidget<TConfig = any>(
       });
 
       const widgetPromise = new Promise((resolve) => {
-        // Create widget instance
-        widgetRef.current = new (window as any).TradingView.widget({
-          ...widgetConfig,
-          container_id: containerId,
-        });
+        // 🔍 DEBUG: Log constructor being used
+        const TradingView = (window as any).TradingView;
+        console.log('[useTradingViewWidget] Available constructors:', Object.keys(TradingView || {}));
+        console.log('[useTradingViewWidget] Widget config:', JSON.stringify({...widgetConfig, container_id: containerId}, null, 2));
+
+        // Create widget instance (try MediumWidget for Ticker Tape)
+        if (widgetName === 'TickerTape' && TradingView.MediumWidget) {
+          console.log('[useTradingViewWidget] Using MediumWidget constructor for Ticker Tape');
+          widgetRef.current = new TradingView.MediumWidget({
+            ...widgetConfig,
+            container_id: containerId,
+          });
+        } else {
+          console.log('[useTradingViewWidget] Using generic widget constructor');
+          widgetRef.current = new TradingView.widget({
+            ...widgetConfig,
+            container_id: containerId,
+          });
+        }
 
         // Resolve immediately (TradingView widgets don't have onLoad callback)
         // We rely on timeout to catch failures
