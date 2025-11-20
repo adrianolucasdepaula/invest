@@ -8,7 +8,7 @@ import { PythonServiceClient } from './clients/python-service.client';
 import { PriceDataPoint, TechnicalIndicators } from './interfaces';
 import { TechnicalDataResponseDto } from './dto/technical-data-response.dto';
 import { SyncCotahistResponseDto } from './dto/sync-cotahist.dto';
-import { Asset, AssetPrice, PriceSource } from '../../database/entities';
+import { Asset, AssetPrice, PriceSource, SyncHistory, SyncStatus, SyncOperationType } from '../../database/entities';
 
 const CACHE_TTL = {
   TECHNICAL_DATA: 300, // 5 minutes (seconds)
@@ -39,6 +39,8 @@ export class MarketDataService {
     private readonly assetRepository: Repository<Asset>,
     @InjectRepository(AssetPrice)
     private readonly assetPriceRepository: Repository<AssetPrice>,
+    @InjectRepository(SyncHistory)
+    private readonly syncHistoryRepository: Repository<SyncHistory>,
   ) { }
 
   /**
@@ -366,9 +368,12 @@ export class MarketDataService {
       `🔄 Sync COTAHIST: ${ticker} (${startYear}-${endYear})`
     );
 
+    let asset: Asset;
+    let syncHistory: SyncHistory;
+
     try {
       // 1. Buscar ou criar asset
-      let asset = await this.assetRepository.findOne({ where: { ticker } });
+      asset = await this.assetRepository.findOne({ where: { ticker } });
       if (!asset) {
         this.logger.log(`Creating new asset: ${ticker}`);
         asset = this.assetRepository.create({ ticker });
@@ -398,6 +403,32 @@ export class MarketDataService {
       const endTime = Date.now();
       const processingTime = (endTime - startTime) / 1000;
 
+      // 7. FASE 34.6: Record successful sync operation (audit trail)
+      syncHistory = this.syncHistoryRepository.create({
+        assetId: asset.id,
+        operationType: SyncOperationType.SYNC_COTAHIST,
+        status: SyncStatus.SUCCESS,
+        recordsSynced: mergedData.length,
+        yearsProcessed: endYear - startYear + 1,
+        processingTime,
+        sourceDetails: {
+          cotahist: cotahistData.length,
+          brapi: brapiData.length,
+          merged: mergedData.length,
+        },
+        errorMessage: null,
+        metadata: {
+          startYear,
+          endYear,
+          period: {
+            start: mergedData[0]?.date || '',
+            end: mergedData[mergedData.length - 1]?.date || '',
+          },
+        },
+      });
+      await this.syncHistoryRepository.save(syncHistory);
+      this.logger.debug(`📝 Sync history recorded: ${syncHistory.id}`);
+
       this.logger.log(
         `✅ Sync complete: ${ticker} (${mergedData.length} records, ${processingTime.toFixed(2)}s)`
       );
@@ -417,6 +448,34 @@ export class MarketDataService {
         },
       };
     } catch (error: any) {
+      // FASE 34.6: Record failed sync operation (audit trail)
+      const endTime = Date.now();
+      const processingTime = (endTime - startTime) / 1000;
+
+      if (asset) {
+        try {
+          syncHistory = this.syncHistoryRepository.create({
+            assetId: asset.id,
+            operationType: SyncOperationType.SYNC_COTAHIST,
+            status: SyncStatus.FAILED,
+            recordsSynced: null,
+            yearsProcessed: endYear - startYear + 1,
+            processingTime,
+            sourceDetails: null,
+            errorMessage: error.message,
+            metadata: {
+              startYear,
+              endYear,
+              errorStack: error.stack,
+            },
+          });
+          await this.syncHistoryRepository.save(syncHistory);
+          this.logger.debug(`📝 Failed sync history recorded: ${syncHistory.id}`);
+        } catch (historyError: any) {
+          this.logger.error(`Failed to record sync history: ${historyError.message}`);
+        }
+      }
+
       this.logger.error(`Failed to sync COTAHIST for ${ticker}: ${error.message}`);
       throw new InternalServerErrorException(
         `Failed to sync historical data: ${error.message}`
@@ -620,5 +679,92 @@ export class MarketDataService {
     this.logger.log(`Invalidating cache for ticker: ${ticker}`);
     // TODO: Implement SCAN-based pattern invalidation
     // For now, just log (TTL will handle expiration)
+  }
+
+  /**
+   * FASE 34.6: Get Sync History (Audit Trail)
+   *
+   * Retorna histórico de todas as sync operations para compliance e monitoring.
+   * Suporta filtros: ticker, status, operation type, pagination.
+   *
+   * @param filters - Filtros opcionais (ticker, status, operationType, limit, offset)
+   * @returns Array de sync history records + metadata de paginação
+   */
+  async getSyncHistory(filters: {
+    ticker?: string;
+    status?: string;
+    operationType?: string;
+    limit?: number;
+    offset?: number;
+  }) {
+    try {
+      const {
+        ticker,
+        status,
+        operationType,
+        limit = 50,
+        offset = 0,
+      } = filters;
+
+      // Build where clause
+      const where: any = {};
+      if (status) {
+        where.status = status;
+      }
+      if (operationType) {
+        where.operationType = operationType;
+      }
+
+      // If ticker filter, we need to fetch asset first
+      let assetFilter: string | undefined;
+      if (ticker) {
+        const asset = await this.assetRepository.findOne({ where: { ticker } });
+        if (!asset) {
+          return {
+            data: [],
+            pagination: { total: 0, limit, offset, hasMore: false },
+          };
+        }
+        where.assetId = asset.id;
+      }
+
+      const [records, total] = await this.syncHistoryRepository.findAndCount({
+        where,
+        relations: ['asset'],
+        order: { createdAt: 'DESC' },
+        take: limit,
+        skip: offset,
+      });
+
+      this.logger.log(
+        `Sync history query: ${records.length}/${total} records (ticker=${ticker}, status=${status})`
+      );
+
+      return {
+        data: records.map(record => ({
+          id: record.id,
+          ticker: record.asset.ticker,
+          operationType: record.operationType,
+          status: record.status,
+          recordsSynced: record.recordsSynced,
+          yearsProcessed: record.yearsProcessed,
+          processingTime: record.processingTime,
+          sourceDetails: record.sourceDetails,
+          errorMessage: record.errorMessage,
+          metadata: record.metadata,
+          createdAt: record.createdAt,
+          updatedAt: record.updatedAt,
+        })),
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + limit < total,
+        },
+      };
+    } catch (error: any) {
+      this.logger.error(`Failed to get sync history: ${error.message}`);
+      throw new InternalServerErrorException('Failed to retrieve sync history');
+    }
   }
 }

@@ -6,7 +6,7 @@ import { MarketDataController } from './market-data.controller';
 import { MarketDataService } from './market-data.service';
 import { PythonServiceClient } from './clients/python-service.client';
 import { AssetsModule } from '../assets/assets.module';
-import { Asset, AssetPrice } from '../../database/entities';
+import { Asset, AssetPrice, SyncHistory } from '../../database/entities';
 
 @Module({
   imports: [
@@ -14,7 +14,7 @@ import { Asset, AssetPrice } from '../../database/entities';
       timeout: 300000, // 5min timeout (COTAHIST pode demorar 2-3min)
       maxRedirects: 0,
     }),
-    TypeOrmModule.forFeature([Asset, AssetPrice]),
+    TypeOrmModule.forFeature([Asset, AssetPrice, SyncHistory]), // FASE 34.6: Add SyncHistory
     ConfigModule,
     AssetsModule, // Para reutilizar AssetsService
   ],

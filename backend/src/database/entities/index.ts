@@ -9,3 +9,4 @@ export { ScrapedData } from './scraped-data.entity';
 export { Analysis, AnalysisType, AnalysisStatus, Recommendation } from './analysis.entity';
 export { UpdateLog, UpdateStatus, UpdateTrigger } from './update-log.entity';
 export { ScraperMetric } from './scraper-metric.entity';
+export { SyncHistory, SyncStatus, SyncOperationType } from './sync-history.entity';

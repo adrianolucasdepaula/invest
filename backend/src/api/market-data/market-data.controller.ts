@@ -114,4 +114,36 @@ export class MarketDataController {
       dto.endYear,
     );
   }
+
+  /**
+   * FASE 34.6: Sync History Audit Trail
+   */
+  @Get('/sync-history')
+  @ApiOperation({
+    summary: 'Get sync history (audit trail)',
+    description: 'Returns audit trail of all sync operations (COTAHIST, BRAPI, Bulk). Supports filtering by ticker, status, operation type, and date range. For compliance and monitoring.'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Sync history retrieved successfully',
+  })
+  async getSyncHistory(
+    @Query('ticker') ticker?: string,
+    @Query('status') status?: string,
+    @Query('operationType') operationType?: string,
+    @Query('limit') limitParam?: string,
+    @Query('offset') offsetParam?: string,
+  ) {
+    const limit = parseInt(limitParam || '50', 10);
+    const offset = parseInt(offsetParam || '0', 10);
+
+    this.logger.log(`Get sync history request: ticker=${ticker}, status=${status}, limit=${limit}`);
+    return this.marketDataService.getSyncHistory({
+      ticker,
+      status,
+      operationType,
+      limit: Math.min(limit, 100), // Max 100 records per request
+      offset,
+    });
+  }
 }

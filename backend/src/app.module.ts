@@ -35,6 +35,7 @@ import {
   Analysis,
   UpdateLog,
   ScraperMetric,
+  SyncHistory, // FASE 34.6
 } from './database/entities';
 
 @Module({
@@ -67,6 +68,7 @@ import {
           Analysis,
           UpdateLog,
           ScraperMetric,
+          SyncHistory, // FASE 34.6
         ],
         synchronize: configService.get('DB_SYNCHRONIZE', false),
         logging: configService.get('DB_LOGGING', false),
