@@ -1,12 +1,54 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsInt, Min, Max, IsOptional } from 'class-validator';
+import { IsString, IsInt, Min, Max, IsOptional, IsIn } from 'class-validator';
+
+/**
+ * Top 100 most liquid B3 tickers (FASE 34.5)
+ * Updated: 2025-11-19
+ * Source: B3 Ibovespa + Most traded stocks
+ */
+export const B3_TICKERS = [
+  // Financeiro
+  'BBAS3', 'BBDC3', 'BBDC4', 'ITUB3', 'ITUB4', 'SANB11', 'BBSE3',
+  // Commodities
+  'VALE3', 'PETR3', 'PETR4', 'SUZB3', 'CSAN3', 'USIM5', 'GGBR4', 'GOAU4', 'CSNA3',
+  // Energia
+  'ELET3', 'ELET6', 'ENBR3', 'TAEE11', 'ENGI11', 'ENEV3', 'CMIG4', 'CPFE3',
+  // Consumo
+  'ABEV3', 'JBSS3', 'BRFS3', 'BEEF3', 'SMTO3', 'RAIZ4', 'MRFG3', 'PCAR3',
+  // Varejo
+  'MGLU3', 'LREN3', 'PETZ3', 'ARZZ3', 'VIIA3', 'ASAI3', 'CRFB3',
+  // Construção/Imobiliário
+  'EZTC3', 'MRVE3', 'CYRE3', 'MULT3', 'TEND3', 'ALSO3',
+  // Transporte/Logística
+  'RENT3', 'RAIL3', 'AZUL4', 'GOLL4', 'EMBR3', 'CCRO3',
+  // Saúde
+  'RADL3', 'HAPV3', 'FLRY3', 'GNDI3', 'QUAL3', 'PNVL3',
+  // Tecnologia
+  'TOTS3', 'LWSA3', 'POSI3', 'CASH3', 'IFCM3',
+  // Siderurgia/Papel
+  'KLBN11', 'SUZB3', 'GGBR4', 'CSNA3', 'GOAU4',
+  // Telecomunicações
+  'VIVT3', 'TIMS3',
+  // Utilities
+  'SBSP3', 'SAPR4', 'SAPR11', 'CPLE6',
+  // Seguros
+  'BBSE3', 'CXSE3', 'PSSA3',
+  // Diversos
+  'B3SA3', 'WEGE3', 'IGTI11', 'YDUQ3', 'COGN3', 'ANIM3', 'CVCB3',
+  'BRAP4', 'NTCO3', 'RDOR3', 'SLCE3', 'UGPA3', 'PRIO3', 'RECV3',
+  'SOMA3', 'VBBR3', 'CMIN3', 'IRBR3', 'JHSF3', 'DXCO3', 'BRKM5',
+  'CIEL3', 'ECOR3', 'RRRP3', 'SULA11', 'KLBN11', 'HYPE3',
+];
 
 export class SyncCotahistDto {
   @ApiProperty({
-    description: 'Ticker do ativo (ex: ABEV3, PETR4, VALE3)',
+    description: 'Ticker do ativo (ex: ABEV3, PETR4, VALE3). Deve ser um ticker válido da B3.',
     example: 'ABEV3',
   })
   @IsString()
+  @IsIn(B3_TICKERS, {
+    message: `Ticker inválido. Deve ser um dos ${B3_TICKERS.length} tickers disponíveis na B3.`,
+  })
   ticker: string;
 
   @ApiProperty({
