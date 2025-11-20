@@ -43,19 +43,19 @@ export class AssetPrice {
   @Column({ type: 'date', primary: true })
   date: Date;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2 })
+  @Column({ type: 'decimal', precision: 18, scale: 4 })
   open: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2 })
+  @Column({ type: 'decimal', precision: 18, scale: 4 })
   high: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2 })
+  @Column({ type: 'decimal', precision: 18, scale: 4 })
   low: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2 })
+  @Column({ type: 'decimal', precision: 18, scale: 4 })
   close: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2, name: 'adjusted_close', nullable: true })
+  @Column({ type: 'decimal', precision: 18, scale: 4, name: 'adjusted_close', nullable: true })
   adjustedClose: number;
 
   @Column({ type: 'bigint' })

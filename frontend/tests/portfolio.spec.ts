@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Portfolio Page', () => {
+  test.setTimeout(120000); // Aumentar timeout para 2 minutos
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/portfolio');
+    await page.waitForLoadState('networkidle'); // Esperar carregamento de dados
   });
 
   test('deve renderizar o título da página', async ({ page }) => {

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Asset, AssetType, AssetPrice, FundamentalData } from '@database/entities';
+import { Asset, AssetType, AssetPrice, FundamentalData, PriceSource } from '@database/entities';
 import { ScrapersService } from '../../scrapers/scrapers.service';
 import { BrapiScraper } from '../../scrapers/fundamental/brapi.scraper';
 import { HistoricalPricesQueryDto, PriceRange } from './dto/historical-prices-query.dto';
@@ -19,7 +19,7 @@ export class AssetsService {
     private fundamentalDataRepository: Repository<FundamentalData>,
     private scrapersService: ScrapersService,
     private brapiScraper: BrapiScraper,
-  ) {}
+  ) { }
 
   async findAll(type?: string) {
     // Build optimized query with LEFT JOIN to get latest 2 prices per asset
@@ -365,6 +365,7 @@ export class AssetsService {
             marketCap: brapiData.marketCap,
             change: brapiData.change,
             changePercent: brapiData.changePercent,
+            source: PriceSource.BRAPI,
             collectedAt, // Registra quando foi coletado da API
           });
 
@@ -415,6 +416,7 @@ export class AssetsService {
               close: histPrice.close,
               volume: histPrice.volume,
               adjustedClose: histPrice.adjustedClose,
+              source: PriceSource.BRAPI,
               collectedAt, // Registra quando foi coletado
             });
 
@@ -551,8 +553,8 @@ export class AssetsService {
       if (!scrapedResult.isValid) {
         this.logger.warn(
           `Insufficient data quality for ${ticker}: ` +
-            `${scrapedResult.sourcesCount} sources (min 3 required), ` +
-            `confidence: ${scrapedResult.confidence} (min 0.7 required)`,
+          `${scrapedResult.sourcesCount} sources (min 3 required), ` +
+          `confidence: ${scrapedResult.confidence} (min 0.7 required)`,
         );
         return {
           success: false,

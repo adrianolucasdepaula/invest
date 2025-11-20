@@ -7,7 +7,7 @@ import { HistoricalPricesQueryDto } from './dto/historical-prices-query.dto';
 @ApiTags('assets')
 @Controller('assets')
 export class AssetsController {
-  constructor(private readonly assetsService: AssetsService) {}
+  constructor(private readonly assetsService: AssetsService) { }
 
   @Get()
   @ApiOperation({ summary: 'Get all assets' })
@@ -64,6 +64,7 @@ export class AssetsController {
     description: 'Fetches current price and historical data for ALL assets from BRAPI. Supports range parameter: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max. Default: 1y. WARNING: range=max will fetch full historical data (may take several minutes)'
   })
   async syncAllAssets(@Query('range') range?: string) {
+    console.log('syncAllAssets endpoint reached, range:', range);
     return this.assetsService.syncAllAssets(range || '1y');
   }
 }

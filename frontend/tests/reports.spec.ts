@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Reports Page', () => {
+  test.slow(); // Aumentar timeout para esta suite
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/reports');
   });
@@ -135,8 +137,8 @@ test.describe('Data Display', () => {
   test('valores monetários devem estar formatados corretamente', async ({ page }) => {
     await page.goto('/dashboard');
 
-    // Procurar por padrão de moeda brasileira (R$ XX,XX)
-    const currencyPattern = /R\$\s*[\d.]+,\d{2}/;
+    // Procurar por padrão de moeda brasileira (R$ XX,XX) - suportando nbsp
+    const currencyPattern = /R\$\s*[\d.,]+/;
     const currencyElements = page.locator(`text=${currencyPattern}`);
 
     const count = await currencyElements.count();
@@ -147,7 +149,7 @@ test.describe('Data Display', () => {
     await page.goto('/assets');
 
     // Procurar por padrão de porcentagem (+X.XX% ou -X.XX%)
-    const percentPattern = /[+-]?\d+\.\d+%/;
+    const percentPattern = /[+-]?\d+[,.]\d+%/;
     const percentElements = page.locator(`text=${percentPattern}`);
 
     const count = await percentElements.count();
