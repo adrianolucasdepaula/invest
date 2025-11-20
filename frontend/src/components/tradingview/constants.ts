@@ -10,6 +10,7 @@
 
 import type {
   B3Symbol,
+  TradingViewSymbol,
   TradingViewTheme,
   TradingViewLocale,
   ChartInterval,
@@ -437,6 +438,27 @@ export const FOREX_POPULAR = [
     proName: 'FX:USDJPY',
     title: 'USD/JPY',
   },
+];
+
+/**
+ * Default symbols for TickerTape widget (IBOV + 10 Blue Chips)
+ *
+ * Composição:
+ * - IBOV (índice principal B3) - sempre primeiro
+ * - 10 Blue Chips (ações mais líquidas)
+ */
+export const TICKERTAPE_DEFAULT_SYMBOLS: TradingViewSymbol[] = [
+  // Index first (contexto geral B3)
+  {
+    proName: B3_INDICES[0].proName, // IBOV
+    title: B3_INDICES[0].title,     // Ibovespa
+  },
+
+  // Blue chips (10 ações mais líquidas)
+  ...B3_BLUE_CHIPS.map(symbol => ({
+    proName: symbol.proName,
+    title: symbol.title,
+  })),
 ];
 
 // ============================================================================
