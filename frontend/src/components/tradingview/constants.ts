@@ -769,6 +769,56 @@ export const ERROR_MESSAGES = {
 export const TRADINGVIEW_SCRIPT_URL = 'https://s3.tradingview.com/tv.js';
 
 // ============================================================================
+// TRADINGVIEW WIDGET EMBED URLS (Script Embed Approach)
+// ============================================================================
+
+/**
+ * TradingView Widget Embed URLs (22 widgets)
+ *
+ * Script embed approach - cada widget tem URL específico para <script> tag.
+ * Uso: script.src = TRADINGVIEW_EMBED_URLS['WidgetName']
+ *
+ * Fonte: TradingView official docs + b3-intelligence-pro project analysis
+ * Formato: https://s3.tradingview.com/external-embedding/embed-widget-{widget-name-kebab-case}.js
+ *
+ * @see https://www.tradingview.com/widget/
+ */
+export const TRADINGVIEW_EMBED_URLS: Record<string, string> = {
+  // ✅ CRÍTICOS (FASE 36 - MVP - 6 widgets)
+  TickerTape: 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js',
+  MarketOverview: 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js',
+  AdvancedChart: 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js',
+  Screener: 'https://s3.tradingview.com/external-embedding/embed-widget-screener.js',
+  TechnicalAnalysis: 'https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js',
+  SymbolOverview: 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js',
+
+  // ⚡ IMPORTANTES (FASE 37+ - 7 widgets)
+  MiniChart: 'https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js',
+  StockMarket: 'https://s3.tradingview.com/external-embedding/embed-widget-stock-market.js',
+  MarketQuotes: 'https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js',
+  Ticker: 'https://s3.tradingview.com/external-embedding/embed-widget-ticker.js',
+  SingleTicker: 'https://s3.tradingview.com/external-embedding/embed-widget-single-ticker.js',
+  Heatmap: 'https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js',
+  SymbolInfo: 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js',
+
+  // 💡 OPCIONAIS (FASE 38+ - 9 widgets)
+  FundamentalData: 'https://s3.tradingview.com/external-embedding/embed-widget-financials.js',
+  CompanyProfile: 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-profile.js',
+  TopStories: 'https://s3.tradingview.com/external-embedding/embed-widget-timeline.js',
+  EconomicCalendar: 'https://s3.tradingview.com/external-embedding/embed-widget-events.js',
+  CryptoScreener: 'https://s3.tradingview.com/external-embedding/embed-widget-crypto-coins-screener.js',
+  ForexCrossRates: 'https://s3.tradingview.com/external-embedding/embed-widget-forex-cross-rates.js',
+  StockHeatmap: 'https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js',
+  CryptocurrencyMarket: 'https://s3.tradingview.com/external-embedding/embed-widget-crypto-mkt-screener.js',
+  ETFHeatmap: 'https://s3.tradingview.com/external-embedding/embed-widget-etf-heatmap.js',
+} as const;
+
+/**
+ * TradingView Widget Name Type (TypeScript type safety)
+ */
+export type TradingViewWidgetName = keyof typeof TRADINGVIEW_EMBED_URLS;
+
+// ============================================================================
 // EXPORTS SUMMARY
 // ============================================================================
 
