@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/
 import { MarketDataService } from './market-data.service';
 import { GetPricesDto, GetTechnicalDataDto, TechnicalDataResponseDto } from './dto';
 import { SyncCotahistDto, SyncCotahistResponseDto } from './dto/sync-cotahist.dto';
+import { SyncStatusResponseDto, SyncBulkDto, SyncBulkResponseDto } from './dto'; // FASE 35
 
 @ApiTags('market-data')
 @Controller('market-data')
@@ -145,5 +146,70 @@ export class MarketDataController {
       limit: Math.min(limit, 100), // Max 100 records per request
       offset,
     });
+  }
+
+  /**
+   * FASE 35: Sistema de Gerenciamento de Sync B3
+   */
+  @Get('sync-status')
+  @ApiOperation({
+    summary: 'Obter status de sincronização de todos os ativos B3',
+    description: 'Retorna lista consolidada (55 ativos) com status de sync, quantidade de registros carregados, período de dados (data mais antiga/recente) e última sincronização para cada ativo. Performance otimizada com query SQL única (LEFT JOIN). Status: SYNCED (≥200 registros), PENDING (0 registros), PARTIAL (<200 registros), FAILED (última sync falhou).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Status de sync retornado com sucesso',
+    type: SyncStatusResponseDto,
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Erro ao buscar status de sync',
+  })
+  async getSyncStatus(): Promise<SyncStatusResponseDto> {
+    this.logger.log('Get sync status request');
+    return this.marketDataService.getSyncStatus();
+  }
+
+  @Post('sync-bulk')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({
+    summary: 'Sincronização em massa de múltiplos ativos B3',
+    description: 'Inicia sincronização de até 20 tickers em background (processamento sequencial para estabilidade). Retorna HTTP 202 Accepted imediatamente. Acompanhe o progresso em tempo real via WebSocket (evento: sync:progress). Período: 1986-2024 (histórico completo COTAHIST B3). Validação prévia de tickers com fail-fast. Retry automático 3x com exponencial backoff (2s, 4s, 8s). Tempo estimado: 2.5min/ativo.',
+  })
+  @ApiResponse({
+    status: 202,
+    description: 'Sincronização iniciada em background (acompanhe via WebSocket)',
+    type: SyncBulkResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Parâmetros inválidos (tickers inválidos, anos fora do range, etc)',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Erro ao iniciar sincronização em massa',
+  })
+  async syncBulk(@Body() dto: SyncBulkDto): Promise<SyncBulkResponseDto> {
+    this.logger.log(
+      `Sync bulk request: ${dto.tickers.length} tickers (${dto.startYear}-${dto.endYear})`
+    );
+
+    // Processar em background (não aguardar conclusão)
+    this.marketDataService.syncBulkAssets(
+      dto.tickers,
+      dto.startYear,
+      dto.endYear,
+    ).catch((error) => {
+      this.logger.error(`Sync bulk background error: ${error.message}`, error.stack);
+    });
+
+    // Retornar resposta imediata (HTTP 202 Accepted)
+    const estimatedMinutes = dto.tickers.length * 2.5; // 2.5min/ativo (média observada)
+    return {
+      message: 'Sincronização iniciada em background',
+      totalTickers: dto.tickers.length,
+      estimatedMinutes: Math.round(estimatedMinutes),
+      instructions: 'Acompanhe o progresso em tempo real via WebSocket (evento: sync:progress)',
+    };
   }
 }

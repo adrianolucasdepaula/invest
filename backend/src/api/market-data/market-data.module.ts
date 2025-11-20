@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MarketDataController } from './market-data.controller';
 import { MarketDataService } from './market-data.service';
 import { PythonServiceClient } from './clients/python-service.client';
+import { SyncGateway } from './sync.gateway'; // FASE 35
 import { AssetsModule } from '../assets/assets.module';
 import { Asset, AssetPrice, SyncHistory } from '../../database/entities';
 
@@ -19,7 +20,7 @@ import { Asset, AssetPrice, SyncHistory } from '../../database/entities';
     AssetsModule, // Para reutilizar AssetsService
   ],
   controllers: [MarketDataController],
-  providers: [MarketDataService, PythonServiceClient],
-  exports: [MarketDataService],
+  providers: [MarketDataService, PythonServiceClient, SyncGateway], // FASE 35: Add SyncGateway
+  exports: [MarketDataService, SyncGateway], // FASE 35: Export SyncGateway
 })
 export class MarketDataModule {}
