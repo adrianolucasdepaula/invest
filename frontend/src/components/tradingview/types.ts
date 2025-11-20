@@ -89,8 +89,8 @@ export type ChartRange =
 export interface TradingViewSymbol {
   /** Symbol in format "EXCHANGE:TICKER" (e.g., "BMFBOVESPA:PETR4") */
   proName: string;
-  /** Display title (optional) */
-  title?: string;
+  /** Display description/title (optional) - TradingView API uses "description" */
+  description?: string;
 }
 
 /**

@@ -33,7 +33,7 @@ export const B3_BLUE_CHIPS: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:PETR4',
     ticker: 'PETR4',
-    title: 'Petrobras PN',
+    description: 'Petrobras PN',
     name: 'Petrobras PN',
     sector: 'Petróleo, Gás e Biocombustíveis',
     segment: 'Petróleo, Gás e Biocombustíveis',
@@ -41,7 +41,7 @@ export const B3_BLUE_CHIPS: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:VALE3',
     ticker: 'VALE3',
-    title: 'Vale ON',
+    description: 'Vale ON',
     name: 'Vale ON',
     sector: 'Mineração',
     segment: 'Minerais Metálicos',
@@ -49,7 +49,7 @@ export const B3_BLUE_CHIPS: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:ITUB4',
     ticker: 'ITUB4',
-    title: 'Itaú Unibanco PN',
+    description: 'Itaú Unibanco PN',
     name: 'Itaú Unibanco PN',
     sector: 'Financeiro',
     segment: 'Bancos',
@@ -57,7 +57,7 @@ export const B3_BLUE_CHIPS: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:BBDC4',
     ticker: 'BBDC4',
-    title: 'Bradesco PN',
+    description: 'Bradesco PN',
     name: 'Bradesco PN',
     sector: 'Financeiro',
     segment: 'Bancos',
@@ -65,7 +65,7 @@ export const B3_BLUE_CHIPS: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:ABEV3',
     ticker: 'ABEV3',
-    title: 'Ambev ON',
+    description: 'Ambev ON',
     name: 'Ambev ON',
     sector: 'Consumo não Cíclico',
     segment: 'Bebidas',
@@ -73,7 +73,7 @@ export const B3_BLUE_CHIPS: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:BBAS3',
     ticker: 'BBAS3',
-    title: 'Banco do Brasil ON',
+    description: 'Banco do Brasil ON',
     name: 'Banco do Brasil ON',
     sector: 'Financeiro',
     segment: 'Bancos',
@@ -81,7 +81,7 @@ export const B3_BLUE_CHIPS: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:WEGE3',
     ticker: 'WEGE3',
-    title: 'WEG ON',
+    description: 'WEG ON',
     name: 'WEG ON',
     sector: 'Bens Industriais',
     segment: 'Máquinas e Equipamentos',
@@ -89,7 +89,7 @@ export const B3_BLUE_CHIPS: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:RENT3',
     ticker: 'RENT3',
-    title: 'Localiza ON',
+    description: 'Localiza ON',
     name: 'Localiza ON',
     sector: 'Consumo Cíclico',
     segment: 'Aluguel de Carros',
@@ -97,7 +97,7 @@ export const B3_BLUE_CHIPS: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:B3SA3',
     ticker: 'B3SA3',
-    title: 'B3 ON',
+    description: 'B3 ON',
     name: 'B3 ON',
     sector: 'Financeiro',
     segment: 'Serviços Financeiros Diversos',
@@ -105,7 +105,7 @@ export const B3_BLUE_CHIPS: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:MGLU3',
     ticker: 'MGLU3',
-    title: 'Magazine Luiza ON',
+    description: 'Magazine Luiza ON',
     name: 'Magazine Luiza ON',
     sector: 'Consumo Cíclico',
     segment: 'Comércio',
@@ -120,7 +120,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:SUZB3',
     ticker: 'SUZB3',
-    title: 'Suzano ON',
+    description: 'Suzano ON',
     name: 'Suzano ON',
     sector: 'Materiais Básicos',
     segment: 'Papel e Celulose',
@@ -128,7 +128,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:JBSS3',
     ticker: 'JBSS3',
-    title: 'JBS ON',
+    description: 'JBS ON',
     name: 'JBS ON',
     sector: 'Consumo não Cíclico',
     segment: 'Alimentos Processados',
@@ -136,7 +136,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:RAIL3',
     ticker: 'RAIL3',
-    title: 'Rumo ON',
+    description: 'Rumo ON',
     name: 'Rumo ON',
     sector: 'Bens Industriais',
     segment: 'Transporte',
@@ -144,7 +144,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:RADL3',
     ticker: 'RADL3',
-    title: 'Raia Drogasil ON',
+    description: 'Raia Drogasil ON',
     name: 'Raia Drogasil ON',
     sector: 'Saúde',
     segment: 'Comércio e Distribuição',
@@ -152,7 +152,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:HAPV3',
     ticker: 'HAPV3',
-    title: 'Hapvida ON',
+    description: 'Hapvida ON',
     name: 'Hapvida ON',
     sector: 'Saúde',
     segment: 'Serviços Médicos Hospitalares',
@@ -160,7 +160,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:GGBR4',
     ticker: 'GGBR4',
-    title: 'Gerdau PN',
+    description: 'Gerdau PN',
     name: 'Gerdau PN',
     sector: 'Materiais Básicos',
     segment: 'Siderurgia',
@@ -168,7 +168,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:CSNA3',
     ticker: 'CSNA3',
-    title: 'CSN ON',
+    description: 'CSN ON',
     name: 'CSN ON',
     sector: 'Materiais Básicos',
     segment: 'Siderurgia',
@@ -176,7 +176,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:VIVT3',
     ticker: 'VIVT3',
-    title: 'Vivo ON',
+    description: 'Vivo ON',
     name: 'Vivo ON',
     sector: 'Telecomunicações',
     segment: 'Telecomunicações',
@@ -184,7 +184,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:ELET3',
     ticker: 'ELET3',
-    title: 'Eletrobras ON',
+    description: 'Eletrobras ON',
     name: 'Eletrobras ON',
     sector: 'Utilidade Pública',
     segment: 'Energia Elétrica',
@@ -192,7 +192,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:SANB11',
     ticker: 'SANB11',
-    title: 'Santander Brasil Unit',
+    description: 'Santander Brasil Unit',
     name: 'Santander Brasil Unit',
     sector: 'Financeiro',
     segment: 'Bancos',
@@ -200,7 +200,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:EMBR3',
     ticker: 'EMBR3',
-    title: 'Embraer ON',
+    description: 'Embraer ON',
     name: 'Embraer ON',
     sector: 'Bens Industriais',
     segment: 'Aeronáutica',
@@ -208,7 +208,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:CSAN3',
     ticker: 'CSAN3',
-    title: 'Cosan ON',
+    description: 'Cosan ON',
     name: 'Cosan ON',
     sector: 'Petróleo, Gás e Biocombustíveis',
     segment: 'Biocombustíveis',
@@ -216,7 +216,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:BEEF3',
     ticker: 'BEEF3',
-    title: 'Minerva ON',
+    description: 'Minerva ON',
     name: 'Minerva ON',
     sector: 'Consumo não Cíclico',
     segment: 'Alimentos Processados',
@@ -224,7 +224,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:NTCO3',
     ticker: 'NTCO3',
-    title: 'Natura ON',
+    description: 'Natura ON',
     name: 'Natura ON',
     sector: 'Consumo Cíclico',
     segment: 'Produtos de Uso Pessoal',
@@ -232,7 +232,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:LREN3',
     ticker: 'LREN3',
-    title: 'Lojas Renner ON',
+    description: 'Lojas Renner ON',
     name: 'Lojas Renner ON',
     sector: 'Consumo Cíclico',
     segment: 'Comércio',
@@ -240,7 +240,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:CIEL3',
     ticker: 'CIEL3',
-    title: 'Cielo ON',
+    description: 'Cielo ON',
     name: 'Cielo ON',
     sector: 'Financeiro',
     segment: 'Serviços Financeiros Diversos',
@@ -248,7 +248,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:PRIO3',
     ticker: 'PRIO3',
-    title: 'PRIO ON',
+    description: 'PRIO ON',
     name: 'PRIO ON',
     sector: 'Petróleo, Gás e Biocombustíveis',
     segment: 'Exploração e Produção',
@@ -256,7 +256,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:KLBN11',
     ticker: 'KLBN11',
-    title: 'Klabin Unit',
+    description: 'Klabin Unit',
     name: 'Klabin Unit',
     sector: 'Materiais Básicos',
     segment: 'Papel e Celulose',
@@ -264,7 +264,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:CPFE3',
     ticker: 'CPFE3',
-    title: 'CPFL Energia ON',
+    description: 'CPFL Energia ON',
     name: 'CPFL Energia ON',
     sector: 'Utilidade Pública',
     segment: 'Energia Elétrica',
@@ -272,7 +272,7 @@ export const B3_HIGH_LIQUIDITY: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:EQTL3',
     ticker: 'EQTL3',
-    title: 'Equatorial ON',
+    description: 'Equatorial ON',
     name: 'Equatorial ON',
     sector: 'Utilidade Pública',
     segment: 'Energia Elétrica',
@@ -286,70 +286,70 @@ export const B3_INDICES: B3Symbol[] = [
   {
     proName: 'BMFBOVESPA:IBOV',
     ticker: 'IBOV',
-    title: 'Ibovespa',
+    description: 'Ibovespa',
     name: 'Ibovespa',
     isIndex: true,
   },
   {
     proName: 'BMFBOVESPA:IFIX',
     ticker: 'IFIX',
-    title: 'IFIX',
+    description: 'IFIX',
     name: 'IFIX (Fundos Imobiliários)',
     isIndex: true,
   },
   {
     proName: 'BMFBOVESPA:SMLL',
     ticker: 'SMLL',
-    title: 'Small Caps',
+    description: 'Small Caps',
     name: 'Small Caps Index',
     isIndex: true,
   },
   {
     proName: 'BMFBOVESPA:IDIV',
     ticker: 'IDIV',
-    title: 'Dividendos',
+    description: 'Dividendos',
     name: 'Índice Dividendos',
     isIndex: true,
   },
   {
     proName: 'BMFBOVESPA:UTIL',
     ticker: 'UTIL',
-    title: 'Utilidade Pública',
+    description: 'Utilidade Pública',
     name: 'Índice Utilidade Pública',
     isIndex: true,
   },
   {
     proName: 'BMFBOVESPA:IFNC',
     ticker: 'IFNC',
-    title: 'Financeiro',
+    description: 'Financeiro',
     name: 'Índice Financeiro',
     isIndex: true,
   },
   {
     proName: 'BMFBOVESPA:IMAT',
     ticker: 'IMAT',
-    title: 'Materiais Básicos',
+    description: 'Materiais Básicos',
     name: 'Índice Materiais Básicos',
     isIndex: true,
   },
   {
     proName: 'BMFBOVESPA:ICON',
     ticker: 'ICON',
-    title: 'Consumo',
+    description: 'Consumo',
     name: 'Índice Consumo',
     isIndex: true,
   },
   {
     proName: 'BMFBOVESPA:IEEX',
     ticker: 'IEEX',
-    title: 'Energia Elétrica',
+    description: 'Energia Elétrica',
     name: 'Índice Energia Elétrica',
     isIndex: true,
   },
   {
     proName: 'BMFBOVESPA:IMOB',
     ticker: 'IMOB',
-    title: 'Imobiliário',
+    description: 'Imobiliário',
     name: 'Índice Imobiliário',
     isIndex: true,
   },
@@ -370,73 +370,73 @@ export const B3_ALL_SYMBOLS: B3Symbol[] = [
 export const INTERNATIONAL_INDICES = [
   {
     proName: 'CURRENCYCOM:US500',
-    title: 'S&P 500',
+    description: 'S&P 500',
   },
   {
     proName: 'NASDAQ:IXIC',
-    title: 'Nasdaq',
+    description: 'Nasdaq',
   },
   {
     proName: 'DJ:DJI',
-    title: 'Dow Jones',
+    description: 'Dow Jones',
   },
   {
     proName: 'TVC:DAX',
-    title: 'DAX (Germany)',
+    description: 'DAX (Germany)',
   },
   {
     proName: 'FTSE:UKX',
-    title: 'FTSE 100 (UK)',
+    description: 'FTSE 100 (UK)',
   },
   {
     proName: 'TVC:NI225',
-    title: 'Nikkei 225 (Japan)',
+    description: 'Nikkei 225 (Japan)',
   },
 ];
 
 export const CRYPTO_POPULAR = [
   {
     proName: 'BINANCE:BTCUSDT',
-    title: 'Bitcoin/USDT',
+    description: 'Bitcoin/USDT',
   },
   {
     proName: 'BINANCE:ETHUSDT',
-    title: 'Ethereum/USDT',
+    description: 'Ethereum/USDT',
   },
   {
     proName: 'BINANCE:BNBUSDT',
-    title: 'BNB/USDT',
+    description: 'BNB/USDT',
   },
   {
     proName: 'BINANCE:SOLUSDT',
-    title: 'Solana/USDT',
+    description: 'Solana/USDT',
   },
   {
     proName: 'BINANCE:ADAUSDT',
-    title: 'Cardano/USDT',
+    description: 'Cardano/USDT',
   },
 ];
 
 export const FOREX_POPULAR = [
   {
     proName: 'FX_IDC:USDBRL',
-    title: 'USD/BRL',
+    description: 'USD/BRL',
   },
   {
     proName: 'FX_IDC:EURBRL',
-    title: 'EUR/BRL',
+    description: 'EUR/BRL',
   },
   {
     proName: 'FX:EURUSD',
-    title: 'EUR/USD',
+    description: 'EUR/USD',
   },
   {
     proName: 'FX:GBPUSD',
-    title: 'GBP/USD',
+    description: 'GBP/USD',
   },
   {
     proName: 'FX:USDJPY',
-    title: 'USD/JPY',
+    description: 'USD/JPY',
   },
 ];
 
@@ -450,14 +450,14 @@ export const FOREX_POPULAR = [
 export const TICKERTAPE_DEFAULT_SYMBOLS: TradingViewSymbol[] = [
   // Index first (contexto geral B3)
   {
-    proName: B3_INDICES[0].proName, // IBOV
-    title: B3_INDICES[0].title,     // Ibovespa
+    proName: B3_INDICES[0].proName,     // IBOV
+    description: B3_INDICES[0].description,   // Ibovespa (usando .description de B3Symbol)
   },
 
   // Blue chips (10 ações mais líquidas)
   ...B3_BLUE_CHIPS.map(symbol => ({
     proName: symbol.proName,
-    title: symbol.title,
+    description: symbol.description,          // TradingView API espera "description"
   })),
 ];
 

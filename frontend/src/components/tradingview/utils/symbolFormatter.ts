@@ -72,7 +72,7 @@ export function parseTradingViewToB3(symbol: string): string {
  * @example
  * ```ts
  * createTradingViewSymbol('PETR4', 'Petrobras')
- * // { proName: 'BMFBOVESPA:PETR4', title: 'Petrobras' }
+ * // { proName: 'BMFBOVESPA:PETR4', description: 'Petrobras' }
  * ```
  */
 export function createTradingViewSymbol(
@@ -81,7 +81,7 @@ export function createTradingViewSymbol(
 ): TradingViewSymbol {
   return {
     proName: formatB3ToTradingView(ticker),
-    title: title || ticker,
+    description: title || ticker,
   };
 }
 
@@ -103,7 +103,7 @@ export function createB3Symbol(
   return {
     proName: formatB3ToTradingView(ticker),
     ticker: ticker.toUpperCase(),
-    title: metadata.title || ticker,
+    description: metadata.description || ticker,
     name: metadata.name || ticker,
     sector: metadata.sector,
     segment: metadata.segment,
@@ -134,8 +134,8 @@ export function batchFormatB3ToTradingView(
  * @example
  * ```ts
  * batchCreateTradingViewSymbols([
- *   { ticker: 'PETR4', title: 'Petrobras' },
- *   { ticker: 'VALE3', title: 'Vale' },
+ *   { ticker: 'PETR4', description: 'Petrobras' },
+ *   { ticker: 'VALE3', description: 'Vale' },
  * ])
  * ```
  */
