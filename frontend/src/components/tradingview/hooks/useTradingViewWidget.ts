@@ -207,29 +207,45 @@ export function useTradingViewWidget<TConfig = any>(
       });
 
       const widgetPromise = new Promise((resolve) => {
-        // 🔍 DEBUG: Log constructor being used
-        const TradingView = (window as any).TradingView;
-        console.log('[useTradingViewWidget] Available constructors:', Object.keys(TradingView || {}));
-        console.log('[useTradingViewWidget] Widget config:', JSON.stringify({...widgetConfig, container_id: containerId}, null, 2));
+        // ✅ TICKER TAPE: Use script embed approach (official TradingView method)
+        if (widgetName === 'TickerTape') {
+          const script = document.createElement('script');
+          script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js';
+          script.type = 'text/javascript';
+          script.async = true;
 
-        // Create widget instance (try MediumWidget for Ticker Tape)
-        if (widgetName === 'TickerTape' && TradingView.MediumWidget) {
-          console.log('[useTradingViewWidget] Using MediumWidget constructor for Ticker Tape');
-          widgetRef.current = new TradingView.MediumWidget({
-            ...widgetConfig,
-            container_id: containerId,
+          // Type assertion for Ticker Tape specific config
+          const config = widgetConfig as any;
+          script.innerHTML = JSON.stringify({
+            symbols: config.symbols,
+            showSymbolLogo: config.showSymbolLogo,
+            colorTheme: config.colorTheme,
+            isTransparent: config.isTransparent,
+            displayMode: config.displayMode,
+            locale: config.locale,
           });
-        } else {
-          console.log('[useTradingViewWidget] Using generic widget constructor');
+
+          // Clear container and append script
+          const containerEl = document.getElementById(containerId);
+          if (containerEl) {
+            containerEl.innerHTML = '';
+            containerEl.appendChild(script);
+          }
+
+          // Store reference (script element, not widget instance)
+          widgetRef.current = script as any;
+          setTimeout(resolve, 100);
+        }
+        // ✅ OTHER WIDGETS: Use constructor approach
+        else {
+          const TradingView = (window as any).TradingView;
           widgetRef.current = new TradingView.widget({
             ...widgetConfig,
             container_id: containerId,
           });
-        }
 
-        // Resolve immediately (TradingView widgets don't have onLoad callback)
-        // We rely on timeout to catch failures
-        setTimeout(resolve, 100);
+          setTimeout(resolve, 100);
+        }
       });
 
       await Promise.race([widgetPromise, timeoutPromise]);

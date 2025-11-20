@@ -71,19 +71,14 @@ export function TickerTape({
 
   // ✅ Memoize config (só recria se dependencies mudarem)
   const widgetConfig = useMemo<TickerTapeProps>(
-    () => {
-      // 🔍 DEBUG: Log símbolos sendo passados
-      console.log('[TickerTape] Símbolos configurados:', JSON.stringify(symbols, null, 2));
-
-      return {
-        symbols,
-        showSymbolLogo,
-        isTransparent: false,      // ✅ CRÍTICO: evita bug dark mode
-        displayMode: 'adaptive',   // Responsive automático
-        colorTheme: theme,         // Sync com next-themes
-        locale: DEFAULT_LOCALE,    // pt_BR
-      };
-    },
+    () => ({
+      symbols,
+      showSymbolLogo,
+      isTransparent: false,      // ✅ CRÍTICO: evita bug dark mode
+      displayMode: 'adaptive',   // Responsive automático
+      colorTheme: theme,         // Sync com next-themes
+      locale: DEFAULT_LOCALE,    // br (TradingView standard)
+    }),
     [symbols, showSymbolLogo, theme]
   );
 

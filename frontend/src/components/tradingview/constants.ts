@@ -473,7 +473,7 @@ export const DEFAULT_THEME: TradingViewTheme = 'dark';
 /**
  * Default locale
  */
-export const DEFAULT_LOCALE: TradingViewLocale = 'pt';  // ✅ FIX: pt não pt_BR (IETF tag)
+export const DEFAULT_LOCALE: TradingViewLocale = 'br';  // ✅ FIX: br (B3 Intelligence Pro working config)
 
 /**
  * Theme color palettes
