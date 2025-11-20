@@ -21,6 +21,7 @@ import { useEffect, useLayoutEffect, useRef, useState, useCallback, useId } from
 import type { WidgetLoadingStatus, WidgetPerformanceMetrics } from '../types';
 import {
   TRADINGVIEW_SCRIPT_URL,
+  TRADINGVIEW_EMBED_URLS,
   WIDGET_LOAD_TIMEOUT,
   ERROR_MESSAGES,
 } from '../constants';
@@ -206,46 +207,35 @@ export function useTradingViewWidget<TConfig = any>(
         }, WIDGET_LOAD_TIMEOUT);
       });
 
-      const widgetPromise = new Promise((resolve) => {
-        // ✅ TICKER TAPE: Use script embed approach (official TradingView method)
-        if (widgetName === 'TickerTape') {
-          const script = document.createElement('script');
-          script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js';
-          script.type = 'text/javascript';
-          script.async = true;
+      const widgetPromise = new Promise((resolve, reject) => {
+        // ✅ GENERALIZED: Use URL mapping for all widgets (script embed approach)
+        const scriptUrl = TRADINGVIEW_EMBED_URLS[widgetName];
 
-          // Type assertion for Ticker Tape specific config
-          const config = widgetConfig as any;
-          script.innerHTML = JSON.stringify({
-            symbols: config.symbols,
-            showSymbolLogo: config.showSymbolLogo,
-            colorTheme: config.colorTheme,
-            isTransparent: config.isTransparent,
-            displayMode: config.displayMode,
-            locale: config.locale,
-          });
-
-          // Clear container and append script
-          const containerEl = document.getElementById(containerId);
-          if (containerEl) {
-            containerEl.innerHTML = '';
-            containerEl.appendChild(script);
-          }
-
-          // Store reference (script element, not widget instance)
-          widgetRef.current = script as any;
-          setTimeout(resolve, 100);
+        if (!scriptUrl) {
+          reject(new Error(`Widget "${widgetName}" não suportado. Verifique TRADINGVIEW_EMBED_URLS em constants.ts`));
+          return;
         }
-        // ✅ OTHER WIDGETS: Use constructor approach
-        else {
-          const TradingView = (window as any).TradingView;
-          widgetRef.current = new TradingView.widget({
-            ...widgetConfig,
-            container_id: containerId,
-          });
 
-          setTimeout(resolve, 100);
+        // Script embed approach (padrão para todos os widgets TradingView)
+        const script = document.createElement('script');
+        script.src = scriptUrl;
+        script.type = 'text/javascript';
+        script.async = true;
+
+        // Serialize widget config to JSON (TradingView lê do script.innerHTML)
+        const config = widgetConfig as any;
+        script.innerHTML = JSON.stringify(config);
+
+        // Clear container and append script
+        const containerEl = document.getElementById(containerId);
+        if (containerEl) {
+          containerEl.innerHTML = '';
+          containerEl.appendChild(script);
         }
+
+        // Store reference (script element)
+        widgetRef.current = script as any;
+        setTimeout(resolve, 100);
       });
 
       await Promise.race([widgetPromise, timeoutPromise]);
