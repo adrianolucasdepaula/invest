@@ -48,6 +48,17 @@
 
 **Total instaladas:** 8 extensões importantes ✅
 
+### ⚡ Desejáveis (FASE 3 - Instaladas)
+
+| Extensão | ID | Versão | Descrição |
+|----------|-------|--------|--------------|
+| **Better Comments** | `aaron-bond.better-comments` | v3.0.2 | Destaque colorido para comentários (TODO, FIXME) |
+| **Tailwind Documentation** | `austenc.tailwind-docs` | v2.1.0 | Documentação inline para classes Tailwind |
+| **Stylelint** | `stylelint.vscode-stylelint` | v1.5.3 | Linting para CSS/SCSS (TailwindCSS support) |
+| **Python Environment Manager** | `donjayamanne.python-environment-manager` | v1.2.7 | Gerenciamento de ambientes Python (scrapers) |
+
+**Total instaladas:** 4 extensões desejáveis ✅ (1 skip: KICS - ID incorreto)
+
 ---
 
 ## ⚙️ CONFIGURAÇÕES
@@ -143,6 +154,16 @@ code --install-extension formulahendry.auto-close-tag
 code --install-extension christian-kohler.path-intellisense
 code --install-extension mattpocock.ts-error-translator
 code --install-extension wix.vscode-import-cost
+```
+
+#### FASE 3: Desejáveis (4 extensões)
+
+```bash
+# Instale as 4 extensões desejáveis
+code --install-extension aaron-bond.better-comments
+code --install-extension austenc.tailwind-docs
+code --install-extension stylelint.vscode-stylelint
+code --install-extension donjayamanne.python-environment-manager
 ```
 
 **Ou via Command Palette:**
@@ -343,5 +364,5 @@ Ao adicionar novas extensões:
 ---
 
 **Última atualização:** 2025-11-20
-**Versão:** 2.0.0 (FASE 1 + FASE 2 completas)
-**Status:** ✅ **16/16 extensões instaladas (8 críticas + 8 importantes)**
+**Versão:** 3.0.0 (FASE 1 + FASE 2 + FASE 3 completas)
+**Status:** ✅ **20/21 extensões instaladas (8 críticas + 8 importantes + 4 desejáveis)**
