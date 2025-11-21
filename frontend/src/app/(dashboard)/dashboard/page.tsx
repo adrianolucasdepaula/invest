@@ -5,6 +5,7 @@ import { useAssets } from '@/lib/hooks/use-assets';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { AssetTable } from '@/components/dashboard/asset-table';
 import { MarketIndices } from '@/components/dashboard/market-indices';
+import { EconomicIndicators } from '@/components/dashboard/economic-indicators';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Activity, DollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -104,6 +105,9 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+
+      {/* Indicadores Econômicos (SELIC, IPCA, CDI) - FASE 1 */}
+      <EconomicIndicators />
 
       {/* Painel de Índices em Destaque (col-span-7 = largura completa) */}
       <div className="grid gap-4 md:grid-cols-1">

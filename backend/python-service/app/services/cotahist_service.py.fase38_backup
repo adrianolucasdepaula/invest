@@ -8,13 +8,11 @@ Layout: 245 bytes fixed position
 Fonte: https://bvmf.bmfbovespa.com.br/InstDados/SerHist/
 """
 
-import asyncio
 import io
 import logging
 import zipfile
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import httpx
 
@@ -99,58 +97,6 @@ class CotahistService:
         except httpx.HTTPError as e:
             logger.error(f"Failed to download COTAHIST {year}: {e}")
             raise
-
-    async def download_years_parallel(
-        self, years: List[int], max_concurrent: int = 5
-    ) -> Dict[int, bytes]:
-        """
-        Faz download paralelo de múltiplos anos (FASE 39 - Performance Optimization).
-
-        Otimização: Baixa até 5 anos simultaneamente (vs sequencial).
-        Ganho esperado: 70-80% redução em tempo de download.
-
-        Args:
-            years: Lista de anos para baixar
-            max_concurrent: Máximo de downloads simultâneos (default: 5)
-
-        Returns:
-            Dict mapeando ano → conteúdo ZIP (apenas sucessos)
-
-        Example:
-            >>> service = CotahistService()
-            >>> results = await service.download_years_parallel([2020, 2021, 2022])
-            >>> len(results)
-            3  # Todos os 3 anos baixados com sucesso
-        """
-        async def download_with_year(year: int) -> Tuple[int, Optional[bytes]]:
-            """Helper para retornar (ano, conteúdo) ou (ano, None) se falhar."""
-            try:
-                content = await self.download_year(year)
-                return (year, content)
-            except Exception as e:
-                logger.warning(f"Skipping year {year} (download failed): {e}")
-                return (year, None)
-
-        # Processar em batches de max_concurrent
-        results = {}
-        for i in range(0, len(years), max_concurrent):
-            batch = years[i : i + max_concurrent]
-            logger.info(f"Downloading batch: {batch} ({len(batch)} years in parallel)")
-
-            # Executar batch em paralelo
-            batch_results = await asyncio.gather(
-                *[download_with_year(year) for year in batch]
-            )
-
-            # Adicionar apenas sucessos ao dict
-            for year, content in batch_results:
-                if content is not None:
-                    results[year] = content
-
-        logger.info(
-            f"Parallel download completed: {len(results)}/{len(years)} years successful"
-        )
-        return results
 
     def parse_line(self, line: str) -> Optional[Dict]:
         """
@@ -340,10 +286,6 @@ class CotahistService:
         """
         Faz download e parse de múltiplos anos de COTAHIST.
 
-        OTIMIZAÇÕES APLICADAS:
-        - FASE 38: Streaming + Batch + Early Filter (parsing)
-        - FASE 39: Download Paralelo (network I/O)
-
         Args:
             start_year: Ano inicial (default: 1986)
             end_year: Ano final (default: 2024)
@@ -363,27 +305,26 @@ class CotahistService:
             1340  # ~67 pontos/ano * 5 anos * 2 ativos
         """
         all_records = []
+        years_processed = 0
 
         logger.info(
             f"Fetching COTAHIST data from {start_year} to {end_year} "
             f"(tickers: {tickers or 'ALL'})"
         )
 
-        # FASE 39: Download paralelo de todos os anos (70-80% mais rápido)
-        years = list(range(start_year, end_year + 1))
-        zip_contents = await self.download_years_parallel(years, max_concurrent=5)
-
-        # FASE 39: Parse sequencial (ROLLBACK - parsing paralelo causou overhead)
-        # Motivo: Python GIL + context switching overhead > ganho de paralelização
-        # Download paralelo (70% do tempo) já otimizou suficientemente
-        for year in sorted(zip_contents.keys()):
+        for year in range(start_year, end_year + 1):
             try:
-                zip_content = zip_contents[year]
+                # Download ZIP do ano
+                zip_content = await self.download_year(year)
 
-                # Parse com streaming + batch + early filter (FASE 38)
+                # Parse arquivo TXT com early filter (FASE 38 optimization)
                 year_records = self.parse_file(zip_content, tickers=tickers)
 
+                # Nota: Filtro por ticker agora é feito DENTRO do parse_file()
+                # usando early filter (80% mais rápido que filtrar depois)
+
                 all_records.extend(year_records)
+                years_processed += 1
 
                 logger.info(
                     f"Year {year}: {len(year_records)} records "
@@ -391,13 +332,13 @@ class CotahistService:
                 )
 
             except Exception as e:
-                logger.error(f"Failed to parse year {year}: {e}")
+                logger.error(f"Failed to process year {year}: {e}")
                 # Continuar com próximo ano mesmo se um falhar
                 continue
 
         logger.info(
             f"Fetch completed: {len(all_records)} total records "
-            f"from {len(zip_contents)} years"
+            f"from {years_processed} years"
         )
 
         return all_records

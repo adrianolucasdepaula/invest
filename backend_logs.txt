@@ -787,3 +787,435 @@ No errors found.
 [95m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: 0805477b-aa41-4afd-9e3a-f5b371343670[39m
 [32m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: JBSS3 (1352 records, 83.81s)[39m
 [32m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (1min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:45 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsController] [39m[32mGET /economic-indicators - Filters: {"limit":10}[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:33:45 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache miss: indicators:list:{"limit":10}[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:33:45 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCached: indicators:list:{"limit":10} (TTL: 300s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:45 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mFetched 3 indicators (total: 3)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:48 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsController] [39m[32mGET /economic-indicators/SELIC[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:33:48 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache miss: indicators:latest:SELIC[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:33:48 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCached: indicators:latest:SELIC (TTL: 60s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:48 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mLatest SELIC: 0.0551 (change: N/A)[39m
+============ CONTROLLER METHOD CALLED ============
+[32m[Nest] 50  - [39m11/21/2025, 10:33:51 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsController] [39m[32mPOST /economic-indicators/sync - Manual sync triggered[39m
+============ CALLING SERVICE ============
+[32m[Nest] 50  - [39m11/21/2025, 10:33:51 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mStarting sync from Banco Central API...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:51 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mFetching SELIC rate from Banco Central API...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mSELIC fetched: 0.055131% (ref: 2025-11-21)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [95m  DEBUG[39m [38;5;3m[EconomicIndicatorsService] [39m[95mUpdated SELIC for Fri Nov 21 2025 00:00:00 GMT+0000 (Coordinated Universal Time)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mSELIC synced: 0.055131%[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mFetching IPCA inflation from Banco Central API...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mIPCA fetched: 0.09% (ref: 2025-10-01)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [95m  DEBUG[39m [38;5;3m[EconomicIndicatorsService] [39m[95mUpdated IPCA for Wed Oct 01 2025 00:00:00 GMT+0000 (Coordinated Universal Time)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mIPCA synced: 0.09%[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mCalculating CDI based on SELIC (BRAPI does not have CDI endpoint)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mFetching SELIC rate from Banco Central API...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mSELIC fetched: 0.055131% (ref: 2025-11-21)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mCDI calculated: -0.0449% (based on SELIC 0.055131%)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [95m  DEBUG[39m [38;5;3m[EconomicIndicatorsService] [39m[95mUpdated CDI for Fri Nov 21 2025 00:00:00 GMT+0000 (Coordinated Universal Time)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mCDI synced: -0.0449%[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mDeleted from cache: indicators:*[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:33:52 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mSync completed: {"selic":true,"ipca":true,"cdi":true}[39m
+============ SERVICE RETURNED ============
+============ RETURNING: {"message":"Sync completed","timestamp":"2025-11-21T22:33:52.497Z"} ============
+[32m[Nest] 50  - [39m11/21/2025, 10:39:47 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: CCRO3 (2020-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:39:47 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: CCRO3 (2020-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:39:47 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (2020-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:39:47 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:39:47 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: CCRO3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:39:47 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m🎯 CACHE HIT: /cotahist/fetch (instant response)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:39:47 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 1326 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:39:47 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:39:49 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mFetching fresh data from BRAPI for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:39:49 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mStarting sync for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:39:49 PM [32m    LOG[39m [38;5;3m[BrapiScraper] [39m[32mScraping CCRO3 from BRAPI[39m
+[31m[Nest] 50  - [39m11/21/2025, 10:39:49 PM [31m  ERROR[39m [38;5;3m[BrapiScraper] [39m[31mFailed to scrape CCRO3 from BRAPI: Request failed with status code 404[39m
+[33m[Nest] 50  - [39m11/21/2025, 10:39:49 PM [33m   WARN[39m [38;5;3m[AssetsService] [39m[33mFailed to fetch data for CCRO3: Request failed with status code 404[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:39:49 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 0 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:39:49 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:39:49 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 1326 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:39:49 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:39:49 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 1326/1326 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:39:49 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 1326 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:39:49 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: c7890c4e-a715-41ab-b957-d09c2441f627[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:39:49 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: CCRO3 (1326 records, 1.71s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:39:49 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (0min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:47 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: CCRO3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:47 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: CCRO3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:47 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:40:47 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:47 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: CCRO3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:47 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m🎯 CACHE HIT: /cotahist/fetch (instant response)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:47 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:40:47 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:48 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mFetching fresh data from BRAPI for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:48 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mStarting sync for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:48 PM [32m    LOG[39m [38;5;3m[BrapiScraper] [39m[32mScraping CCRO3 from BRAPI[39m
+[31m[Nest] 50  - [39m11/21/2025, 10:40:48 PM [31m  ERROR[39m [38;5;3m[BrapiScraper] [39m[31mFailed to scrape CCRO3 from BRAPI: Request failed with status code 404[39m
+[33m[Nest] 50  - [39m11/21/2025, 10:40:48 PM [33m   WARN[39m [38;5;3m[AssetsService] [39m[33mFailed to fetch data for CCRO3: Request failed with status code 404[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:48 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 0 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:40:48 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:48 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:40:48 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:49 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5000/5666 records (88.2%) [Batch 1/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:49 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5666/5666 records (100.0%) [Batch 2/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:49 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:40:49 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: ae53dc1e-7366-4a3b-a3a0-bd13c880ba16[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:49 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: CCRO3 (5666 records, 2.23s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:40:49 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (0min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:03 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: JBSS3 (2020-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:03 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: JBSS3 (2020-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:03 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (2020-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:41:04 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for JBSS3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:04 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: JBSS3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:04 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m🎯 CACHE HIT: /cotahist/fetch (instant response)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:04 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 1352 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:41:04 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for JBSS3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:05 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mFetching fresh data from BRAPI for JBSS3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:05 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mStarting sync for JBSS3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:05 PM [32m    LOG[39m [38;5;3m[BrapiScraper] [39m[32mScraping JBSS3 from BRAPI[39m
+[31m[Nest] 50  - [39m11/21/2025, 10:41:05 PM [31m  ERROR[39m [38;5;3m[BrapiScraper] [39m[31mFailed to scrape JBSS3 from BRAPI: Request failed with status code 404[39m
+[33m[Nest] 50  - [39m11/21/2025, 10:41:05 PM [33m   WARN[39m [38;5;3m[AssetsService] [39m[33mFailed to fetch data for JBSS3: Request failed with status code 404[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:05 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 0 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:41:05 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:05 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 1352 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:41:05 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:05 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 1352/1352 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:05 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 1352 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:41:05 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: 4228629f-9a78-4b00-92b9-11556d598d99[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:05 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: JBSS3 (1352 records, 1.53s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:05 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (0min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:31 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: PETR4 (2020-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:31 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: PETR4 (2020-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:31 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (2020-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:41:31 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for PETR4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:31 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: PETR4 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:41:31 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:41:31 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":2020,"end_year":2025,"tickers":["PETR4"]}...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:42:44 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m✅ POST /cotahist/fetch success (73030ms) + CACHED (TTL 24h)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:42:44 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 1469 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:42:44 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for PETR4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:42:45 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mReturning 67 cached prices for PETR4[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:42:45 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 67 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:42:45 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:42:45 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 1473 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:42:45 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:42:45 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 1473/1473 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:42:45 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 1473 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:42:45 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: 79c53a88-0504-4cab-911a-d2e364a9a0e6[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:42:45 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: PETR4 (1473 records, 74.21s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:42:45 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (1min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:18 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: VALE3 (2024-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:18 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: VALE3 (2024-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:18 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (2024-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:43:18 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for VALE3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:18 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: VALE3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:18 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:43:18 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":2024,"end_year":2025,"tickers":["VALE3"]}...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:49 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m✅ POST /cotahist/fetch success (31020ms) + CACHED (TTL 24h)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:49 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 475 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:43:49 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for VALE3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:50 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mReturning 67 cached prices for VALE3[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:50 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 67 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:43:50 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:50 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 479 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:43:50 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:50 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 479/479 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:50 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 479 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:43:50 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: ebbc176a-a0a3-46a0-b3ad-46197d4a5afd[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:50 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: VALE3 (479 records, 31.97s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:50 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (1min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:59 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: ABEV3 (2020-2021)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:59 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: ABEV3 (2020-2021)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:59 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (2020-2021)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:43:59 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for ABEV3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:59 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: ABEV3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:43:59 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:43:59 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":2020,"end_year":2021,"tickers":["ABEV3"]}...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:44:17 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m✅ POST /cotahist/fetch success (17612ms) + CACHED (TTL 24h)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:44:17 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 496 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:44:17 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for ABEV3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:44:18 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mReturning 67 cached prices for ABEV3[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:44:18 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 67 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:44:18 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:44:18 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 563 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:44:18 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:44:18 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 563/563 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:44:18 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 563 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:44:18 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: dd41dd3e-e9a6-476b-bbec-4fe3ce0d68c4[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:44:18 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: ABEV3 (563 records, 18.66s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:44:18 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (0min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:44:27 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: PETR4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:44:27 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: PETR4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:44:27 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:44:27 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for PETR4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:44:27 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: PETR4 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:44:27 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:44:27 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":1986,"end_year":2025,"tickers":["PETR4"]}...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:46:24 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m✅ POST /cotahist/fetch success (116497ms) + CACHED (TTL 24h)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:46:24 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 5924 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:46:24 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for PETR4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:46:25 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mReturning 67 cached prices for PETR4[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:46:25 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 67 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:46:25 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:46:25 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 5928 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:46:25 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:46:26 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5000/5928 records (84.3%) [Batch 1/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:46:26 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5928/5928 records (100.0%) [Batch 2/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:46:26 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 5928 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:46:26 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: 4a0f5eb2-c2ce-4a76-9b54-133ffbbc5ad3[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:46:26 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: PETR4 (5928 records, 119.05s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:46:26 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (2min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:57 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: CCRO3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:57 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: CCRO3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:57 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:48:57 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:57 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: CCRO3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:57 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m🎯 CACHE HIT: /cotahist/fetch (instant response)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:57 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:48:57 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:58 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mFetching fresh data from BRAPI for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:58 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mStarting sync for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:58 PM [32m    LOG[39m [38;5;3m[BrapiScraper] [39m[32mScraping CCRO3 from BRAPI[39m
+[31m[Nest] 50  - [39m11/21/2025, 10:48:58 PM [31m  ERROR[39m [38;5;3m[BrapiScraper] [39m[31mFailed to scrape CCRO3 from BRAPI: Request failed with status code 404[39m
+[33m[Nest] 50  - [39m11/21/2025, 10:48:58 PM [33m   WARN[39m [38;5;3m[AssetsService] [39m[33mFailed to fetch data for CCRO3: Request failed with status code 404[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:58 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 0 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:48:58 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:58 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:48:58 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:59 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5000/5666 records (88.2%) [Batch 1/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:59 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5666/5666 records (100.0%) [Batch 2/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:59 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:48:59 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: bf6b82df-6031-4f5e-972c-d6d7697c4490[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:59 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: CCRO3 (5666 records, 2.53s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:48:59 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (0min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:21 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: PETR4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:21 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: PETR4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:21 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:49:21 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for PETR4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:21 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: PETR4 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:21 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m🎯 CACHE HIT: /cotahist/fetch (instant response)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:21 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 5924 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:49:21 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for PETR4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:22 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mReturning 67 cached prices for PETR4[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:22 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 67 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:49:22 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:22 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 5928 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:49:22 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:23 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5000/5928 records (84.3%) [Batch 1/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:23 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5928/5928 records (100.0%) [Batch 2/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:23 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 5928 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:49:23 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: 43e7a329-91b2-4484-be0b-71d996dd0ba3[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:23 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: PETR4 (5928 records, 2.22s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:23 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (0min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:47 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: VALE3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:47 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: VALE3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:47 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:49:47 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for VALE3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:47 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: VALE3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:49:47 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:49:47 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":1986,"end_year":2025,"tickers":["VALE3"]}...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:00 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: ABEV3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:00 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: ABEV3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:00 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:52:00 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for ABEV3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:00 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: ABEV3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:00 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:52:00 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":1986,"end_year":2025,"tickers":["ABEV3"]}...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:20 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m✅ POST /cotahist/fetch success (152585ms) + CACHED (TTL 24h)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:20 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 5700 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:52:20 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for VALE3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:21 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mReturning 67 cached prices for VALE3[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:21 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 67 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:52:21 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:21 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 5767 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:52:21 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:22 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5000/5767 records (86.7%) [Batch 1/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:22 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5767/5767 records (100.0%) [Batch 2/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:22 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 5767 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:52:22 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: d67382a8-cdfe-4cae-a8c4-30620fecdf78[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:22 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: VALE3 (5767 records, 155.01s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:52:22 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (3min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:53:12 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsController] [39m[32mGET /economic-indicators/IPCA[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:53:12 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache miss: indicators:latest:IPCA[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:53:12 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsController] [39m[32mGET /economic-indicators/SELIC[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:53:12 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache miss: indicators:latest:SELIC[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:53:12 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsController] [39m[32mGET /economic-indicators/CDI[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:53:12 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache miss: indicators:latest:CDI[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:53:12 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCached: indicators:latest:IPCA (TTL: 60s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:53:12 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mLatest IPCA: 0.09 (change: N/A)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:53:12 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCached: indicators:latest:CDI (TTL: 60s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:53:12 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mLatest CDI: -0.0449 (change: N/A)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:53:12 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCached: indicators:latest:SELIC (TTL: 60s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:53:12 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mLatest SELIC: 0.0551 (change: N/A)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:54:15 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m✅ POST /cotahist/fetch success (135329ms) + CACHED (TTL 24h)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:54:15 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 2759 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:54:15 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for ABEV3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:54:16 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mReturning 67 cached prices for ABEV3[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:54:16 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 67 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:54:16 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:54:16 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 2826 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:54:16 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:54:16 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 2826/2826 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:54:16 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 2826 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:54:16 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: f0a328c4-d6d2-4c3f-a2f6-b5122879a761[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:54:16 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: ABEV3 (2826 records, 136.48s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:54:16 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (2min total)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:00:00 PM [95m  DEBUG[39m [38;5;3m[AssetUpdateJobsService] [39m[95m⏭️ Skipping retry (not in production/staging)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:25 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: CCRO3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:25 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: CCRO3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:25 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:00:25 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:25 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: CCRO3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:25 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m🎯 CACHE HIT: /cotahist/fetch (instant response)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:25 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:00:25 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:26 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mFetching fresh data from BRAPI for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:26 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mStarting sync for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:26 PM [32m    LOG[39m [38;5;3m[BrapiScraper] [39m[32mScraping CCRO3 from BRAPI[39m
+[31m[Nest] 50  - [39m11/21/2025, 11:00:26 PM [31m  ERROR[39m [38;5;3m[BrapiScraper] [39m[31mFailed to scrape CCRO3 from BRAPI: Request failed with status code 404[39m
+[33m[Nest] 50  - [39m11/21/2025, 11:00:26 PM [33m   WARN[39m [38;5;3m[AssetsService] [39m[33mFailed to fetch data for CCRO3: Request failed with status code 404[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:26 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 0 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:00:26 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:27 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:00:27 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:27 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5000/5666 records (88.2%) [Batch 1/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:27 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5666/5666 records (100.0%) [Batch 2/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:27 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:00:27 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: 46647a24-0f76-4c76-b702-1101cf18e36c[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:27 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: CCRO3 (5666 records, 1.83s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:27 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (0min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:41 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: ITUB4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:41 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: ITUB4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:41 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:00:41 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for ITUB4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:41 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: ITUB4 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:00:41 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:00:41 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":1986,"end_year":2025,"tickers":["ITUB4"]}...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:02:48 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m✅ POST /cotahist/fetch success (127442ms) + CACHED (TTL 24h)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:02:48 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 3870 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:02:48 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for ITUB4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:02:49 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mReturning 67 cached prices for ITUB4[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:02:49 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 67 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:02:49 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:02:49 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 3937 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:02:49 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:02:50 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 3937/3937 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 11:02:50 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 3937 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:02:50 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: 3254fee2-ff6f-40da-9847-8848e813e8f8[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:02:50 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: ITUB4 (3937 records, 128.89s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:02:50 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (2min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:03:27 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: ITUB4 (2020-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:03:27 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: ITUB4 (2020-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:03:27 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (2020-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:03:27 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for ITUB4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:03:27 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: ITUB4 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:03:27 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:03:27 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":2020,"end_year":2025,"tickers":["ITUB4"]}...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:05:02 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m✅ POST /cotahist/fetch success (95054ms) + CACHED (TTL 24h)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:05:02 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 1470 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:05:02 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for ITUB4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:05:03 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mReturning 67 cached prices for ITUB4[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:05:03 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 67 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:05:03 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:05:03 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 1473 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:05:03 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:05:03 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 1473/1473 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 11:05:03 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 1473 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:05:03 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: 86bce3c7-f0a6-4136-ae64-d5906b2e10fa[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:05:03 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: ITUB4 (1473 records, 96.08s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:05:03 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (2min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:55 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: CCRO3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:55 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: CCRO3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:55 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:06:55 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:55 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: CCRO3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:55 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m🎯 CACHE HIT: /cotahist/fetch (instant response)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:55 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:06:55 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:56 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mFetching fresh data from BRAPI for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:56 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mStarting sync for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:56 PM [32m    LOG[39m [38;5;3m[BrapiScraper] [39m[32mScraping CCRO3 from BRAPI[39m
+[31m[Nest] 50  - [39m11/21/2025, 11:06:56 PM [31m  ERROR[39m [38;5;3m[BrapiScraper] [39m[31mFailed to scrape CCRO3 from BRAPI: Request failed with status code 404[39m
+[33m[Nest] 50  - [39m11/21/2025, 11:06:56 PM [33m   WARN[39m [38;5;3m[AssetsService] [39m[33mFailed to fetch data for CCRO3: Request failed with status code 404[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:56 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 0 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:06:56 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:56 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:06:56 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:57 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5000/5666 records (88.2%) [Batch 1/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:57 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5666/5666 records (100.0%) [Batch 2/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:57 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:06:57 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: f8d38382-9b1c-4dae-beee-02c0a093c6cc[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:57 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: CCRO3 (5666 records, 1.78s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:06:57 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (0min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:19 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: PETR4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: PETR4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:19 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:07:19 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for PETR4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:19 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: PETR4 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:19 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m🎯 CACHE HIT: /cotahist/fetch (instant response)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 5924 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:07:19 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for PETR4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:20 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mReturning 67 cached prices for PETR4[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:20 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 67 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:07:20 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:20 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 5928 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:07:20 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:20 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5000/5928 records (84.3%) [Batch 1/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:20 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5928/5928 records (100.0%) [Batch 2/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:20 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 5928 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:07:20 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: 6b909dfe-c55d-4247-9ce7-2859abc90e65[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:20 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: PETR4 (5928 records, 1.70s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:20 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (0min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:43 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: VALE3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:43 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: VALE3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:43 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:07:43 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for VALE3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:43 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: VALE3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:43 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m🎯 CACHE HIT: /cotahist/fetch (instant response)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:43 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 5700 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:07:43 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for VALE3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:44 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mReturning 67 cached prices for VALE3[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:44 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 67 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:07:44 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:44 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 5767 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:07:44 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:45 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5000/5767 records (86.7%) [Batch 1/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:45 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5767/5767 records (100.0%) [Batch 2/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:45 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 5767 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:07:45 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: 63957425-fe92-49f3-b06e-15eb984c7c30[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:45 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: VALE3 (5767 records, 1.69s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:07:45 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (0min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:18 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: ITUB4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:18 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: ITUB4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:18 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:08:18 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for ITUB4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:18 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: ITUB4 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:18 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m🎯 CACHE HIT: /cotahist/fetch (instant response)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:18 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 3870 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:08:18 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for ITUB4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:19 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mReturning 67 cached prices for ITUB4[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 67 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:08:19 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 3937 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:08:19 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 3937/3937 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 3937 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:08:19 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: faa985ff-2bc7-426a-9f9a-a15fb6414795[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: ITUB4 (3937 records, 1.55s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:19 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (0min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:36 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: BBDC4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:36 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: BBDC4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:36 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:08:36 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for BBDC4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:36 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: BBDC4 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:08:36 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:08:36 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":1986,"end_year":2025,"tickers":["BBDC4"]}...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:09:58 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: BBDC4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:09:58 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: BBDC4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:09:58 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:09:58 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for BBDC4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:09:58 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: BBDC4 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:09:58 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:09:58 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":1986,"end_year":2025,"tickers":["BBDC4"]}...[39m
+[33m[Nest] 50  - [39m11/21/2025, 11:10:18 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 1/3 (/cotahist/fetch): socket hang up[39m
+[33m[Nest] 50  - [39m11/21/2025, 11:10:18 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 1/3 (/cotahist/fetch): socket hang up[39m

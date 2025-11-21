@@ -253,6 +253,22 @@ class ApiClient {
     return response.data;
   }
 
+  // Economic Indicators endpoints - FASE 1
+  async getEconomicIndicators(params?: { type?: string; limit?: number }) {
+    const response = await this.client.get('/economic-indicators', { params });
+    return response.data;
+  }
+
+  async getLatestIndicator(type: 'SELIC' | 'IPCA' | 'CDI') {
+    const response = await this.client.get(`/economic-indicators/${type}`);
+    return response.data;
+  }
+
+  async syncEconomicIndicators() {
+    const response = await this.client.post('/economic-indicators/sync');
+    return response.data;
+  }
+
   // Auth endpoints
   async login(email: string, password: string) {
     const response = await this.client.post('/auth/login', { email, password });
