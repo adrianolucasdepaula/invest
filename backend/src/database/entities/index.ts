@@ -10,3 +10,4 @@ export { Analysis, AnalysisType, AnalysisStatus, Recommendation } from './analys
 export { UpdateLog, UpdateStatus, UpdateTrigger } from './update-log.entity';
 export { ScraperMetric } from './scraper-metric.entity';
 export { SyncHistory, SyncStatus, SyncOperationType } from './sync-history.entity';
+export { EconomicIndicator } from './economic-indicator.entity'; // FASE 2

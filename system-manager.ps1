@@ -851,11 +851,11 @@ function Clear-System {
 # Show help
 function Show-Help {
     Write-Host ""
-    Write-Host "╔════════════════════════════════════════════════════════╗"
-    Write-Host "║   B3 AI Analysis Platform - System Manager            ║"
-    Write-Host "╚════════════════════════════════════════════════════════╝"
+    Write-Host "============================================================"
+    Write-Host "   B3 AI Analysis Platform - System Manager"
+    Write-Host "============================================================"
     Write-Host ""
-    Write-Host "Uso: .\system-manager.ps1 <comando> [opções]"
+    Write-Host "Uso: .\system-manager.ps1 COMANDO [opcoes]"
     Write-Host ""
     Write-Host "Comandos disponíveis:"
     Write-Host ""
