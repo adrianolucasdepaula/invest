@@ -103,7 +103,7 @@ export class LatestIndicatorResponseDto {
 
   @ApiProperty({
     description: 'Variação em pontos percentuais',
-    example: 0.50,
+    example: 0.5,
     required: false,
   })
   change?: number;
