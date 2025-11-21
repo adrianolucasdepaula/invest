@@ -23,6 +23,7 @@ import { ValidatorsModule } from './validators/validators.module';
 import { WebSocketModule } from './websocket/websocket.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { CronModule } from './modules/cron/cron.module';
+import { EconomicIndicatorsModule } from './api/economic-indicators/economic-indicators.module'; // FASE 2
 import {
   User,
   Asset,
@@ -36,6 +37,7 @@ import {
   UpdateLog,
   ScraperMetric,
   SyncHistory, // FASE 34.6
+  EconomicIndicator, // FASE 2
 } from './database/entities';
 
 @Module({
@@ -69,6 +71,7 @@ import {
           UpdateLog,
           ScraperMetric,
           SyncHistory, // FASE 34.6
+          EconomicIndicator, // FASE 2
         ],
         synchronize: configService.get('DB_SYNCHRONIZE', false),
         logging: configService.get('DB_LOGGING', false),
@@ -128,6 +131,7 @@ import {
     AiModule,
     ValidatorsModule,
     WebSocketModule,
+    EconomicIndicatorsModule, // FASE 2
   ],
   controllers: [AppController],
   providers: [

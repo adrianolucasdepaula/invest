@@ -60,6 +60,33 @@ export interface SyncBulkResponseDto {
 }
 
 /**
+ * FASE 37: Request para sincronização individual (POST /sync-cotahist)
+ */
+export interface SyncIndividualRequestDto {
+  ticker: string;
+  startYear?: number; // 1986-2025 (default: 2020)
+  endYear?: number;   // 1986-2025 (default: current year)
+}
+
+/**
+ * FASE 37: Resposta de sincronização individual (HTTP 200 OK)
+ */
+export interface SyncIndividualResponseDto {
+  totalRecords: number;
+  yearsProcessed: number;
+  processingTime: number;
+  sources: {
+    cotahist: number;
+    brapi: number;
+    merged: number;
+  };
+  period: {
+    start: string;
+    end: string;
+  };
+}
+
+/**
  * Eventos WebSocket emitidos pelo SyncGateway
  */
 

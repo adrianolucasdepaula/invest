@@ -374,6 +374,14 @@ export class MarketDataService {
     let syncHistory: SyncHistory;
 
     try {
+      // FASE 37: Emit WebSocket event - sync started (individual sync = 1 asset)
+      this.syncGateway.emitSyncStarted({
+        tickers: [ticker],
+        totalAssets: 1,
+        startYear,
+        endYear,
+      });
+
       // 1. Buscar ou criar asset
       asset = await this.assetRepository.findOne({ where: { ticker } });
       if (!asset) {
@@ -384,6 +392,13 @@ export class MarketDataService {
 
       // 2. Buscar dados COTAHIST via Python Service
       this.logger.debug(`Fetching COTAHIST data for ${ticker}...`);
+      // FASE 37: Emit progress - fetching COTAHIST
+      this.syncGateway.emitSyncProgress({
+        ticker,
+        current: 1,
+        total: 1,
+        status: 'processing',
+      });
       const cotahistData = await this.fetchCotahistData(ticker, startYear, endYear);
       this.logger.log(`✅ COTAHIST: ${cotahistData.length} records`);
 
@@ -435,6 +450,14 @@ export class MarketDataService {
         `✅ Sync complete: ${ticker} (${mergedData.length} records, ${processingTime.toFixed(2)}s)`
       );
 
+      // FASE 37: Emit WebSocket event - sync completed successfully
+      this.syncGateway.emitSyncCompleted({
+        totalAssets: 1,
+        successCount: 1,
+        failedCount: 0,
+        duration: processingTime,
+      });
+
       return {
         totalRecords: mergedData.length,
         yearsProcessed: endYear - startYear + 1,
@@ -479,6 +502,15 @@ export class MarketDataService {
       }
 
       this.logger.error(`Failed to sync COTAHIST for ${ticker}: ${error.message}`);
+
+      // FASE 37: Emit WebSocket event - sync failed
+      if (asset) {
+        this.syncGateway.emitSyncFailed({
+          error: error.message,
+          tickers: [ticker],
+        });
+      }
+
       throw new InternalServerErrorException(
         `Failed to sync historical data: ${error.message}`
       );
