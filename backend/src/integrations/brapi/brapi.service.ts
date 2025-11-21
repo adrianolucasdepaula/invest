@@ -28,7 +28,9 @@ export class BrapiService {
   ) {
     this.apiKey = this.configService.get<string>('BRAPI_API_KEY', '');
     if (!this.apiKey) {
-      this.logger.warn('⚠️ BRAPI_API_KEY not configured - some endpoints may require authentication');
+      this.logger.warn(
+        '⚠️ BRAPI_API_KEY not configured - some endpoints may require authentication',
+      );
     }
   }
 
@@ -37,9 +39,7 @@ export class BrapiService {
    * @private
    */
   private getRequestConfig(): { params: Record<string, string> } {
-    return this.apiKey
-      ? { params: { token: this.apiKey } }
-      : { params: {} };
+    return this.apiKey ? { params: { token: this.apiKey } } : { params: {} };
   }
 
   /**
@@ -53,18 +53,20 @@ export class BrapiService {
 
       // BCB API: últimos 1 registro da série 11 (SELIC)
       const response = await firstValueFrom(
-        this.httpService.get(`${this.bcbBaseUrl}.11/dados/ultimos/1`, {
-          params: { formato: 'json' },
-        }).pipe(
-          timeout(this.requestTimeout),
-          catchError((error) => {
-            this.logger.error(`Banco Central API error: ${error.message}`);
-            throw new HttpException(
-              `Failed to fetch SELIC rate: ${error.message}`,
-              HttpStatus.BAD_GATEWAY,
-            );
-          }),
-        ),
+        this.httpService
+          .get(`${this.bcbBaseUrl}.11/dados/ultimos/1`, {
+            params: { formato: 'json' },
+          })
+          .pipe(
+            timeout(this.requestTimeout),
+            catchError((error) => {
+              this.logger.error(`Banco Central API error: ${error.message}`);
+              throw new HttpException(
+                `Failed to fetch SELIC rate: ${error.message}`,
+                HttpStatus.BAD_GATEWAY,
+              );
+            }),
+          ),
       );
 
       // BCB response format: [{ "data": "19/11/2025", "valor": "0.055131" }]
@@ -101,18 +103,20 @@ export class BrapiService {
 
       // BCB API: últimos 1 registro da série 433 (IPCA)
       const response = await firstValueFrom(
-        this.httpService.get(`${this.bcbBaseUrl}.433/dados/ultimos/1`, {
-          params: { formato: 'json' },
-        }).pipe(
-          timeout(this.requestTimeout),
-          catchError((error) => {
-            this.logger.error(`Banco Central API error: ${error.message}`);
-            throw new HttpException(
-              `Failed to fetch inflation rate: ${error.message}`,
-              HttpStatus.BAD_GATEWAY,
-            );
-          }),
-        ),
+        this.httpService
+          .get(`${this.bcbBaseUrl}.433/dados/ultimos/1`, {
+            params: { formato: 'json' },
+          })
+          .pipe(
+            timeout(this.requestTimeout),
+            catchError((error) => {
+              this.logger.error(`Banco Central API error: ${error.message}`);
+              throw new HttpException(
+                `Failed to fetch inflation rate: ${error.message}`,
+                HttpStatus.BAD_GATEWAY,
+              );
+            }),
+          ),
       );
 
       // BCB response format: [{ "data": "01/10/2025", "valor": "0.09" }]
@@ -150,7 +154,7 @@ export class BrapiService {
 
       // Buscar SELIC e calcular CDI aproximado
       const selic = await this.getSelic();
-      const cdiValue = parseFloat((selic.value - 0.10).toFixed(4)); // CDI ~0.10% menor que SELIC
+      const cdiValue = parseFloat((selic.value - 0.1).toFixed(4)); // CDI ~0.10% menor que SELIC
 
       this.logger.log(`CDI calculated: ${cdiValue}% (based on SELIC ${selic.value}%)`);
 
@@ -170,14 +174,16 @@ export class BrapiService {
   async healthCheck(): Promise<boolean> {
     try {
       const response = await firstValueFrom(
-        this.httpService.get(`${this.bcbBaseUrl}.11/dados/ultimos/1`, {
-          params: { formato: 'json' },
-        }).pipe(
-          timeout(5000),
-          catchError(() => {
-            throw new Error('Banco Central API is not accessible');
-          }),
-        ),
+        this.httpService
+          .get(`${this.bcbBaseUrl}.11/dados/ultimos/1`, {
+            params: { formato: 'json' },
+          })
+          .pipe(
+            timeout(5000),
+            catchError(() => {
+              throw new Error('Banco Central API is not accessible');
+            }),
+          ),
       );
 
       return response.status === 200 && Array.isArray(response.data) && response.data.length > 0;

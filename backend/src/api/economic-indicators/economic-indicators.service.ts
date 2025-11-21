@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CacheService } from '../../common/services/cache.service';
 import { BrapiService } from '../../integrations/brapi/brapi.service';
 import { EconomicIndicator } from '../../database/entities/economic-indicator.entity';

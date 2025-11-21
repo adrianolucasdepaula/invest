@@ -30,7 +30,11 @@ export class EconomicIndicatorsController {
     summary: 'List all economic indicators',
     description: 'Get all indicators with optional filters (type, date range, limit)',
   })
-  @ApiQuery({ name: 'type', required: false, enum: ['SELIC', 'IPCA', 'CDI', 'PIB', 'IGPM', 'DI', 'POUPANCA', 'ALL'] })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['SELIC', 'IPCA', 'CDI', 'PIB', 'IGPM', 'DI', 'POUPANCA', 'ALL'],
+  })
   @ApiQuery({ name: 'startDate', required: false, example: '2025-01-01' })
   @ApiQuery({ name: 'endDate', required: false, example: '2025-11-21' })
   @ApiQuery({ name: 'limit', required: false, example: 10 })

@@ -44,7 +44,7 @@ export function parseBCBDate(dateStr: string): Date {
 
   if (parts.length !== 3) {
     throw new Error(
-      `Invalid date format: ${dateStr} (expected DD/MM/YYYY, got ${parts.length} parts)`
+      `Invalid date format: ${dateStr} (expected DD/MM/YYYY, got ${parts.length} parts)`,
     );
   }
 
@@ -56,7 +56,7 @@ export function parseBCBDate(dateStr: string): Date {
   // Validate components are numeric
   if (isNaN(day) || isNaN(month) || isNaN(year)) {
     throw new Error(
-      `Invalid date components: ${dateStr} (day=${parts[0]}, month=${parts[1]}, year=${parts[2]} - expected numbers)`
+      `Invalid date components: ${dateStr} (day=${parts[0]}, month=${parts[1]}, year=${parts[2]} - expected numbers)`,
     );
   }
 
@@ -79,13 +79,9 @@ export function parseBCBDate(dateStr: string): Date {
   // Verify created date matches input components
   // This catches invalid calendar dates like 31/02/2025 (February 31st doesn't exist)
   // JavaScript's Date constructor "rolls over" invalid dates (e.g., Feb 31 becomes Mar 3)
-  if (
-    date.getDate() !== day ||
-    date.getMonth() !== month - 1 ||
-    date.getFullYear() !== year
-  ) {
+  if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
     throw new Error(
-      `Invalid date: ${dateStr} (not a valid calendar date - did you mean ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}?)`
+      `Invalid date: ${dateStr} (not a valid calendar date - did you mean ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}?)`,
     );
   }
 
