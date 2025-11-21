@@ -56,7 +56,7 @@ export class SyncGateway implements OnGatewayConnection, OnGatewayDisconnect {
       timestamp: new Date(),
     });
     this.logger.log(
-      `[SYNC WS] Sync started: ${data.totalAssets} assets (${data.startYear}-${data.endYear})`
+      `[SYNC WS] Sync started: ${data.totalAssets} assets (${data.startYear}-${data.endYear})`,
     );
   }
 
@@ -80,15 +80,15 @@ export class SyncGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (data.status === 'success') {
       this.logger.log(
-        `[SYNC WS] Progress ${data.current}/${data.total}: ${data.ticker} ✅ (${data.recordsInserted} records, ${data.duration}s)`
+        `[SYNC WS] Progress ${data.current}/${data.total}: ${data.ticker} ✅ (${data.recordsInserted} records, ${data.duration}s)`,
       );
     } else if (data.status === 'failed') {
       this.logger.error(
-        `[SYNC WS] Progress ${data.current}/${data.total}: ${data.ticker} ❌ (${data.error})`
+        `[SYNC WS] Progress ${data.current}/${data.total}: ${data.ticker} ❌ (${data.error})`,
       );
     } else {
       this.logger.log(
-        `[SYNC WS] Progress ${data.current}/${data.total}: ${data.ticker} ⏳ processing...`
+        `[SYNC WS] Progress ${data.current}/${data.total}: ${data.ticker} ⏳ processing...`,
       );
     }
   }
@@ -108,7 +108,7 @@ export class SyncGateway implements OnGatewayConnection, OnGatewayDisconnect {
       timestamp: new Date(),
     });
     this.logger.log(
-      `[SYNC WS] Sync completed: ${data.successCount}/${data.totalAssets} successful (${Math.round(data.duration / 60)}min total)`
+      `[SYNC WS] Sync completed: ${data.successCount}/${data.totalAssets} successful (${Math.round(data.duration / 60)}min total)`,
     );
   }
 

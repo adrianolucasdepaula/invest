@@ -9,7 +9,14 @@ import { SyncGateway } from './sync.gateway'; // FASE 35
 import { PriceDataPoint, TechnicalIndicators } from './interfaces';
 import { TechnicalDataResponseDto } from './dto/technical-data-response.dto';
 import { SyncCotahistResponseDto } from './dto/sync-cotahist.dto';
-import { Asset, AssetPrice, PriceSource, SyncHistory, SyncStatus, SyncOperationType } from '../../database/entities';
+import {
+  Asset,
+  AssetPrice,
+  PriceSource,
+  SyncHistory,
+  SyncStatus,
+  SyncOperationType,
+} from '../../database/entities';
 
 const CACHE_TTL = {
   TECHNICAL_DATA: 300, // 5 minutes (seconds)
@@ -23,7 +30,7 @@ const TIMEFRAME_TO_PRICE_RANGE: Record<string, PriceRange> = {
   '1Y': PriceRange.ONE_YEAR,
   '2Y': PriceRange.TWO_YEARS,
   '5Y': PriceRange.FIVE_YEARS,
-  'MAX': PriceRange.MAX,
+  MAX: PriceRange.MAX,
 };
 
 const MIN_DATA_POINTS_FOR_INDICATORS = 200;
@@ -43,7 +50,7 @@ export class MarketDataService {
     private readonly assetPriceRepository: Repository<AssetPrice>,
     @InjectRepository(SyncHistory)
     private readonly syncHistoryRepository: Repository<SyncHistory>,
-  ) { }
+  ) {}
 
   /**
    * Calculate date range based on viewing range
@@ -116,7 +123,7 @@ export class MarketDataService {
           .orderBy('price.date', 'ASC')
           .getMany();
 
-        return prices.map(p => ({
+        return prices.map((p) => ({
           date: p.date instanceof Date ? p.date.toISOString().split('T')[0] : String(p.date),
           open: parseFloat(String(p.open)),
           high: parseFloat(String(p.high)),
@@ -145,14 +152,13 @@ export class MarketDataService {
           ORDER BY period_start ASC
         `;
 
-        const result = await this.assetPriceRepository.query(query, [
-          asset.id,
-          startDate,
-          endDate,
-        ]);
+        const result = await this.assetPriceRepository.query(query, [asset.id, startDate, endDate]);
 
         return result.map((row: any) => ({
-          date: row.period_start instanceof Date ? row.period_start.toISOString().split('T')[0] : String(row.period_start),
+          date:
+            row.period_start instanceof Date
+              ? row.period_start.toISOString().split('T')[0]
+              : String(row.period_start),
           open: parseFloat(row.open),
           high: parseFloat(row.high),
           low: parseFloat(row.low),
@@ -180,14 +186,13 @@ export class MarketDataService {
           ORDER BY period_start ASC
         `;
 
-        const result = await this.assetPriceRepository.query(query, [
-          asset.id,
-          startDate,
-          endDate,
-        ]);
+        const result = await this.assetPriceRepository.query(query, [asset.id, startDate, endDate]);
 
         return result.map((row: any) => ({
-          date: row.period_start instanceof Date ? row.period_start.toISOString().split('T')[0] : String(row.period_start),
+          date:
+            row.period_start instanceof Date
+              ? row.period_start.toISOString().split('T')[0]
+              : String(row.period_start),
           open: parseFloat(row.open),
           high: parseFloat(row.high),
           low: parseFloat(row.low),
@@ -196,13 +201,9 @@ export class MarketDataService {
         }));
       }
 
-      throw new InternalServerErrorException(
-        `Timeframe ${timeframe} not yet implemented`,
-      );
+      throw new InternalServerErrorException(`Timeframe ${timeframe} not yet implemented`);
     } catch (error: any) {
-      this.logger.error(
-        `Failed to fetch aggregated prices for ${ticker}: ${error.message}`,
-      );
+      this.logger.error(`Failed to fetch aggregated prices for ${ticker}: ${error.message}`);
       throw new InternalServerErrorException('Failed to fetch aggregated price data');
     }
   }
@@ -366,9 +367,7 @@ export class MarketDataService {
     endYear: number = new Date().getFullYear(),
   ): Promise<SyncCotahistResponseDto> {
     const startTime = Date.now();
-    this.logger.log(
-      `🔄 Sync COTAHIST: ${ticker} (${startYear}-${endYear})`
-    );
+    this.logger.log(`🔄 Sync COTAHIST: ${ticker} (${startYear}-${endYear})`);
 
     let asset: Asset;
     let syncHistory: SyncHistory;
@@ -447,7 +446,7 @@ export class MarketDataService {
       this.logger.debug(`📝 Sync history recorded: ${syncHistory.id}`);
 
       this.logger.log(
-        `✅ Sync complete: ${ticker} (${mergedData.length} records, ${processingTime.toFixed(2)}s)`
+        `✅ Sync complete: ${ticker} (${mergedData.length} records, ${processingTime.toFixed(2)}s)`,
       );
 
       // FASE 37: Emit WebSocket event - sync completed successfully
@@ -511,9 +510,7 @@ export class MarketDataService {
         });
       }
 
-      throw new InternalServerErrorException(
-        `Failed to sync historical data: ${error.message}`
-      );
+      throw new InternalServerErrorException(`Failed to sync historical data: ${error.message}`);
     }
   }
 
@@ -569,13 +566,9 @@ export class MarketDataService {
    * 3. Se divergência > 1% no overlap → log warning
    * 4. COTAHIST tem prioridade em caso de conflito
    */
-  private mergeCotahistBrapi(
-    cotahist: any[],
-    brapi: any[],
-    ticker: string,
-  ): any[] {
-    const cotahistMap = new Map(cotahist.map(d => [d.date, d]));
-    const brapiMap = new Map(brapi.map(d => [d.date, d]));
+  private mergeCotahistBrapi(cotahist: any[], brapi: any[], ticker: string): any[] {
+    const cotahistMap = new Map(cotahist.map((d) => [d.date, d]));
+    const brapiMap = new Map(brapi.map((d) => [d.date, d]));
 
     const merged: any[] = [];
     const threeMonthsAgo = new Date();
@@ -604,20 +597,18 @@ export class MarketDataService {
 
         // Se overlap, validar divergência
         if (cotahistRecord) {
-          const divergence = Math.abs(
-            (cotahistRecord.close - data.close) / cotahistRecord.close
-          );
+          const divergence = Math.abs((cotahistRecord.close - data.close) / cotahistRecord.close);
 
           if (divergence > 0.01) {
             this.logger.warn(
               `⚠️ Divergência ${(divergence * 100).toFixed(2)}% em ${date} (${ticker}): ` +
-              `COTAHIST=${cotahistRecord.close.toFixed(2)}, BRAPI=${data.close.toFixed(2)}`
+                `COTAHIST=${cotahistRecord.close.toFixed(2)}, BRAPI=${data.close.toFixed(2)}`,
             );
           }
         }
 
         // Adicionar/atualizar com dados BRAPI (tem adjustedClose)
-        const existingIdx = merged.findIndex(m => m.date === date);
+        const existingIdx = merged.findIndex((m) => m.date === date);
         const record = {
           date,
           open: data.open,
@@ -657,7 +648,7 @@ export class MarketDataService {
 
     try {
       // Preparar entidades
-      const entities = data.map(d =>
+      const entities = data.map((d) =>
         this.assetPriceRepository.create({
           assetId,
           date: new Date(d.date),
@@ -668,7 +659,7 @@ export class MarketDataService {
           volume: d.volume,
           adjustedClose: d.adjustedClose,
           source: d.source,
-        })
+        }),
       );
 
       // Executar Batch UPSERT em chunks para evitar limites de parâmetros
@@ -694,7 +685,7 @@ export class MarketDataService {
         const progress = ((i + batch.length) / entities.length) * 100;
         const batchNum = Math.floor(i / BATCH_SIZE) + 1;
         this.logger.log(
-          `📦 Batch UPSERT progress: ${i + batch.length}/${entities.length} records (${progress.toFixed(1)}%) [Batch ${batchNum}/${totalBatches}]`
+          `📦 Batch UPSERT progress: ${i + batch.length}/${entities.length} records (${progress.toFixed(1)}%) [Batch ${batchNum}/${totalBatches}]`,
         );
       }
 
@@ -732,13 +723,7 @@ export class MarketDataService {
     offset?: number;
   }) {
     try {
-      const {
-        ticker,
-        status,
-        operationType,
-        limit = 50,
-        offset = 0,
-      } = filters;
+      const { ticker, status, operationType, limit = 50, offset = 0 } = filters;
 
       // Build where clause
       const where: any = {};
@@ -771,11 +756,11 @@ export class MarketDataService {
       });
 
       this.logger.log(
-        `Sync history query: ${records.length}/${total} records (ticker=${ticker}, status=${status})`
+        `Sync history query: ${records.length}/${total} records (ticker=${ticker}, status=${status})`,
       );
 
       return {
-        data: records.map(record => ({
+        data: records.map((record) => ({
           id: record.id,
           ticker: record.asset.ticker,
           operationType: record.operationType,
@@ -880,20 +865,16 @@ export class MarketDataService {
       // Calcular resumo consolidado
       const summary = {
         total: assets.length,
-        synced: assets.filter(a => a.status === 'SYNCED').length,
-        pending: assets.filter(a => a.status === 'PENDING').length,
-        failed: assets.filter(a => a.status === 'FAILED').length,
+        synced: assets.filter((a) => a.status === 'SYNCED').length,
+        pending: assets.filter((a) => a.status === 'PENDING').length,
+        failed: assets.filter((a) => a.status === 'FAILED').length,
       };
 
       const duration = Date.now() - startTime;
-      this.logger.log(
-        `✅ getSyncStatus completed in ${duration}ms (${assets.length} assets)`
-      );
+      this.logger.log(`✅ getSyncStatus completed in ${duration}ms (${assets.length} assets)`);
 
       if (duration > 500) {
-        this.logger.warn(
-          `⚠️ SLOW QUERY: getSyncStatus took ${duration}ms (> 500ms threshold)`
-        );
+        this.logger.warn(`⚠️ SLOW QUERY: getSyncStatus took ${duration}ms (> 500ms threshold)`);
       }
 
       return { assets, summary };
@@ -935,8 +916,8 @@ export class MarketDataService {
     });
 
     if (validAssets.length !== tickers.length) {
-      const validTickers = validAssets.map(a => a.ticker);
-      const invalidTickers = tickers.filter(t => !validTickers.includes(t));
+      const validTickers = validAssets.map((a) => a.ticker);
+      const invalidTickers = tickers.filter((t) => !validTickers.includes(t));
 
       this.logger.error(`❌ Tickers inválidos: ${invalidTickers.join(', ')}`);
 
@@ -947,7 +928,7 @@ export class MarketDataService {
       });
 
       throw new InternalServerErrorException(
-        `Tickers inválidos ou inativos: ${invalidTickers.join(', ')}`
+        `Tickers inválidos ou inativos: ${invalidTickers.join(', ')}`,
       );
     }
 
@@ -1007,17 +988,14 @@ export class MarketDataService {
             recordsInserted: syncResult.totalRecords,
             duration: Math.round(tickerDuration),
           });
-
         } catch (error: any) {
-          this.logger.error(
-            `❌ Tentativa ${attempts}/3 falhou para ${ticker}: ${error.message}`
-          );
+          this.logger.error(`❌ Tentativa ${attempts}/3 falhou para ${ticker}: ${error.message}`);
 
           if (attempts < 3) {
             // Backoff exponencial: 2s, 4s, 8s
             const backoffMs = Math.pow(2, attempts) * 1000;
             this.logger.log(`⏳ Aguardando ${backoffMs}ms antes de retry...`);
-            await new Promise(resolve => setTimeout(resolve, backoffMs));
+            await new Promise((resolve) => setTimeout(resolve, backoffMs));
           } else {
             // Falhou após 3 tentativas
             results.failedTickers.push(ticker);
@@ -1040,7 +1018,7 @@ export class MarketDataService {
 
     const duration = (Date.now() - startTime) / 1000;
     this.logger.log(
-      `✅ Bulk Sync completed: ${results.successCount}/${tickers.length} successful in ${duration.toFixed(1)}s`
+      `✅ Bulk Sync completed: ${results.successCount}/${tickers.length} successful in ${duration.toFixed(1)}s`,
     );
 
     if (results.failedTickers.length > 0) {

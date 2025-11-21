@@ -43,11 +43,7 @@ export class PortfolioController {
 
   @Post(':portfolioId/positions')
   @ApiOperation({ summary: 'Add position to portfolio' })
-  async addPosition(
-    @Req() req: any,
-    @Param('portfolioId') portfolioId: string,
-    @Body() data: any,
-  ) {
+  async addPosition(@Req() req: any, @Param('portfolioId') portfolioId: string, @Body() data: any) {
     return this.portfolioService.addPosition(portfolioId, req.user.id, data);
   }
 

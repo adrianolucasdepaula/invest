@@ -1,0 +1,789 @@
+🚀 Starting B3 Investment Backend...
+✅ Dependencies already installed and up to date
+✅ Dist folder already exists (build will run in watch mode)
+🎯 Starting application...
+
+> b3-invest-backend@1.0.0 start:dev
+> nest start --watch
+
+
+ Info  Webpack is building your sources...
+
+webpack 5.97.1 compiled [1m[32msuccessfully[39m[22m in 11267 ms
+Type-checking in progress...
+[32m[Nest] 62  - [39m11/21/2025, 10:15:36 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +82ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWebSocketModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mValidatorsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHttpModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHttpModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:36 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +398ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScheduleModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +88ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAiModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +40ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +33ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmCoreModule dependencies initialized[39m[38;5;3m +615ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +5ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScrapersModule dependencies initialized[39m[38;5;3m +11ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDataSourcesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEconomicIndicatorsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mQueueModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMarketDataModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCronModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPortfolioModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAnalysisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAssetsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mReportsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mAppWebSocketGateway subscribed to the "subscribe" message[39m[38;5;3m +206ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mAppWebSocketGateway subscribed to the "unsubscribe" message[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppController {/api/v1}:[39m[38;5;3m +4ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/health, GET} route[39m[38;5;3m +7ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCronController {/api/v1/cron}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/cron/trigger-daily-sync, POST} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMarketDataController {/api/v1/market-data}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/:ticker/prices, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/:ticker/technical, POST} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-cotahist, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-history, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-status, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-bulk, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAssetsController {/api/v1/assets}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker/price-history, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker/sync, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker/populate, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/sync-all, POST} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAssetsUpdateController {/api/v1/assets/updates}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/single, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/batch, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/portfolio, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/sector, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/outdated, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/retry, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/:ticker, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mScrapersController {/api/v1/scrapers}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/scrapers/status, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/scrapers/test/:scraperId, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/api/v1/auth}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/register, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/login, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/google, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/google/callback, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/me, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAnalysisController {/api/v1/analysis}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker/fundamental, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker/technical, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker/complete, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:id/details, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/bulk/request, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPortfolioController {/api/v1/portfolio}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:id, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:portfolioId/positions, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:portfolioId/positions/:positionId, PATCH} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:portfolioId/positions/:positionId, DELETE} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/import, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mReportsController {/api/v1/reports}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/assets-status, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/generate, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/:id/download, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mDataSourcesController {/api/v1/data-sources}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/data-sources, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/data-sources/status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEconomicIndicatorsController {/api/v1/economic-indicators}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/economic-indicators, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/economic-indicators/sync, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/economic-indicators/:type, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[AssetUpdateJobsService] [39m[32mAsset Updates Queue initialized: {"waiting":0,"active":0,"completed":0,"failed":0,"delayed":0,"paused":0}[39m
+[33m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [33m   WARN[39m [38;5;3m[AssetUpdateJobsService] [39m[33m⚠️ Cron jobs DISABLED (development environment - enable manually if needed)[39m
+[32m[Nest] 62  - [39m11/21/2025, 10:15:38 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +39ms[39m
+
+    🚀 Application is running on: http://localhost:3101
+    📚 API Documentation: http://localhost:3101/api/docs
+    🔥 Environment: development
+  
+No errors found.
+🚀 Starting B3 Investment Backend...
+✅ Dependencies already installed and up to date
+✅ Dist folder already exists (build will run in watch mode)
+🎯 Starting application...
+
+> b3-invest-backend@1.0.0 start:dev
+> nest start --watch
+
+
+ Info  Webpack is building your sources...
+
+webpack 5.97.1 compiled [1m[32msuccessfully[39m[22m in 9250 ms
+Type-checking in progress...
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +46ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWebSocketModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mValidatorsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHttpModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHttpModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +66ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScheduleModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +50ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAiModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +20ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +3ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +10ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmCoreModule dependencies initialized[39m[38;5;3m +269ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScrapersModule dependencies initialized[39m[38;5;3m +3ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDataSourcesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEconomicIndicatorsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mQueueModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMarketDataModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCronModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPortfolioModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAnalysisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAssetsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mReportsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mAppWebSocketGateway subscribed to the "subscribe" message[39m[38;5;3m +58ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mAppWebSocketGateway subscribed to the "unsubscribe" message[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppController {/api/v1}:[39m[38;5;3m +2ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/health, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCronController {/api/v1/cron}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/cron/trigger-daily-sync, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMarketDataController {/api/v1/market-data}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/:ticker/prices, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/:ticker/technical, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-cotahist, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-history, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-bulk, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAssetsController {/api/v1/assets}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker/price-history, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker/sync, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker/populate, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/sync-all, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAssetsUpdateController {/api/v1/assets/updates}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/single, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/batch, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/portfolio, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/sector, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/outdated, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/retry, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/:ticker, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mScrapersController {/api/v1/scrapers}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/scrapers/status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/scrapers/test/:scraperId, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/api/v1/auth}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/register, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/login, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/google, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/google/callback, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/me, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAnalysisController {/api/v1/analysis}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker/fundamental, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker/technical, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker/complete, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:id/details, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/bulk/request, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPortfolioController {/api/v1/portfolio}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:portfolioId/positions, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:portfolioId/positions/:positionId, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:portfolioId/positions/:positionId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/import, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mReportsController {/api/v1/reports}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/assets-status, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/generate, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/:id/download, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mDataSourcesController {/api/v1/data-sources}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/data-sources, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/data-sources/status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEconomicIndicatorsController {/api/v1/economic-indicators}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/economic-indicators, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/economic-indicators/sync, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/economic-indicators/:type, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[AssetUpdateJobsService] [39m[32mAsset Updates Queue initialized: {"waiting":0,"active":0,"completed":0,"failed":0,"delayed":0,"paused":0}[39m
+[33m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [33m   WARN[39m [38;5;3m[AssetUpdateJobsService] [39m[33m⚠️ Cron jobs DISABLED (development environment - enable manually if needed)[39m
+[32m[Nest] 56  - [39m11/21/2025, 10:45:55 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +16ms[39m
+
+    🚀 Application is running on: http://localhost:3101
+    📚 API Documentation: http://localhost:3101/api/docs
+    🔥 Environment: development
+  
+No errors found.
+🚀 Starting B3 Investment Backend...
+✅ Dependencies already installed and up to date
+✅ Dist folder already exists (build will run in watch mode)
+🎯 Starting application...
+
+> b3-invest-backend@1.0.0 start:dev
+> nest start --watch
+
+
+ Info  Webpack is building your sources...
+
+webpack 5.97.1 compiled [1m[32msuccessfully[39m[22m in 5443 ms
+Type-checking in progress...
+[32m[Nest] 55  - [39m11/21/2025, 10:51:40 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +61ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWebSocketModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mValidatorsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHttpModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHttpModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +4ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +97ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScheduleModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +80ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAiModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +16ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +12ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmCoreModule dependencies initialized[39m[38;5;3m +421ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScrapersModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDataSourcesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEconomicIndicatorsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mQueueModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMarketDataModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCronModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPortfolioModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAnalysisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAssetsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mReportsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mAppWebSocketGateway subscribed to the "subscribe" message[39m[38;5;3m +70ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mAppWebSocketGateway subscribed to the "unsubscribe" message[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppController {/api/v1}:[39m[38;5;3m +2ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/health, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCronController {/api/v1/cron}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/cron/trigger-daily-sync, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMarketDataController {/api/v1/market-data}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/:ticker/prices, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/:ticker/technical, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-cotahist, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-history, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-bulk, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAssetsController {/api/v1/assets}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker/price-history, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker/sync, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker/populate, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/sync-all, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAssetsUpdateController {/api/v1/assets/updates}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/single, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/batch, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/portfolio, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/sector, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/outdated, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/retry, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/:ticker, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mScrapersController {/api/v1/scrapers}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/scrapers/status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/scrapers/test/:scraperId, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/api/v1/auth}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/register, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/login, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/google, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/google/callback, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/me, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAnalysisController {/api/v1/analysis}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker/fundamental, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker/technical, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker/complete, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:id/details, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/bulk/request, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPortfolioController {/api/v1/portfolio}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:portfolioId/positions, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:portfolioId/positions/:positionId, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:portfolioId/positions/:positionId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/import, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mReportsController {/api/v1/reports}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/assets-status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/generate, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/:id/download, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mDataSourcesController {/api/v1/data-sources}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/data-sources, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/data-sources/status, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEconomicIndicatorsController {/api/v1/economic-indicators}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/economic-indicators, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/economic-indicators/sync, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/economic-indicators/:type, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[AssetUpdateJobsService] [39m[32mAsset Updates Queue initialized: {"waiting":0,"active":0,"completed":0,"failed":0,"delayed":0,"paused":0}[39m
+[33m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [33m   WARN[39m [38;5;3m[AssetUpdateJobsService] [39m[33m⚠️ Cron jobs DISABLED (development environment - enable manually if needed)[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:51:41 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +20ms[39m
+
+    🚀 Application is running on: http://localhost:3101
+    📚 API Documentation: http://localhost:3101/api/docs
+    🔥 Environment: development
+  
+No errors found.
+[32m[Nest] 55  - [39m11/21/2025, 9:52:01 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: CCRO3 (1986-2025)[39m
+[32m[Nest] 55  - [39m11/21/2025, 9:52:01 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: CCRO3 (1986-2025)[39m
+[32m[Nest] 55  - [39m11/21/2025, 9:52:01 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 55  - [39m11/21/2025, 9:52:01 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for CCRO3...[39m
+[32m[Nest] 55  - [39m11/21/2025, 9:52:01 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: CCRO3 ⏳ processing...[39m
+[32m[Nest] 55  - [39m11/21/2025, 9:52:01 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 55  - [39m11/21/2025, 9:52:01 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":1986,"end_year":2025,"tickers":["CCRO3"]}...[39m
+[33m[Nest] 55  - [39m11/21/2025, 9:55:01 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 1/3 (/cotahist/fetch): Timeout has occurred[39m
+[33m[Nest] 55  - [39m11/21/2025, 9:55:09 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 2/3 (/cotahist/fetch): socket hang up[39m
+[33m[Nest] 55  - [39m11/21/2025, 9:58:13 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 3/3 (/cotahist/fetch): Timeout has occurred[39m
+[32m[Nest] 55  - [39m11/21/2025, 9:59:25 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: CCRO3 (2020-2025)[39m
+[32m[Nest] 55  - [39m11/21/2025, 9:59:25 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: CCRO3 (2020-2025)[39m
+[32m[Nest] 55  - [39m11/21/2025, 9:59:25 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (2020-2025)[39m
+[95m[Nest] 55  - [39m11/21/2025, 9:59:25 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for CCRO3...[39m
+[32m[Nest] 55  - [39m11/21/2025, 9:59:25 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: CCRO3 ⏳ processing...[39m
+[32m[Nest] 55  - [39m11/21/2025, 9:59:25 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 55  - [39m11/21/2025, 9:59:25 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":2020,"end_year":2025,"tickers":["CCRO3"]}...[39m
+[95m[Nest] 55  - [39m11/21/2025, 10:00:00 PM [95m  DEBUG[39m [38;5;3m[AssetUpdateJobsService] [39m[95m⏭️ Skipping retry (not in production/staging)[39m
+[31m[Nest] 55  - [39m11/21/2025, 10:01:19 PM [31m  ERROR[39m [38;5;3m[PythonServiceClient] [39m[31m❌ POST /cotahist/fetch failed (558591ms): Timeout has occurred[39m
+[33m[Nest] 55  - [39m11/21/2025, 10:01:19 PM [33m   WARN[39m [38;5;3m[MarketDataService] [39m[33mCOTAHIST fetch failed for CCRO3: Timeout has occurred[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:01:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 0 records[39m
+[95m[Nest] 55  - [39m11/21/2025, 10:01:19 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for CCRO3...[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:01:20 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mFetching fresh data from BRAPI for CCRO3 (range: 3mo)[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:01:20 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mStarting sync for CCRO3 (range: 3mo)[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:01:20 PM [32m    LOG[39m [38;5;3m[BrapiScraper] [39m[32mScraping CCRO3 from BRAPI[39m
+[31m[Nest] 55  - [39m11/21/2025, 10:01:20 PM [31m  ERROR[39m [38;5;3m[BrapiScraper] [39m[31mFailed to scrape CCRO3 from BRAPI: Request failed with status code 404[39m
+[33m[Nest] 55  - [39m11/21/2025, 10:01:20 PM [33m   WARN[39m [38;5;3m[AssetsService] [39m[33mFailed to fetch data for CCRO3: Request failed with status code 404[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:01:20 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 0 records (last 3mo)[39m
+[95m[Nest] 55  - [39m11/21/2025, 10:01:20 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:01:20 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 0 records[39m
+[95m[Nest] 55  - [39m11/21/2025, 10:01:20 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[33m[Nest] 55  - [39m11/21/2025, 10:01:20 PM [33m   WARN[39m [38;5;3m[MarketDataService] [39m[33mNo data to upsert[39m
+[95m[Nest] 55  - [39m11/21/2025, 10:01:20 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: d5b81383-8f05-4bb7-863b-2ebfef9836f4[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:01:20 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: CCRO3 (0 records, 559.68s)[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:01:20 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (9min total)[39m
+[33m[Nest] 55  - [39m11/21/2025, 10:02:25 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 1/3 (/cotahist/fetch): Timeout has occurred[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:02:49 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: CCRO3 (2024-2025)[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:02:49 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: CCRO3 (2024-2025)[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:02:49 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (2024-2025)[39m
+[95m[Nest] 55  - [39m11/21/2025, 10:02:49 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for CCRO3...[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:02:49 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: CCRO3 ⏳ processing...[39m
+[32m[Nest] 55  - [39m11/21/2025, 10:02:49 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 55  - [39m11/21/2025, 10:02:49 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":2024,"end_year":2025,"tickers":["CCRO3"]}...[39m
+[33m[Nest] 55  - [39m11/21/2025, 10:05:27 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 2/3 (/cotahist/fetch): Timeout has occurred[39m
+[33m[Nest] 55  - [39m11/21/2025, 10:05:49 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 1/3 (/cotahist/fetch): Timeout has occurred[39m
+[33m[Nest] 55  - [39m11/21/2025, 10:08:31 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 3/3 (/cotahist/fetch): Timeout has occurred[39m
+[33m[Nest] 55  - [39m11/21/2025, 10:08:51 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 2/3 (/cotahist/fetch): Timeout has occurred[39m
+npm error path /app
+npm error command failed
+npm error signal SIGTERM
+npm error command sh -c nest start --watch
+npm error A complete log of this run can be found in: /root/.npm/_logs/2025-11-21T22_51_23_850Z-debug-0.log
+🚀 Starting B3 Investment Backend...
+✅ Dependencies already installed and up to date
+✅ Dist folder already exists (build will run in watch mode)
+🎯 Starting application...
+
+> b3-invest-backend@1.0.0 start:dev
+> nest start --watch
+
+
+ Info  Webpack is building your sources...
+
+webpack 5.97.1 compiled [1m[32msuccessfully[39m[22m in 4447 ms
+Type-checking in progress...
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +62ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWebSocketModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mValidatorsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHttpModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHttpModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +118ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScheduleModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +30ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAiModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +16ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +10ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmCoreModule dependencies initialized[39m[38;5;3m +199ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScrapersModule dependencies initialized[39m[38;5;3m +3ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDataSourcesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEconomicIndicatorsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mQueueModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMarketDataModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCronModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPortfolioModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAnalysisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAssetsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mReportsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mAppWebSocketGateway subscribed to the "subscribe" message[39m[38;5;3m +56ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[WebSocketsController] [39m[32mAppWebSocketGateway subscribed to the "unsubscribe" message[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppController {/api/v1}:[39m[38;5;3m +2ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/health, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCronController {/api/v1/cron}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/cron/trigger-daily-sync, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMarketDataController {/api/v1/market-data}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/:ticker/prices, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/:ticker/technical, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-cotahist, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-history, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/market-data/sync-bulk, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAssetsController {/api/v1/assets}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker/price-history, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker/sync, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/:ticker/populate, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/sync-all, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAssetsUpdateController {/api/v1/assets/updates}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/single, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/batch, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/portfolio, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/sector, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/outdated, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/retry, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/assets/updates/:ticker, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mScrapersController {/api/v1/scrapers}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/scrapers/status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/scrapers/test/:scraperId, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/api/v1/auth}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/register, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/login, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/google, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/google/callback, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/me, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAnalysisController {/api/v1/analysis}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker/fundamental, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker/technical, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker/complete, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:id/details, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/:ticker, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analysis/bulk/request, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPortfolioController {/api/v1/portfolio}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:portfolioId/positions, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:portfolioId/positions/:positionId, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/:portfolioId/positions/:positionId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/portfolio/import, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mReportsController {/api/v1/reports}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/assets-status, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/generate, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/reports/:id/download, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mDataSourcesController {/api/v1/data-sources}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/data-sources, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/data-sources/status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEconomicIndicatorsController {/api/v1/economic-indicators}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/economic-indicators, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/economic-indicators/sync, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/economic-indicators/:type, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[AssetUpdateJobsService] [39m[32mAsset Updates Queue initialized: {"waiting":0,"active":0,"completed":0,"failed":0,"delayed":0,"paused":0}[39m
+[33m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [33m   WARN[39m [38;5;3m[AssetUpdateJobsService] [39m[33m⚠️ Cron jobs DISABLED (development environment - enable manually if needed)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:10:49 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +24ms[39m
+
+    🚀 Application is running on: http://localhost:3101
+    📚 API Documentation: http://localhost:3101/api/docs
+    🔥 Environment: development
+  
+No errors found.
+============ CONTROLLER METHOD CALLED ============
+[32m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsController] [39m[32mPOST /economic-indicators/sync - Manual sync triggered[39m
+============ CALLING SERVICE ============
+[32m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mStarting sync from Banco Central API...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mFetching SELIC rate from Banco Central API...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mSELIC fetched: 0.055131% (ref: 2025-11-21)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [95m  DEBUG[39m [38;5;3m[EconomicIndicatorsService] [39m[95mInserted SELIC for Fri Nov 21 2025 00:00:00 GMT+0000 (Coordinated Universal Time)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mSELIC synced: 0.055131%[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mFetching IPCA inflation from Banco Central API...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mIPCA fetched: 0.09% (ref: 2025-10-01)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [95m  DEBUG[39m [38;5;3m[EconomicIndicatorsService] [39m[95mInserted IPCA for Wed Oct 01 2025 00:00:00 GMT+0000 (Coordinated Universal Time)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mIPCA synced: 0.09%[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mCalculating CDI based on SELIC (BRAPI does not have CDI endpoint)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mFetching SELIC rate from Banco Central API...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mSELIC fetched: 0.055131% (ref: 2025-11-21)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [32m    LOG[39m [38;5;3m[BrapiService] [39m[32mCDI calculated: -0.0449% (based on SELIC 0.055131%)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [95m  DEBUG[39m [38;5;3m[EconomicIndicatorsService] [39m[95mInserted CDI for Fri Nov 21 2025 00:00:00 GMT+0000 (Coordinated Universal Time)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mCDI synced: -0.0449%[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mDeleted from cache: indicators:*[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:11:23 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mSync completed: {"selic":true,"ipca":true,"cdi":true}[39m
+============ SERVICE RETURNED ============
+============ RETURNING: {"message":"Sync completed","timestamp":"2025-11-21T22:11:23.871Z"} ============
+[32m[Nest] 50  - [39m11/21/2025, 10:12:07 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsController] [39m[32mGET /economic-indicators - Filters: {"limit":10}[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:12:07 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache miss: indicators:list:{"limit":10}[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:12:07 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCached: indicators:list:{"limit":10} (TTL: 300s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:12:07 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mFetched 3 indicators (total: 3)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:12:10 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsController] [39m[32mGET /economic-indicators/SELIC[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:12:10 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache miss: indicators:latest:SELIC[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:12:10 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCached: indicators:latest:SELIC (TTL: 60s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:12:10 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mLatest SELIC: 0.0551 (change: N/A)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:12:13 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsController] [39m[32mGET /economic-indicators/IPCA[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:12:13 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache miss: indicators:latest:IPCA[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:12:13 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCached: indicators:latest:IPCA (TTL: 60s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:12:13 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsService] [39m[32mLatest IPCA: 0.09 (change: N/A)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:12:19 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsController] [39m[32mGET /economic-indicators - Filters: {"limit":10}[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:12:19 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache hit: indicators:list:{"limit":10}[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:12:21 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsController] [39m[32mGET /economic-indicators/SELIC[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:12:21 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache hit: indicators:latest:SELIC[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:12:24 PM [32m    LOG[39m [38;5;3m[EconomicIndicatorsController] [39m[32mGET /economic-indicators/IPCA[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:12:24 PM [95m  DEBUG[39m [38;5;3m[CacheService] [39m[95mCache hit: indicators:latest:IPCA[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:18:30 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: CCRO3 (2024-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:18:30 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: CCRO3 (2024-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:18:30 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (2024-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:18:30 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:18:30 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: CCRO3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:18:30 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:18:30 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":2024,"end_year":2025,"tickers":["CCRO3"]}...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:19:04 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m✅ POST /cotahist/fetch success (33892ms) + CACHED (TTL 24h)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:19:04 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 332 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:19:04 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:19:04 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mFetching fresh data from BRAPI for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:19:04 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mStarting sync for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:19:04 PM [32m    LOG[39m [38;5;3m[BrapiScraper] [39m[32mScraping CCRO3 from BRAPI[39m
+[31m[Nest] 50  - [39m11/21/2025, 10:19:05 PM [31m  ERROR[39m [38;5;3m[BrapiScraper] [39m[31mFailed to scrape CCRO3 from BRAPI: Request failed with status code 404[39m
+[33m[Nest] 50  - [39m11/21/2025, 10:19:05 PM [33m   WARN[39m [38;5;3m[AssetsService] [39m[33mFailed to fetch data for CCRO3: Request failed with status code 404[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:19:05 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 0 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:19:05 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:19:05 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 332 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:19:05 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:19:05 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 332/332 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:19:05 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 332 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:19:05 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: 2af70c55-0dbf-413e-a077-d465c812dc89[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:19:05 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: CCRO3 (332 records, 34.66s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:19:05 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (1min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:07 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: CCRO3 (2024-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:07 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: CCRO3 (2024-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:07 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (2024-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:23:07 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:07 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: CCRO3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:07 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m🎯 CACHE HIT: /cotahist/fetch (instant response)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:07 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 332 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:23:07 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:08 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mFetching fresh data from BRAPI for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:08 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mStarting sync for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:08 PM [32m    LOG[39m [38;5;3m[BrapiScraper] [39m[32mScraping CCRO3 from BRAPI[39m
+[31m[Nest] 50  - [39m11/21/2025, 10:23:08 PM [31m  ERROR[39m [38;5;3m[BrapiScraper] [39m[31mFailed to scrape CCRO3 from BRAPI: Request failed with status code 404[39m
+[33m[Nest] 50  - [39m11/21/2025, 10:23:08 PM [33m   WARN[39m [38;5;3m[AssetsService] [39m[33mFailed to fetch data for CCRO3: Request failed with status code 404[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:08 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 0 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:23:08 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:08 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 332 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:23:08 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:08 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 332/332 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:08 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 332 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:23:08 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: ba342bd1-6ed0-4e81-8fda-a70c770e96e1[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:08 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: CCRO3 (332 records, 0.45s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:08 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (0min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: CCRO3 (2024-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: CCRO3 (2024-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (2024-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: CCRO3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m🎯 CACHE HIT: /cotahist/fetch (instant response)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 332 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mFetching fresh data from BRAPI for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mStarting sync for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[BrapiScraper] [39m[32mScraping CCRO3 from BRAPI[39m
+[31m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [31m  ERROR[39m [38;5;3m[BrapiScraper] [39m[31mFailed to scrape CCRO3 from BRAPI: Request failed with status code 404[39m
+[33m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [33m   WARN[39m [38;5;3m[AssetsService] [39m[33mFailed to fetch data for CCRO3: Request failed with status code 404[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 0 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 332 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 332/332 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 332 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: dc0dabea-da73-4f40-9365-ef03afe0e9f2[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: CCRO3 (332 records, 0.42s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:23:19 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (0min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:24:02 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: CCRO3 (2020-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:24:02 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: CCRO3 (2020-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:24:02 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (2020-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:24:02 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:24:02 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: CCRO3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:24:02 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:24:02 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":2020,"end_year":2025,"tickers":["CCRO3"]}...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:23 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: CCRO3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:23 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: CCRO3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:23 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:25:23 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:23 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: CCRO3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:23 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:25:23 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":1986,"end_year":2025,"tickers":["CCRO3"]}...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:25 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m✅ POST /cotahist/fetch success (82468ms) + CACHED (TTL 24h)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:25 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 1326 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:25:25 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:25 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mFetching fresh data from BRAPI for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:25 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mStarting sync for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:25 PM [32m    LOG[39m [38;5;3m[BrapiScraper] [39m[32mScraping CCRO3 from BRAPI[39m
+[33m[Nest] 50  - [39m11/21/2025, 10:25:25 PM [33m   WARN[39m [38;5;3m[AssetsService] [39m[33mFailed to fetch data for CCRO3: Request failed with status code 404[39m
+[31m[Nest] 50  - [39m11/21/2025, 10:25:25 PM [31m  ERROR[39m [38;5;3m[BrapiScraper] [39m[31mFailed to scrape CCRO3 from BRAPI: Request failed with status code 404[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:25 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 0 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:25:25 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:25 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 1326 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:25:25 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:26 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 1326/1326 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:26 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 1326 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:25:26 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: a734bebb-f1b9-495a-916c-88cc8ddc2591[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:26 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: CCRO3 (1326 records, 83.39s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:25:26 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (1min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:27:33 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m✅ POST /cotahist/fetch success (130482ms) + CACHED (TTL 24h)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:27:33 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:27:33 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for CCRO3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:27:33 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mFetching fresh data from BRAPI for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:27:33 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mStarting sync for CCRO3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:27:33 PM [32m    LOG[39m [38;5;3m[BrapiScraper] [39m[32mScraping CCRO3 from BRAPI[39m
+[31m[Nest] 50  - [39m11/21/2025, 10:27:33 PM [31m  ERROR[39m [38;5;3m[BrapiScraper] [39m[31mFailed to scrape CCRO3 from BRAPI: Request failed with status code 404[39m
+[33m[Nest] 50  - [39m11/21/2025, 10:27:33 PM [33m   WARN[39m [38;5;3m[AssetsService] [39m[33mFailed to fetch data for CCRO3: Request failed with status code 404[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:27:33 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 0 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:27:33 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:27:33 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:27:33 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:27:41 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5000/5666 records (88.2%) [Batch 1/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:27:41 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 5666/5666 records (100.0%) [Batch 2/2][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:27:41 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 5666 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:27:41 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: b0944d00-4211-4f9a-b9aa-8ee551f4e665[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:27:41 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: CCRO3 (5666 records, 138.78s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:27:41 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (2min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:28:01 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: JBSS3 (2020-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:28:01 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: JBSS3 (2020-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:28:01 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (2020-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:28:01 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for JBSS3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:28:01 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: JBSS3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:28:01 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:28:01 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":2020,"end_year":2025,"tickers":["JBSS3"]}...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:29:23 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m✅ POST /cotahist/fetch success (82475ms) + CACHED (TTL 24h)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:29:23 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 1352 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:29:23 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for JBSS3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mFetching fresh data from BRAPI for JBSS3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mStarting sync for JBSS3 (range: 3mo)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [32m    LOG[39m [38;5;3m[BrapiScraper] [39m[32mScraping JBSS3 from BRAPI[39m
+[31m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [31m  ERROR[39m [38;5;3m[BrapiScraper] [39m[31mFailed to scrape JBSS3 from BRAPI: Request failed with status code 404[39m
+[33m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [33m   WARN[39m [38;5;3m[AssetsService] [39m[33mFailed to fetch data for JBSS3: Request failed with status code 404[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 0 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 1352 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 1352/1352 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 1352 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: 0805477b-aa41-4afd-9e3a-f5b371343670[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: JBSS3 (1352 records, 83.81s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 10:29:24 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (1min total)[39m

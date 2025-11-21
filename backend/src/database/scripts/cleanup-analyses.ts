@@ -36,9 +36,7 @@ async function getStatisticsBeforeCleanup(dataSource: TypeORMDataSource): Promis
   console.log('========================================\n');
 
   // Total de análises
-  const totalAnalyses = await dataSource
-    .getRepository(Analysis)
-    .count();
+  const totalAnalyses = await dataSource.getRepository(Analysis).count();
   console.log(`Total de análises no banco: ${totalAnalyses}`);
 
   // Análises por status
@@ -116,7 +114,10 @@ async function getStatisticsBeforeCleanup(dataSource: TypeORMDataSource): Promis
   console.log('\n========================================\n');
 }
 
-async function cleanupAnalyses(dataSource: TypeORMDataSource, removeOldAnalyses: boolean = false): Promise<CleanupStats> {
+async function cleanupAnalyses(
+  dataSource: TypeORMDataSource,
+  removeOldAnalyses: boolean = false,
+): Promise<CleanupStats> {
   const stats: CleanupStats = {
     inactiveAssets: 0,
     failedOld: 0,
@@ -131,12 +132,10 @@ async function cleanupAnalyses(dataSource: TypeORMDataSource, removeOldAnalyses:
   console.log('1️⃣  Removendo análises de ativos inativos...');
 
   // Primeiro, buscar IDs de ativos inativos
-  const inactiveAssets = await dataSource
-    .getRepository(Asset)
-    .find({
-      where: { isActive: false },
-      select: ['id'],
-    });
+  const inactiveAssets = await dataSource.getRepository(Asset).find({
+    where: { isActive: false },
+    select: ['id'],
+  });
 
   const inactiveAssetIds = inactiveAssets.map((asset) => asset.id);
 
@@ -203,7 +202,9 @@ async function cleanupAnalyses(dataSource: TypeORMDataSource, removeOldAnalyses:
     stats.veryOld = veryOldResult.affected || 0;
     console.log(`   ✅ Removidas: ${stats.veryOld}`);
   } else {
-    console.log('\n4️⃣  Análises antigas (>90 dias) NÃO removidas (parâmetro removeOldAnalyses=false)');
+    console.log(
+      '\n4️⃣  Análises antigas (>90 dias) NÃO removidas (parâmetro removeOldAnalyses=false)',
+    );
   }
 
   stats.total = stats.inactiveAssets + stats.failedOld + stats.pendingStuck + stats.veryOld;
@@ -217,9 +218,7 @@ async function getStatisticsAfterCleanup(dataSource: TypeORMDataSource): Promise
   console.log('========================================\n');
 
   // Total de análises
-  const totalAnalyses = await dataSource
-    .getRepository(Analysis)
-    .count();
+  const totalAnalyses = await dataSource.getRepository(Analysis).count();
   console.log(`Total de análises no banco: ${totalAnalyses}`);
 
   // Análises por status

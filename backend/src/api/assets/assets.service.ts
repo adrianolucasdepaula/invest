@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Asset, AssetType, AssetPrice, FundamentalData, PriceSource } from '@database/entities';
+import { Asset, AssetPrice, FundamentalData, PriceSource } from '@database/entities';
 import { ScrapersService } from '../../scrapers/scrapers.service';
 import { BrapiScraper } from '../../scrapers/fundamental/brapi.scraper';
 import { HistoricalPricesQueryDto, PriceRange } from './dto/historical-prices-query.dto';
@@ -19,7 +19,7 @@ export class AssetsService {
     private fundamentalDataRepository: Repository<FundamentalData>,
     private scrapersService: ScrapersService,
     private brapiScraper: BrapiScraper,
-  ) { }
+  ) {}
 
   async findAll(type?: string) {
     // Build optimized query with LEFT JOIN to get latest 2 prices per asset
@@ -32,7 +32,7 @@ export class AssetsService {
           SELECT MAX(p.date)
           FROM asset_prices p
           WHERE p.asset_id = asset.id
-        )`
+        )`,
       )
       .leftJoinAndSelect(
         'asset_prices',
@@ -46,7 +46,7 @@ export class AssetsService {
               FROM asset_prices p2
               WHERE p2.asset_id = asset.id
             )
-        )`
+        )`,
       )
       .addSelect('price1.change', 'price1_change')
       .addSelect('price1.change_percent', 'price1_change_percent')
@@ -78,7 +78,9 @@ export class AssetsService {
       const price = Number(latestClose);
       // Use change and changePercent from database (collected from BRAPI)
       const change = rawData?.price1_change ? Number(rawData.price1_change) : null;
-      const changePercent = rawData?.price1_change_percent ? Number(rawData.price1_change_percent) : null;
+      const changePercent = rawData?.price1_change_percent
+        ? Number(rawData.price1_change_percent)
+        : null;
 
       return {
         ...asset,
@@ -109,7 +111,7 @@ export class AssetsService {
           SELECT MAX(p.date)
           FROM asset_prices p
           WHERE p.asset_id = asset.id
-        )`
+        )`,
       )
       .leftJoinAndSelect(
         'asset_prices',
@@ -123,7 +125,7 @@ export class AssetsService {
               FROM asset_prices p2
               WHERE p2.asset_id = asset.id
             )
-        )`
+        )`,
       )
       .where('UPPER(asset.ticker) = :ticker', { ticker: ticker.toUpperCase() })
       .getRawAndEntities();
@@ -136,7 +138,7 @@ export class AssetsService {
     const rawData = result.raw[0];
 
     const latestClose = rawData?.price1_close;
-    const previousClose = rawData?.price2_close;
+    const _previousClose = rawData?.price2_close;
 
     if (!latestClose) {
       return {
@@ -152,7 +154,9 @@ export class AssetsService {
     const price = Number(latestClose);
     // Use change and changePercent from database (collected from BRAPI)
     const change = rawData?.price1_change ? Number(rawData.price1_change) : null;
-    const changePercent = rawData?.price1_change_percent ? Number(rawData.price1_change_percent) : null;
+    const changePercent = rawData?.price1_change_percent
+      ? Number(rawData.price1_change_percent)
+      : null;
 
     return {
       ...asset,
@@ -229,8 +233,8 @@ export class AssetsService {
       '2y': 730,
       '5y': 1825,
       '10y': 3650,
-      'ytd': this.getYTDDays(),
-      'max': 7300, // ~20 years
+      ytd: this.getYTDDays(),
+      max: 7300, // ~20 years
     };
 
     const days = daysMap[range] || 365;
@@ -295,8 +299,8 @@ export class AssetsService {
       '2y': 500,
       '5y': 1250,
       '10y': 2500,
-      'ytd': Math.floor(this.getYTDDays() * 0.7), // ~70% are trading days
-      'max': 5000,
+      ytd: Math.floor(this.getYTDDays() * 0.7), // ~70% are trading days
+      max: 5000,
     };
 
     return daysMap[range] || 250;
@@ -308,7 +312,7 @@ export class AssetsService {
     try {
       // 1. Find asset in database
       const asset = await this.assetRepository.findOne({
-        where: { ticker: ticker.toUpperCase() }
+        where: { ticker: ticker.toUpperCase() },
       });
 
       if (!asset) {
@@ -330,11 +334,15 @@ export class AssetsService {
 
       // 3. Extract price data from BRAPI
       const brapiData = result.data;
-      this.logger.log(`BrapiData for ${ticker}: price=${brapiData.price}, volume=${brapiData.volume}, change=${brapiData.change}, changePercent=${brapiData.changePercent}`);
+      this.logger.log(
+        `BrapiData for ${ticker}: price=${brapiData.price}, volume=${brapiData.volume}, change=${brapiData.change}, changePercent=${brapiData.changePercent}`,
+      );
 
       // 4. Save current day price
       if (brapiData.price && brapiData.volume !== null && brapiData.volume !== undefined) {
-        this.logger.log(`Preparing to save price for ${ticker}. Change: ${brapiData.change}, ChangePercent: ${brapiData.changePercent}`);
+        this.logger.log(
+          `Preparing to save price for ${ticker}. Change: ${brapiData.change}, ChangePercent: ${brapiData.changePercent}`,
+        );
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -344,7 +352,7 @@ export class AssetsService {
           where: {
             assetId: asset.id,
             date: today,
-          }
+          },
         });
 
         const collectedAt = new Date(); // Timestamp da coleta
@@ -370,7 +378,9 @@ export class AssetsService {
           });
 
           await this.assetPriceRepository.save(priceData);
-          this.logger.log(`✓ Saved price for ${ticker}: R$ ${brapiData.price.toFixed(2)} (collected at ${collectedAt.toISOString()})`);
+          this.logger.log(
+            `✓ Saved price for ${ticker}: R$ ${brapiData.price.toFixed(2)} (collected at ${collectedAt.toISOString()})`,
+          );
         } else {
           // Update existing price with latest data
           existingPrice.open = brapiData.open || brapiData.price;
@@ -385,7 +395,9 @@ export class AssetsService {
           existingPrice.collectedAt = collectedAt;
 
           await this.assetPriceRepository.save(existingPrice);
-          this.logger.log(`✓ Updated price for ${ticker}: R$ ${brapiData.price.toFixed(2)} (collected at ${collectedAt.toISOString()})`);
+          this.logger.log(
+            `✓ Updated price for ${ticker}: R$ ${brapiData.price.toFixed(2)} (collected at ${collectedAt.toISOString()})`,
+          );
         }
       }
 
@@ -394,7 +406,8 @@ export class AssetsService {
         let savedCount = 0;
         const collectedAt = new Date(); // Mesmo timestamp para todos os históricos
 
-        for (const histPrice of brapiData.historicalPrices) { // Save all historical data from range
+        for (const histPrice of brapiData.historicalPrices) {
+          // Save all historical data from range
           const priceDate = new Date(histPrice.date);
           priceDate.setHours(0, 0, 0, 0);
 
@@ -402,7 +415,7 @@ export class AssetsService {
             where: {
               assetId: asset.id,
               date: priceDate,
-            }
+            },
           });
 
           if (!existing) {
@@ -497,7 +510,7 @@ export class AssetsService {
                 error: error.message,
               });
             }
-          })
+          }),
         );
       }
 
@@ -526,7 +539,9 @@ export class AssetsService {
    * Populate fundamental data for an asset using scrapers
    * This method scrapes data from multiple sources, validates it, and saves to database
    */
-  async populateFundamentalData(ticker: string): Promise<{ success: boolean; message: string; data?: any }> {
+  async populateFundamentalData(
+    ticker: string,
+  ): Promise<{ success: boolean; message: string; data?: any }> {
     this.logger.log(`Starting fundamental data population for ${ticker}`);
 
     try {
@@ -553,8 +568,8 @@ export class AssetsService {
       if (!scrapedResult.isValid) {
         this.logger.warn(
           `Insufficient data quality for ${ticker}: ` +
-          `${scrapedResult.sourcesCount} sources (min 3 required), ` +
-          `confidence: ${scrapedResult.confidence} (min 0.7 required)`,
+            `${scrapedResult.sourcesCount} sources (min 3 required), ` +
+            `confidence: ${scrapedResult.confidence} (min 0.7 required)`,
         );
         return {
           success: false,
@@ -649,10 +664,12 @@ export class AssetsService {
       pegRatio: scrapedData.pegRatio || scrapedData.peg || null,
 
       // Debt Indicators
-      dividaLiquidaPatrimonio: scrapedData.dividaLiquidaPatrimonio || scrapedData.netDebtToEquity || null,
+      dividaLiquidaPatrimonio:
+        scrapedData.dividaLiquidaPatrimonio || scrapedData.netDebtToEquity || null,
       dividaLiquidaEbitda: scrapedData.dividaLiquidaEbitda || scrapedData.netDebtToEbitda || null,
       dividaLiquidaEbit: scrapedData.dividaLiquidaEbit || scrapedData.netDebtToEbit || null,
-      patrimonioLiquidoAtivos: scrapedData.patrimonioLiquidoAtivos || scrapedData.equityToAssets || null,
+      patrimonioLiquidoAtivos:
+        scrapedData.patrimonioLiquidoAtivos || scrapedData.equityToAssets || null,
       passivosAtivos: scrapedData.passivosAtivos || scrapedData.liabilitiesToAssets || null,
 
       // Efficiency Indicators
@@ -674,15 +691,23 @@ export class AssetsService {
       payout: scrapedData.payout || scrapedData.payoutRatio || null,
 
       // Financial Statement Data (in millions)
-      receitaLiquida: scrapedData.receitaLiquida || scrapedData.revenue || scrapedData.netRevenue || null,
+      receitaLiquida:
+        scrapedData.receitaLiquida || scrapedData.revenue || scrapedData.netRevenue || null,
       ebit: scrapedData.ebit || null,
       ebitda: scrapedData.ebitda || null,
-      lucroLiquido: scrapedData.lucroLiquido || scrapedData.netIncome || scrapedData.netProfit || null,
-      patrimonioLiquido: scrapedData.patrimonioLiquido || scrapedData.equity || scrapedData.shareholderEquity || null,
+      lucroLiquido:
+        scrapedData.lucroLiquido || scrapedData.netIncome || scrapedData.netProfit || null,
+      patrimonioLiquido:
+        scrapedData.patrimonioLiquido ||
+        scrapedData.equity ||
+        scrapedData.shareholderEquity ||
+        null,
       ativoTotal: scrapedData.ativoTotal || scrapedData.totalAssets || null,
-      dividaBruta: scrapedData.dividaBruta || scrapedData.grossDebt || scrapedData.totalDebt || null,
+      dividaBruta:
+        scrapedData.dividaBruta || scrapedData.grossDebt || scrapedData.totalDebt || null,
       dividaLiquida: scrapedData.dividaLiquida || scrapedData.netDebt || null,
-      disponibilidades: scrapedData.disponibilidades || scrapedData.cash || scrapedData.cashAndEquivalents || null,
+      disponibilidades:
+        scrapedData.disponibilidades || scrapedData.cash || scrapedData.cashAndEquivalents || null,
 
       // Store original data and metadata
       metadata: {

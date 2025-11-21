@@ -60,7 +60,7 @@ export class BrapiScraper {
 
       const response = await this.client.get(`/quote/${ticker}`, {
         params: {
-          token: this.apiKey,  // BRAPI requires token as query param, not header
+          token: this.apiKey, // BRAPI requires token as query param, not header
           range,
           interval: '1d',
           fundamental: true,

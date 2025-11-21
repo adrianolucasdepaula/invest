@@ -27,9 +27,7 @@ export class AssetUpdateJobsService implements OnModuleInit {
   async onModuleInit() {
     // Log queue info on startup
     const jobCounts = await this.assetUpdatesQueue.getJobCounts();
-    this.logger.log(
-      `Asset Updates Queue initialized: ${JSON.stringify(jobCounts)}`,
-    );
+    this.logger.log(`Asset Updates Queue initialized: ${JSON.stringify(jobCounts)}`);
 
     if (this.isProductionOrStaging) {
       this.logger.log('🔄 Cron jobs ENABLED (production/staging environment)');
@@ -238,15 +236,14 @@ export class AssetUpdateJobsService implements OnModuleInit {
    * Get queue statistics
    */
   async getQueueStats() {
-    const [jobCounts, waiting, active, completed, failed, delayed] =
-      await Promise.all([
-        this.assetUpdatesQueue.getJobCounts(),
-        this.assetUpdatesQueue.getWaiting(),
-        this.assetUpdatesQueue.getActive(),
-        this.assetUpdatesQueue.getCompleted(),
-        this.assetUpdatesQueue.getFailed(),
-        this.assetUpdatesQueue.getDelayed(),
-      ]);
+    const [jobCounts, waiting, active, completed, failed, delayed] = await Promise.all([
+      this.assetUpdatesQueue.getJobCounts(),
+      this.assetUpdatesQueue.getWaiting(),
+      this.assetUpdatesQueue.getActive(),
+      this.assetUpdatesQueue.getCompleted(),
+      this.assetUpdatesQueue.getFailed(),
+      this.assetUpdatesQueue.getDelayed(),
+    ]);
 
     return {
       counts: jobCounts,

@@ -1,5 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsString, IsInt, Min, Max, ArrayMinSize, ArrayMaxSize, ValidateIf } from 'class-validator';
+import {
+  IsArray,
+  IsString,
+  IsInt,
+  Min,
+  Max,
+  ArrayMinSize,
+  ArrayMaxSize,
+  ValidateIf,
+} from 'class-validator';
 
 /**
  * DTO para sincronização em massa de múltiplos ativos
@@ -55,26 +64,26 @@ export class SyncBulkDto {
 export class SyncBulkResponseDto {
   @ApiProperty({
     example: 'Sync iniciado em background',
-    description: 'Mensagem de confirmação'
+    description: 'Mensagem de confirmação',
   })
   message: string;
 
   @ApiProperty({
     example: 20,
-    description: 'Quantidade total de tickers para sincronizar'
+    description: 'Quantidade total de tickers para sincronizar',
   })
   totalTickers: number;
 
   @ApiProperty({
     example: 50,
     description: 'Tempo estimado total (minutos) baseado em 2.5min/ativo',
-    nullable: true
+    nullable: true,
   })
   estimatedMinutes: number | null;
 
   @ApiProperty({
     example: 'Acompanhe o progresso em tempo real via WebSocket (evento: sync:progress)',
-    description: 'Instruções para acompanhamento do progresso'
+    description: 'Instruções para acompanhamento do progresso',
   })
   instructions: string;
 }

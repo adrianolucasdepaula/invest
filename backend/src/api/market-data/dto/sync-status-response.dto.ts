@@ -22,54 +22,54 @@ export enum AssetSyncStatus {
 export class AssetSyncStatusDto {
   @ApiProperty({
     example: 'VALE3',
-    description: 'Código do ativo (ticker)'
+    description: 'Código do ativo (ticker)',
   })
   ticker: string;
 
   @ApiProperty({
     example: 'Vale ON',
-    description: 'Nome do ativo'
+    description: 'Nome do ativo',
   })
   name: string;
 
   @ApiProperty({
     example: 2514,
-    description: 'Quantidade de registros carregados no database'
+    description: 'Quantidade de registros carregados no database',
   })
   recordsLoaded: number;
 
   @ApiProperty({
     example: '2015-01-02',
     description: 'Data do registro mais antigo',
-    nullable: true
+    nullable: true,
   })
   oldestDate: string | null;
 
   @ApiProperty({
     example: '2025-11-20',
     description: 'Data do registro mais recente',
-    nullable: true
+    nullable: true,
   })
   newestDate: string | null;
 
   @ApiProperty({
     example: AssetSyncStatus.SYNCED,
     enum: AssetSyncStatus,
-    description: 'Status de sincronização do ativo'
+    description: 'Status de sincronização do ativo',
   })
   status: AssetSyncStatus;
 
   @ApiProperty({
     example: '2025-11-20T12:30:00Z',
     description: 'Data/hora da última sincronização',
-    nullable: true
+    nullable: true,
   })
   lastSyncAt: Date | null;
 
   @ApiProperty({
     example: 224.5,
     description: 'Duração da última sincronização (segundos)',
-    nullable: true
+    nullable: true,
   })
   lastSyncDuration: number | null;
 }
@@ -83,13 +83,13 @@ export class AssetSyncStatusDto {
 export class SyncStatusResponseDto {
   @ApiProperty({
     type: [AssetSyncStatusDto],
-    description: 'Lista de todos os ativos com status de sync'
+    description: 'Lista de todos os ativos com status de sync',
   })
   assets: AssetSyncStatusDto[];
 
   @ApiProperty({
     example: { total: 55, synced: 44, pending: 8, failed: 3 },
-    description: 'Resumo consolidado dos status de sync'
+    description: 'Resumo consolidado dos status de sync',
   })
   summary: {
     total: number;

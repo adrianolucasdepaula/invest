@@ -12,6 +12,18 @@ Esse comando inicia TUDO automaticamente:
 - ✅ Backend NestJS (porta 3101)
 - ✅ Frontend Next.js (porta 3000)
 
+## 🤖 AI AGENT WORKFLOWS (NOVO)
+
+O projeto agora suporta workflows automatizados via Antigravity Agent:
+
+- **`/scaffold-resource`**: Cria novos recursos NestJS (Controller, Service, DTOs).
+- **`/code-review`**: Análise de código e sugestões de melhoria.
+- **`/test-frontend`**: Executa testes E2E no frontend.
+- **`/db-migration`**: Executa migrações do banco de dados.
+- **`/reset-db`**: Reseta o banco de dados (Drop + Sync + Seed).
+
+Para usar, basta digitar o comando no chat com o agente.
+
 ## 🛑 PARAR O AMBIENTE
 
 ```bash

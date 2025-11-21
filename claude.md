@@ -475,6 +475,24 @@ Use the backend-api-expert to create GET /api/v1/assets/:ticker/dividends endpoi
 
 ---
 
+## 🌌 ANTIGRAVITY AGENT (NOVO)
+
+O projeto agora conta com o **Antigravity Agent**, um sistema autônomo avançado integrado via MCP.
+
+### 🚀 Capacidades
+- **Autonomia Total**: Pode executar comandos, editar arquivos e gerenciar containers.
+- **Integração GitHub**: Cria PRs, issues e reviews automaticamente.
+- **Acesso ao Banco**: Executa queries e migrations diretamente.
+- **Memória Persistente**: Mantém contexto entre sessões via grafo de conhecimento.
+
+### 🛠️ Workflows Automatizados (`.agent/workflows/`)
+- `/scaffold-resource`: Cria novos recursos NestJS completos.
+- `/code-review`: Realiza análise profunda de código antes do commit.
+- `/test-frontend`: Executa suite E2E completa.
+- `/db-migration`: Gerencia ciclo de vida do banco.
+
+---
+
 ## 🎯 EXEMPLO PRÁTICO: FASE 35 (Validação Tripla MCP)
 
 ### Cenário Real: Implementação de Candle Timeframes

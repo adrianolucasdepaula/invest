@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Param, Query, HttpCode, HttpStatus, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  HttpCode,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { MarketDataService } from './market-data.service';
 import { GetPricesDto, GetTechnicalDataDto, TechnicalDataResponseDto } from './dto';
@@ -15,7 +25,8 @@ export class MarketDataController {
   @Get(':ticker/prices')
   @ApiOperation({
     summary: 'Get historical price data for a ticker with candle aggregation',
-    description: 'Fetches OHLCV price data from database with support for daily (1D), weekly (1W), and monthly (1M) candle aggregation. Use timeframe to set candle interval and range to set viewing period.',
+    description:
+      'Fetches OHLCV price data from database with support for daily (1D), weekly (1W), and monthly (1M) candle aggregation. Use timeframe to set candle interval and range to set viewing period.',
   })
   @ApiParam({ name: 'ticker', example: 'VALE3', description: 'Ticker symbol' })
   @ApiQuery({
@@ -23,22 +34,25 @@ export class MarketDataController {
     required: false,
     enum: ['1D', '1W', '1M'],
     description: 'Candle timeframe: 1D (Daily), 1W (Weekly), 1M (Monthly)',
-    example: '1D'
+    example: '1D',
   })
   @ApiQuery({
     name: 'range',
     required: false,
     enum: ['1mo', '3mo', '6mo', '1y', '2y', '5y', 'max'],
     description: 'Viewing range: how much historical data to return',
-    example: '1y'
+    example: '1y',
   })
-  @ApiQuery({ name: 'days', required: false, type: Number, example: 30, description: 'Alternative to range: specify exact number of days' })
+  @ApiQuery({
+    name: 'days',
+    required: false,
+    type: Number,
+    example: 30,
+    description: 'Alternative to range: specify exact number of days',
+  })
   @ApiResponse({ status: 200, description: 'Price data retrieved successfully' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getPrices(
-    @Param('ticker') ticker: string,
-    @Query() query: GetPricesDto,
-  ) {
+  async getPrices(@Param('ticker') ticker: string, @Query() query: GetPricesDto) {
     const timeframe = query.timeframe || '1D';
     const range = query.range || '1y';
     return this.marketDataService.getAggregatedPrices(ticker, timeframe, range);
@@ -48,7 +62,8 @@ export class MarketDataController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get technical analysis data (prices + indicators) with caching',
-    description: 'Fetches price data and calculates technical indicators via Python Service. Results are cached for 5 minutes. Returns partial data if Python Service is unavailable or insufficient data points (<200).',
+    description:
+      'Fetches price data and calculates technical indicators via Python Service. Results are cached for 5 minutes. Returns partial data if Python Service is unavailable or insufficient data points (<200).',
   })
   @ApiParam({ name: 'ticker', example: 'VALE3', description: 'Ticker symbol' })
   @ApiQuery({
@@ -56,14 +71,14 @@ export class MarketDataController {
     required: false,
     enum: ['1D', '1W', '1M'],
     description: 'Candle timeframe: 1D (Daily), 1W (Weekly), 1M (Monthly)',
-    example: '1D'
+    example: '1D',
   })
   @ApiQuery({
     name: 'range',
     required: false,
     enum: ['1mo', '3mo', '6mo', '1y', '2y', '5y', 'max'],
     description: 'Viewing range: how much historical data to return',
-    example: '1y'
+    example: '1y',
   })
   @ApiResponse({
     status: 200,
@@ -102,12 +117,8 @@ export class MarketDataController {
     status: 500,
     description: 'Erro ao sincronizar (Python Service offline, timeout, etc)',
   })
-  async syncCotahist(
-    @Body() dto: SyncCotahistDto,
-  ): Promise<SyncCotahistResponseDto> {
-    this.logger.log(
-      `Sync COTAHIST request: ${dto.ticker} (${dto.startYear}-${dto.endYear})`
-    );
+  async syncCotahist(@Body() dto: SyncCotahistDto): Promise<SyncCotahistResponseDto> {
+    this.logger.log(`Sync COTAHIST request: ${dto.ticker} (${dto.startYear}-${dto.endYear})`);
 
     return this.marketDataService.syncHistoricalDataFromCotahist(
       dto.ticker,
@@ -122,7 +133,8 @@ export class MarketDataController {
   @Get('/sync-history')
   @ApiOperation({
     summary: 'Get sync history (audit trail)',
-    description: 'Returns audit trail of all sync operations (COTAHIST, BRAPI, Bulk). Supports filtering by ticker, status, operation type, and date range. For compliance and monitoring.'
+    description:
+      'Returns audit trail of all sync operations (COTAHIST, BRAPI, Bulk). Supports filtering by ticker, status, operation type, and date range. For compliance and monitoring.',
   })
   @ApiResponse({
     status: 200,
@@ -154,7 +166,8 @@ export class MarketDataController {
   @Get('sync-status')
   @ApiOperation({
     summary: 'Obter status de sincronização de todos os ativos B3',
-    description: 'Retorna lista consolidada (55 ativos) com status de sync, quantidade de registros carregados, período de dados (data mais antiga/recente) e última sincronização para cada ativo. Performance otimizada com query SQL única (LEFT JOIN). Status: SYNCED (≥200 registros), PENDING (0 registros), PARTIAL (<200 registros), FAILED (última sync falhou).',
+    description:
+      'Retorna lista consolidada (55 ativos) com status de sync, quantidade de registros carregados, período de dados (data mais antiga/recente) e última sincronização para cada ativo. Performance otimizada com query SQL única (LEFT JOIN). Status: SYNCED (≥200 registros), PENDING (0 registros), PARTIAL (<200 registros), FAILED (última sync falhou).',
   })
   @ApiResponse({
     status: 200,
@@ -174,7 +187,8 @@ export class MarketDataController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({
     summary: 'Sincronização em massa de múltiplos ativos B3',
-    description: 'Inicia sincronização de até 20 tickers em background (processamento sequencial para estabilidade). Retorna HTTP 202 Accepted imediatamente. Acompanhe o progresso em tempo real via WebSocket (evento: sync:progress). Período: 1986-2024 (histórico completo COTAHIST B3). Validação prévia de tickers com fail-fast. Retry automático 3x com exponencial backoff (2s, 4s, 8s). Tempo estimado: 2.5min/ativo.',
+    description:
+      'Inicia sincronização de até 20 tickers em background (processamento sequencial para estabilidade). Retorna HTTP 202 Accepted imediatamente. Acompanhe o progresso em tempo real via WebSocket (evento: sync:progress). Período: 1986-2024 (histórico completo COTAHIST B3). Validação prévia de tickers com fail-fast. Retry automático 3x com exponencial backoff (2s, 4s, 8s). Tempo estimado: 2.5min/ativo.',
   })
   @ApiResponse({
     status: 202,
@@ -191,17 +205,15 @@ export class MarketDataController {
   })
   async syncBulk(@Body() dto: SyncBulkDto): Promise<SyncBulkResponseDto> {
     this.logger.log(
-      `Sync bulk request: ${dto.tickers.length} tickers (${dto.startYear}-${dto.endYear})`
+      `Sync bulk request: ${dto.tickers.length} tickers (${dto.startYear}-${dto.endYear})`,
     );
 
     // Processar em background (não aguardar conclusão)
-    this.marketDataService.syncBulkAssets(
-      dto.tickers,
-      dto.startYear,
-      dto.endYear,
-    ).catch((error) => {
-      this.logger.error(`Sync bulk background error: ${error.message}`, error.stack);
-    });
+    this.marketDataService
+      .syncBulkAssets(dto.tickers, dto.startYear, dto.endYear)
+      .catch((error) => {
+        this.logger.error(`Sync bulk background error: ${error.message}`, error.stack);
+      });
 
     // Retornar resposta imediata (HTTP 202 Accepted)
     const estimatedMinutes = dto.tickers.length * 2.5; // 2.5min/ativo (média observada)

@@ -6,17 +6,17 @@ export interface InvestsiteData {
   ticker: string;
   companyName: string;
   price: number;
-  pl: number;              // P/L
-  pvp: number;             // P/VP
-  roe: number;             // ROE
-  dy: number;              // Dividend Yield
-  evEbitda: number;        // EV/EBITDA
+  pl: number; // P/L
+  pvp: number; // P/VP
+  roe: number; // ROE
+  dy: number; // Dividend Yield
+  evEbitda: number; // EV/EBITDA
   liquidezCorrente: number; // Liquidez Corrente
-  margemLiquida: number;   // Margem Líquida
-  margemBruta: number;     // Margem Bruta
+  margemLiquida: number; // Margem Líquida
+  margemBruta: number; // Margem Bruta
   margemOperacional: number; // Margem Operacional
-  receitaLiquida: number;  // Receita Líquida
-  lucroLiquido: number;    // Lucro Líquido
+  receitaLiquida: number; // Receita Líquida
+  lucroLiquido: number; // Lucro Líquido
   patrimonioLiquido: number; // Patrimônio Líquido
 }
 
@@ -35,11 +35,13 @@ export class InvestsiteScraper extends AbstractScraper<InvestsiteData> {
       await this.page.goto(url, { waitUntil: 'networkidle2', timeout: this.config.timeout });
 
       // Aguardar conteúdo carregar
-      await this.page.waitForSelector('table, .tabela, h1', {
-        timeout: 10000
-      }).catch(() => {
-        this.logger.warn('Main content selector not found, continuing anyway');
-      });
+      await this.page
+        .waitForSelector('table, .tabela, h1', {
+          timeout: 10000,
+        })
+        .catch(() => {
+          this.logger.warn('Main content selector not found, continuing anyway');
+        });
 
       // Obter HTML da página
       const content = await this.page.content();
@@ -69,11 +71,11 @@ export class InvestsiteScraper extends AbstractScraper<InvestsiteData> {
 
         // Limpar texto
         text = text
-          .replace(/\./g, '')           // Remover pontos (milhares)
-          .replace(',', '.')            // Vírgula para ponto decimal
-          .replace('%', '')             // Remover %
-          .replace('R$', '')            // Remover R$
-          .replace(/[^\d.-]/g, '')      // Remover caracteres não numéricos
+          .replace(/\./g, '') // Remover pontos (milhares)
+          .replace(',', '.') // Vírgula para ponto decimal
+          .replace('%', '') // Remover %
+          .replace('R$', '') // Remover R$
+          .replace(/[^\d.-]/g, '') // Remover caracteres não numéricos
           .trim();
 
         return parseFloat(text) || 0;
@@ -83,7 +85,7 @@ export class InvestsiteScraper extends AbstractScraper<InvestsiteData> {
       const getValueFromTable = (label: string): number => {
         // Investsite usa tabelas HTML tradicionais
         // Procurar células que contenham o label no texto
-        const labelCells = $('td, th').filter(function() {
+        const labelCells = $('td, th').filter(function () {
           const text = $(this).text().trim();
           return text === label || text.includes(label);
         });
@@ -98,7 +100,7 @@ export class InvestsiteScraper extends AbstractScraper<InvestsiteData> {
         }
 
         // Tentar formato alternativo: procurar <tr> que contenha o label
-        const rows = $('tr').filter(function() {
+        const rows = $('tr').filter(function () {
           return $(this).text().includes(label);
         });
 
@@ -137,61 +139,70 @@ export class InvestsiteScraper extends AbstractScraper<InvestsiteData> {
         price,
 
         // Indicadores de Valuation
-        pl: getValueFromTable('P/L') ||
-            getValueFromTable('P / L') ||
-            getValueFromTable('Preço/Lucro'),
+        pl:
+          getValueFromTable('P/L') ||
+          getValueFromTable('P / L') ||
+          getValueFromTable('Preço/Lucro'),
 
-        pvp: getValueFromTable('P/VP') ||
-             getValueFromTable('P / VP') ||
-             getValueFromTable('Preço/Valor Patrimonial'),
+        pvp:
+          getValueFromTable('P/VP') ||
+          getValueFromTable('P / VP') ||
+          getValueFromTable('Preço/Valor Patrimonial'),
 
-        evEbitda: getValueFromTable('EV/EBITDA') ||
-                  getValueFromTable('EV / EBITDA') ||
-                  getValueFromTable('Enterprise Value / EBITDA'),
+        evEbitda:
+          getValueFromTable('EV/EBITDA') ||
+          getValueFromTable('EV / EBITDA') ||
+          getValueFromTable('Enterprise Value / EBITDA'),
 
         // Indicadores de Rentabilidade
-        roe: getValueFromTable('ROE') ||
-             getValueFromTable('Return on Equity') ||
-             getValueFromTable('Retorno sobre Patrimônio'),
+        roe:
+          getValueFromTable('ROE') ||
+          getValueFromTable('Return on Equity') ||
+          getValueFromTable('Retorno sobre Patrimônio'),
 
-        margemLiquida: getValueFromTable('Margem Líquida') ||
-                       getValueFromTable('Margem Liq.') ||
-                       getValueFromTable('ML'),
+        margemLiquida:
+          getValueFromTable('Margem Líquida') ||
+          getValueFromTable('Margem Liq.') ||
+          getValueFromTable('ML'),
 
-        margemBruta: getValueFromTable('Margem Bruta') ||
-                     getValueFromTable('MB'),
+        margemBruta: getValueFromTable('Margem Bruta') || getValueFromTable('MB'),
 
-        margemOperacional: getValueFromTable('Margem Operacional') ||
-                           getValueFromTable('Margem EBIT') ||
-                           getValueFromTable('MO'),
+        margemOperacional:
+          getValueFromTable('Margem Operacional') ||
+          getValueFromTable('Margem EBIT') ||
+          getValueFromTable('MO'),
 
         // Indicadores de Dividendos
-        dy: getValueFromTable('Dividend Yield') ||
-            getValueFromTable('DY') ||
-            getValueFromTable('Rendimento de Dividendos'),
+        dy:
+          getValueFromTable('Dividend Yield') ||
+          getValueFromTable('DY') ||
+          getValueFromTable('Rendimento de Dividendos'),
 
         // Indicadores de Liquidez
-        liquidezCorrente: getValueFromTable('Liquidez Corrente') ||
-                          getValueFromTable('Liq. Corrente') ||
-                          getValueFromTable('LC'),
+        liquidezCorrente:
+          getValueFromTable('Liquidez Corrente') ||
+          getValueFromTable('Liq. Corrente') ||
+          getValueFromTable('LC'),
 
         // Indicadores Financeiros (valores absolutos)
-        receitaLiquida: getValueFromTable('Receita Líquida') ||
-                        getValueFromTable('Receita') ||
-                        getValueFromTable('Faturamento'),
+        receitaLiquida:
+          getValueFromTable('Receita Líquida') ||
+          getValueFromTable('Receita') ||
+          getValueFromTable('Faturamento'),
 
-        lucroLiquido: getValueFromTable('Lucro Líquido') ||
-                      getValueFromTable('Lucro') ||
-                      getValueFromTable('LL'),
+        lucroLiquido:
+          getValueFromTable('Lucro Líquido') ||
+          getValueFromTable('Lucro') ||
+          getValueFromTable('LL'),
 
-        patrimonioLiquido: getValueFromTable('Patrimônio Líquido') ||
-                           getValueFromTable('PL') ||
-                           getValueFromTable('Equity'),
+        patrimonioLiquido:
+          getValueFromTable('Patrimônio Líquido') ||
+          getValueFromTable('PL') ||
+          getValueFromTable('Equity'),
       };
 
       this.logger.log(`Successfully scraped ${ticker} from Investsite`);
       return data;
-
     } catch (error) {
       this.logger.error(`Failed to scrape ${ticker} from Investsite: ${error.message}`);
       throw error;
@@ -201,8 +212,7 @@ export class InvestsiteScraper extends AbstractScraper<InvestsiteData> {
   validate(data: InvestsiteData): boolean {
     // Validação básica - verificar se obtivemos pelo menos alguns dados
     return (
-      data.ticker !== '' &&
-      (data.price > 0 || data.pl !== 0 || data.pvp !== 0 || data.roe !== 0)
+      data.ticker !== '' && (data.price > 0 || data.pl !== 0 || data.pvp !== 0 || data.roe !== 0)
     );
   }
 

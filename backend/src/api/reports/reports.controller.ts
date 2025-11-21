@@ -1,4 +1,16 @@
-import { Controller, Post, Get, Param, Query, Body, UseGuards, Req, Res, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  Req,
+  Res,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { ReportsService } from './reports.service';
@@ -64,7 +76,8 @@ export class ReportsController {
   @Get(':id/download')
   @ApiOperation({
     summary: 'Download report in specified format (PDF or JSON)',
-    description: 'Generates and downloads the report in the specified format. PDF format generates a professional formatted document, JSON returns structured data.',
+    description:
+      'Generates and downloads the report in the specified format. PDF format generates a professional formatted document, JSON returns structured data.',
   })
   async downloadReport(
     @Param('id') id: string,

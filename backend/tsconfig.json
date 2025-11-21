@@ -33,6 +33,6 @@
       "@common/*": ["src/common/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "scripts/**/*"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }
