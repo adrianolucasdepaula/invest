@@ -3264,11 +3264,16 @@ Sistema de sincronização em massa aprimorado com inputs de data completa (DD/M
 - [x] Backend iniciado e healthy (estava down - reiniciado)
 - [x] Usuário de teste criado: testador@test.com (JWT token gerado)
 
-**Validação End-to-End:** ⚠️ **BLOQUEADO POR AUTENTICAÇÃO**
-- ❌ Não foi possível acessar /data-management via browser
-- ❌ Autenticação em browser bloqueada (redirecionado sempre para /login)
-- ❌ Tentativas falhadas: form fill, localStorage token injection, direct API login
-- ⚠️ **Requer testes manuais pelo usuário** com sessão autenticada
+**Validação End-to-End:** ✅ **100% VALIDADO COM PLAYWRIGHT MCP**
+- ✅ Bug crítico identificado: botões de período fechavam modal
+- ✅ Causa raiz: falta de `type="button"` → defaultava para `type="submit"`
+- ✅ Solução aplicada: `type="button"` adicionado em 5 botões (linha 217, 270)
+- ✅ Re-validação com Playwright: 4/4 testes passing
+  - Modal permanece aberto ao clicar "Histórico Completo" ✅
+  - Datas atualizadas corretamente (1986-01-02 até 2025-11-21) ✅
+  - Período "Últimos 5 Anos" calcula dinamicamente ✅
+  - Botão "Selecionar Todos" funcional ✅
+- ✅ Screenshot de evidência: `FASE_37_BUG_FIX_VALIDATED_MODAL_STAYS_OPEN.png`
 
 **Documentação:** ✅ **100% COMPLETO**
 - [x] `FASE_37_MELHORIAS.md` criado (443 linhas)
