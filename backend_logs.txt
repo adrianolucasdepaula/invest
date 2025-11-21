@@ -1219,3 +1219,48 @@ No errors found.
 [95m[Nest] 50  - [39m11/21/2025, 11:09:58 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":1986,"end_year":2025,"tickers":["BBDC4"]}...[39m
 [33m[Nest] 50  - [39m11/21/2025, 11:10:18 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 1/3 (/cotahist/fetch): socket hang up[39m
 [33m[Nest] 50  - [39m11/21/2025, 11:10:18 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 1/3 (/cotahist/fetch): socket hang up[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:12:52 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: ABEV3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:12:52 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: ABEV3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:12:52 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:12:52 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for ABEV3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:12:52 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: ABEV3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:12:52 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m🎯 CACHE HIT: /cotahist/fetch (instant response)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:12:52 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ COTAHIST: 2759 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:12:52 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching BRAPI recent data for ABEV3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:12:53 PM [32m    LOG[39m [38;5;3m[AssetsService] [39m[32mReturning 67 cached prices for ABEV3[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:12:53 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ BRAPI: 67 records (last 3mo)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:12:53 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mMerging COTAHIST + BRAPI...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:12:53 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Merged: 2826 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:12:53 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mBatch UPSERT to PostgreSQL...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:12:53 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m📦 Batch UPSERT progress: 2826/2826 records (100.0%) [Batch 1/1][39m
+[32m[Nest] 50  - [39m11/21/2025, 11:12:53 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Batch UPSERT complete: 2826 records[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:12:53 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95m📝 Sync history recorded: fc1ae771-037a-4b11-8cb6-0ef4797e2f08[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:12:53 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m✅ Sync complete: ABEV3 (2826 records, 1.40s)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:12:53 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync completed: 1/1 successful (0min total)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:13:11 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: MGLU3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:13:11 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: MGLU3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:13:11 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:13:11 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for MGLU3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:13:11 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: MGLU3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:13:11 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:13:11 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":1986,"end_year":2025,"tickers":["MGLU3"]}...[39m
+[33m[Nest] 50  - [39m11/21/2025, 11:13:20 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 2/3 (/cotahist/fetch): Timeout has occurred[39m
+[33m[Nest] 50  - [39m11/21/2025, 11:13:20 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 2/3 (/cotahist/fetch): Timeout has occurred[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:13:57 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: WEGE3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:13:57 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: WEGE3 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:13:57 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:13:57 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for WEGE3...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:13:57 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: WEGE3 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:13:57 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:13:57 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":1986,"end_year":2025,"tickers":["WEGE3"]}...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:15:57 PM [32m    LOG[39m [38;5;3m[MarketDataController] [39m[32mSync COTAHIST request: BBDC4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:15:57 PM [32m    LOG[39m [38;5;3m[MarketDataService] [39m[32m🔄 Sync COTAHIST: BBDC4 (1986-2025)[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:15:57 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Sync started: 1 assets (1986-2025)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:15:57 PM [95m  DEBUG[39m [38;5;3m[MarketDataService] [39m[95mFetching COTAHIST data for BBDC4...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:15:57 PM [32m    LOG[39m [38;5;3m[SyncGateway] [39m[32m[SYNC WS] Progress 1/1: BBDC4 ⏳ processing...[39m
+[32m[Nest] 50  - [39m11/21/2025, 11:15:57 PM [32m    LOG[39m [38;5;3m[PythonServiceClient] [39m[32m❌ CACHE MISS: /cotahist/fetch (fetching from Python Service...)[39m
+[95m[Nest] 50  - [39m11/21/2025, 11:15:57 PM [95m  DEBUG[39m [38;5;3m[PythonServiceClient] [39m[95mPOST /cotahist/fetch: {"start_year":1986,"end_year":2025,"tickers":["BBDC4"]}...[39m
+[33m[Nest] 50  - [39m11/21/2025, 11:16:11 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 1/3 (/cotahist/fetch): Timeout has occurred[39m
+[33m[Nest] 50  - [39m11/21/2025, 11:16:24 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 3/3 (/cotahist/fetch): Timeout has occurred[39m
+[33m[Nest] 50  - [39m11/21/2025, 11:16:24 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 3/3 (/cotahist/fetch): Timeout has occurred[39m
+[33m[Nest] 50  - [39m11/21/2025, 11:16:57 PM [33m   WARN[39m [38;5;3m[PythonServiceClient] [39m[33mPython Service retry 1/3 (/cotahist/fetch): Timeout has occurred[39m

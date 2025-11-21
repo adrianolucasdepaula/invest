@@ -564,50 +564,68 @@ Uso de memória: ~8KB chunks (streaming)
 
 ---
 
-## ✅ RESULTADOS FINAIS (FASE 39 - Parsing Paralelo)
+## ✅ RESULTADOS FINAIS (FASE 38 + FASE 39)
 
-**Data Implementação:** 2025-11-21 23:00 BRT
-**Status:** 🟢 **COMPLETO - METAS SUPERADAS**
+**Data Conclusão:** 2025-11-21 23:20 BRT
+**Status:** 🟢 **CONCLUÍDO - 6 ATIVOS VALIDADOS**
 
-### Otimizações Implementadas (FASE 39)
+### Otimizações Implementadas
 
-1. **Download Paralelo (AsyncIO gather):**
-   - Baixa até 5 anos simultaneamente
-   - Ganho: 70-80% redução vs sequencial
+**FASE 38 (Parsing Otimizado):**
+1. ✅ Streaming I/O (codecs.getreader) - Processa linha por linha
+2. ✅ Batch Processing (10k chunks) - Append em lotes
+3. ✅ Early Filter - Verifica ticker ANTES de parse completo
+4. ✅ Incremental Codec - Decodifica em chunks de 8KB
 
-2. **Parsing Paralelo (ThreadPoolExecutor):**
-   - Processa múltiplos anos simultaneamente
-   - Usa asyncio.gather + run_in_executor
-   - Ganho: Processa 40 anos em ~2s (vs 119s sequencial)
+**FASE 39 (Download Paralelo):**
+1. ✅ Download Paralelo (AsyncIO gather) - Até 5 anos simultâneos (70-80% redução)
+2. ❌ Parse Paralelo (ROLLBACK) - Python GIL + overhead > ganho
 
-### Resultados dos Testes (Histórico Completo 1986-2025)
+### Resultados por Ativo (Histórico Completo 1986-2025)
 
-| Ativo | Antes (FASE 38) | Depois (FASE 39) | Melhoria | Status |
-|-------|----------------|------------------|----------|--------|
-| **CCRO3** | 139s | **2.8s** | 98.0% | ✅ APROVADO |
-| **PETR4** | 119s | **2.5s** | 98.1% | ✅ APROVADO |
-| **JBSS3** | 84s | **< 3s** | 96.4%+ | ✅ APROVADO |
+| Ticker | Tempo | Registros | FASE 38 | Melhoria | Status |
+|--------|-------|-----------|---------|----------|--------|
+| **CCRO3** | 2.1s | 5.666 | 139s | 98.5% | ✅ APROVADO |
+| **PETR4** | 2.0s | 5.928 | 119s | 98.3% | ✅ APROVADO |
+| **VALE3** | 2.0s | 5.767 | Timeout | 99.0%+ | ✅ APROVADO |
+| **ITUB4** | 1.8s | 3.937 | Timeout | 99.1%+ | ✅ APROVADO |
+| **ABEV3** | 1.7s | 2.826 | 135s | 98.7% | ✅ APROVADO |
+| **JBSS3** | 1.8s | 1.352 | 84s | 97.9% | ✅ APROVADO |
+| **BBDC4** | > 180s | ? | ? | ❌ | ⚠️ TIMEOUT |
+| **MGLU3** | > 30s | ? | ? | ❌ | ⚠️ TIMEOUT |
+| **WEGE3** | > 30s | ? | ? | ❌ | ⚠️ TIMEOUT |
+| **RENT3** | > 30s | ? | ? | ❌ | ⚠️ TIMEOUT |
 
-### Comparação Completa (3 Fases)
+**Taxa de Sucesso:** 6/10 ativos testados (60%)
+**Total Registros Validados:** 25.476 registros (COTAHIST B3 sem manipulação)
+
+### Comparação Completa (Original → FASE 38 → FASE 39)
 
 | Cenário | Original | FASE 38 | FASE 39 | Melhoria Total |
 |---------|----------|---------|---------|----------------|
 | **CCRO3 (2 anos)** | Timeout (60s+) | 0.7s | **0.7s** | **99.0%+** |
-| **CCRO3 (6 anos)** | Timeout (60s+) | 60s | **2.0s** | **96.7%+** |
-| **CCRO3 (40 anos)** | Timeout (180s+) | 139s | **2.8s** | **98.4%+** |
-| **PETR4 (40 anos)** | Timeout (infinito) | 119s | **2.5s** | **99.0%+** |
+| **CCRO3 (6 anos)** | Timeout (60s+) | 60s | **2.0s** | **96.7%** |
+| **CCRO3 (40 anos)** | Timeout (180s+) | 139s | **2.1s** | **98.8%** |
+| **PETR4 (40 anos)** | Timeout (infinito) | 119s | **2.0s** | **99.0%+** |
+| **VALE3 (40 anos)** | Timeout (infinito) | Timeout | **2.0s** | **99.0%+** |
+| **ITUB4 (40 anos)** | Timeout (infinito) | Timeout | **1.8s** | **99.1%+** |
+| **ABEV3 (40 anos)** | Timeout (infinito) | 135s | **1.7s** | **98.7%** |
 
 ### Análise de Performance
 
 **FASE 38 (Streaming + Batch + Early Filter):**
-- ✅ Resolveu parsing de arquivo único (35s → 4s)
-- ✅ Eliminou timeouts infinitos
-- ⚠️ Gargalo: Download sequencial + parsing sequencial
+- ✅ Resolveu parsing de arquivo único (35s → 4s, 88% redução)
+- ✅ Eliminou timeouts infinitos para alguns ativos
+- ⚠️ Gargalo: Download sequencial (70% do tempo total)
 
-**FASE 39 (Download + Parsing Paralelo):**
-- ✅ Download paralelo: 5 anos simultâneos (12s vs 60s)
-- ✅ Parsing paralelo: Todos os anos processados juntos (2s vs 119s)
-- ✅ Meta de < 30s SUPERADA (2.5s-2.8s alcançados)
+**FASE 39 (Download Paralelo):**
+- ✅ Download paralelo: 5 anos simultâneos (redução de 70-80%)
+- ❌ Parsing paralelo: ROLLBACK (Python GIL + overhead degradou performance)
+- ✅ Meta de < 30s SUPERADA (1.7s-2.1s para 6 ativos)
+
+**Problema Remanescente:**
+- ⚠️ 4 ativos específicos ainda com timeout (BBDC4, MGLU3, WEGE3, RENT3)
+- 🔍 Investigação necessária (FASE 40)
 
 ### Arquivos Modificados (FASE 39)
 
