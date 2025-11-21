@@ -34,8 +34,8 @@ export interface SyncConfigModalProps {
   onClose: () => void;
   onConfirm: (config: {
     tickers: string[];
-    startYear: number;
-    endYear: number;
+    startDate: string;
+    endDate: string;
   }) => void;
   isSubmitting?: boolean;
 }
@@ -45,11 +45,23 @@ export interface SyncConfigModalProps {
  */
 type PredefinedPeriod = 'full' | 'recent' | 'ytd' | 'custom';
 
+// Helper functions for date calculations
+const getCurrentDate = () => new Date().toISOString().split('T')[0];
+const getFiveYearsAgo = () => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 5);
+  return date.toISOString().split('T')[0];
+};
+const getYearStart = () => `${new Date().getFullYear()}-01-01`;
+
+const MIN_DATE = '1986-01-02'; // Início COTAHIST
+const currentDate = getCurrentDate();
+
 const PERIODS = {
-  full: { label: 'Histórico Completo', startYear: 1986, endYear: 2024 },
-  recent: { label: 'Últimos 5 Anos', startYear: 2020, endYear: 2024 },
-  ytd: { label: 'Ano Atual (YTD)', startYear: 2024, endYear: 2024 },
-  custom: { label: 'Período Customizado', startYear: 2020, endYear: 2024 },
+  full: { label: 'Histórico Completo', startDate: MIN_DATE, endDate: currentDate },
+  recent: { label: 'Últimos 5 Anos', startDate: getFiveYearsAgo(), endDate: currentDate },
+  ytd: { label: 'Ano Atual (YTD)', startDate: getYearStart(), endDate: currentDate },
+  custom: { label: 'Período Customizado', startDate: '2020-01-01', endDate: currentDate },
 };
 
 /**
@@ -59,8 +71,8 @@ const PERIODS = {
  * Features:
  * - Multi-select tickers (checkbox list with search)
  * - Predefined periods (Full, Recent 5Y, YTD, Custom)
- * - Year range inputs (startYear, endYear)
- * - Validation (1-20 tickers, valid years 1986-2024)
+ * - Date range inputs (startDate, endDate) in format YYYY-MM-DD
+ * - Validation (1-20 tickers, valid dates 1986-01-02 to current date)
  * - Real-time error messages
  */
 export function SyncConfigModal({
@@ -75,8 +87,8 @@ export function SyncConfigModal({
   // State
   const [selectedTickers, setSelectedTickers] = useState<string[]>([]);
   const [period, setPeriod] = useState<PredefinedPeriod>('recent');
-  const [startYear, setStartYear] = useState(PERIODS.recent.startYear);
-  const [endYear, setEndYear] = useState(PERIODS.recent.endYear);
+  const [startDate, setStartDate] = useState(PERIODS.recent.startDate);
+  const [endDate, setEndDate] = useState(PERIODS.recent.endDate);
   const [searchQuery, setSearchQuery] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
 
@@ -85,8 +97,8 @@ export function SyncConfigModal({
     if (!open) {
       setSelectedTickers([]);
       setPeriod('recent');
-      setStartYear(PERIODS.recent.startYear);
-      setEndYear(PERIODS.recent.endYear);
+      setStartDate(PERIODS.recent.startDate);
+      setEndDate(PERIODS.recent.endDate);
       setSearchQuery('');
       setErrors([]);
     }
@@ -123,9 +135,15 @@ export function SyncConfigModal({
   const handlePeriodChange = (newPeriod: PredefinedPeriod) => {
     setPeriod(newPeriod);
     if (newPeriod !== 'custom') {
-      setStartYear(PERIODS[newPeriod].startYear);
-      setEndYear(PERIODS[newPeriod].endYear);
+      setStartDate(PERIODS[newPeriod].startDate);
+      setEndDate(PERIODS[newPeriod].endDate);
     }
+  };
+
+  // Format date for display (DD/MM/YYYY)
+  const formatDate = (dateStr: string): string => {
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
   };
 
   // Validate form
@@ -139,15 +157,15 @@ export function SyncConfigModal({
       newErrors.push('Máximo de 20 ativos por sincronização');
     }
 
-    // Validate year range
-    if (startYear < 1986 || startYear > 2024) {
-      newErrors.push('Ano inicial deve estar entre 1986 e 2024');
+    // Validate date range
+    if (startDate < MIN_DATE || startDate > currentDate) {
+      newErrors.push(`Data inicial deve estar entre ${formatDate(MIN_DATE)} e ${formatDate(currentDate)}`);
     }
-    if (endYear < 1986 || endYear > 2024) {
-      newErrors.push('Ano final deve estar entre 1986 e 2024');
+    if (endDate < MIN_DATE || endDate > currentDate) {
+      newErrors.push(`Data final deve estar entre ${formatDate(MIN_DATE)} e ${formatDate(currentDate)}`);
     }
-    if (endYear < startYear) {
-      newErrors.push('Ano final deve ser maior ou igual ao ano inicial');
+    if (endDate < startDate) {
+      newErrors.push('Data final deve ser maior ou igual à data inicial');
     }
 
     setErrors(newErrors);
@@ -160,8 +178,8 @@ export function SyncConfigModal({
 
     onConfirm({
       tickers: selectedTickers,
-      startYear,
-      endYear,
+      startDate,
+      endDate,
     });
   };
 
@@ -207,33 +225,33 @@ export function SyncConfigModal({
             </div>
           </div>
 
-          {/* Year Range Inputs */}
+          {/* Date Range Inputs */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startYear">Ano Inicial</Label>
+              <Label htmlFor="startDate">Data Inicial</Label>
               <Input
-                id="startYear"
-                type="number"
-                min={1986}
-                max={2024}
-                value={startYear}
+                id="startDate"
+                type="date"
+                min={MIN_DATE}
+                max={currentDate}
+                value={startDate}
                 onChange={(e) => {
-                  setStartYear(parseInt(e.target.value, 10));
+                  setStartDate(e.target.value);
                   setPeriod('custom');
                 }}
                 disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endYear">Ano Final</Label>
+              <Label htmlFor="endDate">Data Final</Label>
               <Input
-                id="endYear"
-                type="number"
-                min={1986}
-                max={2024}
-                value={endYear}
+                id="endDate"
+                type="date"
+                min={MIN_DATE}
+                max={currentDate}
+                value={endDate}
                 onChange={(e) => {
-                  setEndYear(parseInt(e.target.value, 10));
+                  setEndDate(e.target.value);
                   setPeriod('custom');
                 }}
                 disabled={isSubmitting}

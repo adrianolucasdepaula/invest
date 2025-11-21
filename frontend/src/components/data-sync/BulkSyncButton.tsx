@@ -59,15 +59,19 @@ export function BulkSyncButton({
    */
   const handleConfirm = async (config: {
     tickers: string[];
-    startYear: number;
-    endYear: number;
+    startDate: string;
+    endDate: string;
   }) => {
     try {
+      // Convert dates to years for API compatibility
+      const startYear = parseInt(config.startDate.split('-')[0], 10);
+      const endYear = parseInt(config.endDate.split('-')[0], 10);
+
       // Call mutation
       const result = await syncMutation.mutateAsync({
         tickers: config.tickers,
-        startYear: config.startYear,
-        endYear: config.endYear,
+        startYear,
+        endYear,
       });
 
       // Close modal
