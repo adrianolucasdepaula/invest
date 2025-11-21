@@ -1,40 +1,24 @@
 /**
  * TradingView Widgets - Index
  *
- * Centralized exports for all TradingView widgets (6 widgets - MVP).
+ * Centralized exports for TradingView widgets (2 widgets em produção).
  *
  * @module tradingview/widgets
- * @version 1.0.0
- * @created 2025-11-20
+ * @version 2.0.0
+ * @updated 2025-11-20
  */
 
 // ============================================================================
-// WIDGETS (6 - MVP COMPLETE)
+// WIDGETS (2 - PRODUCTION)
 // ============================================================================
 
-// 1. TickerTape - IBOV + 10 Blue Chips running ticker
+// 1. TickerTape - IBOV + 10 Blue Chips running ticker (Header sticky)
 export { TickerTape, default as TickerTapeDefault } from './TickerTape';
 export type { TickerTapeComponentProps } from './TickerTape';
 
-// 2. MarketOverview - Multi-tab market overview (B3, Forex, Crypto)
-export { MarketOverview, default as MarketOverviewDefault } from './MarketOverview';
-export type { MarketOverviewComponentProps } from './MarketOverview';
-
-// 3. AdvancedChart - Full-featured interactive chart with studies
+// 2. AdvancedChart - Full-featured interactive chart with studies (Asset details page)
 export { AdvancedChart, default as AdvancedChartDefault } from './AdvancedChart';
 export type { AdvancedChartComponentProps } from './AdvancedChart';
-
-// 4. Screener - Filterable stock screener table
-export { Screener, default as ScreenerDefault } from './Screener';
-export type { ScreenerComponentProps } from './Screener';
-
-// 5. TechnicalAnalysis - Aggregated buy/sell signals
-export { TechnicalAnalysis, default as TechnicalAnalysisDefault } from './TechnicalAnalysis';
-export type { TechnicalAnalysisComponentProps } from './TechnicalAnalysis';
-
-// 6. SymbolOverview - Compact symbol overview with mini-chart
-export { SymbolOverview, default as SymbolOverviewDefault } from './SymbolOverview';
-export type { SymbolOverviewComponentProps } from './SymbolOverview';
 
 // ============================================================================
 // USAGE EXAMPLES
@@ -43,22 +27,24 @@ export type { SymbolOverviewComponentProps } from './SymbolOverview';
 /**
  * @example
  * ```tsx
- * // Import individual widget
+ * // TickerTape - Header sticky
  * import { TickerTape } from '@/components/tradingview/widgets';
  *
- * // Use in component
- * <TickerTape />
+ * <div className="sticky top-0 z-50">
+ *   <TickerTape />
+ * </div>
  * ```
  *
  * @example
  * ```tsx
- * // Import multiple widgets
- * import { MarketOverview, AdvancedChart } from '@/components/tradingview/widgets';
+ * // AdvancedChart - Asset details page
+ * import { AdvancedChart } from '@/components/tradingview/widgets';
  *
- * // Dashboard layout
- * <div>
- *   <MarketOverview />
- *   <AdvancedChart symbol="PETR4" />
- * </div>
+ * <AdvancedChart
+ *   symbol={`BMFBOVESPA:${ticker.toUpperCase()}`}
+ *   interval="D"
+ *   range="12M"
+ *   height={610}
+ * />
  * ```
  */

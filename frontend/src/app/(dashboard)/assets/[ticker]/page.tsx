@@ -21,6 +21,7 @@ import {
 import Link from 'next/link';
 import { useAsset, useMarketDataPrices, useAssetFundamentals } from '@/lib/hooks/use-assets';
 import { useAnalysis, useRequestAnalysis } from '@/lib/hooks/use-analysis';
+import { AdvancedChart } from '@/components/tradingview/widgets/AdvancedChart';
 
 export default function AssetDetailPage({
   params,
@@ -327,6 +328,22 @@ export default function AssetDetailPage({
             <p>Dados insuficientes para gráfico avançado. Tente um período maior.</p>
           </div>
         )}
+      </Card>
+
+      {/* TradingView Advanced Chart */}
+      <Card className="p-6">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold">Análise Técnica TradingView</h3>
+          <p className="text-sm text-muted-foreground">
+            Gráfico interativo TradingView com indicadores técnicos profissionais
+          </p>
+        </div>
+        <AdvancedChart
+          symbol={`BMFBOVESPA:${ticker.toUpperCase()}`}
+          interval="D"
+          range="12M"
+          height={610}
+        />
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
