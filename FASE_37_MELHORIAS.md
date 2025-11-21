@@ -221,15 +221,140 @@ const handleConfirm = async (config: {
 
 ---
 
-## 📊 Arquivos Modificados
+## 🐛 BUG CRÍTICO DESCOBERTO E CORRIGIDO (2025-11-21 19:15)
+
+### Problema
+
+Durante testes end-to-end com Playwright, foi identificado um **bug crítico**:
+
+**Comportamento Esperado:**
+- Clicar nos botões de período (Histórico Completo, Últimos 5 Anos, YTD, Customizado) deve atualizar as datas SEM fechar o modal
+
+**Comportamento Observado:**
+- ❌ Modal fechava imediatamente ao clicar em qualquer botão de período
+- ❌ Usuário não conseguia selecionar período e ativos na mesma sessão
+- ❌ UX completamente quebrada
+
+### Causa Raiz
+
+**HTML Form Behavior:** Buttons dentro de `<form>` defaultam para `type="submit"` se não especificado explicitamente.
+
+**Código Problemático:**
+```typescript
+// SyncConfigModal.tsx - Linha 214-226
+{(Object.keys(PERIODS) as PredefinedPeriod[]).map((key) => (
+  <Button
+    key={key}
+    // ❌ type não especificado = type="submit" implícito
+    variant={period === key ? 'default' : 'outline'}
+    size="sm"
+    onClick={() => handlePeriodChange(key)}
+    disabled={isSubmitting}
+  >
+    {PERIODS[key].label}
+  </Button>
+))}
+```
+
+**Fluxo do Bug:**
+1. Usuário clica "Histórico Completo"
+2. Browser interpreta como `type="submit"` (padrão HTML)
+3. Evento submit dispara no Dialog
+4. Dialog fecha automaticamente (comportamento padrão shadcn/ui)
+5. Modal desaparece antes de poder selecionar ativos
+
+### Solução Aplicada
+
+**Adicionar `type="button"` explícito em TODOS os botões do formulário:**
+
+```typescript
+// ✅ CORREÇÃO (Linhas 217, 270)
+{(Object.keys(PERIODS) as PredefinedPeriod[]).map((key) => (
+  <Button
+    key={key}
+    type="button"  // ✅ CRÍTICO: Previne submit
+    variant={period === key ? 'default' : 'outline'}
+    size="sm"
+    onClick={() => handlePeriodChange(key)}
+    disabled={isSubmitting}
+  >
+    {PERIODS[key].label}
+  </Button>
+))}
+```
+
+**Também aplicado em:**
+- Linha 270: Botão "Selecionar Todos"
+
+### Validação da Correção
+
+**Método:** End-to-End Testing com Playwright MCP
+
+**Test Cases Executados:**
+1. ✅ Abrir modal "Sincronizar em Massa"
+2. ✅ Clicar "Histórico Completo"
+   - **Resultado:** Modal permanece aberto ✅
+   - **Datas atualizadas:** 02/01/1986 até 21/11/2025 ✅
+3. ✅ Clicar "Últimos 5 Anos"
+   - **Resultado:** Modal permanece aberto ✅
+4. ✅ Clicar "Selecionar Todos"
+   - **Resultado:** Modal permanece aberto ✅
+
+**Screenshot de Evidência:**
+- `FASE_37_BUG_FIX_VALIDATED_MODAL_STAYS_OPEN.png` (capturado em `.playwright-mcp/`)
+
+**Resultado:**
+- ✅ Bug corrigido 100%
+- ✅ Modal permanece aberto após clicar em qualquer botão
+- ✅ Datas atualizam corretamente
+- ✅ UX completamente funcional
+
+### Arquivos Modificados (Bug Fix)
+
+| Arquivo | Linha | Mudança |
+|---------|-------|---------|
+| `frontend/src/components/data-sync/SyncConfigModal.tsx` | 217 | `type="button"` adicionado (4 botões de período) |
+| `frontend/src/components/data-sync/SyncConfigModal.tsx` | 270 | `type="button"` adicionado (botão "Selecionar Todos") |
+
+**Total:** 1 arquivo, 2 linhas modificadas (+5 atributos `type="button"`)
+
+### Lições Aprendidas
+
+1. **HTML Forms:** SEMPRE especificar `type="button"` em buttons que não devem submeter
+2. **Testing:** E2E testing é essencial - TypeScript não detecta este tipo de bug
+3. **Validação:** Testes manuais podem passar despercebidos (usuário rápido fecha modal e reabre)
+4. **Shadcn/ui Dialog:** Componente fecha automaticamente em eventos de submit
+5. **Best Practice:** Prefixar todos os buttons em formulários com `type="button"` por padrão
+
+### Impact
+
+**Severity:** 🔥 CRÍTICO (P0)
+- Bug bloqueava 100% do fluxo de sincronização em massa
+- Usuário não conseguia usar feature principal da FASE 37
+- Modal inutilizável sem este fix
+
+**Fix Complexity:** ⚡ TRIVIAL
+- 2 linhas modificadas
+- 5 atributos adicionados
+- 0 mudanças de lógica
+
+**Validation:** ✅ COMPLETO
+- TypeScript: 0 erros
+- Build: Success
+- E2E Tests: 100% passing
+- Screenshot: Evidência visual capturada
+
+---
+
+## 📊 Arquivos Modificados (Total)
 
 | Arquivo | Linhas | Mudanças |
 |---------|--------|----------|
-| `SyncConfigModal.tsx` | ~80 | Anos → Datas, Validação Dinâmica |
+| `SyncConfigModal.tsx` | ~82 | Anos → Datas, Validação Dinâmica, **Bug Fix type="button"** |
 | `BulkSyncButton.tsx` | ~15 | Conversão Data → Ano |
 | `SyncStatusTable.tsx` | ~15 | Badge de Período |
 
-**Total:** 3 arquivos, ~110 linhas modificadas
+**Total:** 3 arquivos, ~112 linhas modificadas (incluindo bug fix)
 
 ---
 

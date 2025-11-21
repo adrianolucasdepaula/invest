@@ -214,6 +214,7 @@ export function SyncConfigModal({
               {(Object.keys(PERIODS) as PredefinedPeriod[]).map((key) => (
                 <Button
                   key={key}
+                  type="button"
                   variant={period === key ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handlePeriodChange(key)}
@@ -264,6 +265,7 @@ export function SyncConfigModal({
             <div className="flex items-center justify-between">
               <Label>Ativos ({selectedTickers.length} selecionados)</Label>
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={handleSelectAll}
