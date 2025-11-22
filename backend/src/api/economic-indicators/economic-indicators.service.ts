@@ -237,20 +237,26 @@ export class EconomicIndicatorsService {
   }
 
   /**
-   * Sync indicators from BRAPI (SELIC, IPCA, CDI, IPCA_ACUM_12M)
+   * Sync indicators from BRAPI (SELIC, IPCA, CDI, IPCA_ACUM_12M, IPCA-15, IDP/IDE, Ouro)
    * UPDATED FASE 1.1: Fetches last 13 months of data for accurate accumulated calculations
    * UPDATED FASE 1.2: Added IPCA accumulated 12m from BC Série 13522 (official calculation)
+   * UPDATED FASE 1.4: Added 5 new indicators (IPCA-15, IDP Ingressos, IDE Saídas, IDP Líquido, Ouro Monetário)
    * Uses upsert logic (insert or update based on indicatorType + referenceDate)
    */
   async syncFromBrapi(): Promise<void> {
     try {
-      this.logger.log('Starting sync from Banco Central API (13 months + IPCA acum 12m)...');
+      this.logger.log('Starting sync from Banco Central API (13 months - 9 indicators)...');
 
       const syncResults = {
         selic: { synced: 0, failed: 0 },
         ipca: { synced: 0, failed: 0 },
         ipcaAccum12m: { synced: 0, failed: 0 },
         cdi: { synced: 0, failed: 0 },
+        ipca15: { synced: 0, failed: 0 },
+        idpIngressos: { synced: 0, failed: 0 },
+        ideSaidas: { synced: 0, failed: 0 },
+        idpLiquido: { synced: 0, failed: 0 },
+        ouroMonetario: { synced: 0, failed: 0 },
       };
 
       // 1. Sync SELIC (last 13 months to ensure we have complete 12-month rolling window)
@@ -369,13 +375,174 @@ export class EconomicIndicatorsService {
         this.logger.error(`CDI sync failed: ${error.message}`);
       }
 
+      // 5. Sync IPCA-15 (last 13 months - Série 7478 from BC)
+      try {
+        const ipca15DataArray = await this.brapiService.getIPCA15(13);
+        this.logger.log(`Fetched ${ipca15DataArray.length} IPCA-15 records from Banco Central`);
+
+        for (const ipca15Data of ipca15DataArray) {
+          try {
+            await this.upsertIndicator({
+              indicatorType: 'IPCA_15',
+              value: ipca15Data.value,
+              referenceDate: ipca15Data.date,
+              source: 'BRAPI',
+              metadata: {
+                unit: '% a.m.',
+                period: 'monthly',
+                description: 'IPCA-15 - Prévia da Inflação (IBGE)',
+              },
+            });
+            syncResults.ipca15.synced++;
+          } catch (error) {
+            this.logger.error(`IPCA-15 upsert failed for ${ipca15Data.date}: ${error.message}`);
+            syncResults.ipca15.failed++;
+          }
+        }
+        this.logger.log(`IPCA-15 sync: ${syncResults.ipca15.synced} synced, ${syncResults.ipca15.failed} failed`);
+      } catch (error) {
+        this.logger.error(`IPCA-15 sync failed: ${error.message}`);
+      }
+
+      // 6. Sync IDP Ingressos (last 13 months - Série 22886 from BC)
+      try {
+        const idpIngressosDataArray = await this.brapiService.getIDPIngressos(13);
+        this.logger.log(`Fetched ${idpIngressosDataArray.length} IDP Ingressos records from Banco Central`);
+
+        for (const idpIngressosData of idpIngressosDataArray) {
+          try {
+            await this.upsertIndicator({
+              indicatorType: 'IDP_INGRESSOS',
+              value: idpIngressosData.value,
+              referenceDate: idpIngressosData.date,
+              source: 'BRAPI',
+              metadata: {
+                unit: 'US$ milhões',
+                period: 'monthly',
+                description: 'Investimento Direto no País - Ingressos (BC)',
+              },
+            });
+            syncResults.idpIngressos.synced++;
+          } catch (error) {
+            this.logger.error(`IDP Ingressos upsert failed for ${idpIngressosData.date}: ${error.message}`);
+            syncResults.idpIngressos.failed++;
+          }
+        }
+        this.logger.log(`IDP Ingressos sync: ${syncResults.idpIngressos.synced} synced, ${syncResults.idpIngressos.failed} failed`);
+      } catch (error) {
+        this.logger.error(`IDP Ingressos sync failed: ${error.message}`);
+      }
+
+      // 7. Sync IDE Saídas (last 13 months - Série 22867 from BC)
+      try {
+        const ideSaidasDataArray = await this.brapiService.getIDESaidas(13);
+        this.logger.log(`Fetched ${ideSaidasDataArray.length} IDE Saídas records from Banco Central`);
+
+        for (const ideSaidasData of ideSaidasDataArray) {
+          try {
+            await this.upsertIndicator({
+              indicatorType: 'IDE_SAIDAS',
+              value: ideSaidasData.value,
+              referenceDate: ideSaidasData.date,
+              source: 'BRAPI',
+              metadata: {
+                unit: 'US$ milhões',
+                period: 'monthly',
+                description: 'Investimento Direto no Exterior - Saídas (BC)',
+              },
+            });
+            syncResults.ideSaidas.synced++;
+          } catch (error) {
+            this.logger.error(`IDE Saídas upsert failed for ${ideSaidasData.date}: ${error.message}`);
+            syncResults.ideSaidas.failed++;
+          }
+        }
+        this.logger.log(`IDE Saídas sync: ${syncResults.ideSaidas.synced} synced, ${syncResults.ideSaidas.failed} failed`);
+      } catch (error) {
+        this.logger.error(`IDE Saídas sync failed: ${error.message}`);
+      }
+
+      // 8. Sync IDP Líquido (last 13 months - Série 22888 from BC)
+      try {
+        const idpLiquidoDataArray = await this.brapiService.getIDPLiquido(13);
+        this.logger.log(`Fetched ${idpLiquidoDataArray.length} IDP Líquido records from Banco Central`);
+
+        for (const idpLiquidoData of idpLiquidoDataArray) {
+          try {
+            await this.upsertIndicator({
+              indicatorType: 'IDP_LIQUIDO',
+              value: idpLiquidoData.value,
+              referenceDate: idpLiquidoData.date,
+              source: 'BRAPI',
+              metadata: {
+                unit: 'US$ milhões',
+                period: 'monthly',
+                description: 'Investimento Direto no País - Líquido (BC)',
+              },
+            });
+            syncResults.idpLiquido.synced++;
+          } catch (error) {
+            this.logger.error(`IDP Líquido upsert failed for ${idpLiquidoData.date}: ${error.message}`);
+            syncResults.idpLiquido.failed++;
+          }
+        }
+        this.logger.log(`IDP Líquido sync: ${syncResults.idpLiquido.synced} synced, ${syncResults.idpLiquido.failed} failed`);
+      } catch (error) {
+        this.logger.error(`IDP Líquido sync failed: ${error.message}`);
+      }
+
+      // 9. Sync Ouro Monetário (last 13 months - Série 23044 from BC)
+      try {
+        const ouroMonetarioDataArray = await this.brapiService.getOuroMonetario(13);
+        this.logger.log(`Fetched ${ouroMonetarioDataArray.length} Ouro Monetário records from Banco Central`);
+
+        for (const ouroMonetarioData of ouroMonetarioDataArray) {
+          try {
+            await this.upsertIndicator({
+              indicatorType: 'OURO_MONETARIO',
+              value: ouroMonetarioData.value,
+              referenceDate: ouroMonetarioData.date,
+              source: 'BRAPI',
+              metadata: {
+                unit: 'US$ milhões',
+                period: 'monthly',
+                description: 'Ouro Monetário - Reservas em Ouro (BC)',
+              },
+            });
+            syncResults.ouroMonetario.synced++;
+          } catch (error) {
+            this.logger.error(`Ouro Monetário upsert failed for ${ouroMonetarioData.date}: ${error.message}`);
+            syncResults.ouroMonetario.failed++;
+          }
+        }
+        this.logger.log(`Ouro Monetário sync: ${syncResults.ouroMonetario.synced} synced, ${syncResults.ouroMonetario.failed} failed`);
+      } catch (error) {
+        this.logger.error(`Ouro Monetário sync failed: ${error.message}`);
+      }
+
       // Clear cache after sync
       await this.cacheService.del('indicators:*');
 
       const totalSynced =
-        syncResults.selic.synced + syncResults.ipca.synced + syncResults.ipcaAccum12m.synced + syncResults.cdi.synced;
+        syncResults.selic.synced +
+        syncResults.ipca.synced +
+        syncResults.ipcaAccum12m.synced +
+        syncResults.cdi.synced +
+        syncResults.ipca15.synced +
+        syncResults.idpIngressos.synced +
+        syncResults.ideSaidas.synced +
+        syncResults.idpLiquido.synced +
+        syncResults.ouroMonetario.synced;
       const totalFailed =
-        syncResults.selic.failed + syncResults.ipca.failed + syncResults.ipcaAccum12m.failed + syncResults.cdi.failed;
+        syncResults.selic.failed +
+        syncResults.ipca.failed +
+        syncResults.ipcaAccum12m.failed +
+        syncResults.cdi.failed +
+        syncResults.ipca15.failed +
+        syncResults.idpIngressos.failed +
+        syncResults.ideSaidas.failed +
+        syncResults.idpLiquido.failed +
+        syncResults.ouroMonetario.failed;
 
       this.logger.log(
         `Sync completed: ${totalSynced} records synced, ${totalFailed} failed - ${JSON.stringify(syncResults)}`,

@@ -12,10 +12,16 @@ import { parseBCBDate } from '../../common/utils/date-parser.util';
  *   - Série 4390: SELIC acumulada no mês (% a.m.)
  *   - Série 433: IPCA mensal (% a.m.)
  *   - Série 13522: IPCA acumulado 12 meses (% - calculado pelo BC)
+ *   - Série 7478: IPCA-15 mensal (% a.m.)
+ *   - Série 22886: IDP Ingressos (US$ milhões)
+ *   - Série 22867: IDE Saídas (US$ milhões)
+ *   - Série 22888: IDP Líquido (US$ milhões)
+ *   - Série 23044: Ouro Monetário (US$ milhões)
  *
  * @created 2025-11-21 - FASE 2 (Backend Economic Indicators)
  * @updated 2025-11-21 - Migrado de BRAPI para API do Banco Central (gratuita)
  * @updated 2025-11-22 - FASE 1.2: Adicionada Série 13522 (IPCA acumulado 12m)
+ * @updated 2025-11-22 - FASE 1.4: Adicionadas 5 novas séries (IPCA-15, IDP/IDE, Ouro)
  */
 @Injectable()
 export class BrapiService {
@@ -227,6 +233,256 @@ export class BrapiService {
       return cdiRecords;
     } catch (error) {
       this.logger.error(`getCDI failed: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Get IPCA-15 inflation rate (Prévia da Inflação - IBGE via Banco Central)
+   * Série 7478: IPCA-15 mensal
+   * @param count Number of records to fetch (default: 1)
+   * @returns Array of { value: number, date: Date }
+   */
+  async getIPCA15(count: number = 1): Promise<Array<{ value: number; date: Date }>> {
+    try {
+      this.logger.log(`Fetching last ${count} IPCA-15 records from Banco Central API...`);
+
+      const response = await firstValueFrom(
+        this.httpService
+          .get(`${this.bcbBaseUrl}.7478/dados/ultimos/${count}`, {
+            params: { formato: 'json' },
+          })
+          .pipe(
+            timeout(this.requestTimeout),
+            catchError((error) => {
+              this.logger.error(`Banco Central API error: ${error.message}`);
+              throw new HttpException(
+                `Failed to fetch IPCA-15 rate: ${error.message}`,
+                HttpStatus.BAD_GATEWAY,
+              );
+            }),
+          ),
+      );
+
+      const ipca15DataArray = response.data;
+
+      if (!Array.isArray(ipca15DataArray) || ipca15DataArray.length === 0) {
+        throw new HttpException(
+          'Invalid response format from Banco Central API',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const results = ipca15DataArray.map((item) => ({
+        value: parseFloat(item.valor),
+        date: parseBCBDate(item.data),
+      }));
+
+      this.logger.log(`IPCA-15 fetched: ${results.length} records (latest: ${results[0].value}%)`);
+
+      return results;
+    } catch (error) {
+      this.logger.error(`getIPCA15 failed: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Get IDP Ingressos (Investimento Direto no País - Ingressos)
+   * Série 22886: IDP Ingressos (US$ milhões)
+   * @param count Number of records to fetch (default: 1)
+   * @returns Array of { value: number, date: Date }
+   */
+  async getIDPIngressos(count: number = 1): Promise<Array<{ value: number; date: Date }>> {
+    try {
+      this.logger.log(`Fetching last ${count} IDP Ingressos records from Banco Central API...`);
+
+      const response = await firstValueFrom(
+        this.httpService
+          .get(`${this.bcbBaseUrl}.22886/dados/ultimos/${count}`, {
+            params: { formato: 'json' },
+          })
+          .pipe(
+            timeout(this.requestTimeout),
+            catchError((error) => {
+              this.logger.error(`Banco Central API error: ${error.message}`);
+              throw new HttpException(
+                `Failed to fetch IDP Ingressos: ${error.message}`,
+                HttpStatus.BAD_GATEWAY,
+              );
+            }),
+          ),
+      );
+
+      const idpDataArray = response.data;
+
+      if (!Array.isArray(idpDataArray) || idpDataArray.length === 0) {
+        throw new HttpException(
+          'Invalid response format from Banco Central API',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const results = idpDataArray.map((item) => ({
+        value: parseFloat(item.valor),
+        date: parseBCBDate(item.data),
+      }));
+
+      this.logger.log(`IDP Ingressos fetched: ${results.length} records (latest: US$ ${results[0].value}M)`);
+
+      return results;
+    } catch (error) {
+      this.logger.error(`getIDPIngressos failed: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Get IDE Saídas (Investimento Direto no Exterior - Saídas)
+   * Série 22867: IDE Saídas (US$ milhões)
+   * @param count Number of records to fetch (default: 1)
+   * @returns Array of { value: number, date: Date }
+   */
+  async getIDESaidas(count: number = 1): Promise<Array<{ value: number; date: Date }>> {
+    try {
+      this.logger.log(`Fetching last ${count} IDE Saídas records from Banco Central API...`);
+
+      const response = await firstValueFrom(
+        this.httpService
+          .get(`${this.bcbBaseUrl}.22867/dados/ultimos/${count}`, {
+            params: { formato: 'json' },
+          })
+          .pipe(
+            timeout(this.requestTimeout),
+            catchError((error) => {
+              this.logger.error(`Banco Central API error: ${error.message}`);
+              throw new HttpException(
+                `Failed to fetch IDE Saídas: ${error.message}`,
+                HttpStatus.BAD_GATEWAY,
+              );
+            }),
+          ),
+      );
+
+      const ideDataArray = response.data;
+
+      if (!Array.isArray(ideDataArray) || ideDataArray.length === 0) {
+        throw new HttpException(
+          'Invalid response format from Banco Central API',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const results = ideDataArray.map((item) => ({
+        value: parseFloat(item.valor),
+        date: parseBCBDate(item.data),
+      }));
+
+      this.logger.log(`IDE Saídas fetched: ${results.length} records (latest: US$ ${results[0].value}M)`);
+
+      return results;
+    } catch (error) {
+      this.logger.error(`getIDESaidas failed: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Get IDP Líquido (Investimento Direto no País - Líquido)
+   * Série 22888: IDP Líquido (US$ milhões)
+   * @param count Number of records to fetch (default: 1)
+   * @returns Array of { value: number, date: Date }
+   */
+  async getIDPLiquido(count: number = 1): Promise<Array<{ value: number; date: Date }>> {
+    try {
+      this.logger.log(`Fetching last ${count} IDP Líquido records from Banco Central API...`);
+
+      const response = await firstValueFrom(
+        this.httpService
+          .get(`${this.bcbBaseUrl}.22888/dados/ultimos/${count}`, {
+            params: { formato: 'json' },
+          })
+          .pipe(
+            timeout(this.requestTimeout),
+            catchError((error) => {
+              this.logger.error(`Banco Central API error: ${error.message}`);
+              throw new HttpException(
+                `Failed to fetch IDP Líquido: ${error.message}`,
+                HttpStatus.BAD_GATEWAY,
+              );
+            }),
+          ),
+      );
+
+      const idpLiquidoDataArray = response.data;
+
+      if (!Array.isArray(idpLiquidoDataArray) || idpLiquidoDataArray.length === 0) {
+        throw new HttpException(
+          'Invalid response format from Banco Central API',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const results = idpLiquidoDataArray.map((item) => ({
+        value: parseFloat(item.valor),
+        date: parseBCBDate(item.data),
+      }));
+
+      this.logger.log(`IDP Líquido fetched: ${results.length} records (latest: US$ ${results[0].value}M)`);
+
+      return results;
+    } catch (error) {
+      this.logger.error(`getIDPLiquido failed: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Get Ouro Monetário (Reservas em Ouro)
+   * Série 23044: Ouro Monetário (US$ milhões)
+   * @param count Number of records to fetch (default: 1)
+   * @returns Array of { value: number, date: Date }
+   */
+  async getOuroMonetario(count: number = 1): Promise<Array<{ value: number; date: Date }>> {
+    try {
+      this.logger.log(`Fetching last ${count} Ouro Monetário records from Banco Central API...`);
+
+      const response = await firstValueFrom(
+        this.httpService
+          .get(`${this.bcbBaseUrl}.23044/dados/ultimos/${count}`, {
+            params: { formato: 'json' },
+          })
+          .pipe(
+            timeout(this.requestTimeout),
+            catchError((error) => {
+              this.logger.error(`Banco Central API error: ${error.message}`);
+              throw new HttpException(
+                `Failed to fetch Ouro Monetário: ${error.message}`,
+                HttpStatus.BAD_GATEWAY,
+              );
+            }),
+          ),
+      );
+
+      const ouroDataArray = response.data;
+
+      if (!Array.isArray(ouroDataArray) || ouroDataArray.length === 0) {
+        throw new HttpException(
+          'Invalid response format from Banco Central API',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const results = ouroDataArray.map((item) => ({
+        value: parseFloat(item.valor),
+        date: parseBCBDate(item.data),
+      }));
+
+      this.logger.log(`Ouro Monetário fetched: ${results.length} records (latest: US$ ${results[0].value}M)`);
+
+      return results;
+    } catch (error) {
+      this.logger.error(`getOuroMonetario failed: ${error.message}`, error.stack);
       throw error;
     }
   }

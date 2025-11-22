@@ -6,15 +6,19 @@ import { Agent as HttpsAgent } from 'https';
 import { EconomicIndicatorsController } from './economic-indicators.controller';
 import { EconomicIndicatorsService } from './economic-indicators.service';
 import { BrapiService } from '../../integrations/brapi/brapi.service';
+import { ANBIMAService } from '../../integrations/anbima/anbima.service';
+import { FREDService } from '../../integrations/fred/fred.service';
 import { EconomicIndicator } from '../../database/entities/economic-indicator.entity';
 
 /**
  * EconomicIndicatorsModule - Módulo de Indicadores Macroeconômicos
  *
- * Gerencia indicadores econômicos brasileiros (SELIC, IPCA, CDI, PIB, etc)
+ * Gerencia indicadores econômicos brasileiros (SELIC, IPCA, CDI, PIB, etc),
+ * curva de juros (ANBIMA) e indicadores internacionais (FRED)
  * com integração BRAPI, cache Redis e sincronização automática.
  *
  * @created 2025-11-21 - FASE 2 (Backend Economic Indicators)
+ * @updated 2025-11-22 - FASE 1.4: Adicionados ANBIMA e FRED services
  */
 @Module({
   imports: [
@@ -35,7 +39,7 @@ import { EconomicIndicator } from '../../database/entities/economic-indicator.en
     ConfigModule,
   ],
   controllers: [EconomicIndicatorsController],
-  providers: [EconomicIndicatorsService, BrapiService],
-  exports: [EconomicIndicatorsService], // Export for use in jobs/scheduler
+  providers: [EconomicIndicatorsService, BrapiService, ANBIMAService, FREDService],
+  exports: [EconomicIndicatorsService, ANBIMAService, FREDService], // Export for use in jobs/scheduler
 })
 export class EconomicIndicatorsModule {}
