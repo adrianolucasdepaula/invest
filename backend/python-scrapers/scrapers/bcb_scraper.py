@@ -25,12 +25,17 @@ class BCBScraper(BaseScraper):
     Dados extraídos:
     - Taxa Selic (meta e efetiva)
     - Taxa de câmbio (USD/BRL, EUR/BRL)
-    - IPCA (inflação)
-    - PIB
-    - Reservas internacionais
+    - IPCA (inflação mensal e acumulada 12m)
+    - IPCA-15 (prévia do IPCA) - FASE 1.4
+    - IGP-M (inflação mensal e acumulada 12m)
+    - PIB (mensal e trimestral)
+    - Reservas internacionais (USD e ouro)
     - Taxa de desemprego
-    - CDI
+    - CDI (taxa diária)
+    - Fluxo de Capital Estrangeiro (IDP/IDE) - FASE 1.4
     - Dólar comercial (compra e venda)
+
+    Total de séries: 17 (12 antigas + 5 novas FASE 1.4)
     """
 
     BASE_URL = "https://www.bcb.gov.br"
@@ -38,18 +43,36 @@ class BCBScraper(BaseScraper):
 
     # Códigos das séries temporais principais
     SERIES = {
+        # Juros e Política Monetária
         "selic_meta": 432,              # Taxa Selic Meta (% a.a.)
         "selic_efetiva": 4189,          # Taxa Selic Efetiva (% a.a.)
+        "cdi": 4391,                    # CDI (% a.m.)
+
+        # Inflação (IPCA)
         "ipca": 433,                    # IPCA (% mensal)
         "ipca_acum_12m": 13522,         # IPCA acumulado 12 meses
+        "ipca_15": 7478,                # IPCA-15 (% mensal) - FASE 1.4
+
+        # Inflação (IGP-M)
         "igpm": 189,                    # IGP-M (% mensal)
         "igpm_acum_12m": 28763,         # IGP-M acumulado 12 meses
+
+        # Atividade Econômica
         "pib": 4380,                    # PIB mensal (valores correntes)
+        "desemprego": 24369,            # Taxa de desemprego (%)
+
+        # Câmbio
         "cambio_usd": 10813,            # USD/BRL - Ptax venda
         "cambio_eur": 21619,            # EUR/BRL - Ptax venda
+
+        # Fluxo de Capital Estrangeiro - FASE 1.4
+        "idp_ingressos": 22886,         # Investimento Direto País - Ingressos mensais
+        "ide_saidas": 22867,            # Investimento Direto Exterior - Saídas mensais
+        "idp_liquido": 22888,           # IDP - Participação capital líquido
+
+        # Reservas e Ativos
         "reservas": 13621,              # Reservas internacionais (US$ milhões)
-        "desemprego": 24369,            # Taxa de desemprego (%)
-        "cdi": 4391,                    # CDI (% a.m.)
+        "reservas_ouro": 23044,         # Ouro monetário (milhões) - FASE 1.4
     }
 
     def __init__(self):
@@ -133,14 +156,30 @@ class BCBScraper(BaseScraper):
             else:
                 # Map friendly names to series
                 indicator_map = {
+                    # Juros e Política Monetária
                     "selic": ["selic_meta", "selic_efetiva"],
-                    "ipca": ["ipca", "ipca_acum_12m"],
-                    "igpm": ["igpm", "igpm_acum_12m"],
-                    "cambio": ["cambio_usd", "cambio_eur"],
-                    "pib": ["pib"],
-                    "reservas": ["reservas"],
-                    "desemprego": ["desemprego"],
                     "cdi": ["cdi"],
+
+                    # Inflação
+                    "ipca": ["ipca", "ipca_acum_12m", "ipca_15"],  # FASE 1.4: adicionado IPCA-15
+                    "igpm": ["igpm", "igpm_acum_12m"],
+
+                    # Atividade Econômica
+                    "pib": ["pib"],
+                    "desemprego": ["desemprego"],
+
+                    # Câmbio
+                    "cambio": ["cambio_usd", "cambio_eur"],
+                    "usd": ["cambio_usd"],  # FASE 1.4: atalho específico
+                    "eur": ["cambio_eur"],  # FASE 1.4: atalho específico
+
+                    # Fluxo de Capital - FASE 1.4
+                    "capital": ["idp_ingressos", "ide_saidas", "idp_liquido"],
+                    "idp": ["idp_ingressos", "idp_liquido"],
+                    "ide": ["ide_saidas"],
+
+                    # Reservas
+                    "reservas": ["reservas", "reservas_ouro"],  # FASE 1.4: adicionado ouro
                 }
 
                 indicators_to_fetch = indicator_map.get(indicator, [indicator])
