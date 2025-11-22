@@ -188,7 +188,7 @@ export class MarketDataController {
   @ApiOperation({
     summary: 'Sincronização em massa de múltiplos ativos B3',
     description:
-      'Inicia sincronização de até 20 tickers em background (processamento sequencial para estabilidade). Retorna HTTP 202 Accepted imediatamente. Acompanhe o progresso em tempo real via WebSocket (evento: sync:progress). Período: 1986-2024 (histórico completo COTAHIST B3). Validação prévia de tickers com fail-fast. Retry automático 3x com exponencial backoff (2s, 4s, 8s). Tempo estimado: 2.5min/ativo.',
+      'Inicia sincronização de até 20 tickers em background (processamento sequencial para estabilidade). Retorna HTTP 202 Accepted imediatamente APÓS validar tickers. Acompanhe o progresso em tempo real via WebSocket (evento: sync:progress). Período: 1986-2024 (histórico completo COTAHIST B3). Validação prévia de tickers com fail-fast. Retry automático 3x com exponencial backoff (2s, 4s, 8s). Tempo estimado: 2.5min/ativo.',
   })
   @ApiResponse({
     status: 202,
@@ -208,7 +208,12 @@ export class MarketDataController {
       `Sync bulk request: ${dto.tickers.length} tickers (${dto.startYear}-${dto.endYear})`,
     );
 
+    // BUGFIX 2025-11-22: Validar tickers ANTES de retornar HTTP 202
+    // Se tickers inválidos, lança exceção (HTTP 500) ao invés de processar em background
+    await this.marketDataService.validateSyncBulkRequest(dto.tickers);
+
     // Processar em background (não aguardar conclusão)
+    // Validação já passou, então erros aqui são apenas de processamento (logados)
     this.marketDataService
       .syncBulkAssets(dto.tickers, dto.startYear, dto.endYear)
       .catch((error) => {
