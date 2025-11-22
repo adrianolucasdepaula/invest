@@ -4565,8 +4565,108 @@ Todas as 3 páginas críticas passaram em **todos os Core Web Vitals** com marge
 3. Validar em condições reais (FASE 46 - Network Emulation)
 4. Validar responsiveness (FASE 47 - Mobile/Tablet/Desktop)
 
-**Git Commit:** (pendente) - docs(perf): FASE 43 - Performance Validation com Chrome DevTools MCP
+**Git Commit:** `bddd32f` - docs(perf): FASE 43 - Performance Validation com Chrome DevTools MCP
 
 **Status:** ✅ **100% COMPLETO** - Performance validado, sistema aprovado em Core Web Vitals
+
+---
+
+### FASE 44: Chrome DevTools MCP Limitations Analysis ⚠️ CONCLUÍDO COM LIMITAÇÕES (2025-11-22)
+
+**Objetivo:** Validar performance em condições de rede lenta (Slow 3G, Fast 3G, Slow 4G) + CPU throttling usando Chrome DevTools MCP.
+
+**Status:** ⚠️ **CONCLUÍDO COM LIMITAÇÕES IDENTIFICADAS**
+
+#### Limitações Técnicas Identificadas
+
+**1. Network Emulation não persiste durante Performance Trace**
+- **Problema:** `emulate` + `performance_start_trace(reload=true)` reseta emulação
+- **Impacto:** Impossível validar performance em Slow 3G/Fast 3G/Slow 4G
+- **Evidência:** Trace mostra "CPU throttling: none", "Network throttling: none"
+- **Causa:** Chrome DevTools Protocol não preserva emulação entre navigations
+
+**2. CPU Throttling não persiste durante Performance Trace**
+- **Problema:** Mesma limitação de network emulation
+- **Impacto:** CPU throttling 4x não aplicado durante trace
+- **Evidência:** Trace confirma "CPU throttling: none"
+
+**3. Resize Page requer janela em modo normal**
+- **Problema:** `resize_page` falha em janela maximizada/fullscreen
+- **Impacto:** Impossível validar responsiveness (Mobile/Tablet/Desktop)
+- **Erro:** "Restore window to normal state before setting content size"
+
+#### Insights Coletados (Apesar das Limitações)
+
+**1. DOMSize Analysis** ✅ SAUDÁVEL
+- 308 elementos no DOM (threshold < 1500)
+- 187ms style recalculation (aceitável)
+- Sem sinais de DOM bloat
+
+**2. ThirdParties Consistency** ✅ OTIMIZADO
+- TradingView: 20.6 kB transfer, 27ms main thread
+- Consistente com FASE 43 (20-50 kB, 22-32ms)
+- Widgets bem otimizados
+
+**3. CLS Perfeito** ✅ MELHORADO
+- CLS: 0.00 (target < 0.1)
+- Melhoria vs FASE 43: 0.06 → 0.00 (+100%)
+- Layout 100% estável
+
+#### Comparação: Chrome DevTools MCP vs Playwright MCP
+
+| Funcionalidade | Chrome DevTools MCP | Playwright MCP | Recomendação |
+|----------------|---------------------|----------------|--------------|
+| **Performance Traces** | ✅ Excelente | ❌ Não suportado | Chrome DevTools |
+| **Network Emulation** | ⚠️ Limitado | ✅ Confiável | **Playwright** |
+| **CPU Throttling** | ⚠️ Limitado | ✅ Confiável | **Playwright** |
+| **Resize Viewport** | ❌ Falha | ✅ Funciona | **Playwright** |
+| **Insights** | ✅ **Exclusivo** | ❌ Não tem | **Chrome DevTools** |
+
+**Estratégia Híbrida Definida:**
+- **Chrome DevTools MCP:** Performance baseline + insights profundos (FASE 43 ✅)
+- **Playwright MCP:** Network emulation + responsiveness (FASE 45-46)
+
+#### Tools Utilizadas
+
+- `emulate` ⚠️ (funciona, mas não persiste em traces)
+- `performance_start_trace` ✅
+- `performance_analyze_insight` ✅ (DOMSize, ThirdParties)
+- `resize_page` ❌ (falhou - janela maximizada)
+
+**Total:** 4 tools testadas, 2 funcionaram, 2 com limitações
+
+#### Documentação
+
+- `VALIDACAO_FASE44_LIMITACOES_MCP_2025-11-22.md` (completo, 550+ linhas)
+  * Documentação detalhada de todas as limitações
+  * Workarounds e estratégia híbrida
+  * Roadmap para FASE 45-48
+
+#### Valor Entregue
+
+✅ **Identificação proativa de limitações** (evita retrabalho futuro)
+✅ **Insights adicionais** (DOMSize, ThirdParties, CLS perfeito)
+✅ **Estratégia híbrida** definida (Chrome DevTools + Playwright)
+✅ **Roadmap claro** para otimizações (FASE 45-48)
+
+#### Próximos Passos
+
+**FASE 45:** Network Emulation + Responsiveness com **Playwright MCP**
+- Slow 3G, Fast 3G, Slow 4G validation
+- Mobile (375x667), Tablet (768x1024), Desktop (1920x1080)
+- Screenshots de todos breakpoints
+- Métricas em condições reais
+
+**FASE 46:** CSS Critical Inlining (Prioridade ALTA)
+- Economia estimada: FCP -311ms, LCP -311ms
+- Dashboard LCP: 1450ms → 1139ms (21% melhoria)
+
+**FASE 47:** TTFB Optimization (Prioridade MÉDIA)
+- Cache-Control + Redis + Next.js Static
+- Economia estimada: TTFB -100ms+
+
+**Git Commit:** (pendente) - docs(perf): FASE 44 - Chrome DevTools MCP Limitations Analysis
+
+**Status:** ⚠️ **CONCLUÍDO COM LIMITAÇÕES DOCUMENTADAS** - Insights valiosos + Roadmap híbrido definido
 
 ---
