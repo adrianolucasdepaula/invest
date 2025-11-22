@@ -394,24 +394,198 @@ Média mensal: ~US$ 14-15 bilhões
 
 ---
 
+## 🔧 ETAPA 5: Backend NestJS Integration (2025-11-22)
+
+### 5.1 Expansão BrapiService (5 novos indicadores BC)
+
+**Arquivo:** `backend/src/integrations/brapi/brapi.service.ts` (+254 linhas)
+
+**Novos Métodos:**
+```typescript
+async getIPCA15(count: number = 1)           // Série 7478
+async getIDPIngressos(count: number = 1)     // Série 22886
+async getIDESaidas(count: number = 1)        // Série 22867
+async getIDPLiquido(count: number = 1)       // Série 22888
+async getOuroMonetario(count: number = 1)    // Série 23044
+```
+
+**Padrão seguido:**
+- Response format: `Array<{ value: number; date: Date }>`
+- Timeout: 10s
+- Error handling: HttpException com status BAD_GATEWAY
+- Logging: Logger.log() para sucesso, Logger.error() para falha
+
+---
+
+### 5.2 Expansão EconomicIndicatorsService (sync 9 indicadores)
+
+**Arquivo:** `backend/src/api/economic-indicators/economic-indicators.service.ts` (+148 linhas)
+
+**Método atualizado:** `syncFromBrapi()`
+- Antes: 4 indicadores (SELIC, IPCA, IPCA_ACUM_12M, CDI)
+- Depois: 9 indicadores (+5 novos)
+
+**Novos blocos de sync:**
+1. IPCA-15 (Série 7478)
+2. IDP Ingressos (Série 22886)
+3. IDE Saídas (Série 22867)
+4. IDP Líquido (Série 22888)
+5. Ouro Monetário (Série 23044)
+
+**Metadata estrutura:**
+```typescript
+{
+  indicatorType: 'IPCA_15',
+  value: 0.62,
+  referenceDate: new Date('2025-10-01'),
+  source: 'BRAPI',
+  metadata: {
+    unit: '% a.m.',
+    period: 'monthly',
+    description: 'IPCA-15 - Prévia da Inflação (IBGE)',
+  },
+}
+```
+
+---
+
+### 5.3 Criação ANBIMAService (curva de juros)
+
+**Arquivo:** `backend/src/integrations/anbima/anbima.service.ts` (187 linhas)
+
+**API:** Gabriel Gaspar (https://tesouro.gabrielgaspar.com.br/bonds)
+- Alternativa à API oficial Tesouro Direto (descontinuada HTTP 410)
+
+**Método principal:** `getYieldCurve()`
+- Filtra títulos: Tesouro IPCA+ (exclui "Semestrais")
+- Extrai yields: Parse "IPCA + 7,76%" → 0.0776
+- Mapeia vencimentos para vértices: 1y, 2y, 3y, 5y, 10y, 15y, 20y, 30y
+- Agrupa múltiplos bonds por vértice (média de yields)
+
+**Response format:**
+```typescript
+Array<{
+  maturity: string;       // "10y"
+  yield: number;          // 0.0734 (7.34%)
+  bondName: string;       // "Tesouro IPCA+ 2035"
+  maturityDate: Date;
+}>
+```
+
+---
+
+### 5.4 Criação FREDService (commodities + indicadores EUA)
+
+**Arquivo:** `backend/src/integrations/fred/fred.service.ts` (221 linhas)
+
+**API:** Federal Reserve Economic Data (https://api.stlouisfed.org/fred)
+- Requer API key gratuita: https://fredaccount.stlouisfed.org/apikeys
+
+**Métodos implementados:**
+```typescript
+async getPayroll(count: number = 1)      // PAYEMS (Non-Farm Payroll)
+async getBrentOil(count: number = 1)     // DCOILBRENTEU (Brent Oil)
+async getFedFunds(count: number = 1)     // DFF (Fed Funds Rate)
+async getCPIUSA(count: number = 1)       // CPIAUCSL (CPI USA)
+```
+
+**Método genérico:** `fetchSeries(name, seriesId, count)`
+- Calcula date range (últimos N meses)
+- Filtra valores ausentes ("." no FRED)
+- Sort desc (mais recentes primeiro)
+- Limit: count
+
+**Configuração:**
+```bash
+# .env
+FRED_API_KEY=your_free_api_key_here
+```
+
+---
+
+### 5.5 Registro de Módulos
+
+**Arquivo:** `backend/src/api/economic-indicators/economic-indicators.module.ts` (+3 linhas)
+
+**Imports adicionados:**
+```typescript
+import { ANBIMAService } from '../../integrations/anbima/anbima.service';
+import { FREDService } from '../../integrations/fred/fred.service';
+```
+
+**Providers:**
+```typescript
+providers: [
+  EconomicIndicatorsService,
+  BrapiService,
+  ANBIMAService,  // ✅ NOVO
+  FREDService,    // ✅ NOVO
+],
+```
+
+**Exports:**
+```typescript
+exports: [
+  EconomicIndicatorsService,
+  ANBIMAService,  // ✅ NOVO - disponível para jobs/scheduler
+  FREDService,    // ✅ NOVO - disponível para jobs/scheduler
+],
+```
+
+---
+
+### 5.6 Validação Completa
+
+**TypeScript:**
+```bash
+cd backend && npx tsc --noEmit
+# ✅ 0 erros
+```
+
+**Build:**
+```bash
+cd backend && npm run build
+# ✅ webpack 5.97.1 compiled successfully in 30644 ms
+```
+
+**Estatísticas:**
+- 8 arquivos modificados
+- +1191 linhas adicionadas
+- -7 linhas removidas
+- 3 novos módulos criados (ANBIMA, FRED, IPEADATA)
+- 2 services expandidos (BrapiService, EconomicIndicatorsService)
+
+---
+
 ## ✅ Conclusão
 
-**Status Geral:** ✅ FASE 1.4 - ETAPAS 1-4 CONCLUÍDAS COM SUCESSO
+**Status Geral:** ✅ FASE 1.4 - ETAPAS 1-5 CONCLUÍDAS COM SUCESSO
 
 **Conquistas:**
 1. ✅ Expandido BC Brasil de 12 → 17 séries (+42%)
-2. ✅ Criado ANBIMA scraper com 6 títulos/5 vértices
-3. ✅ Criado FRED scraper com 4 séries (EUA + commodities)
-4. ✅ Total: 27 indicadores econômicos disponíveis
-5. ✅ Documentação completa e validação com dados reais
+2. ✅ Criado ANBIMA scraper + service (6 títulos/5 vértices)
+3. ✅ Criado FRED scraper + service (4 séries EUA + commodities)
+4. ✅ Integrado backend NestJS com 9 indicadores
+5. ✅ Total: 27 indicadores econômicos disponíveis
+6. ✅ Documentação completa e validação com dados reais
+7. ✅ TypeScript 0 erros + Build success
+
+**Arquitetura Backend:**
+- BrapiService: 9 métodos (4 antigos + 5 novos)
+- ANBIMAService: 1 método (getYieldCurve)
+- FREDService: 4 métodos (Payroll, Brent, Fed Funds, CPI)
+- EconomicIndicatorsService: syncFromBrapi() com 9 indicadores
+- EconomicIndicatorsModule: 4 services exportados
 
 **Próxima Sessão:**
-- Iniciar ETAPA 5: Backend NestJS
-- Criar DTOs, Entities, Services, Controllers
-- Migrations para novas tabelas/colunas
+- Iniciar ETAPA 6: Frontend Dashboard
+- Criar componentes React para novos indicadores
+- Hooks React Query para fetch de dados
+- Charts com Recharts/lightweight-charts
 
-**Recomendação:**
-Fazer commit intermediário antes de iniciar ETAPA 5 para preservar progresso dos scrapers.
+**Commits Criados:**
+1. `9692e99` - Scrapers (ETAPA 1-4)
+2. `b057f7f` - Backend Integration (ETAPA 5)
 
 ---
 
