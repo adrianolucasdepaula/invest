@@ -9,11 +9,13 @@ import { parseBCBDate } from '../../common/utils/date-parser.util';
  *
  * FONTES:
  * - Banco Central Brasil API: https://api.bcb.gov.br/dados/serie/bcdata.sgs
- *   - Série 11: SELIC (Taxa diária)
- *   - Série 433: IPCA (Mensal)
+ *   - Série 4390: SELIC acumulada no mês (% a.m.)
+ *   - Série 433: IPCA mensal (% a.m.)
+ *   - Série 13522: IPCA acumulado 12 meses (% - calculado pelo BC)
  *
  * @created 2025-11-21 - FASE 2 (Backend Economic Indicators)
  * @updated 2025-11-21 - Migrado de BRAPI para API do Banco Central (gratuita)
+ * @updated 2025-11-22 - FASE 1.2: Adicionada Série 13522 (IPCA acumulado 12m)
  */
 @Injectable()
 export class BrapiService {
@@ -143,6 +145,59 @@ export class BrapiService {
       return results;
     } catch (error) {
       this.logger.error(`getInflation failed: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Get IPCA accumulated 12 months (Inflação acumulada 12 meses - IBGE via Banco Central)
+   * Série 13522: IPCA acumulado 12 meses (calculado oficialmente pelo BC usando índices encadeados)
+   * NOVO: Adicionado na FASE 1.2 para corrigir cálculo de acumulado (era soma simples, incorreto)
+   * @param count Number of records to fetch (default: 1)
+   * @returns Array of { value: number, date: Date }
+   */
+  async getIPCAAccumulated12m(count: number = 1): Promise<Array<{ value: number; date: Date }>> {
+    try {
+      this.logger.log(`Fetching last ${count} IPCA accumulated 12m from Banco Central API...`);
+
+      // BCB API: últimos N registros da série 13522 (IPCA acumulado 12 meses)
+      const response = await firstValueFrom(
+        this.httpService
+          .get(`${this.bcbBaseUrl}.13522/dados/ultimos/${count}`, {
+            params: { formato: 'json' },
+          })
+          .pipe(
+            timeout(this.requestTimeout),
+            catchError((error) => {
+              this.logger.error(`Banco Central API error: ${error.message}`);
+              throw new HttpException(
+                `Failed to fetch IPCA accumulated 12m: ${error.message}`,
+                HttpStatus.BAD_GATEWAY,
+              );
+            }),
+          ),
+      );
+
+      // BCB response format: [{ "data": "01/10/2025", "valor": "4.68" }, ...]
+      const ipcaAccumDataArray = response.data;
+
+      if (!Array.isArray(ipcaAccumDataArray) || ipcaAccumDataArray.length === 0) {
+        throw new HttpException(
+          'Invalid response format from Banco Central API',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const results = ipcaAccumDataArray.map((item) => ({
+        value: parseFloat(item.valor),
+        date: parseBCBDate(item.data), // Parse DD/MM/YYYY to Date
+      }));
+
+      this.logger.log(`IPCA accumulated 12m fetched: ${results.length} records (latest: ${results[0].value}%)`);
+
+      return results;
+    } catch (error) {
+      this.logger.error(`getIPCAAccumulated12m failed: ${error.message}`, error.stack);
       throw error;
     }
   }

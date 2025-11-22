@@ -9,13 +9,20 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : 2,
-  timeout: 90000,
-  reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
-    ['json', { outputFile: 'test-results.json' }],
-    ['list']
-  ],
+  workers: process.env.CI ? 1 : undefined, // ✅ Auto (50% cores) para testes locais
+  timeout: 30000, // ✅ Reduzido de 90s para 30s (usar test.slow() em testes específicos)
+  reporter: process.env.CI
+    ? [
+        ['html', { outputFolder: 'playwright-report' }],
+        ['json', { outputFile: 'test-results.json' }],
+        ['github'], // ✅ GitHub annotations em CI
+        ['list']
+      ]
+    : [
+        ['html', { outputFolder: 'playwright-report' }],
+        ['json', { outputFile: 'test-results.json' }],
+        ['list']
+      ],
 
   use: {
     baseURL: 'http://localhost:3100',
@@ -27,11 +34,48 @@ export default defineConfig({
   },
 
   projects: [
+    // ✅ Global setup (auth)
     { name: 'setup', testMatch: /.*\.setup\.ts/ },
+
+    // ✅ Desktop browsers
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'firefox',
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'webkit',
+      use: {
+        ...devices['Desktop Safari'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
+
+    // ✅ Mobile browsers
+    {
+      name: 'mobile-chrome',
+      use: {
+        ...devices['Pixel 5'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'mobile-safari',
+      use: {
+        ...devices['iPhone 12'],
         storageState: 'playwright/.auth/user.json',
       },
       dependencies: ['setup'],

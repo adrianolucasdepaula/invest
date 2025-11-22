@@ -160,6 +160,7 @@ export class EconomicIndicatorsService {
 
   /**
    * Get latest indicator with 12-month accumulated value
+   * UPDATED FASE 1.2: For IPCA, fetches accumulated 12m from BC Série 13522 (official calculation)
    * @param type Indicator type
    * @returns LatestWithAccumulatedResponseDto
    */
@@ -176,25 +177,49 @@ export class EconomicIndicatorsService {
       // Fetch latest record for current value
       const latest = await this.getLatestByType(type);
 
-      // Fetch last 12 months of data
-      const twelveMonthsAgo = new Date();
-      twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+      let accumulated12Months: number;
+      let monthsCount: number;
 
-      const historicalData = await this.indicatorRepository.find({
-        where: { indicatorType: type },
-        order: { referenceDate: 'DESC' },
-        take: 12,
-      });
+      // Special handling for IPCA: use official BC calculation (Série 13522)
+      if (type === 'IPCA') {
+        const ipcaAccumData = await this.indicatorRepository.findOne({
+          where: { indicatorType: 'IPCA_ACUM_12M' },
+          order: { referenceDate: 'DESC' },
+        });
 
-      // Calculate accumulated value (sum of last 12 months)
-      const accumulated12Months = historicalData.reduce((sum, indicator) => {
-        return sum + Number(indicator.value);
-      }, 0);
+        if (ipcaAccumData) {
+          accumulated12Months = Number(ipcaAccumData.value);
+          monthsCount = 12; // Always 12 months for BC official calculation
+          this.logger.log(`Using official BC IPCA accumulated 12m: ${accumulated12Months}%`);
+        } else {
+          // Fallback: calculate if Série 13522 data not available
+          this.logger.warn('IPCA_ACUM_12M not found, falling back to calculation');
+          const historicalData = await this.indicatorRepository.find({
+            where: { indicatorType: type },
+            order: { referenceDate: 'DESC' },
+            take: 12,
+          });
+          accumulated12Months = historicalData.reduce((sum, indicator) => sum + Number(indicator.value), 0);
+          monthsCount = historicalData.length;
+        }
+      } else {
+        // For other indicators (SELIC, CDI): use sum calculation
+        const historicalData = await this.indicatorRepository.find({
+          where: { indicatorType: type },
+          order: { referenceDate: 'DESC' },
+          take: 12,
+        });
+
+        accumulated12Months = historicalData.reduce((sum, indicator) => {
+          return sum + Number(indicator.value);
+        }, 0);
+        monthsCount = historicalData.length;
+      }
 
       const response: LatestWithAccumulatedResponseDto = {
         ...latest,
         accumulated12Months: Number(accumulated12Months.toFixed(4)),
-        monthsCount: historicalData.length,
+        monthsCount,
       };
 
       // Cache for 1 minute
@@ -212,23 +237,25 @@ export class EconomicIndicatorsService {
   }
 
   /**
-   * Sync indicators from BRAPI (SELIC, IPCA, CDI)
-   * UPDATED FASE 1.1: Fetches last 12 months of data for accurate accumulated calculations
+   * Sync indicators from BRAPI (SELIC, IPCA, CDI, IPCA_ACUM_12M)
+   * UPDATED FASE 1.1: Fetches last 13 months of data for accurate accumulated calculations
+   * UPDATED FASE 1.2: Added IPCA accumulated 12m from BC Série 13522 (official calculation)
    * Uses upsert logic (insert or update based on indicatorType + referenceDate)
    */
   async syncFromBrapi(): Promise<void> {
     try {
-      this.logger.log('Starting sync from Banco Central API (12 months)...');
+      this.logger.log('Starting sync from Banco Central API (13 months + IPCA acum 12m)...');
 
       const syncResults = {
         selic: { synced: 0, failed: 0 },
         ipca: { synced: 0, failed: 0 },
+        ipcaAccum12m: { synced: 0, failed: 0 },
         cdi: { synced: 0, failed: 0 },
       };
 
-      // 1. Sync SELIC (last 12 months)
+      // 1. Sync SELIC (last 13 months to ensure we have complete 12-month rolling window)
       try {
-        const selicDataArray = await this.brapiService.getSelic(12);
+        const selicDataArray = await this.brapiService.getSelic(13);
         this.logger.log(`Fetched ${selicDataArray.length} SELIC records from Banco Central`);
 
         for (const selicData of selicDataArray) {
@@ -255,9 +282,9 @@ export class EconomicIndicatorsService {
         this.logger.error(`SELIC sync failed: ${error.message}`);
       }
 
-      // 2. Sync IPCA (last 12 months)
+      // 2. Sync IPCA (last 13 months to ensure we have complete 12-month rolling window)
       try {
-        const ipcaDataArray = await this.brapiService.getInflation(12);
+        const ipcaDataArray = await this.brapiService.getInflation(13);
         this.logger.log(`Fetched ${ipcaDataArray.length} IPCA records from Banco Central`);
 
         for (const ipcaData of ipcaDataArray) {
@@ -284,9 +311,38 @@ export class EconomicIndicatorsService {
         this.logger.error(`IPCA sync failed: ${error.message}`);
       }
 
-      // 3. Sync CDI (last 12 months - calculated from SELIC)
+      // 3. Sync IPCA Accumulated 12 months (last 13 months - Série 13522 from BC)
       try {
-        const cdiDataArray = await this.brapiService.getCDI(12);
+        const ipcaAccumDataArray = await this.brapiService.getIPCAAccumulated12m(13);
+        this.logger.log(`Fetched ${ipcaAccumDataArray.length} IPCA accumulated 12m records from Banco Central`);
+
+        for (const ipcaAccumData of ipcaAccumDataArray) {
+          try {
+            await this.upsertIndicator({
+              indicatorType: 'IPCA_ACUM_12M',
+              value: ipcaAccumData.value,
+              referenceDate: ipcaAccumData.date,
+              source: 'BRAPI',
+              metadata: {
+                unit: '%',
+                period: '12 months',
+                description: 'IPCA acumulado 12 meses (calculado pelo BC - Série 13522)',
+              },
+            });
+            syncResults.ipcaAccum12m.synced++;
+          } catch (error) {
+            this.logger.error(`IPCA accumulated 12m upsert failed for ${ipcaAccumData.date}: ${error.message}`);
+            syncResults.ipcaAccum12m.failed++;
+          }
+        }
+        this.logger.log(`IPCA accumulated 12m sync: ${syncResults.ipcaAccum12m.synced} synced, ${syncResults.ipcaAccum12m.failed} failed`);
+      } catch (error) {
+        this.logger.error(`IPCA accumulated 12m sync failed: ${error.message}`);
+      }
+
+      // 4. Sync CDI (last 13 months - calculated from SELIC)
+      try {
+        const cdiDataArray = await this.brapiService.getCDI(13);
         this.logger.log(`Calculated ${cdiDataArray.length} CDI records from SELIC`);
 
         for (const cdiData of cdiDataArray) {
@@ -317,9 +373,9 @@ export class EconomicIndicatorsService {
       await this.cacheService.del('indicators:*');
 
       const totalSynced =
-        syncResults.selic.synced + syncResults.ipca.synced + syncResults.cdi.synced;
+        syncResults.selic.synced + syncResults.ipca.synced + syncResults.ipcaAccum12m.synced + syncResults.cdi.synced;
       const totalFailed =
-        syncResults.selic.failed + syncResults.ipca.failed + syncResults.cdi.failed;
+        syncResults.selic.failed + syncResults.ipca.failed + syncResults.ipcaAccum12m.failed + syncResults.cdi.failed;
 
       this.logger.log(
         `Sync completed: ${totalSynced} records synced, ${totalFailed} failed - ${JSON.stringify(syncResults)}`,
