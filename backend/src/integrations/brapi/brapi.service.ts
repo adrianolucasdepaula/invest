@@ -44,18 +44,19 @@ export class BrapiService {
 
   /**
    * Get SELIC rate (Taxa básica de juros - Banco Central)
-   * Série 11: Taxa SELIC diária
+   * Série 4390: Taxa SELIC acumulada no mês (% a.m.)
+   * CORRIGIDO: Anteriormente usava Série 11 (diária), agora usa 4390 (mensal)
    * @param count Number of records to fetch (default: 1)
    * @returns Array of { value: number, date: Date }
    */
   async getSelic(count: number = 1): Promise<Array<{ value: number; date: Date }>> {
     try {
-      this.logger.log(`Fetching last ${count} SELIC rates from Banco Central API...`);
+      this.logger.log(`Fetching last ${count} SELIC monthly rates from Banco Central API...`);
 
-      // BCB API: últimos N registros da série 11 (SELIC)
+      // BCB API: últimos N registros da série 4390 (SELIC acumulada no mês)
       const response = await firstValueFrom(
         this.httpService
-          .get(`${this.bcbBaseUrl}.11/dados/ultimos/${count}`, {
+          .get(`${this.bcbBaseUrl}.4390/dados/ultimos/${count}`, {
             params: { formato: 'json' },
           })
           .pipe(
@@ -70,7 +71,7 @@ export class BrapiService {
           ),
       );
 
-      // BCB response format: [{ "data": "19/11/2025", "valor": "0.055131" }, ...]
+      // BCB response format: [{ "data": "01/10/2025", "valor": "1.28" }, ...]
       const selicDataArray = response.data;
 
       if (!Array.isArray(selicDataArray) || selicDataArray.length === 0) {
@@ -177,12 +178,13 @@ export class BrapiService {
 
   /**
    * Health check: Verifica se Banco Central API está acessível
+   * CORRIGIDO: Usa série 4390 (SELIC mensal) ao invés de 11 (diária)
    */
   async healthCheck(): Promise<boolean> {
     try {
       const response = await firstValueFrom(
         this.httpService
-          .get(`${this.bcbBaseUrl}.11/dados/ultimos/1`, {
+          .get(`${this.bcbBaseUrl}.4390/dados/ultimos/1`, {
             params: { formato: 'json' },
           })
           .pipe(

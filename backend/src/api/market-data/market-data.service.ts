@@ -567,8 +567,9 @@ export class MarketDataService {
    * 4. COTAHIST tem prioridade em caso de conflito
    */
   private mergeCotahistBrapi(cotahist: any[], brapi: any[], ticker: string): any[] {
-    const cotahistMap = new Map(cotahist.map((d) => [d.date, d]));
-    const brapiMap = new Map(brapi.map((d) => [d.date, d]));
+    try {
+      const cotahistMap = new Map(cotahist.map((d) => [d.date, d]));
+      const brapiMap = new Map(brapi.map((d) => [d.date, d]));
 
     const merged: any[] = [];
     const threeMonthsAgo = new Date();
@@ -576,16 +577,24 @@ export class MarketDataService {
 
     // Adicionar todos os dados COTAHIST
     for (const [date, data] of cotahistMap.entries()) {
-      merged.push({
-        date,
-        open: data.open,
-        high: data.high,
-        low: data.low,
-        close: data.close,
-        volume: data.volume,
-        adjustedClose: null, // COTAHIST não tem adjustedClose
-        source: PriceSource.COTAHIST, // Rastreabilidade: dados oficiais B3
-      });
+      // Validar se dados COTAHIST são válidos
+      if (data.close != null && data.open != null && data.high != null && data.low != null) {
+        merged.push({
+          date,
+          open: data.open,
+          high: data.high,
+          low: data.low,
+          close: data.close,
+          volume: data.volume,
+          adjustedClose: null, // COTAHIST não tem adjustedClose
+          source: PriceSource.COTAHIST, // Rastreabilidade: dados oficiais B3
+        });
+      } else {
+        this.logger.warn(
+          `⚠️ Skipping invalid COTAHIST record for ${ticker} on ${date}: ` +
+            `close=${data.close}, open=${data.open}, high=${data.high}, low=${data.low}`,
+        );
+      }
     }
 
     // Adicionar dados BRAPI recentes (últimos 3 meses)
@@ -597,6 +606,16 @@ export class MarketDataService {
 
         // Se overlap, validar divergência
         if (cotahistRecord && data.close != null && cotahistRecord.close != null) {
+          // 🔍 DEBUG: Verificar tipo de data.close
+          if (typeof data.close !== 'number' || typeof cotahistRecord.close !== 'number') {
+            this.logger.error(
+              `❌ Invalid close type for ${ticker} on ${date}: ` +
+                `BRAPI close=${data.close} (type=${typeof data.close}), ` +
+                `COTAHIST close=${cotahistRecord.close} (type=${typeof cotahistRecord.close})`,
+            );
+            continue; // Skip este registro
+          }
+
           const divergence = Math.abs((cotahistRecord.close - data.close) / cotahistRecord.close);
 
           if (divergence > 0.01) {
@@ -608,28 +627,43 @@ export class MarketDataService {
         }
 
         // Adicionar/atualizar com dados BRAPI (tem adjustedClose)
-        const existingIdx = merged.findIndex((m) => m.date === date);
-        const record = {
-          date,
-          open: data.open,
-          high: data.high,
-          low: data.low,
-          close: data.close,
-          volume: data.volume,
-          adjustedClose: data.adjustedClose || data.close, // BRAPI pode não ter adjustedClose
-          source: PriceSource.BRAPI, // Rastreabilidade: dados BRAPI API (com ajuste proventos)
-        };
+        // Validar se dados BRAPI são válidos antes de adicionar
+        if (data.close != null && data.open != null && data.high != null && data.low != null) {
+          const existingIdx = merged.findIndex((m) => m.date === date);
+          const record = {
+            date,
+            open: data.open,
+            high: data.high,
+            low: data.low,
+            close: data.close,
+            volume: data.volume,
+            adjustedClose: data.adjustedClose || data.close, // BRAPI pode não ter adjustedClose
+            source: PriceSource.BRAPI, // Rastreabilidade: dados BRAPI API (com ajuste proventos)
+          };
 
-        if (existingIdx >= 0) {
-          merged[existingIdx] = record; // Substituir com BRAPI
+          if (existingIdx >= 0) {
+            merged[existingIdx] = record; // Substituir com BRAPI
+          } else {
+            merged.push(record);
+          }
         } else {
-          merged.push(record);
+          this.logger.warn(
+            `⚠️ Skipping invalid BRAPI record for ${ticker} on ${date}: ` +
+              `close=${data.close}, open=${data.open}, high=${data.high}, low=${data.low}`,
+          );
         }
       }
     }
 
-    // Ordenar por data
-    return merged.sort((a, b) => a.date.localeCompare(b.date));
+      // Ordenar por data
+      return merged.sort((a, b) => a.date.localeCompare(b.date));
+    } catch (error: any) {
+      this.logger.error(
+        `❌ Merge failed for ${ticker}: ${error.message}`,
+      );
+      this.logger.error(`Stack trace: ${error.stack}`);
+      throw error;
+    }
   }
 
   /**
