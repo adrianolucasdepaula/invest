@@ -3913,9 +3913,76 @@ GET /api/v1/economic-indicators/IPCA/accumulated
 - ✅ **BC Série 13522 (IPCA acum 12m)** existe e deve ser usada
 - ✅ **Validar com múltiplas fontes oficiais** (BC, IBGE, Brasil Indicadores)
 
-**Status:** ✅ **100% COMPLETO - IPCA ACUMULADO CORRIGIDO E VALIDADO**
+---
 
-**Documentação:** `VALIDACAO_MULTIPLAS_FONTES_2025-11-22.md`
+**Validação Frontend (2025-11-22):**
+
+**Objetivo:** Validar que frontend está corretamente integrado com alterações backend (4.59% → 4.68%)
+
+**Arquivos Frontend Verificados (7):**
+```
+✅ types/economic-indicator.ts - Interface LatestWithAccumulatedResponse correta
+✅ lib/api.ts - getLatestIndicatorWithAccumulated() chama /accumulated
+✅ lib/hooks/use-economic-indicators.ts - useLatestIndicator() usa endpoint correto
+✅ components/dashboard/economic-indicator-card.tsx - Nenhum cálculo manual, exibe valor backend
+✅ pages/dashboard.tsx - useAllLatestIndicators() hook integrado
+✅ tests/api/economic-indicators.spec.ts - 5 novos testes para /accumulated
+✅ No código: Zero cálculos manuais encontrados
+```
+
+**Testes E2E Adicionados (+5 novos):**
+```typescript
+// Test 1: IPCA accumulated com validação 4.68%
+expect(data.accumulated12Months).toBeCloseTo(4.68, 2);
+expect(data.monthsCount).toBe(12);
+
+// Test 2: BC Série 13522 oficial
+const expectedValue = 4.68;
+expect(Math.abs(data.accumulated12Months - expectedValue)).toBeLessThan(0.01);
+```
+
+**Resultados Testes E2E:**
+```
+✓ 61 passed (27.7s) em 6 browsers
+✓ 5 skipped (endpoint histórico não implementado)
+
+Browsers testados:
+✅ Chromium, Firefox, WebKit
+✅ Mobile Chrome, Mobile Safari
+
+Logs de validação:
+✅ IPCA accumulated 12m: 4.68% (12 months) - Source: BRAPI
+✅ IPCA accumulated matches BC Série 13522: 4.68% (expected: 4.68%)
+✅ SELIC accumulated 12m: 12.9% (12 months)
+✅ CDI accumulated 12m: 11.7% (12 months)
+```
+
+**Validação Visual (Screenshot):**
+```
+Screenshot: VALIDACAO_FRONTEND_IPCA_ACCUMULATED_4.68.png
+
+Card IPCA no Dashboard:
+- Mensal: +0.09% a.a.
+- Acumulado 12 meses: +4.68% a.a. (12 meses) ✅
+- Fonte: BRAPI
+- Ref: 30/09/2025
+```
+
+**Conclusão Validação Frontend:**
+- ✅ **Frontend já estava corretamente integrado** (FASE 1.1)
+- ✅ **Nenhuma mudança de código necessária** no frontend
+- ✅ **Endpoint /accumulated consumido corretamente**
+- ✅ **Zero cálculos manuais** (apenas exibição)
+- ✅ **Valor 4.68% exibido visualmente** no dashboard
+- ✅ **61 testes E2E passando** em 6 browsers
+
+---
+
+**Status:** ✅ **100% COMPLETO - IPCA ACUMULADO CORRIGIDO E VALIDADO (BACKEND + FRONTEND)**
+
+**Documentação:**
+- `VALIDACAO_MULTIPLAS_FONTES_2025-11-22.md` (Backend validation)
+- `VALIDACAO_FRONTEND_FASE_1.3_COMPLETA.md` (Frontend validation)
 
 ---
 
