@@ -5,6 +5,7 @@ import { GetIndicatorsDto } from './dto/get-indicators.dto';
 import {
   IndicatorsListResponseDto,
   LatestIndicatorResponseDto,
+  LatestWithAccumulatedResponseDto,
 } from './dto/indicator-response.dto';
 
 /**
@@ -127,5 +128,34 @@ export class EconomicIndicatorsController {
   async getLatestByType(@Param('type') type: string): Promise<LatestIndicatorResponseDto> {
     this.logger.log(`GET /economic-indicators/${type}`);
     return this.indicatorsService.getLatestByType(type.toUpperCase());
+  }
+
+  /**
+   * GET /economic-indicators/:type/accumulated
+   * Retorna o último valor + acumulado 12 meses
+   */
+  @Get(':type/accumulated')
+  @ApiOperation({
+    summary: 'Get latest indicator with 12-month accumulated',
+    description: 'Retrieve current monthly value + 12-month accumulated sum',
+  })
+  @ApiParam({
+    name: 'type',
+    description: 'Indicator type',
+    enum: ['SELIC', 'IPCA', 'CDI'],
+    example: 'SELIC',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Latest indicator with accumulated retrieved successfully',
+    type: LatestWithAccumulatedResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'No data found for this indicator type',
+  })
+  async getLatestWithAccumulated(@Param('type') type: string): Promise<LatestWithAccumulatedResponseDto> {
+    this.logger.log(`GET /economic-indicators/${type}/accumulated`);
+    return this.indicatorsService.getLatestWithAccumulated(type.toUpperCase());
   }
 }

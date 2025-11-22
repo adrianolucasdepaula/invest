@@ -9,7 +9,11 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
-import type { LatestIndicatorResponse, IndicatorsListResponse } from '@/types/economic-indicator';
+import type {
+  LatestIndicatorResponse,
+  LatestWithAccumulatedResponse,
+  IndicatorsListResponse,
+} from '@/types/economic-indicator';
 
 /**
  * Hook to fetch all economic indicators with optional filters
@@ -26,13 +30,14 @@ export function useEconomicIndicators(params?: { type?: string; limit?: number }
 
 /**
  * Hook to fetch latest indicator by type (SELIC, IPCA, or CDI)
+ * UPDATED FASE 1.1: Now uses accumulated endpoint to get monthly + 12-month sum
  * @param type - Indicator type ('SELIC' | 'IPCA' | 'CDI')
- * @returns React Query result with latest indicator data
+ * @returns React Query result with latest indicator data + accumulated12Months
  */
 export function useLatestIndicator(type: 'SELIC' | 'IPCA' | 'CDI') {
-  return useQuery<LatestIndicatorResponse>({
+  return useQuery<LatestWithAccumulatedResponse>({
     queryKey: ['economic-indicator', type],
-    queryFn: () => api.getLatestIndicator(type),
+    queryFn: () => api.getLatestIndicatorWithAccumulated(type),
     enabled: !!type,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

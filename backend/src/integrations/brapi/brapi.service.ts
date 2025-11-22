@@ -45,16 +45,17 @@ export class BrapiService {
   /**
    * Get SELIC rate (Taxa básica de juros - Banco Central)
    * Série 11: Taxa SELIC diária
-   * @returns { value: 0.055131, date: Date(2025-11-19) }
+   * @param count Number of records to fetch (default: 1)
+   * @returns Array of { value: number, date: Date }
    */
-  async getSelic(): Promise<{ value: number; date: Date }> {
+  async getSelic(count: number = 1): Promise<Array<{ value: number; date: Date }>> {
     try {
-      this.logger.log('Fetching SELIC rate from Banco Central API...');
+      this.logger.log(`Fetching last ${count} SELIC rates from Banco Central API...`);
 
-      // BCB API: últimos 1 registro da série 11 (SELIC)
+      // BCB API: últimos N registros da série 11 (SELIC)
       const response = await firstValueFrom(
         this.httpService
-          .get(`${this.bcbBaseUrl}.11/dados/ultimos/1`, {
+          .get(`${this.bcbBaseUrl}.11/dados/ultimos/${count}`, {
             params: { formato: 'json' },
           })
           .pipe(
@@ -69,22 +70,24 @@ export class BrapiService {
           ),
       );
 
-      // BCB response format: [{ "data": "19/11/2025", "valor": "0.055131" }]
-      const selicData = response.data?.[0];
+      // BCB response format: [{ "data": "19/11/2025", "valor": "0.055131" }, ...]
+      const selicDataArray = response.data;
 
-      if (!selicData) {
+      if (!Array.isArray(selicDataArray) || selicDataArray.length === 0) {
         throw new HttpException(
           'Invalid response format from Banco Central API',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
 
-      const value = parseFloat(selicData.valor);
-      const date = parseBCBDate(selicData.data); // Parse DD/MM/YYYY to Date
+      const results = selicDataArray.map((item) => ({
+        value: parseFloat(item.valor),
+        date: parseBCBDate(item.data), // Parse DD/MM/YYYY to Date
+      }));
 
-      this.logger.log(`SELIC fetched: ${value}% (ref: ${date.toISOString().split('T')[0]})`);
+      this.logger.log(`SELIC fetched: ${results.length} records (latest: ${results[0].value}%)`);
 
-      return { value, date };
+      return results;
     } catch (error) {
       this.logger.error(`getSelic failed: ${error.message}`, error.stack);
       throw error;
@@ -94,17 +97,17 @@ export class BrapiService {
   /**
    * Get IPCA inflation rate (Inflação - IBGE via Banco Central)
    * Série 433: IPCA mensal
-   * @param country Parâmetro mantido para compatibilidade (não utilizado)
-   * @returns { value: 0.09, date: Date(2025-10-01) }
+   * @param count Number of records to fetch (default: 1)
+   * @returns Array of { value: number, date: Date }
    */
-  async getInflation(country: string = 'brazil'): Promise<{ value: number; date: Date }> {
+  async getInflation(count: number = 1): Promise<Array<{ value: number; date: Date }>> {
     try {
-      this.logger.log(`Fetching IPCA inflation from Banco Central API...`);
+      this.logger.log(`Fetching last ${count} IPCA records from Banco Central API...`);
 
-      // BCB API: últimos 1 registro da série 433 (IPCA)
+      // BCB API: últimos N registros da série 433 (IPCA)
       const response = await firstValueFrom(
         this.httpService
-          .get(`${this.bcbBaseUrl}.433/dados/ultimos/1`, {
+          .get(`${this.bcbBaseUrl}.433/dados/ultimos/${count}`, {
             params: { formato: 'json' },
           })
           .pipe(
@@ -119,22 +122,24 @@ export class BrapiService {
           ),
       );
 
-      // BCB response format: [{ "data": "01/10/2025", "valor": "0.09" }]
-      const ipcaData = response.data?.[0];
+      // BCB response format: [{ "data": "01/10/2025", "valor": "0.09" }, ...]
+      const ipcaDataArray = response.data;
 
-      if (!ipcaData) {
+      if (!Array.isArray(ipcaDataArray) || ipcaDataArray.length === 0) {
         throw new HttpException(
           'Invalid response format from Banco Central API',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
 
-      const value = parseFloat(ipcaData.valor);
-      const date = parseBCBDate(ipcaData.data); // Parse DD/MM/YYYY to Date
+      const results = ipcaDataArray.map((item) => ({
+        value: parseFloat(item.valor),
+        date: parseBCBDate(item.data), // Parse DD/MM/YYYY to Date
+      }));
 
-      this.logger.log(`IPCA fetched: ${value}% (ref: ${date.toISOString().split('T')[0]})`);
+      this.logger.log(`IPCA fetched: ${results.length} records (latest: ${results[0].value}%)`);
 
-      return { value, date };
+      return results;
     } catch (error) {
       this.logger.error(`getInflation failed: ${error.message}`, error.stack);
       throw error;
@@ -143,25 +148,27 @@ export class BrapiService {
 
   /**
    * Get CDI rate (Certificado de Depósito Interbancário)
-   * BRAPI não tem endpoint público para CDI, então retornamos mock baseado em SELIC
+   * BRAPI não tem endpoint público para CDI, então calculamos baseado em SELIC
    * CDI geralmente fica ~0.10% abaixo da SELIC
    *
-   * @returns { value: -0.0449, date: Date(2025-11-19) }
+   * @param count Number of records to fetch (default: 1)
+   * @returns Array of { value: number, date: Date }
    */
-  async getCDI(): Promise<{ value: number; date: Date }> {
+  async getCDI(count: number = 1): Promise<Array<{ value: number; date: Date }>> {
     try {
-      this.logger.log('Calculating CDI based on SELIC (BRAPI does not have CDI endpoint)');
+      this.logger.log(`Calculating last ${count} CDI records based on SELIC...`);
 
-      // Buscar SELIC e calcular CDI aproximado
-      const selic = await this.getSelic();
-      const cdiValue = parseFloat((selic.value - 0.1).toFixed(4)); // CDI ~0.10% menor que SELIC
+      // Buscar SELIC e calcular CDI aproximado para cada registro
+      const selicRecords = await this.getSelic(count);
 
-      this.logger.log(`CDI calculated: ${cdiValue}% (based on SELIC ${selic.value}%)`);
-
-      return {
-        value: cdiValue,
+      const cdiRecords = selicRecords.map((selic) => ({
+        value: parseFloat((selic.value - 0.1).toFixed(4)), // CDI ~0.10% menor que SELIC
         date: selic.date,
-      };
+      }));
+
+      this.logger.log(`CDI calculated: ${cdiRecords.length} records (latest: ${cdiRecords[0].value}%)`);
+
+      return cdiRecords;
     } catch (error) {
       this.logger.error(`getCDI failed: ${error.message}`, error.stack);
       throw error;

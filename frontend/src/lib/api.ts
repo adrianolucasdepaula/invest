@@ -264,6 +264,11 @@ class ApiClient {
     return response.data;
   }
 
+  async getLatestIndicatorWithAccumulated(type: 'SELIC' | 'IPCA' | 'CDI') {
+    const response = await this.client.get(`/economic-indicators/${type}/accumulated`);
+    return response.data;
+  }
+
   async syncEconomicIndicators() {
     const response = await this.client.post('/economic-indicators/sync');
     return response.data;

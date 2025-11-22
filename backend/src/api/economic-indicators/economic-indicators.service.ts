@@ -9,6 +9,7 @@ import {
   IndicatorsListResponseDto,
   IndicatorResponseDto,
   LatestIndicatorResponseDto,
+  LatestWithAccumulatedResponseDto,
 } from './dto/indicator-response.dto';
 
 const CACHE_TTL = {
@@ -158,75 +159,156 @@ export class EconomicIndicatorsService {
   }
 
   /**
+   * Get latest indicator with 12-month accumulated value
+   * @param type Indicator type
+   * @returns LatestWithAccumulatedResponseDto
+   */
+  async getLatestWithAccumulated(type: string): Promise<LatestWithAccumulatedResponseDto> {
+    try {
+      const cacheKey = `indicators:accumulated:${type}`;
+
+      // Try cache first
+      const cached = await this.cacheService.get<LatestWithAccumulatedResponseDto>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      // Fetch latest record for current value
+      const latest = await this.getLatestByType(type);
+
+      // Fetch last 12 months of data
+      const twelveMonthsAgo = new Date();
+      twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
+      const historicalData = await this.indicatorRepository.find({
+        where: { indicatorType: type },
+        order: { referenceDate: 'DESC' },
+        take: 12,
+      });
+
+      // Calculate accumulated value (sum of last 12 months)
+      const accumulated12Months = historicalData.reduce((sum, indicator) => {
+        return sum + Number(indicator.value);
+      }, 0);
+
+      const response: LatestWithAccumulatedResponseDto = {
+        ...latest,
+        accumulated12Months: Number(accumulated12Months.toFixed(4)),
+        monthsCount: historicalData.length,
+      };
+
+      // Cache for 1 minute
+      await this.cacheService.set(cacheKey, response, CACHE_TTL.LATEST);
+
+      this.logger.log(
+        `${type} with accumulated: current=${response.currentValue}%, 12mo=${response.accumulated12Months}% (${response.monthsCount} months)`,
+      );
+
+      return response;
+    } catch (error) {
+      this.logger.error(`getLatestWithAccumulated failed: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
    * Sync indicators from BRAPI (SELIC, IPCA, CDI)
+   * UPDATED FASE 1.1: Fetches last 12 months of data for accurate accumulated calculations
    * Uses upsert logic (insert or update based on indicatorType + referenceDate)
    */
   async syncFromBrapi(): Promise<void> {
     try {
-      this.logger.log('Starting sync from Banco Central API...');
+      this.logger.log('Starting sync from Banco Central API (12 months)...');
 
       const syncResults = {
-        selic: false,
-        ipca: false,
-        cdi: false,
+        selic: { synced: 0, failed: 0 },
+        ipca: { synced: 0, failed: 0 },
+        cdi: { synced: 0, failed: 0 },
       };
 
-      // 1. Sync SELIC
+      // 1. Sync SELIC (last 12 months)
       try {
-        const selicData = await this.brapiService.getSelic();
-        await this.upsertIndicator({
-          indicatorType: 'SELIC',
-          value: selicData.value,
-          referenceDate: selicData.date, // Already a Date from parseBCBDate()
-          source: 'BRAPI',
-          metadata: {
-            unit: '% a.a.',
-            period: 'annual',
-            description: 'Taxa básica de juros (Banco Central)',
-          },
-        });
-        syncResults.selic = true;
-        this.logger.log(`SELIC synced: ${selicData.value}%`);
+        const selicDataArray = await this.brapiService.getSelic(12);
+        this.logger.log(`Fetched ${selicDataArray.length} SELIC records from Banco Central`);
+
+        for (const selicData of selicDataArray) {
+          try {
+            await this.upsertIndicator({
+              indicatorType: 'SELIC',
+              value: selicData.value,
+              referenceDate: selicData.date,
+              source: 'BRAPI',
+              metadata: {
+                unit: '% a.a.',
+                period: 'annual',
+                description: 'Taxa básica de juros (Banco Central)',
+              },
+            });
+            syncResults.selic.synced++;
+          } catch (error) {
+            this.logger.error(`SELIC upsert failed for ${selicData.date}: ${error.message}`);
+            syncResults.selic.failed++;
+          }
+        }
+        this.logger.log(`SELIC sync: ${syncResults.selic.synced} synced, ${syncResults.selic.failed} failed`);
       } catch (error) {
         this.logger.error(`SELIC sync failed: ${error.message}`);
       }
 
-      // 2. Sync IPCA
+      // 2. Sync IPCA (last 12 months)
       try {
-        const ipcaData = await this.brapiService.getInflation('brazil');
-        await this.upsertIndicator({
-          indicatorType: 'IPCA',
-          value: ipcaData.value,
-          referenceDate: ipcaData.date, // Already a Date from parseBCBDate()
-          source: 'BRAPI',
-          metadata: {
-            unit: '% a.a.',
-            period: 'annual',
-            description: 'Índice de Preços ao Consumidor Amplo (IBGE)',
-          },
-        });
-        syncResults.ipca = true;
-        this.logger.log(`IPCA synced: ${ipcaData.value}%`);
+        const ipcaDataArray = await this.brapiService.getInflation(12);
+        this.logger.log(`Fetched ${ipcaDataArray.length} IPCA records from Banco Central`);
+
+        for (const ipcaData of ipcaDataArray) {
+          try {
+            await this.upsertIndicator({
+              indicatorType: 'IPCA',
+              value: ipcaData.value,
+              referenceDate: ipcaData.date,
+              source: 'BRAPI',
+              metadata: {
+                unit: '% a.a.',
+                period: 'annual',
+                description: 'Índice de Preços ao Consumidor Amplo (IBGE)',
+              },
+            });
+            syncResults.ipca.synced++;
+          } catch (error) {
+            this.logger.error(`IPCA upsert failed for ${ipcaData.date}: ${error.message}`);
+            syncResults.ipca.failed++;
+          }
+        }
+        this.logger.log(`IPCA sync: ${syncResults.ipca.synced} synced, ${syncResults.ipca.failed} failed`);
       } catch (error) {
         this.logger.error(`IPCA sync failed: ${error.message}`);
       }
 
-      // 3. Sync CDI
+      // 3. Sync CDI (last 12 months - calculated from SELIC)
       try {
-        const cdiData = await this.brapiService.getCDI();
-        await this.upsertIndicator({
-          indicatorType: 'CDI',
-          value: cdiData.value,
-          referenceDate: cdiData.date, // Already a Date from parseBCBDate()
-          source: 'BRAPI (calculated)',
-          metadata: {
-            unit: '% a.a.',
-            period: 'annual',
-            description: 'Certificado de Depósito Interbancário (calculado ~SELIC - 0.10%)',
-          },
-        });
-        syncResults.cdi = true;
-        this.logger.log(`CDI synced: ${cdiData.value}%`);
+        const cdiDataArray = await this.brapiService.getCDI(12);
+        this.logger.log(`Calculated ${cdiDataArray.length} CDI records from SELIC`);
+
+        for (const cdiData of cdiDataArray) {
+          try {
+            await this.upsertIndicator({
+              indicatorType: 'CDI',
+              value: cdiData.value,
+              referenceDate: cdiData.date,
+              source: 'BRAPI (calculated)',
+              metadata: {
+                unit: '% a.a.',
+                period: 'annual',
+                description: 'Certificado de Depósito Interbancário (calculado ~SELIC - 0.10%)',
+              },
+            });
+            syncResults.cdi.synced++;
+          } catch (error) {
+            this.logger.error(`CDI upsert failed for ${cdiData.date}: ${error.message}`);
+            syncResults.cdi.failed++;
+          }
+        }
+        this.logger.log(`CDI sync: ${syncResults.cdi.synced} synced, ${syncResults.cdi.failed} failed`);
       } catch (error) {
         this.logger.error(`CDI sync failed: ${error.message}`);
       }
@@ -234,7 +316,14 @@ export class EconomicIndicatorsService {
       // Clear cache after sync
       await this.cacheService.del('indicators:*');
 
-      this.logger.log(`Sync completed: ${JSON.stringify(syncResults)}`);
+      const totalSynced =
+        syncResults.selic.synced + syncResults.ipca.synced + syncResults.cdi.synced;
+      const totalFailed =
+        syncResults.selic.failed + syncResults.ipca.failed + syncResults.cdi.failed;
+
+      this.logger.log(
+        `Sync completed: ${totalSynced} records synced, ${totalFailed} failed - ${JSON.stringify(syncResults)}`,
+      );
     } catch (error) {
       this.logger.error(`syncFromBrapi failed: ${error.message}`, error.stack);
       throw error;

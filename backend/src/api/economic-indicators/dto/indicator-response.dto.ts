@@ -127,3 +127,20 @@ export class LatestIndicatorResponseDto {
   })
   unit?: string;
 }
+
+/**
+ * DTO de resposta para indicador com acumulado 12 meses
+ */
+export class LatestWithAccumulatedResponseDto extends LatestIndicatorResponseDto {
+  @ApiProperty({
+    description: 'Valor acumulado dos últimos 12 meses',
+    example: 4.62,
+  })
+  accumulated12Months: number;
+
+  @ApiProperty({
+    description: 'Quantidade de meses utilizados no cálculo',
+    example: 12,
+  })
+  monthsCount: number;
+}

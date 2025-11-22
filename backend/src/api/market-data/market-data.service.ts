@@ -596,7 +596,7 @@ export class MarketDataService {
         const cotahistRecord = cotahistMap.get(date);
 
         // Se overlap, validar divergência
-        if (cotahistRecord) {
+        if (cotahistRecord && data.close != null && cotahistRecord.close != null) {
           const divergence = Math.abs((cotahistRecord.close - data.close) / cotahistRecord.close);
 
           if (divergence > 0.01) {

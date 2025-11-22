@@ -43,6 +43,18 @@ export interface LatestIndicatorResponse {
 }
 
 /**
+ * LatestWithAccumulatedResponse - Latest indicator + 12-month accumulated
+ * Matches backend: LatestWithAccumulatedResponseDto
+ *
+ * Used by GET /api/v1/economic-indicators/:type/accumulated endpoint
+ * FASE 1.1 - Economic Indicators with Accumulated Data
+ */
+export interface LatestWithAccumulatedResponse extends LatestIndicatorResponse {
+  accumulated12Months: number; // Sum of last 12 months
+  monthsCount: number; // Number of months used in calculation (may be < 12 if insufficient data)
+}
+
+/**
  * IndicatorsListResponse - List of indicators with pagination
  * Matches backend: IndicatorsListResponseDto
  *
