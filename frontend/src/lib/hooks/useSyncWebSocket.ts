@@ -155,8 +155,9 @@ export function useSyncWebSocket(options?: {
         isRunning: false,
         currentTicker: null,
         progress: 100,
+        // BUGFIX 2025-11-23: Substituir logs antigos por apenas log de conclusão
+        // Remove entradas "Iniciando sync..." e "Processando..." obsoletas
         logs: [
-          ...prev.logs,
           {
             timestamp: new Date(data.timestamp),
             ticker: 'SYSTEM',
