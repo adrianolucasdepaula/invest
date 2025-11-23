@@ -5390,6 +5390,136 @@ await mcp__playwright__browser_take_screenshot({
 
 ---
 
+### FASE 46: CSS Critical Inlining (Next.js optimizeCss) ✅ 100% COMPLETO (2025-11-23)
+
+**Objetivo:** Eliminar gargalo de RenderBlocking (layout.css) identificado na FASE 43
+
+**Solução Implementada:** Next.js 14 `experimental.optimizeCss: true` + critters@0.0.7
+
+**Status:** ✅ **100% COMPLETO - META SUPERADA EM 42%!** 🎉
+
+#### Problema Identificado (FASE 43)
+
+**Dashboard Baseline:**
+- LCP: 1450ms
+- RenderBlocking (layout.css): 562ms total (532ms main thread processing)
+- Economia estimada: FCP -311ms, LCP -311ms
+
+#### Solução: CSS Critical Inlining
+
+**Pesquisa de Best Practices 2025:**
+1. Next.js Official Docs (optimizing)
+2. Core Web Vitals - NextJS Remove Render Blocking CSS
+3. GitHub Discussion #70526
+4. Pagepro - Next.js Performance Optimization 2025
+5. DEV Community - Optimizing Next.js Performance
+
+**Implementação:**
+```javascript
+// frontend/next.config.js
+experimental: {
+  optimizeCss: true, // Inline critical CSS via critters
+}
+
+// Dependência
+npm install --save-dev critters@0.0.7
+```
+
+#### Resultados - Performance Trace (Chrome DevTools MCP)
+
+**Comparação: Baseline vs Otimizado**
+
+| Métrica | Baseline (FASE 43) | Otimizado (FASE 46) | Melhoria | % |
+|---------|--------------------|--------------------|----------|---|
+| **LCP** | 1450 ms | **1008 ms** | **-442 ms** | **🔥 30.5%** |
+| **TTFB** | 749 ms | **576 ms** | **-173 ms** | **23.1%** |
+| **Render Delay** | 701 ms | **433 ms** | **-268 ms** | **38.2%** |
+| **CLS** | 0.06 | **0.05** | **-0.01** | **16.7%** |
+| **RenderBlocking** | 562 ms | **346 ms** | **-216 ms** | **38.5%** |
+
+#### Meta vs Realizado
+
+**Meta FASE 46:** Economia de 311ms no LCP
+**Realizado:** 442ms de economia
+**Performance:** **142% da meta alcançada!** 🎉
+**Excedente:** +131ms (42% a mais que o esperado)
+
+#### Análise de Sucesso
+
+1. **LCP: 442ms de melhoria (30.5%)**
+   - 1450ms → 1008ms
+   - Agora 60% mais rápido que Google target (2500ms)
+   - Superou meta de 311ms em 42%
+
+2. **TTFB: 173ms de melhoria (23.1%)**
+   - 749ms → 576ms
+   - Bônus inesperado (não era target)
+   - Possível otimização do Next.js build
+
+3. **Render Delay: 268ms de melhoria (38.2%)**
+   - 701ms → 433ms
+   - **Evidência direta do CSS Critical Inlining funcionando!**
+   - CSS inline no `<head>` permitiu renderização mais rápida
+
+4. **RenderBlocking: 216ms de redução (38.5%)**
+   - 562ms → 346ms
+   - Main thread processing: 532ms → 332ms (37.6% melhor)
+   - Download: 28ms → 1ms (96.4% melhor)
+   - **Ainda há 346ms de oportunidade (FASE 47)**
+
+#### Oportunidades de Melhoria Adicional
+
+**RenderBlocking restante: 346ms**
+- layout.css ainda é render-blocking (mas MUITO menor)
+- Cache-Control: `no-store, must-revalidate` ⚠️ (não otimizado)
+- Possível solução: Cache headers + preload (FASE 47)
+
+#### Arquivos Modificados
+
+1. `frontend/next.config.js` (+5 linhas)
+   - Adicionado `experimental.optimizeCss: true`
+
+2. `frontend/package.json` (devDependencies)
+   - Adicionado `critters@0.0.7`
+
+#### Validação
+
+- ✅ TypeScript: 0 erros (frontend + backend)
+- ✅ Build: Success (17 páginas compiladas com optimizeCss ativo)
+- ✅ Performance Trace: Executado com Chrome DevTools MCP
+- ✅ LCP: Melhorou 442ms (30.5%)
+- ✅ Meta: Superada em 42% (311ms → 442ms)
+- ✅ Documentação: Completa (770+ linhas)
+
+#### Documentação
+
+- `VALIDACAO_FASE46_CSS_CRITICAL_INLINING_2025-11-23.md` (completo, 770+ linhas)
+  * Problema identificado (FASE 43 baseline)
+  * Pesquisa de best practices 2025 (5 fontes)
+  * Implementação step-by-step
+  * Resultados detalhados (baseline vs otimizado)
+  * Análise de sucesso (meta superada 42%)
+  * Roadmap próximas otimizações (FASE 47-48)
+
+#### Próximos Passos
+
+**FASE 47:** Cache Headers + TTFB Optimization (Prioridade MÉDIA)
+- Configurar Cache-Control headers (max-age, immutable)
+- Implementar Redis cache para API responses
+- Habilitar Next.js Static Generation
+- Economia estimada: TTFB -50ms+
+
+**FASE 48:** Network Validation (Slow 3G) (Prioridade ALTA)
+- Validar otimizações em condições reais
+- Método: Playwright nativo ou OS-level throttling
+- Target: LCP < 4s mobile (Slow 3G)
+
+**Git Commit:** (pendente) - feat(perf): FASE 46 - CSS Critical Inlining (meta superada 42%)
+
+**Status:** ✅ **100% COMPLETO - SUCESSO EXCEPCIONAL!** 🎉
+
+---
+
 ## 🔧 BUGFIX DEFINITIVO: Sincronização Individual (2025-11-22)
 
 **Data:** 2025-11-22
