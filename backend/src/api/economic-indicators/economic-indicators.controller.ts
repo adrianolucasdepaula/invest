@@ -154,7 +154,9 @@ export class EconomicIndicatorsController {
     status: 404,
     description: 'No data found for this indicator type',
   })
-  async getLatestWithAccumulated(@Param('type') type: string): Promise<LatestWithAccumulatedResponseDto> {
+  async getLatestWithAccumulated(
+    @Param('type') type: string,
+  ): Promise<LatestWithAccumulatedResponseDto> {
     this.logger.log(`GET /economic-indicators/${type}/accumulated`);
     return this.indicatorsService.getLatestWithAccumulated(type.toUpperCase());
   }

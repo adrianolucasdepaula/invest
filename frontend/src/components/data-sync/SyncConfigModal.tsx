@@ -153,9 +153,8 @@ export function SyncConfigModal({
     // Validate tickers count
     if (selectedTickers.length === 0) {
       newErrors.push('Selecione pelo menos 1 ativo');
-    } else if (selectedTickers.length > 20) {
-      newErrors.push('Máximo de 20 ativos por sincronização');
     }
+    // BUGFIX 2025-11-22: Removido limite de 20 ativos (sem restrição de quantidade)
 
     // Validate date range
     if (startDate < MIN_DATE || startDate > currentDate) {

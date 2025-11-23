@@ -1,10 +1,11 @@
 /**
  * useEconomicIndicators - React Query hooks for Economic Indicators
  *
- * Hooks for fetching economic indicators (SELIC, IPCA, CDI) from backend FASE 2.
+ * Hooks for fetching economic indicators (8 types total) from backend FASE 2.
  * Follows TanStack Query v5 patterns from use-assets.ts.
  *
  * @created 2025-11-21 - FASE 1 (Frontend Economic Indicators)
+ * @updated 2025-11-23 - FASE 1.4 (Added 5 new indicator types)
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -13,6 +14,7 @@ import type {
   LatestIndicatorResponse,
   LatestWithAccumulatedResponse,
   IndicatorsListResponse,
+  IndicatorType,
 } from '@/types/economic-indicator';
 
 /**
@@ -29,12 +31,12 @@ export function useEconomicIndicators(params?: { type?: string; limit?: number }
 }
 
 /**
- * Hook to fetch latest indicator by type (SELIC, IPCA, or CDI)
- * UPDATED FASE 1.1: Now uses accumulated endpoint to get monthly + 12-month sum
- * @param type - Indicator type ('SELIC' | 'IPCA' | 'CDI')
+ * Hook to fetch latest indicator by type (all 8 types supported)
+ * UPDATED FASE 1.4: Now supports all 8 indicator types
+ * @param type - Indicator type (IndicatorType)
  * @returns React Query result with latest indicator data + accumulated12Months
  */
-export function useLatestIndicator(type: 'SELIC' | 'IPCA' | 'CDI') {
+export function useLatestIndicator(type: IndicatorType) {
   return useQuery<LatestWithAccumulatedResponse>({
     queryKey: ['economic-indicator', type],
     queryFn: () => api.getLatestIndicatorWithAccumulated(type),
@@ -44,12 +46,12 @@ export function useLatestIndicator(type: 'SELIC' | 'IPCA' | 'CDI') {
 }
 
 /**
- * Convenience hook to fetch all 3 latest indicators in parallel
- * @returns Object with selic, ipca, cdi queries + isLoading/isError states
+ * Convenience hook to fetch all 8 latest indicators in parallel (FASE 1.4)
+ * @returns Object with all 8 indicator queries + isLoading/isError states
  *
  * Example usage:
  * ```tsx
- * const { selic, ipca, cdi, isLoading, isError } = useAllLatestIndicators();
+ * const { selic, ipca, cdi, ipca15, idpIngressos, ideSaidas, idpLiquido, ouroMonetario, isLoading, isError } = useAllLatestIndicators();
  * if (isLoading) return <Skeleton />;
  * if (isError) return <ErrorMessage />;
  * return <div>{selic.data.currentValue}</div>;
@@ -59,12 +61,38 @@ export function useAllLatestIndicators() {
   const selic = useLatestIndicator('SELIC');
   const ipca = useLatestIndicator('IPCA');
   const cdi = useLatestIndicator('CDI');
+  const ipca15 = useLatestIndicator('IPCA_15');
+  const idpIngressos = useLatestIndicator('IDP_INGRESSOS');
+  const ideSaidas = useLatestIndicator('IDE_SAIDAS');
+  const idpLiquido = useLatestIndicator('IDP_LIQUIDO');
+  const ouroMonetario = useLatestIndicator('OURO_MONETARIO');
 
   return {
     selic,
     ipca,
     cdi,
-    isLoading: selic.isLoading || ipca.isLoading || cdi.isLoading,
-    isError: selic.isError || ipca.isError || cdi.isError,
+    ipca15,
+    idpIngressos,
+    ideSaidas,
+    idpLiquido,
+    ouroMonetario,
+    isLoading:
+      selic.isLoading ||
+      ipca.isLoading ||
+      cdi.isLoading ||
+      ipca15.isLoading ||
+      idpIngressos.isLoading ||
+      ideSaidas.isLoading ||
+      idpLiquido.isLoading ||
+      ouroMonetario.isLoading,
+    isError:
+      selic.isError ||
+      ipca.isError ||
+      cdi.isError ||
+      ipca15.isError ||
+      idpIngressos.isError ||
+      ideSaidas.isError ||
+      idpLiquido.isError ||
+      ouroMonetario.isError,
   };
 }

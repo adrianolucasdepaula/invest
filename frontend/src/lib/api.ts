@@ -253,18 +253,38 @@ class ApiClient {
     return response.data;
   }
 
-  // Economic Indicators endpoints - FASE 1
+  // Economic Indicators endpoints - FASE 1.4 (8 indicator types)
   async getEconomicIndicators(params?: { type?: string; limit?: number }) {
     const response = await this.client.get('/economic-indicators', { params });
     return response.data;
   }
 
-  async getLatestIndicator(type: 'SELIC' | 'IPCA' | 'CDI') {
+  async getLatestIndicator(
+    type:
+      | 'SELIC'
+      | 'IPCA'
+      | 'CDI'
+      | 'IPCA_15'
+      | 'IDP_INGRESSOS'
+      | 'IDE_SAIDAS'
+      | 'IDP_LIQUIDO'
+      | 'OURO_MONETARIO',
+  ) {
     const response = await this.client.get(`/economic-indicators/${type}`);
     return response.data;
   }
 
-  async getLatestIndicatorWithAccumulated(type: 'SELIC' | 'IPCA' | 'CDI') {
+  async getLatestIndicatorWithAccumulated(
+    type:
+      | 'SELIC'
+      | 'IPCA'
+      | 'CDI'
+      | 'IPCA_15'
+      | 'IDP_INGRESSOS'
+      | 'IDE_SAIDAS'
+      | 'IDP_LIQUIDO'
+      | 'OURO_MONETARIO',
+  ) {
     const response = await this.client.get(`/economic-indicators/${type}/accumulated`);
     return response.data;
   }

@@ -1,11 +1,25 @@
 /**
- * Economic Indicator Types - FASE 1
+ * Economic Indicator Types - FASE 1.4
  *
- * TypeScript interfaces for economic indicators (SELIC, IPCA, CDI)
+ * TypeScript interfaces for economic indicators (8 types total)
  * matching backend DTOs from FASE 2.
  *
  * @created 2025-11-21 - FASE 1 (Frontend Economic Indicators)
+ * @updated 2025-11-23 - FASE 1.4 (Added 5 new indicator types)
  */
+
+/**
+ * Indicator Type - All supported types (FASE 1.4: 8 types)
+ */
+export type IndicatorType =
+  | 'SELIC'
+  | 'IPCA'
+  | 'CDI'
+  | 'IPCA_15'
+  | 'IDP_INGRESSOS'
+  | 'IDE_SAIDAS'
+  | 'IDP_LIQUIDO'
+  | 'OURO_MONETARIO';
 
 /**
  * EconomicIndicator - Full entity from database
@@ -13,13 +27,13 @@
  */
 export interface EconomicIndicator {
   id: string;
-  indicatorType: 'SELIC' | 'IPCA' | 'CDI';
+  indicatorType: IndicatorType;
   value: number;
   referenceDate: string; // ISO 8601 format
   source: string;
   metadata?: {
-    unit?: string; // "% a.a."
-    period?: string; // "annual"
+    unit?: string; // "% a.a." | "US$ millions"
+    period?: string; // "annual" | "monthly"
     description?: string;
   };
   createdAt: string;

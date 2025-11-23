@@ -19,6 +19,7 @@ export const B3_TICKERS = [
   'VALE3',
   'PETR3',
   'PETR4',
+  'BRAV3', // BUGFIX 2025-11-22: Brava Energia S.A. (ex-3R Petroleum)
   'SUZB3',
   'CSAN3',
   'USIM5',
@@ -26,8 +27,11 @@ export const B3_TICKERS = [
   'GOAU4',
   'CSNA3',
   // Energia
-  'ELET3',
-  'ELET6',
+  'AXIA3', // BUGFIX 2025-11-22: Axia Energia ON (ex-Eletrobras ELET3, mudança 10/11/2025)
+  'AXIA6', // BUGFIX 2025-11-22: Axia Energia PNB (ex-Eletrobras ELET6, mudança 10/11/2025)
+  'EGIE3', // BUGFIX 2025-11-22: Engie Brasil ON
+  'EQTL3', // BUGFIX 2025-11-22: Equatorial ON
+  'AURE3', // BUGFIX 2025-11-22: Auren Energia S.A. (ex-CPFL Geração)
   'ENBR3',
   'TAEE11',
   'ENGI11',
@@ -47,17 +51,18 @@ export const B3_TICKERS = [
   'MGLU3',
   'LREN3',
   'PETZ3',
-  'ARZZ3',
+  'AZZA3', // BUGFIX 2025-11-22: Novo ticker Azzas 2154 (ex-ARZZ3 Arezzo)
   'VIIA3',
   'ASAI3',
   'CRFB3',
+  'CEAB3', // BUGFIX 2025-11-22: C&A Modas S.A.
   // Construção/Imobiliário
   'EZTC3',
   'MRVE3',
   'CYRE3',
   'MULT3',
   'TEND3',
-  'ALSO3',
+  'ALOS3', // BUGFIX 2025-11-22: Corrigido ALSO3 → ALOS3 (Allos S.A.)
   // Transporte/Logística
   'RENT3',
   'RAIL3',

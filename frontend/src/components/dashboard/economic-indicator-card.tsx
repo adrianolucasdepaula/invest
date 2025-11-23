@@ -1,11 +1,18 @@
 /**
  * EconomicIndicatorCard - Card component for displaying economic indicators
  *
- * Displays SELIC, IPCA, or CDI data with monthly value + 12-month accumulated.
- * Follows StatCard pattern for consistency with dashboard.
+ * Displays 8 indicator types (FASE 1.4):
+ * - Percentage indicators: SELIC, IPCA, CDI, IPCA_15 (formatted as %)
+ * - Monetary indicators: IDP_INGRESSOS, IDE_SAIDAS, IDP_LIQUIDO, OURO_MONETARIO (formatted as US$ M)
+ *
+ * Features:
+ * - Monthly value + 12-month accumulated
+ * - Conditional formatting based on unit type
+ * - Refresh button for manual sync
  *
  * @created 2025-11-21 - FASE 1 (Frontend Economic Indicators)
  * @updated 2025-11-21 - FASE 1.1 (Added 12-month accumulated display)
+ * @updated 2025-11-23 - FASE 1.4 (Added conditional formatting for 8 indicator types)
  */
 
 import * as React from 'react';
@@ -43,19 +50,36 @@ export function EconomicIndicatorCard({ indicator, isLoading, icon }: EconomicIn
   });
 
   // IMPORTANT: DO NOT round financial data
-  // Use formatPercent() from lib/utils.ts to maintain precision
+  // Format conditionally: % for rates, US$ for monetary values
+  const isMonetary = React.useMemo(() => {
+    return indicator.unit?.includes('US$') || indicator.unit?.includes('milhões');
+  }, [indicator.unit]);
+
+  const formatValue = React.useCallback(
+    (value: number) => {
+      const isMoney = indicator.unit?.includes('US$') || indicator.unit?.includes('milhões');
+      if (isMoney) {
+        // Format as US$ millions with 1 decimal
+        return `US$ ${value.toFixed(1)}M`;
+      }
+      // Format as percentage
+      return formatPercent(value);
+    },
+    [indicator.unit]
+  );
+
   const formattedValue = React.useMemo(() => {
-    return formatPercent(indicator.currentValue);
-  }, [indicator.currentValue]);
+    return formatValue(indicator.currentValue);
+  }, [indicator.currentValue, formatValue]);
 
   const formattedAccumulated = React.useMemo(() => {
-    return formatPercent(indicator.accumulated12Months);
-  }, [indicator.accumulated12Months]);
+    return formatValue(indicator.accumulated12Months);
+  }, [indicator.accumulated12Months, formatValue]);
 
   const formattedChange = React.useMemo(() => {
     if (!indicator.change && indicator.change !== 0) return null;
-    return formatPercent(Math.abs(indicator.change));
-  }, [indicator.change]);
+    return formatValue(Math.abs(indicator.change));
+  }, [indicator.change, formatValue]);
 
   const formattedDate = React.useMemo(() => {
     try {
@@ -102,7 +126,7 @@ export function EconomicIndicatorCard({ indicator, isLoading, icon }: EconomicIn
                 <p className="text-xs text-muted-foreground mb-1">Mensal</p>
                 <div className="text-2xl font-bold">
                   {formattedValue}
-                  <span className="text-sm text-muted-foreground ml-1">{indicator.unit}</span>
+                  {!isMonetary && <span className="text-sm text-muted-foreground ml-1">{indicator.unit}</span>}
                 </div>
                 {indicator.change !== undefined && (
                   <div className={cn('text-xs flex items-center gap-1 mt-1', getChangeColor(indicator.change))}>
@@ -126,7 +150,7 @@ export function EconomicIndicatorCard({ indicator, isLoading, icon }: EconomicIn
                 </p>
                 <div className="text-xl font-semibold text-primary">
                   {formattedAccumulated}
-                  <span className="text-sm text-muted-foreground ml-1">{indicator.unit}</span>
+                  {!isMonetary && <span className="text-sm text-muted-foreground ml-1">{indicator.unit}</span>}
                 </div>
               </div>
             </div>

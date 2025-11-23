@@ -199,7 +199,10 @@ export class EconomicIndicatorsService {
             order: { referenceDate: 'DESC' },
             take: 12,
           });
-          accumulated12Months = historicalData.reduce((sum, indicator) => sum + Number(indicator.value), 0);
+          accumulated12Months = historicalData.reduce(
+            (sum, indicator) => sum + Number(indicator.value),
+            0,
+          );
           monthsCount = historicalData.length;
         }
       } else {
@@ -283,7 +286,9 @@ export class EconomicIndicatorsService {
             syncResults.selic.failed++;
           }
         }
-        this.logger.log(`SELIC sync: ${syncResults.selic.synced} synced, ${syncResults.selic.failed} failed`);
+        this.logger.log(
+          `SELIC sync: ${syncResults.selic.synced} synced, ${syncResults.selic.failed} failed`,
+        );
       } catch (error) {
         this.logger.error(`SELIC sync failed: ${error.message}`);
       }
@@ -312,7 +317,9 @@ export class EconomicIndicatorsService {
             syncResults.ipca.failed++;
           }
         }
-        this.logger.log(`IPCA sync: ${syncResults.ipca.synced} synced, ${syncResults.ipca.failed} failed`);
+        this.logger.log(
+          `IPCA sync: ${syncResults.ipca.synced} synced, ${syncResults.ipca.failed} failed`,
+        );
       } catch (error) {
         this.logger.error(`IPCA sync failed: ${error.message}`);
       }
@@ -320,7 +327,9 @@ export class EconomicIndicatorsService {
       // 3. Sync IPCA Accumulated 12 months (last 13 months - Série 13522 from BC)
       try {
         const ipcaAccumDataArray = await this.brapiService.getIPCAAccumulated12m(13);
-        this.logger.log(`Fetched ${ipcaAccumDataArray.length} IPCA accumulated 12m records from Banco Central`);
+        this.logger.log(
+          `Fetched ${ipcaAccumDataArray.length} IPCA accumulated 12m records from Banco Central`,
+        );
 
         for (const ipcaAccumData of ipcaAccumDataArray) {
           try {
@@ -337,11 +346,15 @@ export class EconomicIndicatorsService {
             });
             syncResults.ipcaAccum12m.synced++;
           } catch (error) {
-            this.logger.error(`IPCA accumulated 12m upsert failed for ${ipcaAccumData.date}: ${error.message}`);
+            this.logger.error(
+              `IPCA accumulated 12m upsert failed for ${ipcaAccumData.date}: ${error.message}`,
+            );
             syncResults.ipcaAccum12m.failed++;
           }
         }
-        this.logger.log(`IPCA accumulated 12m sync: ${syncResults.ipcaAccum12m.synced} synced, ${syncResults.ipcaAccum12m.failed} failed`);
+        this.logger.log(
+          `IPCA accumulated 12m sync: ${syncResults.ipcaAccum12m.synced} synced, ${syncResults.ipcaAccum12m.failed} failed`,
+        );
       } catch (error) {
         this.logger.error(`IPCA accumulated 12m sync failed: ${error.message}`);
       }
@@ -370,7 +383,9 @@ export class EconomicIndicatorsService {
             syncResults.cdi.failed++;
           }
         }
-        this.logger.log(`CDI sync: ${syncResults.cdi.synced} synced, ${syncResults.cdi.failed} failed`);
+        this.logger.log(
+          `CDI sync: ${syncResults.cdi.synced} synced, ${syncResults.cdi.failed} failed`,
+        );
       } catch (error) {
         this.logger.error(`CDI sync failed: ${error.message}`);
       }
@@ -399,7 +414,9 @@ export class EconomicIndicatorsService {
             syncResults.ipca15.failed++;
           }
         }
-        this.logger.log(`IPCA-15 sync: ${syncResults.ipca15.synced} synced, ${syncResults.ipca15.failed} failed`);
+        this.logger.log(
+          `IPCA-15 sync: ${syncResults.ipca15.synced} synced, ${syncResults.ipca15.failed} failed`,
+        );
       } catch (error) {
         this.logger.error(`IPCA-15 sync failed: ${error.message}`);
       }
@@ -407,7 +424,9 @@ export class EconomicIndicatorsService {
       // 6. Sync IDP Ingressos (last 13 months - Série 22886 from BC)
       try {
         const idpIngressosDataArray = await this.brapiService.getIDPIngressos(13);
-        this.logger.log(`Fetched ${idpIngressosDataArray.length} IDP Ingressos records from Banco Central`);
+        this.logger.log(
+          `Fetched ${idpIngressosDataArray.length} IDP Ingressos records from Banco Central`,
+        );
 
         for (const idpIngressosData of idpIngressosDataArray) {
           try {
@@ -424,11 +443,15 @@ export class EconomicIndicatorsService {
             });
             syncResults.idpIngressos.synced++;
           } catch (error) {
-            this.logger.error(`IDP Ingressos upsert failed for ${idpIngressosData.date}: ${error.message}`);
+            this.logger.error(
+              `IDP Ingressos upsert failed for ${idpIngressosData.date}: ${error.message}`,
+            );
             syncResults.idpIngressos.failed++;
           }
         }
-        this.logger.log(`IDP Ingressos sync: ${syncResults.idpIngressos.synced} synced, ${syncResults.idpIngressos.failed} failed`);
+        this.logger.log(
+          `IDP Ingressos sync: ${syncResults.idpIngressos.synced} synced, ${syncResults.idpIngressos.failed} failed`,
+        );
       } catch (error) {
         this.logger.error(`IDP Ingressos sync failed: ${error.message}`);
       }
@@ -436,7 +459,9 @@ export class EconomicIndicatorsService {
       // 7. Sync IDE Saídas (last 13 months - Série 22867 from BC)
       try {
         const ideSaidasDataArray = await this.brapiService.getIDESaidas(13);
-        this.logger.log(`Fetched ${ideSaidasDataArray.length} IDE Saídas records from Banco Central`);
+        this.logger.log(
+          `Fetched ${ideSaidasDataArray.length} IDE Saídas records from Banco Central`,
+        );
 
         for (const ideSaidasData of ideSaidasDataArray) {
           try {
@@ -453,11 +478,15 @@ export class EconomicIndicatorsService {
             });
             syncResults.ideSaidas.synced++;
           } catch (error) {
-            this.logger.error(`IDE Saídas upsert failed for ${ideSaidasData.date}: ${error.message}`);
+            this.logger.error(
+              `IDE Saídas upsert failed for ${ideSaidasData.date}: ${error.message}`,
+            );
             syncResults.ideSaidas.failed++;
           }
         }
-        this.logger.log(`IDE Saídas sync: ${syncResults.ideSaidas.synced} synced, ${syncResults.ideSaidas.failed} failed`);
+        this.logger.log(
+          `IDE Saídas sync: ${syncResults.ideSaidas.synced} synced, ${syncResults.ideSaidas.failed} failed`,
+        );
       } catch (error) {
         this.logger.error(`IDE Saídas sync failed: ${error.message}`);
       }
@@ -465,7 +494,9 @@ export class EconomicIndicatorsService {
       // 8. Sync IDP Líquido (last 13 months - Série 22888 from BC)
       try {
         const idpLiquidoDataArray = await this.brapiService.getIDPLiquido(13);
-        this.logger.log(`Fetched ${idpLiquidoDataArray.length} IDP Líquido records from Banco Central`);
+        this.logger.log(
+          `Fetched ${idpLiquidoDataArray.length} IDP Líquido records from Banco Central`,
+        );
 
         for (const idpLiquidoData of idpLiquidoDataArray) {
           try {
@@ -482,11 +513,15 @@ export class EconomicIndicatorsService {
             });
             syncResults.idpLiquido.synced++;
           } catch (error) {
-            this.logger.error(`IDP Líquido upsert failed for ${idpLiquidoData.date}: ${error.message}`);
+            this.logger.error(
+              `IDP Líquido upsert failed for ${idpLiquidoData.date}: ${error.message}`,
+            );
             syncResults.idpLiquido.failed++;
           }
         }
-        this.logger.log(`IDP Líquido sync: ${syncResults.idpLiquido.synced} synced, ${syncResults.idpLiquido.failed} failed`);
+        this.logger.log(
+          `IDP Líquido sync: ${syncResults.idpLiquido.synced} synced, ${syncResults.idpLiquido.failed} failed`,
+        );
       } catch (error) {
         this.logger.error(`IDP Líquido sync failed: ${error.message}`);
       }
@@ -494,7 +529,9 @@ export class EconomicIndicatorsService {
       // 9. Sync Ouro Monetário (last 13 months - Série 23044 from BC)
       try {
         const ouroMonetarioDataArray = await this.brapiService.getOuroMonetario(13);
-        this.logger.log(`Fetched ${ouroMonetarioDataArray.length} Ouro Monetário records from Banco Central`);
+        this.logger.log(
+          `Fetched ${ouroMonetarioDataArray.length} Ouro Monetário records from Banco Central`,
+        );
 
         for (const ouroMonetarioData of ouroMonetarioDataArray) {
           try {
@@ -511,11 +548,15 @@ export class EconomicIndicatorsService {
             });
             syncResults.ouroMonetario.synced++;
           } catch (error) {
-            this.logger.error(`Ouro Monetário upsert failed for ${ouroMonetarioData.date}: ${error.message}`);
+            this.logger.error(
+              `Ouro Monetário upsert failed for ${ouroMonetarioData.date}: ${error.message}`,
+            );
             syncResults.ouroMonetario.failed++;
           }
         }
-        this.logger.log(`Ouro Monetário sync: ${syncResults.ouroMonetario.synced} synced, ${syncResults.ouroMonetario.failed} failed`);
+        this.logger.log(
+          `Ouro Monetário sync: ${syncResults.ouroMonetario.synced} synced, ${syncResults.ouroMonetario.failed} failed`,
+        );
       } catch (error) {
         this.logger.error(`Ouro Monetário sync failed: ${error.message}`);
       }
