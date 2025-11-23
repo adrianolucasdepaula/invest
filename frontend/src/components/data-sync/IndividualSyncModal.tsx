@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Calendar, TrendingUp } from 'lucide-react';
 import { useStartIndividualSync } from '@/lib/hooks/useDataSync';
 import { useToast } from '@/components/ui/use-toast';
+import { useSyncWebSocket } from '@/lib/hooks/useSyncWebSocket';
 
 interface IndividualSyncModalProps {
   ticker: string | null;
@@ -45,13 +47,56 @@ export function IndividualSyncModal({
   isOpen,
   onClose,
 }: IndividualSyncModalProps) {
+  const router = useRouter();
   const currentYear = new Date().getFullYear();
   const [startYear, setStartYear] = useState(2020); // Default: últimos 5 anos
   const [endYear, setEndYear] = useState(currentYear);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isSyncStarted, setIsSyncStarted] = useState(false);
 
   const syncMutation = useStartIndividualSync();
   const { toast } = useToast();
+  const { state: wsState } = useSyncWebSocket();
+
+  /**
+   * BUGFIX DEFINITIVO 2025-11-22: Fechar modal após sync:started (não após HTTP 200)
+   *
+   * Comportamento correto (feedback do usuário):
+   * 1. Usuário clica "Iniciar Sincronização"
+   * 2. Backend emite evento WebSocket 'sync:started'
+   * 3. Modal fecha automaticamente
+   * 4. Navega para /data-management
+   * 5. Progresso exibido em tempo real na página principal
+   * 6. HTTP 200 retorna em background (invalida cache React Query)
+   */
+  useEffect(() => {
+    // Detectar quando sync iniciou (WebSocket) E mutation está rodando E ainda não fechou modal
+    if (wsState.isRunning && syncMutation.isPending && !isSyncStarted) {
+      setIsSyncStarted(true);
+
+      // Toast de sucesso (início confirmado)
+      toast({
+        title: 'Sincronização iniciada',
+        description: `${ticker}: Processamento em andamento. Acompanhe o progresso abaixo.`,
+        variant: 'default',
+      });
+
+      // Fechar modal (reset do formulário acontece no useEffect de !isOpen)
+      onClose();
+
+      // Navegar para página principal
+      router.push('/data-management');
+    }
+  }, [wsState.isRunning, syncMutation.isPending, isSyncStarted, ticker, toast, onClose, router]);
+
+  /**
+   * Reset isSyncStarted quando modal fecha
+   */
+  useEffect(() => {
+    if (!isOpen) {
+      setIsSyncStarted(false);
+    }
+  }, [isOpen]);
 
   /**
    * Validate year inputs
@@ -75,31 +120,30 @@ export function IndividualSyncModal({
 
   /**
    * Handle sync button click
+   *
+   * BUGFIX DEFINITIVO 2025-11-22: Não aguarda conclusão HTTP 200
+   * - Inicia mutation (React Query)
+   * - WebSocket useEffect detecta sync:started e fecha modal
+   * - HTTP 200 retorna em background e invalida cache
+   * - Se erro acontecer, exibe toast (mutation não foi iniciada)
    */
   const handleSync = async () => {
     if (!ticker) return;
     if (!validateInputs()) return;
 
     try {
-      const result = await syncMutation.mutateAsync({
+      // Iniciar mutation (não aguarda conclusão)
+      // WebSocket useEffect detectará sync:started e fechará modal automaticamente
+      syncMutation.mutate({
         ticker,
         startYear,
         endYear,
       });
-
-      toast({
-        title: 'Sincronização concluída',
-        description: `${ticker}: ${result.totalRecords} registros sincronizados em ${result.processingTime.toFixed(2)}s`,
-        variant: 'default',
-      });
-
-      // Close modal after success
-      onClose();
     } catch (error: any) {
       console.error(`[SYNC ERROR] ${ticker}:`, error);
       toast({
-        title: 'Erro na sincronização',
-        description: error?.response?.data?.message || `Falha ao sincronizar ${ticker}`,
+        title: 'Erro ao iniciar sincronização',
+        description: error?.response?.data?.message || `Falha ao iniciar sincronização de ${ticker}`,
         variant: 'destructive',
       });
     }

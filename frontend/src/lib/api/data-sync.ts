@@ -61,11 +61,18 @@ export async function startBulkSync(
  * @returns HTTP 200 OK com detalhes da sincronização concluída
  * @throws AxiosError se validação falhar (400) ou erro de servidor (500)
  *
- * Padrão Síncrono (diferente de bulk):
+ * Padrão Síncrono (backend aguarda conclusão):
  * 1. Endpoint aguarda conclusão da sincronização (HTTP 200 OK)
  * 2. Processamento sequencial: COTAHIST → BRAPI → Merge → PostgreSQL
  * 3. Progresso enviado via WebSocket (namespace /sync) durante execução
  * 4. Retorna estatísticas detalhadas após conclusão
+ *
+ * UX Pattern (frontend):
+ * - Modal escuta evento WebSocket 'sync:started'
+ * - Fecha modal após confirmar início (não aguarda conclusão)
+ * - Navega para /data-management automaticamente
+ * - Progresso exibido em tempo real via WebSocket na página principal
+ * - Invalidação de cache React Query acontece após HTTP 200 (background)
  *
  * @example
  * const response = await startIndividualSync({
