@@ -5514,9 +5514,94 @@ npm install --save-dev critters@0.0.7
 - Método: Playwright nativo ou OS-level throttling
 - Target: LCP < 4s mobile (Slow 3G)
 
-**Git Commit:** (pendente) - feat(perf): FASE 46 - CSS Critical Inlining (meta superada 42%)
+**Git Commit:** cdb7a70 - feat(perf): FASE 46 - CSS Critical Inlining (meta superada 42%)
 
 **Status:** ✅ **100% COMPLETO - SUCESSO EXCEPCIONAL!** 🎉
+
+---
+
+### FASE 47: Cache Headers Optimization (immutable + SWR) ✅ 100% COMPLETO (2025-11-23)
+
+**Objetivo:** Otimizar Cache-Control headers para assets estáticos e reduzir TTFB
+
+**Solução Implementada:** Cache-Control headers via `next.config.js` headers()
+
+**Status:** ✅ **100% COMPLETO - Melhoria Consistente (+5.5% LCP, +6.6% TTFB)**
+
+#### Implementação
+
+**Cache Headers Configurados:**
+```javascript
+// next.config.js - async headers()
+{
+  source: '/_next/static/:path*',
+  headers: [{
+    key: 'Cache-Control',
+    value: 'public, max-age=31536000, immutable' // 1 ano
+  }]
+},
+{
+  source: '/images/:path*',
+  headers: [{
+    key: 'Cache-Control',
+    value: 'public, max-age=86400, stale-while-revalidate=604800' // 1 dia + 7 dias SWR
+  }]
+}
+```
+
+**Best Practices Consultadas:**
+1. Next.js Official Docs - Caching Guide
+2. Stack Overflow - Cache-Control in Next.js App Router
+3. Semaphore - Cache Optimization on NextJS
+4. FocusReactive - CDN Caching for Self-hosted Next.js
+5. DEV Community - Mastering Next.js API Caching
+
+#### Resultados - Performance Trace
+
+**Comparação: FASE 46 vs FASE 47**
+
+| Métrica | FASE 46 | FASE 47 | Melhoria | % |
+|---------|---------|---------|----------|---|
+| **LCP** | 1008 ms | **953 ms** | **-55 ms** | **5.5%** |
+| **TTFB** | 576 ms | **538 ms** | **-38 ms** | **6.6%** |
+| **Render Delay** | 433 ms | **415 ms** | **-18 ms** | **4.2%** |
+| **CLS** | 0.05 | **0.05** | 0 ms | 0% |
+
+#### Progresso Total: FASE 43 → FASE 47
+
+| Métrica | FASE 43 (Original) | FASE 47 (Final) | Melhoria Total | % |
+|---------|-------------------|-----------------|----------------|---|
+| **LCP** | 1450 ms | **953 ms** | **-497 ms** | **🔥 34.3%** |
+| **TTFB** | 749 ms | **538 ms** | **-211 ms** | **28.2%** |
+| **Render Delay** | 701 ms | **415 ms** | **-286 ms** | **40.8%** |
+| **CLS** | 0.06 | **0.05** | **-0.01** | **16.7%** |
+
+**LCP agora 62% mais rápido que Google target (2500ms)!** ✅
+
+#### Validação de Cache
+
+**Cache Insight:**
+- Assets próprios (_next/static/): ✅ Cache eficiente (immutable headers funcionando)
+- Apenas terceiros (TradingView): TTL 300s (não controlamos)
+- Estimated savings: FCP 0ms, LCP 0ms (já otimizado)
+
+#### Arquivos Modificados
+
+1. `frontend/next.config.js` (+26 linhas)
+   - Adicionado async headers() function
+   - Cache immutable para /_next/static/*
+   - Cache SWR para /images/*
+
+#### Próximos Passos
+
+**FASE 48:** Network Validation (Slow 3G) - Prioridade ALTA
+- Validar otimizações em condições reais
+- Método: Playwright nativo ou OS-level throttling
+- Target: LCP < 4s mobile (Slow 3G)
+
+**Git Commit:** (pendente) - feat(perf): FASE 47 - Cache Headers Optimization (+5.5% LCP)
+
+**Status:** ✅ **100% COMPLETO - Melhoria Consistente** 🎉
 
 ---
 
