@@ -210,13 +210,42 @@ export class AssetsService {
       this.logger.log(`Fetching fresh data from BRAPI for ${ticker} (range: ${range || 'custom'})`);
       await this.syncAsset(ticker, range || '1y');
 
-      // Re-query database after sync
-      return queryBuilder.getMany();
+      // Re-query database after sync and normalize types
+      const refreshedPrices = await queryBuilder.getMany();
+      return this.normalizePriceTypes(refreshedPrices);
     }
 
     this.logger.log(`Returning ${prices.length} cached prices for ${ticker}`);
-    return prices;
+    // FASE 48: Ensure all numeric fields are numbers, not strings (BRAPI type fix)
+    return this.normalizePriceTypes(prices);
   }
+
+  /**
+   * FASE 48: Normalize price types to ensure all numeric fields are numbers
+   * Fixes issue where PostgreSQL/BRAPI returns numeric values as strings
+   * @private
+   */
+  private normalizePriceTypes(prices: AssetPrice[]): AssetPrice[] {
+    return prices.map((price) => ({
+      ...price,
+      open: typeof price.open === 'string' ? parseFloat(price.open) : price.open,
+      high: typeof price.high === 'string' ? parseFloat(price.high) : price.high,
+      low: typeof price.low === 'string' ? parseFloat(price.low) : price.low,
+      close: typeof price.close === 'string' ? parseFloat(price.close) : price.close,
+      volume: typeof price.volume === 'string' ? parseInt(price.volume, 10) : price.volume,
+      adjustedClose:
+        typeof price.adjustedClose === 'string'
+          ? parseFloat(price.adjustedClose)
+          : price.adjustedClose,
+      change: typeof price.change === 'string' ? parseFloat(price.change) : price.change,
+      changePercent:
+        typeof price.changePercent === 'string'
+          ? parseFloat(price.changePercent)
+          : price.changePercent,
+      marketCap: typeof price.marketCap === 'string' ? parseFloat(price.marketCap) : price.marketCap,
+    }));
+  }
+
 
   /**
    * Convert BRAPI range to start date
