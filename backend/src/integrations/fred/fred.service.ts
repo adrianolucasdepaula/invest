@@ -2,6 +2,7 @@ import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom, timeout, catchError } from 'rxjs';
+import { Decimal } from 'decimal.js';
 
 /**
  * FREDService - Integração com Federal Reserve Economic Data API
@@ -152,11 +153,13 @@ export class FREDService {
       const validObservations = observations.filter((obs) => obs.value !== '.');
 
       const results = validObservations.slice(0, count).map((obs) => ({
-        value: parseFloat(obs.value),
+        value: new Decimal(obs.value).toNumber(),
         date: new Date(obs.date), // Format: YYYY-MM-DD
       }));
 
-      this.logger.log(`${name} fetched: ${results.length} records (latest: ${results[0]?.value || 'N/A'})`);
+      this.logger.log(
+        `${name} fetched: ${results.length} records (latest: ${results[0]?.value || 'N/A'})`,
+      );
 
       return results;
     } catch (error) {

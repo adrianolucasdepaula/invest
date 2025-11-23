@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsDateString, IsIn } from 'class-validator';
+import { IsOptional, IsString, IsDateString } from 'class-validator';
 
 /**
  * DTO para consulta de indicadores econômicos

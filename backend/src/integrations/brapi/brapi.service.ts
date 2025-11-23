@@ -2,6 +2,7 @@ import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom, timeout, catchError } from 'rxjs';
+import { Decimal } from 'decimal.js';
 import { parseBCBDate } from '../../common/utils/date-parser.util';
 
 /**
@@ -199,7 +200,9 @@ export class BrapiService {
         date: parseBCBDate(item.data), // Parse DD/MM/YYYY to Date
       }));
 
-      this.logger.log(`IPCA accumulated 12m fetched: ${results.length} records (latest: ${results[0].value}%)`);
+      this.logger.log(
+        `IPCA accumulated 12m fetched: ${results.length} records (latest: ${results[0].value}%)`,
+      );
 
       return results;
     } catch (error) {
@@ -228,7 +231,9 @@ export class BrapiService {
         date: selic.date,
       }));
 
-      this.logger.log(`CDI calculated: ${cdiRecords.length} records (latest: ${cdiRecords[0].value}%)`);
+      this.logger.log(
+        `CDI calculated: ${cdiRecords.length} records (latest: ${cdiRecords[0].value}%)`,
+      );
 
       return cdiRecords;
     } catch (error) {
@@ -274,7 +279,7 @@ export class BrapiService {
       }
 
       const results = ipca15DataArray.map((item) => ({
-        value: parseFloat(item.valor),
+        value: new Decimal(item.valor).toNumber(),
         date: parseBCBDate(item.data),
       }));
 
@@ -324,11 +329,13 @@ export class BrapiService {
       }
 
       const results = idpDataArray.map((item) => ({
-        value: parseFloat(item.valor),
+        value: new Decimal(item.valor).toNumber(),
         date: parseBCBDate(item.data),
       }));
 
-      this.logger.log(`IDP Ingressos fetched: ${results.length} records (latest: US$ ${results[0].value}M)`);
+      this.logger.log(
+        `IDP Ingressos fetched: ${results.length} records (latest: US$ ${results[0].value}M)`,
+      );
 
       return results;
     } catch (error) {
@@ -374,11 +381,13 @@ export class BrapiService {
       }
 
       const results = ideDataArray.map((item) => ({
-        value: parseFloat(item.valor),
+        value: new Decimal(item.valor).toNumber(),
         date: parseBCBDate(item.data),
       }));
 
-      this.logger.log(`IDE Saídas fetched: ${results.length} records (latest: US$ ${results[0].value}M)`);
+      this.logger.log(
+        `IDE Saídas fetched: ${results.length} records (latest: US$ ${results[0].value}M)`,
+      );
 
       return results;
     } catch (error) {
@@ -424,11 +433,13 @@ export class BrapiService {
       }
 
       const results = idpLiquidoDataArray.map((item) => ({
-        value: parseFloat(item.valor),
+        value: new Decimal(item.valor).toNumber(),
         date: parseBCBDate(item.data),
       }));
 
-      this.logger.log(`IDP Líquido fetched: ${results.length} records (latest: US$ ${results[0].value}M)`);
+      this.logger.log(
+        `IDP Líquido fetched: ${results.length} records (latest: US$ ${results[0].value}M)`,
+      );
 
       return results;
     } catch (error) {
@@ -474,11 +485,13 @@ export class BrapiService {
       }
 
       const results = ouroDataArray.map((item) => ({
-        value: parseFloat(item.valor),
+        value: new Decimal(item.valor).toNumber(),
         date: parseBCBDate(item.data),
       }));
 
-      this.logger.log(`Ouro Monetário fetched: ${results.length} records (latest: US$ ${results[0].value}M)`);
+      this.logger.log(
+        `Ouro Monetário fetched: ${results.length} records (latest: US$ ${results[0].value}M)`,
+      );
 
       return results;
     } catch (error) {

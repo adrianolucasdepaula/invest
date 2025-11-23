@@ -1,6 +1,7 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, timeout, catchError } from 'rxjs';
+import { Decimal } from 'decimal.js';
 
 /**
  * ANBIMAService - Integração com API Gabriel Gaspar para Tesouro Direto
@@ -85,16 +86,17 @@ export class ANBIMAService {
         if (annualYieldStr.includes('IPCA +')) {
           const yieldPart = annualYieldStr.split('IPCA +')[1].trim();
           const yieldNumStr = yieldPart.replace('%', '').replace(',', '.');
-          yieldValue = parseFloat(yieldNumStr) / 100;
+          yieldValue = new Decimal(yieldNumStr).dividedBy(100).toNumber();
         }
 
-        // Parse maturity date: "01/01/2035" -> Date
+        // Parse maturity date: "01/01/2035" -> Date (UTC explicit to avoid timezone issues)
         const [day, month, year] = maturityDateStr.split('/');
-        const maturityDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        const maturityDate = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
 
         // Calculate years to maturity
         const now = new Date();
-        const yearsToMaturity = (maturityDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 365);
+        const yearsToMaturity =
+          (maturityDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 365);
 
         // Map to standard vertices
         let maturity = '';
@@ -116,24 +118,31 @@ export class ANBIMAService {
       });
 
       // Group by maturity and average yields (if multiple bonds for same vertex)
-      const maturityMap = new Map<string, { yields: number[]; bondNames: string[] }>();
+      const maturityMap = new Map<string, { yields: number[]; bondNames: string[]; maturityDates: Date[] }>();
 
       yieldCurve.forEach((item) => {
         if (!maturityMap.has(item.maturity)) {
-          maturityMap.set(item.maturity, { yields: [], bondNames: [] });
+          maturityMap.set(item.maturity, { yields: [], bondNames: [], maturityDates: [] });
         }
         maturityMap.get(item.maturity)!.yields.push(item.yield);
         maturityMap.get(item.maturity)!.bondNames.push(item.bondName);
+        maturityMap.get(item.maturity)!.maturityDates.push(item.maturityDate);
       });
 
-      // Calculate average yield for each vertex
+      // Calculate average yield for each vertex (using Decimal for precision)
       const curveVertices = Array.from(maturityMap.entries()).map(([maturity, data]) => {
-        const avgYield = data.yields.reduce((sum, y) => sum + y, 0) / data.yields.length;
+        const avgYield = data.yields
+          .reduce((sum, y) => sum.plus(y), new Decimal(0))
+          .dividedBy(data.yields.length);
+
+        // Calculate average maturity date
+        const avgMaturityTime = data.maturityDates.reduce((sum, d) => sum + d.getTime(), 0) / data.maturityDates.length;
+
         return {
           maturity,
-          yield: Number(avgYield.toFixed(4)),
+          yield: avgYield.toNumber(),
           bondName: data.bondNames.join(', '),
-          maturityDate: new Date(), // Placeholder, can be refined
+          maturityDate: new Date(avgMaturityTime),
         };
       });
 
