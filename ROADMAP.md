@@ -5777,3 +5777,132 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 **Status:** ✅ **Correções Definitivas Implementadas** - Aguardando validação tripla MCP + commit
 
 ---
+
+## FASE 48: BRAPI Type String Conversion Fix - Backend Data Quality
+
+**Data:** 2025-11-23
+**Status:** 🔴 **PENDENTE** (Alta Prioridade)
+**Complexidade:** Média
+**Impacto:** Médio (warnings não impedem sync, mas afetam qualidade de dados)
+
+### Problema Identificado
+
+Durante testes de sincronização (AZZA3, 2025-11-23), detectamos 19 warnings no backend indicando que a API BRAPI retorna valores numéricos como strings ao invés de numbers, causando inconsistência de tipos:
+
+```
+[ERROR] ❌ Invalid close type for AZZA3 on 2025-10-27: BRAPI close=28.6900 (type=string), COTAHIST close=28.69 (type=number)
+[ERROR] ❌ Invalid close type for AZZA3 on 2025-10-28: BRAPI close=28.4300 (type=string), COTAHIST close=28.43 (type=number)
+[... 17 warnings adicionais ...]
+```
+
+**Observações:**
+- ✅ Sincronização completa com sucesso apesar dos warnings (334 registros em 72.92s)
+- ❌ Warnings indicam problema de qualidade de dados (string vs number)
+- ⚠️ Pode causar problemas em cálculos financeiros futuros se não corrigido
+
+### Tentativa Anterior de Correção (FALHOU)
+
+**Commit:** `465664d` (data desconhecida)
+**Abordagem:** Aplicação de operador unário `+` para conversão de tipos
+**Arquivo:** `backend/src/scrapers/fundamental/brapi.scraper.ts`
+**Resultado:** ❌ Não funcionou - warnings continuam aparecendo
+
+**Possíveis causas da falha:**
+1. Docker build/mount issue (código não recompilado)
+2. TypeScript compilation problem no container
+3. Código não devidamente deployado após mudança
+4. BRAPI API de fato retorna strings (problema upstream)
+
+### Solução Proposta
+
+**Investigação Necessária (4 etapas):**
+
+1. **Verificar TypeScript Compilation no Container:**
+   ```bash
+   docker exec -it invest_backend cat /app/dist/scrapers/fundamental/brapi.scraper.js | grep "close"
+   # Verificar se unary + está presente no JS compilado
+   ```
+
+2. **Validar File Mounting (docker-compose.yml):**
+   ```bash
+   docker-compose config | grep -A 5 "backend:"
+   # Confirmar volume mount correto: ./backend:/app
+   ```
+
+3. **Testar Conversão Explícita (parseFloat):**
+   ```typescript
+   // Ao invés de: +historicalPrices[0].close
+   // Usar: parseFloat(historicalPrices[0].close)
+
+   // Vantagens:
+   // - Mais explícito (intenção clara)
+   // - Funciona mesmo se BRAPI retornar string
+   // - TypeScript-friendly
+   ```
+
+4. **Adicionar Validação de Tipos (Runtime):**
+   ```typescript
+   if (typeof historicalPrices[0].close !== 'number') {
+     this.logger.warn(`BRAPI returned non-numeric close: ${typeof historicalPrices[0].close}`);
+     historicalPrices[0].close = parseFloat(historicalPrices[0].close);
+   }
+   ```
+
+### Arquivos Afetados
+
+**Principal:**
+- `backend/src/scrapers/fundamental/brapi.scraper.ts` (574 linhas)
+  - Método que processa historicalPrices
+  - Aplicar parseFloat() em valores numéricos (close, open, high, low)
+
+**Secundários (Possíveis):**
+- `backend/src/jobs/processors/sync-processor.ts` (175 linhas) - se validação adicional necessária
+- `backend/src/integrations/brapi/brapi.service.ts` - se problema for na integração
+
+### Checklist de Validação
+
+**Pré-Implementação:**
+- [ ] Investigar por que unary `+` não funcionou (commit 465664d)
+- [ ] Verificar TypeScript compilation no Docker container
+- [ ] Validar file mounting (docker-compose.yml)
+- [ ] Testar resposta real da API BRAPI (Postman/curl)
+
+**Implementação:**
+- [ ] Aplicar parseFloat() explícito em todos campos numéricos
+- [ ] Adicionar validação runtime de tipos (opcional)
+- [ ] TypeScript: 0 erros (backend)
+- [ ] Build: Success (backend)
+
+**Validação:**
+- [ ] Reiniciar backend: `docker restart invest_backend`
+- [ ] Testar sincronização com ativo real (AZZA3 ou ABEV3)
+- [ ] Verificar logs backend: 0 warnings de tipo string
+- [ ] Confirmar dados inseridos corretamente no PostgreSQL
+- [ ] Validar tipos com query SQL: `SELECT pg_typeof(close) FROM market_data LIMIT 5;`
+
+**Documentação:**
+- [ ] Criar `BUGFIX_BRAPI_TYPE_CONVERSION_2025-11-23.md`
+- [ ] Atualizar ROADMAP.md (esta seção)
+- [ ] Atualizar TROUBLESHOOTING.md (se aplicável)
+- [ ] Commit detalhado com validação completa
+
+### Prioridade e Próximos Passos
+
+**Prioridade:** 🔥 **Alta** (Solicitado explicitamente pelo usuário em 2025-11-23)
+
+**Quote do Usuário:**
+> "o problema dos warnings de tipo string precisa ser corrigido. preciso que inclua no roadmap."
+
+**Próximos Passos:**
+1. Executar investigação (4 etapas acima)
+2. Aplicar correção definitiva (parseFloat explícito)
+3. Validar com teste real (AZZA3 ou ABEV3)
+4. Documentar correção completa
+5. Commit e push
+
+**Documentação Relacionada:**
+- `BUGFIX_WEBSOCKET_LOGS_2025-11-23.md` - Menciona problema na seção "Observações Adicionais"
+
+**Status:** 🔴 **PENDENTE** - Aguardando implementação
+
+---
