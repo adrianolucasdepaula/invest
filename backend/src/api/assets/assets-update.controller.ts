@@ -70,11 +70,7 @@ export class AssetsUpdateController {
     description: 'Asset not found',
   })
   async updateSingle(@Body() dto: UpdateSingleAssetDto) {
-    return this.assetsUpdateService.updateSingleAsset(
-      dto.ticker,
-      dto.userId,
-      dto.triggeredBy,
-    );
+    return this.assetsUpdateService.updateSingleAsset(dto.ticker, dto.userId, dto.triggeredBy);
   }
 
   /**
@@ -122,11 +118,7 @@ export class AssetsUpdateController {
     description: 'Invalid request (empty tickers array)',
   })
   async updateMultiple(@Body() dto: UpdateMultipleAssetsDto) {
-    return this.assetsUpdateService.updateMultipleAssets(
-      dto.tickers,
-      dto.userId,
-      dto.triggeredBy,
-    );
+    return this.assetsUpdateService.updateMultipleAssets(dto.tickers, dto.userId, dto.triggeredBy);
   }
 
   /**
@@ -158,10 +150,7 @@ export class AssetsUpdateController {
     description: 'Portfolio not found or unauthorized',
   })
   async updatePortfolio(@Body() dto: UpdatePortfolioAssetsDto) {
-    return this.assetsUpdateService.updatePortfolioAssets(
-      dto.portfolioId,
-      dto.userId,
-    );
+    return this.assetsUpdateService.updatePortfolioAssets(dto.portfolioId, dto.userId);
   }
 
   /**
@@ -184,10 +173,7 @@ export class AssetsUpdateController {
     description: 'No active assets found for sector',
   })
   async updateBySector(@Body() dto: UpdateAssetsBySectorDto) {
-    return this.assetsUpdateService.updateAssetsBySector(
-      dto.sector,
-      dto.userId,
-    );
+    return this.assetsUpdateService.updateAssetsBySector(dto.sector, dto.userId);
   }
 
   /**
@@ -236,7 +222,7 @@ export class AssetsUpdateController {
   @ApiOperation({
     summary: 'Retry failed asset updates',
     description:
-      'Automatically retries updates for all assets with failed status that haven\'t reached max retry count. Used by cron jobs.',
+      "Automatically retries updates for all assets with failed status that haven't reached max retry count. Used by cron jobs.",
   })
   @ApiResponse({
     status: 200,
@@ -270,10 +256,7 @@ export class AssetsUpdateController {
     status: 404,
     description: 'Asset not found',
   })
-  async updateByTicker(
-    @Param('ticker') ticker: string,
-    @Body('userId') userId?: string,
-  ) {
+  async updateByTicker(@Param('ticker') ticker: string, @Body('userId') userId?: string) {
     return this.assetsUpdateService.updateSingleAsset(ticker, userId);
   }
 }

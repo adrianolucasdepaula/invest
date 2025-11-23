@@ -131,7 +131,7 @@ export class ReportsService {
           let daysSinceLastAnalysis: number | undefined;
           let isAnalysisRecent = false;
           let isAnalysisOutdated = false;
-          let canRequestAnalysis = true; // Sempre permitir solicitar nova análise
+          const canRequestAnalysis = true; // Sempre permitir solicitar nova análise
 
           if (lastAnalysis) {
             const analysisDate = new Date(lastAnalysis.createdAt);

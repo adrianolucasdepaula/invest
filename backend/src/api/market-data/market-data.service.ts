@@ -9,7 +9,14 @@ import { SyncGateway } from './sync.gateway'; // FASE 35
 import { PriceDataPoint, TechnicalIndicators } from './interfaces';
 import { TechnicalDataResponseDto } from './dto/technical-data-response.dto';
 import { SyncCotahistResponseDto } from './dto/sync-cotahist.dto';
-import { Asset, AssetPrice, PriceSource, SyncHistory, SyncStatus, SyncOperationType } from '../../database/entities';
+import {
+  Asset,
+  AssetPrice,
+  PriceSource,
+  SyncHistory,
+  SyncStatus,
+  SyncOperationType,
+} from '../../database/entities';
 
 const CACHE_TTL = {
   TECHNICAL_DATA: 300, // 5 minutes (seconds)
@@ -23,7 +30,7 @@ const TIMEFRAME_TO_PRICE_RANGE: Record<string, PriceRange> = {
   '1Y': PriceRange.ONE_YEAR,
   '2Y': PriceRange.TWO_YEARS,
   '5Y': PriceRange.FIVE_YEARS,
-  'MAX': PriceRange.MAX,
+  MAX: PriceRange.MAX,
 };
 
 const MIN_DATA_POINTS_FOR_INDICATORS = 200;
@@ -43,7 +50,7 @@ export class MarketDataService {
     private readonly assetPriceRepository: Repository<AssetPrice>,
     @InjectRepository(SyncHistory)
     private readonly syncHistoryRepository: Repository<SyncHistory>,
-  ) { }
+  ) {}
 
   /**
    * Calculate date range based on viewing range
@@ -116,7 +123,7 @@ export class MarketDataService {
           .orderBy('price.date', 'ASC')
           .getMany();
 
-        return prices.map(p => ({
+        return prices.map((p) => ({
           date: p.date instanceof Date ? p.date.toISOString().split('T')[0] : String(p.date),
           open: parseFloat(String(p.open)),
           high: parseFloat(String(p.high)),
@@ -145,14 +152,13 @@ export class MarketDataService {
           ORDER BY period_start ASC
         `;
 
-        const result = await this.assetPriceRepository.query(query, [
-          asset.id,
-          startDate,
-          endDate,
-        ]);
+        const result = await this.assetPriceRepository.query(query, [asset.id, startDate, endDate]);
 
         return result.map((row: any) => ({
-          date: row.period_start instanceof Date ? row.period_start.toISOString().split('T')[0] : String(row.period_start),
+          date:
+            row.period_start instanceof Date
+              ? row.period_start.toISOString().split('T')[0]
+              : String(row.period_start),
           open: parseFloat(row.open),
           high: parseFloat(row.high),
           low: parseFloat(row.low),
@@ -180,14 +186,13 @@ export class MarketDataService {
           ORDER BY period_start ASC
         `;
 
-        const result = await this.assetPriceRepository.query(query, [
-          asset.id,
-          startDate,
-          endDate,
-        ]);
+        const result = await this.assetPriceRepository.query(query, [asset.id, startDate, endDate]);
 
         return result.map((row: any) => ({
-          date: row.period_start instanceof Date ? row.period_start.toISOString().split('T')[0] : String(row.period_start),
+          date:
+            row.period_start instanceof Date
+              ? row.period_start.toISOString().split('T')[0]
+              : String(row.period_start),
           open: parseFloat(row.open),
           high: parseFloat(row.high),
           low: parseFloat(row.low),
@@ -196,13 +201,9 @@ export class MarketDataService {
         }));
       }
 
-      throw new InternalServerErrorException(
-        `Timeframe ${timeframe} not yet implemented`,
-      );
+      throw new InternalServerErrorException(`Timeframe ${timeframe} not yet implemented`);
     } catch (error: any) {
-      this.logger.error(
-        `Failed to fetch aggregated prices for ${ticker}: ${error.message}`,
-      );
+      this.logger.error(`Failed to fetch aggregated prices for ${ticker}: ${error.message}`);
       throw new InternalServerErrorException('Failed to fetch aggregated price data');
     }
   }
@@ -355,25 +356,40 @@ export class MarketDataService {
    * 3. Merge inteligente (COTAHIST prioridade)
    * 4. Batch UPSERT PostgreSQL
    *
+   * BUGFIX 2025-11-22: Adicionado parâmetro options para suprimir eventos WebSocket
+   * quando chamado via syncBulkAssets() (evita emissão duplicada)
+   *
    * @param ticker - Código do ativo (ex: ABEV3)
    * @param startYear - Ano inicial (default: 2020)
    * @param endYear - Ano final (default: ano atual)
+   * @param options - Opções de configuração (emitWebSocketEvents: default true)
    * @returns Estatísticas da sincronização
    */
   async syncHistoricalDataFromCotahist(
     ticker: string,
     startYear: number = 2020,
     endYear: number = new Date().getFullYear(),
+    options?: { emitWebSocketEvents?: boolean },
   ): Promise<SyncCotahistResponseDto> {
     const startTime = Date.now();
-    this.logger.log(
-      `🔄 Sync COTAHIST: ${ticker} (${startYear}-${endYear})`
-    );
+    const shouldEmitEvents = options?.emitWebSocketEvents !== false; // Default: true
+    this.logger.log(`🔄 Sync COTAHIST: ${ticker} (${startYear}-${endYear})`);
 
     let asset: Asset;
     let syncHistory: SyncHistory;
 
     try {
+      // FASE 37: Emit WebSocket event - sync started (individual sync = 1 asset)
+      // BUGFIX 2025-11-22: Condicional para evitar duplicação quando chamado via bulk sync
+      if (shouldEmitEvents) {
+        this.syncGateway.emitSyncStarted({
+          tickers: [ticker],
+          totalAssets: 1,
+          startYear,
+          endYear,
+        });
+      }
+
       // 1. Buscar ou criar asset
       asset = await this.assetRepository.findOne({ where: { ticker } });
       if (!asset) {
@@ -384,6 +400,16 @@ export class MarketDataService {
 
       // 2. Buscar dados COTAHIST via Python Service
       this.logger.debug(`Fetching COTAHIST data for ${ticker}...`);
+      // FASE 37: Emit progress - fetching COTAHIST
+      // BUGFIX 2025-11-22: Condicional para evitar duplicação
+      if (shouldEmitEvents) {
+        this.syncGateway.emitSyncProgress({
+          ticker,
+          current: 1,
+          total: 1,
+          status: 'processing',
+        });
+      }
       const cotahistData = await this.fetchCotahistData(ticker, startYear, endYear);
       this.logger.log(`✅ COTAHIST: ${cotahistData.length} records`);
 
@@ -432,8 +458,19 @@ export class MarketDataService {
       this.logger.debug(`📝 Sync history recorded: ${syncHistory.id}`);
 
       this.logger.log(
-        `✅ Sync complete: ${ticker} (${mergedData.length} records, ${processingTime.toFixed(2)}s)`
+        `✅ Sync complete: ${ticker} (${mergedData.length} records, ${processingTime.toFixed(2)}s)`,
       );
+
+      // FASE 37: Emit WebSocket event - sync completed successfully
+      // BUGFIX 2025-11-22: Condicional para evitar duplicação
+      if (shouldEmitEvents) {
+        this.syncGateway.emitSyncCompleted({
+          totalAssets: 1,
+          successCount: 1,
+          failedCount: 0,
+          duration: processingTime,
+        });
+      }
 
       return {
         totalRecords: mergedData.length,
@@ -479,9 +516,17 @@ export class MarketDataService {
       }
 
       this.logger.error(`Failed to sync COTAHIST for ${ticker}: ${error.message}`);
-      throw new InternalServerErrorException(
-        `Failed to sync historical data: ${error.message}`
-      );
+
+      // FASE 37: Emit WebSocket event - sync failed
+      // BUGFIX 2025-11-22: Condicional para evitar duplicação
+      if (asset && shouldEmitEvents) {
+        this.syncGateway.emitSyncFailed({
+          error: error.message,
+          tickers: [ticker],
+        });
+      }
+
+      throw new InternalServerErrorException(`Failed to sync historical data: ${error.message}`);
     }
   }
 
@@ -537,13 +582,10 @@ export class MarketDataService {
    * 3. Se divergência > 1% no overlap → log warning
    * 4. COTAHIST tem prioridade em caso de conflito
    */
-  private mergeCotahistBrapi(
-    cotahist: any[],
-    brapi: any[],
-    ticker: string,
-  ): any[] {
-    const cotahistMap = new Map(cotahist.map(d => [d.date, d]));
-    const brapiMap = new Map(brapi.map(d => [d.date, d]));
+  private mergeCotahistBrapi(cotahist: any[], brapi: any[], ticker: string): any[] {
+    try {
+      const cotahistMap = new Map(cotahist.map((d) => [d.date, d]));
+      const brapiMap = new Map(brapi.map((d) => [d.date, d]));
 
     const merged: any[] = [];
     const threeMonthsAgo = new Date();
@@ -551,16 +593,24 @@ export class MarketDataService {
 
     // Adicionar todos os dados COTAHIST
     for (const [date, data] of cotahistMap.entries()) {
-      merged.push({
-        date,
-        open: data.open,
-        high: data.high,
-        low: data.low,
-        close: data.close,
-        volume: data.volume,
-        adjustedClose: null, // COTAHIST não tem adjustedClose
-        source: PriceSource.COTAHIST, // Rastreabilidade: dados oficiais B3
-      });
+      // Validar se dados COTAHIST são válidos
+      if (data.close != null && data.open != null && data.high != null && data.low != null) {
+        merged.push({
+          date,
+          open: data.open,
+          high: data.high,
+          low: data.low,
+          close: data.close,
+          volume: data.volume,
+          adjustedClose: null, // COTAHIST não tem adjustedClose
+          source: PriceSource.COTAHIST, // Rastreabilidade: dados oficiais B3
+        });
+      } else {
+        this.logger.warn(
+          `⚠️ Skipping invalid COTAHIST record for ${ticker} on ${date}: ` +
+            `close=${data.close}, open=${data.open}, high=${data.high}, low=${data.low}`,
+        );
+      }
     }
 
     // Adicionar dados BRAPI recentes (últimos 3 meses)
@@ -571,42 +621,65 @@ export class MarketDataService {
         const cotahistRecord = cotahistMap.get(date);
 
         // Se overlap, validar divergência
-        if (cotahistRecord) {
-          const divergence = Math.abs(
-            (cotahistRecord.close - data.close) / cotahistRecord.close
-          );
+        if (cotahistRecord && data.close != null && cotahistRecord.close != null) {
+          // 🔍 DEBUG: Verificar tipo de data.close
+          if (typeof data.close !== 'number' || typeof cotahistRecord.close !== 'number') {
+            this.logger.error(
+              `❌ Invalid close type for ${ticker} on ${date}: ` +
+                `BRAPI close=${data.close} (type=${typeof data.close}), ` +
+                `COTAHIST close=${cotahistRecord.close} (type=${typeof cotahistRecord.close})`,
+            );
+            continue; // Skip este registro
+          }
+
+          const divergence = Math.abs((cotahistRecord.close - data.close) / cotahistRecord.close);
 
           if (divergence > 0.01) {
             this.logger.warn(
               `⚠️ Divergência ${(divergence * 100).toFixed(2)}% em ${date} (${ticker}): ` +
-              `COTAHIST=${cotahistRecord.close.toFixed(2)}, BRAPI=${data.close.toFixed(2)}`
+                `COTAHIST=${cotahistRecord.close.toFixed(2)}, BRAPI=${data.close.toFixed(2)}`,
             );
           }
         }
 
         // Adicionar/atualizar com dados BRAPI (tem adjustedClose)
-        const existingIdx = merged.findIndex(m => m.date === date);
-        const record = {
-          date,
-          open: data.open,
-          high: data.high,
-          low: data.low,
-          close: data.close,
-          volume: data.volume,
-          adjustedClose: data.adjustedClose || data.close, // BRAPI pode não ter adjustedClose
-          source: PriceSource.BRAPI, // Rastreabilidade: dados BRAPI API (com ajuste proventos)
-        };
+        // Validar se dados BRAPI são válidos antes de adicionar
+        if (data.close != null && data.open != null && data.high != null && data.low != null) {
+          const existingIdx = merged.findIndex((m) => m.date === date);
+          const record = {
+            date,
+            open: data.open,
+            high: data.high,
+            low: data.low,
+            close: data.close,
+            volume: data.volume,
+            adjustedClose: data.adjustedClose || data.close, // BRAPI pode não ter adjustedClose
+            source: PriceSource.BRAPI, // Rastreabilidade: dados BRAPI API (com ajuste proventos)
+          };
 
-        if (existingIdx >= 0) {
-          merged[existingIdx] = record; // Substituir com BRAPI
+          if (existingIdx >= 0) {
+            merged[existingIdx] = record; // Substituir com BRAPI
+          } else {
+            merged.push(record);
+          }
         } else {
-          merged.push(record);
+          this.logger.warn(
+            `⚠️ Skipping invalid BRAPI record for ${ticker} on ${date}: ` +
+              `close=${data.close}, open=${data.open}, high=${data.high}, low=${data.low}`,
+          );
         }
       }
     }
 
-    // Ordenar por data
-    return merged.sort((a, b) => a.date.localeCompare(b.date));
+      // Ordenar por data
+      return merged.sort((a, b) => a.date.localeCompare(b.date));
+    } catch (error: any) {
+      this.logger.error(
+        `❌ Merge failed for ${ticker}: ${error.message}`,
+      );
+      this.logger.error(`Stack trace: ${error.stack}`);
+      throw error;
+    }
   }
 
   /**
@@ -625,7 +698,7 @@ export class MarketDataService {
 
     try {
       // Preparar entidades
-      const entities = data.map(d =>
+      const entities = data.map((d) =>
         this.assetPriceRepository.create({
           assetId,
           date: new Date(d.date),
@@ -636,7 +709,7 @@ export class MarketDataService {
           volume: d.volume,
           adjustedClose: d.adjustedClose,
           source: d.source,
-        })
+        }),
       );
 
       // Executar Batch UPSERT em chunks para evitar limites de parâmetros
@@ -662,7 +735,7 @@ export class MarketDataService {
         const progress = ((i + batch.length) / entities.length) * 100;
         const batchNum = Math.floor(i / BATCH_SIZE) + 1;
         this.logger.log(
-          `📦 Batch UPSERT progress: ${i + batch.length}/${entities.length} records (${progress.toFixed(1)}%) [Batch ${batchNum}/${totalBatches}]`
+          `📦 Batch UPSERT progress: ${i + batch.length}/${entities.length} records (${progress.toFixed(1)}%) [Batch ${batchNum}/${totalBatches}]`,
         );
       }
 
@@ -700,13 +773,7 @@ export class MarketDataService {
     offset?: number;
   }) {
     try {
-      const {
-        ticker,
-        status,
-        operationType,
-        limit = 50,
-        offset = 0,
-      } = filters;
+      const { ticker, status, operationType, limit = 50, offset = 0 } = filters;
 
       // Build where clause
       const where: any = {};
@@ -739,11 +806,11 @@ export class MarketDataService {
       });
 
       this.logger.log(
-        `Sync history query: ${records.length}/${total} records (ticker=${ticker}, status=${status})`
+        `Sync history query: ${records.length}/${total} records (ticker=${ticker}, status=${status})`,
       );
 
       return {
-        data: records.map(record => ({
+        data: records.map((record) => ({
           id: record.id,
           ticker: record.asset.ticker,
           operationType: record.operationType,
@@ -848,20 +915,16 @@ export class MarketDataService {
       // Calcular resumo consolidado
       const summary = {
         total: assets.length,
-        synced: assets.filter(a => a.status === 'SYNCED').length,
-        pending: assets.filter(a => a.status === 'PENDING').length,
-        failed: assets.filter(a => a.status === 'FAILED').length,
+        synced: assets.filter((a) => a.status === 'SYNCED').length,
+        pending: assets.filter((a) => a.status === 'PENDING').length,
+        failed: assets.filter((a) => a.status === 'FAILED').length,
       };
 
       const duration = Date.now() - startTime;
-      this.logger.log(
-        `✅ getSyncStatus completed in ${duration}ms (${assets.length} assets)`
-      );
+      this.logger.log(`✅ getSyncStatus completed in ${duration}ms (${assets.length} assets)`);
 
       if (duration > 500) {
-        this.logger.warn(
-          `⚠️ SLOW QUERY: getSyncStatus took ${duration}ms (> 500ms threshold)`
-        );
+        this.logger.warn(`⚠️ SLOW QUERY: getSyncStatus took ${duration}ms (> 500ms threshold)`);
       }
 
       return { assets, summary };
@@ -872,16 +935,47 @@ export class MarketDataService {
   }
 
   /**
+   * BUGFIX 2025-11-22: Validar request de sync bulk ANTES de processar
+   *
+   * Verifica se todos os tickers existem e estão ativos.
+   * Deve ser chamado ANTES de retornar HTTP 202 para garantir fail-fast.
+   *
+   * @param tickers Lista de tickers para validar
+   * @throws InternalServerErrorException se tickers inválidos
+   */
+  async validateSyncBulkRequest(tickers: string[]): Promise<void> {
+    const validAssets = await this.assetRepository.find({
+      where: { ticker: In(tickers), isActive: true },
+      select: ['ticker'],
+    });
+
+    if (validAssets.length !== tickers.length) {
+      const validTickers = validAssets.map((a) => a.ticker);
+      const invalidTickers = tickers.filter((t) => !validTickers.includes(t));
+
+      this.logger.error(`❌ Validation failed - Invalid tickers: ${invalidTickers.join(', ')}`);
+
+      throw new InternalServerErrorException(
+        `Tickers inválidos ou inativos: ${invalidTickers.join(', ')}`,
+      );
+    }
+
+    this.logger.log(`✅ Validation passed - All ${tickers.length} tickers are valid`);
+  }
+
+  /**
    * FASE 35: Sincronizar múltiplos ativos em massa (bulk sync)
    *
    * Processa tickers SEQUENCIALMENTE (1 por vez) para evitar sobrecarga do Python Service.
    * Emite eventos WebSocket em tempo real para acompanhamento do progresso.
    *
    * Features:
-   * - Validação prévia de tickers (fail-fast)
    * - Retry 3x com backoff exponencial
    * - Progress tracking via WebSocket
    * - Processamento assíncrono (retorna 202 Accepted imediatamente)
+   *
+   * BUGFIX 2025-11-22: Validação foi movida para validateSyncBulkRequest()
+   * (chamado no controller ANTES de retornar HTTP 202)
    *
    * @param tickers Lista de tickers para sincronizar (max 20)
    * @param startYear Ano inicial (1986-2024)
@@ -895,29 +989,6 @@ export class MarketDataService {
   ): Promise<{ successCount: number; failedTickers: string[] }> {
     const startTime = Date.now();
     this.logger.log(`🔄 Bulk Sync iniciado: ${tickers.length} tickers (${startYear}-${endYear})`);
-
-    // 1. Validação prévia: Verificar se todos os tickers existem no database
-    const validAssets = await this.assetRepository.find({
-      where: { ticker: In(tickers), isActive: true },
-      select: ['ticker'],
-    });
-
-    if (validAssets.length !== tickers.length) {
-      const validTickers = validAssets.map(a => a.ticker);
-      const invalidTickers = tickers.filter(t => !validTickers.includes(t));
-
-      this.logger.error(`❌ Tickers inválidos: ${invalidTickers.join(', ')}`);
-
-      // FASE 35: Emitir WebSocket event de falha crítica
-      this.syncGateway.emitSyncFailed({
-        error: `Tickers inválidos ou inativos: ${invalidTickers.join(', ')}`,
-        tickers: invalidTickers,
-      });
-
-      throw new InternalServerErrorException(
-        `Tickers inválidos ou inativos: ${invalidTickers.join(', ')}`
-      );
-    }
 
     // FASE 35: Emitir WebSocket event de início
     this.syncGateway.emitSyncStarted({
@@ -958,7 +1029,10 @@ export class MarketDataService {
 
         try {
           // Reutilizar método existente syncHistoricalDataFromCotahist
-          const syncResult = await this.syncHistoricalDataFromCotahist(ticker, startYear, endYear);
+          // BUGFIX 2025-11-22: Suprimir eventos WebSocket duplicados (syncBulkAssets já emite)
+          const syncResult = await this.syncHistoricalDataFromCotahist(ticker, startYear, endYear, {
+            emitWebSocketEvents: false,
+          });
 
           results.successCount++;
           success = true;
@@ -975,17 +1049,14 @@ export class MarketDataService {
             recordsInserted: syncResult.totalRecords,
             duration: Math.round(tickerDuration),
           });
-
         } catch (error: any) {
-          this.logger.error(
-            `❌ Tentativa ${attempts}/3 falhou para ${ticker}: ${error.message}`
-          );
+          this.logger.error(`❌ Tentativa ${attempts}/3 falhou para ${ticker}: ${error.message}`);
 
           if (attempts < 3) {
             // Backoff exponencial: 2s, 4s, 8s
             const backoffMs = Math.pow(2, attempts) * 1000;
             this.logger.log(`⏳ Aguardando ${backoffMs}ms antes de retry...`);
-            await new Promise(resolve => setTimeout(resolve, backoffMs));
+            await new Promise((resolve) => setTimeout(resolve, backoffMs));
           } else {
             // Falhou após 3 tentativas
             results.failedTickers.push(ticker);
@@ -1008,7 +1079,7 @@ export class MarketDataService {
 
     const duration = (Date.now() - startTime) / 1000;
     this.logger.log(
-      `✅ Bulk Sync completed: ${results.successCount}/${tickers.length} successful in ${duration.toFixed(1)}s`
+      `✅ Bulk Sync completed: ${results.successCount}/${tickers.length} successful in ${duration.toFixed(1)}s`,
     );
 
     if (results.failedTickers.length > 0) {

@@ -45,10 +45,8 @@ export function SyncProgressBar({
     onSyncComplete,
   });
 
-  // If not running and no recent completion, hide component
-  if (!state.isRunning && state.progress === 0) {
-    return null;
-  }
+  // FASE 37: Always show component (improved visibility)
+  // Show idle state when not running
 
   // Calculate success rate
   const totalProcessed = state.results.success.length + state.results.failed.length;
@@ -56,6 +54,10 @@ export function SyncProgressBar({
     totalProcessed > 0
       ? Math.round((state.results.success.length / totalProcessed) * 100)
       : 0;
+
+  // Determine component state
+  const isIdle = !state.isRunning && state.progress === 0;
+  const isCompleted = !state.isRunning && state.progress > 0;
 
   return (
     <Card className={cn('p-6 space-y-4', className)}>
@@ -67,10 +69,17 @@ export function SyncProgressBar({
               <Loader2 className="h-5 w-5 animate-spin text-primary" />
               <h3 className="text-lg font-semibold">Sincronização em Andamento</h3>
             </>
-          ) : (
+          ) : isCompleted ? (
             <>
               <CheckCircle2 className="h-5 w-5 text-success" />
               <h3 className="text-lg font-semibold">Sincronização Concluída</h3>
+            </>
+          ) : (
+            <>
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              <h3 className="text-lg font-semibold text-muted-foreground">
+                Aguardando Sincronização
+              </h3>
             </>
           )}
         </div>
@@ -97,15 +106,22 @@ export function SyncProgressBar({
         </Badge>
       </div>
 
-      {/* Current Ticker */}
-      {state.isRunning && state.currentTicker && (
+      {/* Current Ticker or Idle Message */}
+      {state.isRunning && state.currentTicker ? (
         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
           <TrendingUp className="h-4 w-4" />
           <span>
             Processando: <span className="font-semibold text-foreground">{state.currentTicker}</span>
           </span>
         </div>
-      )}
+      ) : isIdle ? (
+        <div className="rounded-lg bg-muted/50 p-3">
+          <p className="text-sm text-muted-foreground">
+            Nenhuma sincronização em andamento. Use o botão &quot;Sincronizar em Massa&quot;
+            ou &quot;Re-Sincronizar&quot; para iniciar.
+          </p>
+        </div>
+      ) : null}
 
       {/* Progress Bar */}
       <div className="space-y-2">

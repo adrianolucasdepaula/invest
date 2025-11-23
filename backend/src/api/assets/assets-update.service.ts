@@ -1,7 +1,15 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, LessThan } from 'typeorm';
-import { Asset, FundamentalData, UpdateLog, UpdateStatus, UpdateTrigger, Portfolio, PortfolioPosition } from '@database/entities';
+import {
+  Asset,
+  FundamentalData,
+  UpdateLog,
+  UpdateStatus,
+  UpdateTrigger,
+  Portfolio,
+  PortfolioPosition,
+} from '@database/entities';
 import { ScrapersService } from '../../scrapers/scrapers.service';
 import { AppWebSocketGateway } from '../../websocket/websocket.gateway';
 
@@ -111,7 +119,9 @@ export class AssetsUpdateService {
 
       // 6. Validate data quality
       if (!scrapedResult || scrapedResult.sourcesCount < this.MIN_SOURCES) {
-        throw new Error(`Insufficient data sources: ${scrapedResult?.sourcesCount || 0} < ${this.MIN_SOURCES}`);
+        throw new Error(
+          `Insufficient data sources: ${scrapedResult?.sourcesCount || 0} < ${this.MIN_SOURCES}`,
+        );
       }
 
       if (scrapedResult.confidence < this.MIN_CONFIDENCE) {
@@ -176,7 +186,9 @@ export class AssetsUpdateService {
 
       // If max retries reached, disable auto-update
       if (asset.updateRetryCount >= this.MAX_RETRY_COUNT) {
-        this.logger.warn(`[UPDATE-SINGLE] Max retries reached for ${ticker}, disabling auto-update`);
+        this.logger.warn(
+          `[UPDATE-SINGLE] Max retries reached for ${ticker}, disabling auto-update`,
+        );
         asset.autoUpdateEnabled = false;
       }
 
@@ -213,10 +225,7 @@ export class AssetsUpdateService {
    * MÉTODO 2: Atualizar todos os ativos de um portfólio
    * Usado quando o usuário quer atualizar todos os ativos do seu portfólio
    */
-  async updatePortfolioAssets(
-    portfolioId: string,
-    userId: string,
-  ): Promise<BatchUpdateResult> {
+  async updatePortfolioAssets(portfolioId: string, userId: string): Promise<BatchUpdateResult> {
     this.logger.log(`[UPDATE-PORTFOLIO] Starting update for portfolio ${portfolioId}`);
     const startTime = Date.now();
 
@@ -231,8 +240,8 @@ export class AssetsUpdateService {
     }
 
     // 2. Extract unique assets from positions
-    const assets = portfolio.positions.map(pos => pos.asset);
-    const uniqueTickers = [...new Set(assets.map(a => a.ticker))];
+    const assets = portfolio.positions.map((pos) => pos.asset);
+    const uniqueTickers = [...new Set(assets.map((a) => a.ticker))];
 
     if (uniqueTickers.length === 0) {
       this.logger.warn(`[UPDATE-PORTFOLIO] Portfolio ${portfolioId} has no assets`);
@@ -297,7 +306,9 @@ export class AssetsUpdateService {
       duration,
     });
 
-    this.logger.log(`[UPDATE-PORTFOLIO] ✅ Completed portfolio ${portfolioId}: ${successCount}/${uniqueTickers.length} successful in ${duration}ms`);
+    this.logger.log(
+      `[UPDATE-PORTFOLIO] ✅ Completed portfolio ${portfolioId}: ${successCount}/${uniqueTickers.length} successful in ${duration}ms`,
+    );
 
     return {
       totalAssets: uniqueTickers.length,
@@ -329,8 +340,8 @@ export class AssetsUpdateService {
       where: { ticker: In(tickers) },
     });
 
-    const foundTickers = assets.map(a => a.ticker);
-    const notFoundTickers = tickers.filter(t => !foundTickers.includes(t));
+    const foundTickers = assets.map((a) => a.ticker);
+    const notFoundTickers = tickers.filter((t) => !foundTickers.includes(t));
 
     if (notFoundTickers.length > 0) {
       this.logger.warn(`[UPDATE-MULTIPLE] Tickers not found: ${notFoundTickers.join(', ')}`);
@@ -383,7 +394,9 @@ export class AssetsUpdateService {
       duration,
     });
 
-    this.logger.log(`[UPDATE-MULTIPLE] ✅ Completed batch: ${successCount}/${foundTickers.length} successful in ${duration}ms`);
+    this.logger.log(
+      `[UPDATE-MULTIPLE] ✅ Completed batch: ${successCount}/${foundTickers.length} successful in ${duration}ms`,
+    );
 
     return {
       totalAssets: foundTickers.length,
@@ -411,7 +424,7 @@ export class AssetsUpdateService {
       .andWhere('asset.autoUpdateEnabled = :autoUpdateEnabled', { autoUpdateEnabled: true })
       .andWhere(
         '(asset.lastUpdated IS NULL OR asset.lastUpdated < :outdatedDate OR asset.lastUpdateStatus = :failedStatus)',
-        { outdatedDate, failedStatus: 'failed' }
+        { outdatedDate, failedStatus: 'failed' },
       );
 
     // If portfolioId provided, filter by portfolio assets
@@ -432,10 +445,7 @@ export class AssetsUpdateService {
    * MÉTODO 5: Atualizar ativos por setor
    * Usado para atualizações temáticas (ex: atualizar todos bancos)
    */
-  async updateAssetsBySector(
-    sector: string,
-    userId?: string,
-  ): Promise<BatchUpdateResult> {
+  async updateAssetsBySector(sector: string, userId?: string): Promise<BatchUpdateResult> {
     this.logger.log(`[UPDATE-SECTOR] Starting update for sector: ${sector}`);
     const startTime = Date.now();
 
@@ -452,7 +462,7 @@ export class AssetsUpdateService {
       throw new NotFoundException(`No active assets found for sector: ${sector}`);
     }
 
-    const tickers = assets.map(a => a.ticker);
+    const tickers = assets.map((a) => a.ticker);
     this.logger.log(`[UPDATE-SECTOR] Found ${tickers.length} assets in sector ${sector}`);
 
     // 2. Update all assets using updateMultipleAssets
@@ -488,7 +498,7 @@ export class AssetsUpdateService {
       };
     }
 
-    const tickers = failedAssets.map(a => a.ticker);
+    const tickers = failedAssets.map((a) => a.ticker);
     this.logger.log(`[RETRY-FAILED] Found ${tickers.length} failed assets to retry`);
 
     // 2. Update all assets using updateMultipleAssets
@@ -569,6 +579,6 @@ export class AssetsUpdateService {
    * MÉTODO AUXILIAR: Sleep para rate limiting
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

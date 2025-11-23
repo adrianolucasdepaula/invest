@@ -202,7 +202,8 @@ export function useSyncWebSocket(options?: {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [options?.autoRefresh, options?.onSyncComplete]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options?.autoRefresh, options?.onSyncComplete]); // Only reconnect when these specific properties change, not when options object reference changes
 
   /**
    * Limpar logs e resetar estado

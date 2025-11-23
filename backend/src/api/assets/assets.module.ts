@@ -1,6 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Asset, AssetPrice, FundamentalData, UpdateLog, Portfolio, PortfolioPosition } from '@database/entities';
+import {
+  Asset,
+  AssetPrice,
+  FundamentalData,
+  UpdateLog,
+  Portfolio,
+  PortfolioPosition,
+} from '@database/entities';
 import { AssetsController } from './assets.controller';
 import { AssetsUpdateController } from './assets-update.controller';
 import { AssetsService } from './assets.service';

@@ -18,7 +18,8 @@ const NEW_IBOV_ASSETS = [
     name: 'Allos S.A.',
     sector: 'Shopping Centers',
     type: AssetType.STOCK,
-    description: 'Allos é uma empresa de shopping centers resultante da fusão da Aliansce com Sonae Sierra Brasil.',
+    description:
+      'Allos é uma empresa de shopping centers resultante da fusão da Aliansce com Sonae Sierra Brasil.',
   },
   {
     ticker: 'ASAI3',
@@ -39,14 +40,16 @@ const NEW_IBOV_ASSETS = [
     name: 'Centrais Elétricas Brasileiras S.A. - Eletrobrás',
     sector: 'Energia Elétrica',
     type: AssetType.STOCK,
-    description: 'Eletrobrás é a maior empresa de energia elétrica da América Latina. AXIA3 são as ações ordinárias.',
+    description:
+      'Eletrobrás é a maior empresa de energia elétrica da América Latina. AXIA3 são as ações ordinárias.',
   },
   {
     ticker: 'AXIA6',
     name: 'Centrais Elétricas Brasileiras S.A. - Eletrobrás',
     sector: 'Energia Elétrica',
     type: AssetType.STOCK,
-    description: 'Eletrobrás é a maior empresa de energia elétrica da América Latina. AXIA6 são as ações preferenciais classe B.',
+    description:
+      'Eletrobrás é a maior empresa de energia elétrica da América Latina. AXIA6 são as ações preferenciais classe B.',
   },
   {
     ticker: 'AZZA3',
@@ -60,14 +63,16 @@ const NEW_IBOV_ASSETS = [
     name: 'BB Seguridade Participações S.A.',
     sector: 'Seguros',
     type: AssetType.STOCK,
-    description: 'BB Seguridade é a holding de seguros, previdência e capitalização do Banco do Brasil.',
+    description:
+      'BB Seguridade é a holding de seguros, previdência e capitalização do Banco do Brasil.',
   },
   {
     ticker: 'BBDC3',
     name: 'Banco Bradesco S.A.',
     sector: 'Bancos',
     type: AssetType.STOCK,
-    description: 'Bradesco é um dos maiores bancos privados do Brasil. BBDC3 são as ações ordinárias.',
+    description:
+      'Bradesco é um dos maiores bancos privados do Brasil. BBDC3 são as ações ordinárias.',
   },
   {
     ticker: 'BRKM5',
@@ -81,7 +86,8 @@ const NEW_IBOV_ASSETS = [
     name: 'Brava Energia S.A.',
     sector: 'Petróleo e Gás',
     type: AssetType.STOCK,
-    description: 'Brava Energia (antiga 3R Petroleum) é uma empresa de exploração e produção de petróleo e gás.',
+    description:
+      'Brava Energia (antiga 3R Petroleum) é uma empresa de exploração e produção de petróleo e gás.',
   },
   {
     ticker: 'BPAC11',
@@ -95,7 +101,8 @@ const NEW_IBOV_ASSETS = [
     name: 'Caixa Seguridade Participações S.A.',
     sector: 'Seguros',
     type: AssetType.STOCK,
-    description: 'Caixa Seguridade é a holding de seguros e previdência da Caixa Econômica Federal.',
+    description:
+      'Caixa Seguridade é a holding de seguros e previdência da Caixa Econômica Federal.',
   },
   {
     ticker: 'CEAB3',
@@ -109,7 +116,8 @@ const NEW_IBOV_ASSETS = [
     name: 'Cogna Educação S.A.',
     sector: 'Educação',
     type: AssetType.STOCK,
-    description: 'Cogna Educação (antiga Kroton) é uma empresa de educação que inclui marcas como Anhanguera, Unopar, Pitágoras e Vasta.',
+    description:
+      'Cogna Educação (antiga Kroton) é uma empresa de educação que inclui marcas como Anhanguera, Unopar, Pitágoras e Vasta.',
   },
 ];
 

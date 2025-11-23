@@ -22,7 +22,7 @@ export class SentimentAnalystAgent extends BaseFinancialAgent {
   }
 
   async analyze(context: AnalysisContext): Promise<AgentResponse> {
-    const { ticker, stockData, news } = context;
+    const { stockData, news } = context;
 
     const systemPrompt = `Você é um analista de sentimento de mercado especializado em notícias financeiras.
 Analise o sentimento (positivo, neutro, negativo) de notícias e eventos relacionados à empresa.

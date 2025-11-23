@@ -67,9 +67,7 @@ export class AssetUpdateProcessor {
 
   @Process('update-multiple-assets')
   async handleMultipleAssets(job: Job<MultipleAssetsUpdateJob>) {
-    this.logger.log(
-      `[JOB ${job.id}] Processing batch update: ${job.data.tickers.length} assets`,
-    );
+    this.logger.log(`[JOB ${job.id}] Processing batch update: ${job.data.tickers.length} assets`);
 
     const result = await this.assetsUpdateService.updateMultipleAssets(
       job.data.tickers,
@@ -82,9 +80,7 @@ export class AssetUpdateProcessor {
 
   @Process('update-portfolio')
   async handlePortfolio(job: Job<PortfolioUpdateJob>) {
-    this.logger.log(
-      `[JOB ${job.id}] Processing portfolio update: ${job.data.portfolioId}`,
-    );
+    this.logger.log(`[JOB ${job.id}] Processing portfolio update: ${job.data.portfolioId}`);
 
     const result = await this.assetsUpdateService.updatePortfolioAssets(
       job.data.portfolioId,
@@ -167,9 +163,6 @@ export class AssetUpdateProcessor {
 
   @OnQueueFailed()
   onFailed(job: Job<AssetUpdateJobData>, error: Error) {
-    this.logger.error(
-      `[JOB ${job.id}] ❌ Failed ${job.name}: ${error.message}`,
-      error.stack,
-    );
+    this.logger.error(`[JOB ${job.id}] ❌ Failed ${job.name}: ${error.message}`, error.stack);
   }
 }

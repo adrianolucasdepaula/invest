@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { useSyncStatus } from '@/lib/hooks/useDataSync';
 import { AssetSyncStatus } from '@/lib/types/data-sync';
 import type { AssetSyncStatusDto } from '@/lib/types/data-sync';
+import { IndividualSyncModal } from './IndividualSyncModal';
 
 /**
  * Helper: Get color class for sync status
@@ -133,6 +134,9 @@ const formatLastSync = (date: Date | null): string => {
  */
 export function SyncStatusTable() {
   const [filter, setFilter] = useState<'all' | AssetSyncStatus>('all');
+  const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const { data: syncStatus, isLoading, error, refetch } = useSyncStatus();
 
   // Filter assets by status
@@ -152,10 +156,24 @@ export function SyncStatusTable() {
   // Calculate partial count
   const partialCount = summary.total - summary.synced - summary.pending - summary.failed;
 
-  // Handle individual asset re-sync
-  const handleResync = async (ticker: string) => {
-    console.log(`[SYNC] Re-syncing ${ticker}...`);
-    // TODO: Implement re-sync logic in A.3 (BulkSyncButton.tsx)
+  /**
+   * FASE 37: Handle individual asset re-sync
+   * Opens modal to configure period (startYear, endYear)
+   */
+  const handleResync = (ticker: string) => {
+    setSelectedTicker(ticker);
+    setIsModalOpen(true);
+  };
+
+  /**
+   * Handle modal close
+   * Refetch status to show updated data
+   */
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedTicker(null);
+    // Refetch status to update table
+    refetch();
   };
 
   // Loading state
@@ -317,6 +335,19 @@ export function SyncStatusTable() {
                     </Badge>
                   </div>
 
+                  {/* Period Badge - DESTAQUE DO PERÍODO DE DADOS */}
+                  {asset.oldestDate && asset.newestDate && (
+                    <div className="mb-3">
+                      <Badge
+                        variant="outline"
+                        className="bg-primary/5 border-primary/20 text-primary text-sm px-3 py-1.5"
+                      >
+                        <Calendar className="mr-2 h-4 w-4" />
+                        Período dos Dados: {formatDate(asset.oldestDate)} até {formatDate(asset.newestDate)}
+                      </Badge>
+                    </div>
+                  )}
+
                   {/* Metrics Grid */}
                   <div className="grid grid-cols-5 gap-4">
                     <div>
@@ -389,6 +420,13 @@ export function SyncStatusTable() {
           ))
         )}
       </div>
+
+      {/* Individual Sync Modal */}
+      <IndividualSyncModal
+        ticker={selectedTicker}
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+      />
     </div>
   );
 }

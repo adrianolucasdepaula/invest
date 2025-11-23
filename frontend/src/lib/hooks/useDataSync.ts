@@ -3,8 +3,8 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getSyncStatus, startBulkSync, getSyncStats } from '../api/data-sync';
-import type { SyncBulkRequestDto } from '../types/data-sync';
+import { getSyncStatus, startBulkSync, startIndividualSync, getSyncStats } from '../api/data-sync';
+import type { SyncBulkRequestDto, SyncIndividualRequestDto } from '../types/data-sync';
 
 /**
  * Hook para obter status de sincronização de todos os ativos
@@ -53,6 +53,43 @@ export function useStartBulkSync() {
     onSuccess: () => {
       // Invalidar cache de status para refetch automático
       queryClient.invalidateQueries({ queryKey: ['sync-status'] });
+    },
+  });
+}
+
+/**
+ * FASE 37: Hook para iniciar sincronização individual de um ativo
+ *
+ * Comportamento:
+ * 1. Envia requisição POST /sync-cotahist
+ * 2. Backend aguarda conclusão e retorna HTTP 200 OK (síncrono)
+ * 3. Invalida cache de sync-status e sync-stats após sucesso
+ * 4. Progresso enviado via WebSocket durante execução
+ *
+ * Diferenças vs useStartBulkSync:
+ * - Síncrono (aguarda conclusão)
+ * - Retorna estatísticas detalhadas (totalRecords, processingTime, sources)
+ * - Mais rápido (1 ativo, ~10-15 segundos)
+ *
+ * @example
+ * const syncMutation = useStartIndividualSync();
+ * await syncMutation.mutateAsync({
+ *   ticker: 'ABEV3',
+ *   startYear: 2020,
+ *   endYear: 2024
+ * });
+ * console.log(syncMutation.data?.totalRecords); // 1200
+ * console.log(syncMutation.data?.processingTime); // 12.5
+ */
+export function useStartIndividualSync() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: SyncIndividualRequestDto) => startIndividualSync(request),
+    onSuccess: () => {
+      // Invalidar cache de status para refetch automático
+      queryClient.invalidateQueries({ queryKey: ['sync-status'] });
+      queryClient.invalidateQueries({ queryKey: ['sync-stats'] });
     },
   });
 }

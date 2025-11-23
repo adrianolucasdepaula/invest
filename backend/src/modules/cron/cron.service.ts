@@ -79,9 +79,7 @@ export class CronService {
         this.logger.log(`✅ Synced ${ticker} for ${currentYear}`);
       } catch (error: any) {
         failureCount++;
-        this.logger.error(
-          `❌ Failed to sync ${ticker}: ${error.message}`,
-        );
+        this.logger.error(`❌ Failed to sync ${ticker}: ${error.message}`);
 
         // Continue with next ticker (partial success allowed)
         continue;
@@ -98,9 +96,7 @@ export class CronService {
 
     // Alert if failure rate > 20%
     if (failureCount / totalTickers > 0.2) {
-      this.logger.warn(
-        `⚠️ High failure rate: ${failureCount}/${totalTickers} tickers failed`,
-      );
+      this.logger.warn(`⚠️ High failure rate: ${failureCount}/${totalTickers} tickers failed`);
     }
   }
 

@@ -66,7 +66,7 @@ export interface TechnicalIndicators {
   // Trend Analysis (Single Values)
   trend?: 'UPTREND' | 'DOWNTREND' | 'SIDEWAYS';
   trend_strength?: number;
-  
+
   // Legacy/Alternative structures (kept for compatibility if needed, but marked optional)
   sma?: SmaIndicator;
   ema?: EmaIndicator;

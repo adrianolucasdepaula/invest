@@ -38,8 +38,6 @@ export class DocumentShardingService {
   shardDocument(document: string, options: ShardingOptions = {}): DocumentChunk[] {
     const { maxTokensPerChunk = 2000, overlapTokens = 200, preserveParagraphs = true } = options;
 
-    const chunks: DocumentChunk[] = [];
-
     if (preserveParagraphs) {
       return this.shardByParagraphs(document, maxTokensPerChunk);
     } else {
@@ -76,7 +74,7 @@ export class DocumentShardingService {
         // Divide o parágrafo grande
         const subChunks = this.shardByTokens(paragraph, maxTokens, 0);
         chunks.push(
-          ...subChunks.map((c, i) => ({
+          ...subChunks.map((c, _i) => ({
             ...c,
             id: `chunk_${chunkId++}`,
           })),

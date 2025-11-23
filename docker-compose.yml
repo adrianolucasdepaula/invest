@@ -169,8 +169,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      python-service:
-        condition: service_healthy
+      # python-service dependency removed (not required for backend startup)
+      # python-service is optional - only used for technical indicators (RSI, MACD, etc)
+      # economic-indicators module uses BRAPI directly, not python-service
+      # python-service:
+      #   condition: service_healthy
     networks:
       - invest_network
     restart: unless-stopped

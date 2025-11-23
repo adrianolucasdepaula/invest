@@ -1,8 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  TechnicalIndicatorsService,
-  PriceData,
-} from './technical-indicators.service';
+import { TechnicalIndicatorsService, PriceData } from './technical-indicators.service';
 import { TechnicalIndicators } from '../../api/market-data/interfaces';
 
 export interface TechnicalAnalysisResult {
@@ -27,7 +24,7 @@ export interface TechnicalAnalysisResult {
 export class TechnicalAnalysisService {
   private readonly logger = new Logger(TechnicalAnalysisService.name);
 
-  constructor(private technicalIndicators: TechnicalIndicatorsService) { }
+  constructor(private technicalIndicators: TechnicalIndicatorsService) {}
 
   /**
    * Perform complete technical analysis
@@ -369,9 +366,7 @@ export class TechnicalAnalysisService {
         `📊 RSI em ${rsi.toFixed(1)} - Ativo sobrevendido, possível reversão de alta`,
       );
     } else if (rsi > 70) {
-      recommendations.push(
-        `📊 RSI em ${rsi.toFixed(1)} - Ativo sobrecomprado, possível correção`,
-      );
+      recommendations.push(`📊 RSI em ${rsi.toFixed(1)} - Ativo sobrecomprado, possível correção`);
     }
 
     // Trend recommendations

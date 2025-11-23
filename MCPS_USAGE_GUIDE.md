@@ -18,8 +18,12 @@
 7. [Playwright MCP](#6-playwright-mcp)
 8. [Chrome DevTools MCP](#7-chrome-devtools-mcp)
 9. [Selenium MCP](#8-selenium-mcp)
-10. [Casos de Uso no Projeto](#casos-de-uso-no-projeto)
-11. [Workflows Recomendados](#workflows-recomendados)
+10. [PostgreSQL MCP](#9-postgresql-mcp)
+11. [GitHub MCP](#10-github-mcp)
+12. [Docker MCP](#11-docker-mcp)
+13. [Memory MCP](#12-memory-mcp)
+14. [Casos de Uso no Projeto](#casos-de-uso-no-projeto)
+15. [Workflows Recomendados](#workflows-recomendados)
 
 ---
 
@@ -37,76 +41,64 @@
 | Playwright | Automação Web | ✅ Connected | Testes E2E e automação browser |
 | Chrome DevTools | Debugging | ✅ Connected | Inspeção e debugging web |
 | Selenium | Automação Web | ✅ Connected | Automação web alternativa |
+| PostgreSQL | Database | ✅ Connected | Acesso direto ao banco de dados |
+| GitHub | DevOps | ✅ Connected | Gestão de PRs, Issues e Repositório |
+| Docker | DevOps | ✅ Connected | Gerenciamento de containers |
+| Memory | Knowledge | ✅ Connected | Grafo de conhecimento persistente |
 
 ### Configuração
 
-⚠️ **IMPORTANTE - Windows:** No Windows, MCPs que usam `npx` requerem o wrapper `cmd /c` para funcionar corretamente.
+### Configuração
 
-**Configuração Correta para Windows:**
+⚠️ **IMPORTANTE:** O projeto agora utiliza uma configuração centralizada em `mcp_config.json`.
+
+**Localização:**
+- Global: `C:\Users\adria\.gemini\antigravity\mcp_config.json`
+- Projeto: `.agent/mcp_config.json`
+
+**Configuração Atual (`mcp_config.json`):**
 
 ```json
-// C:\Users\adria\.claude.json
 {
-  "projects": {
-    "invest-claude-web": {
-      "mcpServers": {
-        "sequential-thinking": {
-          "type": "stdio",
-          "command": "cmd",
-          "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-sequential-thinking"]
-        },
-        "filesystem": {
-          "type": "stdio",
-          "command": "cmd",
-          "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-filesystem", "C:\\Users\\adria\\Dropbox\\PC (2)\\Downloads\\Python - Projetos\\invest-claude-web"]
-        },
-        "shell": {
-          "type": "stdio",
-          "command": "cmd",
-          "args": ["/c", "npx", "-y", "shell-mcp-server"]
-        },
-        "a11y": {
-          "type": "stdio",
-          "command": "cmd",
-          "args": ["/c", "npx", "a11y-mcp"]
-        },
-        "context7": {
-          "type": "stdio",
-          "command": "cmd",
-          "args": ["/c", "npx", "-y", "@upstash/context7-mcp@latest"]
-        }
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://invest_user:invest_password@localhost:5532/invest_db"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-playwright"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:\\Users\\adria\\Dropbox\\PC (2)\\Downloads\\Python - Projetos\\invest-claude-web"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "docker": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-docker"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "..."
       }
     }
   }
 }
 ```
-
-**Configuração .mcp.json (Projeto):**
-
-```json
-// .mcp.json
-{
-  "mcpServers": {
-    "playwright": {
-      "command": "cmd",
-      "args": ["/c", "npx", "@playwright/mcp@latest"],
-      "env": {}
-    },
-    "chrome-devtools": {
-      "command": "cmd",
-      "args": ["/c", "npx", "chrome-devtools-mcp@latest"],
-      "env": {}
-    },
-    "selenium": {
-      "command": "cmd",
-      "args": ["/c", "npx", "-y", "@angiejones/mcp-selenium"],
-      "env": {}
-    }
-  }
-}
-```
-
-**Nota para Linux/Mac:** Use `command: "npx"` diretamente sem `cmd /c`.
 
 ---
 
@@ -630,7 +622,7 @@ Solicitar:
 
 ---
 
-## 8. SELENIUM MCP
+## 9. SELENIUM MCP
 
 ### 📊 Informações Técnicas
 
@@ -654,7 +646,63 @@ Solicitar:
 
 ---
 
-## 🎯 CASOS DE USO NO PROJETO
+## 10. POSTGRESQL MCP
+
+### 📊 Informações Técnicas
+- **Pacote:** `@modelcontextprotocol/server-postgres`
+- **Propósito:** Acesso direto ao banco de dados PostgreSQL
+- **Conexão:** `postgresql://invest_user:invest_password@localhost:5532/invest_db`
+
+### 🛠️ Ferramentas Principais
+- `query`: Executar queries SQL (SELECT apenas recomendado para leitura)
+- `get_schema`: Inspecionar estrutura do banco
+
+---
+
+## 11. GITHUB MCP
+
+### 📊 Informações Técnicas
+- **Pacote:** `@modelcontextprotocol/server-github`
+- **Propósito:** Integração completa com GitHub (PRs, Issues, Commits)
+- **Autenticação:** Via PAT em `mcp_config.json`
+
+### 🛠️ Ferramentas Principais
+- `create_pull_request`: Criar PRs
+- `list_issues`: Listar issues
+- `push_files`: Commit e push de arquivos
+- `search_repositories`: Buscar repositórios
+
+---
+
+## 12. DOCKER MCP
+
+### 📊 Informações Técnicas
+- **Pacote:** `@modelcontextprotocol/server-docker`
+- **Propósito:** Gerenciamento de containers Docker
+- **Socket:** `/var/run/docker.sock` (ou pipe no Windows)
+
+### 🛠️ Ferramentas Principais
+- `list_containers`: Ver containers ativos
+- `logs`: Ver logs de containers
+- `compose_up`: Subir stack
+- `compose_down`: Derrubar stack
+
+---
+
+## 13. MEMORY MCP
+
+### 📊 Informações Técnicas
+- **Pacote:** `@modelcontextprotocol/server-memory`
+- **Propósito:** Grafo de conhecimento persistente para o agente
+
+### 🛠️ Ferramentas Principais
+- `create_entity`: Criar entidade no grafo
+- `create_relation`: Criar relacionamento
+- `read_graph`: Ler o grafo de conhecimento
+
+---
+
+## 14. CASOS DE USO NO PROJETO
 
 ### Workflow 1: Refatoração de Sistema Reports
 
@@ -741,7 +789,7 @@ Solicitar:
 
 ---
 
-## ✅ WORKFLOWS RECOMENDADOS
+## 15. WORKFLOWS RECOMENDADOS
 
 ### 1. Pre-Commit Validation
 

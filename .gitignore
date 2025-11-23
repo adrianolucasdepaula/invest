@@ -193,3 +193,4 @@ invest-claude-web/
 oauth_test_logs.txt
 oauth_test_summary.txt
 temp_logs.txt
+.agent/

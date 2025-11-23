@@ -102,9 +102,11 @@ export class PdfGeneratorService {
    * Prepara dados da análise para o template
    */
   private async prepareReportData(analysis: Analysis): Promise<ReportData> {
-    const asset = analysis.asset || await this.assetRepository.findOne({
-      where: { id: analysis.assetId },
-    });
+    const asset =
+      analysis.asset ||
+      (await this.assetRepository.findOne({
+        where: { id: analysis.assetId },
+      }));
 
     if (!asset) {
       throw new Error(`Asset not found for analysis ${analysis.id}`);
@@ -289,14 +291,16 @@ export class PdfGeneratorService {
           createdAt: analysis.createdAt,
           completedAt: analysis.completedAt,
         },
-        currentPrice: latestPrice ? {
-          price: Number(latestPrice.close),
-          date: latestPrice.date,
-          change: Number(latestPrice.change),
-          changePercent: Number(latestPrice.changePercent),
-          volume: Number(latestPrice.volume),
-          marketCap: latestPrice.marketCap ? Number(latestPrice.marketCap) : null,
-        } : null,
+        currentPrice: latestPrice
+          ? {
+              price: Number(latestPrice.close),
+              date: latestPrice.date,
+              change: Number(latestPrice.change),
+              changePercent: Number(latestPrice.changePercent),
+              volume: Number(latestPrice.volume),
+              marketCap: latestPrice.marketCap ? Number(latestPrice.marketCap) : null,
+            }
+          : null,
         risks: analysis.risks || null,
       };
 

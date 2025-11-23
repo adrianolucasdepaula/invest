@@ -19,5 +19,14 @@ else
     fi
 fi
 
+# Build the application (creates /app/dist)
+if [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+    echo "🔨 Building application (dist folder empty or missing)..."
+    npm run build
+    echo "✅ Build completed successfully!"
+else
+    echo "✅ Dist folder already exists (build will run in watch mode)"
+fi
+
 echo "🎯 Starting application..."
 exec "$@"

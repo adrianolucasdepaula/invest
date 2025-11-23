@@ -180,7 +180,6 @@ export class MultiAgentAnalysisService {
 
     const topRecommendation = sortedRecs[0][0] as 'BUY' | 'HOLD' | 'SELL';
     const topScore = sortedRecs[0][1];
-    const secondScore = sortedRecs[1]?.[1] || 0;
 
     // Nível de acordo: quão unânimes são os agentes
     const agreement = topScore / totalConfidence;

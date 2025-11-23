@@ -1,7 +1,14 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Analysis, AnalysisType, AnalysisStatus, Asset, AssetPrice, Recommendation, User } from '@database/entities';
+import {
+  Analysis,
+  AnalysisType,
+  AnalysisStatus,
+  Asset,
+  AssetPrice,
+  Recommendation,
+} from '@database/entities';
 import { ScrapersService } from '@scrapers/scrapers.service';
 
 @Injectable()
@@ -93,7 +100,9 @@ export class AnalysisService {
       });
 
       if (prices.length < 20) {
-        throw new Error('Insufficient price data for technical analysis (minimum 20 days required)');
+        throw new Error(
+          'Insufficient price data for technical analysis (minimum 20 days required)',
+        );
       }
 
       // Reverse to chronological order for calculations
@@ -137,8 +146,8 @@ export class AnalysisService {
   }
 
   private calculateTechnicalIndicators(prices: AssetPrice[]) {
-    const closes = prices.map(p => Number(p.close));
-    const volumes = prices.map(p => Number(p.volume));
+    const closes = prices.map((p) => Number(p.close));
+    const volumes = prices.map((p) => Number(p.volume));
 
     return {
       rsi: this.calculateRSI(closes, 14),
@@ -150,9 +159,15 @@ export class AnalysisService {
       macd: this.calculateMACD(closes),
       volume_avg: this.calculateSMA(volumes, 20),
       current_price: closes[closes.length - 1],
-      price_change_1d: ((closes[closes.length - 1] / closes[closes.length - 2]) - 1) * 100,
-      price_change_5d: closes.length >= 5 ? ((closes[closes.length - 1] / closes[closes.length - 6]) - 1) * 100 : null,
-      price_change_20d: closes.length >= 20 ? ((closes[closes.length - 1] / closes[closes.length - 21]) - 1) * 100 : null,
+      price_change_1d: (closes[closes.length - 1] / closes[closes.length - 2] - 1) * 100,
+      price_change_5d:
+        closes.length >= 5
+          ? (closes[closes.length - 1] / closes[closes.length - 6] - 1) * 100
+          : null,
+      price_change_20d:
+        closes.length >= 20
+          ? (closes[closes.length - 1] / closes[closes.length - 21] - 1) * 100
+          : null,
     };
   }
 
@@ -186,7 +201,7 @@ export class AnalysisService {
 
     if (avgLoss === 0) return 100;
     const rs = avgGain / avgLoss;
-    return 100 - (100 / (1 + rs));
+    return 100 - 100 / (1 + rs);
   }
 
   private calculateSMA(prices: number[], period: number): number | null {
@@ -230,9 +245,11 @@ export class AnalysisService {
     let score = 0;
 
     // RSI signals
-    if (indicators.rsi < 30) score += 2; // Oversold - buy signal
+    if (indicators.rsi < 30)
+      score += 2; // Oversold - buy signal
     else if (indicators.rsi < 40) score += 1;
-    else if (indicators.rsi > 70) score -= 2; // Overbought - sell signal
+    else if (indicators.rsi > 70)
+      score -= 2; // Overbought - sell signal
     else if (indicators.rsi > 60) score -= 1;
 
     // Moving average signals
@@ -269,7 +286,8 @@ export class AnalysisService {
 
     // Check MA alignment
     if (indicators.sma20 && indicators.sma50) {
-      const trend = (indicators.current_price > indicators.sma20) === (indicators.sma20 > indicators.sma50);
+      const trend =
+        indicators.current_price > indicators.sma20 === indicators.sma20 > indicators.sma50;
       if (trend) signals += 2;
       total += 2;
     }
@@ -288,16 +306,19 @@ export class AnalysisService {
     const rsi = indicators.rsi.toFixed(1);
     const change5d = indicators.price_change_5d?.toFixed(2) || 'N/A';
 
-    return `Análise técnica indica ${recommendation.toUpperCase()}. ` +
-           `Preço atual: R$ ${price}. RSI: ${rsi}. ` +
-           `Variação 5 dias: ${change5d}%.`;
+    return (
+      `Análise técnica indica ${recommendation.toUpperCase()}. ` +
+      `Preço atual: R$ ${price}. RSI: ${rsi}. ` +
+      `Variação 5 dias: ${change5d}%.`
+    );
   }
 
   private identifySignals(indicators: any): string[] {
     const signals: string[] = [];
 
     if (indicators.rsi < 30) signals.push('RSI indica sobrevenda (possível reversão de alta)');
-    else if (indicators.rsi > 70) signals.push('RSI indica sobrecompra (possível reversão de baixa)');
+    else if (indicators.rsi > 70)
+      signals.push('RSI indica sobrecompra (possível reversão de baixa)');
 
     if (indicators.sma20 && indicators.current_price > indicators.sma20) {
       signals.push('Preço acima da SMA 20 (tendência de alta)');
@@ -314,9 +335,12 @@ export class AnalysisService {
 
   private identifyTrends(indicators: any): any {
     return {
-      short_term: indicators.sma20 && indicators.current_price > indicators.sma20 ? 'bullish' : 'bearish',
-      medium_term: indicators.sma50 && indicators.current_price > indicators.sma50 ? 'bullish' : 'bearish',
-      long_term: indicators.sma200 && indicators.current_price > indicators.sma200 ? 'bullish' : 'bearish',
+      short_term:
+        indicators.sma20 && indicators.current_price > indicators.sma20 ? 'bullish' : 'bearish',
+      medium_term:
+        indicators.sma50 && indicators.current_price > indicators.sma50 ? 'bullish' : 'bearish',
+      long_term:
+        indicators.sma200 && indicators.current_price > indicators.sma200 ? 'bullish' : 'bearish',
     };
   }
 
@@ -343,7 +367,9 @@ export class AnalysisService {
       });
 
       if (existingAnalysis) {
-        this.logger.log(`Removing old analysis for ${ticker} by user ${userId} before creating new one`);
+        this.logger.log(
+          `Removing old analysis for ${ticker} by user ${userId} before creating new one`,
+        );
         await this.analysisRepository.remove(existingAnalysis);
       }
     }
@@ -370,7 +396,9 @@ export class AnalysisService {
       // ✅ STEP 1: FUNDAMENTAL ANALYSIS (multi-source scraping)
       this.logger.log(`[Complete] Step 1/3: Scraping fundamental data from 6 sources...`);
       const fundamentalResult = await this.scrapersService.scrapeFundamentalData(ticker);
-      this.logger.log(`[Complete] Fundamental analysis complete: ${fundamentalResult.sourcesCount} sources, ${(fundamentalResult.confidence * 100).toFixed(1)}% confidence`);
+      this.logger.log(
+        `[Complete] Fundamental analysis complete: ${fundamentalResult.sourcesCount} sources, ${(fundamentalResult.confidence * 100).toFixed(1)}% confidence`,
+      );
 
       // ✅ STEP 2: TECHNICAL ANALYSIS (indicators from price data)
       this.logger.log(`[Complete] Step 2/3: Calculating technical indicators...`);
@@ -399,9 +427,13 @@ export class AnalysisService {
           trends: this.identifyTrends(indicators),
         };
 
-        this.logger.log(`[Complete] Technical analysis complete: ${technicalRecommendation}, ${(technicalConfidence * 100).toFixed(1)}% confidence`);
+        this.logger.log(
+          `[Complete] Technical analysis complete: ${technicalRecommendation}, ${(technicalConfidence * 100).toFixed(1)}% confidence`,
+        );
       } else {
-        this.logger.warn(`[Complete] Insufficient price data (${prices.length} days), skipping technical analysis (minimum 20 required)`);
+        this.logger.warn(
+          `[Complete] Insufficient price data (${prices.length} days), skipping technical analysis (minimum 20 required)`,
+        );
       }
 
       // ✅ STEP 3: COMBINE RESULTS (60% fundamental + 40% technical)
@@ -414,16 +446,21 @@ export class AnalysisService {
           sourcesCount: fundamentalResult.sourcesCount,
           confidence: fundamentalResult.confidence,
         },
-        technical: technicalAnalysis ? {
-          recommendation: technicalAnalysis.recommendation,
-          confidence: technicalAnalysis.confidence,
-          indicators: technicalAnalysis.indicators,
-          summary: technicalAnalysis.summary,
-          signals: technicalAnalysis.signals,
-          trends: technicalAnalysis.trends,
-        } : null,
+        technical: technicalAnalysis
+          ? {
+              recommendation: technicalAnalysis.recommendation,
+              confidence: technicalAnalysis.confidence,
+              indicators: technicalAnalysis.indicators,
+              summary: technicalAnalysis.summary,
+              signals: technicalAnalysis.signals,
+              trends: technicalAnalysis.trends,
+            }
+          : null,
         combined: {
-          recommendation: this.combineRecommendations(fundamentalResult.data, technicalRecommendation),
+          recommendation: this.combineRecommendations(
+            fundamentalResult.data,
+            technicalRecommendation,
+          ),
           confidence: technicalAnalysis
             ? this.combinedConfidence(fundamentalResult.confidence, technicalConfidence)
             : fundamentalResult.confidence, // Fallback to fundamental only if no technical data
@@ -452,7 +489,7 @@ export class AnalysisService {
 
       this.logger.log(
         `[Complete] ✓ Complete analysis finished for ${ticker} in ${analysis.processingTime}ms: ` +
-        `${analysis.recommendation} (${(analysis.confidenceScore * 100).toFixed(1)}% confidence, ${analysis.sourcesCount} sources)`,
+          `${analysis.recommendation} (${(analysis.confidenceScore * 100).toFixed(1)}% confidence, ${analysis.sourcesCount} sources)`,
       );
 
       return analysis;
@@ -486,7 +523,7 @@ export class AnalysisService {
     const technicalScore = this.scoreRecommendation(technicalRecommendation);
 
     // Weighted average: 60% fundamental + 40% technical
-    const combinedScore = (fundamentalScore * 0.6) + (technicalScore * 0.4);
+    const combinedScore = fundamentalScore * 0.6 + technicalScore * 0.4;
 
     this.logger.debug(
       `[Combine] Fundamental score: ${fundamentalScore}, Technical score: ${technicalScore}, Combined: ${combinedScore.toFixed(2)}`,
@@ -508,19 +545,22 @@ export class AnalysisService {
 
     // P/L (Price to Earnings)
     if (data.pl) {
-      if (data.pl < 10) score += 1; // Undervalued
+      if (data.pl < 10)
+        score += 1; // Undervalued
       else if (data.pl > 25) score -= 1; // Overvalued
     }
 
     // P/VP (Price to Book Value)
     if (data.pvp) {
-      if (data.pvp < 1.5) score += 1; // Undervalued
+      if (data.pvp < 1.5)
+        score += 1; // Undervalued
       else if (data.pvp > 3) score -= 1; // Overvalued
     }
 
     // ROE (Return on Equity)
     if (data.roe) {
-      if (data.roe > 15) score += 1; // Good profitability
+      if (data.roe > 15)
+        score += 1; // Good profitability
       else if (data.roe < 5) score -= 1; // Poor profitability
     }
 
@@ -538,12 +578,18 @@ export class AnalysisService {
    */
   private scoreRecommendation(rec: Recommendation): number {
     switch (rec) {
-      case Recommendation.STRONG_BUY: return 2;
-      case Recommendation.BUY: return 1;
-      case Recommendation.HOLD: return 0;
-      case Recommendation.SELL: return -1;
-      case Recommendation.STRONG_SELL: return -2;
-      default: return 0;
+      case Recommendation.STRONG_BUY:
+        return 2;
+      case Recommendation.BUY:
+        return 1;
+      case Recommendation.HOLD:
+        return 0;
+      case Recommendation.SELL:
+        return -1;
+      case Recommendation.STRONG_SELL:
+        return -2;
+      default:
+        return 0;
     }
   }
 
@@ -565,7 +611,7 @@ export class AnalysisService {
    * Weight: 60% fundamental + 40% technical
    */
   private combinedConfidence(fundamentalConf: number, technicalConf: number): number {
-    const combined = (fundamentalConf * 0.6) + (technicalConf * 0.4);
+    const combined = fundamentalConf * 0.6 + technicalConf * 0.4;
     this.logger.debug(
       `[Confidence] Combined: ${(combined * 100).toFixed(1)}% (Fundamental: ${(fundamentalConf * 100).toFixed(1)}%, Technical: ${(technicalConf * 100).toFixed(1)}%)`,
     );
@@ -581,13 +627,17 @@ export class AnalysisService {
     technicalConf: number,
   ): string {
     if (!technicalRec) {
-      return `Baseado apenas em análise fundamentalista (${(fundamentalConf * 100).toFixed(0)}% confiança). ` +
-             `Dados técnicos insuficientes (mínimo 20 dias de preços necessário).`;
+      return (
+        `Baseado apenas em análise fundamentalista (${(fundamentalConf * 100).toFixed(0)}% confiança). ` +
+        `Dados técnicos insuficientes (mínimo 20 dias de preços necessário).`
+      );
     }
 
-    return `Análise combinada: 60% fundamentalista (${(fundamentalConf * 100).toFixed(0)}% confiança) + ` +
-           `40% técnica (${(technicalConf * 100).toFixed(0)}% confiança, recomendação: ${technicalRec}). ` +
-           `Confiança final: ${((fundamentalConf * 0.6 + technicalConf * 0.4) * 100).toFixed(0)}%.`;
+    return (
+      `Análise combinada: 60% fundamentalista (${(fundamentalConf * 100).toFixed(0)}% confiança) + ` +
+      `40% técnica (${(technicalConf * 100).toFixed(0)}% confiança, recomendação: ${technicalRec}). ` +
+      `Confiança final: ${((fundamentalConf * 0.6 + technicalConf * 0.4) * 100).toFixed(0)}%.`
+    );
   }
 
   async findAll(
@@ -734,7 +784,9 @@ export class AnalysisService {
       }
     }
 
-    this.logger.log(`Bulk analysis request completed: ${requested.length} requested, ${skipped.length} skipped`);
+    this.logger.log(
+      `Bulk analysis request completed: ${requested.length} requested, ${skipped.length} skipped`,
+    );
 
     return {
       message: `Bulk ${type} analysis requested successfully`,

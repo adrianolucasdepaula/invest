@@ -42,9 +42,7 @@ export class PythonServiceClient {
     const startTime = Date.now();
 
     try {
-      this.logger.debug(
-        `Calling Python Service for ${ticker} (${prices.length} points)`,
-      );
+      this.logger.debug(`Calling Python Service for ${ticker} (${prices.length} points)`);
 
       // Log sample prices to verify format
       if (prices.length > 0) {
@@ -55,21 +53,16 @@ export class PythonServiceClient {
 
       const response: AxiosResponse<{ indicators: TechnicalIndicators }> = await firstValueFrom(
         this.httpService
-          .post<{ indicators: TechnicalIndicators }>(
-            `${this.pythonServiceUrl}/indicators`,
-            {
-              ticker,
-              prices,
-            },
-          )
+          .post<{ indicators: TechnicalIndicators }>(`${this.pythonServiceUrl}/indicators`, {
+            ticker,
+            prices,
+          })
           .pipe(
             timeout(this.requestTimeout),
             retry({
               count: 3,
               delay: (error: any, retryCount: number) => {
-                this.logger.warn(
-                  `Python Service retry ${retryCount}/3: ${error.message}`,
-                );
+                this.logger.warn(`Python Service retry ${retryCount}/3: ${error.message}`);
                 return timer(retryCount * 1000); // 1s, 2s, 3s
               },
             }),
@@ -77,35 +70,23 @@ export class PythonServiceClient {
       );
 
       const duration = Date.now() - startTime;
-      this.logger.log(
-        `✅ Python Service success: ${ticker} (${duration}ms)`,
-      );
+      this.logger.log(`✅ Python Service success: ${ticker} (${duration}ms)`);
 
       return response.data.indicators;
     } catch (error: any) {
       const duration = Date.now() - startTime;
 
       if (error.code === 'ECONNREFUSED') {
-        this.logger.error(
-          `❌ Python Service unavailable (${duration}ms): ${error.message}`,
-        );
+        this.logger.error(`❌ Python Service unavailable (${duration}ms): ${error.message}`);
       } else if (error.name === 'TimeoutError') {
-        this.logger.error(
-          `⏱️ Python Service timeout (${duration}ms): ${error.message}`,
-        );
+        this.logger.error(`⏱️ Python Service timeout (${duration}ms): ${error.message}`);
       } else {
-        this.logger.error(
-          `❌ Python Service error (${duration}ms): ${error.message}`,
-        );
+        this.logger.error(`❌ Python Service error (${duration}ms): ${error.message}`);
 
         // Log detailed error response for debugging
         if (error.response) {
-          this.logger.error(
-            `Response status: ${error.response.status}`,
-          );
-          this.logger.error(
-            `Response data: ${JSON.stringify(error.response.data, null, 2)}`,
-          );
+          this.logger.error(`Response status: ${error.response.status}`);
+          this.logger.error(`Response data: ${JSON.stringify(error.response.data, null, 2)}`);
         }
       }
 
@@ -120,9 +101,7 @@ export class PythonServiceClient {
   async healthCheck(): Promise<boolean> {
     try {
       const response: AxiosResponse = await firstValueFrom(
-        this.httpService
-          .get(`${this.pythonServiceUrl}/health`)
-          .pipe(timeout(5000)),
+        this.httpService.get(`${this.pythonServiceUrl}/health`).pipe(timeout(5000)),
       );
 
       return response.status === 200;
@@ -165,9 +144,7 @@ export class PythonServiceClient {
     try {
       const cached = await this.cacheManager.get<T>(cacheKey);
       if (cached) {
-        this.logger.log(
-          `🎯 CACHE HIT: ${endpoint} (instant response)`,
-        );
+        this.logger.log(`🎯 CACHE HIT: ${endpoint} (instant response)`);
         return cached;
       }
 
@@ -186,20 +163,18 @@ export class PythonServiceClient {
       this.logger.debug(`POST ${endpoint}: ${JSON.stringify(data).substring(0, 100)}...`);
 
       const response: AxiosResponse<T> = await firstValueFrom(
-        this.httpService
-          .post<T>(`${this.pythonServiceUrl}${endpoint}`, data)
-          .pipe(
-            timeout(timeoutMs),
-            retry({
-              count: 3,
-              delay: (error: any, retryCount: number) => {
-                this.logger.warn(
-                  `Python Service retry ${retryCount}/3 (${endpoint}): ${error.message}`,
-                );
-                return timer(retryCount * 2000); // 2s, 4s, 6s
-              },
-            }),
-          ),
+        this.httpService.post<T>(`${this.pythonServiceUrl}${endpoint}`, data).pipe(
+          timeout(timeoutMs),
+          retry({
+            count: 3,
+            delay: (error: any, retryCount: number) => {
+              this.logger.warn(
+                `Python Service retry ${retryCount}/3 (${endpoint}): ${error.message}`,
+              );
+              return timer(retryCount * 2000); // 2s, 4s, 6s
+            },
+          }),
+        ),
       );
 
       const duration = Date.now() - startTime;
@@ -207,9 +182,7 @@ export class PythonServiceClient {
       // 4. Store in cache (TTL 24h = 86400000ms)
       try {
         await this.cacheManager.set(cacheKey, response.data, 86400000);
-        this.logger.log(
-          `✅ POST ${endpoint} success (${duration}ms) + CACHED (TTL 24h)`,
-        );
+        this.logger.log(`✅ POST ${endpoint} success (${duration}ms) + CACHED (TTL 24h)`);
       } catch (cacheError: any) {
         // Cache write failed (non-critical) - return data anyway
         this.logger.warn(
@@ -222,9 +195,7 @@ export class PythonServiceClient {
       return response.data;
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      this.logger.error(
-        `❌ POST ${endpoint} failed (${duration}ms): ${error.message}`,
-      );
+      this.logger.error(`❌ POST ${endpoint} failed (${duration}ms): ${error.message}`);
 
       throw error;
     }

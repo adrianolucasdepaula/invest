@@ -25,7 +25,7 @@ export class TechnicalAnalystAgent extends BaseFinancialAgent {
   }
 
   async analyze(context: AnalysisContext): Promise<AgentResponse> {
-    const { ticker, stockData } = context;
+    const { stockData } = context;
 
     const systemPrompt = `Você é um analista técnico profissional, especializado em análise gráfica e indicadores técnicos.
 Seu foco é identificar:

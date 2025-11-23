@@ -1,5 +1,10 @@
 # B3 AI Analysis Platform
 
+[![Playwright Tests](https://github.com/adrianolucasdepaula/invest/actions/workflows/playwright.yml/badge.svg)](https://github.com/adrianolucasdepaula/invest/actions/workflows/playwright.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-10-red.svg)](https://nestjs.com/)
+
 Plataforma completa de análise de investimentos B3 com Inteligência Artificial para análise fundamentalista, técnica, macroeconômica e gestão de portfólio.
 
 ---

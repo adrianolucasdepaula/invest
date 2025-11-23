@@ -3,6 +3,8 @@ import { test as setup } from '@playwright/test';
 const authFile = 'playwright/.auth/user.json';
 
 setup('authenticate', async ({ request, page }) => {
+    setup.slow(); // ✅ Triplicar timeout (30s → 90s) para auth setup
+
     // Login via API directly (more reliable than UI)
     const response = await request.post('http://localhost:3101/api/v1/auth/login', {
         data: {
@@ -39,9 +41,11 @@ setup('authenticate', async ({ request, page }) => {
 
     // Navigate to dashboard to verify auth works
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load'); // ✅ Usar 'load' ao invés de 'networkidle' (WebSocket mantém conexão ativa)
 
-    // Verify we're authenticated by checking we're on dashboard
+    // Verify we're authenticated by waiting for dashboard content
+    await page.waitForSelector('h1', { state: 'visible', timeout: 10000 });
+
     const url = page.url();
     if (!url.includes('/dashboard')) {
         throw new Error(`Expected to be on /dashboard but got ${url}`);

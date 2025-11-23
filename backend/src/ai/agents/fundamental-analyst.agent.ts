@@ -28,7 +28,7 @@ export class FundamentalAnalystAgent extends BaseFinancialAgent {
   }
 
   async analyze(context: AnalysisContext): Promise<AgentResponse> {
-    const { ticker, stockData } = context;
+    const { stockData } = context;
 
     const systemPrompt = `Você é um analista fundamentalista experiente, especializado em análise de ações brasileiras da B3.
 Seu foco é avaliar empresas através de:

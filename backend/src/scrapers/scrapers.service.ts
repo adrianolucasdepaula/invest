@@ -86,7 +86,9 @@ export class ScrapersService {
 
     try {
       const result = await scraper.scrape(ticker);
-      this.logger.log(`Scraper ${scraperId} test completed: ${result.success ? 'SUCCESS' : 'FAILED'}`);
+      this.logger.log(
+        `Scraper ${scraperId} test completed: ${result.success ? 'SUCCESS' : 'FAILED'}`,
+      );
       return result;
     } catch (error) {
       this.logger.error(`Scraper ${scraperId} test failed: ${error.message}`);
@@ -97,7 +99,10 @@ export class ScrapersService {
   /**
    * Sync data from a single scraper for multiple tickers
    */
-  async syncSingleScraper(scraperId: string, tickers: string[]): Promise<{
+  async syncSingleScraper(
+    scraperId: string,
+    tickers: string[],
+  ): Promise<{
     scraperId: string;
     results: Array<{ ticker: string; success: boolean; data?: any; error?: string }>;
     successful: number;
@@ -139,7 +144,9 @@ export class ScrapersService {
     );
 
     const processedResults = results.map((r) =>
-      r.status === 'fulfilled' ? r.value : { ticker: 'unknown', success: false, error: 'Promise rejected' },
+      r.status === 'fulfilled'
+        ? r.value
+        : { ticker: 'unknown', success: false, error: 'Promise rejected' },
     );
 
     const successful = processedResults.filter((r) => r.success).length;
@@ -269,21 +276,29 @@ export class ScrapersService {
 
     // ✅ BASE SCORE: 6 sources = 100%, proportional scaling
     const sourcesScore = Math.min(results.length / 6, 1.0);
-    this.logger.debug(`[Confidence] Base score from ${results.length} sources: ${(sourcesScore * 100).toFixed(1)}%`);
+    this.logger.debug(
+      `[Confidence] Base score from ${results.length} sources: ${(sourcesScore * 100).toFixed(1)}%`,
+    );
 
     // ✅ PENALTY: Only for significant discrepancies (> 20%)
     let discrepancyPenalty = 0;
     if (discrepancies.length > 0) {
       // Filter only significant discrepancies (normal variance is expected)
-      const significantDiscrepancies = discrepancies.filter(d => d.maxDeviation > 20);
+      const significantDiscrepancies = discrepancies.filter((d) => d.maxDeviation > 20);
 
       if (significantDiscrepancies.length > 0) {
-        const avgDeviation = significantDiscrepancies.reduce((sum, d) => sum + d.maxDeviation, 0) / significantDiscrepancies.length;
+        const avgDeviation =
+          significantDiscrepancies.reduce((sum, d) => sum + d.maxDeviation, 0) /
+          significantDiscrepancies.length;
         // Maximum penalty of 30% (not 100%)
         discrepancyPenalty = Math.min(avgDeviation / 200, 0.3);
-        this.logger.debug(`[Confidence] ${significantDiscrepancies.length} significant discrepancies (avg ${avgDeviation.toFixed(1)}%), penalty: ${(discrepancyPenalty * 100).toFixed(1)}%`);
+        this.logger.debug(
+          `[Confidence] ${significantDiscrepancies.length} significant discrepancies (avg ${avgDeviation.toFixed(1)}%), penalty: ${(discrepancyPenalty * 100).toFixed(1)}%`,
+        );
       } else {
-        this.logger.debug(`[Confidence] ${discrepancies.length} discrepancies but all < 20% (acceptable variance)`);
+        this.logger.debug(
+          `[Confidence] ${discrepancies.length} discrepancies but all < 20% (acceptable variance)`,
+        );
       }
     }
 
@@ -294,7 +309,9 @@ export class ScrapersService {
     const minConfidence = results.length >= this.minSources ? 0.4 : 0;
     const finalConfidence = Math.max(confidence, minConfidence);
 
-    this.logger.log(`[Confidence] Final: ${(finalConfidence * 100).toFixed(1)}% (${results.length} sources, ${discrepancies.length} discrepancies)`);
+    this.logger.log(
+      `[Confidence] Final: ${(finalConfidence * 100).toFixed(1)}% (${results.length} sources, ${discrepancies.length} discrepancies)`,
+    );
 
     return finalConfidence;
   }

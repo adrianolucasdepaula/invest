@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Param, Body, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Body,
+  Logger,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ScrapersService } from './scrapers.service';
 import { ScraperMetricsService } from './scraper-metrics.service';
@@ -115,10 +124,7 @@ export class ScrapersController {
     status: 404,
     description: 'Scraper not found',
   })
-  async testScraper(
-    @Param('scraperId') scraperId: string,
-    @Body() body?: { ticker?: string },
-  ) {
+  async testScraper(@Param('scraperId') scraperId: string, @Body() body?: { ticker?: string }) {
     this.logger.log(`Testing scraper: ${scraperId}`);
 
     const availableScrapers = this.scrapersService.getAvailableScrapers();
@@ -178,5 +184,4 @@ export class ScrapersController {
       );
     }
   }
-
 }
