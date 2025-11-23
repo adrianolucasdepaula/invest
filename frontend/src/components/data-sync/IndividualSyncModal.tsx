@@ -71,13 +71,16 @@ export function IndividualSyncModal({
    */
   useEffect(() => {
     // Detectar quando sync iniciou (WebSocket) E mutation está rodando E ainda não fechou modal
-    if (wsState.isRunning && syncMutation.isPending && !isSyncStarted) {
+    if (wsState.isRunning && syncMutation.isPending && !isSyncStarted && ticker) {
       setIsSyncStarted(true);
+
+      // BUGFIX 2025-11-22: Capturar ticker antes de fechar modal (evita "null:" no toast)
+      const currentTicker = ticker;
 
       // Toast de sucesso (início confirmado)
       toast({
         title: 'Sincronização iniciada',
-        description: `${ticker}: Processamento em andamento. Acompanhe o progresso abaixo.`,
+        description: `${currentTicker}: Processamento em andamento. Acompanhe o progresso abaixo.`,
         variant: 'default',
       });
 
