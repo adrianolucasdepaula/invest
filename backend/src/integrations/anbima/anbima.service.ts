@@ -118,7 +118,10 @@ export class ANBIMAService {
       });
 
       // Group by maturity and average yields (if multiple bonds for same vertex)
-      const maturityMap = new Map<string, { yields: number[]; bondNames: string[]; maturityDates: Date[] }>();
+      const maturityMap = new Map<
+        string,
+        { yields: number[]; bondNames: string[]; maturityDates: Date[] }
+      >();
 
       yieldCurve.forEach((item) => {
         if (!maturityMap.has(item.maturity)) {
@@ -136,7 +139,8 @@ export class ANBIMAService {
           .dividedBy(data.yields.length);
 
         // Calculate average maturity date
-        const avgMaturityTime = data.maturityDates.reduce((sum, d) => sum + d.getTime(), 0) / data.maturityDates.length;
+        const avgMaturityTime =
+          data.maturityDates.reduce((sum, d) => sum + d.getTime(), 0) / data.maturityDates.length;
 
         return {
           maturity,

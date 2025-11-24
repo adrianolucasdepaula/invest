@@ -15,12 +15,17 @@ import { GetPricesDto, GetTechnicalDataDto, TechnicalDataResponseDto } from './d
 import { SyncCotahistDto, SyncCotahistResponseDto } from './dto/sync-cotahist.dto';
 import { SyncStatusResponseDto, SyncBulkDto, SyncBulkResponseDto } from './dto'; // FASE 35
 
+import { TickerMergeService } from './ticker-merge.service';
+
 @ApiTags('market-data')
 @Controller('market-data')
 export class MarketDataController {
   private readonly logger = new Logger(MarketDataController.name);
 
-  constructor(private readonly marketDataService: MarketDataService) {}
+  constructor(
+    private readonly marketDataService: MarketDataService,
+    private readonly tickerMergeService: TickerMergeService,
+  ) {}
 
   @Get(':ticker/prices')
   @ApiOperation({
@@ -50,11 +55,29 @@ export class MarketDataController {
     example: 30,
     description: 'Alternative to range: specify exact number of days',
   })
+  @ApiQuery({
+    name: 'unified',
+    required: false,
+    type: Boolean,
+    example: true,
+    description: 'If true, merges history from previous tickers (e.g. ELET3 -> AXIA3)',
+  })
   @ApiResponse({ status: 200, description: 'Price data retrieved successfully' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getPrices(@Param('ticker') ticker: string, @Query() query: GetPricesDto) {
+  async getPrices(
+    @Param('ticker') ticker: string,
+    @Query() query: GetPricesDto & { unified?: boolean },
+  ) {
     const timeframe = query.timeframe || '1D';
     const range = query.range || '1y';
+    const unified = query.unified === true || String(query.unified) === 'true';
+
+    if (unified) {
+      // For unified history, we currently only support raw prices (no aggregation yet)
+      // TODO: Implement aggregation for unified history if needed
+      return this.tickerMergeService.getUnifiedHistory(ticker, { range });
+    }
+
     return this.marketDataService.getAggregatedPrices(ticker, timeframe, range);
   }
 

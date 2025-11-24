@@ -22,19 +22,19 @@ class ApiClient {
   private setupInterceptors() {
     // Request interceptor
     this.client.interceptors.request.use(
-      (config) => {
+      config => {
         const token = Cookies.get('access_token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },
-      (error) => Promise.reject(error),
+      error => Promise.reject(error)
     );
 
     // Response interceptor
     this.client.interceptors.response.use(
-      (response) => response,
+      response => response,
       (error: AxiosError) => {
         if (error.response?.status === 401) {
           Cookies.remove('access_token');
@@ -43,7 +43,7 @@ class ApiClient {
           }
         }
         return Promise.reject(error);
-      },
+      }
     );
   }
 
@@ -79,12 +79,18 @@ class ApiClient {
     return response.data;
   }
 
-  async getAssetPrices(ticker: string, params?: { range?: string; startDate?: string; endDate?: string }) {
+  async getAssetPrices(
+    ticker: string,
+    params?: { range?: string; startDate?: string; endDate?: string }
+  ) {
     const response = await this.client.get(`/assets/${ticker}/price-history`, { params });
     return response.data;
   }
 
-  async getMarketDataPrices(ticker: string, params?: { timeframe?: string; range?: string; days?: number }) {
+  async getMarketDataPrices(
+    ticker: string,
+    params?: { timeframe?: string; range?: string; days?: number; unified?: boolean }
+  ) {
     const response = await this.client.get(`/market-data/${ticker}/prices`, { params });
     return response.data;
   }
@@ -95,16 +101,24 @@ class ApiClient {
   }
 
   async syncAllAssets(range: string = '3mo') {
-    const response = await this.client.post('/assets/sync-all', {}, {
-      params: { range },
-    });
+    const response = await this.client.post(
+      '/assets/sync-all',
+      {},
+      {
+        params: { range },
+      }
+    );
     return response.data;
   }
 
   async syncAsset(ticker: string, range: string = '3mo') {
-    const response = await this.client.post(`/assets/${ticker}/sync`, {}, {
-      params: { range },
-    });
+    const response = await this.client.post(
+      `/assets/${ticker}/sync`,
+      {},
+      {
+        params: { range },
+      }
+    );
     return response.data;
   }
 
@@ -170,15 +184,13 @@ class ApiClient {
   async updatePosition(portfolioId: string, positionId: string, data: any) {
     const response = await this.client.patch(
       `/portfolio/${portfolioId}/positions/${positionId}`,
-      data,
+      data
     );
     return response.data;
   }
 
   async deletePosition(portfolioId: string, positionId: string) {
-    const response = await this.client.delete(
-      `/portfolio/${portfolioId}/positions/${positionId}`,
-    );
+    const response = await this.client.delete(`/portfolio/${portfolioId}/positions/${positionId}`);
     return response.data;
   }
 
@@ -268,7 +280,7 @@ class ApiClient {
       | 'IDP_INGRESSOS'
       | 'IDE_SAIDAS'
       | 'IDP_LIQUIDO'
-      | 'OURO_MONETARIO',
+      | 'OURO_MONETARIO'
   ) {
     const response = await this.client.get(`/economic-indicators/${type}`);
     return response.data;
@@ -283,7 +295,7 @@ class ApiClient {
       | 'IDP_INGRESSOS'
       | 'IDE_SAIDAS'
       | 'IDP_LIQUIDO'
-      | 'OURO_MONETARIO',
+      | 'OURO_MONETARIO'
   ) {
     const response = await this.client.get(`/economic-indicators/${type}/accumulated`);
     return response.data;

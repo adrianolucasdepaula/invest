@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Asset, AssetPrice, FundamentalData, PriceSource } from '@database/entities';
+import { Asset, AssetPrice, FundamentalData, PriceSource, TickerChange } from '@database/entities';
 import { ScrapersService } from '../../scrapers/scrapers.service';
 import { BrapiScraper } from '../../scrapers/fundamental/brapi.scraper';
 import { HistoricalPricesQueryDto, PriceRange } from './dto/historical-prices-query.dto';
@@ -17,6 +17,8 @@ export class AssetsService {
     private assetPriceRepository: Repository<AssetPrice>,
     @InjectRepository(FundamentalData)
     private fundamentalDataRepository: Repository<FundamentalData>,
+    @InjectRepository(TickerChange)
+    private tickerChangeRepository: Repository<TickerChange>,
     private scrapersService: ScrapersService,
     private brapiScraper: BrapiScraper,
   ) {}
@@ -242,10 +244,10 @@ export class AssetsService {
         typeof price.changePercent === 'string'
           ? parseFloat(price.changePercent)
           : price.changePercent,
-      marketCap: typeof price.marketCap === 'string' ? parseFloat(price.marketCap) : price.marketCap,
+      marketCap:
+        typeof price.marketCap === 'string' ? parseFloat(price.marketCap) : price.marketCap,
     }));
   }
-
 
   /**
    * Convert BRAPI range to start date
@@ -337,6 +339,18 @@ export class AssetsService {
 
   async syncAsset(ticker: string, range: string = '1y') {
     this.logger.log(`Starting sync for ${ticker} (range: ${range})`);
+
+    // Check if ticker has changed (e.g. ELET3 -> AXIA3)
+    const tickerChange = await this.tickerChangeRepository.findOne({
+      where: { oldTicker: ticker.toUpperCase() },
+    });
+
+    if (tickerChange) {
+      this.logger.warn(
+        `Ticker ${ticker} has changed to ${tickerChange.newTicker}. Redirecting sync...`,
+      );
+      return this.syncAsset(tickerChange.newTicker, range);
+    }
 
     try {
       // 1. Find asset in database
@@ -505,8 +519,20 @@ export class AssetsService {
       const assets = await this.assetRepository.find();
       this.logger.log(`Found ${assets.length} assets to sync`);
 
+      // Filter out assets with old tickers (they will be synced via new ticker)
+      const tickerChanges = await this.tickerChangeRepository.find();
+      const oldTickers = new Set(tickerChanges.map((tc) => tc.oldTicker.toUpperCase()));
+
+      const assetsToSync = assets.filter((asset) => !oldTickers.has(asset.ticker.toUpperCase()));
+
+      if (assetsToSync.length < assets.length) {
+        this.logger.log(
+          `Filtered out ${assets.length - assetsToSync.length} assets with old tickers`,
+        );
+      }
+
       const results = {
-        total: assets.length,
+        total: assetsToSync.length,
         success: 0,
         failed: 0,
         range,
@@ -517,8 +543,8 @@ export class AssetsService {
 
       // Sync each asset (in parallel with limit)
       const batchSize = 5; // Process 5 assets at a time to avoid overload
-      for (let i = 0; i < assets.length; i += batchSize) {
-        const batch = assets.slice(i, i + batchSize);
+      for (let i = 0; i < assetsToSync.length; i += batchSize) {
+        const batch = assetsToSync.slice(i, i + batchSize);
 
         await Promise.all(
           batch.map(async (asset) => {
