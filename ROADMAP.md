@@ -6169,7 +6169,7 @@ npm install --save-dev critters@0.0.7
 
 #### Próximos Passos
 
-**FASE 48:** Network Validation (Slow 3G) - Prioridade ALTA
+**FASE 49:** Network Validation (Slow 3G) - Prioridade ALTA
 
 - Validar otimizações em condições reais
 - Método: Playwright nativo ou OS-level throttling
@@ -6537,6 +6537,23 @@ if (typeof historicalPrices[0].close !== "number") {
 
 - `BUGFIX_WEBSOCKET_LOGS_2025-11-23.md` - Menciona problema na seção "Observações Adicionais"
 
-**Status:** 🔴 **PENDENTE** - Aguardando implementação
+**Status:** ✅ **100% COMPLETO** (2025-11-23)
 
 ---
+
+## FASE 49: Network Validation (Slow 3G) & Resilience
+
+**Objetivo:** Validar otimizações de performance (Fases 46-47) em condições de rede adversas e garantir resiliência da aplicação.
+
+**Contexto:**
+
+- Fases 46 e 47 melhoraram LCP e TTFB significativamente.
+- Precisamos garantir que essas melhorias se sustentam em conexões móveis (Slow 3G).
+- Playwright será usado para emular condições de rede.
+
+**Checklist:**
+
+- [ ] Configurar emulação de rede no Playwright (Slow 3G, Fast 3G)
+- [ ] Criar testes de carga/resiliência
+- [ ] Validar comportamento offline/reconexão
+- [ ] Documentar métricas em condições adversas
