@@ -71,6 +71,7 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 ### Frontend (Next.js 14 App Router)
 
 **Responsabilidades:**
+
 - Renderização de páginas e componentes UI
 - Gerenciamento de estado local (React Query + Context API)
 - Comunicação com backend via REST API
@@ -78,6 +79,7 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 - Validação de formulários (React Hook Form + Zod)
 
 **Páginas Principais:**
+
 - `/dashboard` - Overview de portfólio e mercado
 - `/assets` - Listagem e gerenciamento de ativos
 - `/assets/[ticker]/technical` - Análise técnica avançada com gráficos multi-pane (FASE 29)
@@ -89,11 +91,13 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 - `/settings` - Configurações do usuário
 
 **Componentes:**
+
 - Shadcn/ui + TailwindCSS
 - Charts: Recharts (dashboard, portfolio) + lightweight-charts 4.1.3 (análise técnica)
 - Icons: Lucide React
 
 **Componentes de Charts (FASE 29):**
+
 - `candlestick-chart-with-overlays.tsx` - Candlestick com 15+ overlays (SMA, EMA, Bollinger, Pivot Points)
 - `rsi-chart.tsx` - RSI indicator (linhas 70/30)
 - `macd-chart.tsx` - MACD Line + Signal + Histogram
@@ -101,10 +105,12 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 - `multi-pane-chart.tsx` - Orquestrador de 4 painéis sincronizados
 
 **Estado:**
+
 - React Query (cache, refetch, mutations)
 - Context API (autenticação, tema)
 
 **Comunicação:**
+
 - REST API: axios via `lib/api.ts`
 - WebSocket: Socket.io-client
 
@@ -113,6 +119,7 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 ### Backend (NestJS)
 
 **Responsabilidades:**
+
 - API REST (CRUD de ativos, análises, portfólios)
 - Autenticação e autorização (JWT)
 - Lógica de negócio (cross-validation, cálculos)
@@ -124,21 +131,25 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 **Módulos Principais:**
 
 1. **API Module** (`src/api/`)
+
    - Controllers: Rotas REST
    - Services: Lógica de negócio
    - DTOs: Validação de entrada/saída
 
 2. **Database Module** (`src/database/`)
+
    - Entities: Modelos TypeORM
    - Migrations: Versionamento de schema
    - Seeds: Dados iniciais
 
 3. **Scrapers Module** (`src/scrapers/`)
+
    - ScrapersService: Orquestração
    - Individual Scrapers: Fundamentus, BRAPI, StatusInvest, etc
    - Cross-Validation: Merge e cálculo de confiança
 
 4. **Queue Module** (`src/queue/`)
+
    - Jobs: Definições de tarefas
    - Processors: Executores de jobs
 
@@ -147,6 +158,7 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
    - Events: Eventos emitidos para frontend
 
 **Padrões:**
+
 - Dependency Injection (NestJS native)
 - Repository Pattern (TypeORM)
 - DTO Pattern (validação com class-validator)
@@ -157,6 +169,7 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 ### Scrapers (Python + Playwright)
 
 **Responsabilidades:**
+
 - Coleta de dados de sites públicos e privados
 - Autenticação OAuth (Google, email/senha)
 - Parsing de HTML (BeautifulSoup, lxml)
@@ -164,6 +177,7 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 - Retry logic e error handling
 
 **Scrapers Implementados:**
+
 - Fundamentus (público, sem auth)
 - BRAPI (API token)
 - StatusInvest (OAuth Google)
@@ -172,6 +186,7 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 - Investsite (público, sem auth)
 
 **Tecnologias:**
+
 - Playwright: Automação de browser
 - Requests/HTTPX: APIs públicas
 - BeautifulSoup4: Parsing HTML
@@ -182,12 +197,14 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 ### Banco de Dados (PostgreSQL)
 
 **Responsabilidades:**
+
 - Armazenamento persistente de dados
 - Garantia de integridade (ACID)
 - Indexes para performance
 - Migrations (versionamento de schema)
 
 **Entidades Principais:**
+
 - Assets (ativos financeiros)
 - AssetPrices (preços históricos)
 - Analyses (análises fundamentalistas/técnicas)
@@ -207,45 +224,53 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 
 ### Mapeamento: Tipo de Dado → Entity/Tabela
 
-| Tipo de Dado | Entity/Tabela | Localização | Exemplo de Uso |
-|--------------|---------------|-------------|----------------|
-| **Ativos (ticker, nome, setor)** | `Asset` | `backend/src/database/entities/asset.entity.ts` | PETR4, VALE3, ITUB4 |
-| **Preços históricos (OHLCV)** | `AssetPrices` | `backend/src/database/entities/asset-price.entity.ts` | Open, High, Low, Close, Volume + variação |
-| **Análises fundamentalistas** | `Analysis` (type='fundamental') | `backend/src/database/entities/analysis.entity.ts` | P/L, P/VP, ROE, ROIC, Dividend Yield |
-| **Análises técnicas** | `Analysis` (type='technical') | `backend/src/database/entities/analysis.entity.ts` | RSI, MACD, Bollinger, SMA |
-| **Análises completas** | `Analysis` (type='complete') | `backend/src/database/entities/analysis.entity.ts` | Combinação Fundamentalista + Técnica |
-| **Portfólios de usuários** | `Portfolio` | `backend/src/database/entities/portfolio.entity.ts` | Carteiras de investimento |
-| **Posições em portfólio** | `PortfolioPosition` | `backend/src/database/entities/portfolio-position.entity.ts` | Ticker + quantidade + preço médio |
-| **Usuários** | `User` | `backend/src/database/entities/user.entity.ts` | Autenticação, perfil |
-| **Métricas de scrapers** | `ScraperMetrics` | `backend/src/database/entities/scraper-metric.entity.ts` | Taxa de sucesso, response time, errors |
-| **Logs de atualização** | `UpdateLog` | `backend/src/database/entities/update-log.entity.ts` | Histórico de atualizações de preços |
-| **Notificações** ⚠️ | `Notification` (criar) | `backend/src/database/entities/notification.entity.ts` | Alertas, sistema, análises completas |
-| **Alertas de preço** ⚠️ | `PriceAlert` (criar) | `backend/src/database/entities/price-alert.entity.ts` | Target price, condição (above/below) |
-| **Dados de scrapers (raw)** | Campo `metadata` JSON | Coluna JSON nas entities existentes | Dados brutos de fontes específicas |
-| **Configurações de usuário** | Campo `settings` JSON | `User` entity | Preferências, temas, notificações |
-| **Dividendos** ⚠️ | `Dividend` (criar) | `backend/src/database/entities/dividend.entity.ts` | Data pagamento, valor por ação, tipo |
-| **Proventos (JCP)** ⚠️ | `Provento` (criar) | `backend/src/database/entities/provento.entity.ts` | Juros sobre capital próprio |
-| **Eventos corporativos** ⚠️ | `CorporateEvent` (criar) | `backend/src/database/entities/corporate-event.entity.ts` | Splits, grupamentos, fusões |
+| Tipo de Dado                     | Entity/Tabela                   | Localização                                                  | Exemplo de Uso                            |
+| -------------------------------- | ------------------------------- | ------------------------------------------------------------ | ----------------------------------------- |
+| **Ativos (ticker, nome, setor)** | `Asset`                         | `backend/src/database/entities/asset.entity.ts`              | PETR4, VALE3, ITUB4                       |
+| **Preços históricos (OHLCV)**    | `AssetPrices`                   | `backend/src/database/entities/asset-price.entity.ts`        | Open, High, Low, Close, Volume + variação |
+| **Análises fundamentalistas**    | `Analysis` (type='fundamental') | `backend/src/database/entities/analysis.entity.ts`           | P/L, P/VP, ROE, ROIC, Dividend Yield      |
+| **Análises técnicas**            | `Analysis` (type='technical')   | `backend/src/database/entities/analysis.entity.ts`           | RSI, MACD, Bollinger, SMA                 |
+| **Análises completas**           | `Analysis` (type='complete')    | `backend/src/database/entities/analysis.entity.ts`           | Combinação Fundamentalista + Técnica      |
+| **Portfólios de usuários**       | `Portfolio`                     | `backend/src/database/entities/portfolio.entity.ts`          | Carteiras de investimento                 |
+| **Posições em portfólio**        | `PortfolioPosition`             | `backend/src/database/entities/portfolio-position.entity.ts` | Ticker + quantidade + preço médio         |
+| **Usuários**                     | `User`                          | `backend/src/database/entities/user.entity.ts`               | Autenticação, perfil                      |
+| **Métricas de scrapers**         | `ScraperMetrics`                | `backend/src/database/entities/scraper-metric.entity.ts`     | Taxa de sucesso, response time, errors    |
+| **Logs de atualização**          | `UpdateLog`                     | `backend/src/database/entities/update-log.entity.ts`         | Histórico de atualizações de preços       |
+| **Notificações** ⚠️              | `Notification` (criar)          | `backend/src/database/entities/notification.entity.ts`       | Alertas, sistema, análises completas      |
+| **Alertas de preço** ⚠️          | `PriceAlert` (criar)            | `backend/src/database/entities/price-alert.entity.ts`        | Target price, condição (above/below)      |
+| **Dados de scrapers (raw)**      | Campo `metadata` JSON           | Coluna JSON nas entities existentes                          | Dados brutos de fontes específicas        |
+| **Configurações de usuário**     | Campo `settings` JSON           | `User` entity                                                | Preferências, temas, notificações         |
+| **Dividendos** ⚠️                | `Dividend` (criar)              | `backend/src/database/entities/dividend.entity.ts`           | Data pagamento, valor por ação, tipo      |
+| **Proventos (JCP)** ⚠️           | `Provento` (criar)              | `backend/src/database/entities/provento.entity.ts`           | Juros sobre capital próprio               |
+| **Eventos corporativos** ⚠️      | `CorporateEvent` (criar)        | `backend/src/database/entities/corporate-event.entity.ts`    | Splits, grupamentos, fusões               |
 
 **Legenda:**
+
 - ✅ Entity existente (use diretamente)
 - ⚠️ Entity NÃO existe (precisa criar)
 
 ### Workflow para Criar Nova Entity
 
 **1. Criar Entity:**
+
 ```bash
 cd backend/src/database/entities
 # Criar arquivo: <nome>.entity.ts
 ```
 
 **Exemplo (Notification):**
-```typescript
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 
-@Entity('notifications')
+```typescript
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+} from "typeorm";
+
+@Entity("notifications")
 export class Notification {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
@@ -257,7 +282,7 @@ export class Notification {
   @Column()
   title: string;
 
-  @Column('text')
+  @Column("text")
   message: string;
 
   @Column({ default: false })
@@ -269,12 +294,14 @@ export class Notification {
 ```
 
 **2. Criar Migration:**
+
 ```bash
 cd backend
 npm run migration:generate -- -n CreateNotification
 ```
 
 **3. Registrar Entity no Module:**
+
 ```typescript
 // backend/src/database/database.module.ts
 import { Notification } from './entities/notification.entity';
@@ -293,6 +320,7 @@ import { Notification } from './entities/notification.entity';
 ```
 
 **4. Criar Repository/Service:**
+
 ```bash
 # Service
 cd backend/src/api
@@ -302,6 +330,7 @@ cd notifications
 ```
 
 **5. Executar Migration:**
+
 ```bash
 cd backend
 npm run migration:run
@@ -310,6 +339,7 @@ npm run migration:run
 ### Decisão: Nova Entity vs Campo JSON
 
 **Usar Nova Entity quando:**
+
 - ✅ Dados estruturados e previsíveis (schema fixo)
 - ✅ Precisa de queries complexas (filtros, joins, agregações)
 - ✅ Precisa de relacionamentos (foreign keys)
@@ -317,6 +347,7 @@ npm run migration:run
 - ✅ Dados crescem significativamente (> 1000 registros)
 
 **Usar Campo JSON (`metadata`) quando:**
+
 - ✅ Dados semi-estruturados ou variáveis
 - ✅ Schema pode mudar frequentemente
 - ✅ Não precisa de queries complexas (apenas leitura/escrita)
@@ -327,17 +358,17 @@ npm run migration:run
 
 ```typescript
 // ✅ CORRETO: Nova Entity para dados estruturados
-@Entity('price_alerts')
+@Entity("price_alerts")
 export class PriceAlert {
   @Column() ticker: string;
-  @Column('decimal') targetPrice: number;
-  @Column() condition: 'above' | 'below';
+  @Column("decimal") targetPrice: number;
+  @Column() condition: "above" | "below";
 }
 
 // ✅ CORRETO: JSON para dados variáveis
-@Entity('analyses')
+@Entity("analyses")
 export class Analysis {
-  @Column('jsonb')
+  @Column("jsonb")
   metadata: {
     source?: string;
     rawData?: any;
@@ -365,12 +396,14 @@ Antes de criar nova entity, verificar:
 ### Queue (BullMQ + Redis)
 
 **Responsabilidades:**
+
 - Processamento assíncrono de tarefas pesadas
 - Retry automático em falhas
 - Rate limiting
 - Agendamento de tarefas (cron jobs)
 
 **Jobs Implementados:**
+
 - `process-pending-analysis`: Processa análises pendentes
 - `update-asset-prices`: Atualiza preços de ativos
 - `daily-update`: Atualização diária automática
@@ -382,73 +415,73 @@ Antes de criar nova entity, verificar:
 
 ### Backend
 
-| Tecnologia | Versão | Propósito |
-|-----------|--------|-----------|
-| NestJS | 10.x | Framework backend (Node.js 20.x) |
-| TypeScript | 5.x | Linguagem tipada |
-| TypeORM | 0.3.x | ORM para PostgreSQL |
-| class-validator | latest | Validação de DTOs |
-| class-transformer | latest | Transformação de dados |
-| BullMQ | latest | Sistema de filas |
-| Socket.io | latest | WebSocket real-time |
-| Swagger/OpenAPI | latest | Documentação de API |
+| Tecnologia        | Versão | Propósito                        |
+| ----------------- | ------ | -------------------------------- |
+| NestJS            | 10.x   | Framework backend (Node.js 20.x) |
+| TypeScript        | 5.x    | Linguagem tipada                 |
+| TypeORM           | 0.3.x  | ORM para PostgreSQL              |
+| class-validator   | latest | Validação de DTOs                |
+| class-transformer | latest | Transformação de dados           |
+| BullMQ            | latest | Sistema de filas                 |
+| Socket.io         | latest | WebSocket real-time              |
+| Swagger/OpenAPI   | latest | Documentação de API              |
 
 ### Frontend
 
-| Tecnologia | Versão | Propósito |
-|-----------|--------|-----------|
-| Next.js | 14.x | Framework React (App Router) |
-| TypeScript | 5.x | Linguagem tipada |
-| Shadcn/ui | latest | Componentes UI |
-| TailwindCSS | 3.x | CSS utility-first |
-| React Query | latest | Cache e estado servidor |
-| React Hook Form | latest | Gerenciamento de formulários |
-| Zod | latest | Validação de schemas |
-| Recharts | latest | Gráficos e visualizações |
-| Socket.io-client | latest | WebSocket client |
+| Tecnologia       | Versão | Propósito                    |
+| ---------------- | ------ | ---------------------------- |
+| Next.js          | 14.x   | Framework React (App Router) |
+| TypeScript       | 5.x    | Linguagem tipada             |
+| Shadcn/ui        | latest | Componentes UI               |
+| TailwindCSS      | 3.x    | CSS utility-first            |
+| React Query      | latest | Cache e estado servidor      |
+| React Hook Form  | latest | Gerenciamento de formulários |
+| Zod              | latest | Validação de schemas         |
+| Recharts         | latest | Gráficos e visualizações     |
+| Socket.io-client | latest | WebSocket client             |
 
 ### Database
 
-| Tecnologia | Versão | Propósito |
-|-----------|--------|-----------|
-| PostgreSQL | 16.x | RDBMS principal |
-| Redis | 7.x | Cache e filas |
-| PgAdmin | 4.x | Interface de administração |
+| Tecnologia | Versão | Propósito                  |
+| ---------- | ------ | -------------------------- |
+| PostgreSQL | 16.x   | RDBMS principal            |
+| Redis      | 7.x    | Cache e filas              |
+| PgAdmin    | 4.x    | Interface de administração |
 
 ### DevOps
 
-| Tecnologia | Versão | Propósito |
-|-----------|--------|-----------|
-| Docker | latest | Containerização |
+| Tecnologia     | Versão | Propósito                  |
+| -------------- | ------ | -------------------------- |
+| Docker         | latest | Containerização            |
 | Docker Compose | latest | Orquestração de containers |
-| Git | latest | Controle de versão |
-| GitHub | - | Repositório remoto |
+| Git            | latest | Controle de versão         |
+| GitHub         | -      | Repositório remoto         |
 
 ### Scrapers
 
-| Tecnologia | Versão | Propósito |
-|-----------|--------|-----------|
-| Python | 3.11.x | Linguagem para scrapers |
-| Playwright | latest | Automação de browser |
-| Requests | latest | Cliente HTTP |
-| HTTPX | latest | Cliente HTTP assíncrono |
-| BeautifulSoup4 | latest | Parsing HTML |
-| lxml | latest | Parser XML/HTML rápido |
+| Tecnologia     | Versão | Propósito               |
+| -------------- | ------ | ----------------------- |
+| Python         | 3.11.x | Linguagem para scrapers |
+| Playwright     | latest | Automação de browser    |
+| Requests       | latest | Cliente HTTP            |
+| HTTPX          | latest | Cliente HTTP assíncrono |
+| BeautifulSoup4 | latest | Parsing HTML            |
+| lxml           | latest | Parser XML/HTML rápido  |
 
 ### MCPs (Model Context Protocol)
 
 Sistema completo de 8 servidores MCP para estender capacidades do Claude Code:
 
-| MCP | Propósito | Status |
-|-----|-----------|--------|
+| MCP                 | Propósito                                 | Status      |
+| ------------------- | ----------------------------------------- | ----------- |
 | Sequential Thinking | Raciocínio estruturado e análise profunda | ✓ Connected |
-| Filesystem | Leitura/escrita segura de arquivos | ✓ Connected |
-| Shell | Execução de comandos PowerShell/CMD | ✓ Connected |
-| A11y | Auditoria WCAG automatizada (axe-core) | ✓ Connected |
-| Context7 | Documentação atualizada de frameworks | ✓ Connected |
-| Playwright | Automação de browser para testes E2E | ✓ Connected |
-| Chrome DevTools | Inspeção e debugging de aplicações web | ✓ Connected |
-| Selenium | Automação web alternativa | ✓ Connected |
+| Filesystem          | Leitura/escrita segura de arquivos        | ✓ Connected |
+| Shell               | Execução de comandos PowerShell/CMD       | ✓ Connected |
+| A11y                | Auditoria WCAG automatizada (axe-core)    | ✓ Connected |
+| Context7            | Documentação atualizada de frameworks     | ✓ Connected |
+| Playwright          | Automação de browser para testes E2E      | ✓ Connected |
+| Chrome DevTools     | Inspeção e debugging de aplicações web    | ✓ Connected |
+| Selenium            | Automação web alternativa                 | ✓ Connected |
 
 **Configuração:** `C:\Users\adria\.claude.json`
 **Escopo:** Projeto (invest-claude-web)
@@ -529,26 +562,28 @@ invest-claude-web/
 
 ## 🔌 PORTAS E SERVIÇOS
 
-| Serviço | Porta Host | Porta Container | URL |
-|---------|-----------|----------------|-----|
-| **Frontend Next.js** | 3100 | 3000 | http://localhost:3100 |
-| **Backend NestJS** | 3101 | 3101 | http://localhost:3101/api/v1 |
-| **API Service (Python/FastAPI)** | 8000 | 8000 | http://localhost:8000 |
-| **PostgreSQL** | 5532 | 5432 | localhost:5532 |
-| **Redis** | 6479 | 6379 | localhost:6479 |
-| **PgAdmin** | 5150 | 80 | http://localhost:5150 |
-| **Redis Commander** | 8181 | 8081 | http://localhost:8181 |
-| **VNC Direct** | 5900 | 5900 | vnc://localhost:5900 |
-| **noVNC Web** | 6080 | 6080 | http://localhost:6080 |
+| Serviço                          | Porta Host | Porta Container | URL                          |
+| -------------------------------- | ---------- | --------------- | ---------------------------- |
+| **Frontend Next.js**             | 3100       | 3000            | http://localhost:3100        |
+| **Backend NestJS**               | 3101       | 3101            | http://localhost:3101/api/v1 |
+| **API Service (Python/FastAPI)** | 8000       | 8000            | http://localhost:8000        |
+| **PostgreSQL**                   | 5532       | 5432            | localhost:5532               |
+| **Redis**                        | 6479       | 6379            | localhost:6479               |
+| **PgAdmin**                      | 5150       | 80              | http://localhost:5150        |
+| **Redis Commander**              | 8181       | 8081            | http://localhost:8181        |
+| **VNC Direct**                   | 5900       | 5900            | vnc://localhost:5900         |
+| **noVNC Web**                    | 6080       | 6080            | http://localhost:6080        |
 
 ### Credenciais Padrão
 
 **PostgreSQL:**
+
 - User: `invest_user`
 - Password: `invest_password`
 - Database: `invest_db`
 
 **PgAdmin:**
+
 - Email: `admin@invest.com`
 - Password: `admin`
 
@@ -610,6 +645,7 @@ invest-claude-web/
 ```
 
 **Arquivos:**
+
 - `backend/src/api/analysis/analysis.service.ts:20-62`
 - `backend/src/scrapers/scrapers.service.ts:38-62`
 
@@ -657,6 +693,30 @@ invest-claude-web/
 ```
 
 **Arquivo:** `backend/src/api/assets/assets-update.service.ts`
+
+---
+
+### 5. Fluxo de Histórico Unificado (Ticker Merge)
+
+```
+1. User habilita "Histórico Unificado" no frontend (/assets/AXIA3)
+2. Frontend → GET /api/v1/market-data/AXIA3/prices?unified=true
+3. Backend (TickerMergeService):
+   - findTickerChain('AXIA3') → Retorna ['ELET3', 'AXIA3']
+   - Para cada ticker na cadeia:
+     a. Busca histórico de preços (DB + BRAPI sync se necessário)
+   - Merge de dados:
+     a. Combina arrays de preços
+     b. Remove duplicatas (prioriza ticker mais recente)
+     c. Ordena cronologicamente
+4. Backend → Retorna array unificado de AssetPrice[]
+5. Frontend exibe gráfico contínuo com badge "Exibindo histórico unificado"
+```
+
+**Arquivos:**
+
+- `backend/src/api/market-data/ticker-merge.service.ts`
+- `backend/src/api/market-data/market-data.controller.ts`
 
 ---
 

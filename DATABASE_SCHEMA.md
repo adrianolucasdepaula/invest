@@ -53,28 +53,31 @@ O banco de dados PostgreSQL armazena dados de ativos financeiros da B3, análise
 Armazena ativos financeiros da B3 (ações, FIIs, ETFs, criptomoedas).
 
 **Schema:**
+
 ```typescript
 {
-  id: UUID                      // Primary Key
-  ticker: string (UNIQUE)       // Ex: PETR4, VALE3, ITUB4
-  name: string                  // Nome completo (ex: "Petróleo Brasileiro S.A.")
-  type: AssetType               // ENUM: stock, fii, etf, crypto
-  sector: string                // Setor econômico (ex: "Petróleo e Gás")
-  subsector: string             // Subsetor (ex: "Exploração e Produção")
-  isActive: boolean             // Soft delete (true = ativo, false = inativo)
-  metadata: JSON                // Dados extras flexíveis
-  createdAt: timestamp          // Data de criação (automático)
-  updatedAt: timestamp          // Data de atualização (automático)
+  id: UUID; // Primary Key
+  ticker: string(UNIQUE); // Ex: PETR4, VALE3, ITUB4
+  name: string; // Nome completo (ex: "Petróleo Brasileiro S.A.")
+  type: AssetType; // ENUM: stock, fii, etf, crypto
+  sector: string; // Setor econômico (ex: "Petróleo e Gás")
+  subsector: string; // Subsetor (ex: "Exploração e Produção")
+  isActive: boolean; // Soft delete (true = ativo, false = inativo)
+  metadata: JSON; // Dados extras flexíveis
+  createdAt: timestamp; // Data de criação (automático)
+  updatedAt: timestamp; // Data de atualização (automático)
 }
 ```
 
 **Constraints:**
+
 - `ticker` UNIQUE NOT NULL
 - `name` NOT NULL
 - `type` NOT NULL
 - `isActive` DEFAULT true
 
 **Exemplo:**
+
 ```json
 {
   "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -101,48 +104,93 @@ Armazena ativos financeiros da B3 (ações, FIIs, ETFs, criptomoedas).
 Armazena histórico de preços diários de ativos (OHLCV + variação).
 
 **Schema:**
+
 ```typescript
 {
-  id: UUID                      // Primary Key
-  assetId: UUID                 // Foreign Key -> Assets.id
-  date: date                    // Data de referência (ex: 2025-11-14)
-  open: decimal(18,2)           // Preço de abertura
-  high: decimal(18,2)           // Preço máximo do dia
-  low: decimal(18,2)            // Preço mínimo do dia
-  close: decimal(18,2)          // Preço de fechamento
-  adjustedClose: decimal(18,2)  // Preço ajustado (splits, dividendos)
-  volume: bigint                // Volume negociado
-  marketCap: decimal(18,2)      // Valor de mercado
-  change: decimal(18,2)         // Variação absoluta (R$)
-  changePercent: decimal(10,4)  // Variação percentual (%)
-  collectedAt: timestamp        // Quando foi coletado dos scrapers
-  createdAt: timestamp          // Data de criação (automático)
+  id: UUID; // Primary Key
+  assetId: UUID; // Foreign Key -> Assets.id
+  date: date; // Data de referência (ex: 2025-11-14)
+  open: decimal(18, 2); // Preço de abertura
+  high: decimal(18, 2); // Preço máximo do dia
+  low: decimal(18, 2); // Preço mínimo do dia
+  close: decimal(18, 2); // Preço de fechamento
+  adjustedClose: decimal(18, 2); // Preço ajustado (splits, dividendos)
+  volume: bigint; // Volume negociado
+  marketCap: decimal(18, 2); // Valor de mercado
+  change: decimal(18, 2); // Variação absoluta (R$)
+  changePercent: decimal(10, 4); // Variação percentual (%)
+  collectedAt: timestamp; // Quando foi coletado dos scrapers
+  createdAt: timestamp; // Data de criação (automático)
 }
 ```
 
 **Constraints:**
+
 - `assetId` FOREIGN KEY REFERENCES assets(id) ON DELETE CASCADE
 - `date` NOT NULL
 - `close` NOT NULL
 - UNIQUE (assetId, date) - Um preço por ativo por dia
 
 **Exemplo:**
+
 ```json
 {
   "id": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
   "assetId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "date": "2025-11-14",
-  "open": 39.50,
-  "high": 40.20,
-  "low": 39.30,
-  "close": 40.00,
-  "adjustedClose": 40.00,
+  "open": 39.5,
+  "high": 40.2,
+  "low": 39.3,
+  "close": 40.0,
+  "adjustedClose": 40.0,
   "volume": 25000000,
-  "marketCap": 534000000000.00,
-  "change": 0.50,
+  "marketCap": 534000000000.0,
+  "change": 0.5,
   "changePercent": 1.2658,
   "collectedAt": "2025-11-14T18:00:00Z",
   "createdAt": "2025-11-14T18:05:00Z"
+}
+```
+
+---
+
+### 3. TickerChanges (Mudanças de Ticker)
+
+Armazena histórico de mudanças de códigos de negociação (ex: ELET3 → AXIA3).
+
+**Schema:**
+
+```typescript
+{
+  id: UUID; // Primary Key
+  oldTicker: string; // Ticker antigo (ex: "ELET3")
+  newTicker: string; // Novo ticker (ex: "AXIA3")
+  changeDate: date; // Data da mudança
+  reason: string; // Motivo (ex: "REBRANDING", "MERGER")
+  ratio: decimal(10, 6); // Fator de conversão (default: 1.0)
+  createdAt: timestamp; // Data de criação
+  updatedAt: timestamp; // Data de atualização
+}
+```
+
+**Constraints:**
+
+- `oldTicker` NOT NULL
+- `newTicker` NOT NULL
+- UNIQUE (oldTicker, newTicker)
+- Indexes em `oldTicker` e `newTicker` para busca rápida
+
+**Exemplo:**
+
+```json
+{
+  "id": "c4d5e6f7-g8h9-0123-ijkl-456789012345",
+  "oldTicker": "ELET3",
+  "newTicker": "AXIA3",
+  "changeDate": "2024-08-01",
+  "reason": "REBRANDING",
+  "ratio": 1.0,
+  "createdAt": "2025-11-24T10:00:00Z"
 }
 ```
 
@@ -153,6 +201,7 @@ Armazena histórico de preços diários de ativos (OHLCV + variação).
 Armazena análises fundamentalistas/técnicas realizadas por IA com cross-validation de múltiplas fontes.
 
 **Schema:**
+
 ```typescript
 {
   id: UUID                         // Primary Key
@@ -173,12 +222,14 @@ Armazena análises fundamentalistas/técnicas realizadas por IA com cross-valida
 ```
 
 **Constraints:**
+
 - `assetId` FOREIGN KEY REFERENCES assets(id) ON DELETE CASCADE
 - `userId` FOREIGN KEY REFERENCES users(id) ON DELETE SET NULL
 - `type` NOT NULL
 - `status` NOT NULL DEFAULT 'pending'
 
 **Exemplo:**
+
 ```json
 {
   "id": "c3d4e5f6-a7b8-9012-cdef-345678901234",
@@ -190,11 +241,18 @@ Armazena análises fundamentalistas/técnicas realizadas por IA com cross-valida
     "fundamentals": { "pl": 8.5, "pvp": 1.2, "roe": 15.3 },
     "technicals": { "sma20": 39.5, "sma50": 38.2, "rsi": 62 }
   },
-  "dataSources": ["Fundamentus", "BRAPI", "StatusInvest", "Investidor10", "Fundamentei", "Investsite"],
+  "dataSources": [
+    "Fundamentus",
+    "BRAPI",
+    "StatusInvest",
+    "Investidor10",
+    "Fundamentei",
+    "Investsite"
+  ],
   "sourcesCount": 6,
   "confidenceScore": 0.9167,
   "recommendation": "buy",
-  "targetPrice": 45.00,
+  "targetPrice": 45.0,
   "errorMessage": null,
   "completedAt": "2025-11-14T16:30:00Z",
   "createdAt": "2025-11-14T16:25:00Z"
@@ -208,22 +266,24 @@ Armazena análises fundamentalistas/técnicas realizadas por IA com cross-valida
 Armazena portfólios de investimento dos usuários.
 
 **Schema:**
+
 ```typescript
 {
-  id: UUID                      // Primary Key
-  userId: UUID                  // Foreign Key -> Users.id
-  name: string                  // Nome do portfólio (ex: "Carteira Conservadora")
-  description: string           // Descrição opcional
-  totalValue: decimal(18,2)     // Valor total atual (calculado)
-  totalCost: decimal(18,2)      // Custo total investido (calculado)
-  totalProfitLoss: decimal(18,2) // Lucro/prejuízo total (calculado)
-  isActive: boolean             // Soft delete
-  createdAt: timestamp          // Data de criação (automático)
-  updatedAt: timestamp          // Data de atualização (automático)
+  id: UUID; // Primary Key
+  userId: UUID; // Foreign Key -> Users.id
+  name: string; // Nome do portfólio (ex: "Carteira Conservadora")
+  description: string; // Descrição opcional
+  totalValue: decimal(18, 2); // Valor total atual (calculado)
+  totalCost: decimal(18, 2); // Custo total investido (calculado)
+  totalProfitLoss: decimal(18, 2); // Lucro/prejuízo total (calculado)
+  isActive: boolean; // Soft delete
+  createdAt: timestamp; // Data de criação (automático)
+  updatedAt: timestamp; // Data de atualização (automático)
 }
 ```
 
 **Constraints:**
+
 - `userId` FOREIGN KEY REFERENCES users(id) ON DELETE CASCADE
 - `name` NOT NULL
 - `isActive` DEFAULT true
@@ -235,24 +295,26 @@ Armazena portfólios de investimento dos usuários.
 Armazena posições (ativos) dentro de cada portfólio.
 
 **Schema:**
+
 ```typescript
 {
-  id: UUID                         // Primary Key
-  portfolioId: UUID                // Foreign Key -> Portfolios.id
-  assetId: UUID                    // Foreign Key -> Assets.id
-  quantity: decimal(18,8)          // Quantidade de ações/cotas
-  averagePrice: decimal(18,2)      // Preço médio de compra
-  currentPrice: decimal(18,2)      // Preço atual (atualizado periodicamente)
-  totalCost: decimal(18,2)         // Custo total (quantity * averagePrice)
-  totalValue: decimal(18,2)        // Valor total (quantity * currentPrice)
-  profitLoss: decimal(18,2)        // Lucro/prejuízo (totalValue - totalCost)
-  profitLossPercent: decimal(10,4) // Lucro/prejuízo percentual
-  createdAt: timestamp             // Data de criação (automático)
-  updatedAt: timestamp             // Data de atualização (automático)
+  id: UUID; // Primary Key
+  portfolioId: UUID; // Foreign Key -> Portfolios.id
+  assetId: UUID; // Foreign Key -> Assets.id
+  quantity: decimal(18, 8); // Quantidade de ações/cotas
+  averagePrice: decimal(18, 2); // Preço médio de compra
+  currentPrice: decimal(18, 2); // Preço atual (atualizado periodicamente)
+  totalCost: decimal(18, 2); // Custo total (quantity * averagePrice)
+  totalValue: decimal(18, 2); // Valor total (quantity * currentPrice)
+  profitLoss: decimal(18, 2); // Lucro/prejuízo (totalValue - totalCost)
+  profitLossPercent: decimal(10, 4); // Lucro/prejuízo percentual
+  createdAt: timestamp; // Data de criação (automático)
+  updatedAt: timestamp; // Data de atualização (automático)
 }
 ```
 
 **Constraints:**
+
 - `portfolioId` FOREIGN KEY REFERENCES portfolios(id) ON DELETE CASCADE
 - `assetId` FOREIGN KEY REFERENCES assets(id) ON DELETE RESTRICT
 - `quantity` > 0
@@ -331,6 +393,7 @@ CREATE INDEX idx_assets_ticker ON assets(ticker);
 ### Queries Otimizadas
 
 **1. Buscar preço mais recente de um ativo:**
+
 ```sql
 SELECT * FROM asset_prices
 WHERE asset_id = 'uuid-do-ativo'
@@ -340,6 +403,7 @@ LIMIT 1;
 ```
 
 **2. Buscar análises de um usuário (mais recentes primeiro):**
+
 ```sql
 SELECT * FROM analyses
 WHERE user_id = 'uuid-do-usuario'
@@ -348,6 +412,7 @@ ORDER BY created_at DESC;
 ```
 
 **3. Buscar posições de um portfólio com dados do ativo:**
+
 ```sql
 SELECT pp.*, a.ticker, a.name, ap.close as current_price
 FROM portfolio_positions pp
@@ -368,11 +433,13 @@ WHERE pp.portfolio_id = 'uuid-do-portfolio';
 **Localização:** `backend/src/database/migrations/`
 
 **Migrations Aplicadas:**
+
 1. `1762906000000-CreateScraperMetrics.ts` - Sistema de métricas de scrapers
 2. `1762905000000-CreateUpdateLogs.ts` - Sistema de atualização de ativos
 3. `1762904000000-InitialSchema.ts` - Schema inicial (Assets, Prices, Analyses, etc)
 
 **Comandos:**
+
 ```bash
 # Criar nova migration
 npm run migration:create -- src/database/migrations/NomeDaMigration
@@ -444,6 +511,7 @@ GROUP BY p.id, p.name;
 ---
 
 **Documentação complementar:**
+
 - Ver `ARCHITECTURE.md` para fluxos de dados
 - Ver `claude.md` para convenções de código TypeORM
 - Ver `TROUBLESHOOTING.md` para problemas comuns de banco de dados

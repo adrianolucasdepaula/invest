@@ -7,6 +7,7 @@ import {
   UpdateLog,
   Portfolio,
   PortfolioPosition,
+  TickerChange,
 } from '@database/entities';
 import { AssetsController } from './assets.controller';
 import { AssetsUpdateController } from './assets-update.controller';
@@ -24,6 +25,7 @@ import { WebSocketModule } from '../../websocket/websocket.module';
       UpdateLog,
       Portfolio,
       PortfolioPosition,
+      TickerChange,
     ]),
     ScrapersModule,
     WebSocketModule,
