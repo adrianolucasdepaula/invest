@@ -8,10 +8,7 @@ import { PdfGeneratorService } from './pdf-generator.service';
 import { AnalysisModule } from '../analysis/analysis.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Asset, Analysis, AssetPrice]),
-    AnalysisModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Asset, Analysis, AssetPrice]), AnalysisModule],
   controllers: [ReportsController],
   providers: [ReportsService, AIReportService, PdfGeneratorService],
   exports: [ReportsService, AIReportService, PdfGeneratorService],

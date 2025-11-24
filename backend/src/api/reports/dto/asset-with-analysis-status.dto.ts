@@ -1,6 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AssetType } from '../../../database/entities/asset.entity';
-import { AnalysisType, AnalysisStatus, Recommendation } from '../../../database/entities/analysis.entity';
+import {
+  AnalysisType,
+  AnalysisStatus,
+  Recommendation,
+} from '../../../database/entities/analysis.entity';
 
 /**
  * DTO que combina dados de Asset + Status da Análise

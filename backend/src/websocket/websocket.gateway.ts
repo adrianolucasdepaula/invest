@@ -48,7 +48,7 @@ export class AppWebSocketGateway
 
     // Leave all rooms para liberar memória
     const rooms = Array.from(client.rooms);
-    rooms.forEach(room => {
+    rooms.forEach((room) => {
       if (room !== client.id) {
         client.leave(room);
       }
@@ -82,7 +82,7 @@ export class AppWebSocketGateway
       });
 
       if (orphanedSubscriptions.length > 0) {
-        orphanedSubscriptions.forEach(id => this.userSubscriptions.delete(id));
+        orphanedSubscriptions.forEach((id) => this.userSubscriptions.delete(id));
         this.logger.log(`Limpou ${orphanedSubscriptions.length} subscrições órfãs`);
       }
     }, 300000); // 5 minutos
@@ -93,8 +93,8 @@ export class AppWebSocketGateway
     this.userSubscriptions.set(client.id, data);
 
     // Join rooms para broadcast eficiente O(1)
-    data.tickers.forEach(ticker => {
-      data.types.forEach(type => {
+    data.tickers.forEach((ticker) => {
+      data.types.forEach((type) => {
         const roomName = `${ticker}:${type}`;
         client.join(roomName);
       });
@@ -122,8 +122,8 @@ export class AppWebSocketGateway
     if (currentSub) {
       // Leave rooms das subscrições removidas
       if (data.tickers) {
-        data.tickers.forEach(ticker => {
-          currentSub.types.forEach(type => {
+        data.tickers.forEach((ticker) => {
+          currentSub.types.forEach((type) => {
             const roomName = `${ticker}:${type}`;
             client.leave(roomName);
           });
@@ -132,8 +132,8 @@ export class AppWebSocketGateway
       }
       if (data.types) {
         const typesToRemove = data.types as ('prices' | 'analysis' | 'reports' | 'portfolio')[];
-        typesToRemove.forEach(type => {
-          currentSub.tickers.forEach(ticker => {
+        typesToRemove.forEach((type) => {
+          currentSub.tickers.forEach((ticker) => {
             const roomName = `${ticker}:${type}`;
             client.leave(roomName);
           });
@@ -251,11 +251,7 @@ export class AppWebSocketGateway
     this.logger.error(`[WS] Asset update failed: ${data.ticker} - ${data.error}`);
   }
 
-  emitBatchUpdateStarted(data: {
-    portfolioId?: string;
-    totalAssets: number;
-    tickers: string[];
-  }) {
+  emitBatchUpdateStarted(data: { portfolioId?: string; totalAssets: number; tickers: string[] }) {
     this.server.emit('batch_update_started', {
       ...data,
       timestamp: new Date(),
@@ -287,7 +283,7 @@ export class AppWebSocketGateway
       timestamp: new Date(),
     });
     this.logger.log(
-      `[WS] Batch update completed: ${data.successCount}/${data.totalAssets} successful (${data.duration}ms)`
+      `[WS] Batch update completed: ${data.successCount}/${data.totalAssets} successful (${data.duration}ms)`,
     );
   }
 }

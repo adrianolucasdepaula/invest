@@ -8,15 +8,15 @@ export interface FundamenteiData {
   ticker: string;
   companyName: string;
   price: number;
-  pl: number;           // P/L
-  pvp: number;          // P/VP
-  roe: number;          // ROE
-  dy: number;           // Dividend Yield
-  dividaLiquidaEbitda: number;  // Dívida Líquida/EBITDA
-  margemLiquida: number;        // Margem Líquida
-  valorMercado: number;         // Valor de Mercado
-  receitaLiquida: number;       // Receita Líquida
-  lucroLiquido: number;         // Lucro Líquido
+  pl: number; // P/L
+  pvp: number; // P/VP
+  roe: number; // ROE
+  dy: number; // Dividend Yield
+  dividaLiquidaEbitda: number; // Dívida Líquida/EBITDA
+  margemLiquida: number; // Margem Líquida
+  valorMercado: number; // Valor de Mercado
+  receitaLiquida: number; // Receita Líquida
+  lucroLiquido: number; // Lucro Líquido
 }
 
 @Injectable()
@@ -29,7 +29,7 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
     process.cwd(),
     'data',
     'cookies',
-    'fundamentei_session.json'
+    'fundamentei_session.json',
   );
 
   protected async scrapeData(ticker: string): Promise<FundamenteiData> {
@@ -54,16 +54,18 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
       const currentUrl = this.page.url();
       if (currentUrl.includes('/login') || currentUrl.includes('/sign-up')) {
         throw new Error(
-          'Not authenticated - Please complete OAuth login at http://localhost:3100/oauth-manager'
+          'Not authenticated - Please complete OAuth login at http://localhost:3100/oauth-manager',
         );
       }
 
       // Aguardar conteúdo carregar
-      await this.page.waitForSelector('.company-info, .stock-header, h1', {
-        timeout: 15000
-      }).catch(() => {
-        this.logger.warn('Main content selector not found, continuing anyway');
-      });
+      await this.page
+        .waitForSelector('.company-info, .stock-header, h1', {
+          timeout: 15000,
+        })
+        .catch(() => {
+          this.logger.warn('Main content selector not found, continuing anyway');
+        });
 
       // Obter HTML da página
       const content = await this.page.content();
@@ -93,11 +95,11 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
 
         // Limpar texto
         text = text
-          .replace(/\./g, '')           // Remover pontos (milhares)
-          .replace(',', '.')            // Vírgula para ponto decimal
-          .replace('%', '')             // Remover %
-          .replace('R$', '')            // Remover R$
-          .replace(/[^\d.-]/g, '')      // Remover caracteres não numéricos
+          .replace(/\./g, '') // Remover pontos (milhares)
+          .replace(',', '.') // Vírgula para ponto decimal
+          .replace('%', '') // Remover %
+          .replace('R$', '') // Remover R$
+          .replace(/[^\d.-]/g, '') // Remover caracteres não numéricos
           .trim();
 
         return parseFloat(text) || 0;
@@ -107,9 +109,8 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
       const getValueByLabel = (label: string): number => {
         // Tentar múltiplos seletores comuns do Fundamentei
         // Procurar elementos que contenham o label no texto
-        const elements = $('dt, div, span, td, th').filter(function() {
-          return $(this).text().trim() === label ||
-                 $(this).text().trim().includes(label);
+        const elements = $('dt, div, span, td, th').filter(function () {
+          return $(this).text().trim() === label || $(this).text().trim().includes(label);
         });
 
         if (elements.length > 0) {
@@ -155,40 +156,34 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
         price,
 
         // Indicadores fundamentalistas
-        pl: getValueByLabel('P/L') ||
-            getValueByLabel('P / L') ||
-            getValueByLabel('Preço / Lucro'),
+        pl: getValueByLabel('P/L') || getValueByLabel('P / L') || getValueByLabel('Preço / Lucro'),
 
-        pvp: getValueByLabel('P/VP') ||
-             getValueByLabel('P / VP') ||
-             getValueByLabel('Preço / Valor Patrimonial'),
+        pvp:
+          getValueByLabel('P/VP') ||
+          getValueByLabel('P / VP') ||
+          getValueByLabel('Preço / Valor Patrimonial'),
 
-        roe: getValueByLabel('ROE') ||
-             getValueByLabel('Return on Equity'),
+        roe: getValueByLabel('ROE') || getValueByLabel('Return on Equity'),
 
-        dy: getValueByLabel('DY') ||
-            getValueByLabel('Dividend Yield') ||
-            getValueByLabel('Dividendos'),
+        dy:
+          getValueByLabel('DY') ||
+          getValueByLabel('Dividend Yield') ||
+          getValueByLabel('Dividendos'),
 
-        dividaLiquidaEbitda: getValueByLabel('Dívida Líquida / EBITDA') ||
-                             getValueByLabel('Dív. Líq. / EBITDA'),
+        dividaLiquidaEbitda:
+          getValueByLabel('Dívida Líquida / EBITDA') || getValueByLabel('Dív. Líq. / EBITDA'),
 
-        margemLiquida: getValueByLabel('Margem Líquida') ||
-                       getValueByLabel('Margem Liq.'),
+        margemLiquida: getValueByLabel('Margem Líquida') || getValueByLabel('Margem Liq.'),
 
-        valorMercado: getValueByLabel('Valor de Mercado') ||
-                      getValueByLabel('Market Cap'),
+        valorMercado: getValueByLabel('Valor de Mercado') || getValueByLabel('Market Cap'),
 
-        receitaLiquida: getValueByLabel('Receita Líquida') ||
-                        getValueByLabel('Receita'),
+        receitaLiquida: getValueByLabel('Receita Líquida') || getValueByLabel('Receita'),
 
-        lucroLiquido: getValueByLabel('Lucro Líquido') ||
-                      getValueByLabel('Lucro'),
+        lucroLiquido: getValueByLabel('Lucro Líquido') || getValueByLabel('Lucro'),
       };
 
       this.logger.log(`Successfully scraped ${ticker} from Fundamentei`);
       return data;
-
     } catch (error) {
       this.logger.error(`Failed to scrape ${ticker} from Fundamentei: ${error.message}`);
       throw error;
@@ -207,7 +202,7 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
       data.margemLiquida !== 0,
       data.valorMercado > 0,
       data.receitaLiquida > 0,
-      data.lucroLiquido !== 0
+      data.lucroLiquido !== 0,
     ].filter(Boolean).length;
 
     return data.ticker !== '' && filledFields >= 3;
@@ -224,7 +219,7 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
         // Verificar se a sessão ainda é válida navegando para a home
         await this.page.goto('https://fundamentei.com/', {
           waitUntil: 'networkidle2',
-          timeout: 15000
+          timeout: 15000,
         });
 
         const url = this.page.url();
@@ -245,7 +240,6 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
       this.logger.warn('='.repeat(80));
 
       throw new Error('OAuth session required - Please use /oauth-manager to authenticate');
-
     } catch (error) {
       this.logger.error(`Fundamentei login failed: ${error.message}`);
       throw error;

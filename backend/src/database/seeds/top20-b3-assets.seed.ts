@@ -16,7 +16,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Exploração, Refino e Distribuição',
     cnpj: '33.000.167/0001-01',
     website: 'https://www.petrobras.com.br',
-    description: 'Petróleo Brasileiro S.A. - Petrobras é uma empresa de energia integrada que atua nos segmentos de exploração e produção, refino, comercialização e transporte de petróleo e gás natural.',
+    description:
+      'Petróleo Brasileiro S.A. - Petrobras é uma empresa de energia integrada que atua nos segmentos de exploração e produção, refino, comercialização e transporte de petróleo e gás natural.',
   },
   {
     ticker: 'VALE3',
@@ -27,7 +28,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Minerais Metálicos',
     cnpj: '33.592.510/0001-54',
     website: 'https://www.vale.com',
-    description: 'Vale S.A. é uma empresa mineradora multinacional brasileira e uma das maiores operadoras de logística do país. É a maior produtora de minério de ferro e de pelotas de minério de ferro do mundo.',
+    description:
+      'Vale S.A. é uma empresa mineradora multinacional brasileira e uma das maiores operadoras de logística do país. É a maior produtora de minério de ferro e de pelotas de minério de ferro do mundo.',
   },
   {
     ticker: 'ITUB4',
@@ -38,7 +40,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Bancos',
     cnpj: '60.701.190/0001-04',
     website: 'https://www.itau.com.br',
-    description: 'Itaú Unibanco Holding S.A. é um dos maiores conglomerados financeiros do Brasil, oferecendo serviços bancários, seguros, previdência e capitalização.',
+    description:
+      'Itaú Unibanco Holding S.A. é um dos maiores conglomerados financeiros do Brasil, oferecendo serviços bancários, seguros, previdência e capitalização.',
   },
   {
     ticker: 'BBDC4',
@@ -49,7 +52,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Bancos',
     cnpj: '60.746.948/0001-12',
     website: 'https://www.bradesco.com.br',
-    description: 'Banco Bradesco S.A. é um dos maiores bancos do Brasil, oferecendo ampla gama de serviços financeiros incluindo crédito, poupança, investimentos e seguros.',
+    description:
+      'Banco Bradesco S.A. é um dos maiores bancos do Brasil, oferecendo ampla gama de serviços financeiros incluindo crédito, poupança, investimentos e seguros.',
   },
   {
     ticker: 'ABEV3',
@@ -60,7 +64,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Cervejas e Refrigerantes',
     cnpj: '07.526.557/0001-00',
     website: 'https://www.ambev.com.br',
-    description: 'Ambev S.A. é a maior cervejaria da América do Sul e uma das cinco maiores do mundo. Produz marcas como Skol, Brahma, Antarctica, Budweiser, entre outras.',
+    description:
+      'Ambev S.A. é a maior cervejaria da América do Sul e uma das cinco maiores do mundo. Produz marcas como Skol, Brahma, Antarctica, Budweiser, entre outras.',
   },
   {
     ticker: 'MGLU3',
@@ -71,7 +76,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Eletrodomésticos',
     cnpj: '47.960.950/0001-21',
     website: 'https://www.magazineluiza.com.br',
-    description: 'Magazine Luiza S.A. é uma das maiores redes varejistas do Brasil, atuando nos segmentos de eletrodomésticos, eletrônicos, móveis e utilidades domésticas.',
+    description:
+      'Magazine Luiza S.A. é uma das maiores redes varejistas do Brasil, atuando nos segmentos de eletrodomésticos, eletrônicos, móveis e utilidades domésticas.',
   },
   {
     ticker: 'B3SA3',
@@ -82,7 +88,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Bolsa de Valores',
     cnpj: '09.346.601/0001-25',
     website: 'https://www.b3.com.br',
-    description: 'B3 S.A. - Brasil, Bolsa, Balcão é a bolsa de valores oficial do Brasil, administrando mercados de ações, derivativos, renda fixa e commodities.',
+    description:
+      'B3 S.A. - Brasil, Bolsa, Balcão é a bolsa de valores oficial do Brasil, administrando mercados de ações, derivativos, renda fixa e commodities.',
   },
   {
     ticker: 'RENT3',
@@ -93,7 +100,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Aluguel de Carros',
     cnpj: '16.670.085/0001-55',
     website: 'https://www.localiza.com',
-    description: 'Localiza Rent a Car S.A. é a maior empresa de aluguel de veículos da América Latina, atuando também em gestão de frotas e seminovos.',
+    description:
+      'Localiza Rent a Car S.A. é a maior empresa de aluguel de veículos da América Latina, atuando também em gestão de frotas e seminovos.',
   },
   {
     ticker: 'WEGE3',
@@ -104,7 +112,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Motores, Compressores e Outros',
     cnpj: '84.429.695/0001-11',
     website: 'https://www.weg.net',
-    description: 'WEG S.A. é uma empresa brasileira fabricante de equipamentos eletroeletrônicos, incluindo motores elétricos, transformadores, geradores e automação industrial.',
+    description:
+      'WEG S.A. é uma empresa brasileira fabricante de equipamentos eletroeletrônicos, incluindo motores elétricos, transformadores, geradores e automação industrial.',
   },
   {
     ticker: 'SUZB3',
@@ -115,7 +124,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Papel e Celulose',
     cnpj: '16.404.287/0001-55',
     website: 'https://www.suzano.com.br',
-    description: 'Suzano S.A. é a maior produtora de celulose de eucalipto do mundo e uma das principais fabricantes de papel da América Latina.',
+    description:
+      'Suzano S.A. é a maior produtora de celulose de eucalipto do mundo e uma das principais fabricantes de papel da América Latina.',
   },
   {
     ticker: 'RAIL3',
@@ -126,7 +136,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Transporte Ferroviário',
     cnpj: '02.937.149/0001-08',
     website: 'https://www.rumolog.com',
-    description: 'Rumo S.A. é uma empresa de logística ferroviária que opera a maior malha ferroviária do Brasil, transportando principalmente grãos e açúcar.',
+    description:
+      'Rumo S.A. é uma empresa de logística ferroviária que opera a maior malha ferroviária do Brasil, transportando principalmente grãos e açúcar.',
   },
   {
     ticker: 'GGBR4',
@@ -137,7 +148,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Siderurgia',
     cnpj: '33.611.500/0001-19',
     website: 'https://www.gerdau.com.br',
-    description: 'Gerdau S.A. é uma das maiores empresas brasileiras produtoras de aço, com operações nas Américas e Europa.',
+    description:
+      'Gerdau S.A. é uma das maiores empresas brasileiras produtoras de aço, com operações nas Américas e Europa.',
   },
   {
     ticker: 'RADL3',
@@ -148,7 +160,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Medicamentos',
     cnpj: '61.585.865/0001-51',
     website: 'https://www.rd.com.br',
-    description: 'RD - Raia Drogasil S.A. é a maior rede de farmácias do Brasil, resultado da fusão entre Droga Raia e Drogasil.',
+    description:
+      'RD - Raia Drogasil S.A. é a maior rede de farmácias do Brasil, resultado da fusão entre Droga Raia e Drogasil.',
   },
   {
     ticker: 'JBSS3',
@@ -159,7 +172,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Carnes e Derivados',
     cnpj: '02.916.265/0001-60',
     website: 'https://www.jbs.com.br',
-    description: 'JBS S.A. é a maior processadora de proteína animal do mundo, com marcas como Friboi, Seara, Swift e Pilgrim\'s Pride.',
+    description:
+      "JBS S.A. é a maior processadora de proteína animal do mundo, com marcas como Friboi, Seara, Swift e Pilgrim's Pride.",
   },
   {
     ticker: 'EMBR3',
@@ -170,7 +184,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Construção de Aeronaves',
     cnpj: '07.689.002/0001-89',
     website: 'https://www.embraer.com',
-    description: 'Embraer S.A. é a terceira maior fabricante de aeronaves do mundo, especializada em jatos comerciais, executivos e aeronaves militares.',
+    description:
+      'Embraer S.A. é a terceira maior fabricante de aeronaves do mundo, especializada em jatos comerciais, executivos e aeronaves militares.',
   },
   {
     ticker: 'LREN3',
@@ -181,7 +196,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Tecidos, Vestuário e Calçados',
     cnpj: '92.754.738/0001-62',
     website: 'https://www.lojasrenner.com.br',
-    description: 'Lojas Renner S.A. é a maior varejista de moda do Brasil, operando as marcas Renner, Camicado, Youcom e Ashua.',
+    description:
+      'Lojas Renner S.A. é a maior varejista de moda do Brasil, operando as marcas Renner, Camicado, Youcom e Ashua.',
   },
   {
     ticker: 'SANB11',
@@ -192,7 +208,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Bancos',
     cnpj: '90.400.888/0001-42',
     website: 'https://www.santander.com.br',
-    description: 'Banco Santander (Brasil) S.A. é um dos principais bancos do país, oferecendo serviços bancários completos para pessoas físicas e jurídicas.',
+    description:
+      'Banco Santander (Brasil) S.A. é um dos principais bancos do país, oferecendo serviços bancários completos para pessoas físicas e jurídicas.',
   },
   {
     ticker: 'VIVT3',
@@ -203,7 +220,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Telefonia Fixa',
     cnpj: '02.558.157/0001-62',
     website: 'https://www.telefonica.com.br',
-    description: 'Telefônica Brasil S.A. (Vivo) é a maior operadora de telefonia móvel do Brasil em número de clientes, oferecendo também serviços de banda larga e TV por assinatura.',
+    description:
+      'Telefônica Brasil S.A. (Vivo) é a maior operadora de telefonia móvel do Brasil em número de clientes, oferecendo também serviços de banda larga e TV por assinatura.',
   },
   {
     ticker: 'EGIE3',
@@ -214,7 +232,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Geração de Energia',
     cnpj: '02.474.103/0001-19',
     website: 'https://www.engie.com.br',
-    description: 'Engie Brasil Energia S.A. é uma das principais geradoras privadas de energia elétrica do Brasil, com matriz energética diversificada.',
+    description:
+      'Engie Brasil Energia S.A. é uma das principais geradoras privadas de energia elétrica do Brasil, com matriz energética diversificada.',
   },
   {
     ticker: 'EQTL3',
@@ -225,7 +244,8 @@ const TOP_20_B3_ASSETS = [
     segment: 'Distribuição de Energia',
     cnpj: '03.220.438/0001-73',
     website: 'https://www.equatorialenergia.com.br',
-    description: 'Equatorial Energia S.A. é um grupo empresarial brasileiro do setor de energia elétrica, atuando na distribuição e transmissão de energia.',
+    description:
+      'Equatorial Energia S.A. é um grupo empresarial brasileiro do setor de energia elétrica, atuando na distribuição e transmissão de energia.',
   },
 ];
 

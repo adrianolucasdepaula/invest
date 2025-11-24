@@ -60,7 +60,7 @@ export class BrapiScraper {
 
       const response = await this.client.get(`/quote/${ticker}`, {
         params: {
-          token: this.apiKey,  // BRAPI requires token as query param, not header
+          token: this.apiKey, // BRAPI requires token as query param, not header
           range,
           interval: '1d',
           fundamental: true,
@@ -95,12 +95,12 @@ export class BrapiScraper {
         week52Low: result.fiftyTwoWeekLow,
         historicalPrices: result.historicalDataPrice?.map((price: any) => ({
           date: new Date(price.date * 1000).toISOString().split('T')[0],
-          open: price.open,
-          high: price.high,
-          low: price.low,
-          close: price.close,
-          volume: price.volume,
-          adjustedClose: price.adjustedClose,
+          open: +price.open, // BUGFIX 2025-11-22: Normalizar string→number (BRAPI retorna strings)
+          high: +price.high,
+          low: +price.low,
+          close: +price.close,
+          volume: +price.volume,
+          adjustedClose: +price.adjustedClose,
         })),
       };
 

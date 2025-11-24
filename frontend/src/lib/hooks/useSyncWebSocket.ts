@@ -155,8 +155,9 @@ export function useSyncWebSocket(options?: {
         isRunning: false,
         currentTicker: null,
         progress: 100,
+        // BUGFIX 2025-11-23: Substituir logs antigos por apenas log de conclusão
+        // Remove entradas "Iniciando sync..." e "Processando..." obsoletas
         logs: [
-          ...prev.logs,
           {
             timestamp: new Date(data.timestamp),
             ticker: 'SYSTEM',
@@ -202,7 +203,8 @@ export function useSyncWebSocket(options?: {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [options?.autoRefresh, options?.onSyncComplete]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options?.autoRefresh, options?.onSyncComplete]); // Only reconnect when these specific properties change, not when options object reference changes
 
   /**
    * Limpar logs e resetar estado

@@ -1,0 +1,82 @@
+
+> b3-invest-backend@1.0.0 lint
+> eslint "{src,apps,libs,test}/**/*.ts" --fix
+
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\ai\ai.service.ts
+   7:23  error  '_data' is defined but never used          @typescript-eslint/no-unused-vars
+   7:35  error  '_prompt' is defined but never used        @typescript-eslint/no-unused-vars
+  13:48  error  '_analysisData' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\ai\services\document-sharding.service.ts
+  77:32  error  '_i' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\analysis\technical\technical-analysis.service.ts
+  337:5  error  'patterns' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\api\analysis\analysis.service.ts
+  11:3  error  'User' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\api\assets\assets-update.service.ts
+  132:13  error  'fundamentalData' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  450:11  error  'startTime' is assigned a value but never used        @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\api\assets\assets.service.ts
+    4:17  error  'AssetType' is defined but never used               @typescript-eslint/no-unused-vars
+  141:11  error  'previousClose' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\api\auth\auth.service.ts
+  126:13  error  'password' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\api\economic-indicators\dto\get-indicators.dto.ts
+  2:46  error  'IsIn' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\api\economic-indicators\economic-indicators.service.ts
+  3:22  error  'Between' is defined but never used          @typescript-eslint/no-unused-vars
+  3:31  error  'MoreThanOrEqual' is defined but never used  @typescript-eslint/no-unused-vars
+  3:48  error  'LessThanOrEqual' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\api\market-data\dto\get-prices.dto.ts
+  2:39  error  'IsString' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\api\market-data\market-data.service.ts
+    9:26  error  'TechnicalIndicators' is defined but never used  @typescript-eslint/no-unused-vars
+  738:11  error  'assetFilter' is defined but never used          @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\api\portfolio\parsers\b3-parser.ts
+  10:30  error  'fileBuffer' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\api\portfolio\parsers\kinvo-parser.ts
+  10:30  error  'fileBuffer' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\common\services\cache.service.ts
+  60:7  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\common\services\notifications.service.ts
+  90:27  error  'notification' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\integrations\brapi\brapi.service.ts
+  100:22  error  'country' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\modules\cron\cron.service.ts
+  2:16  error  'CronExpression' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\queue\processors\scraping.processor.ts
+  35:38  error  'result' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\scrapers\auth\google-auth.helper.ts
+  193:18  error  Require statement not part of import statement  @typescript-eslint/no-var-requires
+  206:18  error  Require statement not part of import statement  @typescript-eslint/no-var-requires
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\scrapers\base\abstract-scraper.ts
+  3:8  error  'puppeteer' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\scrapers\fundamental\investidor10.scraper.ts
+  90:11  error  'getValueByLabel' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\adria\Dropbox\PC (2)\Downloads\Python - Projetos\invest-claude-web\backend\src\validators\validators.service.ts
+   7:27  error  '_data' is defined but never used  @typescript-eslint/no-unused-vars
+  12:21  error  '_data' is defined but never used  @typescript-eslint/no-unused-vars
+
+Ô£û 31 problems (31 errors, 0 warnings)
+

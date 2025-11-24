@@ -8,6 +8,8 @@ import type {
   SyncStatusResponseDto,
   SyncBulkRequestDto,
   SyncBulkResponseDto,
+  SyncIndividualRequestDto,
+  SyncIndividualResponseDto,
 } from '../types/data-sync';
 
 /**
@@ -49,6 +51,42 @@ export async function startBulkSync(
   request: SyncBulkRequestDto
 ): Promise<SyncBulkResponseDto> {
   const response = await api.post('/market-data/sync-bulk', request);
+  return response.data;
+}
+
+/**
+ * FASE 37: Iniciar sincronização individual de um ativo via COTAHIST
+ *
+ * @param request Objeto com ticker, startYear (opcional) e endYear (opcional)
+ * @returns HTTP 200 OK com detalhes da sincronização concluída
+ * @throws AxiosError se validação falhar (400) ou erro de servidor (500)
+ *
+ * Padrão Síncrono (backend aguarda conclusão):
+ * 1. Endpoint aguarda conclusão da sincronização (HTTP 200 OK)
+ * 2. Processamento sequencial: COTAHIST → BRAPI → Merge → PostgreSQL
+ * 3. Progresso enviado via WebSocket (namespace /sync) durante execução
+ * 4. Retorna estatísticas detalhadas após conclusão
+ *
+ * UX Pattern (frontend):
+ * - Modal escuta evento WebSocket 'sync:started'
+ * - Fecha modal após confirmar início (não aguarda conclusão)
+ * - Navega para /data-management automaticamente
+ * - Progresso exibido em tempo real via WebSocket na página principal
+ * - Invalidação de cache React Query acontece após HTTP 200 (background)
+ *
+ * @example
+ * const response = await startIndividualSync({
+ *   ticker: 'ABEV3',
+ *   startYear: 2020,
+ *   endYear: 2024
+ * });
+ * console.log(response.totalRecords); // 1200
+ * console.log(response.processingTime); // 12.5 (segundos)
+ */
+export async function startIndividualSync(
+  request: SyncIndividualRequestDto
+): Promise<SyncIndividualResponseDto> {
+  const response = await api.post('/market-data/sync-cotahist', request);
   return response.data;
 }
 

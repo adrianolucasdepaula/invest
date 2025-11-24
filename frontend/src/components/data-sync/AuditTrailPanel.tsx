@@ -28,11 +28,16 @@ export interface AuditTrailPanelProps {
 
 /**
  * Helper: Get icon for log status
+ * BUGFIX 2025-11-23: Checkmark azul para logs SYSTEM (conclusão de sync)
  */
-const getLogIcon = (status: SyncLogEntry['status']) => {
+const getLogIcon = (status: SyncLogEntry['status'], ticker?: string) => {
   switch (status) {
     case 'success':
-      return <CheckCircle2 className="h-4 w-4 text-success" />;
+      // Checkmark azul para logs SYSTEM (conclusão), verde para ativos individuais
+      return <CheckCircle2 className={cn(
+        "h-4 w-4",
+        ticker === 'SYSTEM' ? 'text-primary' : 'text-success'
+      )} />;
     case 'failed':
       return <XCircle className="h-4 w-4 text-destructive" />;
     case 'processing':
@@ -151,7 +156,7 @@ export function AuditTrailPanel({
                 )}
               >
                 {/* Icon */}
-                <div className="mt-0.5">{getLogIcon(log.status)}</div>
+                <div className="mt-0.5">{getLogIcon(log.status, log.ticker)}</div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">

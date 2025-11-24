@@ -1,4 +1,11 @@
-import { MigrationInterface, QueryRunner, TableColumn, Table, TableForeignKey, TableIndex } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  TableColumn,
+  Table,
+  TableForeignKey,
+  TableIndex,
+} from 'typeorm';
 
 export class AddAssetUpdateTracking1762716763091 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {

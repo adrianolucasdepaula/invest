@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { RefreshCw, Loader2 } from 'lucide-react';
 import { useStartBulkSync } from '@/lib/hooks/useDataSync';
+import { useSyncWebSocket } from '@/lib/hooks/useSyncWebSocket';
 import { SyncConfigModal } from './SyncConfigModal';
 
 /**
@@ -34,9 +36,81 @@ export function BulkSyncButton({
   className,
   onSyncStarted,
 }: BulkSyncButtonProps) {
+  const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
+  const [isSyncStarted, setIsSyncStarted] = useState(false);
+  // FIX: Local state to track if we are waiting for sync to start (persists after HTTP 202)
+  const [waitingForSyncStart, setWaitingForSyncStart] = useState(false);
+
   const { toast } = useToast();
   const syncMutation = useStartBulkSync();
+  const { state: wsState } = useSyncWebSocket();
+
+  /**
+   * BUGFIX DEFINITIVO 2025-11-23: Race Condition Fix
+   *
+   * Problema anterior: `startBulkSync` retorna HTTP 202 (Accepted) imediatamente,
+   * fazendo `syncMutation.isPending` virar false ANTES do evento WebSocket `sync:started` chegar.
+   * Isso impedia o fechamento do modal.
+   *
+   * Solução: Usar `waitingForSyncStart` que é setado true no clique e só vira false
+   * quando o WebSocket confirma o início.
+   */
+  useEffect(() => {
+    // Debug logs
+    if (waitingForSyncStart || wsState.isRunning) {
+      console.log('[BULK SYNC] State update:', {
+        waitingForSyncStart,
+        wsRunning: wsState.isRunning,
+        mutationPending: syncMutation.isPending,
+        isSyncStarted,
+      });
+    }
+
+    // Se estamos aguardando início E o WebSocket confirmou que está rodando
+    if (wsState.isRunning && waitingForSyncStart && !isSyncStarted) {
+      console.log('[BULK SYNC] Sync started confirmed via WebSocket!');
+      setIsSyncStarted(true);
+      setWaitingForSyncStart(false);
+
+      // Capturar valores
+      const tickersCount = syncMutation.variables?.tickers?.length || 0;
+
+      // Toast de sucesso
+      toast({
+        title: 'Sincronização iniciada',
+        description: `${tickersCount} ativo(s) em processamento. Acompanhe o progresso abaixo.`,
+        variant: 'default',
+      });
+
+      // Fechar modal e navegar
+      setModalOpen(false);
+      router.push('/data-management');
+
+      // Callback
+      if (onSyncStarted) {
+        onSyncStarted();
+      }
+    }
+  }, [
+    wsState.isRunning,
+    waitingForSyncStart,
+    isSyncStarted,
+    syncMutation.variables,
+    toast,
+    onSyncStarted,
+    router,
+  ]);
+
+  /**
+   * Reset states quando modal fecha ou abre
+   */
+  useEffect(() => {
+    if (!modalOpen) {
+      setIsSyncStarted(false);
+      setWaitingForSyncStart(false);
+    }
+  }, [modalOpen]);
 
   /**
    * Handle modal open
@@ -49,7 +123,7 @@ export function BulkSyncButton({
    * Handle modal close
    */
   const handleCloseModal = () => {
-    if (!syncMutation.isPending) {
+    if (!syncMutation.isPending && !waitingForSyncStart) {
       setModalOpen(false);
     }
   };
@@ -57,38 +131,40 @@ export function BulkSyncButton({
   /**
    * Handle sync confirmation
    */
-  const handleConfirm = async (config: {
-    tickers: string[];
-    startYear: number;
-    endYear: number;
-  }) => {
+  const handleConfirm = (config: { tickers: string[]; startDate: string; endDate: string }) => {
     try {
-      // Call mutation
-      const result = await syncMutation.mutateAsync({
-        tickers: config.tickers,
-        startYear: config.startYear,
-        endYear: config.endYear,
-      });
+      const startYear = parseInt(config.startDate.split('-')[0], 10);
+      const endYear = parseInt(config.endDate.split('-')[0], 10);
 
-      // Close modal
-      setModalOpen(false);
+      // Set waiting flag BEFORE mutation
+      setWaitingForSyncStart(true);
 
-      // Show success toast
-      toast({
-        title: 'Sincronização iniciada',
-        description: result.message || `${result.totalTickers} ativo(s) em processamento`,
-        variant: 'default',
-      });
+      console.error('[BULK SYNC] Payload:', { tickers: config.tickers, startYear, endYear });
 
-      // Call callback
-      if (onSyncStarted) {
-        onSyncStarted();
-      }
+      syncMutation.mutate(
+        {
+          tickers: config.tickers,
+          startYear,
+          endYear,
+        },
+        {
+          onError: (error: any) => {
+            console.error('[BULK SYNC ERROR]:', error);
+            setWaitingForSyncStart(false); // Reset on error
+            toast({
+              title: 'Erro ao iniciar sincronização',
+              description: error.message || 'Ocorreu um erro inesperado.',
+              variant: 'destructive',
+            });
+          },
+        }
+      );
     } catch (error: any) {
-      // Show error toast
+      console.error('[BULK SYNC ERROR]:', error);
+      setWaitingForSyncStart(false);
       toast({
         title: 'Erro ao iniciar sincronização',
-        description: error.message || 'Ocorreu um erro inesperado. Tente novamente.',
+        description: error.message || 'Ocorreu um erro inesperado.',
         variant: 'destructive',
       });
     }

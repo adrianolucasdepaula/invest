@@ -22,7 +22,7 @@ export class MacroAnalystAgent extends BaseFinancialAgent {
   }
 
   async analyze(context: AnalysisContext): Promise<AgentResponse> {
-    const { ticker, stockData, macroData } = context;
+    const { stockData, macroData } = context;
 
     const systemPrompt = `Você é um analista macroeconômico especializado no mercado brasileiro.
 Avalie: impacto de Selic, inflação, câmbio, PIB no setor/empresa.

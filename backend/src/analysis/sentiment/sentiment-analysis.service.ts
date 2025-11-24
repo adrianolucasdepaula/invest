@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
 
 export interface SentimentResult {
   score: number; // -1 (muito negativo) a +1 (muito positivo)

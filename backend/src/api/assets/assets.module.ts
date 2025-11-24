@@ -1,6 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Asset, AssetPrice, FundamentalData, UpdateLog, Portfolio, PortfolioPosition } from '@database/entities';
+import {
+  Asset,
+  AssetPrice,
+  FundamentalData,
+  UpdateLog,
+  Portfolio,
+  PortfolioPosition,
+  TickerChange,
+} from '@database/entities';
 import { AssetsController } from './assets.controller';
 import { AssetsUpdateController } from './assets-update.controller';
 import { AssetsService } from './assets.service';
@@ -17,6 +25,7 @@ import { WebSocketModule } from '../../websocket/websocket.module';
       UpdateLog,
       Portfolio,
       PortfolioPosition,
+      TickerChange,
     ]),
     ScrapersModule,
     WebSocketModule,

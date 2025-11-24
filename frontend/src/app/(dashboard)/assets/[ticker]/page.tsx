@@ -7,7 +7,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { MultiPaneChart } from '@/components/charts/multi-pane-chart';
-import { TimeframeRangePicker, type CandleTimeframe, type ViewingRange } from '@/components/charts/timeframe-range-picker';
+import {
+  TimeframeRangePicker,
+  type CandleTimeframe,
+  type ViewingRange,
+} from '@/components/charts/timeframe-range-picker';
 import {
   TrendingUp,
   TrendingDown,
@@ -23,14 +27,11 @@ import { useAsset, useMarketDataPrices, useAssetFundamentals } from '@/lib/hooks
 import { useAnalysis, useRequestAnalysis } from '@/lib/hooks/use-analysis';
 import { AdvancedChart } from '@/components/tradingview/widgets/AdvancedChart';
 
-export default function AssetDetailPage({
-  params,
-}: {
-  params: { ticker: string };
-}) {
+export default function AssetDetailPage({ params }: { params: { ticker: string } }) {
   const ticker = params.ticker;
   const [selectedTimeframe, setSelectedTimeframe] = useState<CandleTimeframe>('1D');
   const [selectedRange, setSelectedRange] = useState<ViewingRange>('1y');
+  const [showUnifiedHistory, setShowUnifiedHistory] = useState(false);
 
   // Fetch critical data first (for LCP optimization)
   const { data: asset, isLoading: assetLoading, error: assetError } = useAsset(ticker);
@@ -56,6 +57,7 @@ export default function AssetDetailPage({
   const { data: priceHistory, isLoading: pricesLoading } = useMarketDataPrices(ticker, {
     timeframe: selectedTimeframe,
     range: selectedRange,
+    unified: showUnifiedHistory,
   });
 
   // TODO: Fundamentals API not implemented yet - temporarily disabled to avoid 404 errors
@@ -89,44 +91,53 @@ export default function AssetDetailPage({
         // Frontend: sma20, sma50, sma200, ema9, ema21, bollinger, macd.line
         const transformedData = {
           ...data,
-          indicators: data.indicators ? {
-            // Moving Averages (snake_case to camelCase)
-            sma20: data.indicators.sma_20,
-            sma50: data.indicators.sma_50,
-            sma200: data.indicators.sma_200,
-            ema9: data.indicators.ema_9,
-            ema21: data.indicators.ema_21,
-            // RSI (no transformation needed)
-            rsi: data.indicators.rsi,
-            // MACD (rename macd.macd to macd.line)
-            macd: data.indicators.macd ? {
-              line: data.indicators.macd.macd,
-              signal: data.indicators.macd.signal,
-              histogram: data.indicators.macd.histogram,
-            } : undefined,
-            // Stochastic (no transformation needed)
-            stochastic: data.indicators.stochastic,
-            // Bollinger Bands (rename bollinger_bands to bollinger)
-            bollinger: data.indicators.bollinger_bands ? {
-              upper: data.indicators.bollinger_bands.upper,
-              middle: data.indicators.bollinger_bands.middle,
-              lower: data.indicators.bollinger_bands.lower,
-            } : undefined,
-            // Keep other indicators as-is
-            atr: data.indicators.atr,
-            obv: data.indicators.obv,
-            volume_sma: data.indicators.volume_sma,
-            pivot: data.indicators.pivot,
-            trend: data.indicators.trend,
-            trend_strength: data.indicators.trend_strength,
-          } : null,
+          indicators: data.indicators
+            ? {
+                // Moving Averages (snake_case to camelCase)
+                sma20: data.indicators.sma_20,
+                sma50: data.indicators.sma_50,
+                sma200: data.indicators.sma_200,
+                ema9: data.indicators.ema_9,
+                ema21: data.indicators.ema_21,
+                // RSI (no transformation needed)
+                rsi: data.indicators.rsi,
+                // MACD (rename macd.macd to macd.line)
+                macd: data.indicators.macd
+                  ? {
+                      line: data.indicators.macd.macd,
+                      signal: data.indicators.macd.signal,
+                      histogram: data.indicators.macd.histogram,
+                    }
+                  : undefined,
+                // Stochastic (no transformation needed)
+                stochastic: data.indicators.stochastic,
+                // Bollinger Bands (rename bollinger_bands to bollinger)
+                bollinger: data.indicators.bollinger_bands
+                  ? {
+                      upper: data.indicators.bollinger_bands.upper,
+                      middle: data.indicators.bollinger_bands.middle,
+                      lower: data.indicators.bollinger_bands.lower,
+                    }
+                  : undefined,
+                // Keep other indicators as-is
+                atr: data.indicators.atr,
+                obv: data.indicators.obv,
+                volume_sma: data.indicators.volume_sma,
+                pivot: data.indicators.pivot,
+                trend: data.indicators.trend,
+                trend_strength: data.indicators.trend_strength,
+              }
+            : null,
         };
 
         setTechnicalData(transformedData);
 
         // Log metadata (cache hit/miss, duration, errors)
         console.log('Technical data metadata:', data.metadata);
-        console.log('Transformed indicators keys:', transformedData.indicators ? Object.keys(transformedData.indicators) : 'null');
+        console.log(
+          'Transformed indicators keys:',
+          transformedData.indicators ? Object.keys(transformedData.indicators) : 'null'
+        );
 
         // Show warning if insufficient data
         if (data.metadata.error === 'INSUFFICIENT_DATA') {
@@ -166,13 +177,13 @@ export default function AssetDetailPage({
       '1y': '1 ano',
       '2y': '2 anos',
       '5y': '5 anos',
-      'max': 'histórico',
+      max: 'histórico',
     };
     return labels[selectedRange] || selectedRange;
   }, [selectedRange]);
 
   const handleIndicatorToggle = (indicator: keyof typeof showIndicators) => {
-    setShowIndicators((prev) => ({
+    setShowIndicators(prev => ({
       ...prev,
       [indicator]: !prev[indicator],
     }));
@@ -183,7 +194,7 @@ export default function AssetDetailPage({
   // Error state
   if (assetError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+      <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4">
         <AlertCircle className="h-12 w-12 text-destructive" />
         <h2 className="text-2xl font-bold">Ativo não encontrado</h2>
         <p className="text-muted-foreground">O ticker {ticker.toUpperCase()} não foi encontrado</p>
@@ -209,7 +220,7 @@ export default function AssetDetailPage({
           <div>
             {isLoading ? (
               <>
-                <Skeleton className="h-9 w-32 mb-2" />
+                <Skeleton className="mb-2 h-9 w-32" />
                 <Skeleton className="h-5 w-48" />
               </>
             ) : (
@@ -235,15 +246,17 @@ export default function AssetDetailPage({
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {isLoading ? (
-          Array(4).fill(0).map((_, i) => (
-            <Card key={i} className="p-6">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-8 w-32" />
-                <Skeleton className="h-4 w-16" />
-              </div>
-            </Card>
-          ))
+          Array(4)
+            .fill(0)
+            .map((_, i) => (
+              <Card key={i} className="p-6">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              </Card>
+            ))
         ) : (
           <>
             <StatCard
@@ -279,8 +292,8 @@ export default function AssetDetailPage({
 
       {/* Indicator Toggles */}
       <Card className="p-4">
-        <h3 className="text-sm font-semibold mb-3">Indicadores Técnicos</h3>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <h3 className="mb-3 text-sm font-semibold">Indicadores Técnicos</h3>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
           {Object.entries(showIndicators).map(([key, value]) => (
             <div key={key} className="flex items-center space-x-2">
               <Checkbox
@@ -290,23 +303,61 @@ export default function AssetDetailPage({
               />
               <label
                 htmlFor={key}
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                className="cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                {key.toUpperCase().replace(/([A-Z])/g, ' $1').trim()}
+                {key
+                  .toUpperCase()
+                  .replace(/([A-Z])/g, ' $1')
+                  .trim()}
               </label>
             </div>
           ))}
         </div>
       </Card>
 
+      {/* Unified History Toggle */}
+      <Card className="p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="mb-1 text-sm font-semibold">Histórico Unificado</h3>
+            <p className="text-xs text-muted-foreground">
+              Incluir dados de tickers anteriores (ex: ELET3 → AXIA3)
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="unified-history"
+              checked={showUnifiedHistory}
+              onCheckedChange={checked => setShowUnifiedHistory(checked as boolean)}
+            />
+            <label
+              htmlFor="unified-history"
+              className="cursor-pointer text-sm font-medium leading-none"
+            >
+              Habilitar
+            </label>
+          </div>
+        </div>
+      </Card>
+
       {/* Price Chart */}
       <Card className="p-6">
         <div className="mb-4 flex flex-col gap-4">
-          <div>
-            <h3 className="text-lg font-semibold">Análise Técnica Avançada</h3>
-            <p className="text-sm text-muted-foreground">
-              Gráficos multi-pane com indicadores técnicos sincronizados
-            </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Análise Técnica Avançada</h3>
+              <p className="text-sm text-muted-foreground">
+                Gráficos multi-pane com indicadores técnicos sincronizados
+              </p>
+            </div>
+            {showUnifiedHistory && (
+              <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-1 dark:border-blue-800 dark:bg-blue-950">
+                <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                  Exibindo histórico unificado
+                </span>
+              </div>
+            )}
           </div>
           <TimeframeRangePicker
             selectedTimeframe={selectedTimeframe}
@@ -324,7 +375,7 @@ export default function AssetDetailPage({
             showIndicators={showIndicators}
           />
         ) : (
-          <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+          <div className="flex h-[400px] items-center justify-center text-muted-foreground">
             <p>Dados insuficientes para gráfico avançado. Tente um período maior.</p>
           </div>
         )}
@@ -351,12 +402,10 @@ export default function AssetDetailPage({
         <Card className="p-6">
           <div className="mb-4">
             <h3 className="text-lg font-semibold">Análise Fundamentalista</h3>
-            <p className="text-sm text-muted-foreground">
-              Principais indicadores fundamentalistas
-            </p>
+            <p className="text-sm text-muted-foreground">Principais indicadores fundamentalistas</p>
           </div>
           {/* TODO: API de fundamentals não implementada ainda - exibindo mensagem padrão */}
-          <div className="flex flex-col items-center justify-center py-8 space-y-2">
+          <div className="flex flex-col items-center justify-center space-y-2 py-8">
             <p className="text-muted-foreground">Dados fundamentalistas não disponíveis</p>
             <p className="text-xs text-muted-foreground">API em desenvolvimento</p>
           </div>
@@ -376,12 +425,14 @@ export default function AssetDetailPage({
             <div className="space-y-4">
               <Skeleton className="h-12 w-full" />
               <div className="grid grid-cols-2 gap-4">
-                {Array(6).fill(0).map((_, i) => (
-                  <div key={i} className="space-y-2">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-6 w-16" />
-                  </div>
-                ))}
+                {Array(6)
+                  .fill(0)
+                  .map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-6 w-16" />
+                    </div>
+                  ))}
               </div>
             </div>
           ) : technicalData?.indicators ? (
@@ -391,7 +442,9 @@ export default function AssetDetailPage({
                   <p className="text-sm text-muted-foreground">RSI (14)</p>
                   <p className="text-xl font-bold">
                     {technicalData.indicators.rsi
-                      ? technicalData.indicators.rsi[technicalData.indicators.rsi.length - 1]?.toFixed(1)
+                      ? technicalData.indicators.rsi[
+                          technicalData.indicators.rsi.length - 1
+                        ]?.toFixed(1)
                       : 'N/A'}
                   </p>
                 </div>
@@ -400,8 +453,8 @@ export default function AssetDetailPage({
                   <p className="text-xl font-bold">
                     {technicalData.indicators.macd?.histogram
                       ? technicalData.indicators.macd.histogram[
-                        technicalData.indicators.macd.histogram.length - 1
-                      ] > 0
+                          technicalData.indicators.macd.histogram.length - 1
+                        ] > 0
                         ? 'Compra'
                         : 'Venda'
                       : 'N/A'}
@@ -442,10 +495,8 @@ export default function AssetDetailPage({
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-8 space-y-2">
-              <p className="text-muted-foreground">
-                Dados insuficientes para indicadores técnicos
-              </p>
+            <div className="flex flex-col items-center justify-center space-y-2 py-8">
+              <p className="text-muted-foreground">Dados insuficientes para indicadores técnicos</p>
             </div>
           )}
         </Card>

@@ -4,12 +4,12 @@ import { Injectable, Logger } from '@nestjs/common';
 export class ValidatorsService {
   private readonly logger = new Logger(ValidatorsService.name);
 
-  validateFundamentalData(data: any): boolean {
+  validateFundamentalData(_data: any): boolean {
     // TODO: Implement fundamental data validation
     return true;
   }
 
-  validatePriceData(data: any): boolean {
+  validatePriceData(_data: any): boolean {
     // TODO: Implement price data validation
     return true;
   }

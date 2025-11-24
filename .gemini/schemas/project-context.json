@@ -1,0 +1,376 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "B3 AI Analysis Platform - Project Context",
+  "description": "Structured context for AI assistants (Antigravity/Gemini)",
+  "version": "1.2.0",
+  "lastUpdated": "2025-11-24T10:58:00-03:00",
+
+  "project": {
+    "name": "B3 AI Analysis Platform",
+    "repository": "invest-claude-web",
+    "type": "Financial Platform (B3 + AI)",
+    "version": "1.1.1",
+    "phase": {
+      "current": 55,
+      "name": "Ticker History Merge",
+      "total": 60,
+      "status": "in_progress",
+      "progress": 98.1
+    }
+  },
+
+  "stack": {
+    "backend": {
+      "framework": "NestJS",
+      "version": "10.x",
+      "language": "TypeScript",
+      "languageVersion": "5.x",
+      "database": {
+        "type": "PostgreSQL",
+        "version": "16",
+        "port": 5532,
+        "name": "invest_db"
+      },
+      "orm": "TypeORM",
+      "queue": {
+        "service": "BullMQ",
+        "storage": "Redis",
+        "port": 6380
+      },
+      "validation": ["class-validator", "class-transformer"]
+    },
+    "frontend": {
+      "framework": "Next.js",
+      "version": "14",
+      "router": "App Router",
+      "language": "TypeScript",
+      "ui": {
+        "library": "Shadcn/ui",
+        "base": "@radix-ui/react-*"
+      },
+      "styling": "TailwindCSS",
+      "stateManagement": "@tanstack/react-query",
+      "charts": ["recharts", "lightweight-charts"]
+    },
+    "scrapers": {
+      "language": "Python",
+      "version": "3.11",
+      "browser": "Playwright",
+      "count": 6,
+      "sources": [
+        "Fundamentei",
+        "Status Invest",
+        "Investing.com",
+        "Yahoo Finance",
+        "Google Finance",
+        "ADVFN"
+      ]
+    }
+  },
+
+  "architecture": {
+    "pattern": "Modular Monolith",
+    "layers": [
+      "API (Controllers + DTOs)",
+      "Services (Business Logic)",
+      "Entities (TypeORM)",
+      "Repositories (Data Access)"
+    ],
+    "ports": {
+      "backend": 3001,
+      "frontend": 3000,
+      "postgres": 5532,
+      "redis": 6380
+    },
+    "communication": {
+      "frontendToBackend": "REST API (http://localhost:3001/api/v1)",
+      "backendToScrapers": ["HTTP", "BullMQ"],
+      "backendToDatabase": "TypeORM",
+      "realtime": "WebSocket (Socket.io)"
+    }
+  },
+
+  "conventions": {
+    "codeStyle": {
+      "linter": "ESLint",
+      "formatter": "Prettier",
+      "indentation": "2 spaces",
+      "quotes": "single",
+      "semicolons": true,
+      "lineLength": 100
+    },
+    "commits": {
+      "format": "Conventional Commits",
+      "types": ["feat", "fix", "docs", "style", "refactor", "test", "chore"]
+    },
+    "branches": {
+      "main": "Production",
+      "develop": "Development",
+      "patterns": ["feature/*", "bugfix/*", "hotfix/*", "release/*"]
+    },
+    "naming": {
+      "files": "kebab-case",
+      "classes": "PascalCase",
+      "functions": "camelCase",
+      "constants": "UPPER_SNAKE_CASE",
+      "interfaces": "PascalCase with I prefix",
+      "types": "PascalCase"
+    }
+  },
+
+  "validation": {
+    "typescript": {
+      "command": "tsc --noEmit",
+      "strictMode": true,
+      "zeroErrors": true,
+      "noAny": true
+    },
+    "build": {
+      "backend": {
+        "command": "npm run build",
+        "outputDir": "dist",
+        "zeroErrors": true
+      },
+      "frontend": {
+        "command": "npm run build",
+        "outputDir": ".next",
+        "zeroErrors": true
+      }
+    },
+    "lint": {
+      "backend": "npm run lint",
+      "frontend": "npm run lint",
+      "zeroWarnings": true
+    },
+    "tests": {
+      "unit": {
+        "command": "npm run test",
+        "framework": "Jest",
+        "coverage": {
+          "minimum": 80,
+          "target": 90
+        }
+      },
+      "e2e": {
+        "command": "npx playwright test",
+        "framework": "Playwright",
+        "browsers": ["chromium", "firefox", "webkit"]
+      }
+    },
+    "mcp": {
+      "mandatory": ["playwright", "chromeDevTools", "sequentialThinking"],
+      "optional": ["reactDevTools", "context7", "memory", "postgres"]
+    }
+  },
+
+  "financial": {
+    "precision": {
+      "brl": {
+        "decimalPlaces": 2,
+        "example": "123.45"
+      },
+      "usd": {
+        "decimalPlaces": 2,
+        "example": "123.45"
+      },
+      "percentage": {
+        "decimalPlaces": 4,
+        "example": "5.6789"
+      },
+      "quantities": {
+        "type": "integer",
+        "example": 100
+      }
+    },
+    "dataType": {
+      "monetary": "Decimal",
+      "library": "decimal.js",
+      "neverUse": ["float", "number (for money)"]
+    },
+    "rounding": {
+      "method": "ROUND_HALF_UP",
+      "library": "decimal.js",
+      "neverUse": ["Math.round()", "toFixed() without Decimal"]
+    },
+    "timezone": {
+      "required": "America/Sao_Paulo",
+      "library": "date-fns-tz",
+      "neverUse": ["UTC without conversion", "local timezone"]
+    },
+    "crossValidation": {
+      "minSources": 3,
+      "outlierThreshold": 0.1,
+      "confidenceScore": {
+        "minimum": 0.75,
+        "calculation": "validSources.length / totalSources.length"
+      }
+    },
+    "tradingHours": {
+      "preOpen": "09:45",
+      "open": "10:00",
+      "close": "17:00",
+      "afterMarket": "17:30"
+    }
+  },
+
+  "methodology": {
+    "ultraThinking": {
+      "when": "Changes > 10 lines",
+      "steps": [
+        "Read context (file + types + dependencies + tests)",
+        "Analyze impact (identify ALL affected files)",
+        "Plan (create document if > 100 lines)",
+        "Validate dependencies (tsc --noEmit + grep)",
+        "Prevent regressions (search similar patterns)"
+      ]
+    },
+    "todoWrite": {
+      "rules": [
+        "Atomic steps (not generic)",
+        "Only 1 in_progress at a time",
+        "Mark completed immediately",
+        "Sequential order (execution logic)"
+      ]
+    },
+    "zeroTolerance": {
+      "typescript": 0,
+      "build": 0,
+      "lint": 0,
+      "console": 0,
+      "gaps": 0,
+      "bugs": 0
+    }
+  },
+
+  "rules": {
+    "neverDo": [
+      "Modify .env, terraform.tfstate",
+      "Commit secrets, API keys, passwords",
+      "Round/manipulate financial data",
+      "Use Math.round() for money",
+      "Use Float for monetary values",
+      "Commit with TypeScript errors",
+      "Commit with build errors",
+      "Skip validations (build, lint, tests)",
+      "Create duplicates without checking",
+      "Use 'any' type (use 'unknown')",
+      "Use mocks in production/staging",
+      "Fictional data in scrapers",
+      "Skip cross-validation",
+      "Temporary workaround (always definitive fix)",
+      "Advance phase with previous incomplete",
+      "Multiple 'in_progress' in TodoWrite"
+    ],
+    "alwaysDo": [
+      "Ultra-Thinking for changes > 10 lines",
+      "Read ROADMAP.md before starting",
+      "Verify 'git status' (clean)",
+      "Search existing code before creating",
+      "TodoWrite with atomic steps",
+      "Only 1 task 'in_progress'",
+      "Mark 'completed' immediately",
+      "Validate TypeScript (tsc --noEmit)",
+      "Validate Build (npm run build)",
+      "Validate Lint (npm run lint)",
+      "MCP Triple (Playwright + Chrome + React DevTools)",
+      "Cross-validation 3+ sources",
+      "Outlier detection (threshold 10%)",
+      "Re-validate before display",
+      "Use Decimal (not Float)",
+      "Conventional Commits",
+      "Working tree clean before new phase",
+      "Document with code (same commit)",
+      "Push after complete validation",
+      "Restart services before testing (system-manager.ps1)",
+      "Verify dependencies before changes",
+      "Update documentation always"
+    ]
+  },
+
+  "documents": {
+    "critical": [
+      ".gemini/GEMINI.md",
+      "CLAUDE.md",
+      "ROADMAP.md",
+      "ARCHITECTURE.md",
+      "DATABASE_SCHEMA.md",
+      "CHECKLIST_TODO_MASTER.md",
+      ".gemini/context/conventions.md",
+      ".gemini/context/financial-rules.md"
+    ],
+    "important": [
+      "CONTRIBUTING.md",
+      "TROUBLESHOOTING.md",
+      "INSTALL.md",
+      "INDEX.md",
+      "DATA_SOURCES.md"
+    ],
+    "reference": [
+      "GAP_ANALYSIS_REGRAS_DESENVOLVIMENTO.md",
+      "MELHORIAS_CONTEXTO_AI_ULTRA_ROBUSTO.md",
+      "FRAMEWORK_VALIDACAO_FRONTEND_UNIVERSAL.md"
+    ]
+  },
+
+  "workflows": {
+    "phaseWorkflow": [
+      "Read ROADMAP.md",
+      "git status (verify clean)",
+      "Ultra-Thinking (if > 100 lines)",
+      "Create FASE_XX_PLANEJAMENTO.md",
+      "TodoWrite (atomic steps)",
+      "Implement (1 step at a time)",
+      "Validate EACH step (TypeScript + Build + Lint)",
+      "MCP Triple (Playwright + Chrome + React DevTools)",
+      "Document (update ROADMAP.md + docs)",
+      "Commit + Push",
+      "Mark phase as 100% complete"
+    ],
+    "codeReview": {
+      "when": "Before next phase",
+      "checklist": "CHECKLIST_CODE_REVIEW_COMPLETO.md",
+      "criteria": "Zero gaps, bugs, errors, warnings"
+    }
+  },
+
+  "tools": {
+    "systemManager": {
+      "file": "system-manager.ps1",
+      "commands": ["start", "stop", "restart", "status", "logs", "clean"],
+      "purpose": "Manage all environment services (Docker, backend, frontend, postgres, redis)"
+    },
+    "mcps": {
+      "total": 8,
+      "list": [
+        "Playwright (E2E testing)",
+        "Chrome DevTools (Manual inspection)",
+        "Selenium (WebDriver)",
+        "Context7 (Official docs)",
+        "Filesystem (File operations)",
+        "Sequential Thinking (Complex reasoning)",
+        "Memory (Knowledge graph)",
+        "Postgres (Database queries)"
+      ]
+    },
+    "subAgents": {
+      "total": 6,
+      "list": [
+        "Backend API Expert (NestJS, TypeORM, PostgreSQL)",
+        "Frontend Components Expert (Next.js, React, Shadcn/ui)",
+        "Scraper Development Expert (Playwright, OAuth, Scraping)",
+        "Chart Analysis Expert (Recharts, lightweight-charts, OHLC)",
+        "TypeScript Validation Expert (Type Safety)",
+        "Queue Management Expert (BullMQ, Jobs, Redis)"
+      ]
+    }
+  },
+
+  "metadata": {
+    "createdAt": "2025-11-24T10:58:00-03:00",
+    "updatedAt": "2025-11-24T10:58:00-03:00",
+    "maintainer": "Claude Code (Sonnet 4.5) + Google Gemini AI",
+    "version": "1.0.0",
+    "schemaVersion": "draft-07",
+    "purpose": "Structured context for AI assistants to understand project completely"
+  }
+}

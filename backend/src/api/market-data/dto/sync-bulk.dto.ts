@@ -1,27 +1,36 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsString, IsInt, Min, Max, ArrayMinSize, ArrayMaxSize, ValidateIf } from 'class-validator';
+import {
+  IsArray,
+  IsString,
+  IsInt,
+  Min,
+  Max,
+  ArrayMinSize,
+  ArrayMaxSize,
+  ValidateIf,
+} from 'class-validator';
 
 /**
  * DTO para sincronização em massa de múltiplos ativos
  * FASE 35 - Sistema de Gerenciamento de Sync B3
  *
  * Limitações:
- * - Máximo 20 tickers por requisição (evita timeout e sobrecarga)
+ * - Máximo 60 tickers por requisição (evita timeout e sobrecarga)
  * - Processamento sequencial (1 por vez) para estabilidade Python Service
  * - Período: 1986-2024 (histórico completo COTAHIST B3)
  */
 export class SyncBulkDto {
   @ApiProperty({
     example: ['VALE3', 'PETR4', 'ABEV3'],
-    description: 'Lista de tickers para sincronizar (1-20 ativos)',
+    description: 'Lista de tickers para sincronizar (1-60 ativos)',
     type: [String],
     minItems: 1,
-    maxItems: 20,
+    maxItems: 60,
   })
   @IsArray({ message: 'tickers deve ser um array' })
   @IsString({ each: true, message: 'Cada ticker deve ser uma string' })
   @ArrayMinSize(1, { message: 'Pelo menos 1 ticker é necessário' })
-  @ArrayMaxSize(20, { message: 'Máximo 20 tickers por requisição (evita timeout)' })
+  @ArrayMaxSize(60, { message: 'Máximo 60 tickers por requisição (evita timeout)' })
   tickers: string[];
 
   @ApiProperty({
@@ -55,26 +64,26 @@ export class SyncBulkDto {
 export class SyncBulkResponseDto {
   @ApiProperty({
     example: 'Sync iniciado em background',
-    description: 'Mensagem de confirmação'
+    description: 'Mensagem de confirmação',
   })
   message: string;
 
   @ApiProperty({
     example: 20,
-    description: 'Quantidade total de tickers para sincronizar'
+    description: 'Quantidade total de tickers para sincronizar',
   })
   totalTickers: number;
 
   @ApiProperty({
     example: 50,
     description: 'Tempo estimado total (minutos) baseado em 2.5min/ativo',
-    nullable: true
+    nullable: true,
   })
   estimatedMinutes: number | null;
 
   @ApiProperty({
     example: 'Acompanhe o progresso em tempo real via WebSocket (evento: sync:progress)',
-    description: 'Instruções para acompanhamento do progresso'
+    description: 'Instruções para acompanhamento do progresso',
   })
   instructions: string;
 }

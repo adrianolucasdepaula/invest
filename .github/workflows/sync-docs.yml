@@ -1,0 +1,58 @@
+name: Sync Claude.md and Gemini.md
+
+on:
+  push:
+    paths:
+      - "CLAUDE.md"
+      - "GEMINI.md"
+    branches:
+      - main
+      - "feature/**"
+
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if files diverge
+        id: check
+        run: |
+          if ! diff -q CLAUDE.md GEMINI.md; then
+            echo "divergent=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Files divergent! Syncing..."
+          else
+            echo "divergent=false" >> $GITHUB_OUTPUT
+            echo "✅ Files already in sync"
+          fi
+
+      - name: Sync files
+        if: steps.check.outputs.divergent == 'true'
+        run: |
+          # Copy CLAUDE.md to GEMINI.md (CLAUDE is source of truth)
+          cp CLAUDE.md GEMINI.md
+
+          echo "✅ Synced GEMINI.md with CLAUDE.md"
+
+      - name: Commit and push
+        if: steps.check.outputs.divergent == 'true'
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+          git add GEMINI.md
+          git commit -m "chore(docs): sync GEMINI.md with CLAUDE.md [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        if: steps.check.outputs.divergent == 'true'
+        run: |
+          echo "### ✅ Documentation Synced" >> $GITHUB_STEP_SUMMARY
+          echo "- CLAUDE.md → GEMINI.md" >> $GITHUB_STEP_SUMMARY
+          echo "- Changes committed and pushed" >> $GITHUB_STEP_SUMMARY

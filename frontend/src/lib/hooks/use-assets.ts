@@ -19,7 +19,7 @@ export function useAsset(ticker: string) {
 
 export function useAssetPrices(
   ticker: string,
-  params?: { range?: string; startDate?: string; endDate?: string },
+  params?: { range?: string; startDate?: string; endDate?: string }
 ) {
   return useQuery({
     queryKey: ['asset-prices', ticker, params],
@@ -31,7 +31,7 @@ export function useAssetPrices(
 
 export function useMarketDataPrices(
   ticker: string,
-  params?: { timeframe?: string; range?: string; days?: number },
+  params?: { timeframe?: string; range?: string; days?: number; unified?: boolean }
 ) {
   return useQuery({
     queryKey: ['market-data-prices', ticker, params],

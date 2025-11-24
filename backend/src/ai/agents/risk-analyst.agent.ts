@@ -22,7 +22,7 @@ export class RiskAnalystAgent extends BaseFinancialAgent {
   }
 
   async analyze(context: AnalysisContext): Promise<AgentResponse> {
-    const { ticker, stockData, portfolio } = context;
+    const { stockData, portfolio } = context;
 
     const systemPrompt = `Você é um analista de risco especializado em gestão de portfólios.
 Avalie: volatilidade, beta, correlações, concentração, risco sistêmico.

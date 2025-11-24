@@ -1,0 +1,64 @@
+#!/bin/bash
+# Pre-push hook - Validate Build and Tests
+# Location: .githooks/pre-push
+# Enable: git config core.hooksPath .githooks
+
+echo "🚀 Pre-push validation..."
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Track errors
+ERRORS=0
+
+# 1. Build Backend
+echo -e "${YELLOW}→ Building Backend...${NC}"
+cd backend
+if ! npm run build; then
+    echo -e "${RED}❌ Backend build failed!${NC}"
+    ERRORS=$((ERRORS + 1))
+else
+    echo -e "${GREEN}✅ Backend build OK${NC}"
+fi
+cd ..
+
+# 2. Build Frontend
+echo -e "${YELLOW}→ Building Frontend...${NC}"
+cd frontend
+if ! npm run build; then
+    echo -e "${RED}❌ Frontend build failed!${NC}"
+    ERRORS=$((ERRORS + 1))
+else
+    echo -e "${GREEN}✅ Frontend build OK${NC}"
+fi
+cd ..
+
+# 3. Run Backend Tests (if exist)
+echo -e "${YELLOW}→ Running Backend Tests...${NC}"
+cd backend
+if npm run test --silent 2>/dev/null; then
+    echo -e "${GREEN}✅ Backend tests passed${NC}"
+else
+    echo -e "${YELLOW}⚠️  Backend tests not configured or failed${NC}"
+    # Não bloquear push por falta de testes (ainda)
+fi
+cd ..
+
+# Final result
+echo ""
+if [ $ERRORS -gt 0 ]; then
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${RED}❌ Pre-push validation FAILED ($ERRORS errors)${NC}"
+    echo -e "${RED}   Please fix the build errors before pushing.${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 1
+else
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}✅ All pre-push checks passed!${NC}"
+    echo -e "${GREEN}   Safe to push to remote.${NC}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 0
+fi

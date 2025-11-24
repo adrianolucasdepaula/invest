@@ -100,11 +100,7 @@ class PopulateDataScript {
         margemBruta: fundamentalResult.data.margemBruta || fundamentalResult.data.grossMargin || null,
         margemEbit: fundamentalResult.data.margemEbit || fundamentalResult.data.ebitMargin || null,
 
-        // Liquidity
-        liquidezCorrente: fundamentalResult.data.liquidezCorrente || fundamentalResult.data.currentRatio || null,
-
         // Absolute values (in millions)
-        valorMercado: fundamentalResult.data.valorMercado || fundamentalResult.data.marketCap || null,
         receitaLiquida: fundamentalResult.data.receitaLiquida || fundamentalResult.data.revenue || null,
         lucroLiquido: fundamentalResult.data.lucroLiquido || fundamentalResult.data.netIncome || null,
         ebitda: fundamentalResult.data.ebitda || null,

@@ -216,9 +216,17 @@ class CotahistRequest(BaseModel):
     - Coverage: 2000+ assets (all B3 stocks, FIIs, ETFs)
     - Cost: 100% FREE
     """
-    start_year: int = Field(default=1986, ge=1986, le=2024, description="Start year (1986-2024)")
-    end_year: int = Field(default=2024, ge=1986, le=2024, description="End year (1986-2024)")
+    start_year: int = Field(default=1986, ge=1986, description="Start year (1986-present)")
+    end_year: int = Field(default_factory=lambda: datetime.now().year, ge=1986, description="End year (1986-present)")
     tickers: Optional[List[str]] = Field(default=None, description="List of tickers to filter (optional, all if None)")
+
+    @validator('start_year', 'end_year')
+    def year_must_be_valid(cls, v):
+        """Ensure year is between 1986 and current year"""
+        current_year = datetime.now().year
+        if v < 1986 or v > current_year:
+            raise ValueError(f'Year must be between 1986 and {current_year}')
+        return v
 
     @validator('end_year')
     def end_year_must_be_after_start(cls, v, values):
