@@ -1,0 +1,84 @@
+#!/bin/bash
+# Pre-commit hook - Validate TypeScript and Lint
+# Location: .githooks/pre-commit
+# Enable: git config core.hooksPath .githooks
+
+echo "🔍 Pre-commit validation..."
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Track errors
+ERRORS=0
+
+# 1. TypeScript validation (Backend)
+echo -e "${YELLOW}→ Validating TypeScript (Backend)...${NC}"
+cd backend
+if ! npx tsc --noEmit; then
+    echo -e "${RED}❌ TypeScript errors in backend!${NC}"
+    ERRORS=$((ERRORS + 1))
+else
+    echo -e "${GREEN}✅ TypeScript OK (Backend)${NC}"
+fi
+cd ..
+
+# 2. TypeScript validation (Frontend)
+echo -e "${YELLOW}→ Validating TypeScript (Frontend)...${NC}"
+cd frontend
+if ! npx tsc --noEmit; then
+    echo -e "${RED}❌ TypeScript errors in frontend!${NC}"
+    ERRORS=$((ERRORS + 1))
+else
+    echo -e "${GREEN}✅ TypeScript OK (Frontend)${NC}"
+fi
+cd ..
+
+# 3. ESLint (Backend)
+echo -e "${YELLOW}→ Running ESLint (Backend)...${NC}"
+cd backend
+if ! npm run lint --silent; then
+    echo -e "${RED}❌ ESLint errors in backend!${NC}"
+    ERRORS=$((ERRORS + 1))
+else
+    echo -e "${GREEN}✅ ESLint OK (Backend)${NC}"
+fi
+cd ..
+
+# 4. ESLint (Frontend)
+echo -e "${YELLOW}→ Running ESLint (Frontend)...${NC}"
+cd frontend
+if ! npm run lint --silent; then
+    echo -e "${RED}❌ ESLint errors in frontend!${NC}"
+    ERRORS=$((ERRORS + 1))
+else
+    echo -e "${GREEN}✅ ESLint OK (Frontend)${NC}"
+fi
+cd ..
+
+# 5. Check for .env in staged files
+echo -e "${YELLOW}→ Checking for sensitive files...${NC}"
+if git diff --cached --name-only | grep -E "^\.env$|^\.env\.local$|terraform\.tfstate$"; then
+    echo -e "${RED}❌ CRITICAL: Attempting to commit sensitive files (.env, terraform.tfstate)!${NC}"
+    echo -e "${RED}   Please unstage these files before committing.${NC}"
+    ERRORS=$((ERRORS + 1))
+else
+    echo -e "${GREEN}✅ No sensitive files detected${NC}"
+fi
+
+# Final result
+echo ""
+if [ $ERRORS -gt 0 ]; then
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${RED}❌ Pre-commit validation FAILED ($ERRORS errors)${NC}"
+    echo -e "${RED}   Please fix the errors above before committing.${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 1
+else
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${GREEN}✅ All pre-commit checks passed!${NC}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 0
+fi
