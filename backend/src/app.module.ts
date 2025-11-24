@@ -38,6 +38,7 @@ import {
   ScraperMetric,
   SyncHistory, // FASE 34.6
   EconomicIndicator, // FASE 2
+  TickerChange, // FASE 55
 } from './database/entities';
 
 @Module({
@@ -72,6 +73,7 @@ import {
           ScraperMetric,
           SyncHistory, // FASE 34.6
           EconomicIndicator, // FASE 2
+          TickerChange, // FASE 55
         ],
         synchronize: configService.get('DB_SYNCHRONIZE', false),
         logging: configService.get('DB_LOGGING', false),
