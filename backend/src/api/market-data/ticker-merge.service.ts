@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { TickerChange } from '../../database/entities/ticker-change.entity';
 import { AssetPrice } from '../../database/entities/asset-price.entity';
 import { AssetsService } from '../assets/assets.service';
+import { HistoricalPricesQueryDto } from '../assets/dto/historical-prices-query.dto';
 
 @Injectable()
 export class TickerMergeService {
@@ -57,7 +58,7 @@ export class TickerMergeService {
   /**
    * Get unified price history for a ticker, including its predecessors
    */
-  async getUnifiedHistory(ticker: string, query: any): Promise<AssetPrice[]> {
+  async getUnifiedHistory(ticker: string, query: HistoricalPricesQueryDto): Promise<AssetPrice[]> {
     const chain = await this.findTickerChain(ticker);
 
     if (chain.length <= 1) {

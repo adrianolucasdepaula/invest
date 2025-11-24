@@ -8,34 +8,17 @@
 
 ## 🎯 START HERE (Novos Desenvolvedores)
 
-| Arquivo                                  | Descrição                                 | Essencial |
-| ---------------------------------------- | ----------------------------------------- | --------- |
-| [README.md](README.md)                   | Overview do projeto                       | ✅ SIM    |
-| [INSTALL.md](INSTALL.md)                 | Instalação completa (Docker, portas, env) | ✅ SIM    |
-| [GETTING_STARTED.md](GETTING_STARTED.md) | Primeiros passos                          | ✅ SIM    |
-
----
-
-## 🤖 CONTEXTO PARA AI (ANTIGRAVITY/GEMINI)
-
-| Arquivo                                    | Descrição                                                           | AI Reading    |
-| ------------------------------------------ | ------------------------------------------------------------------- | ------------- |
-| **[.gemini/GEMINI.md](.gemini/GEMINI.md)** | **Context principal para Gemini**                                   | 🔥 CRÍTICO    |
-| [CLAUDE.md](CLAUDE.md)                     | Metodologia Claude Code (SYNC com GEMINI.md)                        | 🔥 CRÍTICO    |
-| [.gemini/context/](.gemini/context/)       | Contextos específicos (arquitetura, convenções, regras financeiras) | ⚠️ IMPORTANTE |
-| [.gemini/schemas/](.gemini/schemas/)       | Schemas JSON/YAML estruturados                                      | ⚠️ IMPORTANTE |
-| [.gemini/memory/](.gemini/memory/)         | Decisões, tech debt, padrões aprendidos                             | ⚡ ÚTIL       |
-
----
-
-## 🏗️ ARQUITETURA & DESIGN
-
-| Arquivo                                            | Descrição                         | Categoria   |
-| -------------------------------------------------- | --------------------------------- | ----------- |
-| [ARCHITECTURE.md](ARCHITECTURE.md)                 | Arquitetura completa do sistema   | Estrutural  |
-| [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)           | Schema completo do banco de dados | Estrutural  |
-| [DATA_SOURCES.md](DATA_SOURCES.md)                 | Fontes de dados e scrapers        | Integrações |
-| [BMAD_METHOD_ANALYSIS.md](BMAD_METHOD_ANALYSIS.md) | Análise do método BMAD            | Financeiro  |
+| Arquivo                                            | Descrição                                 | Essencial   |
+| -------------------------------------------------- | ----------------------------------------- | ----------- |
+| [README.md](README.md)                             | Overview do projeto                       | ✅ SIM      |
+| [INSTALL.md](INSTALL.md)                           | Instalação completa (Docker, portas, env) | ✅ SIM      |
+| [GETTING_STARTED.md](GETTING_STARTED.md)           | Primeiros passos                          | ✅ SIM      |
+| Arquivo                                            | Descrição                                 | Categoria   |
+| -------------------------------------------------- | ---------------------------------         | ----------- |
+| [ARCHITECTURE.md](ARCHITECTURE.md)                 | Arquitetura completa do sistema           | Estrutural  |
+| [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)           | Schema completo do banco de dados         | Estrutural  |
+| [DATA_SOURCES.md](DATA_SOURCES.md)                 | Fontes de dados e scrapers                | Integrações |
+| [BMAD_METHOD_ANALYSIS.md](BMAD_METHOD_ANALYSIS.md) | Análise do método BMAD                    | Financeiro  |
 
 ---
 

@@ -66,4 +66,22 @@ export class GetPricesDto {
   @Max(3650) // Max 10 years
   @Type(() => Number)
   days?: number;
+
+  @ApiProperty({
+    description: 'Custom start date (YYYY-MM-DD) - for unified history',
+    example: '2024-01-01',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  startDate?: string;
+
+  @ApiProperty({
+    description: 'Custom end date (YYYY-MM-DD) - for unified history',
+    example: '2024-12-31',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  endDate?: string;
 }

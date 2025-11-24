@@ -73,9 +73,13 @@ export class MarketDataController {
     const unified = query.unified === true || String(query.unified) === 'true';
 
     if (unified) {
-      // For unified history, we currently only support raw prices (no aggregation yet)
-      // TODO: Implement aggregation for unified history if needed
-      return this.tickerMergeService.getUnifiedHistory(ticker, { range });
+      // Pass complete query object (not just range) to preserve startDate/endDate
+      const historicalQuery = {
+        range,
+        startDate: query.startDate,
+        endDate: query.endDate,
+      };
+      return this.tickerMergeService.getUnifiedHistory(ticker, historicalQuery as any);
     }
 
     return this.marketDataService.getAggregatedPrices(ticker, timeframe, range);
