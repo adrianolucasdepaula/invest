@@ -97,6 +97,7 @@ export function BulkSyncButton({
     waitingForSyncStart,
     isSyncStarted,
     syncMutation.variables,
+    syncMutation.isPending,
     toast,
     onSyncStarted,
     router,

@@ -181,7 +181,7 @@ export default function AssetsPage() {
     }
 
     return filtered;
-  }, [assets, searchTerm, sortBy]);
+  }, [assets, searchTerm, sortBy, showOnlyOptions]);
 
   const groupedBySector = useMemo(() => {
     if (viewMode !== 'sector' || !sortedAndFilteredAssets.length) return {};
