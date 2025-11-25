@@ -34,6 +34,7 @@ Este arquivo é o ponto de entrada principal. Para detalhes específicos, consul
 - **Arquitetura:** @context/architecture.md
 - **Convenções:** @context/conventions.md
 - **Regras Financeiras:** @context/financial-rules.md
+- **Known Issues:** @context/known-issues.md ⭐ **NOVO - Problemas conhecidos e soluções**
 - **Workflows:** @context/workflows/\*.md
 - **Exemplos:** @context/examples/\*.ts
 
