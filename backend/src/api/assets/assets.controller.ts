@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AssetsService } from './assets.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HistoricalPricesQueryDto } from './dto/historical-prices-query.dto';
+import { SyncOptionsLiquidityResponseDto } from './dto/sync-options-liquidity.dto';
 
 @ApiTags('assets')
 @Controller('assets')
@@ -51,6 +52,14 @@ export class AssetsController {
   })
   async populateFundamentalData(@Param('ticker') ticker: string) {
     return this.assetsService.populateFundamentalData(ticker);
+  }
+
+  @Post('sync-options-liquidity')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Sync options liquidity data from opcoes.net.br' })
+  async syncOptionsLiquidity(): Promise<SyncOptionsLiquidityResponseDto> {
+    return this.assetsService.syncOptionsLiquidity();
   }
 
   @Post('sync-all')

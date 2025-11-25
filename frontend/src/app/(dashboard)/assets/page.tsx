@@ -8,14 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AssetTable } from '@/components/dashboard/asset-table';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Search,
-  Filter,
-  RefreshCw,
-  TrendingUp,
-  TrendingDown,
-  Layers,
-} from 'lucide-react';
+import { Search, Filter, RefreshCw, TrendingUp, TrendingDown, Layers } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -25,6 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 type SortBy = 'ticker' | 'day' | 'week' | 'month' | 'year';
@@ -36,16 +31,20 @@ export default function AssetsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('ticker');
   const [viewMode, setViewMode] = useState<ViewMode>('all');
+  const [showOnlyOptions, setShowOnlyOptions] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncingAsset, setSyncingAsset] = useState<string | null>(null);
   const { data: assets, isLoading, error, refetch } = useAssets();
 
   // Auto-refresh every hour
   useEffect(() => {
-    const interval = setInterval(() => {
-      console.log('Auto-refreshing assets...');
-      refetch();
-    }, 60 * 60 * 1000); // 1 hour
+    const interval = setInterval(
+      () => {
+        console.log('Auto-refreshing assets...');
+        refetch();
+      },
+      60 * 60 * 1000
+    ); // 1 hour
 
     return () => clearInterval(interval);
   }, [refetch]);
@@ -122,6 +121,10 @@ export default function AssetsPage() {
         asset.sector?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    if (showOnlyOptions) {
+      filtered = filtered.filter((asset: any) => asset.hasOptions);
+    }
+
     // Sort by selected criteria
     switch (sortBy) {
       case 'day':
@@ -180,11 +183,9 @@ export default function AssetsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Ativos</h1>
-          <p className="text-muted-foreground">
-            Explore e analise os principais ativos da B3
-          </p>
+          <p className="text-muted-foreground">Explore e analise os principais ativos da B3</p>
           {lastCollectedAt && (
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-xs text-muted-foreground">
               Última atualização:{' '}
               {new Intl.DateTimeFormat('pt-BR', {
                 dateStyle: 'short',
@@ -193,11 +194,7 @@ export default function AssetsPage() {
             </p>
           )}
         </div>
-        <Button
-          onClick={handleSyncAll}
-          disabled={syncing}
-          className="gap-2"
-        >
+        <Button onClick={handleSyncAll} disabled={syncing} className="gap-2">
           <RefreshCw className={cn('h-4 w-4', syncing && 'animate-spin')} />
           {syncing ? 'Sincronizando...' : 'Atualizar Todos'}
         </Button>
@@ -212,8 +209,17 @@ export default function AssetsPage() {
               placeholder="Buscar por ticker, nome ou setor..."
               className="pl-9"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
             />
+          </div>
+
+          <div className="mr-4 flex items-center space-x-2">
+            <Checkbox
+              id="options-mode"
+              checked={showOnlyOptions}
+              onCheckedChange={checked => setShowOnlyOptions(checked as boolean)}
+            />
+            <Label htmlFor="options-mode">Com Opções</Label>
           </div>
 
           <div className="flex items-center gap-2">
@@ -290,16 +296,16 @@ export default function AssetsPage() {
         </Card>
       ) : error ? (
         <Card className="p-6">
-          <div className="text-center py-8">
+          <div className="py-8 text-center">
             <p className="text-destructive">Erro ao carregar ativos</p>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="mt-2 text-sm text-muted-foreground">
               Verifique sua conexão e tente novamente
             </p>
           </div>
         </Card>
       ) : sortedAndFilteredAssets.length === 0 ? (
         <Card className="p-6">
-          <div className="text-center py-8">
+          <div className="py-8 text-center">
             <p className="text-muted-foreground">Nenhum ativo encontrado</p>
           </div>
         </Card>
@@ -318,18 +324,33 @@ export default function AssetsPage() {
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <TrendingUp className="h-4 w-4" />
                     <span>
-                      Ordenado por {sortBy === 'day' ? 'alta do dia' : sortBy === 'week' ? 'alta da semana' : sortBy === 'month' ? 'alta do mês' : 'alta do ano'}
+                      Ordenado por{' '}
+                      {sortBy === 'day'
+                        ? 'alta do dia'
+                        : sortBy === 'week'
+                          ? 'alta da semana'
+                          : sortBy === 'month'
+                            ? 'alta do mês'
+                            : 'alta do ano'}
                     </span>
                   </div>
                 )}
               </div>
-              <AssetTable assets={sectorAssets} onAssetClick={handleAssetClick} onSyncAsset={handleSyncAsset} />
+              <AssetTable
+                assets={sectorAssets}
+                onAssetClick={handleAssetClick}
+                onSyncAsset={handleSyncAsset}
+              />
             </Card>
           ))}
         </div>
       ) : (
         <Card className="p-6">
-          <AssetTable assets={sortedAndFilteredAssets} onAssetClick={handleAssetClick} onSyncAsset={handleSyncAsset} />
+          <AssetTable
+            assets={sortedAndFilteredAssets}
+            onAssetClick={handleAssetClick}
+            onSyncAsset={handleSyncAsset}
+          />
         </Card>
       )}
     </div>

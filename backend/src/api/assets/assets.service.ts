@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Asset, AssetPrice, FundamentalData, PriceSource, TickerChange } from '@database/entities';
 import { ScrapersService } from '../../scrapers/scrapers.service';
 import { BrapiScraper } from '../../scrapers/fundamental/brapi.scraper';
+import { OpcoesScraper } from '../../scrapers/options/opcoes.scraper';
 import { HistoricalPricesQueryDto, PriceRange } from './dto/historical-prices-query.dto';
 
 @Injectable()
@@ -21,6 +22,7 @@ export class AssetsService {
     private tickerChangeRepository: Repository<TickerChange>,
     private scrapersService: ScrapersService,
     private brapiScraper: BrapiScraper,
+    private opcoesScraper: OpcoesScraper,
   ) {}
 
   async findAll(type?: string) {
@@ -337,7 +339,7 @@ export class AssetsService {
     return daysMap[range] || 250;
   }
 
-  async syncAsset(ticker: string, range: string = '1y') {
+  async syncAsset(ticker: string, range: string = '1y', skipLiquiditySync: boolean = false) {
     this.logger.log(`Starting sync for ${ticker} (range: ${range})`);
 
     // Check if ticker has changed (e.g. ELET3 -> AXIA3)
@@ -486,6 +488,21 @@ export class AssetsService {
         }
       }
 
+      if (!skipLiquiditySync) {
+        // Sync options liquidity for this asset specifically
+        // Note: Ideally we should check just this asset, but our scraper fetches all.
+        // For single asset sync, we might want to skip this or just run it if it's cheap.
+        // Since scrapeLiquidity fetches all, it's better to run it only if explicitly requested or periodically.
+        // However, to ensure data consistency, we'll run it here but catch errors to not block the main sync.
+        try {
+          await this.syncOptionsLiquidity();
+        } catch (e) {
+          this.logger.warn(
+            `Failed to sync options liquidity during single asset sync: ${e.message}`,
+          );
+        }
+      }
+
       return {
         message: `Asset ${ticker} synced successfully`,
         ticker,
@@ -513,6 +530,14 @@ export class AssetsService {
 
   async syncAllAssets(range: string = '1y') {
     this.logger.log(`Starting sync for all assets (range: ${range})`);
+
+    // Sync options liquidity first (once for all assets)
+    try {
+      await this.syncOptionsLiquidity();
+    } catch (e) {
+      this.logger.error(`Failed to sync options liquidity during bulk sync: ${e.message}`);
+      // Continue with asset sync even if liquidity sync fails
+    }
 
     try {
       // Get all assets from database
@@ -550,7 +575,7 @@ export class AssetsService {
           batch.map(async (asset) => {
             try {
               this.logger.log(`Syncing ${asset.ticker} (range: ${range})...`);
-              await this.syncAsset(asset.ticker, range);
+              await this.syncAsset(asset.ticker, range, true); // Skip liquidity sync for individual assets
               results.success++;
               results.assets.push({
                 ticker: asset.ticker,
@@ -773,5 +798,45 @@ export class AssetsService {
         discrepancies: scrapedData.discrepancies || [],
       },
     };
+  }
+
+  async syncOptionsLiquidity() {
+    this.logger.log('Syncing options liquidity for all assets');
+    try {
+      const tickers = await this.opcoesScraper.scrapeLiquidity();
+      const tickersSet = new Set(tickers.map((t) => t.toUpperCase()));
+
+      const assets = await this.assetRepository.find();
+      let updatedCount = 0;
+      const assetsWithOptions: string[] = [];
+
+      for (const asset of assets) {
+        const hasOptions = tickersSet.has(asset.ticker.toUpperCase());
+
+        // Update if changed
+        if (asset.hasOptions !== hasOptions) {
+          asset.hasOptions = hasOptions;
+          updatedCount++;
+        }
+
+        if (hasOptions) {
+          assetsWithOptions.push(asset.ticker);
+        }
+      }
+
+      if (updatedCount > 0) {
+        await this.assetRepository.save(assets);
+      }
+
+      this.logger.log(`Updated ${updatedCount} assets with options liquidity info`);
+
+      return {
+        totalUpdated: updatedCount,
+        assetsWithOptions,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to sync options liquidity: ${error.message}`);
+      throw error;
+    }
   }
 }

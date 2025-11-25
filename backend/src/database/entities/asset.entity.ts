@@ -98,4 +98,10 @@ export class Asset {
 
   @OneToMany(() => FundamentalData, (fundamental) => fundamental.asset)
   fundamentalData: FundamentalData[];
+
+  @Column({ name: 'has_options', default: false })
+  hasOptions: boolean;
+
+  @Column({ name: 'options_liquidity_metadata', type: 'jsonb', nullable: true })
+  optionsLiquidityMetadata: Record<string, any>;
 }

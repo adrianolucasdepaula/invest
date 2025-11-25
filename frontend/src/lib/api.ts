@@ -122,6 +122,11 @@ class ApiClient {
     return response.data;
   }
 
+  async syncOptionsLiquidity() {
+    const response = await this.client.post('/assets/sync-options-liquidity');
+    return response.data;
+  }
+
   // Analysis endpoints
   async getAnalysis(ticker: string, type?: 'fundamental' | 'technical' | 'complete') {
     const response = await this.client.get(`/analysis/${ticker}`, {
