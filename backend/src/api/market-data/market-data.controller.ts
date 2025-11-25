@@ -215,7 +215,7 @@ export class MarketDataController {
   @ApiOperation({
     summary: 'Sincronização em massa de múltiplos ativos B3',
     description:
-      'Inicia sincronização de até 20 tickers em background (processamento sequencial para estabilidade). Retorna HTTP 202 Accepted imediatamente APÓS validar tickers. Acompanhe o progresso em tempo real via WebSocket (evento: sync:progress). Período: 1986-2024 (histórico completo COTAHIST B3). Validação prévia de tickers com fail-fast. Retry automático 3x com exponencial backoff (2s, 4s, 8s). Tempo estimado: 2.5min/ativo.',
+      'Inicia sincronização de múltiplos tickers em background (sem limite máximo, processamento sequencial). Retorna HTTP 202 Accepted imediatamente APÓS validar tickers. Acompanhe o progresso em tempo real via WebSocket (evento: sync:progress). Período: 1986-2025 (histórico completo COTAHIST B3). Validação prévia de tickers com fail-fast. Retry automático 3x com exponencial backoff (2s, 4s, 8s). Tempo estimado: 2.5min/ativo.',
   })
   @ApiResponse({
     status: 202,

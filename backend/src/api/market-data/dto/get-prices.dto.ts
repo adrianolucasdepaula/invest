@@ -69,7 +69,7 @@ export class GetPricesDto {
 
   @ApiProperty({
     description: 'Custom start date (YYYY-MM-DD) - for unified history',
-    example: '2024-01-01',
+    example: '2025-01-01',
     required: false,
   })
   @IsOptional()
@@ -78,7 +78,7 @@ export class GetPricesDto {
 
   @ApiProperty({
     description: 'Custom end date (YYYY-MM-DD) - for unified history',
-    example: '2024-12-31',
+    example: '2025-11-25',
     required: false,
   })
   @IsOptional()

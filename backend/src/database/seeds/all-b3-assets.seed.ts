@@ -99,6 +99,11 @@ export async function seedAllB3Assets(dataSource: DataSource): Promise<void> {
         continue; // Skip já existentes
       }
 
+      // Skip tickers fracionários (terminam com F)
+      if (ticker.endsWith('F')) {
+        continue;
+      }
+
       const metadata = assetsData[ticker];
       const assetType = deriveAssetType(ticker, metadata.bdi_codes);
 
