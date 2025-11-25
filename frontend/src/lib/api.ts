@@ -111,6 +111,11 @@ class ApiClient {
     return response.data;
   }
 
+  async getSyncStatus(jobId: string) {
+    const response = await this.client.get(`/assets/sync-status/${jobId}`);
+    return response.data;
+  }
+
   async syncAsset(ticker: string, range: string = '3mo') {
     const response = await this.client.post(
       `/assets/${ticker}/sync`,

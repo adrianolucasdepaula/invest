@@ -1,14 +1,19 @@
-import { Controller, Get, Post, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AssetsService } from './assets.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HistoricalPricesQueryDto } from './dto/historical-prices-query.dto';
 import { SyncOptionsLiquidityResponseDto } from './dto/sync-options-liquidity.dto';
+import { AssetUpdateJobsService } from '../../queue/jobs/asset-update-jobs.service';
+import { UpdateTrigger } from '@database/entities';
 
 @ApiTags('assets')
 @Controller('assets')
 export class AssetsController {
-  constructor(private readonly assetsService: AssetsService) {}
+  constructor(
+    private readonly assetsService: AssetsService,
+    private readonly assetUpdateJobsService: AssetUpdateJobsService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all assets' })
@@ -63,15 +68,46 @@ export class AssetsController {
   }
 
   @Post('sync-all')
+  @HttpCode(HttpStatus.ACCEPTED)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Sync all assets data from sources',
+    summary: 'Queue bulk sync for all assets (ASYNC)',
     description:
-      'Fetches current price and historical data for ALL assets from BRAPI. Supports range parameter: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max. Default: 1y. WARNING: range=max will fetch full historical data (may take several minutes)',
+      'Queues a background job to sync all assets. Returns immediately with job ID. Use GET /assets/sync-status/:jobId to check progress. Supports range parameter: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max. Default: 3mo',
   })
   async syncAllAssets(@Query('range') range?: string) {
-    console.log('syncAllAssets endpoint reached, range:', range);
-    return this.assetsService.syncAllAssets(range || '1y');
+    console.log('[sync-all] Queueing bulk sync, range:', range || '3mo');
+
+    // Get all assets tickers
+    const assets = await this.assetsService.findAll();
+    const tickers = assets.map((asset: any) => asset.ticker);
+
+    // Queue the job (returns immediately)
+    const jobId = await this.assetUpdateJobsService.queueMultipleAssets(
+      tickers,
+      undefined, // userId (optional)
+      UpdateTrigger.MANUAL,
+    );
+
+    console.log(`[sync-all] Job queued successfully: ${jobId}`);
+
+    return {
+      jobId,
+      total: tickers.length,
+      message: `Sync job queued for ${tickers.length} assets. Use GET /assets/sync-status/${jobId} to check progress.`,
+      statusUrl: `/api/v1/assets/sync-status/${jobId}`,
+    };
+  }
+
+  @Get('sync-status/:jobId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get sync job status',
+    description: 'Check the status of a queued sync job. Returns job progress and results.',
+  })
+  async getSyncStatus(@Param('jobId') jobId: string) {
+    return this.assetUpdateJobsService.getJobStatus(jobId);
   }
 }

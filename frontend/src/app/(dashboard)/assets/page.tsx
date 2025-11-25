@@ -52,24 +52,63 @@ export default function AssetsPage() {
   const handleSyncAll = async () => {
     setSyncing(true);
     try {
+      // Step 1: Queue the sync job (returns immediately)
       const result = await api.syncAllAssets();
+      const { jobId, total } = result;
+
       toast({
         title: 'Sincronização iniciada',
-        description: `Sincronizando ${result.total} ativos. Isso pode levar alguns minutos.`,
+        description: `Job ${jobId}: Sincronizando ${total} ativos em background...`,
       });
 
-      // Refresh data after sync
+      // Step 2: Poll job status
+      const pollInterval = setInterval(async () => {
+        try {
+          const status = await api.getSyncStatus(jobId);
+
+          // Check if job is complete
+          if (status.status === 'completed') {
+            clearInterval(pollInterval);
+            setSyncing(false);
+            toast({
+              title: 'Sincronização concluída',
+              description: `${status.result?.successCount || 0} ativos atualizados com sucesso!`,
+            });
+            refetch(); // Refresh the assets list
+          } else if (status.status === 'failed') {
+            clearInterval(pollInterval);
+            setSyncing(false);
+            toast({
+              title: 'Erro na sincronização',
+              description: status.failedReason || 'Job failed',
+              variant: 'destructive',
+            });
+          }
+          // If status is 'waiting', 'active', or 'delayed', continue polling
+        } catch (pollError: any) {
+          console.error('Error polling job status:', pollError);
+        }
+      }, 2000); // Poll every 2 seconds
+
+      // Timeout after 5 minutes (safety net)
       setTimeout(() => {
-        refetch();
-      }, 5000);
+        clearInterval(pollInterval);
+        if (syncing) {
+          setSyncing(false);
+          toast({
+            title: 'Timeout',
+            description: 'Sincronização ainda em progresso. Atualize a página para ver os resultados.',
+            variant: 'destructive',
+          });
+        }
+      }, 5 * 60 * 1000); // 5 minutes
     } catch (error: any) {
+      setSyncing(false);
       toast({
         title: 'Erro ao sincronizar',
         description: error.message || 'Erro ao iniciar sincronização',
         variant: 'destructive',
       });
-    } finally {
-      setSyncing(false);
     }
   };
 

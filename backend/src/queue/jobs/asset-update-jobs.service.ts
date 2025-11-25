@@ -290,4 +290,36 @@ export class AssetUpdateJobsService implements OnModuleInit {
     await this.assetUpdatesQueue.resume();
     this.logger.log('▶️ Queue resumed');
   }
+
+  /**
+   * Get job status by ID
+   */
+  async getJobStatus(jobId: string) {
+    const job = await this.assetUpdatesQueue.getJob(jobId);
+
+    if (!job) {
+      return {
+        jobId,
+        status: 'not_found',
+        message: 'Job not found',
+      };
+    }
+
+    const state = await job.getState();
+    const progress = job.progress();
+    const result = job.returnvalue;
+    const failedReason = job.failedReason;
+
+    return {
+      jobId,
+      status: state,
+      progress,
+      result,
+      failedReason,
+      createdAt: new Date(job.timestamp),
+      processedOn: job.processedOn ? new Date(job.processedOn) : null,
+      finishedOn: job.finishedOn ? new Date(job.finishedOn) : null,
+      attemptsMade: job.attemptsMade,
+    };
+  }
 }

@@ -100,7 +100,7 @@ export function EconomicIndicators() {
         </div>
         <Card className="p-6">
           <p className="text-sm text-destructive">
-            Erro ao carregar indicadores econômicos. Clique em "Sincronizar Indicadores" para atualizar os dados.
+            Erro ao carregar indicadores econômicos. Clique em &ldquo;Sincronizar Indicadores&rdquo; para atualizar os dados.
           </p>
         </Card>
       </div>

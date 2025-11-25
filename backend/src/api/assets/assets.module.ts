@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {
   Asset,
@@ -15,6 +15,7 @@ import { AssetsService } from './assets.service';
 import { AssetsUpdateService } from './assets-update.service';
 import { ScrapersModule } from '../../scrapers/scrapers.module';
 import { WebSocketModule } from '../../websocket/websocket.module';
+import { QueueModule } from '../../queue/queue.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { WebSocketModule } from '../../websocket/websocket.module';
     ]),
     ScrapersModule,
     WebSocketModule,
+    forwardRef(() => QueueModule),
   ],
   controllers: [AssetsController, AssetsUpdateController],
   providers: [AssetsService, AssetsUpdateService],

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScrapersModule } from '../scrapers/scrapers.module';
@@ -23,7 +23,7 @@ import { ScrapedData } from '../database/entities/scraped-data.entity';
     ),
     TypeOrmModule.forFeature([Asset, FundamentalData, AssetPrice, DataSource, ScrapedData]),
     ScrapersModule,
-    AssetsModule,
+    forwardRef(() => AssetsModule),
   ],
   providers: [
     ScrapingProcessor,
