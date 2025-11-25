@@ -519,6 +519,122 @@ export class SyncBulkDto {
 
 ---
 
+## 🔧 CONFIGURAÇÃO E BOAS PRÁTICAS MCPs
+
+### Problema: Output Truncado (> 25000 Tokens)
+
+**Sintoma:**
+```
+[OUTPUT TRUNCATED - exceeded 25000 token limit]
+The tool output was truncated. If this MCP server provides pagination or filtering tools, use them...
+```
+
+**Causa:** MCPs (Playwright, Chrome DevTools) podem retornar outputs muito grandes quando:
+- `browser_snapshot()` retorna página inteira (HTML completo)
+- `list_console_messages()` sem filtros retorna 100+ mensagens
+- `list_network_requests()` sem filtros retorna 50+ requests (scripts, images, fonts)
+
+---
+
+### ✅ SOLUÇÃO DEFINITIVA: Aumentar Limite + Boas Práticas
+
+#### 1. Configuração: Aumentar Limite de Tokens (Recomendado)
+
+**Variável de ambiente:**
+```bash
+# .env ou .env.local (raiz do projeto)
+MAX_MCP_OUTPUT_TOKENS=200000  # MÁXIMO - usa janela de contexto completa
+```
+
+**Como aplicar:**
+1. Criar/editar arquivo `.env` na raiz do projeto
+2. Adicionar linha `MAX_MCP_OUTPUT_TOKENS=200000`
+3. Reiniciar Claude Code (recarregar janela do VS Code)
+
+**Valores:**
+- **Padrão:** 25000 tokens (⚠️ TRUNCA em páginas complexas - NÃO usar)
+- **Recomendado:** 200000 tokens ✅ (MÁXIMO - validação tripla MCP SEM truncamento)
+- Este projeto usa 200000 tokens para aproveitar toda a janela de contexto
+
+**Fonte:** [DEV Community - Solving AI's 25000 Token Wall](https://dev.to/swapnilsurdi/solving-ais-25000-token-wall-introducing-mcp-cache-1fie)
+
+---
+
+#### 2. Boas Práticas: Paginação e Filtering (Otimização)
+
+**Mesmo com limite aumentado, siga estas práticas para otimizar performance:**
+
+##### Playwright MCP
+
+```typescript
+// ✅ PREFERIR: Screenshot (visual) ao invés de snapshot (texto)
+await mcp__playwright__browser_take_screenshot({
+  filename: "VALIDACAO_UI.png",
+  fullPage: true,
+  type: "png"
+});
+
+// ✅ FILTRAR: Console messages (apenas erros)
+await mcp__playwright__browser_console_messages({
+  onlyErrors: true  // Retorna apenas console.error
+});
+
+// ⚠️ USAR COM CAUTELA: Snapshot (pode ser grande)
+await mcp__playwright__browser_snapshot();
+// → OK se MAX_MCP_OUTPUT_TOKENS >= 100000
+```
+
+##### Chrome DevTools MCP
+
+```typescript
+// ✅ CORRETO: Console messages COM FILTRO
+await mcp__chrome-devtools__list_console_messages({
+  types: ["error"],       // Apenas erros (não warn/log/info)
+  pageSize: 20,           // Máximo 20 mensagens
+  pageIdx: 0,             // Primeira página
+  includePreservedMessages: false
+});
+
+// ✅ CORRETO: Network requests COM FILTRO
+await mcp__chrome-devtools__list_network_requests({
+  resourceTypes: ["xhr", "fetch"],  // Apenas API calls
+  pageSize: 10,                     // Máximo 10 requests
+  pageIdx: 0,                       // Primeira página
+  includePreservedRequests: false
+});
+
+// ✅ CORRETO: Snapshot resumido (verbose: false)
+await mcp__chrome-devtools__take_snapshot({
+  verbose: false  // Apenas informações essenciais (padrão)
+});
+
+// ✅ DETALHAR: Requisição específica APÓS list
+await mcp__chrome-devtools__get_network_request({
+  reqid: 12  // ID da lista anterior
+});
+```
+
+---
+
+### 📚 Documentação Completa
+
+**Guia detalhado:** [`MCPS_ANTI_TRUNCAMENTO_GUIA.md`](./MCPS_ANTI_TRUNCAMENTO_GUIA.md)
+
+**Conteúdo:**
+- ❌ O que NUNCA fazer (causa truncamento)
+- ✅ O que SEMPRE fazer (evita truncamento)
+- 📊 Checklist anti-truncamento
+- 🚀 Workflow validação tripla MCP (sem truncamento)
+- ⚠️ O que fazer se truncar (diagnóstico + solução)
+
+**Referências:**
+- [GitHub Issue - Token Limit](https://github.com/anthropics/claude-code/issues/9152)
+- [Stack Overflow - Handling Token Limit](https://stackoverflow.com/questions/79699282/how-to-handle-token-limit-when-processing-large-json-response-with-mcp-client-se)
+- [DEV Community - mcp-cache Solution](https://dev.to/swapnilsurdi/solving-ais-25000-token-wall-introducing-mcp-cache-1fie)
+- [Blog - MCPs API Design](https://blog.fsck.com/2025/10/19/mcps-are-not-like-other-apis/)
+
+---
+
 ## 🎯 EXEMPLO PRÁTICO: FASE 35 (Validação Tripla MCP)
 
 ---

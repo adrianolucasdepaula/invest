@@ -96,6 +96,7 @@ Para informações detalhadas sobre o projeto, consulte:
 - **`CONTRIBUTING.md`** - Convenções de código, Git workflow e como contribuir
 - **`CHECKLIST_TODO_MASTER.md`** - Checklist e TODO master (obrigatório antes de cada fase)
 - **`claude.md`** - Instruções para Claude Code (metodologia e padrões)
+- **`MCPS_ANTI_TRUNCAMENTO_GUIA.md`** - Guia completo MCPs (Playwright, Chrome DevTools) - Configuração 200k tokens
 - **`.claude/agents/README.md`** - Sub-agents especializados (Backend, Frontend, Scrapers, Charts, TypeScript)
 
 ---
