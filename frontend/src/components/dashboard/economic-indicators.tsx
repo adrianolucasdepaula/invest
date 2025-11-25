@@ -11,6 +11,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import { useAllLatestIndicators } from '@/lib/hooks/use-economic-indicators';
 import { EconomicIndicatorCard } from './economic-indicator-card';
 import {
@@ -22,11 +23,18 @@ import {
   ArrowUpFromLine,
   ArrowRightLeft,
   Coins,
+  RefreshCw,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
+import { api } from '@/lib/api';
 
 export function EconomicIndicators() {
+  const [isSyncing, setIsSyncing] = useState(false);
+  const { toast } = useToast();
+
   const {
     selic,
     ipca,
@@ -40,18 +48,59 @@ export function EconomicIndicators() {
     isError,
   } = useAllLatestIndicators();
 
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const response = await api.syncEconomicIndicators();
+      toast({
+        title: "Sincronização Concluída",
+        description: `Indicadores atualizados com sucesso em ${new Date(response.timestamp).toLocaleString('pt-BR')}`,
+      });
+      // Refetch all indicators after sync
+      await Promise.all([
+        selic.refetch(),
+        ipca.refetch(),
+        cdi.refetch(),
+        ipca15.refetch(),
+        idpIngressos.refetch(),
+        ideSaidas.refetch(),
+        idpLiquido.refetch(),
+        ouroMonetario.refetch(),
+      ]);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro na Sincronização",
+        description: error.message || "Não foi possível sincronizar os indicadores. Tente novamente.",
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   if (isError) {
     return (
       <div className="space-y-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Indicadores Econômicos</h2>
-          <p className="text-muted-foreground">
-            Taxas atualizadas do Banco Central do Brasil
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Indicadores Econômicos</h2>
+            <p className="text-muted-foreground">
+              Taxas atualizadas do Banco Central do Brasil
+            </p>
+          </div>
+          <Button
+            onClick={handleSync}
+            disabled={isSyncing}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Sincronizando...' : 'Sincronizar Indicadores'}
+          </Button>
         </div>
         <Card className="p-6">
           <p className="text-sm text-destructive">
-            Erro ao carregar indicadores econômicos. Tente novamente mais tarde.
+            Erro ao carregar indicadores econômicos. Clique em "Sincronizar Indicadores" para atualizar os dados.
           </p>
         </Card>
       </div>
@@ -60,11 +109,22 @@ export function EconomicIndicators() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Indicadores Econômicos</h2>
-        <p className="text-muted-foreground">
-          Taxas e indicadores atualizados do Banco Central do Brasil (8 indicadores - FASE 1.4)
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Indicadores Econômicos</h2>
+          <p className="text-muted-foreground">
+            Taxas e indicadores atualizados do Banco Central do Brasil (8 indicadores - FASE 1.4)
+          </p>
+        </div>
+        <Button
+          onClick={handleSync}
+          disabled={isSyncing || isLoading}
+          variant="outline"
+          size="sm"
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+          {isSyncing ? 'Sincronizando...' : 'Sincronizar Indicadores'}
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
