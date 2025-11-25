@@ -3,6 +3,8 @@ import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
 import { seedDataSources } from './data-sources.seed';
 import { seedAdminUser } from './admin-user.seed';
+import { seedAllB3Assets } from './all-b3-assets.seed';
+import { seedTickerChanges } from './ticker-changes.seed';
 
 // Load environment variables
 config();
@@ -30,6 +32,8 @@ async function runSeeds() {
     // Run seeds
     await seedDataSources(AppDataSource);
     await seedAdminUser(AppDataSource);
+    await seedAllB3Assets(AppDataSource);
+    await seedTickerChanges(AppDataSource);
 
     console.log('\n=== Database seeding completed successfully! ===\n');
 
