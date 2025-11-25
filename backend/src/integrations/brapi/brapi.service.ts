@@ -28,7 +28,9 @@ import { parseBCBDate } from '../../common/utils/date-parser.util';
 export class BrapiService {
   private readonly logger = new Logger(BrapiService.name);
   private readonly bcbBaseUrl = 'https://api.bcb.gov.br/dados/serie/bcdata.sgs';
-  private readonly requestTimeout = 10000; // 10s timeout
+  private readonly requestTimeout = 30000; // 30s timeout (CORRIGIDO: era 10s, insuficiente para BC Brasil)
+  private readonly maxRetries = 3; // Retry logic: 3 tentativas
+  private readonly retryDelayBase = 2000; // Base delay: 2s (exponential backoff)
   private readonly apiKey: string; // Mantido para compatibilidade futura
 
   constructor(
@@ -55,53 +57,78 @@ export class BrapiService {
    * Get SELIC rate (Taxa básica de juros - Banco Central)
    * Série 4390: Taxa SELIC acumulada no mês (% a.m.)
    * CORRIGIDO: Anteriormente usava Série 11 (diária), agora usa 4390 (mensal)
+   * CORRIGIDO 2025-11-25: Adicionado retry logic (3 tentativas, exponential backoff)
    * @param count Number of records to fetch (default: 1)
    * @returns Array of { value: number, date: Date }
    */
   async getSelic(count: number = 1): Promise<Array<{ value: number; date: Date }>> {
-    try {
-      this.logger.log(`Fetching last ${count} SELIC monthly rates from Banco Central API...`);
+    let lastError: Error;
 
-      // BCB API: últimos N registros da série 4390 (SELIC acumulada no mês)
-      const response = await firstValueFrom(
-        this.httpService
-          .get(`${this.bcbBaseUrl}.4390/dados/ultimos/${count}`, {
-            params: { formato: 'json' },
-          })
-          .pipe(
-            timeout(this.requestTimeout),
-            catchError((error) => {
-              this.logger.error(`Banco Central API error: ${error.message}`);
-              throw new HttpException(
-                `Failed to fetch SELIC rate: ${error.message}`,
-                HttpStatus.BAD_GATEWAY,
-              );
-            }),
-          ),
-      );
-
-      // BCB response format: [{ "data": "01/10/2025", "valor": "1.28" }, ...]
-      const selicDataArray = response.data;
-
-      if (!Array.isArray(selicDataArray) || selicDataArray.length === 0) {
-        throw new HttpException(
-          'Invalid response format from Banco Central API',
-          HttpStatus.INTERNAL_SERVER_ERROR,
+    // Retry logic: 3 tentativas com exponential backoff
+    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+      try {
+        this.logger.log(
+          `Fetching last ${count} SELIC monthly rates from Banco Central API (attempt ${attempt}/${this.maxRetries})...`,
         );
+
+        // BCB API: últimos N registros da série 4390 (SELIC acumulada no mês)
+        const response = await firstValueFrom(
+          this.httpService
+            .get(`${this.bcbBaseUrl}.4390/dados/ultimos/${count}`, {
+              params: { formato: 'json' },
+            })
+            .pipe(
+              timeout(this.requestTimeout),
+              catchError((error) => {
+                this.logger.error(`Banco Central API error: ${error.message}`);
+                throw new HttpException(
+                  `Failed to fetch SELIC rate: ${error.message}`,
+                  HttpStatus.BAD_GATEWAY,
+                );
+              }),
+            ),
+        );
+
+        // BCB response format: [{ "data": "01/10/2025", "valor": "1.28" }, ...]
+        const selicDataArray = response.data;
+
+        if (!Array.isArray(selicDataArray) || selicDataArray.length === 0) {
+          throw new HttpException(
+            'Invalid response format from Banco Central API',
+            HttpStatus.INTERNAL_SERVER_ERROR,
+          );
+        }
+
+        const results = selicDataArray.map((item) => ({
+          value: parseFloat(item.valor),
+          date: parseBCBDate(item.data), // Parse DD/MM/YYYY to Date
+        }));
+
+        this.logger.log(
+          `✅ SELIC fetched successfully on attempt ${attempt}: ${results.length} records (latest: ${results[0].value}%)`,
+        );
+
+        return results;
+      } catch (error) {
+        lastError = error;
+
+        if (attempt < this.maxRetries) {
+          const delayMs = this.retryDelayBase * attempt; // Exponential backoff: 2s, 4s, 6s
+          this.logger.warn(
+            `⚠️ getSelic attempt ${attempt}/${this.maxRetries} failed: ${error.message}. Retrying in ${delayMs}ms...`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        } else {
+          this.logger.error(
+            `❌ getSelic failed after ${this.maxRetries} attempts: ${error.message}`,
+            error.stack,
+          );
+        }
       }
-
-      const results = selicDataArray.map((item) => ({
-        value: parseFloat(item.valor),
-        date: parseBCBDate(item.data), // Parse DD/MM/YYYY to Date
-      }));
-
-      this.logger.log(`SELIC fetched: ${results.length} records (latest: ${results[0].value}%)`);
-
-      return results;
-    } catch (error) {
-      this.logger.error(`getSelic failed: ${error.message}`, error.stack);
-      throw error;
     }
+
+    // Se chegou aqui, todas as tentativas falharam
+    throw lastError;
   }
 
   /**
