@@ -28,9 +28,9 @@ import { parseBCBDate } from '../../common/utils/date-parser.util';
 export class BrapiService {
   private readonly logger = new Logger(BrapiService.name);
   private readonly bcbBaseUrl = 'https://api.bcb.gov.br/dados/serie/bcdata.sgs';
-  private readonly requestTimeout = 30000; // 30s timeout (CORRIGIDO: era 10s, insuficiente para BC Brasil)
-  private readonly maxRetries = 3; // Retry logic: 3 tentativas
-  private readonly retryDelayBase = 2000; // Base delay: 2s (exponential backoff)
+  private readonly REQUEST_TIMEOUT = 30000; // 30s timeout (CORRIGIDO: era 10s, insuficiente para BC Brasil)
+  private readonly MAX_RETRIES = 3; // Retry logic: 3 tentativas
+  private readonly RETRY_DELAY_BASE = 2000; // Base delay: 2s (exponential backoff)
   private readonly apiKey: string; // Mantido para compatibilidade futura
 
   constructor(
@@ -65,10 +65,10 @@ export class BrapiService {
     let lastError: Error;
 
     // Retry logic: 3 tentativas com exponential backoff
-    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+    for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
       try {
         this.logger.log(
-          `Fetching last ${count} SELIC monthly rates from Banco Central API (attempt ${attempt}/${this.maxRetries})...`,
+          `Fetching last ${count} SELIC monthly rates from Banco Central API (attempt ${attempt}/${this.MAX_RETRIES})...`,
         );
 
         // BCB API: últimos N registros da série 4390 (SELIC acumulada no mês)
@@ -78,7 +78,7 @@ export class BrapiService {
               params: { formato: 'json' },
             })
             .pipe(
-              timeout(this.requestTimeout),
+              timeout(this.REQUEST_TIMEOUT),
               catchError((error) => {
                 this.logger.error(`Banco Central API error: ${error.message}`);
                 throw new HttpException(
@@ -112,15 +112,15 @@ export class BrapiService {
       } catch (error) {
         lastError = error;
 
-        if (attempt < this.maxRetries) {
-          const delayMs = this.retryDelayBase * attempt; // Exponential backoff: 2s, 4s, 6s
+        if (attempt < this.MAX_RETRIES) {
+          const delayMs = this.RETRY_DELAY_BASE * attempt; // Exponential backoff: 2s, 4s, 6s
           this.logger.warn(
-            `⚠️ getSelic attempt ${attempt}/${this.maxRetries} failed: ${error.message}. Retrying in ${delayMs}ms...`,
+            `⚠️ getSelic attempt ${attempt}/${this.MAX_RETRIES} failed: ${error.message}. Retrying in ${delayMs}ms...`,
           );
           await new Promise((resolve) => setTimeout(resolve, delayMs));
         } else {
           this.logger.error(
-            `❌ getSelic failed after ${this.maxRetries} attempts: ${error.message}`,
+            `❌ getSelic failed after ${this.MAX_RETRIES} attempts: ${error.message}`,
             error.stack,
           );
         }
@@ -148,7 +148,7 @@ export class BrapiService {
             params: { formato: 'json' },
           })
           .pipe(
-            timeout(this.requestTimeout),
+            timeout(this.REQUEST_TIMEOUT),
             catchError((error) => {
               this.logger.error(`Banco Central API error: ${error.message}`);
               throw new HttpException(
@@ -201,7 +201,7 @@ export class BrapiService {
             params: { formato: 'json' },
           })
           .pipe(
-            timeout(this.requestTimeout),
+            timeout(this.REQUEST_TIMEOUT),
             catchError((error) => {
               this.logger.error(`Banco Central API error: ${error.message}`);
               throw new HttpException(
@@ -285,7 +285,7 @@ export class BrapiService {
             params: { formato: 'json' },
           })
           .pipe(
-            timeout(this.requestTimeout),
+            timeout(this.REQUEST_TIMEOUT),
             catchError((error) => {
               this.logger.error(`Banco Central API error: ${error.message}`);
               throw new HttpException(
@@ -335,7 +335,7 @@ export class BrapiService {
             params: { formato: 'json' },
           })
           .pipe(
-            timeout(this.requestTimeout),
+            timeout(this.REQUEST_TIMEOUT),
             catchError((error) => {
               this.logger.error(`Banco Central API error: ${error.message}`);
               throw new HttpException(
@@ -387,7 +387,7 @@ export class BrapiService {
             params: { formato: 'json' },
           })
           .pipe(
-            timeout(this.requestTimeout),
+            timeout(this.REQUEST_TIMEOUT),
             catchError((error) => {
               this.logger.error(`Banco Central API error: ${error.message}`);
               throw new HttpException(
@@ -439,7 +439,7 @@ export class BrapiService {
             params: { formato: 'json' },
           })
           .pipe(
-            timeout(this.requestTimeout),
+            timeout(this.REQUEST_TIMEOUT),
             catchError((error) => {
               this.logger.error(`Banco Central API error: ${error.message}`);
               throw new HttpException(
@@ -491,7 +491,7 @@ export class BrapiService {
             params: { formato: 'json' },
           })
           .pipe(
-            timeout(this.requestTimeout),
+            timeout(this.REQUEST_TIMEOUT),
             catchError((error) => {
               this.logger.error(`Banco Central API error: ${error.message}`);
               throw new HttpException(
