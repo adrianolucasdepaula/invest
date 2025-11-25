@@ -6,8 +6,33 @@ import {
   Min,
   Max,
   ArrayMinSize,
-  ValidateIf,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
+  Validate,
 } from 'class-validator';
+
+/**
+ * Validador customizado para garantir que endYear >= startYear
+ */
+@ValidatorConstraint({ name: 'IsEndYearGreaterThanOrEqualToStartYear', async: false })
+export class IsEndYearGreaterThanOrEqualToStartYear implements ValidatorConstraintInterface {
+  validate(endYear: number, args: ValidationArguments) {
+    const object = args.object as any;
+    const startYear = object.startYear;
+
+    if (typeof startYear !== 'number' || typeof endYear !== 'number') {
+      return false;
+    }
+
+    return endYear >= startYear;
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    const object = args.object as any;
+    return `Ano final (${object.endYear}) deve ser maior ou igual ao ano inicial (${object.startYear})`;
+  }
+}
 
 /**
  * DTO para sincronização em massa de múltiplos ativos
@@ -52,7 +77,7 @@ export class SyncBulkDto {
   @IsInt({ message: 'endYear deve ser um número inteiro' })
   @Min(1986, { message: 'Ano final mínimo é 1986' })
   @Max(2025, { message: 'Ano final máximo é 2025' })
-  @ValidateIf((o) => o.endYear < o.startYear)
+  @Validate(IsEndYearGreaterThanOrEqualToStartYear)
   endYear: number;
 }
 

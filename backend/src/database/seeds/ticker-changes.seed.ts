@@ -96,11 +96,20 @@ export async function seedTickerChanges(dataSource: DataSource): Promise<void> {
         continue;
       }
 
-      // 2.3. Inserir ticker change
+      // 2.3. Validar e inserir ticker change
+      const parsedDate = new Date(changeData.changeDate);
+      if (isNaN(parsedDate.getTime())) {
+        console.log(
+          `  ⚠️  Skipping ${changeData.oldTicker} → ${changeData.newTicker}: invalid date format`,
+        );
+        skipped++;
+        continue;
+      }
+
       const tickerChange = tickerChangeRepository.create({
         oldTicker: changeData.oldTicker,
         newTicker: changeData.newTicker,
-        changeDate: new Date(changeData.changeDate),
+        changeDate: parsedDate,
         reason: changeData.reason,
         ratio: changeData.ratio,
       });

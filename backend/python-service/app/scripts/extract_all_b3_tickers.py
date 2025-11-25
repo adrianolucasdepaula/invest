@@ -179,7 +179,7 @@ async def main():
     print("✅ EXTRAÇÃO CONCLUÍDA COM SUCESSO!")
     print("=" * 80)
 
-    await CotahistService().client.aclose()
+    await service.client.aclose()
 
 
 if __name__ == "__main__":

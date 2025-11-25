@@ -4,16 +4,17 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 /**
- * Seed para popular TODOS os ativos da B3 (1,422 tickers) extraídos do COTAHIST 2025.
+ * Seed para popular TODOS os ativos úteis da B3 extraídos do COTAHIST 2025.
  *
  * Fonte: COTAHIST B3 (Oficial)
  * Data: 2025-11-25
- * Total: 1,422 ativos únicos
+ * Total: 861 ativos úteis (após filtrar fracionários)
  *
  * Distribuição:
- * - 427 Ações (lote padrão - BDI 02)
- * - 434 FIIs (BDI 12)
- * - 561 Fracionárias (BDI 96)
+ * - 415 Ações (lote padrão - BDI 02)
+ * - 446 FIIs (BDI 12)
+ *
+ * Nota: Ativos fracionários (sufixo F) são filtrados automaticamente (linha 103)
  */
 
 interface AssetMetadata {
@@ -107,6 +108,12 @@ export async function seedAllB3Assets(dataSource: DataSource): Promise<void> {
       const metadata = assetsData[ticker];
       const assetType = deriveAssetType(ticker, metadata.bdi_codes);
 
+      // Validações críticas
+      if (!metadata.first_date) {
+        console.warn(`  ⚠️  Skipping ${ticker}: missing first_date`);
+        continue;
+      }
+
       newAssets.push({
         ticker: metadata.ticker,
         name: cleanCompanyName(metadata.company_name),
@@ -115,7 +122,7 @@ export async function seedAllB3Assets(dataSource: DataSource): Promise<void> {
         autoUpdateEnabled: true,
         listingDate: new Date(metadata.first_date),
         metadata: {
-          stock_type: metadata.stock_type.trim(),
+          stock_type: metadata.stock_type ? metadata.stock_type.trim() : '',
           bdi_codes: metadata.bdi_codes,
           first_trading_date: metadata.first_date,
           last_trading_date: metadata.last_date,
