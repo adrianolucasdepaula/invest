@@ -1,255 +1,346 @@
 # Changelog
 
-All notable changes to the B3 AI Analysis Platform will be documented in this file.
+Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
+e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
-## [1.2.0] - 2025-11-20
+## [Unreleased]
 
-### Fixed
+### Pendente
 
-#### Backend - Database Constraints
-- **AssetPrice Entity** - Corrigido constraint NOT NULL no campo `source`
-  - Adicionado `source: PriceSource.BRAPI` em todas as inserções de `AssetPrice`
-  - Resolvido erro `null value in column "source" violates not-null constraint`
-  - Arquivos modificados:
-    - `backend/src/api/assets/assets.service.ts` - Linhas 4, 368, 418
-    - Import de `PriceSource` adicionado ao serviço
-
-#### Frontend - Playwright E2E Tests
-- **Dashboard Tests** - Corrigido testes E2E com dados reais (100% pass)
-  - Adicionado `waitForLoadState('networkidle')` para garantir carregamento de dados
-  - Corrigidos seletores ambíguos usando `.first()` para "Maiores Altas" e "Ibovespa"
-  - Removidas asserções frágeis dependentes de dados dinâmicos (ex: PETR4 em top gainers)
-  - Adicionado logging de console, requests e URL para debugging
-  - Arquivo modificado: `frontend/tests/dashboard.spec.ts`
-  - **Resultado**: 9/9 testes passando ✅
-
-- **Assets Tests** - Atualizado testes para refletir UI atual (100% pass)
-  - Corrigido placeholder de busca: "Buscar por ticker, nome ou setor..."
-  - Substituída verificação de botão "Filtros" inexistente por "Ticker (A-Z)" e "Todos"
-  - Adicionado logging de console e requests para debugging
-  - Simplificada verificação de lista de ativos
-  - Arquivo modificado: `frontend/tests/assets.spec.ts`
-  - **Resultado**: 9/9 testes passando ✅
-
-- **Portfolio Tests** - Adicionado `waitForLoadState('networkidle')` e timeout de 120s
-  - Arquivo modificado: `frontend/tests/portfolio.spec.ts`
-
-- **Reports Tests** - Relaxadas regexes para currency/percentage e aumentado timeout
-  - Arquivo modificado: `frontend/tests/reports.spec.ts`
-
-- **Technical Analysis Tests** - Refatorado para usar auth global e waits adequados
-  - Arquivo modificado: `frontend/tests/technical-analysis.spec.ts`
-
-#### Playwright Configuration
-- **Global Timeouts** - Configuração otimizada para estabilidade
-  - Timeout global: 90000ms (90s)
-  - Navigation timeout: 90000ms
-  - Action timeout: 30000ms
-  - Workers: 2 (para evitar race conditions)
-  - Arquivo modificado: `frontend/playwright.config.ts`
-
-### Added
-
-#### Backend - Data Correction Scripts
-- **fix-data.ts** - Script para popular `change` e `change_percent` em `asset_prices`
-  - Calcula variação percentual entre preços consecutivos
-  - Atualiza 55 ativos com dados corrigidos
-  - Arquivo criado: `backend/scripts/fix-data.ts`
-
-#### Frontend - Authentication Setup
-- **auth.setup.ts** - Setup global de autenticação para Playwright
-  - Login via API com `admin@invest.com`
-  - Salva estado de autenticação em `storageState`
-  - Evita login manual em cada teste
-  - Arquivo criado: `frontend/tests/auth.setup.ts`
-
-### Testing
-
-#### Test Results (Playwright E2E)
-- **Dashboard Page**: 9/9 testes passando ✅
-  - Renderização de título e descrição
-  - 4 cards de estatísticas (Ativos Rastreados, Maiores Altas, Variação Média)
-  - Gráfico do Ibovespa
-  - Seção de maiores altas
-  - Valores de variação com cores corretas
-  - Layout responsivo
-
-- **Assets Page**: 9/9 testes passando ✅
-  - Renderização de título e descrição
-  - Campo de busca funcional
-  - Opções de ordenação e visualização
-  - Lista de ativos completa
-  - Informações completas dos ativos
-  - Navegação para detalhes do ativo
-  - Layout responsivo
-
-- **Auth Setup**: 1/1 teste passando ✅
-  - Autenticação via API funcionando
-  - Cookie `access_token` sendo salvo corretamente
-
-### Known Issues
-
-#### Sync Button Investigation (In Progress)
-- **Problema**: Botão "Atualizar Todos" em `/assets` retorna erro 400 Bad Request
-- **Status**: Em investigação ⚠️
-- **Diagnóstico**:
-  - ✅ Endpoint `/api/v1/assets/sync-all` funciona via curl (201 Created)
-  - ❌ Navegador retorna 400 sem logs de erro no backend
-  - **Hipótese**: Problema na camada de autenticação ou headers da requisição axios
-  - Logs do backend não mostram erro, sugerindo rejeição no `JwtAuthGuard`
-- **Próximos Passos**:
-  - Verificar headers da requisição no DevTools Network Tab
-  - Confirmar se token do cookie está sendo enviado corretamente
-  - Investigar diferença entre autenticação via cookie vs bearer token
-
-### Contributors
-
-- Antigravity (Google Deepmind) - Validação Zero Trust, correções Playwright, debugging
+- Resolução de cache do frontend Docker (Issue #4)
+- População de dados no banco após wipe (Issue #5)
+- Validação visual final da UI de opções
 
 ---
 
-## [1.1.0] - 2025-11-09
+## [1.2.0] - 2025-11-24
 
-### Fixed
+### Added
 
-#### Authentication System
-- **Google OAuth Login Flow** - Corrigido fluxo completo de autenticação OAuth com Google
-  - Removida duplicação de `/v1` na URL de autenticação (`/api/v1/v1/auth/google` → `/api/v1/auth/google`)
-  - Adicionado `/auth/google/callback` às rotas públicas do middleware para evitar loop de redirecionamento
-  - Implementado tratamento de erros robusto no callback OAuth
-  - Adicionado logging detalhado para debugging do fluxo de autenticação
-  - Arquivos modificados:
-    - `frontend/src/app/login/page.tsx` - Corrigida construção da URL OAuth
-    - `frontend/src/middleware.ts` - Adicionada rota callback às rotas públicas
-    - `backend/src/api/auth/auth.controller.ts` - Melhorado error handling e logging
-    - `frontend/src/app/auth/google/callback/page.tsx` - Implementada página de callback completa
-
-#### API Configuration
-- **Correção das URLs da API** - Adicionado `/v1` em todas as configurações de API
-  - `NEXT_PUBLIC_API_URL` corrigido de `http://localhost:3101/api` para `http://localhost:3101/api/v1`
-  - Arquivos modificados:
-    - `.env` (root) - Linhas 179 e 59
-    - `docker-compose.yml` - Linha 347
-    - `frontend/.env` - Linha 4
-
-#### Frontend Stability
-- **Dashboard AssetTable** - Corrigido crash quando `asset.volume` é null
-  - Adicionado null check com fallback para `-` quando volume não está disponível
-  - Arquivo modificado: `frontend/src/components/dashboard/asset-table.tsx:80`
-
-- **API Client** - Melhorado gerenciamento de cookies e interceptors
-  - Arquivo modificado: `frontend/src/lib/api.ts`
+- **Options Liquidity Column** - Nova coluna "Opções" na tabela de ativos
+  - Indica quais ativos possuem opções líquidas (dados de opcoes.net.br)
+  - Filtro "Com Opções" para visualizar apenas ativos com opções
+  - Backend: Endpoint `POST /assets/sync-options-liquidity`
+  - Scraper com paginação completa (174 assets, 7 páginas)
+  - Colunas DB: `has_options` (boolean) e `options_liquidity_metadata` (jsonb)
+- **Centralized Known Issues Documentation**
+  - Arquivo `.gemini/context/known-issues.md` com 8 issues documentados
+  - Root causes, soluções e lições aprendidas para cada problema
+  - Procedimentos de recuperação e checklist de prevenção
+  - Métricas de problemas e status de resolução
+- **Implementation History**
+  - Histórico completo no `implementation_plan.md`
+  - Logs de execução bem-sucedidos do scraper
+  - Troubleshooting detalhado de problemas encontrados
 
 ### Changed
 
-#### Infrastructure
-- **ChromeDriver Installation** - Atualizado método de instalação do ChromeDriver
-  - Migrado de `chromedriver.storage.googleapis.com` (deprecated) para Chrome for Testing official source
-  - Garante compatibilidade com versões mais recentes do Chrome
-  - Arquivo modificado: `backend/api-service/Dockerfile`
+- `OpcoesScraper.login()` atualizado com seletores corretos (`#CPF`, `#Password`)
+- Paginação do scraper implementada com múltiplas estratégias de detecção
+- `AssetsService` integrado com sync de liquidez de opções
 
-- **Docker Compose** - Atualizadas variáveis de ambiente
-  - Corrigido `NEXT_PUBLIC_API_URL` no serviço frontend
-  - Arquivo modificado: `docker-compose.yml`
+### Fixed
 
-### Added
-
-#### Documentation
-- **Relatórios de Correção** - Adicionada documentação completa das correções
-  - `RELATORIO_CORRECAO_OAUTH_LOGIN.md` - Relatório técnico detalhado das correções OAuth
-  - `RESUMO_FINAL_CORRECOES.md` - Resumo executivo com checklist de funcionalidades
-  - `RELATORIO_CONSOLIDADO_TESTES_COMPLETO.md` - Relatório completo de testes (Fases 1-3)
-  - `RELATORIO_FINAL_COMPLETO.md` - Relatório final abrangente
-  - `RELATORIO_FINAL_CORRECOES.md` - Relatório de correções finais
-  - `RELATORIO_OAUTH_COMPLETO.md` - Documentação completa do OAuth
-  - `SYNC_VALIDATION_REPORT.md` - Relatório de validação de sincronização
-  - `VALIDATION_REPORT_FINAL.md` - Relatório final de validação
-
-#### Tooling & Scripts
-- **Scripts PowerShell** - Adicionados scripts de automação para configuração OAuth
-  - `configurar-oauth-simples.ps1` - Script simplificado de configuração OAuth
-  - `setup-oauth-cookies.ps1` - Script para setup de cookies OAuth
-
-#### Configuration Templates
-- **Environment Templates** - Adicionado template de variáveis de ambiente
-  - `backend/api-service/.env.template` - Template para configuração do API Service
-
-### Testing
-
-#### Verified Functionality (100% Operational)
-- ✅ Login com Email/Senha - Funcional
-- ✅ Login com Google OAuth - Funcional
-- ✅ Dashboard - Carregando sem erros
-- ✅ Todos os 7 containers Docker - Healthy
-- ✅ 27 Scrapers configurados - 316KB de cookies OAuth salvos
-
-#### Test Results
-- **Email/Password Login**: Testado com usuário `test@test.com` - ✅ PASSOU
-- **Google OAuth Flow**: Testado fluxo completo end-to-end - ✅ PASSOU
-- **Dashboard AssetTable**: Testado com dados null - ✅ PASSOU
-- **Container Health**: Todos os containers reportando healthy - ✅ PASSOU
-
-### Infrastructure Status
-
-#### Docker Containers
-| Serviço | Status | Porta | Health Check |
-|---------|--------|-------|--------------|
-| Frontend Next.js | Running | 3100 | ✅ Healthy |
-| Backend NestJS | Running | 3101 | ✅ Healthy |
-| API Service | Running | 8000 | ✅ Healthy |
-| PostgreSQL | Running | 5532 | ✅ Healthy |
-| Redis | Running | 6479 | ✅ Healthy |
-| Scrapers (VNC) | Running | 6080 | ✅ Healthy |
-| Orchestrator | Running | - | ✅ Healthy |
-
-### Migration Notes
-
-Se você está atualizando de uma versão anterior:
-
-1. **Atualizar Variáveis de Ambiente**
-   ```bash
-   # Verificar se NEXT_PUBLIC_API_URL tem /v1 no final
-   NEXT_PUBLIC_API_URL=http://localhost:3101/api/v1
-
-   # Verificar Google OAuth callback URL
-   GOOGLE_CALLBACK_URL=http://localhost:3101/api/v1/auth/google/callback
-   ```
-
-2. **Recriar Containers Frontend**
-   ```bash
-   # Variáveis NEXT_PUBLIC_* exigem rebuild
-   docker-compose down frontend
-   docker-compose up -d frontend
-   ```
-
-3. **Verificar Health dos Containers**
-   ```bash
-   docker ps
-   # Todos devem mostrar (healthy)
-   ```
+- Seletores de login incorretos no `OpcoesScraper` (Issue #1)
+- Scraper coletando apenas primeira página (Issue #2) - agora coleta 174 assets
+- Erro TypeScript em element click (Issue #3)
+- Erros de autenticação JWT após reset de DB (Issue #6)
 
 ### Known Issues
 
-Nenhum issue conhecido nesta versão. Sistema 100% operacional.
+- **Frontend Cache**: Mudanças de código não aparecem no browser (Docker volume issue)
+- **Database Vazio**: Dados perdidos após `docker-compose down -v` (aguardando re-sync)
 
-### Contributors
+### Technical Details
 
-- Claude Code (Anthropic) - Correções OAuth, documentação, e estabilização do sistema
-
----
-
-## [1.0.0] - 2024-XX-XX
-
-### Initial Release
-- Sistema inicial de análise de ativos da B3
-- Integração com múltiplos scrapers OAuth
-- Dashboard de visualização de ativos
-- Sistema de autenticação básico
+- **Commits**: `40c7654`, `f8548e4`
+- **Backend Files**: 6 arquivos (entity, migration, scraper, service, controller, DTO)
+- **Frontend Files**: 3 arquivos (api.ts, asset-table.tsx, page.tsx)
+- **Tests**: Backend funcionando 100%, frontend código completo
 
 ---
 
-[1.1.0]: https://github.com/seu-usuario/invest-claude-web/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/seu-usuario/invest-claude-web/releases/tag/v1.0.0
+## [1.1.1] - 2025-11-24
+
+### Added
+
+- **Ticker History Merge (FASE 55)** - Backend completo
+  - Entity `TickerChange` para rastrear mudanças históricas (ex: ELET3 → AXIA3)
+  - Service `TickerMergeService` para unificar dados históricos
+  - Endpoint `/market-data/:ticker/prices?unified=true`
+  - Documentação completa do sistema de merge
+
+### Changed
+
+- Frontend API client (`api.ts`) atualizado para suportar parâmetro `unified`
+- Toggle UI na página de detalhes do ativo para ativar histórico unificado
+- Chart renderiza dados consolidados quando unified mode ativo
+
+### Fixed
+
+- Type safety e query parameters (commit `af673a5`)
+- Bulk sync error - DI de `TickerChangeRepository` no `AssetsModule`
+
+### Technical Details
+
+- **Commits**: `e660599`, `41a8f61`, `af673a5`
+- **Phase**: FASE 55 (98.1% do projeto completo)
+
+---
+
+## [1.1.0] - 2025-11-23
+
+### Added
+
+- **Automated Testing Agent (FASE 49)**
+  - Unit tests para `FundamentalAnalystAgent`
+  - Network resilience tests
+  - Playwright test suite completo
+
+### Fixed
+
+- Backend lint errors (FASE 48)
+- Unused variables e imports removidos
+- TypeScript configuration issues resolvidos
+
+### Technical Details
+
+- **Commits**: `718cbc5`, `4282415`
+- **Tests**: 100% pass rate para unit tests do agent
+
+---
+
+## [1.0.0] - 2025-11-21
+
+### Added
+
+- **AI Context Structure** - Sprint 1
+  - Estrutura `.gemini/` completa
+  - `GEMINI.md` e `CLAUDE.md` sincronizados
+  - Contexto modular para Gemini AI
+- **Gemini CLI Native Usage Guide** - Sprint 2
+  - Documentação completa de uso
+  - Best practices para context management
+
+### Changed
+
+- ROADMAP.md atualizado (48 fases completas)
+- Sincronização de documentação GEMINI.md
+
+### Technical Details
+
+- **Commits**: `c134330`, `4282415`
+- **Structure**: Context files organizados por categoria
+
+---
+
+## [0.9.0] - 2025-11-21
+
+### Added
+
+- **Cache Headers Optimization (FASE 47)**
+  - +5.5% LCP improvement
+  - +6.6% TTFB improvement
+  - Otimização de performance para assets estáticos
+
+### Fixed
+
+- **BRAPI Type String Conversion (FASE 48)**
+  - Correção crítica de conversão de tipos
+  - WebSocket logs - acúmulo removido
+  - Checkmark azul para mensagens SYSTEM
+
+### Technical Details
+
+- **Commits**: `1418681`, `8f81dc5`, `8b2372b`
+- **Performance**: +6% overall improvement
+
+---
+
+## [0.8.0] - 2025-11-20
+
+### Added
+
+- **Bulk Sync and Individual Sync (FASE 37)**
+  - `BulkSyncButton` com WebSocket
+  - Sync individual de assets
+  - Modal com progresso em tempo real
+  - Documentação completa do sistema de sync
+
+### Fixed
+
+- WebSocket connection handling
+- Bulk sync button modal fechando após `sync:started`
+
+### Technical Details
+
+- **Commits**: `3fc5ce7`, `8b2372b`
+- **Features**: Real-time progress tracking
+
+---
+
+## [0.7.0] - 2025-11-19
+
+### Added
+
+- **COTAHIST Performance Optimization (FASE 38-40)**
+  - 98.8% melhoria no parser COTAHIST
+  - 98-99% melhoria com download paralelo
+  - Fix crítico em `data.close.toFixed`
+  - Docker `/dist` cache resolvido
+
+### Fixed
+
+- COTAHIST parser performance crítica
+- Python service download paralelo
+- Bug de precisão em dados de fechamento
+
+### Technical Details
+
+- **Commits**: `dbc32e6`, `757a3fc`, `afd4592`, `bdae121`
+- **Performance**: 98-99% total improvement
+
+---
+
+## [0.6.0] - 2025-11-18
+
+### Added
+
+- **Economic Indicators Dashboard (FASE 1)**
+  - Frontend dashboard completo
+  - Monthly + Accumulated 12 months data
+  - Sync button integrado
+  - Backend API endpoints
+
+### Technical Details
+
+- **Commits**: `9dc8f7c`, `c609f53`
+- **Features**: Real-time economic data display
+
+---
+
+## [0.5.0] - 2025-11-15
+
+### Added
+
+- **Multi-browser Testing (FASE 41)**
+  - Playwright multi-browser support
+  - API testing framework
+  - Validação tripla MCP (Playwright + Chrome + React DevTools)
+
+### Fixed
+
+- ESLint warnings em `useSyncWebSocket` hook
+- Frontend linting issues resolvidos
+
+### Technical Details
+
+- **Commits**: `ab3455a`, `79f899d`, `1b81e18`
+- **Tests**: Cross-browser compatibility verified
+
+---
+
+## Versões Anteriores
+
+### [0.4.x] - Sistema Base
+
+- Arquitetura NestJS + Next.js estabelecida
+- Scrapers fundamentalistas (6 sources)
+- Python-service para análise técnica
+- PostgreSQL + Redis infraestrutura
+- Autenticação JWT
+- Portfolio management básico
+
+### [0.3.x] - MVP
+
+- CRUD de assets
+- Integrações iniciais de scrapers
+- Frontend básico com Shadcn/ui
+- Docker compose setup
+
+### [0.2.x] - Protótipo
+
+- Backend API skeleton
+- Database schema inicial
+- Scraper proof-of-concept
+
+### [0.1.x] - Conceito
+
+- Estrutura de diretórios
+- Tech stack selecionado
+- Documentação inicial
+
+---
+
+## Convenções de Versioning
+
+Este projeto segue [Semantic Versioning](https://semver.org/lang/pt-BR/):
+
+- **MAJOR** (X.0.0): Mudanças incompatíveis de API
+- **MINOR** (0.X.0): Funcionalidades adicionadas de forma retrocompatível
+- **PATCH** (0.0.X): Correções de bugs retrocompatíveis
+
+### Categorias de Mudanças
+
+- **Added**: Novas funcionalidades
+- **Changed**: Mudanças em funcionalidades existentes
+- **Deprecated**: Funcionalidades que serão removidas em breve
+- **Removed**: Funcionalidades removidas
+- **Fixed**: Correções de bugs
+- **Security**: Correções de vulnerabilidades de segurança
+- **Known Issues**: Problemas conhecidos não resolvidos
+- **Technical Details**: Detalhes técnicos (commits, arquivos, métricas)
+
+---
+
+## Próximas Releases (Planejado)
+
+### [1.3.0] - Previsto Q1 2026
+
+- Portfolio optimization engine
+- AI-powered recommendations
+- Real-time market data streaming
+- Advanced charting features
+
+### [1.4.0] - Previsto Q2 2026
+
+- Technical analysis indicators expansion
+- Backtesting framework
+- Strategy builder UI
+- Mobile responsive improvements
+
+### [2.0.0] - Previsto Q3 2026
+
+- API v2 (breaking changes)
+- Microservices architecture migration
+- GraphQL API
+- Multi-tenancy support
+
+---
+
+## Como Gerar Release
+
+```bash
+# 1. Atualizar CHANGELOG.md (adicionar nova versão)
+# 2. Atualizar package.json com nova versão
+# 3. Commit das mudanças
+git add CHANGELOG.md package.json
+git commit -m "chore: release v1.2.0"
+
+# 4. Criar tag
+git tag -a v1.2.0 -m "Release v1.2.0 - Options Liquidity Column"
+
+# 5. Push tag
+git push origin v1.2.0
+
+# 6. Criar release no GitHub
+# Usar CHANGELOG.md como release notes
+```
+
+---
+
+**Mantido por:** Claude Code (Sonnet 4.5) + Google Gemini AI  
+**Última Atualização:** 2025-11-24  
+**Repositório:** invest-claude-web (privado)
