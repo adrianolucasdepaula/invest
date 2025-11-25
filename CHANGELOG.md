@@ -15,6 +15,44 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.2.1] - 2025-11-25
+
+### Fixed
+
+- **Critical Bug #1:** Resource leak in Python script `extract_all_b3_tickers.py`
+  - Fixed: `await service.client.aclose()` instead of creating new instance
+  - Impact: Prevented memory leak in production environment
+- **Critical Bug #2:** Crash on invalid date in `all-b3-assets.seed.ts`
+  - Fixed: Added validation before `new Date(metadata.first_date)`
+  - Impact: Prevented TypeError crash during seed execution
+- **Critical Bug #3:** TypeError on null `stock_type` in `all-b3-assets.seed.ts`
+  - Fixed: Safe null check `metadata.stock_type ? metadata.stock_type.trim() : ''`
+  - Impact: Prevented crash when stock_type is undefined
+- **Critical Bug #4:** Silent invalid date in `ticker-changes.seed.ts`
+  - Fixed: Added `isNaN(parsedDate.getTime())` validation
+  - Impact: Prevented invalid dates from being inserted silently
+- **Critical Bug #5:** Broken DTO validation in `sync-bulk.dto.ts`
+  - Fixed: Replaced incorrect `@ValidateIf` with custom validator `IsEndYearGreaterThanOrEqualToStartYear`
+  - Impact: System now correctly rejects invalid period ranges (e.g., startYear=2025, endYear=1986)
+  - Validated with integration tests (HTTP 400 for invalid, HTTP 202 for valid)
+
+### Changed
+
+- **ARCHITECTURE.md** - Updated to version 1.2.0
+  - Added TickerChange entity documentation (FASE 55)
+  - Documented seed scripts (all-b3-assets: 861 assets 1986-2025, ticker-changes: FASE 55)
+  - Added "Custom Validators" section with code examples
+  - Updated entity mapping table
+  - Updated all timestamps to 2025-11-25
+
+### Documentation
+
+- All 5 critical bugs documented with root cause, fix, and impact
+- Comments updated in seed files to reflect 861 useful assets (non-fractional)
+- Custom validator pattern documented for future DTO validations
+
+---
+
 ## [1.2.0] - 2025-11-24
 
 ### Added

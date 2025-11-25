@@ -1,8 +1,8 @@
 # 🗺️ ROADMAP - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-22
-**Versão:** 1.0.1
+**Última Atualização:** 2025-11-25
+**Versão:** 1.2.1
 **Mantenedor:** Claude Code (Sonnet 4.5)
 
 ---
@@ -978,6 +978,98 @@ OAUTH_CONFIG_METADATA = {
 3. Considerar adicionar mais sites de portfólio (Gorila, Stock3, etc)
 
 **Status:** ✅ **100% COMPLETO E VALIDADO**
+
+---
+
+## 🐛 CORREÇÕES CRÍTICAS DE SISTEMA (2025-11-25)
+
+### Manutenção: 5 Bugs Críticos Corrigidos ✅ 100% COMPLETO
+
+**Versão:** 1.2.1
+**Data:** 2025-11-25
+**Commit:** 4936c27
+
+Correção de 5 bugs críticos identificados durante code review rigoroso dos arquivos de FASES 1-3 (restauração de sistema).
+
+**Bugs Corrigidos:**
+
+1. **Resource Leak no Python Script** ✅ CRÍTICO
+   - **Arquivo:** `backend/python-service/app/scripts/extract_all_b3_tickers.py:182`
+   - **Problema:** `await CotahistService().client.aclose()` criava nova instância ao invés de fechar a existente
+   - **Impacto:** Memory leak em produção
+   - **Correção:** `await service.client.aclose()`
+
+2. **Crash em Data Inválida (Seed)** ✅ CRÍTICO
+   - **Arquivo:** `backend/src/database/seeds/all-b3-assets.seed.ts:111-114`
+   - **Problema:** `new Date(metadata.first_date)` sem verificação de null/undefined
+   - **Impacto:** TypeError crash durante execução do seed
+   - **Correção:** Validação adicionada antes de criar Date
+
+3. **TypeError em String.trim()** ✅ CRÍTICO
+   - **Arquivo:** `backend/src/database/seeds/all-b3-assets.seed.ts:124`
+   - **Problema:** `metadata.stock_type.trim()` sem verificação de null
+   - **Impacto:** TypeError: Cannot read property 'trim' of undefined
+   - **Correção:** `metadata.stock_type ? metadata.stock_type.trim() : ''`
+
+4. **Data Inválida Silenciosa** ✅ CRÍTICO
+   - **Arquivo:** `backend/src/database/seeds/ticker-changes.seed.ts:100-107`
+   - **Problema:** `new Date(changeData.changeDate)` cria Invalid Date silenciosamente
+   - **Impacto:** Datas inválidas inseridas no banco sem aviso
+   - **Correção:** Validação `isNaN(parsedDate.getTime())` adicionada
+
+5. **DTO Validation Completamente Quebrada** ✅ MAIS CRÍTICO
+   - **Arquivo:** `backend/src/api/market-data/dto/sync-bulk.dto.ts:18-35,80`
+   - **Problema:** `@ValidateIf((o) => o.endYear < o.startYear)` APENAS valida quando período é INVÁLIDO
+   - **Impacto:** Sistema ACEITAVA períodos inválidos como {startYear: 2025, endYear: 1986}
+   - **Correção:** Custom validator `IsEndYearGreaterThanOrEqualToStartYear` implementado
+   - **Validação:** Testado com HTTP 400 (invalid) e HTTP 202 (valid)
+
+**Arquivos Modificados:**
+
+- `backend/python-service/app/scripts/extract_all_b3_tickers.py` (+1/-1)
+- `backend/src/database/seeds/all-b3-assets.seed.ts` (+8/-3)
+- `backend/src/database/seeds/ticker-changes.seed.ts` (+8/-1)
+- `backend/src/api/market-data/dto/sync-bulk.dto.ts` (+19/-1)
+
+**Validações Realizadas:**
+
+- ✅ TypeScript: 0 erros (backend + frontend)
+- ✅ Build: Success (webpack compiled)
+- ✅ Testes Funcionais: Período validation working correctly
+- ✅ Documentação: ARCHITECTURE.md, CHANGELOG.md, ROADMAP.md atualizados
+
+**Padrões Implementados:**
+
+Documentado em `ARCHITECTURE.md` - Seção "Validações Customizadas":
+
+```typescript
+// Custom validator para regras de negócio complexas
+@ValidatorConstraint({ name: 'IsEndYearGreaterThanOrEqualToStartYear', async: false })
+export class IsEndYearGreaterThanOrEqualToStartYear implements ValidatorConstraintInterface {
+  validate(endYear: number, args: ValidationArguments) {
+    const object = args.object as any;
+    return endYear >= object.startYear;
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    const object = args.object as any;
+    return `Ano final (${object.endYear}) deve ser maior ou igual ao ano inicial (${object.startYear})`;
+  }
+}
+
+// Aplicação no DTO:
+@Validate(IsEndYearGreaterThanOrEqualToStartYear)
+endYear: number;
+```
+
+**Vantagens do Pattern:**
+
+- ✅ Mensagens de erro customizadas
+- ✅ Validações entre múltiplos campos
+- ✅ Reutilizável em DTOs diferentes
+- ✅ Type-safe (TypeScript)
+
+**Status:** ✅ **CORRIGIDO E VALIDADO**
 
 ---
 

@@ -1,8 +1,8 @@
 # 🏗️ ARCHITECTURE - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-14
-**Versão:** 1.0.0
+**Última Atualização:** 2025-11-25
+**Versão:** 1.2.0
 **Mantenedor:** Claude Code (Sonnet 4.5)
 
 ---
@@ -164,6 +164,46 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 - DTO Pattern (validação com class-validator)
 - Decorator Pattern (NestJS decorators)
 
+**Validações Customizadas:**
+
+Para regras de negócio complexas (ex: endYear >= startYear), implementamos **custom validators** com `@ValidatorConstraint`:
+
+```typescript
+// Exemplo: sync-bulk.dto.ts (FASE 37)
+@ValidatorConstraint({ name: 'IsEndYearGreaterThanOrEqualToStartYear', async: false })
+export class IsEndYearGreaterThanOrEqualToStartYear implements ValidatorConstraintInterface {
+  validate(endYear: number, args: ValidationArguments) {
+    const object = args.object as any;
+    return endYear >= object.startYear;
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    const object = args.object as any;
+    return `Ano final (${object.endYear}) deve ser maior ou igual ao ano inicial (${object.startYear})`;
+  }
+}
+
+// Aplicação no DTO:
+export class SyncBulkDto {
+  @IsInt()
+  @Min(1986)
+  @Max(2025)
+  startYear: number;
+
+  @IsInt()
+  @Min(1986)
+  @Max(2025)
+  @Validate(IsEndYearGreaterThanOrEqualToStartYear)  // ✅ Custom validator
+  endYear: number;
+}
+```
+
+**Vantagens:**
+- Mensagens de erro customizadas
+- Validações entre múltiplos campos
+- Reutilizável em DTOs diferentes
+- Type-safe (TypeScript)
+
 ---
 
 ### Scrapers (Python + Playwright)
@@ -205,8 +245,9 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 
 **Entidades Principais:**
 
-- Assets (ativos financeiros)
-- AssetPrices (preços históricos)
+- Assets (ativos financeiros - 861 ativos B3 não-fracionários)
+- AssetPrices (preços históricos - período 1986-2025, COTAHIST B3)
+- TickerChange (mudanças de ticker - FASE 55, ex: ELET3→AXIA3)
 - Analyses (análises fundamentalistas/técnicas)
 - Portfolios (portfólios de usuários)
 - PortfolioPositions (posições em portfólios)
@@ -228,6 +269,7 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 | -------------------------------- | ------------------------------- | ------------------------------------------------------------ | ----------------------------------------- |
 | **Ativos (ticker, nome, setor)** | `Asset`                         | `backend/src/database/entities/asset.entity.ts`              | PETR4, VALE3, ITUB4                       |
 | **Preços históricos (OHLCV)**    | `AssetPrices`                   | `backend/src/database/entities/asset-price.entity.ts`        | Open, High, Low, Close, Volume + variação |
+| **Mudanças de ticker (FASE 55)** | `TickerChange`                  | `backend/src/database/entities/ticker-change.entity.ts`      | ELET3→AXIA3, ELET6→AXIA6 (rebranding)     |
 | **Análises fundamentalistas**    | `Analysis` (type='fundamental') | `backend/src/database/entities/analysis.entity.ts`           | P/L, P/VP, ROE, ROIC, Dividend Yield      |
 | **Análises técnicas**            | `Analysis` (type='technical')   | `backend/src/database/entities/analysis.entity.ts`           | RSI, MACD, Bollinger, SMA                 |
 | **Análises completas**           | `Analysis` (type='complete')    | `backend/src/database/entities/analysis.entity.ts`           | Combinação Fundamentalista + Técnica      |
@@ -504,7 +546,7 @@ invest-claude-web/
 │   │   ├── database/              # TypeORM
 │   │   │   ├── entities/          # Modelos de dados
 │   │   │   ├── migrations/        # Migrations SQL
-│   │   │   └── seeds/             # Seeds de dados
+│   │   │   └── seeds/             # Seeds de dados (all-b3-assets.seed.ts: 861 ativos B3 1986-2025, ticker-changes.seed.ts: FASE 55)
 │   │   ├── scrapers/              # Serviços de scraping
 │   │   │   ├── fundamental/       # Scrapers fundamentalistas
 │   │   │   ├── news/              # Scrapers de notícias
@@ -759,5 +801,5 @@ invest-claude-web/
 
 ---
 
-**Última atualização:** 2025-11-14
+**Última atualização:** 2025-11-25
 **Mantido por:** Claude Code (Sonnet 4.5)
