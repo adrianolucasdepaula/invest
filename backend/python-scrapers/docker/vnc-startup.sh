@@ -18,6 +18,19 @@ echo "VNC Port: $VNC_PORT"
 echo "noVNC Port: $NOVNC_PORT"
 echo "=========================================="
 
+# Clean up stale lock files from previous runs
+echo "Cleaning up stale X11 locks..."
+rm -f /tmp/.X99-lock /tmp/.X11-unix/X99 2>/dev/null || true
+
+# Kill any orphaned processes from previous runs
+echo "Killing orphaned processes..."
+pkill -f Xvfb 2>/dev/null || true
+pkill -f x11vnc 2>/dev/null || true
+pkill -f fluxbox 2>/dev/null || true
+pkill -f chrome 2>/dev/null || true
+pkill -f chromedriver 2>/dev/null || true
+sleep 1
+
 # Start Xvfb (X Virtual Framebuffer)
 echo "Starting Xvfb..."
 Xvfb :99 -screen 0 ${DISPLAY_WIDTH}x${DISPLAY_HEIGHT}x24 -ac +extension GLX +render -noreset &
@@ -52,6 +65,13 @@ echo "✓ Fluxbox started (PID: $FLUXBOX_PID)"
 
 # Start x11vnc (VNC server)
 echo "Starting x11vnc..."
+# Otimizações de performance para VNC:
+# -threads: Multi-threading para melhor performance
+# -ncache 10: Cache de 10MB para reduzir tráfego de rede
+# -ncache_cr: Cache com client-side rendering
+# -speeds lan: Otimizado para LAN (localhost = muito rápido)
+# -deferupdate 1: Micro delay (1ms) para agrupar updates
+# -defer 1: Defer pointer events por 1ms
 x11vnc -display :99 \
     -forever \
     -shared \
@@ -60,6 +80,12 @@ x11vnc -display :99 \
     -xkb \
     -ncache 10 \
     -ncache_cr \
+    -threads \
+    -speeds lan \
+    -deferupdate 1 \
+    -defer 1 \
+    -wait 5 \
+    -noxdamage \
     -quiet &
 X11VNC_PID=$!
 sleep 2

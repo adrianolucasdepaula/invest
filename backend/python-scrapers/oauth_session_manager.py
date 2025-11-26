@@ -123,6 +123,117 @@ class OAuthSessionManager:
         self.current_session: Optional[OAuthSession] = None
         self.collected_cookies: Dict[str, List[Dict]] = {}
 
+    def is_chrome_alive(self) -> bool:
+        """
+        Verificar se o Chrome ainda está vivo e respondendo.
+
+        IMPORTANTE: Detecta Chrome crashado/zombie que deixaria a sessão corrompida.
+
+        Returns:
+            True se Chrome está funcionando, False se crashou
+        """
+        if not self.driver:
+            logger.debug("[HEALTH] Driver não existe")
+            return False
+
+        try:
+            # Operação simples que requer Chrome vivo
+            # Se Chrome crashou, isso vai lançar exceção
+            _ = self.driver.current_url
+            _ = self.driver.title
+            return True
+        except Exception as e:
+            logger.error(f"[HEALTH] ❌ Chrome NÃO está respondendo: {e}")
+            logger.warning("[HEALTH] Chrome provavelmente crashou - driver será limpo")
+            return False
+
+    def ensure_chrome_alive(self) -> bool:
+        """
+        Garantir que Chrome está vivo, reiniciando se necessário.
+
+        Returns:
+            True se Chrome está funcionando (ou foi reiniciado), False se falhou
+        """
+        if self.is_chrome_alive():
+            return True
+
+        logger.warning("[HEALTH] ⚠️ Chrome morto detectado - tentando reiniciar...")
+
+        # Limpar driver antigo
+        try:
+            if self.driver:
+                self.driver.quit()
+        except:
+            pass
+        self.driver = None
+
+        # Tentar reiniciar
+        success = self.start_chrome()
+        if success:
+            logger.success("[HEALTH] ✓ Chrome reiniciado com sucesso")
+        else:
+            logger.error("[HEALTH] ❌ Falha ao reiniciar Chrome")
+
+        return success
+
+    def restart_chrome_fresh(self) -> bool:
+        """
+        Reiniciar Chrome completamente - mata TODOS os processos e inicia novo.
+
+        Usado entre sites para garantir ambiente 100% limpo.
+        Os cookies coletados são preservados em self.collected_cookies (Python).
+
+        Returns:
+            True se reiniciou com sucesso, False caso contrário
+        """
+        import subprocess
+
+        logger.info("=" * 80)
+        logger.info("[RESTART] 🔄 Reiniciando Chrome completamente (ambiente limpo)...")
+
+        # 1. Fechar driver Selenium graciosamente
+        if self.driver:
+            try:
+                logger.debug("[RESTART] Fechando driver Selenium...")
+                self.driver.quit()
+            except Exception as e:
+                logger.warning(f"[RESTART] Erro ao fechar driver: {e}")
+            self.driver = None
+
+        # 2. Matar TODOS os processos Chrome/Chromedriver (força bruta)
+        logger.debug("[RESTART] Matando processos Chrome/Chromedriver...")
+        try:
+            subprocess.run(["pkill", "-9", "-f", "chrome"], capture_output=True, timeout=10)
+            subprocess.run(["pkill", "-9", "-f", "chromedriver"], capture_output=True, timeout=10)
+        except Exception as e:
+            logger.warning(f"[RESTART] Erro ao matar processos: {e}")
+
+        # 3. Aguardar processos terminarem
+        import time
+        time.sleep(2)
+
+        # 4. Verificar se ainda há processos Chrome
+        try:
+            result = subprocess.run(["pgrep", "-f", "chrome"], capture_output=True, timeout=5)
+            if result.returncode == 0:
+                logger.warning("[RESTART] ⚠️ Ainda há processos Chrome - tentando novamente...")
+                subprocess.run(["pkill", "-9", "-f", "chrome"], capture_output=True, timeout=10)
+                time.sleep(1)
+        except:
+            pass
+
+        # 5. Iniciar novo Chrome limpo
+        logger.debug("[RESTART] Iniciando novo Chrome...")
+        success = self.start_chrome()
+
+        if success:
+            logger.success("[RESTART] ✓ Chrome reiniciado com ambiente limpo")
+        else:
+            logger.error("[RESTART] ❌ Falha ao reiniciar Chrome")
+
+        logger.info("=" * 80)
+        return success
+
     def create_session(self, session_id: str) -> OAuthSession:
         """Criar nova sessão OAuth"""
         logger.info(f"Criando nova sessão OAuth: {session_id}")
@@ -189,11 +300,50 @@ class OAuthSessionManager:
                 "Chrome/120.0.0.0 Safari/537.36"
             )
 
+            # ==================== OTIMIZAÇÕES DE PERFORMANCE/REDE ====================
+            # Melhorar velocidade de carregamento e conexão de rede
+
+            # Desabilitar recursos pesados que não são necessários para OAuth
+            chrome_options.add_argument("--blink-settings=imagesEnabled=true")  # Manter imagens (necessário para captcha)
+            chrome_options.add_argument("--disable-extensions")  # Sem extensões
+            chrome_options.add_argument("--disable-plugins")  # Sem plugins
+            chrome_options.add_argument("--disable-software-rasterizer")
+
+            # Network/DNS otimizações
+            chrome_options.add_argument("--dns-prefetch-disable")  # Ironicamente, desabilitar prefetch melhora em alguns casos
+            chrome_options.add_argument("--enable-features=NetworkService,NetworkServiceInProcess")  # Network moderno
+            chrome_options.add_argument("--disable-features=IsolateOrigins,site-per-process")  # Reduzir overhead de processos
+
+            # Cache e compressão
+            chrome_options.add_argument("--aggressive-cache-discard")  # Limpar cache agressivamente
+            chrome_options.add_argument("--disable-application-cache")  # Sem app cache
+            chrome_options.add_argument("--disk-cache-size=52428800")  # 50MB cache (suficiente)
+
+            # Rendering otimizações
+            chrome_options.add_argument("--disable-smooth-scrolling")  # Scroll mais rápido
+            chrome_options.add_argument("--disable-background-timer-throttling")  # Timers completos
+            chrome_options.add_argument("--disable-backgrounding-occluded-windows")  # Sem throttling em background
+            chrome_options.add_argument("--disable-renderer-backgrounding")  # Rendering sempre ativo
+
+            # Remover delays desnecessários
+            chrome_options.add_argument("--disable-hang-monitor")  # Sem delay em "página não responde"
+            chrome_options.add_argument("--disable-prompt-on-repost")  # Sem confirmação de repost
+            chrome_options.add_argument("--disable-domain-reliability")  # Sem envio de relatórios de erro
+
+            # =========================================================================
+
             # Preferências
             prefs = {
                 "profile.default_content_setting_values.notifications": 2,  # Bloquear notificações
                 "credentials_enable_service": False,  # Desabilitar prompt de salvar senha
                 "profile.password_manager_enabled": False,
+                # Network/Performance prefs
+                "net.network_prediction_options": 2,  # Prefetch desabilitado
+                "download.prompt_for_download": False,  # Sem prompt de download
+                "profile.default_content_settings.popups": 0,  # Permitir popups (OAuth)
+                "webrtc.ip_handling_policy": "disable_non_proxied_udp",  # WebRTC otimizado
+                "webrtc.multiple_routes_enabled": False,
+                "webrtc.nonproxied_udp_enabled": False,
             }
             chrome_options.add_experimental_option("prefs", prefs)
 
@@ -207,6 +357,15 @@ class OAuthSessionManager:
             self.driver.set_page_load_timeout(120)
             self.driver.implicitly_wait(5)
             logger.debug(f"[START_CHROME] Timeouts configurados: page_load=120s, implicit_wait=5s")
+
+            # IMPORTANTE: Forçar tamanho da janela após criação
+            # Sem window manager, --start-maximized não funciona
+            try:
+                self.driver.set_window_position(0, 0)
+                self.driver.set_window_size(1920, 1080)
+                logger.debug(f"[START_CHROME] Janela posicionada em (0,0) com tamanho 1920x1080")
+            except Exception as win_err:
+                logger.warning(f"[START_CHROME] Não foi possível redimensionar janela: {win_err}")
 
             elapsed = time.time() - start_time
             logger.success(f"[START_CHROME] Chrome iniciado com sucesso em {elapsed:.2f}s")
@@ -233,9 +392,18 @@ class OAuthSessionManager:
         Returns:
             True se navegação foi bem-sucedida
         """
-        if not self.driver or not self.current_session:
-            logger.error("[NAVIGATE] Sessão não iniciada ou driver não disponível")
+        if not self.current_session:
+            logger.error("[NAVIGATE] Sessão não iniciada")
             return False
+
+        # REINÍCIO COMPLETO: Mata todos os Chrome e inicia novo para ambiente 100% limpo
+        # Isso garante apenas 1 aba e sem lixo de navegações anteriores
+        if not self.restart_chrome_fresh():
+            logger.error("[NAVIGATE] ❌ Falha ao reiniciar Chrome - tentando ensure_chrome_alive...")
+            # Fallback para o método antigo se restart_chrome_fresh falhar
+            if not self.ensure_chrome_alive():
+                logger.error("[NAVIGATE] ❌ Chrome não está disponível e não foi possível reiniciar")
+                return False
 
         navigation_start = time.time()
         site_config = None
@@ -297,21 +465,85 @@ class OAuthSessionManager:
             logger.debug(f"[NAVIGATE] Aguardando 3s para carregamento completo...")
             await asyncio.sleep(3)
 
+            # IMPORTANTE: Ativar janela do Chrome no VNC usando xdotool
+            # Sem isso, a janela pode não aparecer no VNC
+            try:
+                import subprocess
+                subprocess.run(
+                    ["xdotool", "search", "--name", "Chrome", "windowactivate", "--sync", "windowraise", "windowmove", "0", "0"],
+                    capture_output=True, timeout=5, env={"DISPLAY": self.DISPLAY}
+                )
+                logger.debug(f"[NAVIGATE] Janela Chrome ativada via xdotool")
+            except Exception as xdot_err:
+                logger.warning(f"[NAVIGATE] Não foi possível ativar janela via xdotool: {xdot_err}")
+
             # Tentar clicar no botão OAuth automaticamente se configurado
             if site_config.get("auto_click_oauth") and site_config.get("oauth_button"):
                 try:
                     logger.info(f"[NAVIGATE] Tentando clicar automaticamente no botão OAuth...")
                     logger.debug(f"[NAVIGATE] XPath do botão: {site_config['oauth_button']}")
+
+                    # Salvar handle da janela principal ANTES do clique
+                    main_window = self.driver.current_window_handle
+                    windows_before = len(self.driver.window_handles)
+                    logger.debug(f"[NAVIGATE] Janelas antes do clique: {windows_before}")
+
                     wait = WebDriverWait(self.driver, 10)
                     oauth_button = wait.until(
                         EC.element_to_be_clickable((By.XPATH, site_config["oauth_button"]))
                     )
                     oauth_button.click()
                     logger.success(f"[NAVIGATE] Botão OAuth clicado automaticamente")
-                    await asyncio.sleep(2)
+
+                    # Aguardar possível popup/nova janela abrir (comum em OAuth)
+                    # StatusInvest: popup pode demorar até 3-4s para abrir
+                    logger.debug(f"[NAVIGATE] Aguardando popup OAuth abrir...")
+                    await asyncio.sleep(3)
+
+                    # Verificar múltiplas vezes se janela foi aberta (popup pode demorar)
+                    windows_after = len(self.driver.window_handles)
+                    logger.debug(f"[NAVIGATE] Janelas após o clique: {windows_after}")
+
+                    # Se ainda não abriu, aguardar mais 2s
+                    if windows_after == windows_before:
+                        logger.debug(f"[NAVIGATE] Popup ainda não detectado, aguardando mais 2s...")
+                        await asyncio.sleep(2)
+                        windows_after = len(self.driver.window_handles)
+                        logger.debug(f"[NAVIGATE] Janelas após espera adicional: {windows_after}")
+
+                    if windows_after > windows_before:
+                        # Nova janela detectada - provavelmente popup OAuth do Google
+                        logger.info(f"[NAVIGATE] ✅ Nova janela detectada (popup OAuth) - mudando foco...")
+
+                        # Listar todas as janelas e URLs (debug)
+                        logger.debug(f"[NAVIGATE] Total de janelas: {len(self.driver.window_handles)}")
+                        for i, window_handle in enumerate(self.driver.window_handles):
+                            original_window = self.driver.current_window_handle
+                            self.driver.switch_to.window(window_handle)
+                            logger.debug(f"[NAVIGATE] Janela {i+1}: {self.driver.current_url[:100]}")
+                            self.driver.switch_to.window(original_window)
+
+                        # Encontrar a nova janela (popup OAuth)
+                        for window_handle in self.driver.window_handles:
+                            if window_handle != main_window:
+                                # Mudar para a janela popup
+                                self.driver.switch_to.window(window_handle)
+                                logger.success(f"[NAVIGATE] ✓ Mudado para janela popup OAuth")
+                                logger.info(f"[NAVIGATE] URL da popup: {self.driver.current_url}")
+
+                                # Aguardar popup carregar completamente
+                                await asyncio.sleep(1)
+                                break
+                    else:
+                        logger.debug(f"[NAVIGATE] Nenhuma nova janela detectada - OAuth na mesma aba")
+                        logger.debug(f"[NAVIGATE] URL atual: {self.driver.current_url}")
+
                 except (TimeoutException, NoSuchElementException) as e:
                     logger.warning(f"[NAVIGATE] Não foi possível clicar automaticamente: {e}")
                     # Não é erro crítico, usuário pode clicar manualmente
+                except Exception as window_err:
+                    logger.warning(f"[NAVIGATE] Erro ao detectar/trocar janela popup: {window_err}")
+                    # Continuar normalmente - usuário pode interagir manualmente
 
             # Marcar como aguardando ação do usuário
             site_progress.status = SiteStatus.WAITING_USER
@@ -343,8 +575,13 @@ class OAuthSessionManager:
         Returns:
             Número de cookies coletados
         """
-        if not self.driver or not self.current_session:
-            logger.error("[COLLECT] Driver ou sessão não disponível")
+        if not self.current_session:
+            logger.error("[COLLECT] Sessão não disponível")
+            return 0
+
+        # HEALTH CHECK: Verificar se Chrome está vivo antes de coletar
+        if not self.is_chrome_alive():
+            logger.error("[COLLECT] ❌ Chrome não está respondendo - não é possível coletar cookies")
             return 0
 
         collect_start = time.time()
@@ -582,21 +819,48 @@ class OAuthSessionManager:
 
     def cleanup(self):
         """Limpar recursos (fechar Chrome)"""
+        logger.info("=" * 80)
+        logger.info("[CLEANUP] Fechando navegador...")
+        logger.debug(f"[CLEANUP] Timestamp: {datetime.now().isoformat()}")
+
         try:
             if self.driver:
-                logger.info("=" * 80)
-                logger.info("[CLEANUP] Fechando navegador...")
-                logger.debug(f"[CLEANUP] Timestamp: {datetime.now().isoformat()}")
+                # Tentar fechar graciosamente
+                try:
+                    self.driver.quit()
+                    logger.debug("[CLEANUP] driver.quit() executado")
+                except Exception as quit_error:
+                    logger.warning(f"[CLEANUP] driver.quit() falhou: {quit_error}")
 
-                self.driver.quit()
                 self.driver = None
+                logger.success("[CLEANUP] ✓ Driver limpo")
 
-                logger.success("[CLEANUP] Navegador fechado com sucesso")
-                logger.info("=" * 80)
+            # Forçar limpeza de processos Chrome zombie
+            try:
+                import subprocess
+                import os
+
+                # Matar processos chrome que possam estar travados
+                if os.name != 'nt':  # Linux/Docker
+                    result = subprocess.run(
+                        ['pkill', '-9', '-f', 'chrome'],
+                        capture_output=True,
+                        timeout=5
+                    )
+                    if result.returncode == 0:
+                        logger.debug("[CLEANUP] Processos Chrome órfãos terminados")
+            except Exception as kill_error:
+                logger.debug(f"[CLEANUP] pkill não executado: {kill_error}")
+
+            logger.success("[CLEANUP] Navegador fechado com sucesso")
+
         except Exception as e:
             logger.error(f"[CLEANUP] ❌ Erro ao fechar navegador: {e}")
             logger.exception(e)
-            logger.info("=" * 80)
+            # Garantir que driver é None mesmo em caso de erro
+            self.driver = None
+
+        logger.info("=" * 80)
 
     def cancel_session(self):
         """Cancelar sessão atual"""
@@ -616,7 +880,13 @@ class OAuthSessionManager:
         """Obter status da sessão atual"""
         if not self.current_session:
             return None
-        return self.current_session.to_dict()
+
+        status = self.current_session.to_dict()
+
+        # Adicionar status do Chrome ao retorno
+        status["chrome_alive"] = self.is_chrome_alive()
+
+        return status
 
 
 # Instância global (singleton)
