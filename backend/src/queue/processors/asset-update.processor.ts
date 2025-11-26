@@ -52,7 +52,9 @@ export class AssetUpdateProcessor {
 
   constructor(private readonly assetsUpdateService: AssetsUpdateService) {}
 
-  @Process('update-single-asset')
+  // ✅ FIX: Reduced concurrency from 10 → 3 to prevent scraper overload (FASE 1 - WORKAROUND)
+  // TODO: Implement rate limiting per scraper (FASE 3 - DEFINITIVE)
+  @Process({ name: 'update-single-asset', concurrency: 3 })
   async handleSingleAsset(job: Job<SingleAssetUpdateJob>) {
     this.logger.log(`[JOB ${job.id}] Processing single asset update: ${job.data.ticker}`);
 

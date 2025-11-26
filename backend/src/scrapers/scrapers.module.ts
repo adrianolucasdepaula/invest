@@ -11,6 +11,7 @@ import { OpcoesScraper } from './options/opcoes.scraper';
 import { ScrapersService } from './scrapers.service';
 import { ScraperMetricsService } from './scraper-metrics.service';
 import { ScrapersController } from './scrapers.controller';
+import { RateLimiterService } from './rate-limiter.service'; // ✅ FASE 3
 
 @Module({
   imports: [TypeOrmModule.forFeature([ScraperMetric])],
@@ -25,6 +26,7 @@ import { ScrapersController } from './scrapers.controller';
     OpcoesScraper,
     ScrapersService,
     ScraperMetricsService,
+    RateLimiterService, // ✅ FASE 3
   ],
   exports: [
     FundamentusScraper,
@@ -36,6 +38,7 @@ import { ScrapersController } from './scrapers.controller';
     OpcoesScraper,
     ScrapersService,
     ScraperMetricsService,
+    RateLimiterService, // ✅ FASE 3
   ],
 })
 export class ScrapersModule {}
