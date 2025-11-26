@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AbstractScraper } from '../base/abstract-scraper';
+import { RateLimiterService } from '../rate-limiter.service'; // ✅ FASE 3
 import * as cheerio from 'cheerio';
 
 export interface Investidor10Data {
@@ -59,6 +60,12 @@ export class Investidor10Scraper extends AbstractScraper<Investidor10Data> {
   readonly name = 'Investidor10 Scraper';
   readonly source = 'investidor10';
   readonly requiresLogin = false;
+  readonly baseUrl = 'https://investidor10.com.br'; // ✅ FASE 3
+
+  constructor(rateLimiter: RateLimiterService) {
+    super();
+    this.rateLimiter = rateLimiter; // ✅ FASE 3
+  }
 
   protected async scrapeData(ticker: string): Promise<Investidor10Data> {
     const url = `https://investidor10.com.br/acoes/${ticker.toLowerCase()}/`;
@@ -179,7 +186,16 @@ export class Investidor10Scraper extends AbstractScraper<Investidor10Data> {
   }
 
   validate(data: Investidor10Data): boolean {
-    return data.ticker !== '' && (data.price > 0 || data.pl !== 0 || data.pvp !== 0);
+    // ✅ FASE 5.2: Validação mais permissiva para aceitar dados parciais
+    // Aceita se ticker existe E pelo menos 1 indicador válido (não zero)
+    if (!data.ticker) return false;
+
+    const hasValidPrice = data.price > 0;
+    const hasValidValuation = data.pl !== 0 || data.pvp !== 0 || data.psr !== 0;
+    const hasValidFinancials = data.receitaLiquida !== 0 || data.ebit !== 0 || data.lucroLiquido !== 0;
+    const hasValidMarket = data.valorMercado !== 0 || data.volume !== 0;
+
+    return hasValidPrice || hasValidValuation || hasValidFinancials || hasValidMarket;
   }
 
   protected async login(): Promise<void> {
