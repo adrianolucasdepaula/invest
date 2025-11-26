@@ -10,6 +10,7 @@ import {
   SectorUpdateJob,
 } from '../processors/asset-update.processor';
 import { UpdateTrigger } from '@database/entities';
+import { AppWebSocketGateway } from '../../websocket/websocket.gateway';
 
 @Injectable()
 export class AssetUpdateJobsService implements OnModuleInit {
@@ -19,6 +20,7 @@ export class AssetUpdateJobsService implements OnModuleInit {
   constructor(
     @InjectQueue('asset-updates') private assetUpdatesQueue: Queue,
     private configService: ConfigService,
+    private webSocketGateway: AppWebSocketGateway,
   ) {
     const env = this.configService.get<string>('NODE_ENV', 'development');
     this.isProductionOrStaging = env === 'production' || env === 'staging';
@@ -146,6 +148,8 @@ export class AssetUpdateJobsService implements OnModuleInit {
    * Queue multiple assets update
    * ✅ FIX: Create individual jobs for each asset to enable parallelization
    * and prevent job stalling on large batches (e.g., 861 assets)
+   *
+   * ✅ ENHANCEMENT: Emit batch WebSocket events for frontend progress tracking
    */
   async queueMultipleAssets(
     tickers: string[],
@@ -153,6 +157,12 @@ export class AssetUpdateJobsService implements OnModuleInit {
     triggeredBy: UpdateTrigger = UpdateTrigger.MANUAL,
   ) {
     this.logger.log(`Queueing ${tickers.length} individual asset update jobs (parallelizable)`);
+
+    // Emit batch started event
+    this.webSocketGateway.emitBatchUpdateStarted({
+      totalAssets: tickers.length,
+      tickers,
+    });
 
     // ✅ Create individual job for each asset (allows BullMQ concurrency)
     const jobPromises = tickers.map((ticker) =>
@@ -181,8 +191,94 @@ export class AssetUpdateJobsService implements OnModuleInit {
 
     this.logger.log(`✅ Queued ${jobs.length} individual jobs: ${jobIds[0]} to ${jobIds[jobIds.length - 1]}`);
 
+    // Monitor job completion in background and emit batch completed event
+    this.monitorBatchCompletion(jobIds, tickers.length).catch((error) => {
+      this.logger.error(`Error monitoring batch completion: ${error.message}`);
+    });
+
     // Return first job ID for tracking (frontend can poll this)
     return jobIds[0];
+  }
+
+  /**
+   * Monitor batch job completion and emit WebSocket events
+   * Runs in background, checks periodically for job completion
+   */
+  private async monitorBatchCompletion(jobIds: any[], totalAssets: number) {
+    const startTime = Date.now();
+    const checkInterval = 5000; // Check every 5 seconds
+    let completed = 0;
+    let failed = 0;
+    let lastProgress = 0;
+
+    const checkJobs = async () => {
+      const jobs = await Promise.all(
+        jobIds.map((id) => this.assetUpdatesQueue.getJob(id)),
+      );
+
+      completed = 0;
+      failed = 0;
+      let inProgress = 0;
+
+      for (const job of jobs) {
+        if (!job) continue;
+
+        const state = await job.getState();
+        if (state === 'completed') {
+          completed++;
+        } else if (state === 'failed') {
+          failed++;
+        } else if (state === 'active') {
+          inProgress++;
+        }
+      }
+
+      const currentProgress = completed + failed;
+      const progressPercent = Math.round((currentProgress / totalAssets) * 100);
+
+      // Emit progress update if changed significantly (every 5%)
+      if (progressPercent >= lastProgress + 5 || currentProgress === totalAssets) {
+        const activeJob = jobs.find(async (j) => j && (await j.getState()) === 'active');
+        const currentTicker = activeJob ? (activeJob.data as any).ticker : '';
+
+        this.webSocketGateway.emitBatchUpdateProgress({
+          current: currentProgress,
+          total: totalAssets,
+          currentTicker,
+        });
+
+        lastProgress = progressPercent;
+      }
+
+      // Check if all jobs completed
+      if (currentProgress >= totalAssets) {
+        const duration = Date.now() - startTime;
+
+        this.webSocketGateway.emitBatchUpdateCompleted({
+          totalAssets,
+          successCount: completed,
+          failedCount: failed,
+          duration,
+        });
+
+        this.logger.log(
+          `✅ Batch monitoring complete: ${completed}/${totalAssets} successful, ${failed} failed (${duration}ms)`,
+        );
+
+        return true; // Stop monitoring
+      }
+
+      return false; // Continue monitoring
+    };
+
+    // Poll until all jobs complete (with max 2 hour timeout)
+    const maxIterations = (2 * 60 * 60 * 1000) / checkInterval;
+    for (let i = 0; i < maxIterations; i++) {
+      const isDone = await checkJobs();
+      if (isDone) break;
+
+      await new Promise((resolve) => setTimeout(resolve, checkInterval));
+    }
   }
 
   /**

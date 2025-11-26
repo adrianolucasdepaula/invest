@@ -18,7 +18,9 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { AssetsUpdateService } from './assets-update.service';
+import { AssetUpdateJobsService } from '../../queue/jobs/asset-update-jobs.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UpdateTrigger } from '@database/entities';
 import {
   UpdateSingleAssetDto,
   UpdateMultipleAssetsDto,
@@ -32,7 +34,10 @@ import {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class AssetsUpdateController {
-  constructor(private readonly assetsUpdateService: AssetsUpdateService) {}
+  constructor(
+    private readonly assetsUpdateService: AssetsUpdateService,
+    private readonly assetUpdateJobsService: AssetUpdateJobsService,
+  ) {}
 
   /**
    * ENDPOINT 1: Atualizar um único ativo
@@ -233,24 +238,25 @@ export class AssetsUpdateController {
   }
 
   /**
-   * ENDPOINT 7: Atualizar todos os ativos com dados fundamentalistas (ASYNC)
+   * ENDPOINT 7: Atualizar todos os ativos com dados fundamentalistas (ASYNC via BullMQ)
    * POST /api/v1/assets/updates/bulk-all
    */
   @Post('bulk-all')
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({
-    summary: 'Update all assets with fundamental data (asynchronous with WebSocket)',
+    summary: 'Queue bulk update for all assets with fundamental data (asynchronous with WebSocket)',
     description:
-      'Starts background update of fundamental data for all active assets. Returns HTTP 202 immediately. Monitor progress via WebSocket events (asset_update_started, batch_update_progress, batch_update_completed). Similar to /data-management bulk sync pattern.',
+      'Queues individual BullMQ jobs for all active assets (parallelized with concurrency=3). Returns HTTP 202 immediately with jobId. Monitor progress via WebSocket events (batch_update_started, batch_update_progress, batch_update_completed).',
   })
   @ApiResponse({
     status: 202,
-    description: 'Bulk update started in background',
+    description: 'Bulk update jobs queued successfully',
     schema: {
       example: {
-        message: 'Atualização iniciada em background para 861 ativos',
+        jobId: '12345',
         totalAssets: 861,
-        estimatedMinutes: 28.7,
+        message: 'Queued 861 individual jobs for parallel processing',
+        estimatedMinutes: 9.5,
         instructions:
           'Monitore o progresso em tempo real via WebSocket (eventos: batch_update_started, batch_update_progress, batch_update_completed)',
       },
@@ -261,18 +267,19 @@ export class AssetsUpdateController {
     const assets = await this.assetsUpdateService.getAllActiveAssets();
     const tickers = assets.map((asset) => asset.ticker);
 
-    // 2. Start background processing (don't await)
-    this.assetsUpdateService
-      .updateMultipleAssets(tickers, userId, 'manual' as any)
-      .catch((error) => {
-        console.error(`[bulk-all] Background error: ${error.message}`);
-      });
+    // 2. Queue individual jobs via BullMQ (returns immediately)
+    const jobId = await this.assetUpdateJobsService.queueMultipleAssets(
+      tickers,
+      userId,
+      UpdateTrigger.MANUAL,
+    );
 
     // 3. Return immediate response (HTTP 202 Accepted)
     return {
-      message: `Atualização iniciada em background para ${tickers.length} ativos`,
+      jobId,
       totalAssets: tickers.length,
-      estimatedMinutes: Math.round((tickers.length * 2) / 60), // ~2s per asset
+      message: `Queued ${tickers.length} individual jobs for parallel processing`,
+      estimatedMinutes: Math.round((tickers.length * 2) / (60 * 3)), // ~2s per asset, concurrency=3
       instructions:
         'Monitore o progresso em tempo real via WebSocket (eventos: batch_update_started, batch_update_progress, batch_update_completed)',
     };
