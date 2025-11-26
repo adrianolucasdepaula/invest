@@ -137,12 +137,12 @@ export function AssetTable({
                     >
                       {asset.volume ? asset.volume.toLocaleString('pt-BR') : '-'}
                     </td>
-                    {asset.marketCap && (
+                    {assets.some(a => a.marketCap) && (
                       <td
                         className="cursor-pointer px-4 py-3 text-right text-sm"
                         onClick={() => onAssetClick?.(asset.ticker)}
                       >
-                        {formatCurrency(asset.marketCap)}
+                        {asset.marketCap ? formatCurrency(asset.marketCap) : '-'}
                       </td>
                     )}
                     <td className="px-4 py-3 text-center">
