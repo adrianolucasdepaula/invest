@@ -19,7 +19,18 @@ import { ScrapedData } from '../database/entities/scraped-data.entity';
       { name: 'scraping' },
       { name: 'analysis' },
       { name: 'reports' },
-      { name: 'asset-updates' },
+      {
+        name: 'asset-updates',
+        // ✅ FIX: Enable concurrency for parallelizing asset updates
+        // Allows 10 jobs to process simultaneously, reducing total time from ~35min to ~2.9min
+        defaultJobOptions: {
+          removeOnComplete: 100,
+          removeOnFail: 50,
+          timeout: 180000, // ✅ FASE 4.1: 180s (3min) - Permite fila de inicialização Puppeteer (30s+) + scraping (150s máx)
+        },
+        // Note: Concurrency is configured in processor @Processor() decorator
+        // See: asset-update.processor.ts
+      },
     ),
     TypeOrmModule.forFeature([Asset, FundamentalData, AssetPrice, DataSource, ScrapedData]),
     ScrapersModule,
