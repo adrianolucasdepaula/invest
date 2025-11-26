@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AbstractScraper } from '../base/abstract-scraper';
+import { RateLimiterService } from '../rate-limiter.service'; // ✅ FASE 3
 import * as cheerio from 'cheerio';
 
 export interface InvestsiteData {
@@ -25,6 +26,12 @@ export class InvestsiteScraper extends AbstractScraper<InvestsiteData> {
   readonly name = 'Investsite Scraper';
   readonly source = 'investsite';
   readonly requiresLogin = false; // Site público
+  readonly baseUrl = 'https://www.investsite.com.br'; // ✅ FASE 3
+
+  constructor(rateLimiter: RateLimiterService) {
+    super();
+    this.rateLimiter = rateLimiter; // ✅ FASE 3
+  }
 
   protected async scrapeData(ticker: string): Promise<InvestsiteData> {
     // URL do Investsite - formato: principais_indicadores.php?cod_negociacao=TICKER

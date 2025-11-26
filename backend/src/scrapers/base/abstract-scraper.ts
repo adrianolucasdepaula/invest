@@ -40,7 +40,7 @@ export abstract class AbstractScraper<T = any> implements BaseScraper<T> {
   constructor(config?: ScraperConfig) {
     this.logger = new Logger(this.constructor.name);
     this.config = {
-      timeout: 90000, // ✅ FASE 2: Aumentado de 60s para 90s (prevenir timeout com concurrency)
+      timeout: 180000, // ✅ FASE 5.5: Aumentado de 90s para 180s (3min) - prevenir ERR_ABORTED em páginas lentas
       retries: 3,
       headless: true,
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -63,7 +63,7 @@ export abstract class AbstractScraper<T = any> implements BaseScraper<T> {
 
       this.browser = await puppeteerExtra.default.launch({
         headless: this.config.headless,
-        protocolTimeout: 90000, // ✅ FASE 2: Aumentado de 60s para 90s (prevenir crash com concurrency)
+        protocolTimeout: 180000, // ✅ FASE 5.5: Aumentado de 90s para 180s (3min) - prevenir ERR_ABORTED
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -77,7 +77,7 @@ export abstract class AbstractScraper<T = any> implements BaseScraper<T> {
       this.page = await this.browser.newPage();
       await this.page.setUserAgent(this.config.userAgent);
       await this.page.setViewport({ width: 1920, height: 1080 });
-      this.page.setDefaultNavigationTimeout(90000); // ✅ FASE 2: Aumentado de 60s para 90s
+      this.page.setDefaultNavigationTimeout(180000); // ✅ FASE 5.5: Aumentado de 90s para 180s (3min)
 
       if (this.requiresLogin) {
         await this.login();
@@ -148,6 +148,24 @@ export abstract class AbstractScraper<T = any> implements BaseScraper<T> {
       };
     } catch (error) {
       const responseTime = Date.now() - startTime;
+
+      // ✅ FASE 5.4: Tratamento específico para net::ERR_ABORTED
+      // ERR_ABORTED indica que a navegação foi cancelada (página não existe, timeout, redirect falhou)
+      // Não é um erro crítico - apenas indica que o ticker não tem dados neste source
+      if (error.message && error.message.includes('net::ERR_ABORTED')) {
+        this.logger.warn(
+          `⚠️ Page not available for ${ticker} on ${this.source} (ERR_ABORTED) - skipping`,
+        );
+        return {
+          success: false,
+          error: 'Page not available (ERR_ABORTED)',
+          source: this.source,
+          timestamp: new Date(),
+          responseTime,
+        };
+      }
+
+      // Para outros erros, manter log de ERROR
       this.logger.error(`Failed to scrape ${ticker} from ${this.source}: ${error.message}`);
 
       return {

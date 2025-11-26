@@ -144,34 +144,45 @@ export class AssetUpdateJobsService implements OnModuleInit {
 
   /**
    * Queue multiple assets update
+   * ✅ FIX: Create individual jobs for each asset to enable parallelization
+   * and prevent job stalling on large batches (e.g., 861 assets)
    */
   async queueMultipleAssets(
     tickers: string[],
     userId?: string,
     triggeredBy: UpdateTrigger = UpdateTrigger.MANUAL,
   ) {
-    this.logger.log(`Queueing batch update: ${tickers.length} assets`);
+    this.logger.log(`Queueing ${tickers.length} individual asset update jobs (parallelizable)`);
 
-    const job = await this.assetUpdatesQueue.add(
-      'update-multiple-assets',
-      {
-        type: 'multiple',
-        tickers,
-        userId,
-        triggeredBy,
-      } as MultipleAssetsUpdateJob,
-      {
-        attempts: 2,
-        backoff: {
-          type: 'fixed',
-          delay: 5000,
+    // ✅ Create individual job for each asset (allows BullMQ concurrency)
+    const jobPromises = tickers.map((ticker) =>
+      this.assetUpdatesQueue.add(
+        'update-single-asset',
+        {
+          type: 'single',
+          ticker,
+          userId,
+          triggeredBy,
+        } as SingleAssetUpdateJob,
+        {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 2000,
+          },
+          removeOnComplete: 100,
+          removeOnFail: 50,
         },
-        removeOnComplete: 50,
-        removeOnFail: 50,
-      },
+      ),
     );
 
-    return job.id;
+    const jobs = await Promise.all(jobPromises);
+    const jobIds = jobs.map((j) => j.id);
+
+    this.logger.log(`✅ Queued ${jobs.length} individual jobs: ${jobIds[0]} to ${jobIds[jobIds.length - 1]}`);
+
+    // Return first job ID for tracking (frontend can poll this)
+    return jobIds[0];
   }
 
   /**

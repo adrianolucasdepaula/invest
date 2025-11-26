@@ -303,17 +303,6 @@ frontend:
 
 - Entender escopo de cada volume Docker (dados vs cache vs deps)
 - Usar comandos targeted ao invés de destrutivos
-- Documentar qual volume é crítico vs descartável
-- Considerar builds sem cache persistente para dev
-- Testar mudanças de UI rapidamente (não esperar acumular)
-
-### Status Atual
-
-⚠️ Frontend ainda exibindo build antigo (aguardando ação do usuário para limpar volume)
-
-### Arquivos Afetados
-
-- Nenhum (problema de infraestrutura, não código)
 
 ---
 

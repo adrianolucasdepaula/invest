@@ -1,0 +1,300 @@
+[
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "cebsp_",
+    "path": "/",
+    "sameSite": "Strict",
+    "secure": false,
+    "value": "2"
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "_ce.s",
+    "path": "/",
+    "sameSite": "Strict",
+    "secure": false,
+    "value": "v~79956b4ed7485042b9553c61d279de3c1e7e4838~lcw~1763878919567~vir~new~lva~1763878925699~vpv~0~v11.cs~442075~v11.s~b4657d10-c834-11f0-bbe7-5f716936f61b~v11.vs~79956b4ed7485042b9553c61d279de3c1e7e4838~v11.fsvd~eyJ1cmwiOiJpbnZlc3RpZG9yMTAuY29tLmJyL2xvZ2luIiwicmVmIjoiIiwidXRtIjpbXX0%3D~v11.sla~1763878913892~v11.ws~1~v11.wr~142~v11ls~b4657d10-c834-11f0-bbe7-5f716936f61b~vdva~1763942399999~v11nv~0~gtrk.la~mibbysum~lcw~1763878925699",
+    "expires": 1795414925
+  },
+  {
+    "domain": "investidor10.com.br",
+    "httpOnly": true,
+    "name": "laravel_session",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": true,
+    "value": "eyJpdiI6Inp4aGVIZSttVmpGcEFYYUw4NFlUV3c9PSIsInZhbHVlIjoiTDl6YllvVFZVZmZFOEVsTHh2QXZyZi9VZkpBTE9VeWJBQkxCY2ZscXl6QzNYd0Qzcjh6WUtQbnZHOThvMWtKdDJIZzlPYWpoRG9lT1F5eDhkRy8zSWlXVDd4SXhIaE9tUkVBYklZVWQzdklyb3A1UW5jeENpS0lVUVBRZTl5VjgiLCJtYWMiOiIxNGZjNTAzOWYyMDI0YmI4OGMwMGVhMzU0NmYzMjM3MDRmNTdlZThkMmMyODQ2NWRlMzA5OWRlZDcxNmI2MTZmIiwidGFnIjoiIn0%3D",
+    "expires": 1766470921
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "_ga",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "GA1.3.1010611907.1763878911",
+    "expires": 1798438921
+  },
+  {
+    "domain": "investidor10.com.br",
+    "httpOnly": false,
+    "name": "user_id",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "eyJpdiI6IitxSk1nZFd0djFjRE5GRVdPVGpIUXc9PSIsInZhbHVlIjoiZnovRDQxMUtOMnRGcEl4TTVtMkZIUnNvY3lhTTZpOXMrRDhIb3BRZ1Q0OEw4SC9pUUFmWG5ndFhqNldmZmxLdCIsIm1hYyI6ImZiMWQyYmZmZGE2ZjZjN2VhZjBhNzhlN2Y1YmZkOTgyMDE0MWJhNWM1ODQ2NjRhOTIxNjc3NDQ4MDljMDA4NzkiLCJ0YWciOiIifQ%3D%3D",
+    "expires": 1798438919
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "_gcl_au",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "1.1.335127557.1763878910.2102074191.1763878919.1763878918",
+    "expires": 1771654910
+  },
+  {
+    "domain": "investidor10.com.br",
+    "httpOnly": false,
+    "name": "g_state",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "{\"i_l\":0,\"i_ll\":1763878913722}",
+    "expires": 1779430918
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "prism_800273571",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "a9023266-c35b-4b71-996b-652a9fcf9c57",
+    "expires": 1766470913
+  },
+  {
+    "domain": "investidor10.com.br",
+    "httpOnly": false,
+    "name": "ads_popup",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "1",
+    "expires": 1763965314
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "sc_is_visitor_unique",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "rx12923067.1763878925.CB6CB244EBBF4838ADCE7C785E7619B4.1.1.1.1.1.1.1.1.1",
+    "expires": 1798438925
+  },
+  {
+    "domain": "investidor10.com.br",
+    "httpOnly": false,
+    "name": "buy_and_hold",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "1",
+    "expires": 1798438908
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "_ce.clock_data",
+    "path": "/",
+    "sameSite": "Strict",
+    "secure": false,
+    "value": "-46542993%2C179.160.224.239%2C1%2C9c1ce27f08b16479d2e17743062b28ed%2CChrome%2CBR",
+    "expires": 1763965313
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "cebs",
+    "path": "/",
+    "sameSite": "Strict",
+    "secure": false,
+    "value": "1"
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "_ga_5EQ309XQDG",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "GS2.1.s1763878912$o1$g1$t1763878924$j48$l0$h616078246",
+    "expires": 1798438924
+  },
+  {
+    "domain": "investidor10.com.br",
+    "httpOnly": true,
+    "name": "XSRF-TOKEN",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": true,
+    "value": "eyJpdiI6IjJNLzBNbnMwMHpHS2dRTFhVTXBXNWc9PSIsInZhbHVlIjoiWlFLZjZMNkZleTdVb3h1MFNlVnFXa2RLMGx6bThsYUZrTDI4Mkk1ZCs1RzFLdXpPRk9maklVQkR3YWpwQVdleDFWRnRmZGVQbkVhVkVhRzAyTGRQbmVmc1NGaFE1N0tFZzI1OGdlaTB5Yzhja3dmelJLeHFqL052aFBYZUFDbWEiLCJtYWMiOiI5YmE1ZmY5ZWUxZjUxOTM2Y2MxNzNiMzNhNmRhODk3MDlmNjU0YmM4OWExMWRiYjNkNWU5YzQ1NDU5Njk2MzhiIiwidGFnIjoiIn0%3D",
+    "expires": 1766470921
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "_ga_267511960",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "GS2.1.s1763878910$o1$g1$t1763878921$j49$l0$h0",
+    "expires": 1798438921
+  },
+  {
+    "domain": "investidor10.com.br",
+    "httpOnly": true,
+    "name": "remember_web_59ba36addc2b2f9401580f014c7f58ea4e30989d",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": true,
+    "value": "eyJpdiI6IkNtNmdmWnRGUE9WQSs2b0pHakQxRlE9PSIsInZhbHVlIjoiTiswNmpKR0lRUTFxUm1XcEpPQzBKak9kdU5rK3FPS3JtTDVCd3pHNWZCVmJzZWtBVGJGUFY5cCtSaTRSWWJDTEtEbnR1ZE5EMURtWXBlMVMzK3FOdE92Wkx4ZTdHV3VaUTFna0NnZVVxZ1BOK2pFaDR1bWt3L0ZwejRlOFhXNlJvMUFQaE96L3Nsejk1M2ViZ0EyWmZRPT0iLCJtYWMiOiI1NTg2ZjRjZjIxNzk4M2FjZjhkMGRiYWJkZTEzYjQ3YThlYTc0YmExZGQ5OTFlNGViZjcwZTBkZTc2ZjIzY2MzIiwidGFnIjoiIn0%3D",
+    "expires": 1798438918
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "_clck",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "1kop6d9%5E2%5Eg19%5E0%5E2153",
+    "expires": 1795414912
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "_fbp",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "fb.2.1763878912749.411656283510900652",
+    "expires": 1771654922
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "__eoi",
+    "path": "/",
+    "sameSite": "None",
+    "secure": true,
+    "value": "ID=55e448ccb73e0d62:T=1763925452:RT=1763925452:S=AA-AfjaaPr2zGIaFTEqSUEb0y7Nv",
+    "expires": 1779477452
+  },
+  {
+    "domain": "investidor10.com.br",
+    "httpOnly": false,
+    "name": "g_csrf_token",
+    "path": "/",
+    "sameSite": "None",
+    "secure": true,
+    "value": "78696f1473e9fcb2",
+    "expires": 1763879218
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "_gid",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "GA1.3.1707916574.1763878912",
+    "expires": 1763965321
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "__gpi",
+    "path": "/",
+    "sameSite": "None",
+    "secure": true,
+    "value": "UID=000012a851244254:T=1763925452:RT=1763925452:S=ALNI_MY4j0TQSU5F-Qnf38Lx1p18oDyk-Q",
+    "expires": 1797621452
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "_CEFT",
+    "path": "/",
+    "sameSite": "Strict",
+    "secure": false,
+    "value": "Q%3D%3D%3D",
+    "expires": 1795414925
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "__gads",
+    "path": "/",
+    "sameSite": "None",
+    "secure": true,
+    "value": "ID=57f9ac1b278af762:T=1763925452:RT=1763925452:S=ALNI_MYg9cWrdMiWWIMCXQN_sOiodso2Sg",
+    "expires": 1797621452
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "_clsk",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "1vlouxn%5E1763878927015%5E2%5E1%5Eb.clarity.ms%2Fcollect",
+    "expires": 1763965327
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "sib_cuid",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "ccb5b839-6ef6-4bda-bd16-9ff151a9a9d7",
+    "expires": 1779582109
+  },
+  {
+    "domain": ".investidor10.com.br",
+    "httpOnly": false,
+    "name": "_rdt_uuid",
+    "path": "/",
+    "sameSite": "Strict",
+    "secure": true,
+    "value": "1763878910600.55020317-b0f2-4b86-b829-847037098995",
+    "expires": 1771654921
+  },
+  {
+    "domain": "investidor10.com.br",
+    "httpOnly": true,
+    "name": "hash-ads_popup",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": true,
+    "value": "eyJpdiI6ImdRVXQ3VDJnemduZFlxcWhJRFdhSGc9PSIsInZhbHVlIjoidUNRSVNRUFVvaU1RWVM1Y2trSlNZcWdlS3FnR1Q0RWRsSktyc3MzZzVTNUQxZWs1QU00ZlhVdVdlbDlwTzY1V0N2M2krdUdMY09kZm5nb0dKVXNEL3N1b2Y3ZjJ6OHoyWWNKUUMyaWRDb1E9IiwibWFjIjoiZmRmNTQzNWY0YjkyMmQ4NzI3NWE5Y2Y1ZWYzMmU4NTdmMWRhMDU4Mjk4ZDQ3MjliYTgyOWRlMDRjNTdjZWIxOSIsInRhZyI6IiJ9",
+    "expires": 1795414905
+  },
+  {
+    "domain": "investidor10.com.br",
+    "httpOnly": true,
+    "name": "cookie_contador_whole-site",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": true,
+    "value": "eyJpdiI6IkNUdGNEM3NaUEc4UmYyYk1kbFk1S0E9PSIsInZhbHVlIjoibHV4MzBCU1Q5T3dVaHpiUExneExhandpQnpJeWJVTkY0L0ZqVU5FRGd5NitlMDdTNTlUTWJ6cHIrek82Y0NHRmM4alNFZ3Uvb09DNGNGRHA5dzEwQkE9PSIsIm1hYyI6IjgxNWRkOGEzNjZjMWVlOWQzMzc1MjI5NmIzYjA3YWRiNWI1MTYxMDdhODg4ODRhNzgxNDdiMmMwM2U1YzRkYmIiLCJ0YWciOiIifQ%3D%3D",
+    "expires": 1763906625
+  }
+]

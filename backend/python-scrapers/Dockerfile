@@ -36,6 +36,9 @@ RUN apt-get update && apt-get install -y \
     novnc \
     websockify \
     xterm \
+    # X11 utilities for window management
+    xdotool \
+    x11-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Google Chrome (método moderno sem apt-key)

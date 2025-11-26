@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AbstractScraper } from '../base/abstract-scraper';
+import { RateLimiterService } from '../rate-limiter.service'; // ✅ FASE 3
 import * as cheerio from 'cheerio';
 
 export interface FundamentusData {
@@ -35,6 +36,12 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
   readonly name = 'Fundamentus Scraper';
   readonly source = 'fundamentus';
   readonly requiresLogin = false;
+  readonly baseUrl = 'https://www.fundamentus.com.br'; // ✅ FASE 3
+
+  constructor(rateLimiter: RateLimiterService) {
+    super();
+    this.rateLimiter = rateLimiter; // ✅ FASE 3: Injetar rate limiter
+  }
 
   protected async scrapeData(ticker: string): Promise<FundamentusData> {
     const url = `https://www.fundamentus.com.br/detalhes.php?papel=${ticker.toUpperCase()}`;

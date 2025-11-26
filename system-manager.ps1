@@ -607,7 +607,14 @@ function Clean-Containers {
 
 # Start system
 function Start-System {
+    param([bool]$VerboseMode = $false)
+
     Print-Header "Iniciando Sistema B3 AI Analysis Platform"
+    
+    if ($VerboseMode) {
+        Print-Warning "MODO VERBOSE ATIVADO: Logs serão exibidos em tempo real."
+        Print-Warning "Pressione Ctrl+C para parar os logs (os containers continuarão rodando se usar -d, mas neste modo rodaremos em foreground)."
+    }
 
     # Check and create environment files
     if (-not (Test-EnvironmentFiles)) {
@@ -664,6 +671,21 @@ function Start-System {
     # Start services
     Print-Header "Iniciando Serviços Docker"
     Print-Info "Iniciando containers..."
+
+    # Start services
+    Print-Header "Iniciando Serviços Docker"
+    Print-Info "Iniciando containers..."
+
+    if ($VerboseMode) {
+        # Em modo verbose, rodamos sem -d para ver os logs imediatamente
+        # Mas isso significa que o script vai parar aqui até o usuário cancelar
+        Print-Info "Executando em modo foreground (logs em tempo real)..."
+        docker-compose up
+        
+        # Se o usuário cancelar (Ctrl+C), o docker-compose up para os containers.
+        # Então não fazemos health check depois.
+        return
+    }
 
     docker-compose up -d
 
@@ -831,6 +853,7 @@ function Clear-System {
     Print-Header "Limpando Sistema"
 
     Print-Warning "ATENÇÃO: Isso irá remover TODOS os dados (banco de dados, cache, volumes)!"
+    Print-Info "DICA: Se você quer apenas resolver problemas de cache/build, use 'clean-cache' ou 'rebuild-frontend'."
     $confirm = Read-Host "Tem certeza que deseja continuar? Digite 'CONFIRMAR' para prosseguir"
 
     if ($confirm -eq "CONFIRMAR") {
@@ -845,6 +868,190 @@ function Clear-System {
         Print-Info "Para iniciar novamente: .\system-manager.ps1 start"
     } else {
         Print-Info "Operação cancelada"
+    }
+}
+
+# Backup Database
+function Backup-Database {
+    Print-Header "Backup do Banco de Dados"
+
+    if (-not (Test-Path "backups")) {
+        New-Item -ItemType Directory -Force -Path "backups" | Out-Null
+    }
+
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $filename = "invest_db_$timestamp.sql"
+    $filepath = "backups/$filename"
+
+    Print-Info "Criando backup em $filepath..."
+    
+    # Check if postgres container is running
+    if (-not (docker ps -q -f name=invest_postgres)) {
+        Print-Error "Container invest_postgres não está rodando!"
+        return
+    }
+
+    docker exec -t invest_postgres pg_dump -U invest_user invest_db > $filepath
+
+    if ($LASTEXITCODE -eq 0) {
+        Print-Success "Backup criado com sucesso: $filepath"
+    } else {
+        Print-Error "Erro ao criar backup"
+    }
+}
+
+# Restore Database
+function Restore-Database {
+    Print-Header "Restaurar Banco de Dados"
+
+    if (-not (Test-Path "backups")) {
+        Print-Error "Diretório 'backups' não encontrado."
+        return
+    }
+
+    $backups = Get-ChildItem "backups/*.sql" | Sort-Object LastWriteTime -Descending
+
+    if (-not $backups) {
+        Print-Warning "Nenhum arquivo de backup encontrado em 'backups/'."
+        return
+    }
+
+    Write-Host "Backups disponíveis:"
+    $i = 1
+    foreach ($backup in $backups) {
+        Write-Host "  [$i] $($backup.Name) ($($backup.LastWriteTime))"
+        $i++
+    }
+    Write-Host ""
+
+    $selection = Read-Host "Selecione o número do backup para restaurar (0 para cancelar)"
+    
+    if ($selection -match "^\d+$" -and $selection -gt 0 -and $selection -le $backups.Count) {
+        $selectedBackup = $backups[$selection - 1]
+        
+        Write-Host ""
+        Print-Warning "ATENÇÃO: Isso irá SOBRESCREVER todo o banco de dados atual!"
+        Print-Warning "Arquivo selecionado: $($selectedBackup.Name)"
+        $confirm = Read-Host "Digite 'RESTAURAR' para confirmar"
+
+        if ($confirm -eq "RESTAURAR") {
+            Print-Info "Restaurando banco de dados..."
+            
+            # Check if postgres container is running
+            if (-not (docker ps -q -f name=invest_postgres)) {
+                Print-Error "Container invest_postgres não está rodando!"
+                return
+            }
+            
+            cat $selectedBackup.FullName | docker exec -i invest_postgres psql -U invest_user invest_db
+
+            if ($LASTEXITCODE -eq 0) {
+                Print-Success "Banco de dados restaurado com sucesso!"
+            } else {
+                Print-Error "Erro ao restaurar banco de dados"
+            }
+        } else {
+            Print-Info "Operação cancelada."
+        }
+    } else {
+        Print-Info "Operação cancelada."
+    }
+}
+
+# Clean Cache (Safe)
+function Clean-Cache {
+    Print-Header "Limpeza de Cache (Segura)"
+
+    Print-Info "Parando frontend..."
+    docker stop invest_frontend 2>$null
+
+    Print-Info "Removendo volume de cache do Next.js..."
+    docker volume rm invest-claude-web_frontend_next 2>$null
+
+    Print-Success "Cache do frontend limpo!"
+    
+    $cleanDeps = Read-Host "Deseja remover também node_modules (backend/frontend)? (y/n)"
+    if ($cleanDeps -eq "y") {
+        Print-Info "Removendo volumes de dependências..."
+        docker volume rm invest-claude-web_backend_node_modules 2>$null
+        docker volume rm invest-claude-web_frontend_node_modules 2>$null
+        Print-Success "Dependências removidas. Execute 'install' para reinstalar."
+    }
+
+    Print-Info "Execute 'start' ou 'rebuild-frontend' para iniciar novamente."
+}
+
+# Rebuild Frontend
+function Rebuild-Frontend {
+    Print-Header "Rebuild Frontend"
+    
+    Clean-Cache
+    
+    Print-Info "Iniciando frontend com rebuild..."
+    docker-compose up -d --build frontend
+    
+    if ($LASTEXITCODE -eq 0) {
+        Print-Success "Frontend reiniciado com sucesso!"
+    } else {
+        Print-Error "Erro ao reiniciar frontend"
+    }
+}
+
+# Prune System
+function Prune-System {
+    Print-Header "Limpeza Profunda (Docker Prune)"
+    
+    Print-Warning "Isso irá remover:"
+    Write-Host "  - Todos os containers parados"
+    Write-Host "  - Todas as redes não usadas"
+    Write-Host "  - Todas as imagens não usadas (dangling)"
+    Write-Host "  - Cache de build"
+    
+    $confirm = Read-Host "Deseja continuar? (y/n)"
+    if ($confirm -eq "y") {
+        docker system prune -a
+        Print-Success "Limpeza concluída!"
+    }
+}
+
+# Check Types
+function Check-Types {
+    Print-Header "Verificação de Tipos (TypeScript)"
+
+    # Backend
+    if (Test-Path "backend") {
+        Print-Info "Verificando Backend..."
+        Push-Location backend
+        if (Test-Path "node_modules") {
+            npx tsc --noEmit
+            if ($LASTEXITCODE -eq 0) {
+                Print-Success "Backend: 0 erros"
+            } else {
+                Print-Error "Backend: Erros de tipo encontrados"
+            }
+        } else {
+            Print-Warning "Backend: node_modules não encontrado (pulei verificação)"
+        }
+        Pop-Location
+    }
+
+    Write-Host ""
+
+    # Frontend
+    if (Test-Path "frontend") {
+        Print-Info "Verificando Frontend..."
+        Push-Location frontend
+        if (Test-Path "node_modules") {
+            npx tsc --noEmit
+            if ($LASTEXITCODE -eq 0) {
+                Print-Success "Frontend: 0 erros"
+            } else {
+                Print-Error "Frontend: Erros de tipo encontrados"
+            }
+        } else {
+            Print-Warning "Frontend: node_modules não encontrado (pulei verificação)"
+        }
+        Pop-Location
     }
 }
 
@@ -868,6 +1075,12 @@ function Show-Help {
     Write-Host "  ${GREEN}build${RESET}              Faz build das imagens Docker"
     Write-Host "  ${YELLOW}migrate${RESET}            Executa migrações do banco de dados"
     Write-Host "  ${BLUE}logs [service]${RESET}     Mostra logs (opcional: especificar serviço)"
+    Write-Host "  ${MAGENTA}backup${RESET}             Cria backup do banco de dados"
+    Write-Host "  ${MAGENTA}restore${RESET}            Restaura backup do banco de dados"
+    Write-Host "  ${CYAN}clean-cache${RESET}        Limpa cache do frontend (seguro)"
+    Write-Host "  ${CYAN}rebuild-frontend${RESET}   Limpa cache e recria container frontend"
+    Write-Host "  ${CYAN}check-types${RESET}        Verifica erros de TypeScript (backend/frontend)"
+    Write-Host "  ${RED}prune${RESET}              Limpeza profunda do Docker (prune -a)"
     Write-Host "  ${RED}clean${RESET}              Remove todos os dados e volumes (CUIDADO!)"
     Write-Host "  ${BLUE}help${RESET}               Mostra esta mensagem de ajuda"
     Write-Host ""
@@ -890,10 +1103,25 @@ function Show-Help {
 
 # Main script logic
 $command = $args[0]
-$param = $args[1]
+$param = $null
+$verboseMode = $false
+
+# Parse arguments
+for ($i = 0; $i -lt $args.Count; $i++) {
+    $arg = $args[$i]
+    if ($arg -eq "-Verbose" -or $arg -eq "--verbose" -or $arg -eq "-v") {
+        $verboseMode = $true
+    }
+    elseif ($i -eq 0) {
+        $command = $arg
+    }
+    elseif ($null -eq $param -and $arg -ne "-Verbose" -and $arg -ne "--verbose" -and $arg -ne "-v") {
+        $param = $arg
+    }
+}
 
 switch ($command) {
-    "start" { Start-System }
+    "start" { Start-System -VerboseMode $verboseMode }
     "stop" { Stop-System }
     "restart" { Restart-System }
     "status" { Get-SystemStatus }
@@ -902,6 +1130,12 @@ switch ($command) {
     "build" { Build-DockerImages }
     "migrate" { Invoke-Migrations }
     "logs" { Get-Logs -Service $param }
+    "backup" { Backup-Database }
+    "restore" { Restore-Database }
+    "clean-cache" { Clean-Cache }
+    "rebuild-frontend" { Rebuild-Frontend }
+    "check-types" { Check-Types }
+    "prune" { Prune-System }
     "clean" { Clear-System }
     "help" { Show-Help }
     default {

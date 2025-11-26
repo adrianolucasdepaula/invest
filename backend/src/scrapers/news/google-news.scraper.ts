@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AbstractScraper } from '../base/abstract-scraper';
+import { RateLimiterService } from '../rate-limiter.service'; // ✅ FASE 3
 import * as cheerio from 'cheerio';
 
 export interface NewsArticle {
@@ -17,6 +18,12 @@ export class GoogleNewsScraper extends AbstractScraper<NewsArticle[]> {
   readonly name = 'Google News';
   readonly source = 'google-news';
   readonly requiresLogin = false;
+  readonly baseUrl = 'https://news.google.com'; // ✅ FASE 3
+
+  constructor(rateLimiter: RateLimiterService) {
+    super();
+    this.rateLimiter = rateLimiter; // ✅ FASE 3
+  }
 
   protected async scrapeData(ticker: string): Promise<NewsArticle[]> {
     const startTime = Date.now();

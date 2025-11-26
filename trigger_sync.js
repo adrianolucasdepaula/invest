@@ -1,5 +1,5 @@
-const token =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkOTBjNTk5ZC02MmJmLTQxNmQtYTBiNC1iYzI3NTYxZmQ2ZmEiLCJlbWFpbCI6ImFkbWluQGludmVzdC5jb20iLCJpYXQiOjE3NjQwMzM5NzksImV4cCI6MTc2NDYzODc3OX0.lbvd1QU0wH3yj_cVdNuORjdJmFTOgStoI-Rr3mW7y0s";
+const fs = require("fs");
+const token = fs.readFileSync("token.txt", "utf8").trim();
 
 async function triggerSync() {
   try {

@@ -21,6 +21,8 @@ async function login() {
 
     const data = await response.json();
     console.log(data.token);
+    fs.writeFileSync("token.txt", data.token);
+    console.log("Token saved to token.txt");
   } catch (error) {
     console.error("Error:", error);
     process.exit(1);

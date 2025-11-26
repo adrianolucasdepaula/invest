@@ -132,6 +132,12 @@ class ApiClient {
     return response.data;
   }
 
+  // Bulk update all assets with fundamental data (async with WebSocket)
+  async bulkUpdateAllAssetsFundamentals(userId?: string) {
+    const response = await this.client.post('/assets/updates/bulk-all', { userId });
+    return response.data;
+  }
+
   // Analysis endpoints
   async getAnalysis(ticker: string, type?: 'fundamental' | 'technical' | 'complete') {
     const response = await this.client.get(`/analysis/${ticker}`, {

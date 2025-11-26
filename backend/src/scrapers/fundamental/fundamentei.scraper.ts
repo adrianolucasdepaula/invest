@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AbstractScraper } from '../base/abstract-scraper';
 import { GoogleAuthHelper } from '../auth/google-auth.helper';
+import { RateLimiterService } from '../rate-limiter.service'; // ✅ FASE 3
 import * as cheerio from 'cheerio';
 import * as path from 'path';
 
@@ -24,6 +25,7 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
   readonly name = 'Fundamentei Scraper';
   readonly source = 'fundamentei';
   readonly requiresLogin = true;
+  readonly baseUrl = 'https://fundamentei.com'; // ✅ FASE 3
 
   private readonly cookiesPath = path.join(
     process.cwd(),
@@ -31,6 +33,11 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
     'cookies',
     'fundamentei_session.json',
   );
+
+  constructor(rateLimiter: RateLimiterService) {
+    super();
+    this.rateLimiter = rateLimiter; // ✅ FASE 3
+  }
 
   protected async scrapeData(ticker: string): Promise<FundamenteiData> {
     // URL do Fundamentei para o ticker

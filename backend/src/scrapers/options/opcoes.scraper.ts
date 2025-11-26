@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AbstractScraper } from '../base/abstract-scraper';
+import { RateLimiterService } from '../rate-limiter.service'; // ✅ FASE 3
 
 export interface OpcaoData {
   ticker: string;
@@ -37,12 +38,17 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
   readonly name = 'Opções.net.br Scraper';
   readonly source = 'opcoes';
   readonly requiresLogin = true;
+  readonly baseUrl = 'https://opcoes.net.br'; // ✅ FASE 3
 
   private username: string;
   private password: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    rateLimiter: RateLimiterService, // ✅ FASE 3
+  ) {
     super();
+    this.rateLimiter = rateLimiter; // ✅ FASE 3
     this.username = this.configService.get<string>('OPCOES_USERNAME');
     this.password = this.configService.get<string>('OPCOES_PASSWORD');
   }

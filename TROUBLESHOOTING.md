@@ -39,17 +39,20 @@ Este documento contém soluções para os problemas mais comuns encontrados dura
 ### Problema 1: Backend não compila
 
 **Sintomas:**
+
 ```
 Error: Cannot find module '@api/assets/assets.service'
 ```
 
 **Causa Raiz:**
+
 - Configuração incorreta de path aliases no `tsconfig.json`
 - TypeScript server do VSCode desatualizado
 
 **Solução:**
 
 **1. Verificar tsconfig.json:**
+
 ```json
 {
   "compilerOptions": {
@@ -63,11 +66,13 @@ Error: Cannot find module '@api/assets/assets.service'
 ```
 
 **2. Reiniciar TypeScript server no VSCode:**
+
 - Pressione `Ctrl+Shift+P` (Windows/Linux) ou `Cmd+Shift+P` (Mac)
 - Digite: `TypeScript: Restart TS Server`
 - Confirme
 
 **3. Validar compilação:**
+
 ```bash
 cd backend
 npx tsc --noEmit
@@ -80,31 +85,36 @@ npx tsc --noEmit
 ### Problema 2: Erro de CORS ao chamar API
 
 **Sintomas:**
+
 ```
 Access to XMLHttpRequest at 'http://localhost:3101/api/v1/assets' from origin 'http://localhost:3100' has been blocked by CORS policy
 ```
 
 **Causa Raiz:**
+
 - Configuração CORS não permite origem do frontend
 - Backend não está aceitando credenciais
 
 **Solução:**
 
 **1. Verificar configuração CORS em `backend/src/main.ts`:**
+
 ```typescript
 app.enableCors({
-  origin: 'http://localhost:3100',  // URL do frontend
-  credentials: true,                 // Permite cookies/headers
+  origin: "http://localhost:3100", // URL do frontend
+  credentials: true, // Permite cookies/headers
 });
 ```
 
 **2. Verificar variável de ambiente do frontend:**
+
 ```bash
 # frontend/.env.local
 NEXT_PUBLIC_API_URL=http://localhost:3101
 ```
 
 **3. Reiniciar ambos os serviços:**
+
 ```bash
 docker-compose restart backend frontend
 ```
@@ -114,12 +124,14 @@ docker-compose restart backend frontend
 ### Problema 3: TypeORM connection error
 
 **Sintomas:**
+
 ```
 Error: ECONNREFUSED 127.0.0.1:5432
 Connection terminated unexpectedly
 ```
 
 **Causa Raiz:**
+
 - PostgreSQL não está rodando
 - Credenciais incorretas
 - Porta incorreta
@@ -127,11 +139,13 @@ Connection terminated unexpectedly
 **Solução:**
 
 **1. Verificar se PostgreSQL está rodando:**
+
 ```bash
 docker ps | grep postgres
 ```
 
 **2. Verificar configuração de conexão em `backend/.env`:**
+
 ```bash
 DB_HOST=postgres       # Nome do serviço no docker-compose
 DB_PORT=5432           # Porta interna do container
@@ -141,14 +155,53 @@ DB_DATABASE=invest_db
 ```
 
 **3. Testar conexão manualmente:**
+
 ```bash
 docker exec -it invest_postgres psql -U invest_user -d invest_db
 ```
 
 **4. Reiniciar container PostgreSQL:**
+
 ```bash
 docker-compose restart postgres
 ```
+
+---
+
+### Problema 3.1: Timeout Crônico em Assets/SELIC (DEFINITIVO) ✅ RESOLVIDO
+
+**Data da Solução:** 2025-11-25
+**Commit:** `be76c07` (Assets) / `0bb3e8c` (SELIC)
+
+**Sintomas:**
+
+- `GET /assets` demorando > 30s ou timeout (504 Gateway Timeout)
+- `GET /economic-indicators/SELIC` falhando com timeout
+- Dashboard lento ou travando
+
+**Causa Raiz:**
+
+- **Assets:** Query `findAll` carregando histórico de preços completo (milhares de linhas) para cada ativo (N+1 query gigante).
+- **SELIC:** Tentativa de buscar dados desde 1996 a cada request, sem cache ou com cache ineficiente.
+
+**Solução Definitiva:**
+
+1. **Assets (Otimização de Query):**
+
+   - Removido `relations: ['priceHistory']` do `findAll`
+   - Criado endpoint específico para histórico: `GET /assets/:ticker/price-history`
+   - `findAll` agora retorna apenas dados cadastrais + último preço (`currentPrice`)
+   - **Resultado:** Tempo de resposta 30s+ → < 200ms 🚀
+
+2. **SELIC (Retry Logic + Otimização):**
+   - Implementado `RetryService` com backoff exponencial
+   - Reduzido range de busca padrão (apenas dados recentes se histórico já existe)
+   - Melhorado tratamento de erro da API do Banco Central
+
+**Arquivos Modificados:**
+
+- `backend/src/api/assets/assets.service.ts`
+- `backend/src/api/economic-indicators/economic-indicators.service.ts`
 
 ---
 
@@ -157,11 +210,15 @@ docker-compose restart postgres
 ### Problema 4: Frontend não conecta ao backend
 
 **Sintomas:**
+
 ```
+
 Error: Network Error - ERR_CONNECTION_REFUSED
+
 ```
 
 **Causa Raiz:**
+
 - Backend não está rodando
 - URL da API incorreta
 - Porta incorreta
@@ -169,23 +226,27 @@ Error: Network Error - ERR_CONNECTION_REFUSED
 **Solução:**
 
 **1. Verificar se backend está rodando:**
+
 ```bash
 docker ps | grep invest_backend
 ```
 
 **2. Verificar variável de ambiente:**
+
 ```bash
 # frontend/.env.local
 NEXT_PUBLIC_API_URL=http://localhost:3101
 ```
 
 **3. Testar endpoint manualmente:**
+
 ```bash
 curl http://localhost:3101/health
 # Resultado esperado: {"status":"ok"}
 ```
 
 **4. Verificar logs do backend:**
+
 ```bash
 docker logs invest_backend --tail 50
 ```
@@ -195,11 +256,13 @@ docker logs invest_backend --tail 50
 ### Problema 5: Build do Next.js falha
 
 **Sintomas:**
+
 ```
 Type error: Property 'x' does not exist on type 'Y'
 ```
 
 **Causa Raiz:**
+
 - Erro de tipagem TypeScript
 - Import incorreto
 - Componente com props inválidas
@@ -207,25 +270,29 @@ Type error: Property 'x' does not exist on type 'Y'
 **Solução:**
 
 **1. Validar TypeScript:**
+
 ```bash
 cd frontend
 npx tsc --noEmit
 ```
 
 **2. Limpar cache do Next.js:**
+
 ```bash
 rm -rf .next
 npm run build
 ```
 
 **3. Verificar imports:**
+
 - Imports absolutos devem usar `@/` (configurado em `tsconfig.json`)
+
 ```typescript
 // ✅ Correto
-import { api } from '@/lib/api';
+import { api } from "@/lib/api";
 
 // ❌ Incorreto
-import { api } from '../../../lib/api';
+import { api } from "../../../lib/api";
 ```
 
 ---
@@ -233,10 +300,12 @@ import { api } from '../../../lib/api';
 ### Problema 6: Página retorna 404
 
 **Sintomas:**
+
 - Página não encontrada (404)
 - Rota funciona em dev mas não em produção
 
 **Causa Raiz:**
+
 - Arquivo não está no local correto
 - Nome do arquivo/pasta incorreto
 - Dynamic route mal configurada
@@ -244,6 +313,7 @@ import { api } from '../../../lib/api';
 **Solução:**
 
 **1. Verificar estrutura de pastas do App Router:**
+
 ```
 app/
 ├── (dashboard)/          # Route group (não afeta URL)
@@ -256,12 +326,14 @@ app/
 ```
 
 **2. Verificar nome dos arquivos:**
+
 - `page.tsx` → Página renderizável
 - `layout.tsx` → Layout da rota
 - `loading.tsx` → Estado de loading
 - `error.tsx` → Estado de erro
 
 **3. Rebuild e reiniciar:**
+
 ```bash
 npm run build
 docker-compose restart frontend
@@ -274,308 +346,19 @@ docker-compose restart frontend
 ### Problema 7: Scraper retorna dados vazios
 
 **Sintomas:**
-```
+
+````
 ScraperResult { data: {}, confidence: 0.0 }
-```
-
-**Causa Raiz:**
-- Site mudou estrutura HTML
-- Seletores CSS/XPath desatualizados
-- Timeout muito curto
-- OAuth expirado (para scrapers autenticados)
-
-**Solução:**
-
-**1. Verificar se site mudou estrutura:**
-- Acessar site manualmente
-- Inspecionar elementos (F12)
-- Comparar seletores com código do scraper
-
-**2. Rodar scraper manualmente para debug:**
-```bash
-# Via API (preferido)
-curl -X POST http://localhost:3101/api/v1/scrapers/test/fundamentus \
-  -H "Content-Type: application/json" \
-  -d '{"ticker": "PETR4"}'
-
-# Via npm (se disponível)
-cd backend
-npm run test:scraper -- PETR4
-```
-
-**3. Verificar logs do scraper:**
-```bash
-docker logs invest_backend | grep -i "scraper"
-docker logs invest_backend | grep -i "PETR4"
-```
-
-**4. Atualizar seletores CSS/XPath:**
-```typescript
-// Exemplo: fundamentus.scraper.ts
-const price = await this.page.$eval('.price-value', el => el.textContent);
-// Se falhar, inspecionar elemento no site e atualizar seletor
-```
-
-**5. Aumentar timeout (se necessário):**
-```typescript
-// Em scraper específico
-await this.page.goto(url, {
-  waitUntil: 'networkidle2',
-  timeout: 60000  // 60 segundos
-});
-```
-
----
-
-### Problema 8: OAuth scraper não autentica
-
-**Sintomas:**
-```
-Error: Not authenticated - Please complete OAuth login
-```
-
-**Causa Raiz:**
-- Sessão OAuth expirada
-- Cookies não salvos
-- OAuth Manager não executado
-
-**Solução:**
-
-**1. Verificar se OAuth Manager está rodando:**
-```bash
-curl http://localhost:8000/health
-```
-
-**2. Renovar sessões OAuth:**
-- Acessar: http://localhost:3100/oauth-manager
-- Clicar em "Iniciar Renovação de Sessões OAuth"
-- Seguir instruções no VNC viewer (http://localhost:6080)
-
-**3. Verificar cookies salvos:**
-```bash
-# Windows
-dir "data\cookies\"
-
-# Linux/Mac
-ls -la data/cookies/
-```
-
-**4. Logs do OAuth Manager:**
-```bash
-docker logs invest_api_service | grep -i oauth
-```
-
----
-
-### Problema 9: Scraper com taxa de sucesso baixa
-
-**Sintomas:**
-- Taxa de sucesso < 70%
-- Métricas mostram muitas falhas
-
-**Causa Raiz:**
-- Site instável
-- Validação muito restritiva
-- Problemas de rede
-- Outliers no cálculo de métricas
-
-**Solução:**
-
-**1. Analisar métricas no banco:**
-```sql
-SELECT
-  scraper_id,
-  success,
-  response_time,
-  error_message,
-  created_at
-FROM scraper_metrics
-WHERE scraper_id = 'fundamentus'
-ORDER BY created_at DESC
-LIMIT 20;
-```
-
-**2. Relaxar validação (se apropriado):**
-```typescript
-// ANTES - Validação restritiva
-validate(data): boolean {
-  return data.ticker !== '' && data.price > 0;
-}
-
-// DEPOIS - Validação relaxada (aceita dados parciais)
-validate(data): boolean {
-  const filledFields = [
-    data.price > 0,
-    data.pl !== 0,
-    data.pvp !== 0,
-    // ... outros campos
-  ].filter(Boolean).length;
-
-  return data.ticker !== '' && filledFields >= 3;
-}
-```
-
-**3. Filtrar outliers nas métricas:**
-- Ver `FASE_26_MANUTENCAO_SCRAPERS.md` para exemplo completo
-- Implementado em `scraper-metrics.service.ts`
-
----
-
-### Problema 10: OAuth Manager - Timeout em site pesado (ADVFN) ✅ RESOLVIDO
-
-**Data da Solução:** 2025-11-15
-**Commit:** (pendente)
-
-**Sintomas:**
-```
-ADVFN
-29 cookies
-Message: timeout: Timed out receiving message from renderer: 58.938
-Stacktrace: #0 0x563b66686aca <unknown> ...
-```
-
-**Causa Raiz:**
-- Timeout padrão do Selenium: **60s** (muito curto para sites pesados)
-- ADVFN demora **~59s** para carregar (timeout exato: 58.938s)
-- Site tem muitos scripts/assets pesados (JS, CSS, imagens)
-- `wait_time` do ADVFN: 20s (inconsistente com tempo real de carregamento)
-
-**Análise:**
-- Site conseguiu coletar **29 cookies** ANTES do timeout (navegação parcial bem-sucedida)
-- Erro ocorreu em `driver.get(url)` ao aguardar "page load complete"
-- Chrome renderizou página mas demorou > 60s para enviar sinal de "load complete"
-
-**Solução Definitiva:**
-
-**1. Aumentar timeout global para sites pesados:**
-```python
-# oauth_session_manager.py:203-207
-# ANTES:
-self.driver.set_page_load_timeout(60)
-
-# DEPOIS:
-# IMPORTANTE: 120s para sites pesados (ADVFN, etc) que demoram > 60s
-self.driver.set_page_load_timeout(120)
-self.driver.implicitly_wait(5)
-logger.debug(f"[START_CHROME] Timeouts configurados: page_load=120s, implicit_wait=5s")
-```
-
-**2. Tratamento gracioso de timeout (continuar mesmo com erro):**
-```python
-# oauth_session_manager.py:264-283
-# ANTES:
-self.driver.get(site_config["url"])
-nav_elapsed = time.time() - nav_start
-
-# DEPOIS:
-try:
-    self.driver.get(site_config["url"])
-    nav_elapsed = time.time() - nav_start
-    logger.info(f"[NAVIGATE] Página carregada em {nav_elapsed:.2f}s")
-
-    # Verificar se navegação demorou muito
-    if nav_elapsed > 60:
-        logger.warning(f"[NAVIGATE] ⚠️ Navegação MUITO LENTA: {nav_elapsed:.2f}s (> 60s)")
-    elif nav_elapsed > 30:
-        logger.warning(f"[NAVIGATE] ⚠️ Navegação LENTA: {nav_elapsed:.2f}s (> 30s)")
-
-except Exception as nav_error:
-    nav_elapsed = time.time() - nav_start
-    logger.warning(f"[NAVIGATE] ⚠️ Timeout/Erro durante carregamento após {nav_elapsed:.2f}s: {nav_error}")
-    logger.warning(f"[NAVIGATE] ⚠️ Continuando mesmo assim - site pode ter carregado parcialmente")
-    # NÃO lançar exceção - vamos tentar coletar cookies mesmo assim
-```
-
-**3. Aumentar wait_time do ADVFN:**
-```python
-# oauth_sites_config.py:116-117
-# ANTES:
-"wait_time": 20,
-
-# DEPOIS:
-"instructions": "ADVFN pode requerer credenciais próprias. Se não tiver, pode pular. Site pesado pode demorar até 120s.",
-"wait_time": 30,  # Site pesado, pode demorar mais
-```
-
-**Arquivos Modificados:**
-- `backend/python-scrapers/oauth_session_manager.py` (+14 linhas, -5 linhas)
-- `backend/python-scrapers/oauth_sites_config.py` (+1 linha, -1 linha)
-
-**Validação:**
-- ✅ Python syntax: válido (grep verificado)
-- ✅ Serviços reiniciados: api-service + scrapers (ambos healthy)
-- ⏳ Teste real pendente: Aguardando usuário testar ADVFN novamente
-
-**Comportamento Esperado Após Fix:**
-1. **Navegação normal (< 120s):** Página carrega, coleta cookies, segue fluxo normal
-2. **Timeout entre 60-120s:** Warning de lentidão, mas coleta cookies e continua
-3. **Timeout > 120s:** Timeout exception, mas tenta coletar cookies parciais
-
-**Prevenção:**
-- Timeout agora suporta sites que demoram até **2 minutos** para carregar
-- Logs detalhados mostram exatamente onde ocorreu lentidão
-- Fallback gracioso: mesmo com timeout, tenta aproveitar carregamento parcial
-
-**Próximos Passos:**
-1. Testar ADVFN novamente via OAuth Manager (http://localhost:3100/oauth-manager)
-2. Se timeout persistir (> 120s), considerar abordagem alternativa:
-   - Usar `page.goto(url, {waitUntil: 'domcontentloaded'})` (mais rápido, menos confiável)
-   - Implementar retry logic com backoff exponencial
-
----
-
-## 🟡 PROBLEMAS DE DATABASE
-
-### Problema 10: Migration falha
-
-**Sintomas:**
-```
-QueryFailedError: column "change" already exists
-QueryFailedError: relation "users" already exists
-```
-
-**Causa Raiz:**
-- Migration já foi executada
-- Alteração manual no banco
-- Conflito de migrations
-
-**Solução:**
-
-**1. Verificar migrations executadas:**
-```sql
-SELECT * FROM migrations ORDER BY timestamp DESC;
-```
-
-**2. Reverter última migration:**
-```bash
-cd backend
-npm run migration:revert
-```
-
-**3. Corrigir migration e re-executar:**
-```bash
-# Editar arquivo de migration
-npm run migration:run
-```
-
-**4. Em caso de erro persistente, recriar banco (⚠️ DADOS PERDIDOS):**
-```bash
-docker-compose down
-docker volume rm invest_postgres_data
-docker-compose up -d postgres
-npm run migration:run
-```
-
----
-
 ### Problema 11: Dados inconsistentes
 
 **Sintomas:**
+
 - Análises com `confidence_score = 0`
 - Preços com `change_percent = NULL`
 - Relacionamentos quebrados
 
 **Causa Raiz:**
+
 - Scrapers retornando dados ruins
 - Bug na lógica de cross-validation
 - Falha na atualização de preços
@@ -583,12 +366,14 @@ npm run migration:run
 **Solução:**
 
 **1. Executar script de limpeza:**
+
 ```bash
 cd backend
 npm run script:cleanup-analyses
-```
+````
 
 **2. Validar integridade de dados:**
+
 ```sql
 -- Verificar análises sem confiança
 SELECT COUNT(*) FROM analyses WHERE confidence_score = 0;
@@ -603,6 +388,7 @@ WHERE ast.id IS NULL;
 ```
 
 **3. Criar backup antes de correções:**
+
 ```bash
 docker exec invest_postgres pg_dump -U invest_user invest_db > backup.sql
 ```
@@ -612,11 +398,13 @@ docker exec invest_postgres pg_dump -U invest_user invest_db > backup.sql
 ### Problema 12: Performance lenta de queries
 
 **Sintomas:**
+
 - Queries demoram > 5 segundos
 - Dashboard carrega lentamente
 - Timeout em listagens
 
 **Causa Raiz:**
+
 - Falta de indexes
 - Queries N+1
 - Dados históricos sem limit
@@ -624,6 +412,7 @@ docker exec invest_postgres pg_dump -U invest_user invest_db > backup.sql
 **Solução:**
 
 **1. Verificar indexes existentes:**
+
 ```sql
 SELECT
   tablename,
@@ -635,6 +424,7 @@ ORDER BY tablename, indexname;
 ```
 
 **2. Criar indexes faltantes:**
+
 ```sql
 -- Exemplo: Index para query frequente
 CREATE INDEX idx_asset_prices_date ON asset_prices(date);
@@ -642,6 +432,7 @@ CREATE INDEX idx_asset_prices_asset_date ON asset_prices(asset_id, date);
 ```
 
 **3. Analisar query plan:**
+
 ```sql
 EXPLAIN ANALYZE
 SELECT * FROM asset_prices
@@ -651,6 +442,7 @@ LIMIT 1;
 ```
 
 **4. Otimizar queries N+1:**
+
 ```typescript
 // ❌ N+1 Query
 const analyses = await analysisRepo.find();
@@ -660,7 +452,7 @@ for (const analysis of analyses) {
 
 // ✅ Eager Loading
 const analyses = await analysisRepo.find({
-  relations: ['asset']
+  relations: ["asset"],
 });
 ```
 
@@ -671,12 +463,14 @@ const analyses = await analysisRepo.find({
 ### Problema 13: Container não inicia
 
 **Sintomas:**
+
 ```
 Error: Container invest_postgres exited with code 1
 Error: Container invest_backend restarting
 ```
 
 **Causa Raiz:**
+
 - Porta já em uso
 - Volume corrompido
 - Erro de configuração
@@ -685,12 +479,14 @@ Error: Container invest_backend restarting
 **Solução:**
 
 **1. Verificar logs do container:**
+
 ```bash
 docker logs invest_postgres
 docker logs invest_backend --tail 50
 ```
 
 **2. Verificar portas em uso:**
+
 ```bash
 # Windows
 netstat -ano | findstr :3101
@@ -702,11 +498,13 @@ lsof -i :5532
 ```
 
 **3. Verificar volume:**
+
 ```bash
 docker volume inspect invest_postgres_data
 ```
 
 **4. Recriar container (⚠️ DADOS PERDIDOS):**
+
 ```bash
 docker-compose down
 docker volume rm invest_postgres_data
@@ -714,6 +512,7 @@ docker-compose up -d
 ```
 
 **5. Verificar recursos do Docker:**
+
 - Docker Desktop → Settings → Resources
 - Memória mínima: 4GB
 - CPU mínima: 2 cores
@@ -723,12 +522,14 @@ docker-compose up -d
 ### Problema 14: Docker build falha
 
 **Sintomas:**
+
 ```
 ERROR [internal] load metadata for docker.io/library/node:20
 failed to solve: node:20: failed to resolve source metadata
 ```
 
 **Causa Raiz:**
+
 - Sem conexão com internet
 - Registry do Docker inacessível
 - Cache corrompido
@@ -736,21 +537,25 @@ failed to solve: node:20: failed to resolve source metadata
 **Solução:**
 
 **1. Verificar conexão:**
+
 ```bash
 ping docker.io
 ```
 
 **2. Limpar cache do Docker:**
+
 ```bash
 docker system prune -a
 ```
 
 **3. Rebuild sem cache:**
+
 ```bash
 docker-compose build --no-cache
 ```
 
 **4. Especificar registry mirror (se necessário):**
+
 ```json
 // daemon.json (Docker Desktop → Settings → Docker Engine)
 {
@@ -765,12 +570,14 @@ docker-compose build --no-cache
 ### Problema 15: WebSocket não conecta
 
 **Sintomas:**
+
 ```
 WebSocket connection failed
 WebSocket is closed before the connection is established
 ```
 
 **Causa Raiz:**
+
 - URL incorreta
 - Backend não tem Gateway configurado
 - CORS bloqueando conexão
@@ -778,20 +585,23 @@ WebSocket is closed before the connection is established
 **Solução:**
 
 **1. Verificar URL do WebSocket:**
+
 ```typescript
 // frontend/lib/api.ts ou similar
-const socket = io('http://localhost:3101', {
-  transports: ['websocket', 'polling']
+const socket = io("http://localhost:3101", {
+  transports: ["websocket", "polling"],
 });
 ```
 
 **2. Verificar variável de ambiente:**
+
 ```bash
 # frontend/.env.local
 NEXT_PUBLIC_WS_URL=http://localhost:3101
 ```
 
 **3. Verificar Gateway no backend:**
+
 ```typescript
 // backend/src/websocket/websocket.gateway.ts
 @WebSocketGateway({
@@ -803,11 +613,12 @@ NEXT_PUBLIC_WS_URL=http://localhost:3101
 ```
 
 **4. Testar conexão manualmente:**
+
 ```javascript
 // Console do browser (F12)
-const socket = io('http://localhost:3101');
-socket.on('connect', () => console.log('Connected!'));
-socket.on('error', (err) => console.error('Error:', err));
+const socket = io("http://localhost:3101");
+socket.on("connect", () => console.log("Connected!"));
+socket.on("error", (err) => console.error("Error:", err));
 ```
 
 ---
@@ -815,10 +626,12 @@ socket.on('error', (err) => console.error('Error:', err));
 ### Problema 16: WebSocket desconecta frequentemente
 
 **Sintomas:**
+
 - Conexão estabelecida mas cai após alguns segundos
 - Reconnect loops
 
 **Causa Raiz:**
+
 - Timeout muito curto
 - Backend reiniciando
 - Problema de rede
@@ -826,8 +639,9 @@ socket.on('error', (err) => console.error('Error:', err));
 **Solução:**
 
 **1. Aumentar timeout:**
+
 ```typescript
-const socket = io('http://localhost:3101', {
+const socket = io("http://localhost:3101", {
   reconnectionDelay: 1000,
   reconnection: true,
   reconnectionAttempts: 10,
@@ -836,23 +650,25 @@ const socket = io('http://localhost:3101', {
 ```
 
 **2. Implementar ping/pong:**
+
 ```typescript
 // Backend Gateway
 @WebSocketGateway()
 export class WebSocketGateway {
-  @SubscribeMessage('ping')
+  @SubscribeMessage("ping")
   handlePing(): string {
-    return 'pong';
+    return "pong";
   }
 }
 
 // Frontend
 setInterval(() => {
-  socket.emit('ping');
+  socket.emit("ping");
 }, 30000); // Ping a cada 30s
 ```
 
 **3. Verificar estabilidade do backend:**
+
 ```bash
 docker stats invest_backend
 # CPU deve estar < 80%
@@ -864,6 +680,7 @@ docker stats invest_backend
 ### Problema 17: OAuth Manager - DNS resolution quebrada (api-service) ✅ RESOLVIDO
 
 **Sintomas:**
+
 ```
 Frontend: Network Error
 Console: Failed to load resource: net::ERR_EMPTY_RESPONSE
@@ -871,11 +688,13 @@ api-service logs: could not translate host name "postgres" to address: Temporary
 ```
 
 **Causa Raiz:**
+
 - **`docker-compose.yml` (linha 260):** `network_mode: "service:scrapers"`
 - Compartilhamento de stack de rede quebra resolução DNS do Docker
 - api-service não consegue resolver hostnames "postgres" e "redis"
 
 **Diagnóstico:**
+
 ```bash
 # Scrapers consegue resolver:
 $ docker exec invest_scrapers sh -c "getent hosts postgres"
@@ -896,18 +715,19 @@ api-service:
   environment:
     # Database - Using IP because network_mode breaks DNS resolution
     # NOTE: IPs are from invest_network, may change if network is recreated
-    - DB_HOST=172.25.0.2  # ANTES: postgres
+    - DB_HOST=172.25.0.2 # ANTES: postgres
     - DB_PORT=5432
     - DB_USERNAME=invest_user
     - DB_PASSWORD=invest_password
     - DB_DATABASE=invest_db
 
     # Redis - Using IP because network_mode breaks DNS resolution
-    - REDIS_HOST=172.25.0.3  # ANTES: redis
+    - REDIS_HOST=172.25.0.3 # ANTES: redis
     - REDIS_PORT=6379
 ```
 
 **Obter IPs da rede:**
+
 ```bash
 docker network inspect invest-claude-web_invest_network --format='{{range .Containers}}{{.Name}}: {{.IPv4Address}} {{end}}'
 
@@ -919,6 +739,7 @@ docker network inspect invest-claude-web_invest_network --format='{{range .Conta
 ```
 
 **Validação:**
+
 ```bash
 docker-compose restart api-service
 docker-compose logs api-service | grep -E "Database|Redis"
@@ -927,12 +748,14 @@ docker-compose logs api-service | grep -E "Database|Redis"
 ```
 
 **Comportamento Esperado Após Fix:**
+
 - ✅ api-service conecta ao PostgreSQL via IP
 - ✅ api-service conecta ao Redis via IP
 - ✅ Health check HTTP 200 OK
 - ✅ 27 scrapers registered
 
 **Notas Importantes:**
+
 - **IPs são fixos dentro da rede Docker** (mesmo após restart dos containers)
 - **IPs só mudam se a rede for recriada** (`docker-compose down -v`)
 - Se IPs mudarem, atualizar `docker-compose.yml` e reiniciar api-service
@@ -942,18 +765,21 @@ docker-compose logs api-service | grep -E "Database|Redis"
 ### Problema 18: OAuth Manager - Timeout frontend (60s HTTP request) ✅ RESOLVIDO
 
 **Sintomas:**
+
 ```
 Frontend Alert: "timeout of 60000ms exceeded"
 Backend logs: [NAVIGATE] ✓ Navegação concluída em 67.74s
 ```
 
 **Causa Raiz:**
+
 - **Backend timeout**: 120s (Selenium - fix aplicado no commit 8115ce1)
 - **Frontend timeout**: 60s (axios HTTP request)
 - **ADVFN carregamento**: 67.74s
 - **Resultado**: Backend sucesso, mas frontend dá timeout aos 60s
 
 **Timeline do Problema:**
+
 1. Backend inicia navegação ADVFN
 2. Backend carrega página em 64.67s
 3. Backend aguarda 3s → Total: 67.74s
@@ -978,12 +804,14 @@ private getOAuthClient() {
 ```
 
 **Justificativa 150s:**
+
 - Backend timeout Selenium: 120s
 - ADVFN tempo real: ~67s
 - Margem de segurança: +30s
 - **Total**: 150s
 
 **Validação:**
+
 ```bash
 cd frontend && npx tsc --noEmit
 # ✅ 0 erros
@@ -993,6 +821,7 @@ docker-compose restart frontend
 ```
 
 **Comportamento Esperado Após Fix:**
+
 - ✅ Frontend aguarda até 150s
 - ✅ ADVFN (67s) carrega sem timeout
 - ✅ Sites lentos (até 120s) funcionam
@@ -1030,6 +859,7 @@ docker-compose restart frontend
 ### Ferramentas de Debug
 
 **Backend:**
+
 ```bash
 # Logs em tempo real
 docker logs -f invest_backend
@@ -1042,6 +872,7 @@ docker exec invest_backend env
 ```
 
 **Frontend:**
+
 ```bash
 # Logs em tempo real
 docker logs -f invest_frontend
@@ -1052,6 +883,7 @@ npm run dev
 ```
 
 **Database:**
+
 ```bash
 # Acessar psql
 docker exec -it invest_postgres psql -U invest_user -d invest_db

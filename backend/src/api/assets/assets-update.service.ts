@@ -576,6 +576,16 @@ export class AssetsUpdateService {
   }
 
   /**
+   * MÉTODO AUXILIAR: Buscar todos os ativos ativos
+   */
+  async getAllActiveAssets(): Promise<Asset[]> {
+    return this.assetRepository.find({
+      where: { isActive: true },
+      order: { ticker: 'ASC' },
+    });
+  }
+
+  /**
    * MÉTODO AUXILIAR: Sleep para rate limiting
    */
   private sleep(ms: number): Promise<void> {

@@ -234,6 +234,7 @@ services:
       - ./browser-profiles:/app/browser-profiles
       - ./logs:/app/logs
       - ./data:/app/data
+      - x11_socket:/tmp/.X11-unix  # Compartilhar X11 socket com api-service
     depends_on:
       postgres:
         condition: service_healthy
@@ -293,6 +294,7 @@ services:
       - ./backend/api-service:/app
       - ./backend/python-scrapers:/app/python-scrapers
       - ./logs:/app/logs
+      - x11_socket:/tmp/.X11-unix  # Compartilhar X11 socket com scrapers
     depends_on:
       postgres:
         condition: service_healthy
@@ -512,3 +514,5 @@ volumes:
     driver: local
   data:
     driver: local
+  x11_socket:
+    driver: local  # Compartilhar X11 socket entre scrapers e api-service

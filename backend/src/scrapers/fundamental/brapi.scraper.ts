@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 import { ScraperResult } from '../base/base-scraper.interface';
+import { RateLimiterService } from '../rate-limiter.service'; // ✅ FASE 3
 
 export interface BrapiData {
   ticker: string;
@@ -43,8 +44,12 @@ export class BrapiScraper {
   readonly name = 'BRAPI Scraper';
   readonly source = 'brapi';
   readonly requiresLogin = false;
+  readonly baseUrl = 'https://brapi.dev'; // ✅ FASE 3
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private rateLimiter: RateLimiterService, // ✅ FASE 3
+  ) {
     this.apiKey = this.configService.get<string>('BRAPI_API_KEY');
     this.client = axios.create({
       baseURL: 'https://brapi.dev/api',
@@ -57,6 +62,12 @@ export class BrapiScraper {
 
     try {
       this.logger.log(`Scraping ${ticker} from BRAPI`);
+
+      // ✅ FASE 3: Aplicar rate limiting ANTES de API call
+      if (this.rateLimiter && this.baseUrl) {
+        const domain = this.rateLimiter.extractDomain(this.baseUrl);
+        await this.rateLimiter.throttle(domain);
+      }
 
       const response = await this.client.get(`/quote/${ticker}`, {
         params: {

@@ -23,22 +23,22 @@
 
 ### Software Obrigatório
 
-| Software | Versão Mínima | Download |
-|----------|---------------|----------|
-| **Docker** | 24.x | https://docs.docker.com/get-docker/ |
-| **Docker Compose** | 2.x | Incluído no Docker Desktop |
-| **Git** | 2.x | https://git-scm.com/downloads |
-| **Node.js** | 20.x | https://nodejs.org/ (opcional - para dev local) |
-| **Python** | 3.11.x | https://www.python.org/ (opcional - para dev local) |
+| Software           | Versão Mínima | Download                                            |
+| ------------------ | ------------- | --------------------------------------------------- |
+| **Docker**         | 24.x          | https://docs.docker.com/get-docker/                 |
+| **Docker Compose** | 2.x           | Incluído no Docker Desktop                          |
+| **Git**            | 2.x           | https://git-scm.com/downloads                       |
+| **Node.js**        | 20.x          | https://nodejs.org/ (opcional - para dev local)     |
+| **Python**         | 3.11.x        | https://www.python.org/ (opcional - para dev local) |
 
 ### Recursos de Sistema
 
-| Recurso | Mínimo | Recomendado |
-|---------|--------|-------------|
-| **CPU** | 2 cores | 4+ cores |
-| **RAM** | 4 GB | 8+ GB |
-| **Disco** | 10 GB | 20+ GB |
-| **SO** | Windows 10, macOS 10.15, Ubuntu 20.04 | Versões mais recentes |
+| Recurso   | Mínimo                                | Recomendado           |
+| --------- | ------------------------------------- | --------------------- |
+| **CPU**   | 2 cores                               | 4+ cores              |
+| **RAM**   | 4 GB                                  | 8+ GB                 |
+| **Disco** | 10 GB                                 | 20+ GB                |
+| **SO**    | Windows 10, macOS 10.15, Ubuntu 20.04 | Versões mais recentes |
 
 ### Verificar Instalação
 
@@ -97,6 +97,7 @@ cd invest-claude-web
 ```
 
 **Estrutura esperada:**
+
 ```
 invest-claude-web/
 ├── backend/
@@ -121,6 +122,7 @@ nano backend/.env  # ou vim, code, etc.
 ```
 
 **Conteúdo padrão de `backend/.env`:**
+
 ```bash
 # Database
 DB_HOST=postgres
@@ -155,6 +157,7 @@ nano frontend/.env.local
 ```
 
 **Conteúdo padrão de `frontend/.env.local`:**
+
 ```bash
 # API URLs
 NEXT_PUBLIC_API_URL=http://localhost:3101
@@ -190,6 +193,7 @@ docker-compose ps
 ```
 
 **Resultado esperado:**
+
 ```
 NAME                STATUS              PORTS
 invest_backend      Up X seconds        0.0.0.0:3101->3101/tcp
@@ -217,6 +221,7 @@ docker exec -it invest_postgres psql -U invest_user -d invest_db -c "SELECT * FR
 ```
 
 **Resultado esperado:**
+
 ```
 Migration 1762906000000-CreateScraperMetrics has been executed successfully.
 Migration 1762905000000-CreateUpdateLogs has been executed successfully.
@@ -241,17 +246,17 @@ docker exec -it invest_postgres psql -U invest_user -d invest_db -c "SELECT COUN
 
 ### Tabela de Portas
 
-| Serviço | Porta Host | Porta Container | URL de Acesso |
-|---------|-----------|----------------|---------------|
-| **Frontend Next.js** | 3100 | 3000 | http://localhost:3100 |
-| **Backend NestJS** | 3101 | 3101 | http://localhost:3101/api/v1 |
-| **API Service (Python/FastAPI)** | 8000 | 8000 | http://localhost:8000 |
-| **PostgreSQL** | 5532 | 5432 | localhost:5532 |
-| **Redis** | 6479 | 6379 | localhost:6479 |
-| **PgAdmin** | 5150 | 80 | http://localhost:5150 |
-| **Redis Commander** | 8181 | 8081 | http://localhost:8181 |
-| **VNC Direct** | 5900 | 5900 | vnc://localhost:5900 |
-| **noVNC Web** | 6080 | 6080 | http://localhost:6080 |
+| Serviço                          | Porta Host | Porta Container | URL de Acesso                |
+| -------------------------------- | ---------- | --------------- | ---------------------------- |
+| **Frontend Next.js**             | 3100       | 3000            | http://localhost:3100        |
+| **Backend NestJS**               | 3101       | 3101            | http://localhost:3101/api/v1 |
+| **API Service (Python/FastAPI)** | 8000       | 8000            | http://localhost:8000        |
+| **PostgreSQL**                   | 5532       | 5432            | localhost:5532               |
+| **Redis**                        | 6479       | 6379            | localhost:6479               |
+| **PgAdmin**                      | 5150       | 80              | http://localhost:5150        |
+| **Redis Commander**              | 8181       | 8081            | http://localhost:8181        |
+| **VNC Direct**                   | 5900       | 5900            | vnc://localhost:5900         |
+| **noVNC Web**                    | 6080       | 6080            | http://localhost:6080        |
 
 ### Descrição dos Serviços
 
@@ -262,6 +267,7 @@ docker exec -it invest_postgres psql -U invest_user -d invest_db -c "SELECT COUN
 **Acesso:** http://localhost:3100
 
 **Funcionalidades:**
+
 - Dashboard de investimentos
 - Análise de ativos (fundamentalista, técnica, completa)
 - Gestão de portfólio
@@ -278,6 +284,7 @@ docker exec -it invest_postgres psql -U invest_user -d invest_db -c "SELECT COUN
 **Acesso:** http://localhost:3101/api/v1
 
 **Endpoints principais:**
+
 - `GET /health` - Health check
 - `GET /assets` - Listar ativos
 - `POST /analysis/fundamental/:ticker` - Solicitar análise fundamentalista
@@ -295,6 +302,7 @@ docker exec -it invest_postgres psql -U invest_user -d invest_db -c "SELECT COUN
 **Acesso:** http://localhost:8000
 
 **Endpoints:**
+
 - `GET /health` - Health check
 - `POST /oauth/renew` - Renovar sessões OAuth
 - `GET /oauth/status` - Status das sessões
@@ -308,16 +316,19 @@ docker exec -it invest_postgres psql -U invest_user -d invest_db -c "SELECT COUN
 **Acesso:** localhost:5532
 
 **Credenciais padrão:**
+
 - User: `invest_user`
 - Password: `invest_password`
 - Database: `invest_db`
 
 **Conexão via CLI:**
+
 ```bash
 docker exec -it invest_postgres psql -U invest_user -d invest_db
 ```
 
 **Conexão via cliente externo:**
+
 ```
 Host: localhost
 Port: 5532
@@ -335,11 +346,13 @@ Password: invest_password
 **Acesso:** localhost:6479
 
 **Conexão via CLI:**
+
 ```bash
 docker exec -it invest_redis redis-cli
 ```
 
 **Comandos úteis:**
+
 ```bash
 # Listar todas as chaves
 KEYS *
@@ -360,10 +373,12 @@ LRANGE bull:analysis:active 0 -1
 **Acesso:** http://localhost:5150
 
 **Credenciais padrão:**
+
 - Email: `admin@invest.com`
 - Password: `admin`
 
 **Adicionar servidor (primeira vez):**
+
 1. Clique em "Add New Server"
 2. Name: `Invest DB`
 3. Connection:
@@ -383,6 +398,7 @@ LRANGE bull:analysis:active 0 -1
 **Acesso:** http://localhost:8181
 
 **Funcionalidades:**
+
 - Visualizar todas as chaves
 - Inspecionar valores
 - Deletar chaves
@@ -399,6 +415,7 @@ LRANGE bull:analysis:active 0 -1
 **Acesso noVNC Web:** http://localhost:6080
 
 **Uso:**
+
 - Renovação de sessões OAuth (Google login)
 - Debugging de scrapers visuais
 - Verificação de problemas de rendering
@@ -409,30 +426,30 @@ LRANGE bull:analysis:active 0 -1
 
 ### Backend (`backend/.env`)
 
-| Variável | Descrição | Valor Padrão | Obrigatório |
-|----------|-----------|--------------|-------------|
-| `DB_HOST` | Host do PostgreSQL | `postgres` | ✅ |
-| `DB_PORT` | Porta do PostgreSQL | `5432` | ✅ |
-| `DB_USERNAME` | Usuário do PostgreSQL | `invest_user` | ✅ |
-| `DB_PASSWORD` | Senha do PostgreSQL | `invest_password` | ✅ |
-| `DB_DATABASE` | Nome do banco | `invest_db` | ✅ |
-| `REDIS_HOST` | Host do Redis | `redis` | ✅ |
-| `REDIS_PORT` | Porta do Redis | `6379` | ✅ |
-| `JWT_SECRET` | Chave secreta JWT | - | ✅ |
-| `API_PORT` | Porta da API | `3101` | ✅ |
-| `API_PREFIX` | Prefixo da API | `/api/v1` | ✅ |
-| `BRAPI_TOKEN` | Token da BRAPI | - | ⚠️ Opcional* |
+| Variável      | Descrição             | Valor Padrão      | Obrigatório   |
+| ------------- | --------------------- | ----------------- | ------------- |
+| `DB_HOST`     | Host do PostgreSQL    | `postgres`        | ✅            |
+| `DB_PORT`     | Porta do PostgreSQL   | `5432`            | ✅            |
+| `DB_USERNAME` | Usuário do PostgreSQL | `invest_user`     | ✅            |
+| `DB_PASSWORD` | Senha do PostgreSQL   | `invest_password` | ✅            |
+| `DB_DATABASE` | Nome do banco         | `invest_db`       | ✅            |
+| `REDIS_HOST`  | Host do Redis         | `redis`           | ✅            |
+| `REDIS_PORT`  | Porta do Redis        | `6379`            | ✅            |
+| `JWT_SECRET`  | Chave secreta JWT     | -                 | ✅            |
+| `API_PORT`    | Porta da API          | `3101`            | ✅            |
+| `API_PREFIX`  | Prefixo da API        | `/api/v1`         | ✅            |
+| `BRAPI_TOKEN` | Token da BRAPI        | -                 | ⚠️ Opcional\* |
 
-*\*Opcional mas recomendado para scraper BRAPI funcionar (obter em https://brapi.dev)*
+_\*Opcional mas recomendado para scraper BRAPI funcionar (obter em https://brapi.dev)_
 
 ### Frontend (`frontend/.env.local`)
 
-| Variável | Descrição | Valor Padrão | Obrigatório |
-|----------|-----------|--------------|-------------|
-| `NEXT_PUBLIC_API_URL` | URL da API backend | `http://localhost:3101` | ✅ |
-| `NEXT_PUBLIC_WS_URL` | URL do WebSocket | `http://localhost:3101` | ✅ |
-| `NEXTAUTH_URL` | URL do NextAuth | `http://localhost:3100` | ⚠️ Se usar OAuth |
-| `NEXTAUTH_SECRET` | Secret do NextAuth | - | ⚠️ Se usar OAuth |
+| Variável              | Descrição          | Valor Padrão            | Obrigatório      |
+| --------------------- | ------------------ | ----------------------- | ---------------- |
+| `NEXT_PUBLIC_API_URL` | URL da API backend | `http://localhost:3101` | ✅               |
+| `NEXT_PUBLIC_WS_URL`  | URL do WebSocket   | `http://localhost:3101` | ✅               |
+| `NEXTAUTH_URL`        | URL do NextAuth    | `http://localhost:3100` | ⚠️ Se usar OAuth |
+| `NEXTAUTH_SECRET`     | Secret do NextAuth | -                       | ⚠️ Se usar OAuth |
 
 ---
 
@@ -481,6 +498,7 @@ docker exec -it invest_postgres psql -U invest_user -d invest_db
 Abra o navegador em http://localhost:3100
 
 **Resultado esperado:**
+
 - Página de login carrega sem erros
 - Console do browser (F12) sem erros críticos
 - Consegue fazer login (se tiver usuário seed)
@@ -514,12 +532,14 @@ docker exec invest_backend npm run seed
 ```
 
 **📧 Credenciais Padrão:**
+
 - Email: `admin@invest.com`
 - Senha: `Admin@123`
 
 **📚 Documentação Completa:** Ver `TESTING.md` para instruções detalhadas de teste e troubleshooting.
 
 **Verificar se foi criado:**
+
 ```bash
 docker exec invest_postgres psql -U invest_user -d invest_db \
   -c "SELECT email, first_name, last_name, is_active FROM users WHERE email = 'admin@invest.com';"
@@ -635,11 +655,13 @@ docker exec -it invest_redis redis-cli
 ### Porta já em uso
 
 **Erro:**
+
 ```
 Error: bind: address already in use
 ```
 
 **Solução:**
+
 ```bash
 # Windows
 netstat -ano | findstr :3101
@@ -655,6 +677,7 @@ kill -9 <PID>
 ### Container não inicia
 
 **Solução:**
+
 ```bash
 # Ver logs do container
 docker logs invest_backend
@@ -669,6 +692,7 @@ docker-compose up -d --build
 ### Migrations falham
 
 **Solução:**
+
 ```bash
 # Reverter última migration
 docker exec invest_backend npm run migration:revert
@@ -685,3 +709,30 @@ Para mais problemas, consulte **`TROUBLESHOOTING.md`**.
 
 **Última atualização:** 2025-11-14
 **Mantido por:** Claude Code (Sonnet 4.5)
+
+---
+
+## 🛠️ GERENCIAMENTO DO SISTEMA
+
+O projeto inclui um script poderoso `system-manager.ps1` para facilitar a manutenção.
+
+### Comandos Principais
+
+| Comando                               | Descrição                           |
+| ------------------------------------- | ----------------------------------- |
+| `.\system-manager.ps1 start`          | Inicia o sistema (com verificações) |
+| `.\system-manager.ps1 stop`           | Para todos os serviços              |
+| `.\system-manager.ps1 status`         | Mostra status detalhado             |
+| `.\system-manager.ps1 logs [service]` | Mostra logs (ex: `logs backend`)    |
+
+### Comandos de Manutenção (NOVO)
+
+| Comando                                 | Descrição                                   |
+| --------------------------------------- | ------------------------------------------- |
+| `.\system-manager.ps1 backup`           | Cria backup completo do banco em `backups/` |
+| `.\system-manager.ps1 restore`          | Restaura um backup existente                |
+| `.\system-manager.ps1 clean-cache`      | Limpa cache do frontend (seguro)            |
+| `.\system-manager.ps1 rebuild-frontend` | Força rebuild do frontend                   |
+| `.\system-manager.ps1 check-types`      | Verifica erros de TypeScript                |
+| `.\system-manager.ps1 prune`            | Limpeza profunda do Docker                  |
+| `.\system-manager.ps1 start -Verbose`   | Inicia com logs em tempo real               |

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AbstractScraper } from '../base/abstract-scraper';
+import { RateLimiterService } from '../rate-limiter.service'; // ✅ FASE 3
 import * as cheerio from 'cheerio';
 
 export interface StatusInvestData {
@@ -39,6 +40,12 @@ export class StatusInvestScraper extends AbstractScraper<StatusInvestData> {
   readonly name = 'StatusInvest Scraper';
   readonly source = 'statusinvest';
   readonly requiresLogin = false; // Pode funcionar sem login, mas com login tem mais dados
+  readonly baseUrl = 'https://statusinvest.com.br'; // ✅ FASE 3
+
+  constructor(rateLimiter: RateLimiterService) {
+    super();
+    this.rateLimiter = rateLimiter; // ✅ FASE 3
+  }
 
   protected async scrapeData(ticker: string): Promise<StatusInvestData> {
     const url = `https://statusinvest.com.br/acoes/${ticker.toLowerCase()}`;

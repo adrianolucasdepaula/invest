@@ -1,8 +1,18 @@
-const token =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkOTBjNTk5ZC02MmJmLTQxNmQtYTBiNC1iYzI3NTYxZmQ2ZmEiLCJlbWFpbCI6ImFkbWluQGludmVzdC5jb20iLCJpYXQiOjE3NjQwMzM5NzksImV4cCI6MTc2NDYzODc3OX0.lbvd1QU0wH3yj_cVdNuORjdJmFTOgStoI-Rr3mW7y0s";
+const fs = require("fs");
+
+// Check if token.txt exists
+if (!fs.existsSync("token.txt")) {
+  console.error(
+    "Error: token.txt not found. Please run 'node login.js' first."
+  );
+  process.exit(1);
+}
+
+const token = fs.readFileSync("token.txt", "utf8").trim();
 
 async function verifyAssets() {
   try {
+    console.log("Fetching assets...");
     const response = await fetch("http://localhost:3101/api/v1/assets", {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -11,6 +21,9 @@ async function verifyAssets() {
 
     if (!response.ok) {
       console.error("Fetch failed:", response.status);
+      if (response.status === 401) {
+        console.error("Token might be expired. Run 'node login.js' again.");
+      }
       process.exit(1);
     }
 

@@ -233,7 +233,53 @@ export class AssetsUpdateController {
   }
 
   /**
-   * ENDPOINT 7 (BONUS): Atualizar ativo específico por ticker (simplificado)
+   * ENDPOINT 7: Atualizar todos os ativos com dados fundamentalistas (ASYNC)
+   * POST /api/v1/assets/updates/bulk-all
+   */
+  @Post('bulk-all')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({
+    summary: 'Update all assets with fundamental data (asynchronous with WebSocket)',
+    description:
+      'Starts background update of fundamental data for all active assets. Returns HTTP 202 immediately. Monitor progress via WebSocket events (asset_update_started, batch_update_progress, batch_update_completed). Similar to /data-management bulk sync pattern.',
+  })
+  @ApiResponse({
+    status: 202,
+    description: 'Bulk update started in background',
+    schema: {
+      example: {
+        message: 'Atualização iniciada em background para 861 ativos',
+        totalAssets: 861,
+        estimatedMinutes: 28.7,
+        instructions:
+          'Monitore o progresso em tempo real via WebSocket (eventos: batch_update_started, batch_update_progress, batch_update_completed)',
+      },
+    },
+  })
+  async updateAllAssetsFundamentals(@Body('userId') userId?: string) {
+    // 1. Get all active assets
+    const assets = await this.assetsUpdateService.getAllActiveAssets();
+    const tickers = assets.map((asset) => asset.ticker);
+
+    // 2. Start background processing (don't await)
+    this.assetsUpdateService
+      .updateMultipleAssets(tickers, userId, 'manual' as any)
+      .catch((error) => {
+        console.error(`[bulk-all] Background error: ${error.message}`);
+      });
+
+    // 3. Return immediate response (HTTP 202 Accepted)
+    return {
+      message: `Atualização iniciada em background para ${tickers.length} ativos`,
+      totalAssets: tickers.length,
+      estimatedMinutes: Math.round((tickers.length * 2) / 60), // ~2s per asset
+      instructions:
+        'Monitore o progresso em tempo real via WebSocket (eventos: batch_update_started, batch_update_progress, batch_update_completed)',
+    };
+  }
+
+  /**
+   * ENDPOINT 8 (BONUS): Atualizar ativo específico por ticker (simplificado)
    * POST /api/v1/assets/updates/:ticker
    */
   @Post(':ticker')

@@ -101,9 +101,10 @@ class OAuthController:
                     "message": "Nenhuma sessão OAuth ativa"
                 }
 
+            # Usar get_session_status() que inclui chrome_alive
             return {
                 "success": True,
-                "session": manager.current_session.to_dict()
+                "session": manager.get_session_status()
             }
 
         except Exception as e:

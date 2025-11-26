@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AssetTable } from '@/components/dashboard/asset-table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Filter, RefreshCw, TrendingUp, TrendingDown, Layers } from 'lucide-react';
+import { Search, Filter, RefreshCw, TrendingUp, TrendingDown, Layers, Loader2, CheckCircle2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -21,6 +21,8 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { useAssetBulkUpdate } from '@/lib/hooks/useAssetBulkUpdate';
+import { Progress } from '@/components/ui/progress';
 
 type SortBy = 'ticker' | 'day' | 'week' | 'month' | 'year';
 type ViewMode = 'all' | 'sector';
@@ -32,9 +34,31 @@ export default function AssetsPage() {
   const [sortBy, setSortBy] = useState<SortBy>('ticker');
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [showOnlyOptions, setShowOnlyOptions] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [syncingAsset, setSyncingAsset] = useState<string | null>(null);
   const { data: assets, isLoading, error, refetch } = useAssets();
+
+  // WebSocket hook for bulk updates
+  const { state: bulkUpdateState, isConnected } = useAssetBulkUpdate({
+    onUpdateComplete: () => {
+      const successRate = bulkUpdateState.total > 0
+        ? Math.round((bulkUpdateState.successCount / bulkUpdateState.total) * 100)
+        : 0;
+
+      toast({
+        title: 'Atualização concluída!',
+        description: `${bulkUpdateState.successCount}/${bulkUpdateState.total} ativos atualizados (${successRate}% sucesso)${bulkUpdateState.failedCount > 0 ? `. ${bulkUpdateState.failedCount} falharam` : ''}.`,
+      });
+      refetch();
+    },
+    onUpdateStarted: () => {
+      toast({
+        title: 'Atualização iniciada',
+        description: `Atualizando dados fundamentalistas de todos os ativos em background...`,
+      });
+    },
+  });
+
+  console.log('[DEBUG COMPONENT] Assets page rendered! showOnlyOptions:', showOnlyOptions, 'assets:', assets?.length);
 
   // Auto-refresh every hour
   useEffect(() => {
@@ -50,63 +74,14 @@ export default function AssetsPage() {
   }, [refetch]);
 
   const handleSyncAll = async () => {
-    setSyncing(true);
     try {
-      // Step 1: Queue the sync job (returns immediately)
-      const result = await api.syncAllAssets();
-      const { jobId, total } = result;
-
-      toast({
-        title: 'Sincronização iniciada',
-        description: `Job ${jobId}: Sincronizando ${total} ativos em background...`,
-      });
-
-      // Step 2: Poll job status
-      const pollInterval = setInterval(async () => {
-        try {
-          const status = await api.getSyncStatus(jobId);
-
-          // Check if job is complete
-          if (status.status === 'completed') {
-            clearInterval(pollInterval);
-            setSyncing(false);
-            toast({
-              title: 'Sincronização concluída',
-              description: `${status.result?.successCount || 0} ativos atualizados com sucesso!`,
-            });
-            refetch(); // Refresh the assets list
-          } else if (status.status === 'failed') {
-            clearInterval(pollInterval);
-            setSyncing(false);
-            toast({
-              title: 'Erro na sincronização',
-              description: status.failedReason || 'Job failed',
-              variant: 'destructive',
-            });
-          }
-          // If status is 'waiting', 'active', or 'delayed', continue polling
-        } catch (pollError: any) {
-          console.error('Error polling job status:', pollError);
-        }
-      }, 2000); // Poll every 2 seconds
-
-      // Timeout after 5 minutes (safety net)
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        if (syncing) {
-          setSyncing(false);
-          toast({
-            title: 'Timeout',
-            description: 'Sincronização ainda em progresso. Atualize a página para ver os resultados.',
-            variant: 'destructive',
-          });
-        }
-      }, 5 * 60 * 1000); // 5 minutes
+      // Call new endpoint that returns HTTP 202 and uses WebSocket
+      await api.bulkUpdateAllAssetsFundamentals();
+      // Toast will be shown by WebSocket onUpdateStarted callback
     } catch (error: any) {
-      setSyncing(false);
       toast({
-        title: 'Erro ao sincronizar',
-        description: error.message || 'Erro ao iniciar sincronização',
+        title: 'Erro ao iniciar atualização',
+        description: error.message || 'Erro ao iniciar atualização em massa',
         variant: 'destructive',
       });
     }
@@ -153,6 +128,10 @@ export default function AssetsPage() {
   const sortedAndFilteredAssets = useMemo(() => {
     if (!assets) return [];
 
+    console.log('[DEBUG useMemo] showOnlyOptions:', showOnlyOptions);
+    console.log('[DEBUG useMemo] Total assets:', assets.length);
+    console.log('[DEBUG useMemo] Assets with hasOptions=true:', assets.filter((a: any) => a.hasOptions).length);
+
     let filtered = assets.filter(
       (asset: any) =>
         asset.ticker.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -161,7 +140,9 @@ export default function AssetsPage() {
     );
 
     if (showOnlyOptions) {
+      console.log('[DEBUG useMemo] Filtering - before:', filtered.length);
       filtered = filtered.filter((asset: any) => asset.hasOptions);
+      console.log('[DEBUG useMemo] Filtering - after:', filtered.length);
     }
 
     // Sort by selected criteria
@@ -233,11 +214,53 @@ export default function AssetsPage() {
             </p>
           )}
         </div>
-        <Button onClick={handleSyncAll} disabled={syncing} className="gap-2">
-          <RefreshCw className={cn('h-4 w-4', syncing && 'animate-spin')} />
-          {syncing ? 'Sincronizando...' : 'Atualizar Todos'}
+        <Button onClick={handleSyncAll} disabled={bulkUpdateState.isRunning} className="gap-2">
+          {bulkUpdateState.isRunning ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          {bulkUpdateState.isRunning ? 'Atualizando...' : 'Atualizar Todos'}
         </Button>
       </div>
+
+      {/* Progress Bar - Shown during bulk update */}
+      {bulkUpdateState.isRunning && (
+        <Card className="p-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span className="font-medium">
+                  Atualização em andamento
+                </span>
+                {bulkUpdateState.currentTicker && (
+                  <span className="text-muted-foreground">
+                    - {bulkUpdateState.currentTicker}
+                  </span>
+                )}
+              </div>
+              <span className="text-muted-foreground">
+                {bulkUpdateState.current}/{bulkUpdateState.total}
+              </span>
+            </div>
+            <Progress value={bulkUpdateState.progress} className="h-2" />
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{bulkUpdateState.progress}% completo</span>
+              <div className="flex items-center gap-3">
+                <span className="text-green-600">
+                  ✓ {bulkUpdateState.successCount} sucesso
+                </span>
+                {bulkUpdateState.failedCount > 0 && (
+                  <span className="text-destructive">
+                    ✗ {bulkUpdateState.failedCount} falhas
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <Card className="p-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
@@ -256,7 +279,10 @@ export default function AssetsPage() {
             <Checkbox
               id="options-mode"
               checked={showOnlyOptions}
-              onCheckedChange={checked => setShowOnlyOptions(checked as boolean)}
+              onCheckedChange={checked => {
+                console.log('[DEBUG] Checkbox changed:', checked, 'type:', typeof checked);
+                setShowOnlyOptions(checked === true);
+              }}
             />
             <Label htmlFor="options-mode">Com Opções</Label>
           </div>

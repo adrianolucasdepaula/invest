@@ -40,9 +40,21 @@ Print-Success "Arquivo backend/.env encontrado"
 # 2. Ler variáveis do Google OAuth
 Print-Info "Lendo configurações do Google OAuth..."
 $envContent = Get-Content "backend/.env"
-$googleClientId = ($envContent | Select-String "^GOOGLE_CLIENT_ID=" | Select-Object -First 1) -replace "^GOOGLE_CLIENT_ID=", ""
-$googleClientSecret = ($envContent | Select-String "^GOOGLE_CLIENT_SECRET=" | Select-Object -First 1) -replace "^GOOGLE_CLIENT_SECRET=", ""
-$googleCallbackUrl = ($envContent | Select-String "^GOOGLE_CALLBACK_URL=" | Select-Object -First 1) -replace "^GOOGLE_CALLBACK_URL=", ""
+
+# Função auxiliar para extrair valor do .env
+function Get-EnvValue {
+    param([string]$Name, [array]$Content)
+    $match = $Content | Select-String "^$Name\s*=\s*(.*)$"
+    if ($match) {
+        # Remove quotes if present
+        return $match.Matches.Groups[1].Value.Trim().Trim('"').Trim("'")
+    }
+    return $null
+}
+
+$googleClientId = Get-EnvValue -Name "GOOGLE_CLIENT_ID" -Content $envContent
+$googleClientSecret = Get-EnvValue -Name "GOOGLE_CLIENT_SECRET" -Content $envContent
+$googleCallbackUrl = Get-EnvValue -Name "GOOGLE_CALLBACK_URL" -Content $envContent
 
 Write-Host ""
 

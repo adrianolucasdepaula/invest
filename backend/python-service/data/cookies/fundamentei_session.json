@@ -1,0 +1,72 @@
+[
+  {
+    "domain": "fundamentei.com",
+    "httpOnly": false,
+    "name": "_dd_s",
+    "path": "/",
+    "sameSite": "Strict",
+    "secure": false,
+    "value": "logs=1&id=2b4ee1d5-e523-4316-a98f-804a0ffad229&created=1763878722514&expire=1763879786165",
+    "expires": 1763879791
+  },
+  {
+    "domain": ".fundamentei.com",
+    "httpOnly": false,
+    "name": "_ga_23P2YLWQWN",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "GS2.1.s1763878723$o1$g1$t1763878884$j60$l0$h0",
+    "expires": 1798438885
+  },
+  {
+    "domain": ".fundamentei.com",
+    "httpOnly": false,
+    "name": "AdoptConsent",
+    "path": "/",
+    "sameSite": "None",
+    "secure": true,
+    "value": "N4Ig7gpgRgzglgFwgSQCIgFwgGYEYCG+UA7LgEwC0EADAGwQUAs2tAHBfmVPhcQMy5WZWnz4BWVlDEgANCABuceAgD2AJ2QATTCDHVirPsWYURtMU2bUO1bOyJlNrRo00BOA7lkgVABwTIAHYAKvgA5jCYANoAunJ+CADyAK4IoRHRcSAAxiqBMBCBAdpYFABiAF4IAB4Aot4Q8oVpAJ6+EDpgknAAEhUQAHLeufnNAGoQavB5mGRyyb6a+EiaAIIIOmTUZBa4uBRkfMF0GIIYLgB01C4AWiAAvkA===",
+    "expires": 1769062724
+  },
+  {
+    "domain": ".fundamentei.com",
+    "httpOnly": false,
+    "name": "amp_3c6ca9",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "AGjrIsyvrJESp97scEiXbE...1janlqmrd.1janlvkop.2.0.2",
+    "expires": 1795414884
+  },
+  {
+    "domain": ".fundamentei.com",
+    "httpOnly": false,
+    "name": "_ga",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "GA1.1.482919362.1763878724",
+    "expires": 1798438885
+  },
+  {
+    "domain": ".fundamentei.com",
+    "httpOnly": false,
+    "name": "AdoptVisitorId",
+    "path": "/",
+    "sameSite": "None",
+    "secure": true,
+    "value": "KwBg7AHAzGAsBmBaAbFZxGwSRBDE8EeARgEwAmEW5AnJAIxA",
+    "expires": 1769062884
+  },
+  {
+    "domain": ".fundamentei.com",
+    "httpOnly": false,
+    "name": "_fbp",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": false,
+    "value": "fb.1.1763878724025.54099022070444821",
+    "expires": 1771654885
+  }
+]

@@ -8,13 +8,13 @@ import { Injectable, Logger } from '@nestjs/common';
  *
  * Estratégia:
  * - Mantém registro do último request por domínio
- * - Aplica delay mínimo de 5000ms entre requests ao mesmo domínio (FASE 5.1.2)
+ * - Aplica delay mínimo de 10000ms entre requests ao mesmo domínio (FASE 5.6)
  * - Delay por domínio (não global) permite concurrency entre domínios diferentes
  *
  * Exemplo:
  * - Request 1: fundamentus.com.br → executa imediatamente
  * - Request 2: investidor10.com.br → executa imediatamente (domínio diferente)
- * - Request 3: fundamentus.com.br → aguarda 5000ms desde Request 1
+ * - Request 3: fundamentus.com.br → aguarda 10000ms desde Request 1
  */
 @Injectable()
 export class RateLimiterService {
@@ -24,7 +24,7 @@ export class RateLimiterService {
   private lastRequest: Map<string, number> = new Map();
 
   // Delay mínimo entre requests ao mesmo domínio (ms)
-  private readonly MIN_DELAY_MS = 5000; // ✅ FASE 5.1.2: 5000ms (0.2 requests/segundo) - BRAPI free plan limit: 1 req/5s
+  private readonly MIN_DELAY_MS = 10000; // ✅ FASE 5.6: 10000ms (0.1 requests/segundo) - BRAPI free plan conservador: 1 req/10s
 
   /**
    * Aplica throttling para um domínio específico

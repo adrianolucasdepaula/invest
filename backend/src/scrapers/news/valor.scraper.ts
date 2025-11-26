@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AbstractScraper } from '../base/abstract-scraper';
+import { RateLimiterService } from '../rate-limiter.service'; // ✅ FASE 3
 import * as cheerio from 'cheerio';
 
 export interface ValorArticle {
@@ -18,6 +19,12 @@ export class ValorScraper extends AbstractScraper<ValorArticle[]> {
   readonly name = 'Valor Econômico';
   readonly source = 'valor';
   readonly requiresLogin = false;
+  readonly baseUrl = 'https://valor.globo.com'; // ✅ FASE 3
+
+  constructor(rateLimiter: RateLimiterService) {
+    super();
+    this.rateLimiter = rateLimiter; // ✅ FASE 3
+  }
 
   protected async scrapeData(ticker: string): Promise<ValorArticle[]> {
     const startTime = Date.now();
