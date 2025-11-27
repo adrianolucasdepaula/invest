@@ -46,7 +46,7 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
   protected async scrapeData(ticker: string): Promise<FundamentusData> {
     const url = `https://www.fundamentus.com.br/detalhes.php?papel=${ticker.toUpperCase()}`;
 
-    await this.page.goto(url, { waitUntil: 'networkidle2', timeout: this.config.timeout });
+    await this.page.goto(url, { waitUntil: 'networkidle', timeout: this.config.timeout });
 
     const content = await this.page.content();
     const $ = cheerio.load(content);

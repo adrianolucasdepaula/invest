@@ -58,7 +58,7 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
       this.logger.log('Logging in to Opções.net.br');
 
       await this.page.goto('https://opcoes.net.br/login', {
-        waitUntil: 'networkidle2',
+        waitUntil: 'networkidle',
         timeout: this.config.timeout,
       });
 
@@ -76,7 +76,7 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
       await this.page.type('#Password', password);
 
       await Promise.all([
-        this.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }),
+        this.page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }),
         this.page.click('button[type="submit"]'),
       ]);
 
@@ -90,7 +90,7 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
   protected async scrapeData(ticker: string): Promise<OpcoesData> {
     const url = `https://opcoes.net.br/opcoes/bovespa/${ticker.toUpperCase()}`;
 
-    await this.page.goto(url, { waitUntil: 'networkidle2', timeout: this.config.timeout });
+    await this.page.goto(url, { waitUntil: 'networkidle', timeout: this.config.timeout });
 
     // Wait for options table
     await this.page
@@ -203,7 +203,7 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
       const url = 'https://opcoes.net.br/estudos/liquidez/opcoes';
 
       await this.page.goto(url, {
-        waitUntil: 'networkidle2',
+        waitUntil: 'networkidle',
         timeout: this.config.timeout,
       });
 

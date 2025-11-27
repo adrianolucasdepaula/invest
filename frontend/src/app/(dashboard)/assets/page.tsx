@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AssetTable } from '@/components/dashboard/asset-table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Filter, RefreshCw, TrendingUp, TrendingDown, Layers, Loader2, CheckCircle2 } from 'lucide-react';
+import { Search, Filter, RefreshCw, TrendingUp, Layers, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -20,9 +20,9 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
 import { useAssetBulkUpdate } from '@/lib/hooks/useAssetBulkUpdate';
 import { Progress } from '@/components/ui/progress';
+import { AssetUpdateLogsPanel } from '@/components/dashboard/AssetUpdateLogsPanel';
 
 type SortBy = 'ticker' | 'day' | 'week' | 'month' | 'year';
 type ViewMode = 'all' | 'sector';
@@ -38,7 +38,7 @@ export default function AssetsPage() {
   const { data: assets, isLoading, error, refetch } = useAssets();
 
   // WebSocket hook for bulk updates
-  const { state: bulkUpdateState, isConnected } = useAssetBulkUpdate({
+  const { state: bulkUpdateState, isConnected, clearLogs } = useAssetBulkUpdate({
     onUpdateComplete: () => {
       const successRate = bulkUpdateState.total > 0
         ? Math.round((bulkUpdateState.successCount / bulkUpdateState.total) * 100)
@@ -58,8 +58,6 @@ export default function AssetsPage() {
     },
   });
 
-  console.log('[DEBUG COMPONENT] Assets page rendered! showOnlyOptions:', showOnlyOptions, 'assets:', assets?.length);
-
   // Auto-refresh every hour
   useEffect(() => {
     const interval = setInterval(
@@ -75,9 +73,7 @@ export default function AssetsPage() {
 
   const handleSyncAll = async () => {
     try {
-      // Call new endpoint that returns HTTP 202 and uses WebSocket
       await api.bulkUpdateAllAssetsFundamentals();
-      // Toast will be shown by WebSocket onUpdateStarted callback
     } catch (error: any) {
       toast({
         title: 'Erro ao iniciar atualização',
@@ -96,7 +92,6 @@ export default function AssetsPage() {
         description: `${ticker} foi atualizado com sucesso. Preço: R$ ${result.currentPrice?.toFixed(2) || 'N/A'}`,
       });
 
-      // Refresh data after sync
       setTimeout(() => {
         refetch();
       }, 1000);
@@ -111,7 +106,6 @@ export default function AssetsPage() {
     }
   };
 
-  // Get most recent collection timestamp
   const lastCollectedAt = useMemo(() => {
     if (!assets || assets.length === 0) return null;
 
@@ -128,10 +122,6 @@ export default function AssetsPage() {
   const sortedAndFilteredAssets = useMemo(() => {
     if (!assets) return [];
 
-    console.log('[DEBUG useMemo] showOnlyOptions:', showOnlyOptions);
-    console.log('[DEBUG useMemo] Total assets:', assets.length);
-    console.log('[DEBUG useMemo] Assets with hasOptions=true:', assets.filter((a: any) => a.hasOptions).length);
-
     let filtered = assets.filter(
       (asset: any) =>
         asset.ticker.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -140,12 +130,9 @@ export default function AssetsPage() {
     );
 
     if (showOnlyOptions) {
-      console.log('[DEBUG useMemo] Filtering - before:', filtered.length);
       filtered = filtered.filter((asset: any) => asset.hasOptions);
-      console.log('[DEBUG useMemo] Filtering - after:', filtered.length);
     }
 
-    // Sort by selected criteria
     switch (sortBy) {
       case 'day':
         filtered.sort((a: any, b: any) => (b.changePercent || 0) - (a.changePercent || 0));
@@ -153,7 +140,6 @@ export default function AssetsPage() {
       case 'week':
       case 'month':
       case 'year':
-        // TODO: Implement historical sorting when data is available
         filtered.sort((a: any, b: any) => (b.changePercent || 0) - (a.changePercent || 0));
         break;
       case 'ticker':
@@ -176,7 +162,6 @@ export default function AssetsPage() {
       return acc;
     }, {});
 
-    // Sort each sector's assets
     Object.keys(grouped).forEach(sector => {
       grouped[sector].sort((a: any, b: any) => {
         switch (sortBy) {
@@ -224,20 +209,15 @@ export default function AssetsPage() {
         </Button>
       </div>
 
-      {/* Progress Bar - Shown during bulk update */}
       {bulkUpdateState.isRunning && (
         <Card className="p-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                <span className="font-medium">
-                  Atualização em andamento
-                </span>
+                <span className="font-medium">Atualização em andamento</span>
                 {bulkUpdateState.currentTicker && (
-                  <span className="text-muted-foreground">
-                    - {bulkUpdateState.currentTicker}
-                  </span>
+                  <span className="text-muted-foreground">- {bulkUpdateState.currentTicker}</span>
                 )}
               </div>
               <span className="text-muted-foreground">
@@ -248,13 +228,9 @@ export default function AssetsPage() {
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{bulkUpdateState.progress}% completo</span>
               <div className="flex items-center gap-3">
-                <span className="text-green-600">
-                  ✓ {bulkUpdateState.successCount} sucesso
-                </span>
+                <span className="text-green-600">✓ {bulkUpdateState.successCount} sucesso</span>
                 {bulkUpdateState.failedCount > 0 && (
-                  <span className="text-destructive">
-                    ✗ {bulkUpdateState.failedCount} falhas
-                  </span>
+                  <span className="text-destructive">✗ {bulkUpdateState.failedCount} falhas</span>
                 )}
               </div>
             </div>
@@ -279,10 +255,7 @@ export default function AssetsPage() {
             <Checkbox
               id="options-mode"
               checked={showOnlyOptions}
-              onCheckedChange={checked => {
-                console.log('[DEBUG] Checkbox changed:', checked, 'type:', typeof checked);
-                setShowOnlyOptions(checked === true);
-              }}
+              onCheckedChange={checked => setShowOnlyOptions(checked === true)}
             />
             <Label htmlFor="options-mode">Com Opções</Label>
           </div>
@@ -417,6 +390,16 @@ export default function AssetsPage() {
             onSyncAsset={handleSyncAsset}
           />
         </Card>
+      )}
+
+      {(bulkUpdateState.logs.length > 0 || bulkUpdateState.isRunning) && (
+        <AssetUpdateLogsPanel
+          logs={bulkUpdateState.logs}
+          onClearLogs={clearLogs}
+          isRunning={bulkUpdateState.isRunning}
+          maxHeight={300}
+          autoScroll
+        />
       )}
     </div>
   );

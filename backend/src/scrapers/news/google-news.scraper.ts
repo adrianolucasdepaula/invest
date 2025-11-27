@@ -36,7 +36,7 @@ export class GoogleNewsScraper extends AbstractScraper<NewsArticle[]> {
       const url = `https://news.google.com/search?q=${encodeURIComponent(searchQuery)}&hl=pt-BR&gl=BR&ceid=BR:pt-419`;
 
       await this.page.goto(url, {
-        waitUntil: 'networkidle2',
+        waitUntil: 'networkidle',
         timeout: 30000,
       });
 

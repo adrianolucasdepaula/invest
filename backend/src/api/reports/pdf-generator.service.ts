@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Analysis, Asset, AssetPrice } from '@database/entities';
-import * as puppeteer from 'puppeteer';
+import { chromium } from 'playwright';
 import * as handlebars from 'handlebars';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -196,16 +196,14 @@ export class PdfGeneratorService {
       // Renderizar HTML
       const html = template(reportData);
 
-      // Gerar PDF com Puppeteer
-      const browser = await puppeteer.launch({
+      // Gerar PDF com Playwright
+      const browser = await chromium.launch({
         headless: true,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
           '--disable-gpu',
         ],
       });
@@ -214,7 +212,7 @@ export class PdfGeneratorService {
 
       // Configurar conteúdo HTML
       await page.setContent(html, {
-        waitUntil: 'networkidle0',
+        waitUntil: 'networkidle',
       });
 
       // Gerar PDF

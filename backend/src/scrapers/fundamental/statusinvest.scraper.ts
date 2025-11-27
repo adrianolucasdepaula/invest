@@ -50,7 +50,7 @@ export class StatusInvestScraper extends AbstractScraper<StatusInvestData> {
   protected async scrapeData(ticker: string): Promise<StatusInvestData> {
     const url = `https://statusinvest.com.br/acoes/${ticker.toLowerCase()}`;
 
-    await this.page.goto(url, { waitUntil: 'networkidle2', timeout: this.config.timeout });
+    await this.page.goto(url, { waitUntil: 'networkidle', timeout: this.config.timeout });
 
     // Wait for main content to load
     await this.page.waitForSelector('.top-info', { timeout: 10000 }).catch(() => {

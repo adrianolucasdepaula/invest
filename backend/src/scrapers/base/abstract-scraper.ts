@@ -1,12 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { BaseScraper, ScraperConfig, ScraperResult } from './base-scraper.interface';
-import puppeteer, { Browser, Page } from 'puppeteer';
-import * as puppeteerExtra from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import { chromium, Browser, Page } from 'playwright';
 import { RateLimiterService } from '../rate-limiter.service'; // ✅ FASE 3
-
-// Use stealth plugin to avoid detection
-puppeteerExtra.default.use(StealthPlugin());
 
 export abstract class AbstractScraper<T = any> implements BaseScraper<T> {
   protected readonly logger: Logger;
@@ -61,23 +56,28 @@ export abstract class AbstractScraper<T = any> implements BaseScraper<T> {
     try {
       this.logger.log(`[INIT QUEUE] Initializing scraper: ${this.name}`);
 
-      this.browser = await puppeteerExtra.default.launch({
+      // Use system Chromium if env variable is set (for Alpine Linux)
+      const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+
+      this.browser = await chromium.launch({
         headless: this.config.headless,
-        protocolTimeout: 180000, // ✅ FASE 5.5: Aumentado de 90s para 180s (3min) - prevenir ERR_ABORTED
+        timeout: 180000, // ✅ FASE 5.5: Aumentado de 90s para 180s (3min) - prevenir ERR_ABORTED
+        executablePath: executablePath || undefined, // Use system Chromium if available
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-accelerated-2d-canvas',
           '--disable-gpu',
-          '--window-size=1920x1080',
         ],
       });
 
       this.page = await this.browser.newPage();
-      await this.page.setUserAgent(this.config.userAgent);
-      await this.page.setViewport({ width: 1920, height: 1080 });
-      this.page.setDefaultNavigationTimeout(180000); // ✅ FASE 5.5: Aumentado de 90s para 180s (3min)
+      await this.page.setViewportSize({ width: 1920, height: 1080 });
+      await this.page.setExtraHTTPHeaders({
+        'User-Agent': this.config.userAgent,
+      });
+      this.page.setDefaultTimeout(180000); // ✅ FASE 5.5: Aumentado de 90s para 180s (3min)
 
       if (this.requiresLogin) {
         await this.login();
@@ -86,7 +86,7 @@ export abstract class AbstractScraper<T = any> implements BaseScraper<T> {
       this.logger.log(`[INIT QUEUE] ✅ Scraper initialized: ${this.name}`);
 
       // ✅ FASE 4: Gap de 2s antes de liberar próximo browser
-      // Evita sobrecarga CDP permitindo operações assíncronas do stealth plugin finalizarem
+      // Evita sobrecarga permitindo operações assíncronas finalizarem
       await this.wait(2000);
     } catch (error) {
       this.logger.error(`[INIT QUEUE] ❌ Failed to initialize scraper: ${error.message}`);

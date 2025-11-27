@@ -39,7 +39,7 @@ export class InvestsiteScraper extends AbstractScraper<InvestsiteData> {
 
     try {
       // Navegar para a página do ativo
-      await this.page.goto(url, { waitUntil: 'networkidle2', timeout: this.config.timeout });
+      await this.page.goto(url, { waitUntil: 'networkidle', timeout: this.config.timeout });
 
       // Aguardar conteúdo carregar
       await this.page

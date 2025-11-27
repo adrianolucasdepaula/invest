@@ -36,7 +36,7 @@ export class ValorScraper extends AbstractScraper<ValorArticle[]> {
       const searchUrl = `https://valor.globo.com/busca/?q=${encodeURIComponent(ticker)}`;
 
       await this.page.goto(searchUrl, {
-        waitUntil: 'networkidle2',
+        waitUntil: 'networkidle',
         timeout: 30000,
       });
 

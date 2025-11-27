@@ -52,9 +52,10 @@ export class AssetUpdateProcessor {
 
   constructor(private readonly assetsUpdateService: AssetsUpdateService) {}
 
-  // ✅ FIX: Reduced concurrency from 10 → 3 to prevent scraper overload (FASE 1 - WORKAROUND)
-  // TODO: Implement rate limiting per scraper (FASE 3 - DEFINITIVE)
-  @Process({ name: 'update-single-asset', concurrency: 3 })
+  // ✅ FIX: Reduced concurrency from 10 → 1 to prevent Puppeteer timeout (FASE 1.1 - CRITICAL)
+  // Each job spawns 6 parallel scrapers, so concurrency=1 means max 6 browser operations
+  // TODO: Implement sequential scraper execution (FASE 3 - DEFINITIVE)
+  @Process({ name: 'update-single-asset', concurrency: 1 })
   async handleSingleAsset(job: Job<SingleAssetUpdateJob>) {
     this.logger.log(`[JOB ${job.id}] Processing single asset update: ${job.data.ticker}`);
 

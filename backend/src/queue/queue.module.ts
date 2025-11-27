@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bull';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScrapersModule } from '../scrapers/scrapers.module';
 import { AssetsModule } from '../api/assets/assets.module';
+import { WebSocketModule } from '../websocket/websocket.module';
 import { ScrapingProcessor } from './processors/scraping.processor';
 import { AssetUpdateProcessor } from './processors/asset-update.processor';
 import { ScheduledJobsService } from './jobs/scheduled-jobs.service';
@@ -34,6 +35,7 @@ import { ScrapedData } from '../database/entities/scraped-data.entity';
     ),
     TypeOrmModule.forFeature([Asset, FundamentalData, AssetPrice, DataSource, ScrapedData]),
     ScrapersModule,
+    WebSocketModule, // ✅ FIX: Import WebSocketModule to make AppWebSocketGateway available for dependency injection
     forwardRef(() => AssetsModule),
   ],
   providers: [

@@ -31,13 +31,7 @@ export class AssetUpdateJobsService implements OnModuleInit {
     const jobCounts = await this.assetUpdatesQueue.getJobCounts();
     this.logger.log(`Asset Updates Queue initialized: ${JSON.stringify(jobCounts)}`);
 
-    if (this.isProductionOrStaging) {
-      this.logger.log('🔄 Cron jobs ENABLED (production/staging environment)');
-    } else {
-      this.logger.warn(
-        '⚠️ Cron jobs DISABLED (development environment - enable manually if needed)',
-      );
-    }
+    this.logger.log('🔄 Cron jobs ENABLED');
   }
 
   // ============================================================================
@@ -50,11 +44,6 @@ export class AssetUpdateJobsService implements OnModuleInit {
     timeZone: 'America/Sao_Paulo',
   })
   async scheduleDailyOutdatedUpdate() {
-    if (!this.isProductionOrStaging) {
-      this.logger.debug('⏭️ Skipping daily update (not in production/staging)');
-      return;
-    }
-
     this.logger.log('📅 Scheduling daily outdated assets update...');
 
     await this.assetUpdatesQueue.add(
@@ -84,11 +73,6 @@ export class AssetUpdateJobsService implements OnModuleInit {
     timeZone: 'America/Sao_Paulo',
   })
   async scheduleRetryFailed() {
-    if (!this.isProductionOrStaging) {
-      this.logger.debug('⏭️ Skipping retry (not in production/staging)');
-      return;
-    }
-
     this.logger.log('🔁 Scheduling retry for failed assets...');
 
     await this.assetUpdatesQueue.add(
@@ -158,11 +142,20 @@ export class AssetUpdateJobsService implements OnModuleInit {
   ) {
     this.logger.log(`Queueing ${tickers.length} individual asset update jobs (parallelizable)`);
 
+    // DEBUG: Check if WebSocketGateway is injected
+    this.logger.debug(`[DEBUG] WebSocketGateway instance: ${this.webSocketGateway ? 'INJECTED' : 'UNDEFINED'}`);
+
     // Emit batch started event
-    this.webSocketGateway.emitBatchUpdateStarted({
-      totalAssets: tickers.length,
-      tickers,
-    });
+    try {
+      this.logger.debug(`[DEBUG] Calling emitBatchUpdateStarted with ${tickers.length} assets...`);
+      this.webSocketGateway.emitBatchUpdateStarted({
+        totalAssets: tickers.length,
+        tickers,
+      });
+      this.logger.debug(`[DEBUG] emitBatchUpdateStarted completed successfully`);
+    } catch (error) {
+      this.logger.error(`[ERROR] Failed to emit batch started event: ${error.message}`, error.stack);
+    }
 
     // ✅ Create individual job for each asset (allows BullMQ concurrency)
     const jobPromises = tickers.map((ticker) =>
@@ -192,8 +185,9 @@ export class AssetUpdateJobsService implements OnModuleInit {
     this.logger.log(`✅ Queued ${jobs.length} individual jobs: ${jobIds[0]} to ${jobIds[jobIds.length - 1]}`);
 
     // Monitor job completion in background and emit batch completed event
+    this.logger.debug(`[DEBUG] Starting monitorBatchCompletion for ${jobIds.length} jobs...`);
     this.monitorBatchCompletion(jobIds, tickers.length).catch((error) => {
-      this.logger.error(`Error monitoring batch completion: ${error.message}`);
+      this.logger.error(`[ERROR] Error monitoring batch completion: ${error.message}`, error.stack);
     });
 
     // Return first job ID for tracking (frontend can poll this)
@@ -205,6 +199,7 @@ export class AssetUpdateJobsService implements OnModuleInit {
    * Runs in background, checks periodically for job completion
    */
   private async monitorBatchCompletion(jobIds: any[], totalAssets: number) {
+    this.logger.log(`[MONITOR] Starting batch monitoring for ${totalAssets} assets (${jobIds.length} jobs)`);
     const startTime = Date.now();
     const checkInterval = 5000; // Check every 5 seconds
     let completed = 0;
@@ -212,6 +207,7 @@ export class AssetUpdateJobsService implements OnModuleInit {
     let lastProgress = 0;
 
     const checkJobs = async () => {
+      this.logger.debug(`[MONITOR] Checking job status (iteration)...`);
       const jobs = await Promise.all(
         jobIds.map((id) => this.assetUpdatesQueue.getJob(id)),
       );
@@ -241,11 +237,16 @@ export class AssetUpdateJobsService implements OnModuleInit {
         const activeJob = jobs.find(async (j) => j && (await j.getState()) === 'active');
         const currentTicker = activeJob ? (activeJob.data as any).ticker : '';
 
-        this.webSocketGateway.emitBatchUpdateProgress({
-          current: currentProgress,
-          total: totalAssets,
-          currentTicker,
-        });
+        this.logger.debug(`[MONITOR] Emitting progress: ${currentProgress}/${totalAssets} (${progressPercent}%)`);
+        try {
+          this.webSocketGateway.emitBatchUpdateProgress({
+            current: currentProgress,
+            total: totalAssets,
+            currentTicker,
+          });
+        } catch (error) {
+          this.logger.error(`[ERROR] Failed to emit progress: ${error.message}`);
+        }
 
         lastProgress = progressPercent;
       }
@@ -254,12 +255,18 @@ export class AssetUpdateJobsService implements OnModuleInit {
       if (currentProgress >= totalAssets) {
         const duration = Date.now() - startTime;
 
-        this.webSocketGateway.emitBatchUpdateCompleted({
-          totalAssets,
-          successCount: completed,
-          failedCount: failed,
-          duration,
-        });
+        this.logger.log(`[MONITOR] All jobs complete! Emitting completion event...`);
+        try {
+          this.webSocketGateway.emitBatchUpdateCompleted({
+            totalAssets,
+            successCount: completed,
+            failedCount: failed,
+            duration,
+          });
+          this.logger.debug(`[MONITOR] Completion event emitted successfully`);
+        } catch (error) {
+          this.logger.error(`[ERROR] Failed to emit completion: ${error.message}`);
+        }
 
         this.logger.log(
           `✅ Batch monitoring complete: ${completed}/${totalAssets} successful, ${failed} failed (${duration}ms)`,

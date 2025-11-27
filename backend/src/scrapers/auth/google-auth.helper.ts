@@ -1,4 +1,4 @@
-import { Page } from 'puppeteer';
+import { Page } from 'playwright';
 import { Logger } from '@nestjs/common';
 
 export class GoogleAuthHelper {
@@ -50,7 +50,7 @@ export class GoogleAuthHelper {
       }
 
       // Wait for Google login page
-      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {});
+      await page.waitForNavigation({ waitUntil: 'networkidle', timeout: 10000 }).catch(() => {});
 
       // Wait for email input
       await page.waitForSelector('input[type="email"]', { timeout: 10000 });
@@ -74,7 +74,7 @@ export class GoogleAuthHelper {
       await this.clickNextButton(page);
 
       // Wait for navigation after login
-      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {
+      await page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {
         this.logger.warn('Navigation timeout after login');
       });
 
@@ -133,7 +133,7 @@ export class GoogleAuthHelper {
         // Wait for manual 2FA completion (up to 2 minutes)
         await page
           .waitForNavigation({
-            waitUntil: 'networkidle2',
+            waitUntil: 'networkidle',
             timeout: 120000,
           })
           .catch(() => {
@@ -189,7 +189,7 @@ export class GoogleAuthHelper {
    */
   static async saveSession(page: Page, filePath: string): Promise<void> {
     try {
-      const cookies = await page.cookies();
+      const cookies = await page.context().cookies();
       const fs = require('fs');
       fs.writeFileSync(filePath, JSON.stringify(cookies, null, 2));
       this.logger.log(`Session saved to ${filePath}`);
@@ -210,7 +210,7 @@ export class GoogleAuthHelper {
 
       const cookiesString = fs.readFileSync(filePath, 'utf8');
       const cookies = JSON.parse(cookiesString);
-      await page.setCookie(...cookies);
+      await page.context().addCookies(cookies);
       this.logger.log(`Session loaded from ${filePath}`);
       return true;
     } catch (error) {

@@ -70,7 +70,7 @@ export class Investidor10Scraper extends AbstractScraper<Investidor10Data> {
   protected async scrapeData(ticker: string): Promise<Investidor10Data> {
     const url = `https://investidor10.com.br/acoes/${ticker.toLowerCase()}/`;
 
-    await this.page.goto(url, { waitUntil: 'networkidle2', timeout: this.config.timeout });
+    await this.page.goto(url, { waitUntil: 'networkidle', timeout: this.config.timeout });
 
     // Wait for main content
     await this.page.waitForSelector('._card', { timeout: 10000 }).catch(() => {});

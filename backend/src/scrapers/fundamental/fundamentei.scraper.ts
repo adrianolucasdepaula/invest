@@ -55,7 +55,7 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
       }
 
       // Navegar para a página do ativo
-      await this.page.goto(url, { waitUntil: 'networkidle2', timeout: this.config.timeout });
+      await this.page.goto(url, { waitUntil: 'networkidle', timeout: this.config.timeout });
 
       // Verificar se está logado (se não redirecionar para login)
       const currentUrl = this.page.url();
@@ -225,7 +225,7 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
 
         // Verificar se a sessão ainda é válida navegando para a home
         await this.page.goto('https://fundamentei.com/', {
-          waitUntil: 'networkidle2',
+          waitUntil: 'networkidle',
           timeout: 15000,
         });
 

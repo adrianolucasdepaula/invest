@@ -38,22 +38,43 @@ export class ScrapersService {
 
   /**
    * Scrape fundamental data from multiple sources and cross-validate
+   * ✅ FIX: Sequential execution to prevent Puppeteer timeout (FASE 6 - CRITICAL)
+   * Running scrapers sequentially prevents resource exhaustion
    */
   async scrapeFundamentalData(ticker: string): Promise<CrossValidationResult> {
-    this.logger.log(`Scraping fundamental data for ${ticker} from multiple sources`);
+    this.logger.log(`Scraping fundamental data for ${ticker} from multiple sources (sequential)`);
 
-    const results = await Promise.allSettled([
-      this.fundamentusScraper.scrape(ticker),
-      this.brapiScraper.scrape(ticker),
-      this.statusInvestScraper.scrape(ticker),
-      this.investidor10Scraper.scrape(ticker),
-      this.fundamenteiScraper.scrape(ticker),
-      this.investsiteScraper.scrape(ticker),
-    ]);
+    const scrapers = [
+      { name: 'fundamentus', scraper: this.fundamentusScraper },
+      { name: 'brapi', scraper: this.brapiScraper },
+      { name: 'statusinvest', scraper: this.statusInvestScraper },
+      { name: 'investidor10', scraper: this.investidor10Scraper },
+      { name: 'fundamentei', scraper: this.fundamenteiScraper },
+      { name: 'investsite', scraper: this.investsiteScraper },
+    ];
 
-    const successfulResults = results
-      .filter((result) => result.status === 'fulfilled' && result.value.success)
-      .map((result: any) => result.value as ScraperResult);
+    const successfulResults: ScraperResult[] = [];
+
+    // ✅ Run scrapers SEQUENTIALLY to prevent Puppeteer overload
+    for (const { name, scraper } of scrapers) {
+      try {
+        const result = await scraper.scrape(ticker);
+        if (result.success) {
+          successfulResults.push(result);
+          this.logger.debug(`[${ticker}] ${name}: SUCCESS`);
+        } else {
+          this.logger.debug(`[${ticker}] ${name}: FAILED (no data)`);
+        }
+      } catch (error) {
+        this.logger.debug(`[${ticker}] ${name}: ERROR - ${error.message}`);
+      }
+
+      // ✅ Early exit: Stop if we have enough sources (optimization)
+      if (successfulResults.length >= this.minSources) {
+        this.logger.debug(`[${ticker}] Got ${successfulResults.length} sources, stopping early`);
+        break;
+      }
+    }
 
     if (successfulResults.length < this.minSources) {
       this.logger.warn(

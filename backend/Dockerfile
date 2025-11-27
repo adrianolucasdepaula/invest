@@ -1,6 +1,6 @@
 FROM node:20-alpine AS base
 
-# Install dependencies for Puppeteer and curl for healthcheck
+# Install dependencies for Playwright/Chromium and curl for healthcheck
 RUN apk add --no-cache \
     chromium \
     nss \
@@ -10,9 +10,9 @@ RUN apk add --no-cache \
     ttf-freefont \
     curl
 
-# Tell Puppeteer to skip installing Chrome. We'll be using the installed package.
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+# Configure Playwright to use system Chromium instead of downloading its own
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Development stage
 FROM base AS development

@@ -139,10 +139,360 @@ export class IsEndYearGreaterThanStartYear implements ValidatorConstraintInterfa
 | PgAdmin | 5150 | http://localhost:5150 |
 | noVNC (OAuth) | 6080 | http://localhost:6080 |
 
+## Development Principles
+
+### 1. Quality > Velocity ("Não Ter Pressa")
+
+**Princípio Fundamental:** Priorizar correção definitiva sobre fix rápido.
+
+- ✅ Tempo adequado para análise profunda (Ultra-Thinking)
+- ✅ Não pular etapas de validação
+- ✅ Code review obrigatório antes de próxima fase
+- ❌ Pressão por deadlines NÃO justifica baixa qualidade
+- ❌ NUNCA fazer workarounds temporários que se tornam permanentes
+
+**Referência:** `VALIDACAO_REGRAS_DOCUMENTACAO_2025-11-27.md` - Regra 1.6
+
+---
+
+### 2. KISS Principle (Keep It Simple, Stupid)
+
+**Evitar complexidade desnecessária:**
+
+- ✅ Usar melhores práticas comprovadas e modernas
+- ✅ Soluções simples e diretas quando possível
+- ✅ Código legível > Código "inteligente"
+- ❌ Over-engineering
+- ❌ Abstrações prematuras
+
+**Nota:** "Moderno e funcional" ≠ "Complexo". Simplicidade é sofisticação.
+
+---
+
+### 3. Root Cause Analysis Obrigatório
+
+**Para TODOS os bugs e problemas:**
+
+- ✅ Identificar causa raiz (não apenas sintoma)
+- ✅ Corrigir problema original (não workaround)
+- ✅ Documentar em `KNOWN-ISSUES.md` ou `.gemini/context/known-issues.md`
+- ✅ Implementar prevenção (não apenas correção)
+- ❌ NUNCA simplificar para "terminar rápido"
+
+**Exemplo:**
+```
+❌ ERRADO: Adicionar try-catch para suprimir erro
+✅ CORRETO: Investigar por que erro ocorre e corrigir causa
+```
+
+**Referência:** `.gemini/context/known-issues.md` - 8 issues com root cause completo
+
+---
+
+### 4. Anti-Workaround Policy
+
+**Regra Explícita:**
+
+- ❌ Workarounds temporários que se tornam permanentes
+- ❌ "Resolver depois" sem issue/TODO rastreável
+- ❌ Comentários tipo `// FIXME`, `// HACK` sem plano de correção
+- ✅ Se problema é crítico → corrigir agora
+- ✅ Se não é crítico → criar issue rastreável com prioridade
+
+**Fluxo Correto:**
+
+```
+Problema Encontrado
+    ↓
+É bloqueante?
+    ├─ SIM → Corrigir AGORA (root cause analysis)
+    └─ NÃO → Criar issue no KNOWN-ISSUES.md + continuar
+```
+
+---
+
+## Critical Rules (Regras Críticas)
+
+### Zero Tolerance Policy
+
+**0 erros obrigatório em:**
+
+- TypeScript: `npx tsc --noEmit` (backend + frontend)
+- Build: `npm run build` (backend + frontend)
+- Console: Navegador sem erros (validar com Chrome DevTools MCP)
+- ESLint: 0 critical warnings
+
+**Antes de CADA commit:**
+
+```bash
+# Backend
+cd backend
+npx tsc --noEmit  # Deve retornar 0 erros
+npm run build     # Deve completar sem erros
+
+# Frontend
+cd frontend
+npx tsc --noEmit  # Deve retornar 0 erros
+npm run build     # Deve completar sem erros
+npm run lint      # 0 critical warnings
+```
+
+---
+
+### Git Workflow
+
+**Regras Obrigatórias:**
+
+- ✅ Git sempre atualizado (working tree clean antes de nova fase)
+- ✅ Branch sempre atualizada e mergeada com main
+- ✅ Commits frequentes com mensagens descritivas (Conventional Commits)
+- ✅ Documentação atualizada no mesmo commit (não separado)
+- ❌ NUNCA commitar código que não compila
+- ❌ NUNCA commitar com erros TypeScript
+
+**Commit Message Format:**
+
+```bash
+git commit -m "feat: add new feature X
+
+✅ Zero Tolerance validado
+✅ Documentação atualizada
+
+🤖 Generated with Claude Code (https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
+**Referência:** `CONTRIBUTING.md` - Git workflow completo
+
+---
+
+### Validação Completa e Robusta
+
+**Para TODA nova funcionalidade:**
+
+- ✅ **MCP Triplo Obrigatório:**
+  1. Playwright (E2E testing)
+  2. Chrome DevTools (snapshot + console + network)
+  3. React DevTools (component tree + state)
+
+- ✅ **Ultra-Thinking + TodoWrite:** Planejamento antes de execução
+- ✅ **Screenshots de Evidência:** Salvar em `docs/screenshots/`
+- ✅ **Relatório de Validação:** Criar `VALIDACAO_FASE_XX.md`
+
+**Referência:** `METODOLOGIA_MCPS_INTEGRADA.md`
+
+---
+
+### Dados Financeiros - Precisão Absoluta
+
+**Regras NÃO-NEGOCIÁVEIS:**
+
+- ✅ **Decimal (não Float)** para valores monetários
+- ✅ **Cross-validation** mínimo 3 fontes
+- ✅ **Timezone:** America/Sao_Paulo (sempre)
+- ❌ NUNCA arredondar/manipular dados financeiros
+- ❌ NUNCA usar dados mock em produção
+- ❌ NUNCA ajustar valores para "parecer melhor"
+
+**Exemplo:**
+
+```typescript
+// ❌ ERRADO
+const price: number = 123.45;  // Float tem imprecisão
+
+// ✅ CORRETO
+import { Decimal } from 'decimal.js';
+const price: Decimal = new Decimal('123.45');
+```
+
+**Referência CRÍTICA:** `.gemini/context/financial-rules.md` - Leitura obrigatória
+
+---
+
+### Não Duplicar Código/Funcionalidade
+
+**Antes de criar qualquer novo componente/serviço/função:**
+
+- ✅ Pesquisar no código: `grep -r "palavraChave"`
+- ✅ Consultar `ARCHITECTURE.md` (mapa de componentes)
+- ✅ Verificar se não existe solução similar
+- ✅ Se existir → melhorar/evoluir o atual (não duplicar)
+- ❌ NUNCA criar fluxo novo sendo que já existe
+
+**Referência:** `CHECKLIST_TODO_MASTER.md` - Anti-Pattern #2
+
+---
+
+## Planejamento de Fases
+
+### Template Obrigatório
+
+**Para TODA nova fase:**
+
+1. Criar `PLANO_FASE_XX_NOME.md` usando template de `IMPLEMENTATION_PLAN.md`
+2. Ultra-Thinking: Análise profunda (não planejar só baseado em docs)
+3. Analisar TODOS artefatos relacionados (código + docs)
+4. Code review do planejamento (antes de implementar)
+5. Versionamento do plano (v1.0, v1.1, v2.0)
+
+**Workflow:**
+
+```
+Planejamento (PLANO_FASE_XX.md)
+    ↓
+Code Review Aprovado
+    ↓
+Implementação
+    ↓
+Validação MCP Triplo
+    ↓
+VALIDACAO_FASE_XX.md
+    ↓
+Commit + Atualizar ROADMAP.md
+```
+
+**Referência:** `IMPLEMENTATION_PLAN.md` - Template completo
+
+---
+
+## Documentação Sempre Atualizada
+
+### Arquivos que DEVEM ser atualizados em CADA fase:
+
+| Arquivo | Quando Atualizar | Obrigatório? |
+|---------|------------------|--------------|
+| **CLAUDE.md** / **GEMINI.md** | Novas regras/convenções | ✅ SIM (sync obrigatório) |
+| **ARCHITECTURE.md** | Novos componentes/fluxos | ✅ SIM |
+| **ROADMAP.md** | Fase completa | ✅ SIM |
+| **CHANGELOG.md** | Mudanças notáveis | ✅ SIM |
+| **KNOWN-ISSUES.md** | Novos issues conhecidos | ✅ SIM (se aplicável) |
+| **DATABASE_SCHEMA.md** | Novas entities/migrations | ✅ SIM (se aplicável) |
+| **INDEX.md** | Nova documentação criada | ⚠️ IMPORTANTE |
+
+### Onde Armazenar Novos Dados
+
+**Consultar SEMPRE:** `ARCHITECTURE.md` seção "ONDE ARMAZENAR NOVOS DADOS"
+
+**Tabela de decisão completa para:**
+- Entities vs Campo JSON
+- Onde criar novos endpoints
+- Onde adicionar novas funcionalidades
+
+---
+
+## Critical Files Reference (Arquivos em .gemini/context/)
+
+**⚠️ IMPORTANTE:** Os arquivos abaixo estão em `.gemini/context/` mas são **CRÍTICOS** para Claude Code:
+
+### 1. Convenções de Código
+
+**Arquivo:** `.gemini/context/conventions.md`
+
+**Conteúdo:**
+- Naming conventions (classes, files, variables, etc)
+- Code style (indentation, quotes, semicolons)
+- Imports organization
+- Types vs Interfaces
+- Git commit messages
+
+**Quando consultar:** Antes de criar qualquer arquivo/classe/função nova
+
+---
+
+### 2. Regras de Dados Financeiros
+
+**Arquivo:** `.gemini/context/financial-rules.md`
+
+**Conteúdo CRÍTICO:**
+- Tipos de dados (Decimal vs Float)
+- Precisão e arredondamento
+- Timezone (America/Sao_Paulo)
+- Cross-validation (mínimo 3 fontes)
+- Outlier detection
+- Corporate actions (splits, dividends)
+
+**Quando consultar:** Antes de trabalhar com QUALQUER dado financeiro
+
+**LEITURA OBRIGATÓRIA - NÃO-NEGOCIÁVEL**
+
+---
+
+### 3. Known Issues (Problemas Conhecidos)
+
+**Arquivo:** `.gemini/context/known-issues.md`
+
+**Conteúdo:**
+- 8 issues documentados com root cause
+- Soluções aplicadas
+- Lições aprendidas
+- Procedimentos de recuperação
+- Checklist de prevenção
+
+**Quando consultar:**
+- Antes de modificar Docker volumes
+- Antes de trabalhar com scrapers
+- Quando encontrar erro similar
+- Antes de operações destrutivas
+
+**Arquivo Público (resumo):** `KNOWN-ISSUES.md` (raiz do projeto)
+
+---
+
+## Script de Gerenciamento
+
+### system-manager.ps1
+
+**Localização:** `system-manager.ps1` (raiz do projeto)
+
+**Funcionalidades:**
+- ✅ Check prerequisites (Docker, Node.js, etc)
+- ✅ Start/Stop/Restart services
+- ✅ Status de todos containers
+- ✅ View logs
+- ✅ Clean/rebuild
+- ✅ Validação de environment
+
+**Uso Obrigatório:**
+- Antes de QUALQUER teste com MCPs
+- Antes de validação de frontend/backend
+- Após mudanças em docker-compose.yml
+- Para verificar saúde do ambiente
+
+**Comando:**
+
+```powershell
+.\system-manager.ps1 status    # Ver status de todos serviços
+.\system-manager.ps1 start     # Iniciar todos serviços
+.\system-manager.ps1 restart   # Reiniciar serviços específicos
+```
+
+---
+
 ## Additional Documentation
 
-- `ARCHITECTURE.md` - Detailed architecture, data flows, entity storage guide
-- `DATABASE_SCHEMA.md` - Complete schema, relationships, indexes
-- `INSTALL.md` - Full installation guide
-- `TROUBLESHOOTING.md` - Common issues and solutions
-- `ROADMAP.md` - Development history (55 phases)
+### Core Documentation (Raiz do Projeto)
+
+- **ARCHITECTURE.md** - Arquitetura completa, fluxos, onde armazenar novos dados
+- **DATABASE_SCHEMA.md** - Schema completo, relacionamentos, indexes
+- **INSTALL.md** - Instalação completa (Docker, portas, env vars)
+- **TROUBLESHOOTING.md** - 16+ problemas comuns com soluções
+- **ROADMAP.md** - Histórico de 55+ fases completas
+- **CHANGELOG.md** - Mudanças notáveis versionadas
+- **INDEX.md** - Índice mestre de toda documentação (200+ arquivos)
+- **KNOWN-ISSUES.md** - Issues conhecidos (resumo executivo)
+- **IMPLEMENTATION_PLAN.md** - Template de planejamento de fases
+- **VALIDACAO_REGRAS_DOCUMENTACAO_2025-11-27.md** - Compliance de regras
+
+### Gemini Context Files (Leitura Obrigatória)
+
+- **.gemini/context/conventions.md** - Convenções de código
+- **.gemini/context/financial-rules.md** - Regras de dados financeiros (CRÍTICO)
+- **.gemini/context/known-issues.md** - Análise técnica de issues
+
+### Process Documentation
+
+- **CHECKLIST_TODO_MASTER.md** - Checklist ultra-robusto antes de cada fase
+- **CHECKLIST_CODE_REVIEW_COMPLETO.md** - Code review obrigatório
+- **METODOLOGIA_MCPS_INTEGRADA.md** - Integração MCPs + Ultra-Thinking + TodoWrite
+- **MCPS_USAGE_GUIDE.md** - Guia técnico dos 8 MCPs
