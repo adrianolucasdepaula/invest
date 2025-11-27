@@ -12,6 +12,102 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Resolução de cache do frontend Docker (Issue #4)
 - População de dados no banco após wipe (Issue #5)
 - Validação visual final da UI de opções
+- FASE 58: Git Workflow Automation (Prioridade 2)
+- FASE 59: Dependency Management System (Prioridade 2)
+- FASE 60: Architecture Visual Diagrams (Prioridade 2)
+
+---
+
+## [1.3.0] - 2025-11-27
+
+### Added
+
+- **Documentation Compliance & Quality Improvements (FASE 57):**
+  - **KNOWN-ISSUES.md** (609 linhas) - Documentação pública de issues conhecidos
+    - 3 issues ativos (Frontend Cache, Database Restore, UI Validation)
+    - 11 issues resolvidos com soluções documentadas
+    - Lições aprendidas (Docker, Scrapers, Frontend, Database)
+    - Procedimentos de recuperação (step-by-step)
+    - Checklist de prevenção
+    - Métricas de problemas (73% resolvidos)
+
+  - **IMPLEMENTATION_PLAN.md** (643 linhas) - Template formal de planejamento de fases
+    - Template completo com 10 seções obrigatórias
+    - Workflow de planejamento (diagrama Mermaid)
+    - Sistema de versionamento de planos (vMAJOR.MINOR)
+    - Critérios de aprovação (13 itens)
+    - Histórico de 5 planejamentos anteriores
+
+  - **VALIDACAO_REGRAS_DOCUMENTACAO_2025-11-27.md** (393 linhas) - Relatório de compliance
+    - Auditoria completa de 60+ regras de desenvolvimento
+    - Matriz de compliance detalhada (70% contemplado, 20% parcial, 10% não contemplado)
+    - 6 gaps críticos identificados
+    - Prioridades de ação (Prioridade 1, 2, 3)
+    - Estatísticas finais e recomendações
+
+### Changed
+
+- **CLAUDE.md** - Atualizado com 185 linhas (+59% de conteúdo)
+  - **4 Development Principles adicionados:**
+    1. Quality > Velocity ("Não Ter Pressa")
+    2. KISS Principle (Keep It Simple, Stupid)
+    3. Root Cause Analysis Obrigatório
+    4. Anti-Workaround Policy
+
+  - **Critical Rules expandidas:**
+    - Zero Tolerance Policy (TypeScript, Build, Console, ESLint)
+    - Git Workflow (Conventional Commits, commit format)
+    - Validação Completa (MCP Triplo obrigatório)
+    - Dados Financeiros (Decimal, cross-validation, timezone)
+    - Não Duplicar Código (checklist de verificação)
+
+  - **Critical Files Reference:** Nova seção com referências explícitas a:
+    - `.gemini/context/conventions.md` (Convenções de código)
+    - `.gemini/context/financial-rules.md` (Regras financeiras - LEITURA OBRIGATÓRIA)
+    - `.gemini/context/known-issues.md` (Análise técnica de issues)
+
+  - **Documentação Sempre Atualizada:** Tabela de arquivos obrigatórios por fase
+  - **Planejamento de Fases:** Template obrigatório com workflow completo
+  - **Script de Gerenciamento:** system-manager.ps1 uso obrigatório
+
+- **GEMINI.md** - Sincronizado com CLAUDE.md (100% idêntico, 499 linhas)
+  - Todos os 4 Development Principles incluídos
+  - Critical Files Reference completa
+  - Versionamento sincronizado
+
+- **ROADMAP.md** - Atualizado com FASE 57 + 3 próximas fases planejadas
+  - FASE 57: Documentation Compliance (COMPLETA)
+  - FASE 58: Git Workflow Automation (PLANEJADA - Prioridade 2)
+  - FASE 59: Dependency Management System (PLANEJADA - Prioridade 2)
+  - FASE 60: Architecture Visual Diagrams (PLANEJADA - Prioridade 2)
+  - Resumo de status: 57 fases completas + 3 planejadas = 60 fases
+  - Compliance status: 70% → 85% (projetado após FASES 58-60)
+
+### Documentation
+
+- **Total de arquivos criados/modificados:** 5 arquivos, +2,143 linhas de documentação
+- **Compliance:** 42/60 regras (70%) completamente contempladas
+- **Gaps críticos endereçados:** 6 de 6 (100%)
+- **Sincronização:** CLAUDE.md e GEMINI.md idênticos (499 linhas cada)
+- **Versionamento:** Histórico de mudanças documentado em todos arquivos
+
+### Technical Details
+
+- **Arquivos Criados:**
+  - `/KNOWN-ISSUES.md` (+609 linhas)
+  - `/IMPLEMENTATION_PLAN.md` (+643 linhas)
+  - `/VALIDACAO_REGRAS_DOCUMENTACAO_2025-11-27.md` (+393 linhas)
+
+- **Arquivos Modificados:**
+  - `/CLAUDE.md` (+185 linhas - 4 princípios + critical files)
+  - `/GEMINI.md` (+313 linhas - sincronização completa)
+  - `/ROADMAP.md` (+697 linhas - FASE 57 + 3 fases planejadas)
+
+- **Referências:**
+  - Regras de desenvolvimento: 60+ regras auditadas
+  - Prioridade 1 (CRÍTICO): 100% completa
+  - Prioridade 2 (IMPORTANTE): 3 fases planejadas
+  - Prioridade 3 (DESEJÁVEL): 2 melhorias identificadas
 
 ---
 
