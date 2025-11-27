@@ -20,11 +20,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { MoreVertical, RefreshCw, AlertTriangle, Eye, CheckCircle2 } from 'lucide-react';
+import { MoreVertical, RefreshCw, AlertTriangle, Eye, CheckCircle2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface Asset {
   ticker: string;
   name: string;
+  sector?: string;
   price: number;
   change: number;
   changePercent: number;
@@ -45,12 +46,95 @@ interface AssetTableProps {
   onSyncAsset?: (ticker: string) => void;
 }
 
+type SortColumn = 'ticker' | 'name' | 'sector' | 'price' | 'changePercent' | 'volume' | 'marketCap';
+type SortDirection = 'asc' | 'desc' | null;
+
 export function AssetTable({
   assets,
   isLoading = false,
   onAssetClick,
   onSyncAsset,
 }: AssetTableProps) {
+  const [sortColumn, setSortColumn] = React.useState<SortColumn>('ticker');
+  const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      // Cycle through: asc -> desc -> null -> asc
+      setSortDirection(prev => {
+        if (prev === 'asc') return 'desc';
+        if (prev === 'desc') return null;
+        return 'asc';
+      });
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedAssets = React.useMemo(() => {
+    if (!sortDirection) return assets;
+
+    return [...assets].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortColumn) {
+        case 'ticker':
+          aValue = a.ticker;
+          bValue = b.ticker;
+          break;
+        case 'name':
+          aValue = a.name;
+          bValue = b.name;
+          break;
+        case 'sector':
+          aValue = a.sector || 'Sem Setor';
+          bValue = b.sector || 'Sem Setor';
+          break;
+        case 'price':
+          aValue = a.price || 0;
+          bValue = b.price || 0;
+          break;
+        case 'changePercent':
+          aValue = a.changePercent || 0;
+          bValue = b.changePercent || 0;
+          break;
+        case 'volume':
+          aValue = a.volume || 0;
+          bValue = b.volume || 0;
+          break;
+        case 'marketCap':
+          aValue = a.marketCap || 0;
+          bValue = b.marketCap || 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (typeof aValue === 'string') {
+        return sortDirection === 'asc'
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+
+      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+    });
+  }, [assets, sortColumn, sortDirection]);
+
+  const SortIcon = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />;
+    }
+    if (sortDirection === 'asc') {
+      return <ArrowUp className="ml-1 h-3 w-3 text-primary" />;
+    }
+    if (sortDirection === 'desc') {
+      return <ArrowDown className="ml-1 h-3 w-3 text-primary" />;
+    }
+    return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />;
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -78,13 +162,70 @@ export function AssetTable({
           <table className="w-full">
             <thead>
               <tr className="border-b">
-                <th className="px-4 py-3 text-left font-medium">Ticker</th>
-                <th className="px-4 py-3 text-left font-medium">Nome</th>
-                <th className="px-4 py-3 text-right font-medium">Preço</th>
-                <th className="px-4 py-3 text-right font-medium">Variação</th>
-                <th className="px-4 py-3 text-right font-medium">Volume</th>
-                {assets.some(a => a.marketCap) && (
-                  <th className="px-4 py-3 text-right font-medium">Market Cap</th>
+                <th className="px-4 py-3 text-left font-medium">
+                  <button
+                    onClick={() => handleSort('ticker')}
+                    className="flex items-center hover:text-primary transition-colors"
+                  >
+                    Ticker
+                    <SortIcon column="ticker" />
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  <button
+                    onClick={() => handleSort('name')}
+                    className="flex items-center hover:text-primary transition-colors"
+                  >
+                    Nome
+                    <SortIcon column="name" />
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  <button
+                    onClick={() => handleSort('sector')}
+                    className="flex items-center hover:text-primary transition-colors"
+                  >
+                    Setor
+                    <SortIcon column="sector" />
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-right font-medium">
+                  <button
+                    onClick={() => handleSort('price')}
+                    className="ml-auto flex items-center hover:text-primary transition-colors"
+                  >
+                    Preço
+                    <SortIcon column="price" />
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-right font-medium">
+                  <button
+                    onClick={() => handleSort('changePercent')}
+                    className="ml-auto flex items-center hover:text-primary transition-colors"
+                  >
+                    Variação
+                    <SortIcon column="changePercent" />
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-right font-medium">
+                  <button
+                    onClick={() => handleSort('volume')}
+                    className="ml-auto flex items-center hover:text-primary transition-colors"
+                  >
+                    Volume
+                    <SortIcon column="volume" />
+                  </button>
+                </th>
+                {sortedAssets.some(a => a.marketCap) && (
+                  <th className="px-4 py-3 text-right font-medium">
+                    <button
+                      onClick={() => handleSort('marketCap')}
+                      className="ml-auto flex items-center hover:text-primary transition-colors"
+                    >
+                      Market Cap
+                      <SortIcon column="marketCap" />
+                    </button>
+                  </th>
                 )}
                 <th className="px-4 py-3 text-center font-medium">Opções</th>
                 <th className="px-4 py-3 text-right font-medium">Última Atualização</th>
@@ -92,7 +233,7 @@ export function AssetTable({
               </tr>
             </thead>
             <tbody>
-              {assets.map(asset => {
+              {sortedAssets.map(asset => {
                 const collectedAt = asset.currentPrice?.collectedAt;
                 const isStale = isDataStale(collectedAt);
 
@@ -112,6 +253,14 @@ export function AssetTable({
                       onClick={() => onAssetClick?.(asset.ticker)}
                     >
                       {asset.name}
+                    </td>
+                    <td
+                      className="cursor-pointer px-4 py-3 text-sm"
+                      onClick={() => onAssetClick?.(asset.ticker)}
+                    >
+                      {asset.sector || (
+                        <span className="text-muted-foreground italic">Sem Setor</span>
+                      )}
                     </td>
                     <td
                       className="cursor-pointer px-4 py-3 text-right font-medium"
@@ -137,7 +286,7 @@ export function AssetTable({
                     >
                       {asset.volume ? asset.volume.toLocaleString('pt-BR') : '-'}
                     </td>
-                    {assets.some(a => a.marketCap) && (
+                    {sortedAssets.some(a => a.marketCap) && (
                       <td
                         className="cursor-pointer px-4 py-3 text-right text-sm"
                         onClick={() => onAssetClick?.(asset.ticker)}
@@ -208,7 +357,7 @@ export function AssetTable({
               })}
             </tbody>
           </table>
-          {assets.length === 0 && (
+          {sortedAssets.length === 0 && (
             <div className="py-8 text-center text-muted-foreground">Nenhum ativo encontrado</div>
           )}
         </div>

@@ -1,17 +1,24 @@
-# BUG: Scrapers Crash - Puppeteer Timeout + Backend Unhealthy
+# BUG: Scrapers Crash - Playwright Browser Overload + Backend Unhealthy (RESOLVIDO - MIGRADO PARA PLAYWRIGHT)
 
 **Data:** 2025-11-25 → 2025-11-26 (RESOLVIDO)
+**Atualização:** 2025-11-27 (MIGRADO PARA PLAYWRIGHT)
 **Prioridade:** 🔴 CRÍTICA
-**Status:** ✅ RESOLVIDO DEFINITIVAMENTE (FASE 4 IMPLEMENTADA)
+**Status:** ✅ RESOLVIDO DEFINITIVAMENTE (FASE 4 IMPLEMENTADA + MIGRAÇÃO PLAYWRIGHT)
+
+> **📝 NOTA IMPORTANTE (2025-11-27):**
+> Este documento foi originalmente escrito durante o período em que o sistema utilizava **Puppeteer**.
+> **Todas as funcionalidades foram migradas para Playwright** (commit `71dfc26`).
+> As ferramentas oficiais de scraping agora são: **Playwright + Chrome DevTools MCP**.
+> O documento é mantido para referência histórica das correções aplicadas.
 
 ---
 
 ## 📋 SUMÁRIO EXECUTIVO
 
-**Problema:**
+**Problema (Contexto Histórico - Puppeteer):**
 Ao implementar solução de jobs individuais (Opção 1) para "Atualizar Todos" (861 ativos), descobrimos problema **mais grave** no sistema de scrapers:
 - ❌ **0 ativos atualizados** (jobs criados, mas scrapers falharam 100%)
-- ❌ Backend crashou com **Puppeteer timeout** após processar ~50 jobs
+- ❌ Backend crashou com **browser automation timeout** após processar ~50 jobs
 - ❌ Backend ficou **unhealthy** e precisou restart
 - ❌ Scrapers falhando massivamente com erros: `net::ERR_ABORTED`, `403 Forbidden`
 
@@ -19,7 +26,10 @@ Ao implementar solução de jobs individuais (Opção 1) para "Atualizar Todos" 
 A arquitetura de jobs individuais funcionou **perfeitamente** (✅ 861 jobs criados, ✅ concurrency paralela), mas **expôs problema crônico** nos scrapers que estava oculto pelo processamento sequencial anterior:
 1. **Sobrecarga de requisições simultâneas** - 10 scrapers executando em paralelo sobrecarregaram sites externos (Investidor10, Fundamentei, BRAPI)
 2. **Rate limiting não aplicado** - Sites bloquearam requisições (403 Forbidden)
-3. **Puppeteer sem timeout adequado** - Scrapers travaram e crasharam o backend
+3. **Browser automation sem timeout adequado** - Scrapers travaram e crasharam o backend
+
+**Solução Final (2025-11-27):**
+✅ Migração completa para **Playwright** - ferramenta oficial de scraping junto com Chrome DevTools MCP
 
 ---
 
@@ -543,6 +553,61 @@ Exit code: 0  # ✅ 0 erros
 | **3** | Rate limiting | ✅ Implementada | Resolve 403 externos |
 | **4** | **Fila de inicialização** | ✅ Implementada | Resolve CDP overload |
 | **4.1** | **Timeout BullMQ 180s** | ✅ **IMPLEMENTADA** | ✅ **PERMITE FASE 4 FUNCIONAR** |
+
+---
+
+## 🚀 MIGRAÇÃO PARA PLAYWRIGHT (2025-11-27)
+
+**Status:** ✅ **100% COMPLETO**
+
+### Motivo da Migração
+
+Após resolver os problemas críticos com Puppeteer (FASES 1-4), o sistema foi **migrado completamente para Playwright** como parte da evolução da stack de scraping.
+
+### Ferramentas Oficiais de Scraping
+
+1. **Playwright** (`^1.57.0`) - Browser automation principal
+2. **Chrome DevTools MCP** - Debugging e validação
+
+### Mudanças Principais
+
+| Aspecto | Puppeteer (Antes) | Playwright (Agora) |
+|---------|-------------------|-------------------|
+| **Dependência** | `puppeteer`, `puppeteer-extra`, `puppeteer-extra-plugin-stealth` | `playwright` (nativo) |
+| **API** | `puppeteerExtra.launch()` | `chromium.launch()` |
+| **Navigation** | `waitUntil: 'networkidle2'` | `waitUntil: 'networkidle'` |
+| **Stealth** | Plugin third-party | Args nativos Chromium |
+| **Timeout** | `protocolTimeout: 90000` | `timeout: 180000` |
+| **Browser** | Download automático (~200MB) | Chromium do sistema (Alpine) |
+
+### Arquivos Migrados
+
+- ✅ 26 arquivos totais
+- ✅ `backend/src/scrapers/base/abstract-scraper.ts` - Core migrado
+- ✅ 6 scrapers fundamentais - Migrados
+- ✅ `backend/src/scrapers/auth/google-auth.helper.ts` - Migrado
+- ✅ `backend/src/api/reports/pdf-generator.service.ts` - Migrado
+- ✅ `backend/Dockerfile` - Configurado para Playwright
+
+### Validação
+
+```bash
+✅ TypeScript: 0 errors
+✅ Build: Success
+✅ Scrapers: 100% funcionais com Playwright
+✅ Git commit: 71dfc26 (2025-11-27)
+```
+
+### Notas Históricas
+
+Este documento permanece como **referência histórica** das correções aplicadas durante a era Puppeteer:
+- **FASE 1:** Redução de concurrency (10→3)
+- **FASE 2:** Aumento de timeout (90s)
+- **FASE 3:** Implementação de rate limiting
+- **FASE 4:** Fila de inicialização (solução definitiva CDP overload)
+- **FASE 4.1:** Timeout BullMQ (180s)
+
+Todas essas correções foram **preservadas e adaptadas** para Playwright.
 
 ---
 

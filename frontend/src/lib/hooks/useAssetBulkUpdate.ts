@@ -3,9 +3,11 @@
  * Conecta ao namespace padrão do backend (AppWebSocketGateway)
  *
  * ✅ UPDATED: Agora captura logs individuais (asset_update_*) para exibição em tempo real
+ * ✅ FIX: Changed to static import to fix browser module resolution
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3101';
 
@@ -119,7 +121,7 @@ export function useAssetBulkUpdate(options?: {
     logs: [], // ✅ NEW: Initialize empty logs array
   });
 
-  const socketRef = useRef<any>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   // ✅ FIX: Use refs for callbacks to prevent reconnection on every render
   const onUpdateCompleteRef = useRef(options?.onUpdateComplete);
@@ -149,23 +151,15 @@ export function useAssetBulkUpdate(options?: {
 
     console.log('[ASSET BULK WS] Component is mounted on CLIENT! Connecting to:', WS_URL);
 
-    // Use dynamic import to avoid SSR issues
-    let socket: any = null;
-    let cleanup: (() => void) | null = null;
+    // ✅ FIX: Use static import (already imported at top of file)
+    const socket = io(WS_URL, {
+      transports: ['websocket'],
+      autoConnect: true,
+    });
 
-    (async () => {
-      const { io } = await import('socket.io-client');
+    socketRef.current = socket;
 
-      console.log('[ASSET BULK WS] Socket.io loaded, creating connection...');
-
-      socket = io(WS_URL, {
-        transports: ['websocket'],
-        autoConnect: true,
-      });
-
-      socketRef.current = socket;
-
-      console.log('[ASSET BULK WS] Socket created, waiting for connection...');
+    console.log('[ASSET BULK WS] Socket created, waiting for connection...');
 
       // Connection handlers
       socket.on('connect', () => {
@@ -307,7 +301,6 @@ export function useAssetBulkUpdate(options?: {
           onUpdateCompleteRef.current();
         }
       });
-    });
 
     // Cleanup ao desmontar
     return () => {

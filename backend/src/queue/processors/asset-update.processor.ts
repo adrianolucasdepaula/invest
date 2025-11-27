@@ -52,9 +52,9 @@ export class AssetUpdateProcessor {
 
   constructor(private readonly assetsUpdateService: AssetsUpdateService) {}
 
-  // ✅ FIX: Reduced concurrency from 10 → 1 to prevent Puppeteer timeout (FASE 1.1 - CRITICAL)
+  // ✅ FIX: Reduced concurrency from 10 → 1 to prevent Playwright browser overload (FASE 1.1 - CRITICAL)
   // Each job spawns 6 parallel scrapers, so concurrency=1 means max 6 browser operations
-  // TODO: Implement sequential scraper execution (FASE 3 - DEFINITIVE)
+  // Sequential scraper execution implemented (FASE 6 - DEFINITIVE)
   @Process({ name: 'update-single-asset', concurrency: 1 })
   async handleSingleAsset(job: Job<SingleAssetUpdateJob>) {
     this.logger.log(`[JOB ${job.id}] Processing single asset update: ${job.data.ticker}`);

@@ -27,7 +27,7 @@ import { ScrapedData } from '../database/entities/scraped-data.entity';
         defaultJobOptions: {
           removeOnComplete: 100,
           removeOnFail: 50,
-          timeout: 180000, // ✅ FASE 4.1: 180s (3min) - Permite fila de inicialização Puppeteer (30s+) + scraping (150s máx)
+          timeout: 180000, // ✅ FASE 4.1: 180s (3min) - Permite fila de inicialização Playwright (30s+) + scraping (150s máx)
         },
         // Note: Concurrency is configured in processor @Processor() decorator
         // See: asset-update.processor.ts

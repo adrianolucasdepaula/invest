@@ -38,7 +38,7 @@ export class ScrapersService {
 
   /**
    * Scrape fundamental data from multiple sources and cross-validate
-   * ✅ FIX: Sequential execution to prevent Puppeteer timeout (FASE 6 - CRITICAL)
+   * ✅ FIX: Sequential execution to prevent Playwright browser overload (FASE 6 - CRITICAL)
    * Running scrapers sequentially prevents resource exhaustion
    */
   async scrapeFundamentalData(ticker: string): Promise<CrossValidationResult> {
@@ -55,7 +55,7 @@ export class ScrapersService {
 
     const successfulResults: ScraperResult[] = [];
 
-    // ✅ Run scrapers SEQUENTIALLY to prevent Puppeteer overload
+    // ✅ Run scrapers SEQUENTIALLY to prevent Playwright browser overload
     for (const { name, scraper } of scrapers) {
       try {
         const result = await scraper.scrape(ticker);
