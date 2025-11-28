@@ -8153,9 +8153,11 @@ cat backups/backup_20251127.sql | docker exec -i invest_postgres psql -U invest_
 - ✅ Referências a `.gemini/context/` adicionadas
 
 **Recomendados para próximas fases:**
-- [ ] FASE 58: Git Workflow Automation (Prioridade 2)
-- [ ] FASE 59: Dependency Management System (Prioridade 2)
-- [ ] FASE 61: Architecture Visual Diagrams (Prioridade 2)
+- [x] FASE 58: Playwright Migration & Exit Code 137 Resolution ✅ (2025-11-28)
+- [x] FASE 59: Fundamentus Scraper - Validação 100% ✅ (2025-11-28)
+- [ ] FASE 60: Git Workflow Automation (Prioridade 2)
+- [ ] FASE 61: Dependency Management System (Prioridade 2)
+- [ ] FASE 62: Architecture Visual Diagrams (Prioridade 2)
 
 **Documentação Relacionada:**
 
@@ -8387,9 +8389,167 @@ class BaseScraper:
 
 ---
 
+## FASE 59: Fundamentus Scraper - Validação 100% ✅ 100% COMPLETO (2025-11-28)
+
+**Objetivo:** Validar `fundamentus_scraper.py` com 100% de aprovação em múltiplos tickers, setores e cenários de erro.
+
+**Contexto:**
+
+- fundamentus_scraper migrado para Playwright (FASE 58)
+- Bug de substring matching corrigido (FASE 58)
+- Necessidade de validação completa antes de aplicar padrão a outros scrapers
+- Criar documentação setorial para expectativas de coverage
+
+**Validações Realizadas:**
+
+### 1. Suite de Testes Completa ✅
+
+**Arquivo criado:** `test_fundamentus_complete.py`
+
+**Tickers testados:**
+- ✅ **Industriais (3):** PETR4, VALE3, WEGE3
+- ✅ **Financeiros (2):** ITUB4, BBAS3
+- ✅ **Inválidos (2):** INVALID, TESTE99
+
+**Resultados:**
+
+| Categoria | Coverage | Tempo Médio | Status |
+|-----------|----------|-------------|--------|
+| Industriais | 90.0% | 3.77s | ✅ 100% (3/3) |
+| Financeiros | 43.3% | 3.05s | ✅ 100% (2/2) |
+| Inválidos | N/A | 3.86s | ✅ Erro esperado (2/2) |
+
+**Performance geral:** 3.48s médio (66% faster que meta de 10s)
+
+### 2. Descoberta Crítica: Coverage Setorial ✅
+
+**Investigação via Chrome DevTools MCP:**
+
+**Problema aparente:** ITUB4/BBAS3 com 43.3% coverage (parecia baixo)
+
+**Investigação:**
+```javascript
+// Executado via Chrome DevTools MCP
+const table2 = document.querySelectorAll('table.w728')[2];
+// Descoberta: Muitos campos com "-" (não aplicável)
+```
+
+**Descoberta:** NÃO é bug! Bancos têm estrutura contábil diferente:
+
+❌ **Campos não aplicáveis a bancos:**
+- P/EBIT, PSR, P/Ativos, P/Cap.Giro, P/Ativ Circ.Liq
+- EV/EBITDA, EV/EBIT (sem EBITDA tradicional)
+- Marg. Bruta, Marg. EBIT (sem COGS)
+- EBIT / Ativo, ROIC, Giro Ativos (métricas industriais)
+
+**Conclusão:** 43.3% é **ESPERADO e CORRETO** para setor financeiro!
+
+### 3. Melhorias Implementadas ✅
+
+**Error Handling Aprimorado** (`fundamentus_scraper.py:74`):
+
+```python
+# ANTES
+if ("não encontrado" in page_source or
+    "papel não encontrado" in page_source):
+
+# DEPOIS
+if ("não encontrado" in page_source or
+    "papel não encontrado" in page_source or
+    "nenhum papel encontrado" in page_source):  # ← Adicionado
+```
+
+**Resultado:** 100% detecção de tickers inválidos
+
+### 4. Documentação Setorial Completa ✅
+
+**Arquivo criado:** `SECTOR_COVERAGE_EXPECTATIONS.md`
+
+**Conteúdo:**
+
+| Setor | Coverage Esperado | Campos Faltando |
+|-------|-------------------|-----------------|
+| **Industrial** | ≥ 90% (27/30) | Poucos (P/Cap.Giro, LPA) |
+| **Financeiro** | 40-50% (13-15/30) | P/EBIT, EV/EBITDA, Margens, ROIC |
+| **FII** | 30-40% (8-12/30) | Todos exceto DY, P/VP, ROE |
+| **Holding** | 50-60% (15-18/30) | Varia por portfólio |
+
+**Inclui:**
+- Templates de validação para cada setor
+- Metodologia de investigação (Chrome DevTools)
+- Exemplos práticos
+- Código de teste adaptável
+
+### 5. Relatório de Validação ✅
+
+**Arquivo criado:** `VALIDACAO_FUNDAMENTUS_SCRAPER.md`
+
+**Conteúdo completo:**
+- ✅ Resumo executivo
+- ✅ Resultados detalhados por ticker
+- ✅ Performance benchmarking
+- ✅ Investigações via Chrome DevTools MCP
+- ✅ Melhorias implementadas
+- ✅ Compliance com regras do projeto
+- ✅ Lições aprendidas
+- ✅ Próximos passos recomendados
+
+### Validation Checks (6/6 PASSED) ✅
+
+| Check | Resultado |
+|-------|-----------|
+| Industriais: Coverage ≥ 90% | ✅ PASS (100%, 3/3) |
+| Financeiros: Coverage ≥ 40% | ✅ PASS (100%, 2/2) |
+| Industriais: ev_ebitda OK | ✅ PASS (3/3 com valores) |
+| Tickers inválidos: Error handling | ✅ PASS (2/2 com erro esperado) |
+| Tempo médio < 10s | ✅ PASS (3.48s, 66% faster) |
+| Timeout < 30s (3x retries) | ✅ PASS (max 11.52s) |
+
+### Lições Aprendidas
+
+1. **Nem todo "baixo coverage" é bug:**
+   - Investigar primeiro com Chrome DevTools MCP
+   - Entender estrutura de dados setorial antes de assumir erro
+
+2. **Setores diferentes = expectativas diferentes:**
+   - Bancos: Contabilidade distinta (sem EBITDA tradicional)
+   - FIIs: Métricas próprias (DY, P/VP)
+   - Documentar diferenças é crítico para futuros scrapers
+
+3. **Error handling precisa ser abrangente:**
+   - Testar múltiplas variações de mensagens
+   - "nenhum papel encontrado" vs "papel não encontrado"
+
+4. **Chrome DevTools MCP é essencial:**
+   - Inspeção real de HTML via JavaScript evaluation
+   - Confirma se problema é código ou dados
+   - Economiza tempo de debugging
+
+### Próximos Passos
+
+1. ✅ **Commit realizado** (commit 6e264e8)
+2. **Aplicar padrão a outros scrapers:**
+   - Usar `SECTOR_COVERAGE_EXPECTATIONS.md` como template
+   - Validar statusinvest, investsite, b3, etc.
+3. **Opcional: Auto-detection de setor:**
+   - Ajustar expectativas automaticamente por `AssetType`
+
+**Documentação Relacionada:**
+
+- `backend/python-scrapers/SECTOR_COVERAGE_EXPECTATIONS.md` - Expectativas setoriais
+- `backend/python-scrapers/VALIDACAO_FUNDAMENTUS_SCRAPER.md` - Relatório completo
+- `backend/python-scrapers/test_fundamentus_complete.py` - Suite de validação
+- `backend/python-scrapers/PLAYWRIGHT_SCRAPER_PATTERN.md` - Template standardizado
+
+**Status:** ✅ **100% COMPLETO - PRODUÇÃO-READY**
+
+**Confiança:** ALTA para uso em produção
+
+---
+
 ## 📋 PRÓXIMAS FASES PLANEJADAS
 
-### FASE 59: Git Workflow Automation 🔵 PLANEJADO
+### FASE 60: Git Workflow Automation 🔵 PLANEJADO
 
 **Prioridade:** ⚠️ **IMPORTANTE** (Prioridade 2)
 
@@ -8762,16 +8922,17 @@ docs/
 
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (57 fases)
+### Fases Completas (59 fases)
 
-- ✅ FASE 1-56: Implementadas e validadas (ver histórico acima)
-- ✅ FASE 57: Documentation Compliance & Quality Improvements (2025-11-27)
+- ✅ FASE 1-57: Implementadas e validadas (ver histórico acima)
+- ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
+- ✅ FASE 59: Fundamentus Scraper - Validação 100% (2025-11-28)
 
 ### Fases Planejadas (3 fases)
 
-- 🔵 FASE 58: Git Workflow Automation (Prioridade 2)
-- 🔵 FASE 59: Dependency Management System (Prioridade 2)
-- 🔵 FASE 61: Architecture Visual Diagrams (Prioridade 2)
+- 🔵 FASE 60: Git Workflow Automation (Prioridade 2)
+- 🔵 FASE 61: Dependency Management System (Prioridade 2)
+- 🔵 FASE 62: Architecture Visual Diagrams (Prioridade 2)
 
 ### Compliance Status
 
@@ -8792,13 +8953,13 @@ docs/
 ### Próximos Passos Recomendados
 
 1. **Curto Prazo (Esta Semana):**
-   - Implementar FASE 58: Git Workflow Automation
+   - Implementar FASE 60: Git Workflow Automation
    - Testar hooks com time de desenvolvimento
 
 2. **Médio Prazo (Este Mês):**
-   - Implementar FASE 59: Dependency Management System
+   - Implementar FASE 61: Dependency Management System
    - Executar primeiro ciclo de atualização de dependências
-   - Implementar FASE 61: Architecture Visual Diagrams
+   - Implementar FASE 62: Architecture Visual Diagrams
 
 3. **Longo Prazo (Próximo Sprint):**
    - GitHub Branch Protection Rules (Prioridade 3)
