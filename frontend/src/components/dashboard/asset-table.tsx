@@ -25,6 +25,7 @@ import { MoreVertical, RefreshCw, AlertTriangle, Eye, CheckCircle2, ArrowUpDown,
 interface Asset {
   ticker: string;
   name: string;
+  type?: string;
   sector?: string;
   price: number;
   change: number;

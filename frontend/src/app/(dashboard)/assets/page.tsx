@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AssetTable } from '@/components/dashboard/asset-table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Filter, RefreshCw, TrendingUp, Layers, Loader2 } from 'lucide-react';
+import { Search, Filter, RefreshCw, Layers, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -24,14 +24,23 @@ import { useAssetBulkUpdate } from '@/lib/hooks/useAssetBulkUpdate';
 import { Progress } from '@/components/ui/progress';
 import { AssetUpdateLogsPanel } from '@/components/dashboard/AssetUpdateLogsPanel';
 
-type SortBy = 'ticker' | 'day' | 'week' | 'month' | 'year';
-type ViewMode = 'all' | 'sector';
+type ViewMode = 'all' | 'sector' | 'type' | 'type-sector';
+
+// Helper function to detect asset type based on ticker
+function getAssetType(ticker: string, assetType?: string): string {
+  // If backend provides type, use it
+  if (assetType) return assetType;
+
+  // Otherwise, detect from ticker pattern
+  if (ticker.endsWith('11')) return 'FII';
+  if (/\d$/.test(ticker)) return 'Ação';
+  return 'Outro';
+}
 
 export default function AssetsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<SortBy>('ticker');
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [showOnlyOptions, setShowOnlyOptions] = useState(false);
   const [syncingAsset, setSyncingAsset] = useState<string | null>(null);
@@ -133,22 +142,11 @@ export default function AssetsPage() {
       filtered = filtered.filter((asset: any) => asset.hasOptions);
     }
 
-    switch (sortBy) {
-      case 'day':
-        filtered.sort((a: any, b: any) => (b.changePercent || 0) - (a.changePercent || 0));
-        break;
-      case 'week':
-      case 'month':
-      case 'year':
-        filtered.sort((a: any, b: any) => (b.changePercent || 0) - (a.changePercent || 0));
-        break;
-      case 'ticker':
-      default:
-        filtered.sort((a: any, b: any) => a.ticker.localeCompare(b.ticker));
-    }
+    // Sort by ticker (A-Z)
+    filtered.sort((a: any, b: any) => a.ticker.localeCompare(b.ticker));
 
     return filtered;
-  }, [assets, searchTerm, sortBy, showOnlyOptions]);
+  }, [assets, searchTerm, showOnlyOptions]);
 
   const groupedBySector = useMemo(() => {
     if (viewMode !== 'sector' || !sortedAndFilteredAssets.length) return {};
@@ -162,22 +160,56 @@ export default function AssetsPage() {
       return acc;
     }, {});
 
+    // Sort each sector's assets by ticker (A-Z)
     Object.keys(grouped).forEach(sector => {
-      grouped[sector].sort((a: any, b: any) => {
-        switch (sortBy) {
-          case 'day':
-          case 'week':
-          case 'month':
-          case 'year':
-            return (b.changePercent || 0) - (a.changePercent || 0);
-          default:
-            return a.ticker.localeCompare(b.ticker);
-        }
-      });
+      grouped[sector].sort((a: any, b: any) => a.ticker.localeCompare(b.ticker));
     });
 
     return grouped;
-  }, [sortedAndFilteredAssets, viewMode, sortBy]);
+  }, [sortedAndFilteredAssets, viewMode]);
+
+  const groupedByType = useMemo(() => {
+    if (viewMode !== 'type' || !sortedAndFilteredAssets.length) return {};
+
+    const grouped = sortedAndFilteredAssets.reduce((acc: any, asset: any) => {
+      const type = getAssetType(asset.ticker, asset.type);
+      if (!acc[type]) {
+        acc[type] = [];
+      }
+      acc[type].push(asset);
+      return acc;
+    }, {});
+
+    // Sort each type's assets by ticker (A-Z)
+    Object.keys(grouped).forEach(type => {
+      grouped[type].sort((a: any, b: any) => a.ticker.localeCompare(b.ticker));
+    });
+
+    return grouped;
+  }, [sortedAndFilteredAssets, viewMode]);
+
+  const groupedByTypeAndSector = useMemo(() => {
+    if (viewMode !== 'type-sector' || !sortedAndFilteredAssets.length) return {};
+
+    const grouped = sortedAndFilteredAssets.reduce((acc: any, asset: any) => {
+      const type = getAssetType(asset.ticker, asset.type);
+      const sector = asset.sector || 'Sem Setor';
+      const key = `${type} - ${sector}`;
+
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(asset);
+      return acc;
+    }, {});
+
+    // Sort each group's assets by ticker (A-Z)
+    Object.keys(grouped).forEach(key => {
+      grouped[key].sort((a: any, b: any) => a.ticker.localeCompare(b.ticker));
+    });
+
+    return grouped;
+  }, [sortedAndFilteredAssets, viewMode]);
 
   const handleAssetClick = (ticker: string) => {
     router.push(`/assets/${ticker}`);
@@ -261,46 +293,8 @@ export default function AssetsPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Select value={sortBy} onValueChange={(value: SortBy) => setSortBy(value)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Ordenar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ticker">
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4" />
-                    Ticker (A-Z)
-                  </div>
-                </SelectItem>
-                <SelectItem value="day">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    Alta do Dia
-                  </div>
-                </SelectItem>
-                <SelectItem value="week">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    Alta da Semana
-                  </div>
-                </SelectItem>
-                <SelectItem value="month">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    Alta do Mês
-                  </div>
-                </SelectItem>
-                <SelectItem value="year">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    Alta do Ano
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
             <Select value={viewMode} onValueChange={(value: ViewMode) => setViewMode(value)}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Visualização" />
               </SelectTrigger>
               <SelectContent>
@@ -310,10 +304,22 @@ export default function AssetsPage() {
                     Todos
                   </div>
                 </SelectItem>
+                <SelectItem value="type">
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-4 w-4" />
+                    Por Tipo
+                  </div>
+                </SelectItem>
                 <SelectItem value="sector">
                   <div className="flex items-center gap-2">
                     <Layers className="h-4 w-4" />
                     Por Setor
+                  </div>
+                </SelectItem>
+                <SelectItem value="type-sector">
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-4 w-4" />
+                    Por Tipo e Setor
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -347,35 +353,54 @@ export default function AssetsPage() {
             <p className="text-muted-foreground">Nenhum ativo encontrado</p>
           </div>
         </Card>
+      ) : viewMode === 'type' ? (
+        <div className="space-y-6">
+          {Object.entries(groupedByType).map(([type, typeAssets]: [string, any]) => (
+            <Card key={type} className="p-6">
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold">{type}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {typeAssets.length} {typeAssets.length === 1 ? 'ativo' : 'ativos'}
+                </p>
+              </div>
+              <AssetTable
+                assets={typeAssets}
+                onAssetClick={handleAssetClick}
+                onSyncAsset={handleSyncAsset}
+              />
+            </Card>
+          ))}
+        </div>
       ) : viewMode === 'sector' ? (
         <div className="space-y-6">
           {Object.entries(groupedBySector).map(([sector, sectorAssets]: [string, any]) => (
             <Card key={sector} className="p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-semibold">{sector}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {sectorAssets.length} {sectorAssets.length === 1 ? 'ativo' : 'ativos'}
-                  </p>
-                </div>
-                {sortBy !== 'ticker' && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <TrendingUp className="h-4 w-4" />
-                    <span>
-                      Ordenado por{' '}
-                      {sortBy === 'day'
-                        ? 'alta do dia'
-                        : sortBy === 'week'
-                          ? 'alta da semana'
-                          : sortBy === 'month'
-                            ? 'alta do mês'
-                            : 'alta do ano'}
-                    </span>
-                  </div>
-                )}
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold">{sector}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {sectorAssets.length} {sectorAssets.length === 1 ? 'ativo' : 'ativos'}
+                </p>
               </div>
               <AssetTable
                 assets={sectorAssets}
+                onAssetClick={handleAssetClick}
+                onSyncAsset={handleSyncAsset}
+              />
+            </Card>
+          ))}
+        </div>
+      ) : viewMode === 'type-sector' ? (
+        <div className="space-y-6">
+          {Object.entries(groupedByTypeAndSector).map(([group, groupAssets]: [string, any]) => (
+            <Card key={group} className="p-6">
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold">{group}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {groupAssets.length} {groupAssets.length === 1 ? 'ativo' : 'ativos'}
+                </p>
+              </div>
+              <AssetTable
+                assets={groupAssets}
                 onAssetClick={handleAssetClick}
                 onSyncAsset={handleSyncAsset}
               />
