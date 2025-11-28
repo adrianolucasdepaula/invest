@@ -163,6 +163,10 @@ class FundamentusScraper(BaseScraper):
 
                 # Número de ações
                 "nro_acoes": None,        # Número de ações
+
+                # Temporary fields for calculation
+                "_div_bruta": None,       # Dív. Bruta (temporary)
+                "_div_liquida": None,     # Dív. Líquida (temporary)
             }
 
             # OPTIMIZATION: Get HTML content once and parse locally
@@ -191,29 +195,75 @@ class FundamentusScraper(BaseScraper):
                     for row in rows:
                         cells = row.select("td")
 
-                        # Processar células em pares (label, value)
-                        for i in range(0, len(cells) - 1, 2):
-                            try:
-                                label_elem = cells[i].select_one(".txt")
-                                value_elem = cells[i + 1].select_one(".txt")
+                        # Handle different table structures:
+                        # - Tables 0,1,3,4: 4 columns (2 pairs of label-value)
+                        # - Table 2: 6 columns (3 pairs of label-value) OR 2 columns (headers)
 
-                                if not label_elem or not value_elem:
+                        if len(cells) == 2:
+                            # Header row - skip
+                            continue
+                        elif len(cells) == 4:
+                            # Process in pairs: (label, value, label, value)
+                            for i in range(0, 4, 2):
+                                try:
+                                    label_elem = cells[i].select_one(".txt")
+                                    value_elem = cells[i + 1].select_one(".txt")
+
+                                    if not label_elem or not value_elem:
+                                        continue
+
+                                    label = label_elem.get_text().strip()
+                                    value = value_elem.get_text().strip()
+
+                                    # Map to data fields (will parse internally)
+                                    self._map_field(data, label, value)
+
+                                except Exception as e:
                                     continue
+                        elif len(cells) == 6:
+                            # Process in triplets: (label, value, label, value, label, value)
+                            for i in range(0, 6, 2):
+                                try:
+                                    label_elem = cells[i].select_one(".txt")
+                                    value_elem = cells[i + 1].select_one(".txt")
 
-                                label = label_elem.get_text().strip()
-                                value = value_elem.get_text().strip()
+                                    if not label_elem or not value_elem:
+                                        continue
 
-                                # Parse value
-                                parsed_value = self._parse_value(value)
+                                    label = label_elem.get_text().strip()
+                                    value = value_elem.get_text().strip()
 
-                                # Map to data fields
-                                self._map_field(data, label, parsed_value)
+                                    # Skip empty labels/values
+                                    if not label or not value:
+                                        continue
 
-                            except Exception as e:
-                                continue
+                                    # Map to data fields (will parse internally)
+                                    self._map_field(data, label, value)
+
+                                except Exception as e:
+                                    continue
 
             except Exception as e:
                 logger.error(f"Error extracting table data: {e}")
+
+            # Calculate derived fields
+            try:
+                # div_liquida_patrim = Dív. Líquida / Patrim. Líq
+                if data.get("_div_liquida") and data.get("patrim_liquido"):
+                    data["div_liquida_patrim"] = data["_div_liquida"] / data["patrim_liquido"]
+
+                # div_liquida_ebit = Dív. Líquida / EBIT (usar o EBIT dos últimos 12 meses)
+                # Precisamos do EBIT de 12 meses, mas só temos o EBIT de 3 meses
+                # Vamos deixar None por enquanto (não temos dado suficiente)
+                # if data.get("_div_liquida") and data.get("ebit"):
+                #     data["div_liquida_ebit"] = data["_div_liquida"] / data["ebit"]
+
+            except Exception as e:
+                logger.debug(f"Error calculating derived fields: {e}")
+
+            # Remove temporary fields
+            data.pop("_div_bruta", None)
+            data.pop("_div_liquida", None)
 
             logger.debug(f"Extracted Fundamentus data for {ticker}: {data}")
             return data
@@ -228,8 +278,14 @@ class FundamentusScraper(BaseScraper):
         Handles Brazilian number format (comma as decimal separator)
         Handles percentages
         Handles billions/millions notation
+        Returns None for non-numeric values
         """
         if not value_text or value_text == "-":
+            return None
+
+        # Quick check: if it contains letters (except R$), it's not a number
+        # This avoids trying to parse company names, etc.
+        if any(c.isalpha() and c not in 'R$' for c in value_text):
             return None
 
         try:
@@ -241,6 +297,8 @@ class FundamentusScraper(BaseScraper):
             value_text = value_text.replace("%", "").strip()
 
             # Replace Brazilian decimal separator
+            # Thousands: 1.234.567 → 1234567
+            # Decimal: 123,45 → 123.45
             value_text = value_text.replace(".", "").replace(",", ".")
 
             # Parse number
@@ -255,7 +313,7 @@ class FundamentusScraper(BaseScraper):
             logger.debug(f"Could not parse value '{value_text}': {e}")
             return None
 
-    def _map_field(self, data: dict, label: str, value: Optional[float]):
+    def _map_field(self, data: dict, label: str, value: str):
         """Map Fundamentus field labels to data dictionary keys"""
 
         # Normalize label
@@ -263,51 +321,92 @@ class FundamentusScraper(BaseScraper):
 
         # Mapping dictionary
         field_map = {
+            # Basic info
+            "empresa": "company_name",
+
+            # Pricing
             "cotação": "price",
+
+            # Valuation ratios
             "p/l": "p_l",
             "p/vp": "p_vp",
             "psr": "psr",
             "p/ativos": "p_ativos",
+            "p/cap. giro": "p_cap_giro",
             "p/cap.giro": "p_cap_giro",
             "p/ebit": "p_ebit",
+            "p/ativ circ liq": "p_ativ_circ_liq",
             "p/ativ circ.liq": "p_ativ_circ_liq",
+
+            # EV multiples
             "ev/ebit": "ev_ebit",
+            "ev / ebit": "ev_ebit",
             "ev/ebitda": "ev_ebitda",
+            "ev / ebitda": "ev_ebitda",
+
+            # Margins
             "mrg ebit": "margem_ebit",
             "marg. ebit": "margem_ebit",
             "mrg. líq.": "margem_liquida",
             "marg. líquida": "margem_liquida",
+
+            # Liquidity
             "liq. corr.": "liquidez_corrente",
+            "liquidez corr": "liquidez_corrente",
             "liquidez corrente": "liquidez_corrente",
             "liq.2meses": "liquidez_2meses",
             "liquidez 2 meses": "liquidez_2meses",
+            "vol $ méd (2m)": "liquidez_2meses",
+
+            # Debt
             "dív.brut/patrim.": "div_bruta_patrim",
             "div. bruta/patrim.": "div_bruta_patrim",
+            "div br/ patrim": "div_bruta_patrim",
             "dív.líq./patrim.": "div_liquida_patrim",
             "div. líquida/patrim.": "div_liquida_patrim",
             "dív.líq./ebit": "div_liquida_ebit",
             "div. líquida/ebit": "div_liquida_ebit",
+
+            # Balance sheet
             "patrim. líq": "patrim_liquido",
             "patrimônio líquido": "patrim_liquido",
             "receita líquida": "receita_liquida",
             "ebit": "ebit",
             "lucro líquido": "lucro_liquido",
+
+            # Growth & Returns
             "cresc. rec.5a": "crescimento_receita_5a",
+            "cresc. rec (5a)": "crescimento_receita_5a",
+            "cres. rec (5a)": "crescimento_receita_5a",  # Fixed typo
             "crescimento receita 5a": "crescimento_receita_5a",
             "roe": "roe",
             "roic": "roic",
             "roa": "roa",
+
+            # Dividends
             "div. yield": "dy",
             "dividend yield": "dy",
             "payout": "payout",
+
+            # Shares
             "nro. ações": "nro_acoes",
             "número de ações": "nro_acoes",
+
+            # Temporary fields for calculations (not exposed in final data)
+            "dív. bruta": "_div_bruta",
+            "dív. líquida": "_div_liquida",
         }
 
         # Find matching field
+        # Use exact match (==) instead of substring (in) to avoid false matches
+        # Example: "ev / ebit" in "ev / ebitda" would incorrectly return True
         for key, field in field_map.items():
-            if key in label:
-                data[field] = value
+            if label == key:
+                # For company_name, keep as string. For all others, parse as number
+                if field == "company_name":
+                    data[field] = value
+                else:
+                    data[field] = self._parse_value(value)
                 return
 
         # Log unmapped fields for future improvement

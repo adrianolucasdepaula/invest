@@ -414,10 +414,13 @@ Para cada scraper a ser migrado:
 
 ### ✅ fundamentus_scraper.py
 - **Status:** ✅ Validado e em produção
-- **Tempo:** 7.72s
-- **Campos:** 30 extraídos com sucesso
-- **Teste:** PETR4 - Todos valores corretos
+- **Tempo:** ~9s
+- **Coverage:** 90% (27/30 campos)
+- **Campos extraídos:** 27 (incluindo ev_ebitda corrigido em 2025-11-28)
+- **Campos indisponíveis:** 3 (div_liquida_ebit, payout, roa - confirmado via Chrome DevTools)
+- **Teste:** PETR4 - Todos valores disponíveis corretos
 - **Padrão:** BeautifulSoup single fetch ✅
+- **Bug corrigido:** Substring matching (2025-11-28)
 
 ### ✅ bcb_scraper.py
 - **Status:** ✅ Validado e em produção
@@ -480,6 +483,68 @@ Para cada scraper a ser migrado:
 ```python
 await page.goto(url, wait_until='load', timeout=60000)
 ```
+
+### Campos Não Mapeados (Substring Matching Bug)
+
+**⚠️ BUG CRÍTICO ENCONTRADO EM 2025-11-28**
+
+**Sintoma:** Campos presentes no HTML mas retornam `None` após extração.
+
+**Exemplo:**
+- `ev_ebitda` sempre `None`
+- Chrome DevTools confirma que "EV / EBITDA" = "2,63" existe
+- Mapeamento `"ev / ebitda": "ev_ebitda"` existe
+
+**Root Cause:** Substring matching inadvertido em `_map_field()`:
+
+```python
+# ❌ BUGADO (usa substring matching):
+for key, field in field_map.items():
+    if key in label:  # "ev / ebit" in "ev / ebitda" → True!
+        data[field] = value
+        return
+
+# Resultado: label "ev / ebitda" casa com "ev / ebit" primeiro
+# Campo ev_ebitda fica None, ev_ebit recebe valor errado
+```
+
+**Solução:** Usar exact matching (`==`) ao invés de substring (`in`):
+
+```python
+# ✅ CORRETO (usa exact matching):
+for key, field in field_map.items():
+    if label == key:  # Exact match apenas
+        data[field] = value
+        return
+```
+
+**Como investigar:**
+
+1. **Chrome DevTools MCP** - Confirmar que campo existe no HTML:
+   ```javascript
+   const tables = document.querySelectorAll('table.w728');
+   // Inspecionar estrutura e valores
+   ```
+
+2. **Logs de debug** - Adicionar temporariamente:
+   ```python
+   logger.debug(f"Label: '{label}' = {value}")
+   ```
+
+3. **Teste isolado** - Validar lógica de matching:
+   ```python
+   normalized_label = "ev / ebitda"
+   for key in field_map.keys():
+       if key in normalized_label:
+           print(f"Match: {key}")  # Detecta false positives
+   ```
+
+**Validação obrigatória:**
+- Coverage ≥ 85%
+- Confirmar TODOS os campos esperados usando Chrome DevTools
+- Documentar campos realmente indisponíveis (com evidência)
+
+**Referência:** `fundamentus_scraper.py:407` - Bug corrigido em 2025-11-28
 
 ---
 
