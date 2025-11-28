@@ -1,0 +1,74 @@
+{
+  "total_assets": 861,
+  "type_distribution": {
+    "fii": 446,
+    "stock": 415
+  },
+  "sector_distribution": {
+    "stocks": {},
+    "fiis": {}
+  },
+  "test_matrix_by_type": {
+    "fii": [
+      {
+        "ticker": "ABCP11",
+        "name": "FII ABC IMOB",
+        "sector": "N/A"
+      },
+      {
+        "ticker": "AFHF11",
+        "name": "FII AFHF",
+        "sector": "N/A"
+      },
+      {
+        "ticker": "AFHI11",
+        "name": "FII AFHI CRI",
+        "sector": "N/A"
+      },
+      {
+        "ticker": "AIEC11",
+        "name": "FII AUTONOMY",
+        "sector": "N/A"
+      },
+      {
+        "ticker": "AJFI11",
+        "name": "FII AJ MALLS",
+        "sector": "N/A"
+      }
+    ],
+    "stock": [
+      {
+        "ticker": "AALR3",
+        "name": "ALLIAR",
+        "sector": "N/A"
+      },
+      {
+        "ticker": "ABCB4",
+        "name": "ABC BRASIL",
+        "sector": "N/A"
+      },
+      {
+        "ticker": "ABEV3",
+        "name": "AMBEV S/A",
+        "sector": "N/A"
+      },
+      {
+        "ticker": "ADMF3",
+        "name": "CIABRASF",
+        "sector": "N/A"
+      },
+      {
+        "ticker": "AERI3",
+        "name": "AERIS",
+        "sector": "N/A"
+      }
+    ]
+  },
+  "test_matrix_by_sector": {},
+  "statistics": {
+    "total_sectors_stocks": 0,
+    "total_sectors_fiis": 0,
+    "stocks_no_sector": 415,
+    "fiis_no_sector": 446
+  }
+}

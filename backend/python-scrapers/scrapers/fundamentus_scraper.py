@@ -120,6 +120,11 @@ class FundamentusScraper(BaseScraper):
                 "ticker": ticker.upper(),
                 "company_name": None,
 
+                # Classificação (NOVOS CAMPOS)
+                "tipo": None,             # Tipo (PN, ON, UNT, etc)
+                "setor": None,            # Setor
+                "subsetor": None,         # Subsetor
+
                 # Cotação e Valuation
                 "price": None,
                 "p_l": None,          # P/L
@@ -185,6 +190,47 @@ class FundamentusScraper(BaseScraper):
                     data["company_name"] = company_text
             except Exception as e:
                 logger.debug(f"Could not extract company name: {e}")
+
+            # Extract tipo, setor e subsetor from first table
+            # Esses campos estão na primeira tabela (table.w728) na primeira linha
+            try:
+                first_table = soup.select_one("table.w728")
+                if first_table:
+                    rows = first_table.select("tr")
+                    for row in rows:
+                        cells = row.select("td")
+                        if len(cells) >= 4:
+                            # Procurar labels "Tipo", "Setor", "Subsetor"
+                            for i in range(0, len(cells), 2):
+                                try:
+                                    label_elem = cells[i].select_one(".txt")
+                                    if not label_elem:
+                                        continue
+
+                                    label = label_elem.get_text().strip()
+
+                                    if label == "Tipo":
+                                        # Tipo é texto simples
+                                        value_elem = cells[i + 1].select_one(".txt")
+                                        if value_elem:
+                                            data["tipo"] = value_elem.get_text().strip()
+
+                                    elif label == "Setor":
+                                        # Setor é link
+                                        value_link = cells[i + 1].select_one("a")
+                                        if value_link:
+                                            data["setor"] = value_link.get_text().strip()
+
+                                    elif label == "Subsetor":
+                                        # Subsetor é link
+                                        value_link = cells[i + 1].select_one("a")
+                                        if value_link:
+                                            data["subsetor"] = value_link.get_text().strip()
+
+                                except Exception as e:
+                                    continue
+            except Exception as e:
+                logger.debug(f"Could not extract tipo/setor/subsetor: {e}")
 
             # Extract table data (main data is in tables with class "w728")
             # MUCH faster: Local parsing instead of multiple await calls
