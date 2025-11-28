@@ -3,10 +3,11 @@ Banco Central do Brasil (BCB) Scraper - Dados macroeconômicos oficiais
 Fonte: https://www.bcb.gov.br/
 SEM necessidade de login - dados públicos
 API SGS (Sistema Gerenciador de Séries Temporais) disponível
+
+MIGRATED TO PLAYWRIGHT - 2025-11-27
 """
 import asyncio
 from typing import Dict, Any, Optional, List
-from selenium.webdriver.common.by import By
 from loguru import logger
 import aiohttp
 import json
@@ -287,19 +288,29 @@ class BCBScraper(BaseScraper):
 
     async def _fetch_via_web(self, indicator: str) -> Optional[Dict[str, Any]]:
         """
-        Fallback: Fetch data via web scraping
+        Fallback: Fetch data via web scraping (Playwright)
+
+        OPTIMIZED: Uses single HTML fetch + local parsing (BeautifulSoup)
+        instead of multiple await calls. ~10x faster!
         """
         try:
-            # Create driver if not exists
-            if not self.driver:
-                self.driver = self._create_driver()
+            from bs4 import BeautifulSoup
+
+            # Ensure page is initialized
+            if not self.page:
+                await self.initialize()
 
             # Navigate to BCB main page
             url = f"{self.BASE_URL}"
             logger.info(f"Navigating to {url}")
 
-            self.driver.get(url)
-            await asyncio.sleep(3)
+            # Using 'load' instead of 'networkidle' to avoid timeout issues
+            await self.page.goto(url, wait_until="load", timeout=60000)
+            await asyncio.sleep(1)  # Small delay for any JS to execute
+
+            # OPTIMIZATION: Get HTML content once and parse locally
+            html_content = await self.page.content()
+            soup = BeautifulSoup(html_content, 'html.parser')
 
             # Extract data from main page indicators
             data = {
@@ -311,56 +322,56 @@ class BCBScraper(BaseScraper):
             # Look for key indicators on the main page
             # BCB displays main indicators on homepage
 
-            # Try to find Selic
+            # Try to find Selic - Local parsing (no await)
             try:
                 selic_selectors = [
-                    "//span[contains(text(), 'SELIC')]/..//span[@class='value']",
-                    "//div[contains(@class, 'selic')]//span[@class='value']",
                     ".indicator-selic .value",
+                    "[class*='selic'] .value",
+                    ".value",
                 ]
 
                 for selector in selic_selectors:
                     try:
-                        if selector.startswith("//"):
-                            elem = self.driver.find_element(By.XPATH, selector)
-                        else:
-                            elem = self.driver.find_element(By.CSS_SELECTOR, selector)
+                        elem = soup.select_one(selector)
 
                         if elem:
-                            value_text = elem.text.strip().replace(",", ".").replace("%", "")
-                            data["indicators"]["selic"] = {
-                                "current_value": float(value_text),
-                                "date": datetime.now().strftime("%d/%m/%Y"),
-                            }
-                            break
+                            # Check if this is actually the Selic indicator
+                            parent_text = elem.parent.get_text().upper() if elem.parent else ""
+                            if 'SELIC' in parent_text or 'TAXA' in parent_text:
+                                value_text = elem.get_text().strip().replace(",", ".").replace("%", "")
+                                data["indicators"]["selic"] = {
+                                    "current_value": float(value_text),
+                                    "date": datetime.now().strftime("%d/%m/%Y"),
+                                }
+                                break
                     except:
                         continue
 
             except Exception as e:
                 logger.debug(f"Could not extract Selic from web: {e}")
 
-            # Try to find USD/BRL
+            # Try to find USD/BRL - Local parsing (no await)
             try:
                 cambio_selectors = [
-                    "//span[contains(text(), 'Dólar')]/..//span[@class='value']",
-                    "//div[contains(@class, 'cambio')]//span[@class='value']",
                     ".indicator-cambio .value",
+                    "[class*='cambio'] .value",
+                    "[class*='dolar'] .value",
                 ]
 
                 for selector in cambio_selectors:
                     try:
-                        if selector.startswith("//"):
-                            elem = self.driver.find_element(By.XPATH, selector)
-                        else:
-                            elem = self.driver.find_element(By.CSS_SELECTOR, selector)
+                        elem = soup.select_one(selector)
 
                         if elem:
-                            value_text = elem.text.strip().replace(",", ".")
-                            data["indicators"]["cambio_usd"] = {
-                                "current_value": float(value_text),
-                                "date": datetime.now().strftime("%d/%m/%Y"),
-                            }
-                            break
+                            # Check if this is actually the USD/BRL indicator
+                            parent_text = elem.parent.get_text().upper() if elem.parent else ""
+                            if 'DÓLAR' in parent_text or 'DOLAR' in parent_text or 'USD' in parent_text:
+                                value_text = elem.get_text().strip().replace(",", ".")
+                                data["indicators"]["cambio_usd"] = {
+                                    "current_value": float(value_text),
+                                    "date": datetime.now().strftime("%d/%m/%Y"),
+                                }
+                                break
                     except:
                         continue
 

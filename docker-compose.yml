@@ -258,7 +258,7 @@ services:
       resources:
         limits:
           cpus: '2.0'
-          memory: 2G
+          memory: 2G  # Reverted from 4G - memory is NOT the issue (max 376MB used)
         reservations:
           cpus: '0.5'
           memory: 512M

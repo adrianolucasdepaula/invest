@@ -469,10 +469,99 @@ Commit + Atualizar ROADMAP.md
 
 ---
 
+## Python Scrapers (Playwright)
+
+### Arquitetura e Padrão Standardizado
+
+**Localização:** `backend/python-scrapers/`
+
+**Framework:** Playwright (migrado de Selenium em 2025-11-28)
+
+**Scrapers ativos:** 2 (fundamentus, bcb)
+**Scrapers aguardando migração:** 24
+
+### Padrão Obrigatório - BeautifulSoup Single Fetch
+
+**❌ NUNCA fazer** (padrão antigo Selenium):
+```python
+# Múltiplos await operations (lento, pode causar Exit 137)
+tables = await page.query_selector_all("table")
+for table in tables:
+    rows = await table.query_selector_all("tr")
+    for row in rows:
+        cells = await row.query_selector_all("td")
+        # ... múltiplos awaits = LENTO
+```
+
+**✅ SEMPRE fazer** (padrão novo Playwright + BeautifulSoup):
+```python
+from bs4 import BeautifulSoup
+
+# Single HTML fetch (rápido, ~10x mais rápido)
+html_content = await page.content()  # await #1 (ÚNICO)
+soup = BeautifulSoup(html_content, 'html.parser')
+
+# All operations local (sem await)
+tables = soup.select("table")  # local
+for table in tables:
+    rows = table.select("tr")  # local
+    for row in rows:
+        cells = row.select("td")  # local
+        # ... instantâneo!
+```
+
+### Regras Críticas
+
+1. **Browser Individual** (não compartilhado)
+   - Cada scraper tem `self.playwright`, `self.browser`, `self.page`
+   - Seguir padrão do backend TypeScript (`abstract-scraper.ts`)
+
+2. **Wait Strategy**
+   - ✅ Usar `wait_until='load'` (rápido)
+   - ❌ EVITAR `wait_until='networkidle'` (analytics lentos = timeout)
+
+3. **Cleanup Completo**
+   - Sempre fechar: `page`, `browser`, `playwright` (nessa ordem)
+
+4. **Performance**
+   - Meta: <10s por scrape
+   - Usar single HTML fetch + BeautifulSoup local parsing
+
+### Arquivos Críticos
+
+- **PLAYWRIGHT_SCRAPER_PATTERN.md** - Template e padrão standardizado (LEITURA OBRIGATÓRIA)
+- **VALIDACAO_MIGRACAO_PLAYWRIGHT.md** - Validação completa da migração
+- **ERROR_137_ANALYSIS.md** - Análise do Exit Code 137 (resolvido)
+- **base_scraper.py** - Classe base (arquitetura Playwright)
+
+### Quando Consultar
+
+- **Antes de migrar qualquer scraper** → Ler `PLAYWRIGHT_SCRAPER_PATTERN.md`
+- **Erro Exit 137** → Verificar se está usando BeautifulSoup pattern
+- **Scraper lento (>10s)** → Verificar múltiplos `await` operations
+- **Container restarting** → Verificar `main.py` imports (apenas scrapers migrados)
+
+### Testing
+
+```bash
+# Test individual scraper
+docker exec invest_scrapers python test_fundamentus.py
+docker exec invest_scrapers python test_bcb.py
+
+# Check container status
+docker logs invest_scrapers --tail 50
+
+# Restart scrapers service
+docker-compose restart scrapers
+```
+
+---
+
 ## Additional Documentation
 
 ### Core Documentation (Raiz do Projeto)
 
+- **README.md** - Overview do projeto, quick start, stack tecnológico, installation guide
 - **ARCHITECTURE.md** - Arquitetura completa, fluxos, onde armazenar novos dados
 - **DATABASE_SCHEMA.md** - Schema completo, relacionamentos, indexes
 - **INSTALL.md** - Instalação completa (Docker, portas, env vars)
@@ -483,6 +572,15 @@ Commit + Atualizar ROADMAP.md
 - **KNOWN-ISSUES.md** - Issues conhecidos (resumo executivo)
 - **IMPLEMENTATION_PLAN.md** - Template de planejamento de fases
 - **VALIDACAO_REGRAS_DOCUMENTACAO_2025-11-27.md** - Compliance de regras
+- **VALIDACAO_DOCUMENTACAO_CLAUDE_CODE.md** - Validação de acessibilidade de docs pelo Claude Code
+
+### Python Scrapers Documentation
+
+- **backend/python-scrapers/PLAYWRIGHT_SCRAPER_PATTERN.md** - Template e padrão standardizado (LEITURA OBRIGATÓRIA)
+- **backend/python-scrapers/VALIDACAO_MIGRACAO_PLAYWRIGHT.md** - Relatório completo de validação
+- **backend/python-scrapers/ERROR_137_ANALYSIS.md** - Análise técnica Exit Code 137 (resolvido)
+- **backend/python-scrapers/MIGRATION_REPORT.md** - Status de migração de todos scrapers
+- **backend/python-scrapers/SELENIUM_TO_PLAYWRIGHT_MIGRATION.md** - Guia de migração
 
 ### Gemini Context Files (Leitura Obrigatória)
 

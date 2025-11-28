@@ -1,3 +1,4 @@
+# MIGRATED TO PLAYWRIGHT - 2025-11-27
 """
 ADVFN Scraper - Market analysis and technical indicators
 Fonte: https://br.advfn.com/
@@ -8,8 +9,6 @@ import pickle
 import re
 from datetime import datetime
 from typing import Dict, Any, Optional
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
 from loguru import logger
 
 from base_scraper import BaseScraper, ScraperResult
@@ -38,15 +37,16 @@ class ADVFNScraper(BaseScraper):
         )
 
     async def initialize(self):
-        """Load Google OAuth cookies"""
+        """Load Google OAuth cookies - Playwright version"""
         if self._initialized:
             return
 
-        if not self.driver:
-            self.driver = self._create_driver()
+        # Call parent initialize to create page
+        await super().initialize()
 
         try:
-            self.driver.get(self.BASE_URL)
+            # Navigate to base URL
+            await self.page.goto(self.BASE_URL, wait_until="load")
             await asyncio.sleep(2)
 
             # Load Google OAuth cookies
@@ -54,14 +54,37 @@ class ADVFNScraper(BaseScraper):
                 with open(self.COOKIES_FILE, 'rb') as f:
                     cookies = pickle.load(f)
 
+                # Convert and filter cookies for ADVFN
+                advfn_cookies = []
                 for cookie in cookies:
                     if 'advfn.com' in cookie.get('domain', ''):
-                        try:
-                            self.driver.add_cookie(cookie)
-                        except Exception as e:
-                            logger.debug(f"Could not add cookie: {e}")
+                        # Playwright cookie format
+                        pw_cookie = {
+                            'name': cookie.get('name'),
+                            'value': cookie.get('value'),
+                            'domain': cookie.get('domain'),
+                            'path': cookie.get('path', '/'),
+                        }
+                        # Optional fields
+                        if 'expires' in cookie:
+                            pw_cookie['expires'] = cookie['expires']
+                        if 'httpOnly' in cookie:
+                            pw_cookie['httpOnly'] = cookie['httpOnly']
+                        if 'secure' in cookie:
+                            pw_cookie['secure'] = cookie['secure']
+                        if 'sameSite' in cookie:
+                            pw_cookie['sameSite'] = cookie['sameSite']
 
-                self.driver.refresh()
+                        advfn_cookies.append(pw_cookie)
+
+                # Add cookies to context
+                if advfn_cookies:
+                    context = self.page.context
+                    await context.add_cookies(advfn_cookies)
+                    logger.debug(f"Added {len(advfn_cookies)} cookies to ADVFN scraper")
+
+                # Reload page with cookies
+                await self.page.reload()
                 await asyncio.sleep(3)
 
             except FileNotFoundError:
@@ -91,11 +114,13 @@ class ADVFNScraper(BaseScraper):
             url = f"{self.BASE_URL}/bolsa-de-valores/bovespa/{ticker_clean}/cotacao"
             logger.info(f"Navigating to {url}")
 
-            self.driver.get(url)
+            # Playwright navigation
+            await self.page.goto(url, wait_until="load")
             await asyncio.sleep(3)
 
             # Check if ticker exists
-            if "não encontrado" in self.driver.page_source.lower() or "not found" in self.driver.page_source.lower():
+            page_content = (await self.page.content()).lower()
+            if "não encontrado" in page_content or "not found" in page_content:
                 return ScraperResult(
                     success=False,
                     error=f"Ticker {ticker} not found on ADVFN",

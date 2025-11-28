@@ -1,7 +1,7 @@
 # Python Scrapers Dockerfile
 FROM python:3.11-slim
 
-# Install system dependencies for Chrome, Selenium, and VNC
+# Install system dependencies for Playwright, Chrome, and VNC
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -48,14 +48,6 @@ RUN wget -q -O /tmp/google-chrome-stable.deb https://dl.google.com/linux/direct/
     && rm /tmp/google-chrome-stable.deb \
     && rm -rf /var/lib/apt/lists/*
 
-# Install ChromeDriver
-RUN CHROMEDRIVER_VERSION=$(curl -sS https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE) && \
-    wget -q -O /tmp/chromedriver-linux64.zip https://storage.googleapis.com/chrome-for-testing-public/$CHROMEDRIVER_VERSION/linux64/chromedriver-linux64.zip && \
-    unzip /tmp/chromedriver-linux64.zip -d /tmp/ && \
-    mv /tmp/chromedriver-linux64/chromedriver /usr/local/bin/ && \
-    rm -rf /tmp/chromedriver-linux64.zip /tmp/chromedriver-linux64 && \
-    chmod +x /usr/local/bin/chromedriver
-
 # Set working directory
 WORKDIR /app
 
@@ -64,6 +56,9 @@ COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Install Playwright browsers (use system Chrome installed above)
+RUN playwright install --with-deps chromium || true
 
 # Copy application code
 COPY . .
