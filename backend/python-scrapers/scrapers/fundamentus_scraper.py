@@ -69,7 +69,9 @@ class FundamentusScraper(BaseScraper):
 
             # Check if ticker exists (Playwright)
             page_source = (await self.page.content()).lower()
-            if "não encontrado" in page_source or "papel não encontrado" in page_source:
+            if ("não encontrado" in page_source or
+                "papel não encontrado" in page_source or
+                "nenhum papel encontrado" in page_source):
                 return ScraperResult(
                     success=False,
                     error=f"Ticker {ticker} not found on Fundamentus",
