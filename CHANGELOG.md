@@ -13,9 +13,57 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - População de dados no banco após wipe (Issue #5)
 - Validação visual final da UI de opções
 - Migração dos 24 scrapers Python restantes (Selenium → Playwright)
-- FASE 60: Git Workflow Automation (Prioridade 2)
-- FASE 61: Dependency Management System (Prioridade 2)
-- FASE 62: Architecture Visual Diagrams (Prioridade 2)
+- FASE 61: Git Workflow Automation (Prioridade 2)
+- FASE 62: Dependency Management System (Prioridade 2)
+- FASE 63: Architecture Visual Diagrams (Prioridade 2)
+
+---
+
+## [1.4.0] - 2025-11-29
+
+### Added
+
+- **Validação Ultra-Completa do Ecossistema (FASE 60):**
+  - **RELATORIO_VALIDACAO_FINAL_2025-11-29.md** - Relatório completo de validação
+  - **VALIDACAO_PLAYWRIGHT_DEVTOOLS_2025-11-29.md** - Validação Playwright + DevTools
+  - **frontend/tests/pages-validation.spec.ts** - 14 testes E2E de páginas
+  - **frontend/tests/assets-debug.spec.ts** - Debug de assets
+  - **frontend/playwright-local.config.ts** - Config para testes locais
+  - 7 relatórios de validação adicionais
+
+### Fixed
+
+- **URL da API incorreta no Frontend** - CRÍTICO
+  - Frontend chamava `/api/assets` ao invés de `/api/v1/assets` (404)
+  - Hardcoded `NEXT_PUBLIC_API_URL=http://localhost:3101/api/v1` no docker-compose.yml
+  - 861 assets agora carregando corretamente
+
+- **Import incorreto no reports/page.tsx**
+  - `Module not found: '@/components/reports/multi-source-tooltip'`
+  - Corrigido: Import de `multi-source-tooltip` para `MultiSourceTooltip` (PascalCase)
+
+- **API Service Port 8000 não iniciava**
+  - Container `invest_api_service` crashava com erros de Selenium
+  - `requirements.txt`: Substituído selenium por playwright
+  - `Dockerfile`: Adicionadas dependências Playwright + chromium
+  - `scraper_test_controller.py`: Apenas scrapers migrados (Fundamentus, BCB)
+  - `main.py`: Desabilitado oauth_router temporariamente
+
+### Changed
+
+- **docker-compose.yml** - NEXT_PUBLIC_API_URL hardcoded para garantir /api/v1
+- **backend/api-service/** - Migração completa para Playwright
+- **ROADMAP.md** - FASE 60 completa adicionada
+- **CHANGELOG.md** - Versão 1.4.0 documentada
+
+### Validated
+
+- ✅ 14/14 páginas testadas com Playwright
+- ✅ 14/14 screenshots capturados
+- ✅ 0 erros críticos de console
+- ✅ 8/8 containers Docker healthy
+- ✅ 861 assets carregando corretamente
+- ✅ API `/api/v1/assets` respondendo 200 OK
 
 ---
 

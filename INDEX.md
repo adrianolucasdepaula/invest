@@ -1,8 +1,8 @@
 # 📚 Índice de Documentação - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-25
-**Versão:** 1.2.1
+**Última Atualização:** 2025-11-29
+**Versão:** 1.4.0
 
 ---
 
@@ -28,7 +28,7 @@
 
 | Arquivo                                                        | Descrição                                         | Status                   |
 | -------------------------------------------------------------- | ------------------------------------------------- | ------------------------ |
-| [ROADMAP.md](ROADMAP.md)                                       | **Histórico completo** (56 fases, 100% completo) | ✅ Atualizado 2025-11-25 |
+| [ROADMAP.md](ROADMAP.md)                                       | **Histórico completo** (60+ fases, 100% completo) | ✅ Atualizado 2025-11-29 |
 | [NEXT_STEPS.md](NEXT_STEPS.md)                                 | Próximos passos planejados                        | ⚠️ Consultar ROADMAP     |
 | [PROXIMO_PASSO_APOS_FASE_30.md](PROXIMO_PASSO_APOS_FASE_30.md) | Decisões pós-FASE 30                              | 📜 Histórico             |
 
@@ -213,13 +213,13 @@ grep -r "MCP Triplo" VALIDACAO_*.md
 
 ---
 
-## 📊 ESTATÍSTICAS (Atualizado 2025-11-24)
+## 📊 ESTATÍSTICAS (Atualizado 2025-11-29)
 
-- **Total de Arquivos .md:** 200+
-- **Fases Concluídas:** 53 (98.1%)
-- **Fase Atual:** 55 (Ticker History Merge)
-- **Validações Documentadas:** 50+
-- **Problemas Resolvidos:** 100+
+- **Total de Arquivos .md:** 220+
+- **Fases Concluídas:** 60 (100%)
+- **Fase Atual:** 60 (Validação E2E + Fixes API)
+- **Validações Documentadas:** 55+
+- **Problemas Resolvidos:** 110+
 - **MCPs Integrados:** 8
 - **Sub-Agents:** 6
 
@@ -236,6 +236,6 @@ grep -r "MCP Triplo" VALIDACAO_*.md
 
 ---
 
-**Mantenedor:** Claude Code (Sonnet 4.5) + Google Gemini AI  
-**Última Atualização:** 2025-11-24 10:58  
+**Mantenedor:** Claude Code (Opus 4.5) + Google Gemini AI
+**Última Atualização:** 2025-11-29 12:00
 **Próxima Revisão:** A cada fase concluída

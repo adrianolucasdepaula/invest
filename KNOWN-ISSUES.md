@@ -1,9 +1,9 @@
 # 🔍 KNOWN ISSUES - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-28
-**Versão:** 1.0.0
-**Mantenedor:** Claude Code (Sonnet 4.5)
+**Última Atualização:** 2025-11-29
+**Versão:** 1.1.0
+**Mantenedor:** Claude Code (Opus 4.5)
 
 ---
 

@@ -423,7 +423,7 @@ Commit + Atualizar ROADMAP.md
 **Arquivo:** `.gemini/context/known-issues.md`
 
 **Conteúdo:**
-- 8 issues documentados com root cause
+- 9 issues documentados com root cause
 - Soluções aplicadas
 - Lições aprendidas
 - Procedimentos de recuperação
@@ -566,7 +566,7 @@ docker-compose restart scrapers
 - **DATABASE_SCHEMA.md** - Schema completo, relacionamentos, indexes
 - **INSTALL.md** - Instalação completa (Docker, portas, env vars)
 - **TROUBLESHOOTING.md** - 16+ problemas comuns com soluções
-- **ROADMAP.md** - Histórico de 55+ fases completas
+- **ROADMAP.md** - Histórico de 60+ fases completas
 - **CHANGELOG.md** - Mudanças notáveis versionadas
 - **INDEX.md** - Índice mestre de toda documentação (200+ arquivos)
 - **KNOWN-ISSUES.md** - Issues conhecidos (resumo executivo)
