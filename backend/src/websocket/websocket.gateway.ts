@@ -8,11 +8,12 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger, OnModuleDestroy } from '@nestjs/common';
+import { Logger, OnModuleDestroy, UsePipes, ValidationPipe } from '@nestjs/common';
+import { SubscribeDto, SubscriptionType, UnsubscribeDto } from './dto/subscribe.dto';
 
 interface SubscriptionData {
   tickers: string[];
-  types: ('prices' | 'analysis' | 'reports' | 'portfolio')[];
+  types: SubscriptionType[];
 }
 
 @WebSocketGateway({
@@ -89,60 +90,87 @@ export class AppWebSocketGateway
   }
 
   @SubscribeMessage('subscribe')
-  handleSubscribe(@MessageBody() data: SubscriptionData, @ConnectedSocket() client: Socket) {
-    this.userSubscriptions.set(client.id, data);
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  handleSubscribe(@MessageBody() data: SubscribeDto, @ConnectedSocket() client: Socket) {
+    // Guard: Validar arrays não vazios (já validado pelo DTO, mas double-check por segurança)
+    if (!data.tickers || !data.types || data.tickers.length === 0 || data.types.length === 0) {
+      return {
+        event: 'error',
+        data: {
+          success: false,
+          message: 'tickers and types are required and cannot be empty',
+        },
+      };
+    }
+
+    // Sanitize tickers (uppercase, trim)
+    const sanitizedTickers = data.tickers.map((ticker) => ticker.trim().toUpperCase());
+
+    const subscriptionData: SubscriptionData = {
+      tickers: sanitizedTickers,
+      types: data.types,
+    };
+
+    this.userSubscriptions.set(client.id, subscriptionData);
 
     // Join rooms para broadcast eficiente O(1)
-    data.tickers.forEach((ticker) => {
-      data.types.forEach((type) => {
+    subscriptionData.tickers.forEach((ticker) => {
+      subscriptionData.types.forEach((type) => {
         const roomName = `${ticker}:${type}`;
         client.join(roomName);
       });
     });
 
-    this.logger.log(`Cliente ${client.id} inscrito em: ${JSON.stringify(data)}`);
+    this.logger.log(`Cliente ${client.id} inscrito em: ${JSON.stringify(subscriptionData)}`);
 
     return {
       event: 'subscribed',
       data: {
         success: true,
-        tickers: data.tickers,
-        types: data.types,
+        tickers: subscriptionData.tickers,
+        types: subscriptionData.types,
       },
     };
   }
 
   @SubscribeMessage('unsubscribe')
-  handleUnsubscribe(
-    @MessageBody() data: { tickers?: string[]; types?: string[] },
-    @ConnectedSocket() client: Socket,
-  ) {
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  handleUnsubscribe(@MessageBody() data: UnsubscribeDto, @ConnectedSocket() client: Socket) {
     const currentSub = this.userSubscriptions.get(client.id);
 
-    if (currentSub) {
-      // Leave rooms das subscrições removidas
-      if (data.tickers) {
-        data.tickers.forEach((ticker) => {
-          currentSub.types.forEach((type) => {
-            const roomName = `${ticker}:${type}`;
-            client.leave(roomName);
-          });
-        });
-        currentSub.tickers = currentSub.tickers.filter((t) => !data.tickers.includes(t));
-      }
-      if (data.types) {
-        const typesToRemove = data.types as ('prices' | 'analysis' | 'reports' | 'portfolio')[];
-        typesToRemove.forEach((type) => {
-          currentSub.tickers.forEach((ticker) => {
-            const roomName = `${ticker}:${type}`;
-            client.leave(roomName);
-          });
-        });
-        currentSub.types = currentSub.types.filter((t) => !typesToRemove.includes(t));
-      }
-
-      this.userSubscriptions.set(client.id, currentSub);
+    if (!currentSub) {
+      return {
+        event: 'error',
+        data: {
+          success: false,
+          message: 'No active subscription found',
+        },
+      };
     }
+
+    // Leave rooms das subscrições removidas
+    if (data.tickers && data.tickers.length > 0) {
+      const sanitizedTickers = data.tickers.map((ticker) => ticker.trim().toUpperCase());
+      sanitizedTickers.forEach((ticker) => {
+        currentSub.types.forEach((type) => {
+          const roomName = `${ticker}:${type}`;
+          client.leave(roomName);
+        });
+      });
+      currentSub.tickers = currentSub.tickers.filter((t) => !sanitizedTickers.includes(t));
+    }
+
+    if (data.types && data.types.length > 0) {
+      data.types.forEach((type) => {
+        currentSub.tickers.forEach((ticker) => {
+          const roomName = `${ticker}:${type}`;
+          client.leave(roomName);
+        });
+      });
+      currentSub.types = currentSub.types.filter((t) => !data.types.includes(t));
+    }
+
+    this.userSubscriptions.set(client.id, currentSub);
 
     return {
       event: 'unsubscribed',

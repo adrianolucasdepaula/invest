@@ -17,7 +17,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "python-scrapers"))
 from routes.scraper_test_routes import router as scraper_router
 from routes.config_routes import router as config_router
 from routes.job_routes import router as job_router
-from routes.oauth_routes import router as oauth_router
+# DISABLED: OAuth routes use Selenium (needs Playwright migration)
+# from routes.oauth_routes import router as oauth_router
 # Temporarily disabled - requires analysis-service volume mount
 # from routes.analysis_routes import router as analysis_router
 
@@ -131,10 +132,10 @@ app.include_router(scraper_router)
 app.include_router(config_router)
 app.include_router(job_router)
 
-# Debug: Log OAuth router details
-logger.info(f"🔍 OAuth Router: prefix={oauth_router.prefix}, routes={len(oauth_router.routes)}")
-app.include_router(oauth_router)
-logger.success("✓ OAuth router included")
+# DISABLED: OAuth routes use Selenium (needs Playwright migration)
+# logger.info(f"🔍 OAuth Router: prefix={oauth_router.prefix}, routes={len(oauth_router.routes)}")
+# app.include_router(oauth_router)
+# logger.success("✓ OAuth router included")
 
 # Temporarily disabled - requires analysis-service volume mount
 # app.include_router(analysis_router)

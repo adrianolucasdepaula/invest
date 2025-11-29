@@ -1,34 +1,46 @@
 # Dockerfile for B3 Scraper Test API
+# Updated 2025-11-29: Migrated from Selenium to Playwright
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies for Playwright
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     unzip \
     curl \
     ca-certificates \
+    # Playwright dependencies
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libdbus-1-3 \
+    libxkbcommon0 \
+    libatspi2.0-0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    libpango-1.0-0 \
+    libcairo2 \
+    # Font packages (fallbacks for ttf-unifont and ttf-ubuntu-font-family)
+    fonts-unifont \
+    fonts-liberation \
+    fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
-
-# Install Chrome (for scrapers that need it)
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg \
-    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
-    && apt-get update && apt-get install -y google-chrome-stable \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install ChromeDriver
-RUN CHROMEDRIVER_VERSION=$(curl -sS https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE) && \
-    wget -q -O /tmp/chromedriver-linux64.zip https://storage.googleapis.com/chrome-for-testing-public/$CHROMEDRIVER_VERSION/linux64/chromedriver-linux64.zip && \
-    unzip /tmp/chromedriver-linux64.zip -d /tmp/ && \
-    mv /tmp/chromedriver-linux64/chromedriver /usr/local/bin/ && \
-    rm -rf /tmp/chromedriver-linux64.zip /tmp/chromedriver-linux64 && \
-    chmod +x /usr/local/bin/chromedriver
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Install Playwright browsers (Chromium only, without --with-deps since we installed deps manually)
+RUN playwright install chromium
 
 # Copy application code
 COPY . .

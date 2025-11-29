@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { NewAnalysisDialog } from '@/components/analysis';
 import { AddPositionDialog } from '@/components/portfolio/add-position-dialog';
-import { MultiSourceTooltip } from '@/components/reports/multi-source-tooltip';
+import { MultiSourceTooltip } from '@/components/reports/MultiSourceTooltip';
 import {
   Search,
   TrendingUp,

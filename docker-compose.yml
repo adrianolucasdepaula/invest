@@ -392,8 +392,8 @@ services:
       # App Environment
       - NODE_ENV=${NODE_ENV:-development}
 
-      # API Configuration
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3101/api/v1}
+      # API Configuration - Hardcoded to ensure /api/v1 is used
+      - NEXT_PUBLIC_API_URL=http://localhost:3101/api/v1
       - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-http://localhost:3101}
       - NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV:-development}
 
@@ -433,11 +433,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: 1G
+          cpus: '2.0'
+          memory: 2G
         reservations:
           cpus: '0.5'
-          memory: 512M
+          memory: 1G
     command: npm run dev
 
   # Nginx reverse proxy (optional, for production)

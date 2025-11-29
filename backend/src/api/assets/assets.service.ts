@@ -57,7 +57,15 @@ export class AssetsService {
       .orderBy('asset.ticker', 'ASC');
 
     if (type) {
-      qb.where('asset.type = :type', { type });
+      // Normalize type to lowercase to match PostgreSQL enum values
+      const normalizedType = type.toLowerCase();
+      const validTypes = ['stock', 'fii', 'etf', 'bdr', 'option', 'future', 'crypto', 'fixed_income'];
+      if (!validTypes.includes(normalizedType)) {
+        this.logger.warn(`Invalid asset type requested: ${type}. Valid types: ${validTypes.join(', ')}`);
+        // Return empty array for invalid type instead of database error
+        return [];
+      }
+      qb.where('asset.type = :type', { type: normalizedType });
     }
 
     const assets = await qb.getRawAndEntities();

@@ -13,53 +13,27 @@ from loguru import logger
 # Add python-scrapers to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "python-scrapers"))
 
+# Import ONLY Playwright-migrated scrapers (as of 2025-11-29)
+# Other scrapers are temporarily disabled pending Playwright migration
 from scrapers import (
-    # Fundamental Analysis
-    StatusInvestScraper,
+    # ✅ MIGRATED TO PLAYWRIGHT
     FundamentusScraper,
-    InvestsiteScraper,
-    FundamenteiScraper,
-    Investidor10Scraper,
-    # Market Analysis
-    InvestingScraper,
-    ADVFNScraper,
-    GoogleFinanceScraper,
-    TradingViewScraper,
-    # Official Data
-    B3Scraper,
     BCBScraper,
-    # Insider Trading
-    GriffinScraper,
-    # Crypto
-    CoinMarketCapScraper,
-    # Options
-    OpcoesNetScraper,
-    # AI Assistants
-    ChatGPTScraper,
-    GeminiScraper,
-    DeepSeekScraper,
-    ClaudeScraper,
-    GrokScraper,
-    # News
-    BloombergScraper,
-    GoogleNewsScraper,
-    InvestingNewsScraper,
-    ValorScraper,
-    ExameScraper,
-    InfoMoneyScraper,
-    # Institutional Reports
-    EstadaoScraper,
-    MaisRetornoScraper,
 )
-from cookie_manager import cookie_manager
+
+# DISABLED: cookie_manager uses Selenium (needs Playwright migration)
+# from cookie_manager import cookie_manager
+cookie_manager = None  # Placeholder until migration
 
 
 class ScraperTestController:
     """Controller for scraper testing operations"""
 
     # Scraper registry with metadata
+    # TEMPORARY: Only Playwright-migrated scrapers (2025-11-29)
+    # Other 24 scrapers pending migration
     SCRAPERS_REGISTRY = {
-        # Fundamental Analysis
+        # ✅ MIGRATED TO PLAYWRIGHT - Fundamental Analysis
         "FUNDAMENTUS": {
             "class": FundamentusScraper,
             "name": "Fundamentus",
@@ -68,250 +42,29 @@ class ScraperTestController:
             "category": "fundamental_analysis",
             "description": "Dados fundamentalistas públicos",
             "url": "https://www.fundamentus.com.br/",
+            "status": "active",
         },
-        "INVESTSITE": {
-            "class": InvestsiteScraper,
-            "name": "Investsite",
-            "source": "INVESTSITE",
-            "requires_login": False,
-            "category": "fundamental_analysis",
-            "description": "Análise fundamentalista detalhada",
-            "url": "https://www.investsite.com.br/",
-        },
-        "STATUSINVEST": {
-            "class": StatusInvestScraper,
-            "name": "StatusInvest",
-            "source": "STATUSINVEST",
-            "requires_login": False,
-            "category": "fundamental_analysis",
-            "description": "Análise fundamentalista e valuation",
-            "url": "https://statusinvest.com.br/",
-        },
-        "FUNDAMENTEI": {
-            "class": FundamenteiScraper,
-            "name": "Fundamentei",
-            "source": "FUNDAMENTEI",
-            "requires_login": True,
-            "category": "fundamental_analysis",
-            "description": "Análise fundamentalista premium",
-            "url": "https://fundamentei.com/",
-        },
-        "INVESTIDOR10": {
-            "class": Investidor10Scraper,
-            "name": "Investidor10",
-            "source": "INVESTIDOR10",
-            "requires_login": True,
-            "category": "fundamental_analysis",
-            "description": "Análise fundamentalista completa",
-            "url": "https://investidor10.com.br/",
-        },
-        # Market Analysis
-        "INVESTING": {
-            "class": InvestingScraper,
-            "name": "Investing.com",
-            "source": "INVESTING",
-            "requires_login": True,
-            "category": "market_analysis",
-            "description": "Análise de mercado global",
-            "url": "https://br.investing.com/",
-        },
-        "ADVFN": {
-            "class": ADVFNScraper,
-            "name": "ADVFN",
-            "source": "ADVFN",
-            "requires_login": True,
-            "category": "market_analysis",
-            "description": "Análise de mercado e cotações",
-            "url": "https://br.advfn.com/",
-        },
-        "GOOGLEFINANCE": {
-            "class": GoogleFinanceScraper,
-            "name": "Google Finance",
-            "source": "GOOGLEFINANCE",
-            "requires_login": True,
-            "category": "market_analysis",
-            "description": "Dados financeiros do Google",
-            "url": "https://www.google.com/finance/",
-        },
-        "TRADINGVIEW": {
-            "class": TradingViewScraper,
-            "name": "TradingView",
-            "source": "TRADINGVIEW",
-            "requires_login": True,
-            "category": "technical_analysis",
-            "description": "Análise técnica e gráficos",
-            "url": "https://br.tradingview.com/",
-        },
-        # Official Data
-        "B3": {
-            "class": B3Scraper,
-            "name": "B3",
-            "source": "B3",
-            "requires_login": False,
-            "category": "official_data",
-            "description": "Dados oficiais da bolsa brasileira",
-            "url": "https://www.b3.com.br/",
-        },
+        # ✅ MIGRATED TO PLAYWRIGHT - Official Data
         "BCB": {
             "class": BCBScraper,
             "name": "Banco Central do Brasil",
             "source": "BCB",
             "requires_login": False,
             "category": "official_data",
-            "description": "Dados macroeconômicos oficiais",
+            "description": "Dados macroeconômicos oficiais (SELIC, IPCA, CDI)",
             "url": "https://www.bcb.gov.br/",
-        },
-        # Insider Trading
-        "GRIFFIN": {
-            "class": GriffinScraper,
-            "name": "Griffin",
-            "source": "GRIFFIN",
-            "requires_login": False,
-            "category": "insider_trading",
-            "description": "Movimentações de insiders",
-            "url": "https://griffin.app.br/",
-        },
-        # Crypto
-        "COINMARKETCAP": {
-            "class": CoinMarketCapScraper,
-            "name": "CoinMarketCap",
-            "source": "COINMARKETCAP",
-            "requires_login": False,
-            "category": "crypto",
-            "description": "Dados de criptomoedas",
-            "url": "https://coinmarketcap.com/",
-        },
-        # Options
-        "OPCOES": {
-            "class": OpcoesNetScraper,
-            "name": "Opcoes.net.br",
-            "source": "OPCOES",
-            "requires_login": True,
-            "category": "options",
-            "description": "Options chain e Greeks",
-            "url": "https://opcoes.net.br/",
-        },
-        # AI Assistants
-        "CHATGPT": {
-            "class": ChatGPTScraper,
-            "name": "ChatGPT",
-            "source": "CHATGPT",
-            "requires_login": True,
-            "category": "ai_analysis",
-            "description": "Análise via ChatGPT",
-            "url": "https://chatgpt.com/",
-        },
-        "GEMINI": {
-            "class": GeminiScraper,
-            "name": "Gemini",
-            "source": "GEMINI",
-            "requires_login": True,
-            "category": "ai_analysis",
-            "description": "Análise via Google Gemini",
-            "url": "https://gemini.google.com/",
-        },
-        "DEEPSEEK": {
-            "class": DeepSeekScraper,
-            "name": "DeepSeek",
-            "source": "DEEPSEEK",
-            "requires_login": True,
-            "category": "ai_analysis",
-            "description": "Análise via DeepSeek",
-            "url": "https://www.deepseek.com/",
-        },
-        "CLAUDE": {
-            "class": ClaudeScraper,
-            "name": "Claude",
-            "source": "CLAUDE",
-            "requires_login": True,
-            "category": "ai_analysis",
-            "description": "Análise via Claude AI",
-            "url": "https://claude.ai/",
-        },
-        "GROK": {
-            "class": GrokScraper,
-            "name": "Grok",
-            "source": "GROK",
-            "requires_login": True,
-            "category": "ai_analysis",
-            "description": "Análise via Grok",
-            "url": "https://grok.com/",
-        },
-        # News
-        "BLOOMBERG": {
-            "class": BloombergScraper,
-            "name": "Bloomberg Línea",
-            "source": "BLOOMBERG",
-            "requires_login": False,
-            "category": "news",
-            "description": "Notícias financeiras Bloomberg",
-            "url": "https://www.bloomberglinea.com.br/",
-        },
-        "GOOGLENEWS": {
-            "class": GoogleNewsScraper,
-            "name": "Google News",
-            "source": "GOOGLENEWS",
-            "requires_login": True,
-            "category": "news",
-            "description": "Notícias do Google",
-            "url": "https://news.google.com/",
-        },
-        "INVESTING_NEWS": {
-            "class": InvestingNewsScraper,
-            "name": "Investing News",
-            "source": "INVESTING_NEWS",
-            "requires_login": True,
-            "category": "news",
-            "description": "Notícias do Investing.com",
-            "url": "https://br.investing.com/news/",
-        },
-        "VALOR": {
-            "class": ValorScraper,
-            "name": "Valor Econômico",
-            "source": "VALOR",
-            "requires_login": True,
-            "category": "news",
-            "description": "Notícias do Valor Econômico",
-            "url": "https://valor.globo.com/",
-        },
-        "EXAME": {
-            "class": ExameScraper,
-            "name": "Exame",
-            "source": "EXAME",
-            "requires_login": True,
-            "category": "news",
-            "description": "Notícias da Exame",
-            "url": "https://exame.com/",
-        },
-        "INFOMONEY": {
-            "class": InfoMoneyScraper,
-            "name": "InfoMoney",
-            "source": "INFOMONEY",
-            "requires_login": True,
-            "category": "news",
-            "description": "Notícias do InfoMoney",
-            "url": "https://www.infomoney.com.br/",
-        },
-        # Institutional Reports
-        "ESTADAO": {
-            "class": EstadaoScraper,
-            "name": "Estadão Investidor",
-            "source": "ESTADAO",
-            "requires_login": True,
-            "category": "institutional_reports",
-            "description": "Análises do Estadão",
-            "url": "https://einvestidor.estadao.com.br/",
-        },
-        "MAISRETORNO": {
-            "class": MaisRetornoScraper,
-            "name": "Mais Retorno",
-            "source": "MAISRETORNO",
-            "requires_login": True,
-            "category": "institutional_reports",
-            "description": "Análises e educação financeira",
-            "url": "https://maisretorno.com/",
+            "status": "active",
         },
     }
+
+    # ⏸️ DISABLED SCRAPERS - Pending Playwright migration
+    # 24 scrapers waiting for migration:
+    # - StatusInvest, Investsite, Fundamentei, Investidor10
+    # - Investing.com, ADVFN, GoogleFinance, TradingView
+    # - B3, Griffin, CoinMarketCap, Opcoes.net
+    # - ChatGPT, Gemini, DeepSeek, Claude, Grok
+    # - Bloomberg, GoogleNews, InvestingNews, Valor, Exame, InfoMoney
+    # - Estadão, MaisRetorno
 
     def __init__(self):
         """Initialize controller"""
@@ -521,42 +274,24 @@ class ScraperTestController:
             "unhealthy": 0,
             "unknown": 0,
             "scrapers": [],
+            "note": "Cookie manager disabled - pending Playwright migration",
         }
 
-        # Check cookies status first
-        cookies_status = await cookie_manager.check_cookies_status()
-
-        # Check each scraper
+        # Check each scraper (simplified - cookie_manager disabled)
         for scraper_id, metadata in self.SCRAPERS_REGISTRY.items():
             scraper_health = {
                 "id": scraper_id,
                 "name": metadata["name"],
                 "category": metadata["category"],
                 "requires_login": metadata["requires_login"],
-                "status": "unknown",
-                "message": "",
+                "status": "healthy" if not metadata["requires_login"] else "unknown",
+                "message": "Playwright-migrated scraper" if metadata.get("status") == "active" else "Pending migration",
             }
 
-            # Public scrapers - assume healthy (could ping URL)
-            if not metadata["requires_login"]:
-                scraper_health["status"] = "healthy"
-                scraper_health["message"] = "Public scraper, no authentication required"
+            if metadata.get("status") == "active":
                 health_results["healthy"] += 1
-
-            # OAuth scrapers - check cookies
-            elif metadata["requires_login"]:
-                if not cookies_status["exists"]:
-                    scraper_health["status"] = "unhealthy"
-                    scraper_health["message"] = "Cookies not found"
-                    health_results["unhealthy"] += 1
-                elif cookies_status["needs_renewal"]:
-                    scraper_health["status"] = "warning"
-                    scraper_health["message"] = f"Cookies need renewal (age: {cookies_status['age_days']} days)"
-                    health_results["unhealthy"] += 1
-                else:
-                    scraper_health["status"] = "healthy"
-                    scraper_health["message"] = f"Cookies valid ({cookies_status['expires_in_days']} days left)"
-                    health_results["healthy"] += 1
+            else:
+                health_results["unknown"] += 1
 
             health_results["scrapers"].append(scraper_health)
 
@@ -569,7 +304,7 @@ class ScraperTestController:
         elif healthy_pct >= 50:
             health_results["overall_health"] = "warning"
         else:
-            health_results["overall_health"] = "unhealthy"
+            health_results["overall_health"] = "partial"
 
         health_results["healthy_percentage"] = round(healthy_pct, 1)
         health_results["execution_time"] = round(time.time() - start_time, 2)
@@ -579,41 +314,19 @@ class ScraperTestController:
     async def get_cookies_status(self) -> Dict[str, Any]:
         """
         Get Google OAuth cookies status
+        DISABLED: cookie_manager pending Playwright migration
 
         Returns:
             Dict with cookies status
         """
-        try:
-            status = await cookie_manager.check_cookies_status()
-
-            # Add helpful information
-            if not status["exists"]:
-                status["action_required"] = "Run script to save Google cookies"
-                status["severity"] = "critical"
-            elif status["needs_renewal"]:
-                status["action_required"] = "Renew Google cookies soon"
-                status["severity"] = "warning"
-            elif status.get("expires_in_days", 0) <= 2:
-                status["action_required"] = "Cookies expire soon, plan renewal"
-                status["severity"] = "warning"
-            else:
-                status["action_required"] = "None - cookies are valid"
-                status["severity"] = "ok"
-
-            # Add renewal instructions
-            status["renewal_command"] = "docker exec -it invest_scrapers python scripts/save_google_cookies.py"
-
-            return status
-
-        except Exception as e:
-            logger.error(f"Error checking cookies status: {e}")
-            return {
-                "exists": False,
-                "valid": False,
-                "error": str(e),
-                "severity": "critical",
-                "action_required": "Fix error and save Google cookies",
-            }
+        return {
+            "exists": False,
+            "valid": False,
+            "disabled": True,
+            "message": "Cookie manager disabled - pending Playwright migration",
+            "severity": "info",
+            "action_required": "Wait for Playwright migration of cookie_manager.py",
+        }
 
 
 # Global instance
