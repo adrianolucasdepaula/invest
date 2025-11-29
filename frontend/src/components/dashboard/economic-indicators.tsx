@@ -11,8 +11,17 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAllLatestIndicators } from '@/lib/hooks/use-economic-indicators';
+
+// Hook para evitar hydration mismatch com renderização condicional
+function useHydrated() {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+  return hydrated;
+}
 import { EconomicIndicatorCard } from './economic-indicator-card';
 import {
   TrendingUp,
@@ -32,6 +41,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 
 export function EconomicIndicators() {
+  const hydrated = useHydrated();
   const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
 
@@ -78,7 +88,8 @@ export function EconomicIndicators() {
     }
   };
 
-  if (isError) {
+  // Mostrar erro apenas após hidratação para evitar hydration mismatch
+  if (hydrated && isError) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -107,6 +118,9 @@ export function EconomicIndicators() {
     );
   }
 
+  // Tratar !hydrated como loading para renderização consistente server/client
+  const showLoading = !hydrated || isLoading;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -118,7 +132,7 @@ export function EconomicIndicators() {
         </div>
         <Button
           onClick={handleSync}
-          disabled={isSyncing || isLoading}
+          disabled={isSyncing || showLoading}
           variant="outline"
           size="sm"
         >
@@ -128,7 +142,7 @@ export function EconomicIndicators() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {isLoading ? (
+        {showLoading ? (
           <>
             {Array(8)
               .fill(0)

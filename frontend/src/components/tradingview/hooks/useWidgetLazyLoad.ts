@@ -41,7 +41,7 @@ export interface UseWidgetLazyLoadOptions {
 
 export interface UseWidgetLazyLoadReturn {
   /** Ref to attach to widget container */
-  ref: React.RefObject<HTMLDivElement>;
+  ref: React.RefObject<HTMLDivElement | null>;
   /** Is widget visible */
   isVisible: boolean;
   /** Has widget been loaded at least once */

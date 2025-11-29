@@ -1,120 +1,147 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  /* B3 AI Analysis Platform - Financial Design System */
-  :root {
-    /* Base colors - Clean and professional */
-    --background: 0 0% 100%;
-    --foreground: 215 25% 15%;
+/* B3 AI Analysis Platform - Financial Design System */
+/* Tailwind CSS v4 Theme Configuration */
 
-    /* Cards with subtle elevation */
-    --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+@theme {
+  /* Colors for utilities like bg-background, text-foreground, etc */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
 
-    /* Popovers and dialogs */
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
-
-    /* Primary - Financial blue (trust, stability) */
-    --primary: 213 94% 42%;  /* Deep blue */
-    --primary-foreground: 0 0% 100%;
-
-    /* Secondary - Neutral gray */
-    --secondary: 210 12% 95%;
-    --secondary-foreground: 215 25% 20%;
-
-    /* Muted - Subtle backgrounds */
-    --muted: 210 12% 97%;
-    --muted-foreground: 215 10% 50%;
-
-    /* Accent - Premium gold/amber */
-    --accent: 42 87% 55%;  /* Gold accent for premium features */
-    --accent-foreground: 215 25% 15%;
-
-    /* Destructive - Financial red (losses, danger) */
-    --destructive: 0 84% 52%;  /* Vivid red */
-    --destructive-foreground: 0 0% 100%;
-
-    /* Success - Financial green (gains, profit) */
-    --success: 145 75% 38%;  /* Vibrant green */
-    --success-foreground: 0 0% 100%;
-
-    /* Warning - Attention yellow */
-    --warning: 38 92% 50%;  /* Amber warning */
-    --warning-foreground: 215 25% 15%;
-
-    /* Borders and inputs */
-    --border: 214 20% 88%;
-    --input: 214 20% 92%;
-    --ring: 213 94% 42%;
-
-    /* Border radius - Slightly rounded for modern look */
-    --radius: 0.625rem;  /* 10px */
-
-    /* Chart colors for data visualization */
-    --chart-1: 213 94% 42%;  /* Blue */
-    --chart-2: 145 75% 38%;  /* Green */
-    --chart-3: 42 87% 55%;   /* Gold */
-    --chart-4: 0 84% 52%;    /* Red */
-    --chart-5: 271 81% 56%;  /* Purple */
-  }
-
-  .dark {
-    /* Dark mode - Professional dark theme for trading */
-    --background: 215 28% 10%;
-    --foreground: 210 12% 95%;
-
-    --card: 215 25% 12%;
-    --card-foreground: 210 12% 95%;
-
-    --popover: 215 28% 10%;
-    --popover-foreground: 210 12% 95%;
-
-    /* Primary - Brighter blue for dark mode */
-    --primary: 213 90% 58%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 215 20% 18%;
-    --secondary-foreground: 210 12% 90%;
-
-    --muted: 215 22% 16%;
-    --muted-foreground: 215 10% 60%;
-
-    /* Accent - Gold stands out in dark */
-    --accent: 42 87% 55%;
-    --accent-foreground: 215 28% 10%;
-
-    /* Destructive - Softer red for dark mode */
-    --destructive: 0 75% 55%;
-    --destructive-foreground: 0 0% 100%;
-
-    /* Success - Vibrant green for dark mode */
-    --success: 145 70% 45%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 215 28% 10%;
-
-    --border: 215 20% 22%;
-    --input: 215 20% 22%;
-    --ring: 213 90% 58%;
-
-    /* Chart colors adjusted for dark mode */
-    --chart-1: 213 90% 58%;
-    --chart-2: 145 70% 45%;
-    --chart-3: 42 87% 55%;
-    --chart-4: 0 75% 55%;
-    --chart-5: 271 81% 65%;
-  }
+  /* Border radius */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+/* CSS Variables - Light Mode */
+:root {
+  /* Base colors - Clean and professional */
+  --background: 0 0% 100%;
+  --foreground: 215 25% 15%;
+
+  /* Cards with subtle elevation */
+  --card: 0 0% 100%;
+  --card-foreground: 215 25% 15%;
+
+  /* Popovers and dialogs */
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 25% 15%;
+
+  /* Primary - Financial blue (trust, stability) */
+  --primary: 213 94% 42%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Secondary - Neutral gray */
+  --secondary: 210 12% 95%;
+  --secondary-foreground: 215 25% 20%;
+
+  /* Muted - Subtle backgrounds */
+  --muted: 210 12% 97%;
+  --muted-foreground: 215 10% 50%;
+
+  /* Accent - Premium gold/amber */
+  --accent: 42 87% 55%;
+  --accent-foreground: 215 25% 15%;
+
+  /* Destructive - Financial red (losses, danger) */
+  --destructive: 0 84% 52%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* Success - Financial green (gains, profit) */
+  --success: 145 75% 38%;
+  --success-foreground: 0 0% 100%;
+
+  /* Warning - Attention yellow */
+  --warning: 38 92% 50%;
+  --warning-foreground: 215 25% 15%;
+
+  /* Borders and inputs */
+  --border: 214 20% 88%;
+  --input: 214 20% 92%;
+  --ring: 213 94% 42%;
+
+  /* Border radius */
+  --radius: 0.625rem;
+
+  /* Chart colors */
+  --chart-1: 213 94% 42%;
+  --chart-2: 145 75% 38%;
+  --chart-3: 42 87% 55%;
+  --chart-4: 0 84% 52%;
+  --chart-5: 271 81% 56%;
+}
+
+/* CSS Variables - Dark Mode */
+.dark {
+  --background: 215 28% 10%;
+  --foreground: 210 12% 95%;
+
+  --card: 215 25% 12%;
+  --card-foreground: 210 12% 95%;
+
+  --popover: 215 28% 10%;
+  --popover-foreground: 210 12% 95%;
+
+  --primary: 213 90% 58%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 215 20% 18%;
+  --secondary-foreground: 210 12% 90%;
+
+  --muted: 215 22% 16%;
+  --muted-foreground: 215 10% 60%;
+
+  --accent: 42 87% 55%;
+  --accent-foreground: 215 28% 10%;
+
+  --destructive: 0 75% 55%;
+  --destructive-foreground: 0 0% 100%;
+
+  --success: 145 70% 45%;
+  --success-foreground: 0 0% 100%;
+
+  --warning: 38 92% 50%;
+  --warning-foreground: 215 28% 10%;
+
+  --border: 215 20% 22%;
+  --input: 215 20% 22%;
+  --ring: 213 90% 58%;
+
+  --chart-1: 213 90% 58%;
+  --chart-2: 145 70% 45%;
+  --chart-3: 42 87% 55%;
+  --chart-4: 0 75% 55%;
+  --chart-5: 271 81% 65%;
+}
+
+/* Base layer styles */
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
 }

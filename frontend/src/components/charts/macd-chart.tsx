@@ -9,6 +9,8 @@ import {
   LineData,
   HistogramData,
   Time,
+  LineSeries,
+  HistogramSeries,
 } from 'lightweight-charts';
 
 interface MacdChartProps {
@@ -63,7 +65,7 @@ export const MacdChart = forwardRef<any, MacdChartProps>(
       );
 
       // MACD Histogram (verde/vermelho)
-      const histogramSeries = chart.addHistogramSeries({
+      const histogramSeries = chart.addSeries(HistogramSeries, {
         priceFormat: {
           type: 'price',
           precision: 4,
@@ -80,7 +82,7 @@ export const MacdChart = forwardRef<any, MacdChartProps>(
       histogramSeries.setData(histogramData);
 
       // MACD Line (azul)
-      const macdLineSeries = chart.addLineSeries({
+      const macdLineSeries = chart.addSeries(LineSeries, {
         color: '#3b82f6', // blue-500
         lineWidth: 2,
         title: 'MACD',
@@ -94,7 +96,7 @@ export const MacdChart = forwardRef<any, MacdChartProps>(
       macdLineSeries.setData(macdLineData);
 
       // Signal Line (laranja)
-      const signalSeries = chart.addLineSeries({
+      const signalSeries = chart.addSeries(LineSeries, {
         color: '#f97316', // orange-500
         lineWidth: 2,
         title: 'Signal',

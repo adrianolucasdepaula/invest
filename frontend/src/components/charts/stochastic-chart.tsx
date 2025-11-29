@@ -8,6 +8,7 @@ import {
   ISeriesApi,
   LineData,
   Time,
+  LineSeries,
 } from 'lightweight-charts';
 
 interface StochasticChartProps {
@@ -61,7 +62,7 @@ export const StochasticChart = forwardRef<any, StochasticChartProps>(
       );
 
       // %K Line (azul)
-      const kSeries = chart.addLineSeries({
+      const kSeries = chart.addSeries(LineSeries, {
         color: '#3b82f6', // blue-500
         lineWidth: 2,
         title: '%K',
@@ -75,7 +76,7 @@ export const StochasticChart = forwardRef<any, StochasticChartProps>(
       kSeries.setData(kData);
 
       // %D Line (laranja)
-      const dSeries = chart.addLineSeries({
+      const dSeries = chart.addSeries(LineSeries, {
         color: '#f97316', // orange-500
         lineWidth: 2,
         title: '%D',
@@ -89,7 +90,7 @@ export const StochasticChart = forwardRef<any, StochasticChartProps>(
       dSeries.setData(dData);
 
       // Add overbought/oversold lines (80 and 20)
-      const overboughtSeries = chart.addLineSeries({
+      const overboughtSeries = chart.addSeries(LineSeries, {
         color: '#ef4444', // red-500
         lineWidth: 1,
         lineStyle: 1,
@@ -103,7 +104,7 @@ export const StochasticChart = forwardRef<any, StochasticChartProps>(
 
       overboughtSeries.setData(overboughtData);
 
-      const oversoldSeries = chart.addLineSeries({
+      const oversoldSeries = chart.addSeries(LineSeries, {
         color: '#22c55e', // green-500
         lineWidth: 1,
         lineStyle: 1,

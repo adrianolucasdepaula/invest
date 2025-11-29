@@ -26,6 +26,15 @@ import { AssetUpdateLogsPanel } from '@/components/dashboard/AssetUpdateLogsPane
 
 type ViewMode = 'all' | 'sector' | 'type' | 'type-sector';
 
+// Hook para evitar hydration mismatch com componentes Radix UI
+function useHydrated() {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+  return hydrated;
+}
+
 // Helper function to detect asset type based on ticker
 function getAssetType(ticker: string, assetType?: string): string {
   // If backend provides type, use it
@@ -40,6 +49,7 @@ function getAssetType(ticker: string, assetType?: string): string {
 export default function AssetsPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const hydrated = useHydrated();
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [showOnlyOptions, setShowOnlyOptions] = useState(false);
@@ -293,37 +303,43 @@ export default function AssetsPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Select value={viewMode} onValueChange={(value: ViewMode) => setViewMode(value)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Visualização" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4" />
-                    Todos
-                  </div>
-                </SelectItem>
-                <SelectItem value="type">
-                  <div className="flex items-center gap-2">
-                    <Layers className="h-4 w-4" />
-                    Por Tipo
-                  </div>
-                </SelectItem>
-                <SelectItem value="sector">
-                  <div className="flex items-center gap-2">
-                    <Layers className="h-4 w-4" />
-                    Por Setor
-                  </div>
-                </SelectItem>
-                <SelectItem value="type-sector">
-                  <div className="flex items-center gap-2">
-                    <Layers className="h-4 w-4" />
-                    Por Tipo e Setor
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            {hydrated ? (
+              <Select value={viewMode} onValueChange={(value: ViewMode) => setViewMode(value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Visualização" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4" />
+                      Todos
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="type">
+                    <div className="flex items-center gap-2">
+                      <Layers className="h-4 w-4" />
+                      Por Tipo
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="sector">
+                    <div className="flex items-center gap-2">
+                      <Layers className="h-4 w-4" />
+                      Por Setor
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="type-sector">
+                    <div className="flex items-center gap-2">
+                      <Layers className="h-4 w-4" />
+                      Por Tipo e Setor
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="flex h-10 w-[180px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm">
+                <span className="text-muted-foreground">Visualização</span>
+              </div>
+            )}
           </div>
         </div>
       </Card>

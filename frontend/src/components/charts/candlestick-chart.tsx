@@ -9,6 +9,8 @@ import {
   CandlestickData,
   HistogramData,
   Time,
+  CandlestickSeries,
+  HistogramSeries,
 } from 'lightweight-charts';
 
 interface CandlestickChartProps {
@@ -59,7 +61,7 @@ export function CandlestickChart({ data }: CandlestickChartProps) {
     chartRef.current = chart;
 
     // Add candlestick series
-    const candlestickSeries = chart.addCandlestickSeries({
+    const candlestickSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#22c55e', // green-500
       downColor: '#ef4444', // red-500
       borderUpColor: '#22c55e',
@@ -71,7 +73,7 @@ export function CandlestickChart({ data }: CandlestickChartProps) {
     candlestickSeriesRef.current = candlestickSeries;
 
     // Add volume series (histogram below)
-    const volumeSeries = chart.addHistogramSeries({
+    const volumeSeries = chart.addSeries(HistogramSeries, {
       color: '#3f3f46', // zinc-700 for volume bars
       priceFormat: {
         type: 'volume',

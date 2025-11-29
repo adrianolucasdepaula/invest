@@ -1,9 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   images: {
-    domains: ['localhost', 'brapi.dev'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'https',
+        hostname: 'brapi.dev',
+      },
+    ],
   },
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101',
@@ -14,16 +22,8 @@ const nextConfig = {
   experimental: {
     optimizeCss: true, // Inline critical CSS automaticamente via critters
   },
-  // Enable HMR in Docker (file watching via polling)
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.watchOptions = {
-        poll: 1000, // Check for changes every 1 second
-        aggregateTimeout: 300,
-      }
-    }
-    return config
-  },
+  // Next.js 16+ uses Turbopack by default, empty config acknowledges this
+  turbopack: {},
   // FASE 47: Cache-Control Headers - Otimizar TTFB e cache
   // Ref: https://nextjs.org/docs/pages/api-reference/config/next-config-js/headers
   // Ref: https://focusreactive.com/configure-cdn-caching-for-self-hosted-next-js-websites/

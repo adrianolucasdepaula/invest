@@ -8,6 +8,7 @@ import {
   ISeriesApi,
   LineData,
   Time,
+  LineSeries,
 } from 'lightweight-charts';
 
 interface RsiChartProps {
@@ -55,7 +56,7 @@ export const RsiChart = forwardRef<any, RsiChartProps>(
       chartRef.current = chart;
 
       // RSI Line Series
-      const rsiSeries = chart.addLineSeries({
+      const rsiSeries = chart.addSeries(LineSeries, {
         color: '#a855f7', // purple-500
         lineWidth: 2,
         title: 'RSI (14)',
@@ -74,7 +75,7 @@ export const RsiChart = forwardRef<any, RsiChartProps>(
       rsiSeries.setData(rsiData);
 
       // Add overbought/oversold lines (70 and 30)
-      const overboughtSeries = chart.addLineSeries({
+      const overboughtSeries = chart.addSeries(LineSeries, {
         color: '#ef4444', // red-500
         lineWidth: 1,
         lineStyle: 1, // Dotted
@@ -88,7 +89,7 @@ export const RsiChart = forwardRef<any, RsiChartProps>(
 
       overboughtSeries.setData(overboughtData);
 
-      const oversoldSeries = chart.addLineSeries({
+      const oversoldSeries = chart.addSeries(LineSeries, {
         color: '#22c55e', // green-500
         lineWidth: 1,
         lineStyle: 1, // Dotted

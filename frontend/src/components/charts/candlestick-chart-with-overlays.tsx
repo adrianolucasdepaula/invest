@@ -10,6 +10,9 @@ import {
   HistogramData,
   LineData,
   Time,
+  CandlestickSeries,
+  HistogramSeries,
+  LineSeries,
 } from 'lightweight-charts';
 
 interface CandlestickChartWithOverlaysProps {
@@ -102,7 +105,7 @@ export function CandlestickChartWithOverlays({
     chartRef.current = chart;
 
     // Add candlestick series (igual ao existente)
-    const candlestickSeries = chart.addCandlestickSeries({
+    const candlestickSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#22c55e',
       downColor: '#ef4444',
       borderUpColor: '#22c55e',
@@ -113,7 +116,7 @@ export function CandlestickChartWithOverlays({
     candlestickSeriesRef.current = candlestickSeries;
 
     // Add volume series (igual ao existente)
-    const volumeSeries = chart.addHistogramSeries({
+    const volumeSeries = chart.addSeries(HistogramSeries, {
       color: '#3f3f46',
       priceFormat: { type: 'volume' },
       priceScaleId: 'volume',
@@ -159,7 +162,7 @@ export function CandlestickChartWithOverlays({
 
     // SMA 20 (azul claro)
     if (indicators?.sma20 && showIndicators?.sma20) {
-      const sma20Series = chart.addLineSeries({
+      const sma20Series = chart.addSeries(LineSeries, {
         color: '#3b82f6', // blue-500
         lineWidth: 2,
         title: 'SMA 20',
@@ -178,7 +181,7 @@ export function CandlestickChartWithOverlays({
 
     // SMA 50 (laranja)
     if (indicators?.sma50 && showIndicators?.sma50) {
-      const sma50Series = chart.addLineSeries({
+      const sma50Series = chart.addSeries(LineSeries, {
         color: '#f97316', // orange-500
         lineWidth: 2,
         title: 'SMA 50',
@@ -197,7 +200,7 @@ export function CandlestickChartWithOverlays({
 
     // SMA 200 (vermelho escuro)
     if (indicators?.sma200 && showIndicators?.sma200) {
-      const sma200Series = chart.addLineSeries({
+      const sma200Series = chart.addSeries(LineSeries, {
         color: '#dc2626', // red-600
         lineWidth: 2,
         title: 'SMA 200',
@@ -216,7 +219,7 @@ export function CandlestickChartWithOverlays({
 
     // EMA 9 (roxo)
     if (indicators?.ema9 && showIndicators?.ema9) {
-      const ema9Series = chart.addLineSeries({
+      const ema9Series = chart.addSeries(LineSeries, {
         color: '#a855f7', // purple-500
         lineWidth: 1,
         lineStyle: 2, // Dashed
@@ -236,7 +239,7 @@ export function CandlestickChartWithOverlays({
 
     // EMA 21 (rosa)
     if (indicators?.ema21 && showIndicators?.ema21) {
-      const ema21Series = chart.addLineSeries({
+      const ema21Series = chart.addSeries(LineSeries, {
         color: '#ec4899', // pink-500
         lineWidth: 1,
         lineStyle: 2, // Dashed
@@ -257,7 +260,7 @@ export function CandlestickChartWithOverlays({
     // Bollinger Bands (3 linhas)
     if (indicators?.bollinger && showIndicators?.bollinger) {
       // Upper band (cinza claro)
-      const upperSeries = chart.addLineSeries({
+      const upperSeries = chart.addSeries(LineSeries, {
         color: '#71717a', // zinc-500
         lineWidth: 1,
         lineStyle: 1, // Dotted
@@ -275,7 +278,7 @@ export function CandlestickChartWithOverlays({
       upperSeries.setData(upperData);
 
       // Middle band (amarelo)
-      const middleSeries = chart.addLineSeries({
+      const middleSeries = chart.addSeries(LineSeries, {
         color: '#eab308', // yellow-500
         lineWidth: 2,
         title: 'BB Middle',
@@ -292,7 +295,7 @@ export function CandlestickChartWithOverlays({
       middleSeries.setData(middleData);
 
       // Lower band (cinza claro)
-      const lowerSeries = chart.addLineSeries({
+      const lowerSeries = chart.addSeries(LineSeries, {
         color: '#71717a', // zinc-500
         lineWidth: 1,
         lineStyle: 1, // Dotted
@@ -313,7 +316,7 @@ export function CandlestickChartWithOverlays({
     // Pivot Points (5 linhas horizontais)
     if (indicators?.pivotPoints && showIndicators?.pivotPoints) {
       // R2 (resistência forte - vermelho forte)
-      const r2Series = chart.addLineSeries({
+      const r2Series = chart.addSeries(LineSeries, {
         color: '#b91c1c', // red-700
         lineWidth: 1,
         lineStyle: 1,
@@ -330,7 +333,7 @@ export function CandlestickChartWithOverlays({
       r2Series.setData(r2Data);
 
       // R1 (resistência - vermelho claro)
-      const r1Series = chart.addLineSeries({
+      const r1Series = chart.addSeries(LineSeries, {
         color: '#ef4444', // red-500
         lineWidth: 1,
         lineStyle: 1,
@@ -347,7 +350,7 @@ export function CandlestickChartWithOverlays({
       r1Series.setData(r1Data);
 
       // P (pivot - amarelo)
-      const pSeries = chart.addLineSeries({
+      const pSeries = chart.addSeries(LineSeries, {
         color: '#eab308', // yellow-500
         lineWidth: 2,
         title: 'Pivot',
@@ -363,7 +366,7 @@ export function CandlestickChartWithOverlays({
       pSeries.setData(pData);
 
       // S1 (suporte - verde claro)
-      const s1Series = chart.addLineSeries({
+      const s1Series = chart.addSeries(LineSeries, {
         color: '#22c55e', // green-500
         lineWidth: 1,
         lineStyle: 1,
@@ -380,7 +383,7 @@ export function CandlestickChartWithOverlays({
       s1Series.setData(s1Data);
 
       // S2 (suporte forte - verde forte)
-      const s2Series = chart.addLineSeries({
+      const s2Series = chart.addSeries(LineSeries, {
         color: '#15803d', // green-700
         lineWidth: 1,
         lineStyle: 1,

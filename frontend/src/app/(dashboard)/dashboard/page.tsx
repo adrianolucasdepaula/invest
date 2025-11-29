@@ -1,7 +1,16 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useAssets } from '@/lib/hooks/use-assets';
+
+// Hook para evitar hydration mismatch com renderização condicional
+function useHydrated() {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+  return hydrated;
+}
 import { StatCard } from '@/components/dashboard/stat-card';
 import { AssetTable } from '@/components/dashboard/asset-table';
 import { MarketIndices } from '@/components/dashboard/market-indices';
@@ -11,7 +20,11 @@ import { TrendingUp, TrendingDown, Activity, DollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
+  const hydrated = useHydrated();
   const { data: assets, isLoading, error } = useAssets({ limit: 10 });
+
+  // Tratar !hydrated como loading para renderização consistente server/client
+  const showLoading = !hydrated || isLoading;
 
   // Calculate real stats from assets data
   const stats = useMemo(() => {
@@ -56,7 +69,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {isLoading ? (
+        {showLoading ? (
           <>
             {Array(4).fill(0).map((_, i) => (
               <Card key={i} className="p-6">
@@ -125,7 +138,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="space-y-4">
-            {isLoading ? (
+            {showLoading ? (
               Array(5)
                 .fill(0)
                 .map((_, i) => (
@@ -186,7 +199,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="space-y-4">
-            {isLoading ? (
+            {showLoading ? (
               Array(5)
                 .fill(0)
                 .map((_, i) => (
@@ -246,7 +259,7 @@ export default function DashboardPage() {
             Principais ativos do mercado brasileiro
           </p>
         </div>
-        {isLoading ? (
+        {showLoading ? (
           <div className="space-y-4">
             {Array(5)
               .fill(0)

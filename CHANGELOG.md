@@ -14,8 +14,81 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Validação visual final da UI de opções
 - Migração dos 24 scrapers Python restantes (Selenium → Playwright)
 - FASE 61: Git Workflow Automation (Prioridade 2)
-- FASE 62: Dependency Management System (Prioridade 2)
-- FASE 63: Architecture Visual Diagrams (Prioridade 2)
+- FASE 62: Architecture Visual Diagrams (Prioridade 2)
+
+---
+
+## [1.5.0] - 2025-11-29
+
+### Added
+
+- **Dependency Management System (FASE 60b):**
+  - **scripts/check-updates.ps1** - Script PowerShell para verificar dependências outdated
+  - **scripts/update-dependencies.ps1** - Script PowerShell para atualização segura
+  - **docs/DEPENDENCY_MANAGEMENT.md** - Documentação completa do sistema
+
+### Changed
+
+- **Backend Dependencies - NestJS 10 → 11:**
+  - `@nestjs/*` packages: 10.x → 11.x (core, common, platform-express, jwt, etc.)
+  - `@types/node`: 20.x → 24.x
+  - `bcrypt`: 5.x → 6.x
+  - `date-fns`: 3.x → 4.x
+  - `class-validator`: 0.14.x → 0.14.3
+  - `typeorm`: 0.3.x → 0.3.x (latest)
+  - **Fix:** `auth.module.ts` - JWT signOptions type cast para NestJS 11
+  - **Fix:** `common.module.ts` - `IoRedisStore` → `ioRedisStore` (lowercase) para cache-manager 3.6
+
+- **Frontend Dependencies - Next.js 14 → 16, React 18 → 19:**
+  - `next`: 14.x → 16.0.5
+  - `react` / `react-dom`: 18.x → 19.2.0
+  - `tailwindcss`: 3.x → 4.1.17
+  - `lightweight-charts`: 4.x → 5.0.9
+  - `@types/react` / `@types/react-dom`: 18.x → 19.x
+  - **Fix:** `tailwind.config.ts` - darkMode format para v4
+  - **Fix:** `postcss.config.js` - `@tailwindcss/postcss` para Tailwind v4
+  - **Fix:** `next.config.js` - Turbopack config, removed deprecated swcMinify
+  - **Fix:** `globals.css` - Complete rewrite usando `@theme` directive (Tailwind v4)
+  - **Fix:** `useWidgetLazyLoad.ts` - RefObject type para React 19 (`| null`)
+  - **Fix:** `candlestick-chart.tsx`, `candlestick-chart-with-overlays.tsx`, `macd-chart.tsx`, `rsi-chart.tsx`, `stochastic-chart.tsx` - lightweight-charts v5 API (`addSeries(SeriesType, options)`)
+
+- **Python Dependencies - All containers updated:**
+  - **python-scrapers/requirements.txt:**
+    - `playwright`: 1.40 → 1.56.0
+    - `beautifulsoup4`: 4.12 → 4.14.2
+    - `pandas`: 2.1 → 2.3.3
+    - `numpy`: 1.26 → 2.3.5
+    - `redis`: 5.0 → 7.1.0
+    - `pydantic`: 2.5 → 2.12.5
+  - **python-service/requirements.txt:**
+    - `fastapi`: 0.109 → 0.122.0
+    - `uvicorn`: 0.27 → 0.38.0
+    - `pandas-ta-classic`: 0.3.37 → 0.3.59
+    - `yfinance`: 0.2.50 → 0.2.66
+    - `numba`: 0.61 → 0.62.1
+    - `pytest`: 7.4 → 9.0.1
+  - **api-service/requirements.txt:**
+    - `aiohttp`: 3.9 → 3.13.2
+    - `aiofiles`: 23.2 → 25.1.0
+    - `sqlalchemy`: 2.0.25 → 2.0.44
+    - `hiredis`: 2.3 → 3.3.0
+
+### Validated
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Build Backend: webpack compiled successfully
+- ✅ Build Frontend: 18 páginas geradas
+- ✅ Docker Containers: 8/8 healthy
+- ✅ npm outdated: 100% atualizado (apenas deprecated @types stubs)
+- ✅ pip list outdated: 100% atualizado (apenas pip/setuptools base image)
+
+### Breaking Changes
+
+- **lightweight-charts v5:** API mudou de `chart.addCandlestickSeries()` para `chart.addSeries(CandlestickSeries, options)`
+- **Tailwind v4:** CSS-first config com `@theme` directive, `@tailwindcss/postcss` plugin
+- **React 19:** RefObject type requires `| null` generic parameter
+- **NestJS 11:** JWT module signOptions type stricter
 
 ---
 
@@ -689,6 +762,6 @@ git push origin v1.2.0
 
 ---
 
-**Mantido por:** Claude Code (Sonnet 4.5) + Google Gemini AI  
-**Última Atualização:** 2025-11-24  
+**Mantido por:** Claude Code (Opus 4.5) + Google Gemini AI
+**Última Atualização:** 2025-11-29
 **Repositório:** invest-claude-web (privado)
