@@ -2,7 +2,7 @@
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
 **Última Atualização:** 2025-12-02
-**Versão:** 1.6.0
+**Versão:** 1.6.2
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -8646,8 +8646,9 @@ scripts/
 |----------|-----------|--------|------|
 | **FASE 1** | Sistema de Rastreamento de Origem por Campo | ✅ 100% | 2025-12-02 |
 | **FASE 2** | Aumentar MIN_SOURCES de 2 para 3 | ✅ 100% | 2025-12-02 |
-| **FASE 3** | Dashboard de Qualidade de Dados | 🔵 PENDENTE | - |
-| **FASE 4** | Alertas de Discrepância | 🔵 PENDENTE | - |
+| **FASE 3** | API endpoint + Componentes de Qualidade de Dados | ✅ 100% | 2025-12-02 |
+| **FASE 4** | Dashboard de Qualidade de Scrapers | 🔵 PENDENTE | - |
+| **FASE 5** | Alertas de Discrepância | 🔵 PENDENTE | - |
 
 **FASE 1 - Implementações Concluídas:**
 
@@ -8705,7 +8706,32 @@ backend/src/database/migrations/1764696740650-AddFieldSourcesToFundamentalData.t
 - ✅ Container: `MIN_DATA_SOURCES=3` carregado
 - ✅ Logs: Warnings para ativos com < 3 fontes (ex: ALUP4, AJFI11)
 
-**Status:** 🟡 **FASE 1 + FASE 2 COMPLETAS - FASE 3 PENDENTE**
+**FASE 3 - Implementações Concluídas:**
+
+- [x] **Backend:**
+  - `GET /assets/:ticker/data-sources` - Endpoint com informações de fontes
+  - `AssetDataSourcesResponseDto` - DTO documentado com Swagger
+  - `getDataSources()` em AssetsService - Query com cálculos de consenso
+- [x] **Frontend:**
+  - `DataSourceIndicator` - Badge + Tooltip com detalhes de consenso
+  - `DataQualitySummary` - Badges resumidos de qualidade
+  - `useAssetDataSources` hook - React Query para buscar dados
+  - Integração na página `/assets/[ticker]`
+- [x] **Visual:**
+  - Badge verde: >= 80% consenso
+  - Badge amarelo: >= 50% consenso
+  - Badge vermelho: < 50% consenso
+  - Badge de discrepâncias quando houver fontes divergentes
+
+**Validação FASE 3:**
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Console do navegador: Sem erros
+- ✅ Endpoint testado com sucesso (PETR4)
+- ✅ Componentes renderizando corretamente
+
+**Status:** 🟡 **FASES 1-3 COMPLETAS - FASES 4-5 PENDENTES**
 
 ---
 

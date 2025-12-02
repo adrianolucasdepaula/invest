@@ -18,6 +18,35 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.6.2] - 2025-12-02
+
+### Added
+
+- **FASE 3 - API endpoint e componentes de qualidade de dados:**
+  - **Backend:**
+    - `GET /assets/:ticker/data-sources` - Endpoint com informações detalhadas de fontes
+    - `AssetDataSourcesResponseDto` - DTO documentado com Swagger
+    - `getDataSources()` em AssetsService - Query com cálculos de consenso
+  - **Frontend:**
+    - `DataSourceIndicator` - Badge + Tooltip com detalhes de consenso por campo
+    - `DataQualitySummary` - Badges resumidos de qualidade de dados
+    - `useAssetDataSources` hook - React Query para buscar dados de fontes
+    - Integração na página de detalhes do ativo (`/assets/[ticker]`)
+  - **Visual:**
+    - Badge verde: >= 80% consenso
+    - Badge amarelo: >= 50% consenso
+    - Badge vermelho: < 50% consenso
+    - Badge de discrepâncias quando houver fontes divergentes
+
+### Validated
+
+- TypeScript Backend: 0 erros
+- TypeScript Frontend: 0 erros
+- Console do navegador: Sem erros (apenas warnings externos do TradingView)
+- Endpoint testado: `curl http://localhost:3101/api/v1/assets/PETR4/data-sources`
+
+---
+
 ## [1.6.1] - 2025-12-02
 
 ### Changed
