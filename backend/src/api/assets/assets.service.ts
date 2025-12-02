@@ -11,6 +11,72 @@ import { HistoricalPricesQueryDto, PriceRange } from './dto/historical-prices-qu
 export class AssetsService {
   private readonly logger = new Logger(AssetsService.name);
 
+  /**
+   * Sanitize numeric value to prevent PostgreSQL overflow
+   * @param value - Value to sanitize
+   * @param maxValue - Maximum allowed value for the field
+   * @param decimalPlaces - Number of decimal places to round to
+   *
+   * IMPORTANT: JavaScript can only safely represent integers up to Number.MAX_SAFE_INTEGER (9007199254740991)
+   * Values like 9999999999999999.99 get rounded to 10000000000000000 causing overflow!
+   * We use conservative max values that JS can represent precisely.
+   */
+  private sanitizeNumericValue(
+    value: any,
+    maxValue: number = 999999999999.99, // Safe default for most fields
+    decimalPlaces: number = 2,
+  ): number | null {
+    if (value === null || value === undefined) return null;
+
+    const num = Number(value);
+
+    // Handle invalid numbers
+    if (isNaN(num) || !isFinite(num)) {
+      this.logger.warn(`[SANITIZE] Invalid numeric value: ${value}`);
+      return null;
+    }
+
+    // Clamp to valid range
+    if (num > maxValue) {
+      this.logger.warn(`[SANITIZE] Value ${num} exceeds max ${maxValue}, clamping`);
+      return maxValue;
+    }
+    if (num < -maxValue) {
+      this.logger.warn(`[SANITIZE] Value ${num} below min ${-maxValue}, clamping`);
+      return -maxValue;
+    }
+
+    // Round to specified decimal places
+    const multiplier = Math.pow(10, decimalPlaces);
+    return Math.round(num * multiplier) / multiplier;
+  }
+
+  /**
+   * Sanitize price data before saving to database
+   * Handles different field precisions with JS-safe max values:
+   * - open/high/low/close/adjustedClose: numeric(18,4) - using 9999999999999.9999 (13 digits + 4 decimal = 17 total)
+   * - marketCap/change: numeric(18,2) - using 999999999999999.99 (15 digits + 2 decimal = 17 total)
+   * - changePercent: numeric(10,4) - using 999999.9999 (6 digits + 4 decimal = 10 total)
+   *
+   * All max values are safely representable in JavaScript (< Number.MAX_SAFE_INTEGER)
+   */
+  private sanitizePriceData(data: any): any {
+    return {
+      ...data,
+      // numeric(18,4): max 13 digits before decimal + 4 after = 17 total (JS-safe)
+      open: this.sanitizeNumericValue(data.open, 9999999999999.9999, 4),
+      high: this.sanitizeNumericValue(data.high, 9999999999999.9999, 4),
+      low: this.sanitizeNumericValue(data.low, 9999999999999.9999, 4),
+      close: this.sanitizeNumericValue(data.close, 9999999999999.9999, 4),
+      adjustedClose: this.sanitizeNumericValue(data.adjustedClose, 9999999999999.9999, 4),
+      // numeric(18,2): max 15 digits before decimal + 2 after = 17 total (JS-safe)
+      marketCap: this.sanitizeNumericValue(data.marketCap, 999999999999999.99, 2),
+      change: this.sanitizeNumericValue(data.change, 999999999999999.99, 2),
+      // numeric(10,4): max 6 digits before decimal + 4 after = 10 total (JS-safe)
+      changePercent: this.sanitizeNumericValue(data.changePercent, 999999.9999, 4),
+    };
+  }
+
   constructor(
     @InjectRepository(Asset)
     private assetRepository: Repository<Asset>,
@@ -413,19 +479,24 @@ export class AssetsService {
         this.logger.log(`Price exists for ${ticker}? ${!!existingPrice}`);
 
         if (!existingPrice) {
-          const priceData = this.assetPriceRepository.create({
-            asset,
-            assetId: asset.id,
-            date: today,
+          // Sanitize price data to prevent numeric overflow (especially changePercent which is numeric(10,4))
+          const sanitizedData = this.sanitizePriceData({
             open: brapiData.open || brapiData.price,
             high: brapiData.high || brapiData.price,
             low: brapiData.low || brapiData.price,
             close: brapiData.price,
-            volume: brapiData.volume,
             adjustedClose: brapiData.price,
             marketCap: brapiData.marketCap,
             change: brapiData.change,
             changePercent: brapiData.changePercent,
+          });
+
+          const priceData = this.assetPriceRepository.create({
+            asset,
+            assetId: asset.id,
+            date: today,
+            ...sanitizedData,
+            volume: brapiData.volume,
             source: PriceSource.BRAPI,
             collectedAt, // Registra quando foi coletado da API
           });
@@ -435,16 +506,28 @@ export class AssetsService {
             `✓ Saved price for ${ticker}: R$ ${brapiData.price.toFixed(2)} (collected at ${collectedAt.toISOString()})`,
           );
         } else {
-          // Update existing price with latest data
-          existingPrice.open = brapiData.open || brapiData.price;
-          existingPrice.high = brapiData.high || brapiData.price;
-          existingPrice.low = brapiData.low || brapiData.price;
-          existingPrice.close = brapiData.price;
+          // Sanitize price data to prevent numeric overflow
+          const sanitizedData = this.sanitizePriceData({
+            open: brapiData.open || brapiData.price,
+            high: brapiData.high || brapiData.price,
+            low: brapiData.low || brapiData.price,
+            close: brapiData.price,
+            adjustedClose: brapiData.price,
+            marketCap: brapiData.marketCap,
+            change: brapiData.change,
+            changePercent: brapiData.changePercent,
+          });
+
+          // Update existing price with sanitized data
+          existingPrice.open = sanitizedData.open;
+          existingPrice.high = sanitizedData.high;
+          existingPrice.low = sanitizedData.low;
+          existingPrice.close = sanitizedData.close;
           existingPrice.volume = brapiData.volume;
-          existingPrice.adjustedClose = brapiData.price;
-          existingPrice.marketCap = brapiData.marketCap;
-          existingPrice.change = brapiData.change;
-          existingPrice.changePercent = brapiData.changePercent;
+          existingPrice.adjustedClose = sanitizedData.adjustedClose;
+          existingPrice.marketCap = sanitizedData.marketCap;
+          existingPrice.change = sanitizedData.change;
+          existingPrice.changePercent = sanitizedData.changePercent;
           existingPrice.collectedAt = collectedAt;
 
           await this.assetPriceRepository.save(existingPrice);
@@ -472,16 +555,24 @@ export class AssetsService {
           });
 
           if (!existing) {
-            const historicalData = this.assetPriceRepository.create({
-              asset,
-              assetId: asset.id,
-              date: priceDate,
+            // Sanitize historical price data to prevent numeric overflow
+            const sanitizedHistData = this.sanitizePriceData({
               open: histPrice.open,
               high: histPrice.high,
               low: histPrice.low,
               close: histPrice.close,
-              volume: histPrice.volume,
               adjustedClose: histPrice.adjustedClose,
+              marketCap: null,
+              change: null,
+              changePercent: null,
+            });
+
+            const historicalData = this.assetPriceRepository.create({
+              asset,
+              assetId: asset.id,
+              date: priceDate,
+              ...sanitizedHistData,
+              volume: histPrice.volume,
               source: PriceSource.BRAPI,
               collectedAt, // Registra quando foi coletado
             });

@@ -33,9 +33,21 @@ export class InvestsiteScraper extends AbstractScraper<InvestsiteData> {
     this.rateLimiter = rateLimiter; // ✅ FASE 3
   }
 
+  /**
+   * Detect if ticker is a FII (Fundo Imobiliário)
+   * FIIs typically end with "11" and have 6-7 characters (e.g., BRCR11, KNRI11, BTLG11)
+   */
+  private isFII(ticker: string): boolean {
+    const upperTicker = ticker.toUpperCase();
+    return upperTicker.endsWith('11') && upperTicker.length >= 5 && upperTicker.length <= 7;
+  }
+
   protected async scrapeData(ticker: string): Promise<InvestsiteData> {
-    // URL do Investsite - formato: principais_indicadores.php?cod_negociacao=TICKER
-    const url = `https://www.investsite.com.br/principais_indicadores.php?cod_negociacao=${ticker.toUpperCase()}`;
+    // ✅ FII Support: Investsite uses different page for FIIs
+    // Stocks: principais_indicadores.php?cod_negociacao=TICKER
+    // FIIs: fii_indicadores.php?cod_negociacao=TICKER
+    const page = this.isFII(ticker) ? 'fii_indicadores.php' : 'principais_indicadores.php';
+    const url = `https://www.investsite.com.br/${page}?cod_negociacao=${ticker.toUpperCase()}`;
 
     try {
       // Navegar para a página do ativo

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, lazy, Suspense, useState, useEffect } from 'react';
+import { useMemo, lazy, Suspense, useState, useEffect, use } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -27,8 +27,8 @@ import { useAsset, useMarketDataPrices, useAssetFundamentals } from '@/lib/hooks
 import { useAnalysis, useRequestAnalysis } from '@/lib/hooks/use-analysis';
 import { AdvancedChart } from '@/components/tradingview/widgets/AdvancedChart';
 
-export default function AssetDetailPage({ params }: { params: { ticker: string } }) {
-  const ticker = params.ticker;
+export default function AssetDetailPage({ params }: { params: Promise<{ ticker: string }> }) {
+  const { ticker } = use(params);
   const [selectedTimeframe, setSelectedTimeframe] = useState<CandleTimeframe>('1D');
   const [selectedRange, setSelectedRange] = useState<ViewingRange>('1y');
   const [showUnifiedHistory, setShowUnifiedHistory] = useState(false);

@@ -67,8 +67,19 @@ export class Investidor10Scraper extends AbstractScraper<Investidor10Data> {
     this.rateLimiter = rateLimiter; // ✅ FASE 3
   }
 
+  /**
+   * Detect if ticker is a FII (Fundo Imobiliário)
+   * FIIs typically end with "11" and have 6-7 characters (e.g., BRCR11, KNRI11, BTLG11)
+   */
+  private isFII(ticker: string): boolean {
+    const upperTicker = ticker.toUpperCase();
+    return upperTicker.endsWith('11') && upperTicker.length >= 5 && upperTicker.length <= 7;
+  }
+
   protected async scrapeData(ticker: string): Promise<Investidor10Data> {
-    const url = `https://investidor10.com.br/acoes/${ticker.toLowerCase()}/`;
+    // ✅ FII Support: Use correct URL path based on asset type
+    const assetType = this.isFII(ticker) ? 'fiis' : 'acoes';
+    const url = `https://investidor10.com.br/${assetType}/${ticker.toLowerCase()}/`;
 
     await this.page.goto(url, { waitUntil: 'networkidle', timeout: this.config.timeout });
 

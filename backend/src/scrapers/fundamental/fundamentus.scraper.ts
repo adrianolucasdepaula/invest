@@ -43,8 +43,21 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
     this.rateLimiter = rateLimiter; // ✅ FASE 3: Injetar rate limiter
   }
 
+  /**
+   * Detect if ticker is a FII (Fundo Imobiliário)
+   * FIIs typically end with "11" and have 6-7 characters (e.g., BRCR11, KNRI11, BTLG11)
+   */
+  private isFII(ticker: string): boolean {
+    const upperTicker = ticker.toUpperCase();
+    return upperTicker.endsWith('11') && upperTicker.length >= 5 && upperTicker.length <= 7;
+  }
+
   protected async scrapeData(ticker: string): Promise<FundamentusData> {
-    const url = `https://www.fundamentus.com.br/detalhes.php?papel=${ticker.toUpperCase()}`;
+    // ✅ FII Support: Fundamentus uses different page for FIIs
+    // Stocks: detalhes.php?papel=TICKER
+    // FIIs: fii_detalhes.php?papel=TICKER
+    const page = this.isFII(ticker) ? 'fii_detalhes.php' : 'detalhes.php';
+    const url = `https://www.fundamentus.com.br/${page}?papel=${ticker.toUpperCase()}`;
 
     await this.page.goto(url, { waitUntil: 'networkidle', timeout: this.config.timeout });
 

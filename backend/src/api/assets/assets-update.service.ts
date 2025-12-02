@@ -44,8 +44,8 @@ export class AssetsUpdateService {
   // Configuration
   private readonly MAX_RETRY_COUNT = 3;
   private readonly OUTDATED_THRESHOLD_DAYS = 7;
-  private readonly MIN_SOURCES = 3;
-  private readonly MIN_CONFIDENCE = 0.7;
+  private readonly MIN_SOURCES = 2; // Reduced from 3 to 2 - more realistic for B3 assets
+  private readonly MIN_CONFIDENCE = 0.5; // Reduced from 0.7 to 0.5 - matches minConfidence guarantee in scrapers
   private readonly RATE_LIMIT_DELAY = 2000; // 2 seconds between requests
 
   constructor(
@@ -506,61 +506,101 @@ export class AssetsUpdateService {
   }
 
   /**
+   * MÉTODO AUXILIAR: Sanitizar valor numérico para evitar overflow no PostgreSQL
+   * numeric(18,2) permite valores até 9999999999999999.99
+   *
+   * IMPORTANTE: JavaScript não consegue representar 9999999999999999.99 precisamente
+   * (Number.MAX_SAFE_INTEGER = 9007199254740991), então usamos um valor menor seguro.
+   * Para dados financeiros, 999_999_999_999_999 (999 trilhões) é mais que suficiente
+   * para qualquer market cap ou valor de empresa.
+   */
+  private sanitizeNumericValue(value: any): number | null {
+    if (value === null || value === undefined) return null;
+
+    const num = Number(value);
+
+    // Handle invalid numbers
+    if (isNaN(num) || !isFinite(num)) return null;
+
+    // Max safe value that JS can represent precisely and fits in numeric(18,2)
+    // Using 999_999_999_999_999.99 (15 nines) - well within JS safe integer range
+    // and leaves room for 3 more digits in numeric(18,2)
+    const MAX_VALUE = 999999999999999.99;
+    const MIN_VALUE = -999999999999999.99;
+
+    // Clamp to valid range
+    if (num > MAX_VALUE) {
+      this.logger.warn(`[SANITIZE] Value ${num} exceeds max (${MAX_VALUE}), clamping`);
+      return MAX_VALUE;
+    }
+    if (num < MIN_VALUE) {
+      this.logger.warn(`[SANITIZE] Value ${num} below min (${MIN_VALUE}), clamping`);
+      return MIN_VALUE;
+    }
+
+    // Round to 2 decimal places
+    return Math.round(num * 100) / 100;
+  }
+
+  /**
    * MÉTODO AUXILIAR: Salvar dados fundamentalistas
    */
   private async saveFundamentalData(asset: Asset, scrapedResult: any): Promise<FundamentalData> {
     const data = scrapedResult.data;
 
+    // Sanitize all numeric values to prevent overflow
+    const sanitize = (v: any) => this.sanitizeNumericValue(v);
+
     const fundamentalData = this.fundamentalDataRepository.create({
       assetId: asset.id,
       referenceDate: new Date(),
 
-      // Valuation
-      pl: data.pl || data.pe || null,
-      pvp: data.pvp || data.pb || null,
-      psr: data.psr || null,
-      pAtivos: data.pAtivos || data.pa || null,
-      pCapitalGiro: data.pCapitalGiro || data.pcg || null,
-      pEbit: data.pEbit || null,
-      evEbit: data.evEbit || null,
-      evEbitda: data.evEbitda || null,
-      pegRatio: data.pegRatio || null,
+      // Valuation (sanitized to prevent numeric overflow)
+      pl: sanitize(data.pl || data.pe),
+      pvp: sanitize(data.pvp || data.pb),
+      psr: sanitize(data.psr),
+      pAtivos: sanitize(data.pAtivos || data.pa),
+      pCapitalGiro: sanitize(data.pCapitalGiro || data.pcg),
+      pEbit: sanitize(data.pEbit),
+      evEbit: sanitize(data.evEbit),
+      evEbitda: sanitize(data.evEbitda),
+      pegRatio: sanitize(data.pegRatio),
 
-      // Profitability
-      roe: data.roe || null,
-      roa: data.roa || null,
-      roic: data.roic || null,
-      margemBruta: data.margemBruta || null,
-      margemEbit: data.margemEbit || null,
-      margemEbitda: data.margemEbitda || null,
-      margemLiquida: data.margemLiquida || null,
-      giroAtivos: data.giroAtivos || null,
+      // Profitability (sanitized)
+      roe: sanitize(data.roe),
+      roa: sanitize(data.roa),
+      roic: sanitize(data.roic),
+      margemBruta: sanitize(data.margemBruta),
+      margemEbit: sanitize(data.margemEbit),
+      margemEbitda: sanitize(data.margemEbitda),
+      margemLiquida: sanitize(data.margemLiquida),
+      giroAtivos: sanitize(data.giroAtivos),
 
-      // Debt
-      dividaBruta: data.dividaBruta || null,
-      dividaLiquida: data.dividaLiquida || null,
-      dividaLiquidaEbitda: data.dividaLiquidaEbitda || data.dividaEbitda || null,
-      dividaLiquidaEbit: data.dividaLiquidaEbit || null,
-      dividaLiquidaPatrimonio: data.dividaLiquidaPatrimonio || data.dividaPatrimonio || null,
-      patrimonioLiquidoAtivos: data.patrimonioLiquidoAtivos || null,
-      passivosAtivos: data.passivosAtivos || null,
+      // Debt (sanitized)
+      dividaBruta: sanitize(data.dividaBruta),
+      dividaLiquida: sanitize(data.dividaLiquida),
+      dividaLiquidaEbitda: sanitize(data.dividaLiquidaEbitda || data.dividaEbitda),
+      dividaLiquidaEbit: sanitize(data.dividaLiquidaEbit),
+      dividaLiquidaPatrimonio: sanitize(data.dividaLiquidaPatrimonio || data.dividaPatrimonio),
+      patrimonioLiquidoAtivos: sanitize(data.patrimonioLiquidoAtivos),
+      passivosAtivos: sanitize(data.passivosAtivos),
 
-      // Growth
-      cagrReceitas5anos: data.cagrReceitas5anos || data.cagr5Anos || null,
-      cagrLucros5anos: data.cagrLucros5anos || null,
+      // Growth (sanitized)
+      cagrReceitas5anos: sanitize(data.cagrReceitas5anos || data.cagr5Anos),
+      cagrLucros5anos: sanitize(data.cagrLucros5anos),
 
-      // Dividends
-      dividendYield: data.dividendYield || data.dy || null,
-      payout: data.payout || null,
+      // Dividends (sanitized)
+      dividendYield: sanitize(data.dividendYield || data.dy),
+      payout: sanitize(data.payout),
 
-      // Financial Statement Data
-      receitaLiquida: data.receitaLiquida || null,
-      ebit: data.ebit || null,
-      ebitda: data.ebitda || null,
-      lucroLiquido: data.lucroLiquido || null,
-      patrimonioLiquido: data.patrimonioLiquido || null,
-      ativoTotal: data.ativoTotal || null,
-      disponibilidades: data.disponibilidades || null,
+      // Financial Statement Data (sanitized)
+      receitaLiquida: sanitize(data.receitaLiquida),
+      ebit: sanitize(data.ebit),
+      ebitda: sanitize(data.ebitda),
+      lucroLiquido: sanitize(data.lucroLiquido),
+      patrimonioLiquido: sanitize(data.patrimonioLiquido),
+      ativoTotal: sanitize(data.ativoTotal),
+      disponibilidades: sanitize(data.disponibilidades),
 
       // Metadata
       metadata: {

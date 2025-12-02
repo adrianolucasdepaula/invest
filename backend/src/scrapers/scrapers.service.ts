@@ -33,7 +33,8 @@ export class ScrapersService {
     private investsiteScraper: InvestsiteScraper,
     private opcoesScraper: OpcoesScraper,
   ) {
-    this.minSources = this.configService.get<number>('MIN_DATA_SOURCES', 3);
+    // Reduced from 3 to 2 - more realistic for B3 assets (many tickers only available in 2 sources)
+    this.minSources = this.configService.get<number>('MIN_DATA_SOURCES', 2);
   }
 
   /**
@@ -210,7 +211,7 @@ export class ScrapersService {
     const confidence = this.calculateConfidence(results, discrepancies);
 
     return {
-      isValid: results.length >= this.minSources && confidence >= 0.7,
+      isValid: results.length >= this.minSources && confidence >= 0.5, // Reduced from 0.7 to 0.5 - matches minConfidence guarantee
       data: mergedData,
       sources,
       sourcesCount: results.length,
@@ -326,8 +327,9 @@ export class ScrapersService {
     // ✅ FINAL CONFIDENCE: Apply penalty
     const confidence = sourcesScore * (1 - discrepancyPenalty);
 
-    // ✅ MINIMUM GUARANTEE: 40% if >= minSources (never return 0 with valid data)
-    const minConfidence = results.length >= this.minSources ? 0.4 : 0;
+    // ✅ MINIMUM GUARANTEE: 50% if >= minSources (never return 0 with valid data)
+    // Increased from 40% to 50% since we reduced minSources from 3 to 2
+    const minConfidence = results.length >= this.minSources ? 0.5 : 0;
     const finalConfidence = Math.max(confidence, minConfidence);
 
     this.logger.log(

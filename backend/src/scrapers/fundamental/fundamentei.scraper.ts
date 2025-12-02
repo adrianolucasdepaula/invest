@@ -39,9 +39,19 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
     this.rateLimiter = rateLimiter; // ✅ FASE 3
   }
 
+  /**
+   * Detect if ticker is a FII (Fundo Imobiliário)
+   * FIIs typically end with "11" and have 6-7 characters (e.g., BRCR11, KNRI11, BTLG11)
+   */
+  private isFII(ticker: string): boolean {
+    const upperTicker = ticker.toUpperCase();
+    return upperTicker.endsWith('11') && upperTicker.length >= 5 && upperTicker.length <= 7;
+  }
+
   protected async scrapeData(ticker: string): Promise<FundamenteiData> {
-    // URL do Fundamentei para o ticker
-    const url = `https://fundamentei.com/acoes/${ticker.toUpperCase()}`;
+    // ✅ FII Support: Use correct URL path based on asset type
+    const assetType = this.isFII(ticker) ? 'fiis' : 'acoes';
+    const url = `https://fundamentei.com/${assetType}/${ticker.toUpperCase()}`;
 
     try {
       // Tentar carregar sessão OAuth salva
