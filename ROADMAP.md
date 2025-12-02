@@ -1,8 +1,8 @@
 # 🗺️ ROADMAP - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-29
-**Versão:** 1.5.0
+**Última Atualização:** 2025-12-02
+**Versão:** 1.6.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -8623,6 +8623,76 @@ scripts/
 - Husky Documentation: https://typicode.github.io/husky/
 
 **Status:** 🔵 **PLANEJADO** (aguardando aprovação)
+
+---
+
+### FASE 61: Evolução do Sistema de Coleta de Dados 🔄 EM ANDAMENTO (2025-12-02)
+
+**Prioridade:** 🔴 **CRÍTICO** (Prioridade 1)
+**Data Início:** 2025-12-02
+**Tipo:** Data Quality + Confidence Improvement
+
+**Objetivo:** Evoluir o sistema de coleta de dados fundamentalistas com rastreamento de origem por campo e validação por consenso.
+
+**Motivação:**
+- Aumentar confiança dos dados coletados (de 2 para 3+ fontes)
+- Rastrear origem de cada campo para auditoria
+- Validar dados via CONSENSO (não média/mediana - dados financeiros são ABSOLUTOS)
+- Detectar e sinalizar discrepâncias entre fontes
+
+**Fases do Plano:**
+
+| Sub-Fase | Descrição | Status | Data |
+|----------|-----------|--------|------|
+| **FASE 1** | Sistema de Rastreamento de Origem por Campo | ✅ 100% | 2025-12-02 |
+| **FASE 2** | Aumentar MIN_SOURCES de 2 para 3 | 🔵 PENDENTE | - |
+| **FASE 3** | Dashboard de Qualidade de Dados | 🔵 PENDENTE | - |
+| **FASE 4** | Alertas de Discrepância | 🔵 PENDENTE | - |
+
+**FASE 1 - Implementações Concluídas:**
+
+- [x] **Interfaces de Consenso:**
+  - `FieldSourceValue` - Valor com fonte, valor e timestamp
+  - `FieldSourceInfo` - Consenso, discrepância, fontes divergentes
+  - `SelectionStrategy` - CONSENSUS e PRIORITY (não AVERAGE/MEDIAN)
+  - `ToleranceConfig` - Tolerâncias por tipo de campo
+- [x] **Tolerâncias Configuradas:**
+  - Valuation (P/L, P/VP, EV/EBIT): 2%
+  - Margens e Rentabilidade: 0.5%
+  - Valores Absolutos: 0.1%
+- [x] **Migration:** `field_sources` JSONB com GIN index
+- [x] **Algoritmo de Consenso:**
+  - `selectByConsensus()` - agrupa valores similares
+  - `groupSimilarValues()` - clustering por tolerância
+  - Detecção de `hasDiscrepancy` e `divergentSources`
+
+**Arquivos Criados/Modificados:**
+
+```
+backend/src/scrapers/interfaces/field-source.interface.ts (265 linhas)
+backend/src/scrapers/interfaces/index.ts (8 linhas)
+backend/src/scrapers/scrapers.service.ts (~150 linhas modificadas)
+backend/src/database/entities/fundamental-data.entity.ts (+22 linhas)
+backend/src/database/migrations/1764696740650-AddFieldSourcesToFundamentalData.ts
+```
+
+**Validação FASE 1:**
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Migration aplicada com sucesso
+- ✅ Dados sendo salvos com estrutura correta
+- ✅ Consenso funcionando (exemplo: 67% = 2/3 fontes)
+- ✅ Discrepâncias detectadas com desvio percentual
+
+**Princípio Técnico:**
+> Dados financeiros são ABSOLUTOS. Usamos CONSENSO para VALIDAR qual valor está correto, NÃO para calcular média/mediana.
+
+**Referências:**
+- `PLANO_EVOLUCAO_SISTEMA_COLETA.md` - Plano completo
+- `CHANGELOG.md` - Versão 1.6.0
+
+**Status:** 🟡 **FASE 1 COMPLETA - FASE 2 PENDENTE**
 
 ---
 

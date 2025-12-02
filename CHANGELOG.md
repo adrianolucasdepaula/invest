@@ -18,6 +18,60 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.6.0] - 2025-12-02
+
+### Added
+
+- **Sistema de Rastreamento de Origem por Campo (FASE 1 - Evolução Coleta):**
+  - **Interfaces de Consenso:**
+    - `FieldSourceValue` - Valor de campo com fonte, valor e timestamp
+    - `FieldSourceInfo` - Info consolidada com consenso, discrepância e fontes divergentes
+    - `SelectionStrategy` - CONSENSUS (validação por múltiplas fontes) e PRIORITY (fallback)
+    - `ToleranceConfig` - Tolerâncias configuráveis por tipo de campo
+  - **Tolerâncias por Tipo de Dado:**
+    - Indicadores de valuation (P/L, P/VP, EV/EBIT): 2%
+    - Margens e rentabilidade (ROE, ROA, ROIC): 0.5%
+    - Valores absolutos (Receita, Lucro, Patrimônio): 0.1%
+  - **Migration:** `AddFieldSourcesToFundamentalData` - Coluna JSONB `field_sources` com índice GIN
+  - **Algoritmo de Consenso:**
+    - Agrupa valores similares dentro da tolerância
+    - Seleciona grupo com maior número de fontes concordando
+    - Usa fonte prioritária como fallback (fundamentus > statusinvest > investidor10)
+    - Rastreia fontes divergentes com desvio percentual
+
+### Changed
+
+- **scrapers.service.ts:**
+  - Removido AVERAGE/MEDIAN (dados financeiros são ABSOLUTOS, não estatísticos)
+  - Implementado `selectByConsensus()` - seleção por validação entre múltiplas fontes
+  - Implementado `groupSimilarValues()` - clustering de valores por tolerância
+  - Adicionado `agreementCount`, `hasDiscrepancy`, `divergentSources` ao resultado
+  - Coleta de TODAS as 6 fontes (sem early exit) para máximo rastreamento
+
+- **field-source.interface.ts:**
+  - Reescrito para usar CONSENSUS ao invés de AVERAGE/MEDIAN
+  - Adicionado `DEFAULT_TOLERANCES` com configuração por campo
+  - Adicionado `TRACKABLE_FIELDS` - 35 campos rastreáveis
+  - Adicionado `SOURCE_PRIORITY` - ordem de prioridade das fontes
+
+- **fundamental-data.entity.ts:**
+  - Adicionado campo `fieldSources: FieldSourcesMap` (JSONB com GIN index)
+
+### Validated
+
+- TypeScript Backend: 0 erros
+- TypeScript Frontend: 0 erros
+- Migration: Aplicada com sucesso
+- Dados: Estrutura `fieldSources` sendo populada corretamente
+- Consenso: Funcionando com detecção de discrepâncias (ex: 67% consenso = 2/3 fontes)
+
+### Technical Notes
+
+- **Princípio Fundamental:** Dados financeiros são ABSOLUTOS. Usamos CONSENSO para VALIDAR qual valor está correto, NÃO para calcular média/mediana.
+- **Exemplo de Consenso:** Campo `evEbitda` com 3 fontes - `investidor10` (7.3) e `investsite` (7.27) concordam (67% consenso), `fundamentus` (5.03) marcado como divergente com 31.1% de desvio.
+
+---
+
 ## [1.5.0] - 2025-11-29
 
 ### Added
