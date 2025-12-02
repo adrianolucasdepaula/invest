@@ -60,8 +60,9 @@ export class ScrapersService {
     private investsiteScraper: InvestsiteScraper,
     private opcoesScraper: OpcoesScraper,
   ) {
-    // Reduced from 3 to 2 - more realistic for B3 assets (many tickers only available in 2 sources)
-    this.minSources = this.configService.get<number>('MIN_DATA_SOURCES', 2);
+    // FASE 2: Aumentado de 2 para 3 - maior confiança com sistema de consenso
+    // Com 6 scrapers ativos, 3 fontes é o mínimo razoável para validação por consenso
+    this.minSources = this.configService.get<number>('MIN_DATA_SOURCES', 3);
   }
 
   /**
@@ -696,7 +697,7 @@ export class ScrapersService {
     const confidence = sourcesScore * (1 - discrepancyPenalty);
 
     // ✅ MINIMUM GUARANTEE: 50% if >= minSources (never return 0 with valid data)
-    // Increased from 40% to 50% since we reduced minSources from 3 to 2
+    // FASE 2: minSources agora é 3 para maior confiança via consenso
     const minConfidence = results.length >= this.minSources ? 0.5 : 0;
     const finalConfidence = Math.max(confidence, minConfidence);
 

@@ -8645,7 +8645,7 @@ scripts/
 | Sub-Fase | Descrição | Status | Data |
 |----------|-----------|--------|------|
 | **FASE 1** | Sistema de Rastreamento de Origem por Campo | ✅ 100% | 2025-12-02 |
-| **FASE 2** | Aumentar MIN_SOURCES de 2 para 3 | 🔵 PENDENTE | - |
+| **FASE 2** | Aumentar MIN_SOURCES de 2 para 3 | ✅ 100% | 2025-12-02 |
 | **FASE 3** | Dashboard de Qualidade de Dados | 🔵 PENDENTE | - |
 | **FASE 4** | Alertas de Discrepância | 🔵 PENDENTE | - |
 
@@ -8692,7 +8692,20 @@ backend/src/database/migrations/1764696740650-AddFieldSourcesToFundamentalData.t
 - `PLANO_EVOLUCAO_SISTEMA_COLETA.md` - Plano completo
 - `CHANGELOG.md` - Versão 1.6.0
 
-**Status:** 🟡 **FASE 1 COMPLETA - FASE 2 PENDENTE**
+**FASE 2 - Implementações Concluídas:**
+
+- [x] `.env`: `MIN_DATA_SOURCES=3` (antes era 2)
+- [x] `scrapers.service.ts`: Default alterado de 2 para 3
+- [x] Warnings emitidos quando ativo tem < 3 fontes disponíveis
+- [x] Container recreado com nova configuração
+
+**Validação FASE 2:**
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ Container: `MIN_DATA_SOURCES=3` carregado
+- ✅ Logs: Warnings para ativos com < 3 fontes (ex: ALUP4, AJFI11)
+
+**Status:** 🟡 **FASE 1 + FASE 2 COMPLETAS - FASE 3 PENDENTE**
 
 ---
 

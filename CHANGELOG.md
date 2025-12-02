@@ -18,6 +18,24 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.6.1] - 2025-12-02
+
+### Changed
+
+- **FASE 2 - Aumentar MIN_SOURCES de 2 para 3:**
+  - `.env`: `MIN_DATA_SOURCES=3` (antes era 2)
+  - `scrapers.service.ts`: Default alterado de 2 para 3
+  - Warnings emitidos quando ativo tem menos de 3 fontes disponíveis
+  - Maior confiança na validação por consenso (3 fontes mínimas)
+
+### Validated
+
+- TypeScript Backend: 0 erros
+- Container restart: MIN_DATA_SOURCES=3 carregado corretamente
+- Logs: Warnings aparecendo para ativos com < 3 fontes
+
+---
+
 ## [1.6.0] - 2025-12-02
 
 ### Added
