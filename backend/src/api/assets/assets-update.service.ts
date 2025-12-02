@@ -544,63 +544,86 @@ export class AssetsUpdateService {
 
   /**
    * MÉTODO AUXILIAR: Salvar dados fundamentalistas
+   *
+   * FASE 1 - Sistema de Rastreamento de Fontes
+   * ✅ Popula fieldSources com origem de cada campo
+   * ✅ Usa valores do merge inteligente
    */
   private async saveFundamentalData(asset: Asset, scrapedResult: any): Promise<FundamentalData> {
     const data = scrapedResult.data;
+    const fieldSources = scrapedResult.fieldSources || {};
 
     // Sanitize all numeric values to prevent overflow
     const sanitize = (v: any) => this.sanitizeNumericValue(v);
+
+    // FASE 1: Função auxiliar para obter valor do fieldSources ou fallback
+    const getFieldValue = (field: string, ...fallbacks: string[]): number | null => {
+      // Primeiro: tentar do fieldSources (valor já mergeado)
+      if (fieldSources[field]?.finalValue !== undefined) {
+        return sanitize(fieldSources[field].finalValue);
+      }
+      // Fallback: usar data diretamente (compatibilidade)
+      for (const key of [field, ...fallbacks]) {
+        if (data[key] !== undefined && data[key] !== null) {
+          return sanitize(data[key]);
+        }
+      }
+      return null;
+    };
 
     const fundamentalData = this.fundamentalDataRepository.create({
       assetId: asset.id,
       referenceDate: new Date(),
 
-      // Valuation (sanitized to prevent numeric overflow)
-      pl: sanitize(data.pl || data.pe),
-      pvp: sanitize(data.pvp || data.pb),
-      psr: sanitize(data.psr),
-      pAtivos: sanitize(data.pAtivos || data.pa),
-      pCapitalGiro: sanitize(data.pCapitalGiro || data.pcg),
-      pEbit: sanitize(data.pEbit),
-      evEbit: sanitize(data.evEbit),
-      evEbitda: sanitize(data.evEbitda),
-      pegRatio: sanitize(data.pegRatio),
+      // Valuation (usando fieldSources quando disponível)
+      pl: getFieldValue('pl', 'pe'),
+      pvp: getFieldValue('pvp', 'pb'),
+      psr: getFieldValue('psr'),
+      pAtivos: getFieldValue('pAtivos', 'pa'),
+      pCapitalGiro: getFieldValue('pCapitalGiro', 'pcg'),
+      pEbit: getFieldValue('pEbit'),
+      evEbit: getFieldValue('evEbit'),
+      evEbitda: getFieldValue('evEbitda'),
+      pegRatio: getFieldValue('pegRatio'),
 
-      // Profitability (sanitized)
-      roe: sanitize(data.roe),
-      roa: sanitize(data.roa),
-      roic: sanitize(data.roic),
-      margemBruta: sanitize(data.margemBruta),
-      margemEbit: sanitize(data.margemEbit),
-      margemEbitda: sanitize(data.margemEbitda),
-      margemLiquida: sanitize(data.margemLiquida),
-      giroAtivos: sanitize(data.giroAtivos),
+      // Profitability
+      roe: getFieldValue('roe'),
+      roa: getFieldValue('roa'),
+      roic: getFieldValue('roic'),
+      margemBruta: getFieldValue('margemBruta'),
+      margemEbit: getFieldValue('margemEbit'),
+      margemEbitda: getFieldValue('margemEbitda'),
+      margemLiquida: getFieldValue('margemLiquida'),
+      giroAtivos: getFieldValue('giroAtivos'),
 
-      // Debt (sanitized)
-      dividaBruta: sanitize(data.dividaBruta),
-      dividaLiquida: sanitize(data.dividaLiquida),
-      dividaLiquidaEbitda: sanitize(data.dividaLiquidaEbitda || data.dividaEbitda),
-      dividaLiquidaEbit: sanitize(data.dividaLiquidaEbit),
-      dividaLiquidaPatrimonio: sanitize(data.dividaLiquidaPatrimonio || data.dividaPatrimonio),
-      patrimonioLiquidoAtivos: sanitize(data.patrimonioLiquidoAtivos),
-      passivosAtivos: sanitize(data.passivosAtivos),
+      // Debt
+      dividaBruta: getFieldValue('dividaBruta'),
+      dividaLiquida: getFieldValue('dividaLiquida'),
+      dividaLiquidaEbitda: getFieldValue('dividaLiquidaEbitda', 'dividaEbitda'),
+      dividaLiquidaEbit: getFieldValue('dividaLiquidaEbit'),
+      dividaLiquidaPatrimonio: getFieldValue('dividaLiquidaPatrimonio', 'dividaPatrimonio'),
+      patrimonioLiquidoAtivos: getFieldValue('patrimonioLiquidoAtivos'),
+      passivosAtivos: getFieldValue('passivosAtivos'),
 
-      // Growth (sanitized)
-      cagrReceitas5anos: sanitize(data.cagrReceitas5anos || data.cagr5Anos),
-      cagrLucros5anos: sanitize(data.cagrLucros5anos),
+      // Growth
+      cagrReceitas5anos: getFieldValue('cagrReceitas5anos', 'cagr5Anos'),
+      cagrLucros5anos: getFieldValue('cagrLucros5anos'),
 
-      // Dividends (sanitized)
-      dividendYield: sanitize(data.dividendYield || data.dy),
-      payout: sanitize(data.payout),
+      // Dividends
+      dividendYield: getFieldValue('dividendYield', 'dy'),
+      payout: getFieldValue('payout'),
 
-      // Financial Statement Data (sanitized)
-      receitaLiquida: sanitize(data.receitaLiquida),
-      ebit: sanitize(data.ebit),
-      ebitda: sanitize(data.ebitda),
-      lucroLiquido: sanitize(data.lucroLiquido),
-      patrimonioLiquido: sanitize(data.patrimonioLiquido),
-      ativoTotal: sanitize(data.ativoTotal),
-      disponibilidades: sanitize(data.disponibilidades),
+      // Financial Statement Data
+      receitaLiquida: getFieldValue('receitaLiquida'),
+      ebit: getFieldValue('ebit'),
+      ebitda: getFieldValue('ebitda'),
+      lucroLiquido: getFieldValue('lucroLiquido'),
+      patrimonioLiquido: getFieldValue('patrimonioLiquido'),
+      ativoTotal: getFieldValue('ativoTotal'),
+      disponibilidades: getFieldValue('disponibilidades'),
+
+      // FASE 1: Rastreamento de origem por campo
+      fieldSources: fieldSources,
 
       // Metadata
       metadata: {
@@ -608,7 +631,8 @@ export class AssetsUpdateService {
         sourcesCount: scrapedResult.sourcesCount,
         confidence: scrapedResult.confidence,
         discrepancies: scrapedResult.discrepancies,
-        rawData: data,
+        rawSourcesData: scrapedResult.rawSourcesData,
+        mergeStrategy: 'smart',
       },
     });
 

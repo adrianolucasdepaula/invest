@@ -9,6 +9,7 @@ import {
   Index,
 } from 'typeorm';
 import { Asset } from './asset.entity';
+import type { FieldSourcesMap } from '../../scrapers/interfaces/field-source.interface';
 
 @Entity('fundamental_data')
 @Index(['asset', 'referenceDate'])
@@ -158,6 +159,29 @@ export class FundamentalData {
   // Additional metadata
   @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, any>;
+
+  /**
+   * Rastreamento de origem por campo
+   *
+   * FASE 1.2 - Sistema de Rastreamento de Fontes
+   *
+   * Estrutura:
+   * {
+   *   "pl": {
+   *     "values": [
+   *       {"source": "fundamentus", "value": 5.42, "scrapedAt": "2025-12-02T10:30:00Z"},
+   *       {"source": "statusinvest", "value": 5.45, "scrapedAt": "2025-12-02T10:30:00Z"}
+   *     ],
+   *     "finalValue": 5.42,
+   *     "finalSource": "fundamentus",
+   *     "sourcesCount": 2,
+   *     "variance": 0.012,
+   *     "consensus": 95.5
+   *   }
+   * }
+   */
+  @Column({ type: 'jsonb', name: 'field_sources', nullable: true, default: () => "'{}'" })
+  fieldSources: FieldSourcesMap;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
