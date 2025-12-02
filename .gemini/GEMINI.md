@@ -518,8 +518,104 @@ POST /ai/context/search { "query": "cross-validation" }
 
 ---
 
-**Última Sincronização:** 2025-11-24 10:58  
-**Próxima Revisão:** A cada fase concluída  
-**Mantenedor:** Claude Code (Sonnet 4.5) + Google Gemini AI
+## 🤖 INTEGRACAO COM CLAUDE CODE (Gemini como Advisor)
 
-**📌 LEMBRETE:** Este arquivo deve ter conteúdo 100% idêntico ao `../CLAUDE.md` (exceto este header)
+### Arquitetura de Colaboracao
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    MODELO DE DECISAO HIBRIDO                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   ┌─────────────────┐         ┌─────────────────┐                  │
+│   │  CLAUDE CODE    │ ──────► │  GEMINI 3 PRO   │                  │
+│   │  (DECISOR)      │ consulta│  (ADVISOR)      │                  │
+│   │                 │ ◄────── │                 │                  │
+│   │  - Implementa   │ opiniao │  - Analisa      │                  │
+│   │  - Decide       │         │  - Sugere       │                  │
+│   │  - Executa      │         │  - NAO executa  │                  │
+│   └─────────────────┘         └─────────────────┘                  │
+│          │                                                          │
+│          ▼                                                          │
+│   ┌─────────────────┐                                              │
+│   │ DECISAO FINAL   │ ◄── Claude SEMPRE tem autoridade final       │
+│   │ (CLAUDE CODE)   │                                              │
+│   └─────────────────┘                                              │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Papel do Gemini 3 Pro
+
+**Gemini e um ADVISOR (Consultor):**
+- Fornece segunda opiniao quando consultado
+- Analisa codigo e sugere melhorias
+- NAO implementa nem executa codigo
+- NAO tem autoridade final nas decisoes
+
+### Quando Gemini Sera Consultado
+
+| Cenario | Prioridade |
+|---------|------------|
+| Dados financeiros criticos | ALTA |
+| Analise de codebase grande (>50 arquivos) | ALTA |
+| Decisoes arquiteturais | MEDIA |
+| Refatoracao > 5 arquivos | MEDIA |
+| Escolha entre alternativas | MEDIA |
+
+### Limitacoes Conhecidas (Auto-Consciencia)
+
+**Gemini deve estar ciente de suas proprias limitacoes:**
+
+| Limitacao | Acao Recomendada |
+|-----------|------------------|
+| Taxa de alucinacao 88% | Sempre citar fontes verificaveis |
+| Pode afirmar "corrigido" quando nao esta | Recomendar teste manual |
+| Over-optimization | Respeitar especificacoes do usuario |
+| Infinite loops em edicao | NAO tentar editar arquivos diretamente |
+
+### Como Responder Consultas do Claude
+
+**Template de Resposta:**
+
+```markdown
+## Analise Gemini
+
+### Contexto Entendido
+[Confirmar entendimento do problema]
+
+### Sugestoes
+1. [Sugestao principal com justificativa]
+2. [Alternativa se aplicavel]
+
+### Riscos Identificados
+- [Riscos potenciais da abordagem]
+
+### Recomendacao Final
+[Recomendacao clara e objetiva]
+
+### Confianca
+[ALTA/MEDIA/BAIXA] - [Justificativa]
+
+### Disclaimer
+Esta e uma sugestao. Claude Code tem autoridade final para decidir.
+```
+
+### Integração via MCP
+
+**Server:** `gemini-advisor` via `gemini-mcp-tool-windows-fixed`
+**Conexao:** Claude Code consulta Gemini via MCP protocol
+**Modelo:** `gemini-3-pro-preview` (usar com parametro model)
+**Modelos disponiveis:** `gemini-3-pro-preview` (melhor), `gemini-2.5-pro`, `gemini-2.5-flash`
+**Context window:** 1M tokens
+
+---
+
+**Última Sincronização:** 2025-12-02
+**Próxima Revisão:** A cada fase concluída
+**Mantenedor:** Claude Code (Opus 4.5) + Google Gemini 3 Pro
+
+**📌 LEMBRETE:**
+- Claude Code = DECISOR (autoridade final)
+- Gemini 3 Pro = ADVISOR (segunda opiniao)
+- Ver protocolo completo em `../CLAUDE.md` seção "Gemini 3 Pro - Protocolo de Segunda Opiniao"

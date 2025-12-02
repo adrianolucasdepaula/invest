@@ -557,6 +557,221 @@ docker-compose restart scrapers
 
 ---
 
+## Gemini 3 Pro - Protocolo de Segunda Opiniao (Advisor)
+
+### Arquitetura de Integracao
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    MODELO DE DECISAO HIBRIDO                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   ┌─────────────────┐         ┌─────────────────┐                  │
+│   │  CLAUDE CODE    │ ──────► │  GEMINI 3 PRO   │                  │
+│   │  (DECISOR)      │ consulta│  (ADVISOR)      │                  │
+│   │                 │ ◄────── │                 │                  │
+│   │  - Implementa   │ opiniao │  - Analisa      │                  │
+│   │  - Decide       │         │  - Sugere       │                  │
+│   │  - Executa      │         │  - NAO executa  │                  │
+│   └─────────────────┘         └─────────────────┘                  │
+│          │                                                          │
+│          ▼                                                          │
+│   ┌─────────────────┐                                              │
+│   │ DECISAO FINAL   │ ◄── Claude SEMPRE tem autoridade final       │
+│   │ (CLAUDE CODE)   │                                              │
+│   └─────────────────┘                                              │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Principio Fundamental:**
+- Claude Code = **DECISOR** (autoridade final, implementador)
+- Gemini 3 Pro = **ADVISOR** (consultor, segunda opiniao, SEM poder de execucao)
+
+### MCP Instalado
+
+**Server:** `gemini-advisor` via `gemini-mcp-tool-windows-fixed`
+**Status:** Ativo e conectado
+**Modelo:** `gemini-3-pro-preview` (usar com parametro model)
+**Modelos disponiveis:** `gemini-3-pro-preview` (melhor), `gemini-2.5-pro`, `gemini-2.5-flash`
+**Context window:** 1M tokens
+
+### Quando Claude DEVE Consultar Gemini
+
+| Cenario | Prioridade | Justificativa |
+|---------|------------|---------------|
+| Dados financeiros criticos | **ALTA** | Taxa de alucinacao Claude 12% vs Gemini 88% - Claude mais preciso, mas segunda opiniao reduz risco |
+| Analise de codebase grande (>50 arquivos) | **ALTA** | Gemini tem 1M tokens vs 200K Claude |
+| Decisoes arquiteturais | **MEDIA** | Perspectiva diferente pode revelar blind spots |
+| Refatoracao > 5 arquivos | **MEDIA** | Validar impacto em arquivos relacionados |
+| Escolha entre alternativas | **MEDIA** | Debate de pros/cons |
+| Debugging complexo | **BAIXA** | Claude e superior (80.9% vs 76.2% SWE-bench) |
+| Tarefas < 50 linhas | **NAO CONSULTAR** | Overhead nao compensa |
+
+### Quando Claude NAO DEVE Consultar Gemini
+
+- Bug fixes simples (Claude e melhor em debugging)
+- Tarefas triviais (< 50 linhas de codigo)
+- Quando ja tem certeza da solucao
+- Prototipagem rapida (adiciona latencia desnecessaria)
+- Codigo que precisa de precisao absoluta (Claude tem menor taxa de alucinacao)
+
+### Limitacoes Conhecidas do Gemini 3 Pro (CRITICO)
+
+**Claude DEVE considerar estas limitacoes ao interpretar respostas do Gemini:**
+
+| Limitacao | Impacto | Como Claude Deve Tratar |
+|-----------|---------|-------------------------|
+| **Taxa de alucinacao 88%** | Pode afirmar coisas incorretas | Verificar SEMPRE com codigo fonte |
+| **Afirma "corrigido" quando nao esta** | Falso positivo em validacoes | Testar manualmente apos sugestao |
+| **Over-optimization** | Muda codigo que foi especificado | Ignorar se contradiz requisitos |
+| **Infinite loops em edicao** | Pode travar em old_string not found | Nao usar para edicao direta |
+| **Instabilidade em picos** | Provider overload errors | Retry ou prosseguir sem consulta |
+| **Hallucina estruturas cross-language** | Inventa models Java em projeto Python | Validar linguagem correta |
+
+**Fontes:**
+- [Gemini 3 Pro Hallucination Rate - The Decoder](https://the-decoder.com/gemini-3-pro-tops-new-ai-reliability-benchmark-but-hallucination-rates-remain-high/)
+- [GitHub Issues - google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli/issues)
+
+### Protocolo de Consulta Inteligente
+
+**Workflow Recomendado com Sequential Thinking + Gemini:**
+
+```
+1. Claude inicia Sequential Thinking
+   ↓
+2. Durante analise, Claude identifica necessidade de segunda opiniao
+   ↓
+3. Claude formula pergunta ESPECIFICA e CONTEXTUALIZADA para Gemini
+   ↓
+4. Gemini retorna analise/sugestao
+   ↓
+5. Claude AVALIA criticamente a resposta considerando limitacoes
+   ↓
+6. Claude DECIDE (aceita, rejeita ou adapta sugestao)
+   ↓
+7. Claude IMPLEMENTA a decisao final
+   ↓
+8. Claude valida com Zero Tolerance (tsc, build, lint)
+```
+
+### Como Formular Consultas ao Gemini
+
+**Template de Consulta Efetiva:**
+
+```markdown
+CONTEXTO:
+- Projeto: [descrever brevemente]
+- Stack: [tecnologias]
+- Arquivos envolvidos: [listar]
+
+SITUACAO:
+[Descrever o problema/decisao de forma clara]
+
+CODIGO RELEVANTE:
+[Incluir trechos especificos - Gemini tem 1M tokens]
+
+PERGUNTA ESPECIFICA:
+[Uma pergunta clara e objetiva]
+
+RESTRICOES:
+[Listar restricoes que Gemini deve respeitar]
+```
+
+**Exemplo de Consulta Bem Formulada:**
+
+```markdown
+CONTEXTO:
+- Projeto: B3 AI Analysis Platform
+- Stack: NestJS + TypeORM + PostgreSQL
+- Arquivo: backend/src/scrapers/scrapers.service.ts
+
+SITUACAO:
+Estou implementando cross-validation de dados financeiros.
+Preciso decidir entre usar media ou mediana para consolidar valores de 6 fontes.
+
+CODIGO RELEVANTE:
+[codigo do metodo atual]
+
+PERGUNTA ESPECIFICA:
+Qual abordagem e mais robusta para dados financeiros B3:
+1. Media com outlier detection (threshold 10%)
+2. Mediana (naturalmente resistente a outliers)
+
+RESTRICOES:
+- Deve manter precisao Decimal (nao Float)
+- Minimo 3 fontes concordando
+- Timezone America/Sao_Paulo
+```
+
+### Interpretando Respostas do Gemini
+
+**Claude DEVE aplicar este filtro critico:**
+
+1. **Verificar facticidade:** Gemini afirmou algo? Validar no codigo fonte
+2. **Checar consistencia:** Sugestao contradiz regras do projeto? Ignorar
+3. **Avaliar completude:** Resposta considera todas restricoes? Complementar se necessario
+4. **Testar viabilidade:** Sugestao e implementavel? Simular antes de aplicar
+5. **Documentar decisao:** Registrar por que aceitou/rejeitou sugestao
+
+**Padrao de Documentacao:**
+
+```markdown
+## Consulta Gemini: [titulo]
+**Data:** YYYY-MM-DD
+**Contexto:** [breve descricao]
+
+### Pergunta
+[pergunta formulada]
+
+### Resposta Gemini
+[resumo da resposta]
+
+### Avaliacao Claude
+- Pontos aceitos: [lista]
+- Pontos rejeitados: [lista com justificativa]
+- Adaptacoes: [modificacoes feitas]
+
+### Decisao Final
+[o que foi implementado e por que]
+```
+
+### Integracao com MCPs Existentes
+
+**Combinacao Recomendada:**
+
+| Fase | MCPs a Usar | Ordem |
+|------|-------------|-------|
+| Ultra-Thinking | Sequential Thinking + Gemini (se complexo) | 1. ST analisa → 2. Gemini opina → 3. ST decide |
+| Analise de Contexto | Filesystem + Gemini | 1. FS le arquivos → 2. Gemini analisa contexto grande |
+| Code Review | Gemini + Sequential Thinking | 1. Gemini revisa → 2. ST avalia criticas |
+| Validacao | Shell + Chrome DevTools | SEM Gemini (validacao objetiva) |
+| Implementacao | Filesystem + Shell | SEM Gemini (Claude implementa sozinho) |
+
+### Anti-Patterns (NUNCA FAZER)
+
+| Anti-Pattern | Por que e Ruim | O que Fazer |
+|--------------|----------------|-------------|
+| Delegar decisao ao Gemini | Claude perde controle | Claude sempre decide |
+| Aceitar sugestao sem validar | Gemini alucina 88% | Verificar no codigo |
+| Consultar para tarefas triviais | Overhead desnecessario | Resolver diretamente |
+| Pedir para Gemini implementar | Gemini nao executa | Claude implementa |
+| Ignorar limitacoes documentadas | Bugs e inconsistencias | Consultar tabela de limitacoes |
+| Consultar sem contexto | Resposta generica inutil | Usar template de consulta |
+
+### Metricas de Uso
+
+**Claude deve registrar internamente:**
+
+- Consultas ao Gemini por sessao
+- Taxa de aceitacao de sugestoes
+- Sugestoes rejeitadas e motivo
+- Tempo economizado vs overhead
+
+**Meta:** Consultar Gemini em ~20-30% das tarefas complexas, com taxa de utilidade >70%
+
+---
+
 ## Additional Documentation
 
 ### Core Documentation (Raiz do Projeto)

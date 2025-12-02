@@ -512,7 +512,7 @@ Antes de criar nova entity, verificar:
 
 ### MCPs (Model Context Protocol)
 
-Sistema completo de 8 servidores MCP para estender capacidades do Claude Code:
+Sistema completo de 9 servidores MCP para estender capacidades do Claude Code:
 
 | MCP                 | Propósito                                 | Status      |
 | ------------------- | ----------------------------------------- | ----------- |
@@ -524,10 +524,17 @@ Sistema completo de 8 servidores MCP para estender capacidades do Claude Code:
 | Playwright          | Automação de browser para testes E2E      | ✓ Connected |
 | Chrome DevTools     | Inspeção e debugging de aplicações web    | ✓ Connected |
 | Selenium            | Automação web alternativa                 | ✓ Connected |
+| **Gemini Advisor**  | Segunda opinião via Gemini CLI (1M tokens)| ✓ Connected |
 
 **Configuração:** `C:\Users\adria\.claude.json`
 **Escopo:** Projeto (invest-claude-web)
 **Documentação:** `MCPS_USAGE_GUIDE.md`, `METODOLOGIA_MCPS_INTEGRADA.md`
+
+**Gemini Advisor - Protocolo:**
+- Claude Code = **DECISOR** (autoridade final)
+- Gemini = **ADVISOR** (segunda opinião, não implementa)
+- Modelo recomendado: `gemini-3-pro-preview`
+- Ver detalhes em `CLAUDE.md` seção "Gemini 3 Pro - Protocolo de Segunda Opiniao"
 
 ---
 

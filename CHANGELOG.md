@@ -13,8 +13,48 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - População de dados no banco após wipe (Issue #5)
 - Validação visual final da UI de opções
 - Migração dos 24 scrapers Python restantes (Selenium → Playwright)
-- FASE 61: Git Workflow Automation (Prioridade 2)
-- FASE 62: Architecture Visual Diagrams (Prioridade 2)
+- FASE 61.4-5: Dashboard de Qualidade + Alertas de Discrepância
+- FASE 63: Git Workflow Automation (Prioridade 2)
+- FASE 64: Architecture Visual Diagrams (Prioridade 2)
+
+---
+
+## [1.7.0] - 2025-12-02
+
+### Added
+
+- **FASE 62 - MCP Gemini Advisor Integration:**
+  - **MCP Server Configuration:**
+    - Pacote: `gemini-mcp-tool-windows-fixed@latest` (versão corrigida para Windows)
+    - Wrapper script: `~/.claude-mcp-servers/gemini-wrapper.cmd`
+    - Configuração em `.claude.json` (projeto e global)
+  - **Ferramentas Disponíveis:**
+    - `ask-gemini` - Consultas gerais e análise de código
+    - `brainstorm` - Ideação com metodologias criativas (SCAMPER, Design Thinking)
+    - `timeout-test` - Teste de resiliência
+    - `Help` - Documentação do Gemini CLI
+  - **Modelos Configurados:**
+    - `gemini-3-pro-preview` (recomendado - mais recente)
+    - `gemini-2.5-pro` (alternativa estável)
+    - `gemini-2.5-flash` (rápido/econômico)
+  - **Documentação Atualizada:**
+    - `CLAUDE.md` - Seção completa "Gemini 3 Pro - Protocolo de Segunda Opiniao"
+    - `.gemini/GEMINI.md` - Seção "INTEGRACAO COM CLAUDE CODE"
+
+### Validated
+
+- **Validação Massiva (11 testes - 100% PASSOU):**
+  - Consulta simples, análise de código TypeScript, brainstorm
+  - Análise de arquivo real do projeto, decisão arquitetural
+  - Análise de dados financeiros, code review múltiplos arquivos
+  - Português vs Inglês, resposta longa, web search, timeout
+
+### Protocol
+
+- **Claude Code = DECISOR** (autoridade final, implementador)
+- **Gemini = ADVISOR** (segunda opinião, não implementa)
+- Consultar para: análises grandes (>50 arquivos), decisões arquiteturais, dados financeiros
+- Não consultar para: tarefas triviais (<50 linhas), debugging simples
 
 ---
 

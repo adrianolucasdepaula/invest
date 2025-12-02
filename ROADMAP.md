@@ -2,7 +2,7 @@
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
 **Última Atualização:** 2025-12-02
-**Versão:** 1.6.2
+**Versão:** 1.7.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -8732,6 +8732,68 @@ backend/src/database/migrations/1764696740650-AddFieldSourcesToFundamentalData.t
 - ✅ Componentes renderizando corretamente
 
 **Status:** 🟡 **FASES 1-3 COMPLETAS - FASES 4-5 PENDENTES**
+
+---
+
+### FASE 62: MCP Gemini Advisor Integration ✅ 100% COMPLETO (2025-12-02)
+
+**Prioridade:** ⚠️ **IMPORTANTE** (Prioridade 2)
+**Data:** 2025-12-02
+**Tipo:** Developer Experience + AI Integration
+**Versão:** 1.7.0
+
+**Objetivo:** Integrar Gemini CLI como segunda opinião (Advisor) para o Claude Code, permitindo consultas a um modelo AI alternativo para validação de decisões arquiteturais, análise de código e dados financeiros.
+
+**Motivação:**
+- Reduzir risco de erros em decisões críticas via segunda opinião
+- Aproveitar context window de 1M tokens do Gemini para análises grandes
+- Criar workflow colaborativo Claude (decisor) + Gemini (advisor)
+
+**Implementações Concluídas:**
+
+1. **MCP Server Configuration:**
+   - Pacote: `gemini-mcp-tool-windows-fixed@latest`
+   - Wrapper script: `~/.claude-mcp-servers/gemini-wrapper.cmd`
+   - Configuração em `.claude.json` (projeto + global)
+
+2. **Ferramentas Disponíveis:**
+   - `ask-gemini` - Consultas gerais e análise de código
+   - `brainstorm` - Ideação com metodologias criativas
+   - `timeout-test` - Teste de resiliência
+   - `Help` - Documentação
+
+3. **Modelos Configurados:**
+   - `gemini-3-pro-preview` (recomendado - mais recente)
+   - `gemini-2.5-pro` (alternativa estável)
+   - `gemini-2.5-flash` (rápido/econômico)
+
+4. **Documentação:**
+   - `CLAUDE.md` - Seção completa "Gemini 3 Pro - Protocolo de Segunda Opiniao"
+   - `.gemini/GEMINI.md` - Seção "INTEGRACAO COM CLAUDE CODE"
+
+**Validação Massiva (11 testes):**
+
+| # | Teste | Status |
+|---|-------|--------|
+| 1 | Consulta simples (ping) | ✅ PASSOU |
+| 2 | Análise de código TypeScript | ✅ PASSOU |
+| 3 | Brainstorm com domínio | ✅ PASSOU |
+| 4 | Análise arquivo real do projeto | ✅ PASSOU |
+| 5 | Decisão arquitetural | ✅ PASSOU |
+| 6 | Análise dados financeiros | ✅ PASSOU |
+| 7 | Code review múltiplos arquivos | ✅ PASSOU |
+| 8 | Português vs Inglês | ✅ PASSOU |
+| 9 | Resposta longa (20 itens) | ✅ PASSOU |
+| 10 | Web search (SELIC) | ✅ PASSOU |
+| 11 | Timeout/resiliência | ✅ PASSOU |
+
+**Protocolo de Uso:**
+- Claude Code = **DECISOR** (autoridade final, implementador)
+- Gemini = **ADVISOR** (segunda opinião, não implementa)
+- Consultar para: análises grandes, decisões arquiteturais, dados financeiros
+- Não consultar para: tarefas triviais (<50 linhas), debugging simples
+
+**Status:** ✅ **100% COMPLETO**
 
 ---
 
