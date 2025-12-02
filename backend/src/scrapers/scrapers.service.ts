@@ -11,10 +11,11 @@ import { ScraperResult } from './base/base-scraper.interface';
 import {
   FieldSourcesMap,
   FieldSourceValue,
-  MergeStrategy,
-  DEFAULT_FIELD_MERGE_CONFIG,
+  SelectionStrategy,
+  FIELD_SELECTION_STRATEGY,
   SOURCE_PRIORITY,
   TRACKABLE_FIELDS,
+  DEFAULT_TOLERANCES,
 } from './interfaces';
 
 /**
@@ -293,15 +294,21 @@ export class ScrapersService {
   /**
    * FASE 1 - Construir mapa de rastreamento de origem por campo
    *
-   * Para cada campo rastreável, coleta os valores de todas as fontes
-   * e calcula variância e consenso.
+   * IMPORTANTE: Dados financeiros são ABSOLUTOS.
+   * Usamos CONSENSO para validar qual valor está correto,
+   * NÃO calculamos média/mediana.
+   *
+   * Lógica:
+   * 1. Coleta valores de todas as fontes
+   * 2. Agrupa valores similares (dentro da tolerância)
+   * 3. Seleciona o valor com maior consenso
+   * 4. Se não há consenso, usa fonte prioritária + flag de alerta
    */
   private buildFieldSources(
     rawSourcesData: Array<{ source: string; data: any; scrapedAt: string }>,
   ): FieldSourcesMap {
     const fieldSources: FieldSourcesMap = {};
 
-    // Para cada campo rastreável
     for (const field of TRACKABLE_FIELDS) {
       const values: FieldSourceValue[] = [];
 
@@ -315,34 +322,205 @@ export class ScrapersService {
         });
       }
 
-      // Filtrar valores não-nulos para cálculos
-      const validValues = values.filter((v) => v.value !== null);
+      // Filtrar valores válidos (não-nulos e não-zero para a maioria dos campos)
+      const validValues = values.filter(
+        (v) => v.value !== null && (v.value !== 0 || this.isZeroValidForField(field)),
+      );
 
       if (validValues.length === 0) {
         continue; // Pular campos sem dados
       }
 
-      // Aplicar estratégia de merge para determinar valor final
-      const strategy = DEFAULT_FIELD_MERGE_CONFIG[field] || MergeStrategy.MEDIAN;
-      const { finalValue, finalSource } = this.applyMergeStrategy(validValues, strategy);
-
-      // Calcular variância
-      const variance = this.calculateVariance(validValues.map((v) => v.value as number));
-
-      // Calcular consenso (% de fontes com valores similares)
-      const consensus = this.calculateConsensus(validValues.map((v) => v.value as number));
+      // Aplicar seleção por consenso
+      const result = this.selectByConsensus(field, validValues);
 
       fieldSources[field] = {
         values,
-        finalValue,
-        finalSource,
+        finalValue: result.finalValue,
+        finalSource: result.finalSource,
         sourcesCount: validValues.length,
-        variance,
-        consensus,
+        agreementCount: result.agreementCount,
+        consensus: result.consensus,
+        hasDiscrepancy: result.hasDiscrepancy,
+        divergentSources: result.divergentSources,
       };
     }
 
     return fieldSources;
+  }
+
+  /**
+   * Verifica se zero é um valor válido para um campo
+   * (alguns campos podem legitimamente ser zero)
+   */
+  private isZeroValidForField(field: string): boolean {
+    const zeroValidFields = [
+      'dividaLiquida', // Empresa sem dívida líquida
+      'dividaBruta', // Empresa sem dívida
+      'dividaLiquidaEbitda', // Empresa sem dívida
+      'dividaLiquidaPatrimonio', // Empresa sem dívida
+    ];
+    return zeroValidFields.includes(field);
+  }
+
+  /**
+   * Seleciona valor por CONSENSO entre fontes
+   *
+   * Algoritmo:
+   * 1. Agrupa valores similares (dentro da tolerância)
+   * 2. Encontra o grupo com mais fontes concordando
+   * 3. Se há empate ou nenhum consenso, usa fonte prioritária
+   * 4. Marca discrepâncias para análise posterior
+   */
+  private selectByConsensus(
+    field: string,
+    validValues: FieldSourceValue[],
+  ): {
+    finalValue: number | null;
+    finalSource: string;
+    agreementCount: number;
+    consensus: number;
+    hasDiscrepancy: boolean;
+    divergentSources?: Array<{ source: string; value: number; deviation: number }>;
+  } {
+    if (validValues.length === 0) {
+      return {
+        finalValue: null,
+        finalSource: '',
+        agreementCount: 0,
+        consensus: 0,
+        hasDiscrepancy: false,
+      };
+    }
+
+    // Se apenas uma fonte, usar diretamente
+    if (validValues.length === 1) {
+      return {
+        finalValue: validValues[0].value,
+        finalSource: validValues[0].source,
+        agreementCount: 1,
+        consensus: 100,
+        hasDiscrepancy: false,
+      };
+    }
+
+    // Obter tolerância para este campo
+    const tolerance = this.getFieldTolerance(field);
+
+    // Agrupar valores similares
+    const groups = this.groupSimilarValues(validValues, tolerance);
+
+    // Encontrar grupo com maior consenso
+    let bestGroup = groups[0];
+    for (const group of groups) {
+      if (group.sources.length > bestGroup.sources.length) {
+        bestGroup = group;
+      }
+    }
+
+    // Calcular consenso
+    const agreementCount = bestGroup.sources.length;
+    const consensus = Math.round((agreementCount / validValues.length) * 100);
+
+    // Verificar se há discrepância significativa
+    const hasDiscrepancy = agreementCount < validValues.length && groups.length > 1;
+
+    // Selecionar fonte prioritária dentro do grupo de consenso
+    let finalSource = bestGroup.sources[0];
+    for (const source of SOURCE_PRIORITY) {
+      if (bestGroup.sources.includes(source)) {
+        finalSource = source;
+        break;
+      }
+    }
+
+    // Obter o valor da fonte selecionada
+    const selectedValue = validValues.find((v) => v.source === finalSource);
+    const finalValue = selectedValue?.value ?? bestGroup.representativeValue;
+
+    // Identificar fontes divergentes
+    let divergentSources: Array<{ source: string; value: number; deviation: number }> | undefined;
+    if (hasDiscrepancy) {
+      divergentSources = validValues
+        .filter((v) => !bestGroup.sources.includes(v.source) && v.value !== null)
+        .map((v) => ({
+          source: v.source,
+          value: v.value as number,
+          deviation: this.calculateDeviation(v.value as number, finalValue as number),
+        }));
+    }
+
+    return {
+      finalValue,
+      finalSource,
+      agreementCount,
+      consensus,
+      hasDiscrepancy,
+      divergentSources,
+    };
+  }
+
+  /**
+   * Obtém tolerância configurada para um campo
+   */
+  private getFieldTolerance(field: string): number {
+    return DEFAULT_TOLERANCES.byField?.[field] ?? DEFAULT_TOLERANCES.default;
+  }
+
+  /**
+   * Agrupa valores similares (dentro da tolerância)
+   */
+  private groupSimilarValues(
+    values: FieldSourceValue[],
+    tolerance: number,
+  ): Array<{ representativeValue: number; sources: string[] }> {
+    const groups: Array<{ representativeValue: number; sources: string[] }> = [];
+
+    for (const v of values) {
+      if (v.value === null) continue;
+
+      // Procurar grupo existente compatível
+      let foundGroup = false;
+      for (const group of groups) {
+        if (this.valuesAreEqual(v.value, group.representativeValue, tolerance)) {
+          group.sources.push(v.source);
+          foundGroup = true;
+          break;
+        }
+      }
+
+      // Se não encontrou grupo compatível, criar novo
+      if (!foundGroup) {
+        groups.push({
+          representativeValue: v.value,
+          sources: [v.source],
+        });
+      }
+    }
+
+    return groups;
+  }
+
+  /**
+   * Verifica se dois valores são iguais dentro da tolerância
+   */
+  private valuesAreEqual(value1: number, value2: number, tolerance: number): boolean {
+    if (value1 === value2) return true;
+    if (value1 === 0 || value2 === 0) {
+      // Se um é zero, comparar valor absoluto
+      return Math.abs(value1 - value2) <= tolerance;
+    }
+    // Comparação percentual
+    const deviation = Math.abs(value1 - value2) / Math.abs(value2);
+    return deviation <= tolerance;
+  }
+
+  /**
+   * Calcula desvio percentual entre dois valores
+   */
+  private calculateDeviation(value: number, reference: number): number {
+    if (reference === 0) return value === 0 ? 0 : 100;
+    return Math.round(Math.abs((value - reference) / reference) * 10000) / 100; // Em percentual
   }
 
   /**
@@ -389,143 +567,9 @@ export class ScrapersService {
   }
 
   /**
-   * FASE 1 - Aplica estratégia de merge para determinar valor final
-   */
-  private applyMergeStrategy(
-    values: FieldSourceValue[],
-    strategy: MergeStrategy,
-  ): { finalValue: number | null; finalSource: string } {
-    const validValues = values.filter((v) => v.value !== null);
-
-    if (validValues.length === 0) {
-      return { finalValue: null, finalSource: '' };
-    }
-
-    switch (strategy) {
-      case MergeStrategy.MEDIAN: {
-        const sorted = [...validValues].sort((a, b) => (a.value as number) - (b.value as number));
-        const midIndex = Math.floor(sorted.length / 2);
-        const medianValue = sorted[midIndex];
-        return {
-          finalValue: medianValue.value,
-          finalSource: medianValue.source,
-        };
-      }
-
-      case MergeStrategy.AVERAGE: {
-        const sum = validValues.reduce((acc, v) => acc + (v.value as number), 0);
-        const avg = sum / validValues.length;
-        // Fonte é a mais próxima da média
-        const closest = validValues.reduce((prev, curr) =>
-          Math.abs((curr.value as number) - avg) < Math.abs((prev.value as number) - avg)
-            ? curr
-            : prev,
-        );
-        return {
-          finalValue: Math.round(avg * 100) / 100,
-          finalSource: closest.source,
-        };
-      }
-
-      case MergeStrategy.PRIORITY: {
-        // Usar ordem de prioridade de fontes
-        for (const source of SOURCE_PRIORITY) {
-          const found = validValues.find((v) => v.source === source);
-          if (found) {
-            return {
-              finalValue: found.value,
-              finalSource: found.source,
-            };
-          }
-        }
-        // Fallback: primeiro valor
-        return {
-          finalValue: validValues[0].value,
-          finalSource: validValues[0].source,
-        };
-      }
-
-      case MergeStrategy.MOST_RECENT: {
-        // Ordenar por data de coleta (mais recente primeiro)
-        const sorted = [...validValues].sort(
-          (a, b) => new Date(b.scrapedAt).getTime() - new Date(a.scrapedAt).getTime(),
-        );
-        return {
-          finalValue: sorted[0].value,
-          finalSource: sorted[0].source,
-        };
-      }
-
-      case MergeStrategy.CONSENSUS:
-      default: {
-        // Usar valor mais comum (ou mediana se todos diferentes)
-        const valueCounts = new Map<number, { count: number; source: string }>();
-        for (const v of validValues) {
-          const rounded = Math.round((v.value as number) * 100) / 100;
-          const existing = valueCounts.get(rounded);
-          if (existing) {
-            existing.count++;
-          } else {
-            valueCounts.set(rounded, { count: 1, source: v.source });
-          }
-        }
-        // Encontrar valor mais comum
-        let maxCount = 0;
-        let consensusValue = validValues[0].value;
-        let consensusSource = validValues[0].source;
-        for (const [value, info] of valueCounts) {
-          if (info.count > maxCount) {
-            maxCount = info.count;
-            consensusValue = value;
-            consensusSource = info.source;
-          }
-        }
-        return {
-          finalValue: consensusValue,
-          finalSource: consensusSource,
-        };
-      }
-    }
-  }
-
-  /**
-   * FASE 1 - Calcula variância normalizada (0-1)
-   */
-  private calculateVariance(values: number[]): number {
-    if (values.length < 2) return 0;
-
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    if (mean === 0) return 0;
-
-    const squaredDiffs = values.map((v) => Math.pow(v - mean, 2));
-    const variance = squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
-
-    // Normalizar: coeficiente de variação (desvio padrão / média)
-    const stdDev = Math.sqrt(variance);
-    const cv = Math.abs(stdDev / mean);
-
-    // Limitar entre 0 e 1
-    return Math.min(cv, 1);
-  }
-
-  /**
-   * FASE 1 - Calcula consenso entre fontes (0-100%)
-   */
-  private calculateConsensus(values: number[]): number {
-    if (values.length < 2) return 100;
-
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    if (mean === 0) return 100;
-
-    // Contar quantos valores estão dentro de 10% da média
-    const threshold = Math.abs(mean * 0.1);
-    const withinThreshold = values.filter((v) => Math.abs(v - mean) <= threshold).length;
-
-    return Math.round((withinThreshold / values.length) * 100);
-  }
-
-  /**
-   * FASE 1 - Merge inteligente usando fieldSources já calculado
+   * FASE 1 - Constrói dados mesclados a partir do fieldSources
+   *
+   * Usa valores validados por CONSENSO (não média/mediana)
    */
   private mergeDataWithStrategies(
     rawSourcesData: Array<{ source: string; data: any; scrapedAt: string }>,
@@ -535,10 +579,20 @@ export class ScrapersService {
 
     const mergedData: Record<string, any> = {};
 
-    // Para cada campo com dados, usar o valor final calculado
+    // Contadores para metadados
+    let fieldsWithConsensus = 0;
+    let fieldsWithDiscrepancy = 0;
+
+    // Para cada campo com dados, usar o valor validado por consenso
     for (const [field, info] of Object.entries(fieldSources)) {
       if (info.finalValue !== null) {
         mergedData[field] = info.finalValue;
+
+        if (info.hasDiscrepancy) {
+          fieldsWithDiscrepancy++;
+        } else if (info.agreementCount >= 2) {
+          fieldsWithConsensus++;
+        }
       }
     }
 
@@ -547,7 +601,9 @@ export class ScrapersService {
       sources: rawSourcesData.map((r) => r.source),
       timestamp: new Date(),
       sourcesCount: rawSourcesData.length,
-      mergeStrategy: 'smart', // Indicar que usou merge inteligente
+      selectionMethod: 'consensus', // Validação por consenso
+      fieldsWithConsensus,
+      fieldsWithDiscrepancy,
     };
 
     return mergedData;

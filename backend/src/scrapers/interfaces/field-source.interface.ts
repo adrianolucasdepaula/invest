@@ -1,10 +1,11 @@
 /**
  * Interfaces para Sistema de Rastreamento de Origem por Campo
  *
- * FASE 1.3 - Plano de Evolução do Sistema de Coleta
+ * FASE 1 - Sistema de Validação por Consenso
  *
- * Estas interfaces definem a estrutura de dados para rastrear
- * a origem de cada campo fundamental coletado dos scrapers.
+ * IMPORTANTE: Em dados financeiros, os valores são ABSOLUTOS.
+ * Não calculamos média/mediana - usamos múltiplas fontes para VALIDAR
+ * qual valor está correto através de consenso.
  */
 
 /**
@@ -23,12 +24,16 @@ export interface FieldSourceValue {
 
 /**
  * Informações consolidadas de um campo com múltiplas fontes
+ *
+ * O sistema usa CONSENSO para validar valores:
+ * - Se múltiplas fontes concordam (dentro de tolerância), valor é confiável
+ * - Se há discrepância, usamos fonte prioritária + flag de alerta
  */
 export interface FieldSourceInfo {
   /** Lista de valores coletados de cada fonte */
   values: FieldSourceValue[];
 
-  /** Valor final escolhido após merge */
+  /** Valor final escolhido (validado por consenso ou fonte prioritária) */
   finalValue: number | null;
 
   /** Fonte do valor final */
@@ -37,11 +42,17 @@ export interface FieldSourceInfo {
   /** Quantidade de fontes que retornaram valor para este campo */
   sourcesCount: number;
 
-  /** Variância entre os valores das fontes (0-1, menor = mais confiável) */
-  variance: number;
+  /** Quantidade de fontes que concordam com o valor final (dentro da tolerância) */
+  agreementCount: number;
 
   /** Porcentagem de consenso entre fontes (0-100) */
   consensus: number;
+
+  /** Flag: true se há discrepância significativa entre fontes */
+  hasDiscrepancy: boolean;
+
+  /** Se há discrepância, lista as fontes divergentes */
+  divergentSources?: Array<{ source: string; value: number; deviation: number }>;
 }
 
 /**
@@ -50,38 +61,80 @@ export interface FieldSourceInfo {
 export type FieldSourcesMap = Record<string, FieldSourceInfo>;
 
 /**
- * Estratégias de merge disponíveis
+ * Estratégia de seleção de valor
+ *
+ * NOTA: Não usamos AVERAGE/MEDIAN para dados financeiros absolutos.
+ * Usamos CONSENSUS para validação e PRIORITY como fallback.
  */
-export enum MergeStrategy {
-  /** Usa mediana dos valores (mais robusto a outliers) */
-  MEDIAN = 'median',
-
-  /** Usa média dos valores */
-  AVERAGE = 'average',
-
-  /** Usa valor mais recente */
-  MOST_RECENT = 'most_recent',
-
-  /** Usa consenso (para campos categóricos) */
+export enum SelectionStrategy {
+  /**
+   * CONSENSUS: Valor mais comum entre as fontes (dentro da tolerância)
+   * - Se 3+ fontes concordam → valor validado com alta confiança
+   * - Se 2 fontes concordam → valor validado com média confiança
+   * - Se nenhuma concorda → usa fonte prioritária + flag discrepância
+   */
   CONSENSUS = 'consensus',
 
-  /** Usa fonte prioritária */
+  /**
+   * PRIORITY: Usa fonte prioritária diretamente
+   * - Para campos onde apenas uma fonte é confiável
+   * - Outras fontes servem apenas para detectar anomalias
+   */
   PRIORITY = 'priority',
 }
 
 /**
- * Configuração de merge por campo
+ * Configuração de tolerância para comparação de valores
+ *
+ * Dois valores são considerados "iguais" se a diferença percentual
+ * for menor que a tolerância configurada.
  */
-export interface FieldMergeConfig {
-  /** Nome do campo */
-  field: string;
+export interface ToleranceConfig {
+  /** Tolerância percentual padrão (ex: 0.01 = 1%) */
+  default: number;
 
-  /** Estratégia de merge a ser usada */
-  strategy: MergeStrategy;
-
-  /** Threshold de variância aceitável (0-1) */
-  varianceThreshold?: number;
+  /** Tolerâncias específicas por campo */
+  byField?: Record<string, number>;
 }
+
+/**
+ * Tolerâncias padrão por tipo de dado
+ */
+export const DEFAULT_TOLERANCES: ToleranceConfig = {
+  // 1% de tolerância padrão para indicadores
+  default: 0.01,
+
+  byField: {
+    // Indicadores de valuation - tolerância maior (podem variar por metodologia)
+    pl: 0.02, // 2%
+    pvp: 0.02,
+    psr: 0.02,
+    evEbit: 0.02,
+    evEbitda: 0.02,
+
+    // Margens - tolerância menor (valores percentuais diretos)
+    margemBruta: 0.005, // 0.5%
+    margemEbit: 0.005,
+    margemEbitda: 0.005,
+    margemLiquida: 0.005,
+
+    // Rentabilidade - tolerância menor
+    roe: 0.005,
+    roa: 0.005,
+    roic: 0.005,
+
+    // Dividend Yield - tolerância menor
+    dividendYield: 0.005,
+
+    // Valores absolutos (R$) - tolerância muito pequena
+    receitaLiquida: 0.001, // 0.1%
+    lucroLiquido: 0.001,
+    patrimonioLiquido: 0.001,
+    ativoTotal: 0.001,
+    dividaBruta: 0.001,
+    dividaLiquida: 0.001,
+  },
+};
 
 /**
  * Lista de campos que podem ser rastreados
@@ -138,68 +191,74 @@ export const TRACKABLE_FIELDS = [
 export type TrackableField = (typeof TRACKABLE_FIELDS)[number];
 
 /**
- * Configuração padrão de merge por campo
+ * Configuração de estratégia por campo
+ *
+ * CONSENSUS: Usado para a maioria dos campos - valida via múltiplas fontes
+ * PRIORITY: Usado quando sabemos que uma fonte específica é mais confiável
  */
-export const DEFAULT_FIELD_MERGE_CONFIG: Record<string, MergeStrategy> = {
-  // Valuation - usar MEDIANA (robusto a outliers)
-  pl: MergeStrategy.MEDIAN,
-  pvp: MergeStrategy.MEDIAN,
-  psr: MergeStrategy.MEDIAN,
-  pAtivos: MergeStrategy.MEDIAN,
-  pCapitalGiro: MergeStrategy.MEDIAN,
-  pEbit: MergeStrategy.MEDIAN,
-  evEbit: MergeStrategy.MEDIAN,
-  evEbitda: MergeStrategy.MEDIAN,
-  pegRatio: MergeStrategy.MEDIAN,
+export const FIELD_SELECTION_STRATEGY: Record<string, SelectionStrategy> = {
+  // Todos os campos usam CONSENSUS por padrão
+  // O sistema tentará validar via consenso e usará PRIORITY como fallback
+  pl: SelectionStrategy.CONSENSUS,
+  pvp: SelectionStrategy.CONSENSUS,
+  psr: SelectionStrategy.CONSENSUS,
+  pAtivos: SelectionStrategy.CONSENSUS,
+  pCapitalGiro: SelectionStrategy.CONSENSUS,
+  pEbit: SelectionStrategy.CONSENSUS,
+  evEbit: SelectionStrategy.CONSENSUS,
+  evEbitda: SelectionStrategy.CONSENSUS,
+  pegRatio: SelectionStrategy.CONSENSUS,
 
-  // Debt - usar MEDIANA
-  dividaLiquidaPatrimonio: MergeStrategy.MEDIAN,
-  dividaLiquidaEbitda: MergeStrategy.MEDIAN,
-  dividaLiquidaEbit: MergeStrategy.MEDIAN,
-  patrimonioLiquidoAtivos: MergeStrategy.MEDIAN,
-  passivosAtivos: MergeStrategy.MEDIAN,
+  dividaLiquidaPatrimonio: SelectionStrategy.CONSENSUS,
+  dividaLiquidaEbitda: SelectionStrategy.CONSENSUS,
+  dividaLiquidaEbit: SelectionStrategy.CONSENSUS,
+  patrimonioLiquidoAtivos: SelectionStrategy.CONSENSUS,
+  passivosAtivos: SelectionStrategy.CONSENSUS,
 
-  // Efficiency - usar MEDIANA
-  margemBruta: MergeStrategy.MEDIAN,
-  margemEbit: MergeStrategy.MEDIAN,
-  margemEbitda: MergeStrategy.MEDIAN,
-  margemLiquida: MergeStrategy.MEDIAN,
-  roe: MergeStrategy.MEDIAN,
-  roa: MergeStrategy.MEDIAN,
-  roic: MergeStrategy.MEDIAN,
-  giroAtivos: MergeStrategy.MEDIAN,
+  margemBruta: SelectionStrategy.CONSENSUS,
+  margemEbit: SelectionStrategy.CONSENSUS,
+  margemEbitda: SelectionStrategy.CONSENSUS,
+  margemLiquida: SelectionStrategy.CONSENSUS,
+  roe: SelectionStrategy.CONSENSUS,
+  roa: SelectionStrategy.CONSENSUS,
+  roic: SelectionStrategy.CONSENSUS,
+  giroAtivos: SelectionStrategy.CONSENSUS,
 
-  // Growth - usar MEDIANA
-  cagrReceitas5anos: MergeStrategy.MEDIAN,
-  cagrLucros5anos: MergeStrategy.MEDIAN,
+  cagrReceitas5anos: SelectionStrategy.CONSENSUS,
+  cagrLucros5anos: SelectionStrategy.CONSENSUS,
 
-  // Dividends - usar AVERAGE (menos variação)
-  dividendYield: MergeStrategy.AVERAGE,
-  payout: MergeStrategy.AVERAGE,
+  dividendYield: SelectionStrategy.CONSENSUS,
+  payout: SelectionStrategy.CONSENSUS,
 
-  // Financials (valores absolutos) - usar PRIORITY
-  receitaLiquida: MergeStrategy.PRIORITY,
-  ebit: MergeStrategy.PRIORITY,
-  ebitda: MergeStrategy.PRIORITY,
-  lucroLiquido: MergeStrategy.PRIORITY,
-  patrimonioLiquido: MergeStrategy.PRIORITY,
-  ativoTotal: MergeStrategy.PRIORITY,
-  dividaBruta: MergeStrategy.PRIORITY,
-  dividaLiquida: MergeStrategy.PRIORITY,
-  disponibilidades: MergeStrategy.PRIORITY,
+  // Valores absolutos financeiros - também usam CONSENSUS para validação
+  receitaLiquida: SelectionStrategy.CONSENSUS,
+  ebit: SelectionStrategy.CONSENSUS,
+  ebitda: SelectionStrategy.CONSENSUS,
+  lucroLiquido: SelectionStrategy.CONSENSUS,
+  patrimonioLiquido: SelectionStrategy.CONSENSUS,
+  ativoTotal: SelectionStrategy.CONSENSUS,
+  dividaBruta: SelectionStrategy.CONSENSUS,
+  dividaLiquida: SelectionStrategy.CONSENSUS,
+  disponibilidades: SelectionStrategy.CONSENSUS,
 };
 
 /**
- * Prioridade de fontes para estratégia PRIORITY
+ * Prioridade de fontes para fallback quando não há consenso
  * Ordem: mais confiável primeiro
  */
 export const SOURCE_PRIORITY = [
-  'fundamentus', // 1º - Mais completo e atualizado
+  'fundamentus', // 1º - Dados oficiais CVM, mais completo
   'statusinvest', // 2º - Boa qualidade e cobertura
   'investidor10', // 3º - Dados extras (PEG Ratio, CAGR)
-  'brapi', // 4º - API oficial
+  'brapi', // 4º - API com dados B3
   'investsite', // 5º - Backup
   'fundamentei', // 6º - Requer login
 ] as const;
 
 export type SourceName = (typeof SOURCE_PRIORITY)[number];
+
+// Mantendo exports antigos para compatibilidade (deprecated)
+/** @deprecated Use SelectionStrategy instead */
+export const MergeStrategy = SelectionStrategy;
+/** @deprecated Use FIELD_SELECTION_STRATEGY instead */
+export const DEFAULT_FIELD_MERGE_CONFIG = FIELD_SELECTION_STRATEGY;
