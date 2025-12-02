@@ -1,9 +1,10 @@
 import { Controller, Get, Post, Param, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AssetsService } from './assets.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { HistoricalPricesQueryDto } from './dto/historical-prices-query.dto';
 import { SyncOptionsLiquidityResponseDto } from './dto/sync-options-liquidity.dto';
+import { AssetDataSourcesResponseDto } from './dto/asset-data-sources.dto';
 import { AssetUpdateJobsService } from '../../queue/jobs/asset-update-jobs.service';
 import { UpdateTrigger } from '@database/entities';
 
@@ -25,6 +26,21 @@ export class AssetsController {
   @ApiOperation({ summary: 'Get asset by ticker' })
   async getAsset(@Param('ticker') ticker: string) {
     return this.assetsService.findByTicker(ticker);
+  }
+
+  @Get(':ticker/data-sources')
+  @ApiOperation({
+    summary: 'Get data sources information for an asset',
+    description:
+      'Returns detailed information about data sources used for each field, including consensus percentage, discrepancies detected, and values from each scraper source.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Data sources information',
+    type: AssetDataSourcesResponseDto,
+  })
+  async getAssetDataSources(@Param('ticker') ticker: string) {
+    return this.assetsService.getDataSources(ticker);
   }
 
   @Get(':ticker/price-history')

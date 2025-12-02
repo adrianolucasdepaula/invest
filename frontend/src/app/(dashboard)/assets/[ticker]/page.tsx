@@ -23,7 +23,8 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useAsset, useMarketDataPrices, useAssetFundamentals } from '@/lib/hooks/use-assets';
+import { useAsset, useMarketDataPrices, useAssetFundamentals, useAssetDataSources } from '@/lib/hooks/use-assets';
+import { DataQualitySummary } from '@/components/assets/DataSourceIndicator';
 import { useAnalysis, useRequestAnalysis } from '@/lib/hooks/use-analysis';
 import { AdvancedChart } from '@/components/tradingview/widgets/AdvancedChart';
 
@@ -64,6 +65,9 @@ export default function AssetDetailPage({ params }: { params: Promise<{ ticker: 
   // const { data: fundamentals, isLoading: fundamentalsLoading } = useAssetFundamentals(ticker);
   const fundamentals = null;
   const fundamentalsLoading = false;
+
+  // Fetch data sources information for quality indicators
+  const { data: dataSources, isLoading: dataSourcesLoading } = useAssetDataSources(ticker);
 
   // Fetch technical data from backend (ALWAYS - advanced mode is default)
   useEffect(() => {
@@ -227,6 +231,17 @@ export default function AssetDetailPage({ params }: { params: Promise<{ ticker: 
               <>
                 <h1 className="text-3xl font-bold tracking-tight">{ticker.toUpperCase()}</h1>
                 <p className="text-muted-foreground">{asset?.name || 'Carregando...'}</p>
+                {dataSources && !dataSourcesLoading && (
+                  <div className="mt-2">
+                    <DataQualitySummary
+                      overallConfidence={dataSources.overallConfidence}
+                      totalFieldsTracked={dataSources.totalFieldsTracked}
+                      fieldsWithDiscrepancy={dataSources.fieldsWithDiscrepancy}
+                      fieldsWithHighConsensus={dataSources.fieldsWithHighConsensus}
+                      sourcesUsed={dataSources.sourcesUsed}
+                    />
+                  </div>
+                )}
               </>
             )}
           </div>

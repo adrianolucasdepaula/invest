@@ -938,4 +938,120 @@ export class AssetsService {
       throw error;
     }
   }
+
+  /**
+   * FASE 3 - Obter detalhes de fontes de dados para um ativo
+   *
+   * Retorna informações detalhadas sobre:
+   * - Quais fontes foram consultadas
+   * - Valor de cada fonte para cada campo
+   * - Consenso entre fontes
+   * - Discrepâncias detectadas
+   */
+  async getDataSources(ticker: string): Promise<{
+    ticker: string;
+    assetName: string;
+    lastUpdate: string | null;
+    overallConfidence: number;
+    sourcesUsed: string[];
+    totalSourcesQueried: number;
+    totalSourcesSuccessful: number;
+    totalFieldsTracked: number;
+    fieldsWithDiscrepancy: number;
+    fieldsWithHighConsensus: number;
+    fields: Record<string, any>;
+  }> {
+    this.logger.log(`Getting data sources for ${ticker}`);
+
+    // 1. Buscar asset
+    const asset = await this.assetRepository.findOne({
+      where: { ticker: ticker.toUpperCase() },
+    });
+
+    if (!asset) {
+      throw new NotFoundException(`Asset ${ticker} not found`);
+    }
+
+    // 2. Buscar dados fundamentalistas mais recentes com fieldSources
+    const fundamentalData = await this.fundamentalDataRepository.findOne({
+      where: { assetId: asset.id },
+      order: { updatedAt: 'DESC' },
+    });
+
+    if (!fundamentalData || !fundamentalData.fieldSources) {
+      return {
+        ticker: asset.ticker,
+        assetName: asset.name,
+        lastUpdate: fundamentalData?.updatedAt?.toISOString() || null,
+        overallConfidence: 0,
+        sourcesUsed: [],
+        totalSourcesQueried: 0,
+        totalSourcesSuccessful: 0,
+        totalFieldsTracked: 0,
+        fieldsWithDiscrepancy: 0,
+        fieldsWithHighConsensus: 0,
+        fields: {},
+      };
+    }
+
+    // 3. Processar fieldSources para estatísticas
+    const fieldSources = fundamentalData.fieldSources;
+    const fields = Object.keys(fieldSources);
+
+    // Coletar fontes únicas
+    const allSources = new Set<string>();
+    let fieldsWithDiscrepancy = 0;
+    let fieldsWithHighConsensus = 0;
+    let totalConsensus = 0;
+
+    for (const field of fields) {
+      const info = fieldSources[field];
+      if (!info) continue;
+
+      // Coletar fontes
+      info.values?.forEach((v: any) => {
+        if (v.source) allSources.add(v.source);
+      });
+
+      // Contar discrepâncias
+      if (info.hasDiscrepancy) {
+        fieldsWithDiscrepancy++;
+      }
+
+      // Contar alto consenso (>= 67%)
+      if (info.consensus >= 67) {
+        fieldsWithHighConsensus++;
+      }
+
+      totalConsensus += info.consensus || 0;
+    }
+
+    // Calcular confiança geral (média do consenso)
+    const overallConfidence = fields.length > 0 ? totalConsensus / fields.length / 100 : 0;
+
+    // Contar fontes com sucesso (que retornaram pelo menos um valor)
+    const sourcesWithData = new Set<string>();
+    for (const field of fields) {
+      const info = fieldSources[field];
+      info?.values?.forEach((v: any) => {
+        if (v.value !== null && v.source) {
+          sourcesWithData.add(v.source);
+        }
+      });
+    }
+
+    return {
+      ticker: asset.ticker,
+      assetName: asset.name,
+      lastUpdate: fundamentalData.updatedAt?.toISOString() || null,
+      overallConfidence: Math.round(overallConfidence * 100) / 100,
+      sourcesUsed: Array.from(sourcesWithData),
+      totalSourcesQueried: allSources.size,
+      totalSourcesSuccessful: sourcesWithData.size,
+      totalFieldsTracked: fields.length,
+      fieldsWithDiscrepancy,
+      fieldsWithHighConsensus,
+      fields: fieldSources,
+    };
+  }
 }

@@ -100,6 +100,11 @@ class ApiClient {
     return response.data;
   }
 
+  async getAssetDataSources(ticker: string) {
+    const response = await this.client.get(`/assets/${ticker}/data-sources`);
+    return response.data;
+  }
+
   async syncAllAssets(range: string = '3mo') {
     const response = await this.client.post(
       '/assets/sync-all',
