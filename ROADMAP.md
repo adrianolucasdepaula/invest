@@ -1,8 +1,8 @@
 # 🗺️ ROADMAP - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-02
-**Versão:** 1.7.1
+**Última Atualização:** 2025-12-03
+**Versão:** 1.7.2
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -8843,6 +8843,61 @@ backend/src/database/migrations/1764696740650-AddFieldSourcesToFundamentalData.t
 - Gemini = **ADVISOR** (segunda opinião, não implementa)
 - Consultar para: análises grandes, decisões arquiteturais, dados financeiros
 - Não consultar para: tarefas triviais (<50 linhas), debugging simples
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
+### FASE 63: Atualizar Dados Individual por Ativo ✅ 100% COMPLETO (2025-12-03)
+
+**Prioridade:** ⚠️ **IMPORTANTE** (Prioridade 2)
+**Data:** 2025-12-03
+**Tipo:** Feature + UX Enhancement
+**Versão:** 1.7.2
+
+**Objetivo:** Permitir atualização individual de dados fundamentais de um ativo específico, sem necessidade de atualizar todos os ativos em bulk.
+
+**Motivação:**
+- Usuários frequentemente precisam atualizar apenas um ativo específico
+- Bulk update é demorado e desnecessário para um único ativo
+- Melhor UX com feedback visual imediato
+
+**Implementações Concluídas:**
+
+1. **Backend:**
+   - `POST /assets/:ticker/update-fundamentals` - Endpoint individual
+   - `updateSingleAsset()` em AssetsUpdateService
+   - `queueSingleAsset()` em AssetUpdateJobsService
+   - Integração com Python scrapers via BullMQ
+
+2. **Frontend:**
+   - Botão "Atualizar Dados" no dropdown de ações da tabela
+   - `syncingAsset` prop para estado de loading individual
+   - Spinner visual com duração mínima de 2 segundos
+   - Toast notification com Job ID
+   - Refetch automático após 5 segundos
+
+3. **API Client:**
+   - `api.updateAssetFundamentals(ticker)` - Novo método
+
+**Arquivos Modificados:**
+
+| Arquivo | Mudanças |
+|---------|----------|
+| `backend/src/api/assets/assets.controller.ts` | +Endpoint POST |
+| `backend/src/api/assets/assets-update.service.ts` | +updateSingleAsset() |
+| `backend/src/queue/jobs/asset-update-jobs.service.ts` | +queueSingleAsset() |
+| `frontend/src/app/(dashboard)/assets/page.tsx` | +handleSyncAsset() |
+| `frontend/src/components/dashboard/asset-table.tsx` | +syncingAsset prop |
+| `frontend/src/lib/api.ts` | +updateAssetFundamentals() |
+| `frontend/src/lib/hooks/useAssetBulkUpdate.ts` | Melhorias WebSocket |
+
+**Validação:**
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Build: Sucesso
+- ✅ MCP Playwright: Validação visual
 
 **Status:** ✅ **100% COMPLETO**
 

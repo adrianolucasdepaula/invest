@@ -13,8 +13,41 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - População de dados no banco após wipe (Issue #5)
 - Validação visual final da UI de opções
 - Migração dos 24 scrapers Python restantes (Selenium → Playwright)
-- FASE 63: Git Workflow Automation (Prioridade 2)
-- FASE 64: Architecture Visual Diagrams (Prioridade 2)
+- FASE 64: Git Workflow Automation (Prioridade 2)
+- FASE 65: Architecture Visual Diagrams (Prioridade 2)
+
+---
+
+## [1.7.2] - 2025-12-03
+
+### Added
+
+- **FASE 63 - Atualizar Dados Individual por Ativo:**
+  - **Backend:**
+    - `POST /assets/:ticker/update-fundamentals` - Endpoint para atualização individual
+    - `updateSingleAsset()` em AssetsUpdateService - Inicia job de atualização
+    - `queueSingleAsset()` em AssetUpdateJobsService - Enfileira job no BullMQ
+    - Integração com Python scrapers via fila assíncrona
+  - **Frontend:**
+    - Botão "Atualizar Dados" no dropdown de ações da tabela de ativos
+    - `syncingAsset` prop em AssetTable para estado de loading individual
+    - Spinner visual com duração mínima de 2 segundos para feedback
+    - Toast notification com Job ID após enfileiramento
+    - Refetch automático da lista após 5 segundos
+  - **API Client:**
+    - `api.updateAssetFundamentals(ticker)` - Método para chamar endpoint
+
+### Improved
+
+- UX: Feedback visual imediato ao clicar em "Atualizar Dados"
+- UX: Spinner por ativo específico (não bloqueia interação com outros ativos)
+- UX: Mínimo de 2s de exibição do spinner para garantir visibilidade
+
+### Validated
+
+- TypeScript: 0 erros (backend + frontend)
+- Build: Sucesso
+- MCP Playwright: Validação visual da tabela e dropdown
 
 ---
 
