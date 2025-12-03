@@ -131,14 +131,33 @@ export class AssetsUpdateService {
       // 7. Map and save fundamental data
       const fundamentalData = await this.saveFundamentalData(asset, scrapedResult);
 
-      // 8. Update asset tracking fields
+      // 8. Extract sector from rawSourcesData (BRAPI provides this)
+      // Try BRAPI first (most reliable for sector), then other sources
+      this.logger.debug(
+        `[UPDATE-SINGLE] rawSourcesData for ${ticker}: ${JSON.stringify(
+          scrapedResult.rawSourcesData?.map((s) => ({
+            source: s.source,
+            hasSector: !!s.data?.sector,
+            sector: s.data?.sector,
+          })),
+        )}`,
+      );
+      const sectorFromSources = this.extractSectorFromSources(scrapedResult.rawSourcesData);
+      if (sectorFromSources && !asset.sector) {
+        asset.sector = sectorFromSources;
+        this.logger.debug(`[UPDATE-SINGLE] Extracted sector "${sectorFromSources}" for ${ticker}`);
+      } else if (!sectorFromSources) {
+        this.logger.debug(`[UPDATE-SINGLE] No sector found in sources for ${ticker}`);
+      }
+
+      // 9. Update asset tracking fields
       asset.lastUpdated = new Date();
       asset.lastUpdateStatus = 'success';
       asset.lastUpdateError = null;
       asset.updateRetryCount = 0;
       await this.assetRepository.save(asset);
 
-      // 9. Complete update log
+      // 10. Complete update log
       const duration = Date.now() - startTime;
       updateLog.completedAt = new Date();
       updateLog.status = UpdateStatus.SUCCESS;
@@ -152,7 +171,7 @@ export class AssetsUpdateService {
       };
       await this.updateLogRepository.save(updateLog);
 
-      // 10. Emit WebSocket event: update completed
+      // 11. Emit WebSocket event: update completed
       this.webSocketGateway.emitAssetUpdateCompleted({
         assetId: asset.id,
         ticker: asset.ticker,
@@ -654,5 +673,81 @@ export class AssetsUpdateService {
    */
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * MÉTODO AUXILIAR: Extrair setor dos dados brutos das fontes
+   *
+   * Prioridade:
+   * 1. BRAPI (mais confiável para setor)
+   * 2. StatusInvest
+   * 3. Fundamentus
+   * 4. Outras fontes
+   */
+  private extractSectorFromSources(
+    rawSourcesData: Array<{ source: string; data: any; scrapedAt: string }>,
+  ): string | null {
+    if (!rawSourcesData || rawSourcesData.length === 0) return null;
+
+    // Invalid/generic sector values to ignore
+    const invalidSectors = [
+      'ações', 'acoes', 'fiis', 'fii', 'home', 'início', 'inicio',
+      'de atuação', 'de atuacao', 'setor de atuação', 'setor',
+      'arrow_forward', 'arrow_back', 'papéis', 'papeis', 'misto',
+    ];
+
+    // Helper to validate sector value
+    const isValidSector = (sector: string): boolean => {
+      if (!sector || sector.length < 3) return false;
+      // Reject sectors that are too long (likely garbage data)
+      if (sector.length > 50) return false;
+      const normalized = sector.toLowerCase().trim();
+      // Check if sector is in invalid list or contains newlines/special chars
+      if (invalidSectors.includes(normalized)) return false;
+      if (/[\n\r\t]/.test(sector)) return false;
+      if (/arrow_/.test(sector)) return false;
+      // Reject if it looks like numeric data (many numbers/percentages)
+      if (/(\d+[,.]?\d*%?\s*){5,}/.test(sector)) return false;
+      // Reject if it looks like a ticker (4-6 letters followed by 1-2 numbers)
+      if (/^[A-Z]{4,6}\d{1,2}$/i.test(sector)) return false;
+      // Reject if contains "Subsetor:" repeated (garbage from Investidor10)
+      if (/Subsetor:/i.test(sector)) return false;
+      return true;
+    };
+
+    // Clean sector text
+    const cleanSector = (sector: string): string => {
+      return sector
+        .replace(/[\n\r\t]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/arrow_forward|arrow_back|chevron_right|chevron_left/gi, '')
+        .trim();
+    };
+
+    // Priority order: Fundamentus first (best sector data), then others
+    const priorityOrder = ['fundamentus', 'brapi', 'fundamentei', 'statusinvest', 'investidor10', 'investsite'];
+
+    // Try priority sources first
+    for (const sourceId of priorityOrder) {
+      const sourceData = rawSourcesData.find((s) => s.source === sourceId);
+      if (sourceData?.data?.sector) {
+        const sector = cleanSector(String(sourceData.data.sector));
+        if (isValidSector(sector)) {
+          return sector;
+        }
+      }
+    }
+
+    // If no priority source has valid sector, check all sources
+    for (const sourceData of rawSourcesData) {
+      if (sourceData?.data?.sector) {
+        const sector = cleanSector(String(sourceData.data.sector));
+        if (isValidSector(sector)) {
+          return sector;
+        }
+      }
+    }
+
+    return null;
   }
 }

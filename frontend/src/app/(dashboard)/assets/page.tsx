@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AssetTable } from '@/components/dashboard/asset-table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Filter, RefreshCw, Layers, Loader2 } from 'lucide-react';
+import { Search, Filter, RefreshCw, Layers, Loader2, XCircle, Pause, Play } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -54,6 +54,9 @@ export default function AssetsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [showOnlyOptions, setShowOnlyOptions] = useState(false);
   const [syncingAsset, setSyncingAsset] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isPausing, setIsPausing] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const { data: assets, isLoading, error, refetch } = useAssets();
 
   // WebSocket hook for bulk updates
@@ -91,7 +94,30 @@ export default function AssetsPage() {
   }, [refetch]);
 
   const handleSyncAll = async () => {
+    // ✅ FIX: Check if there's already a bulk update running before starting a new one
+    if (bulkUpdateState.isRunning) {
+      toast({
+        title: 'Atualização já em andamento',
+        description: 'Aguarde a conclusão da atualização atual ou cancele-a antes de iniciar uma nova.',
+        variant: 'default',
+      });
+      return;
+    }
+
+    // Double-check with API to prevent race conditions
     try {
+      const queueStatus = await api.getBulkUpdateStatus();
+      const pendingJobs = (queueStatus.active || 0) + (queueStatus.waiting || 0);
+
+      if (pendingJobs > 0) {
+        toast({
+          title: 'Atualização já em andamento',
+          description: `Existem ${pendingJobs} jobs pendentes na fila. Aguarde ou cancele antes de iniciar nova atualização.`,
+          variant: 'default',
+        });
+        return;
+      }
+
       await api.bulkUpdateAllAssetsFundamentals();
     } catch (error: any) {
       toast({
@@ -102,18 +128,73 @@ export default function AssetsPage() {
     }
   };
 
+  const handleCancelUpdate = async () => {
+    setIsCancelling(true);
+    try {
+      const result = await api.cancelBulkUpdate();
+      toast({
+        title: 'Atualização cancelada',
+        description: result.message || 'Jobs pendentes foram removidos da fila.',
+      });
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao cancelar',
+        description: error.message || 'Erro ao cancelar atualização',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const handlePauseResume = async () => {
+    setIsPausing(true);
+    try {
+      if (isPaused) {
+        await api.resumeBulkUpdate();
+        setIsPaused(false);
+        toast({
+          title: 'Fila retomada',
+          description: 'A atualização em massa foi retomada.',
+        });
+      } else {
+        await api.pauseBulkUpdate();
+        setIsPaused(true);
+        toast({
+          title: 'Fila pausada',
+          description: 'A atualização em massa foi pausada. Jobs ativos serão concluídos.',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Erro',
+        description: error.message || 'Erro ao pausar/retomar atualização',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPausing(false);
+    }
+  };
+
   const handleSyncAsset = async (ticker: string) => {
     setSyncingAsset(ticker);
+    const startTime = Date.now();
+    const MIN_SPINNER_DURATION = 2000; // Minimum 2 seconds for user to see feedback
+
     try {
-      const result = await api.syncAsset(ticker);
+      // Use the same fundamental data update process as bulk update
+      const result = await api.updateAssetFundamentals(ticker);
       toast({
-        title: 'Ativo atualizado',
-        description: `${ticker} foi atualizado com sucesso. Preço: R$ ${result.currentPrice?.toFixed(2) || 'N/A'}`,
+        title: 'Atualização iniciada',
+        description: `${ticker} foi adicionado à fila de atualização. Job ID: ${result.jobId}`,
       });
 
+      // The WebSocket hook will handle real-time updates
+      // Refetch after a delay to get updated data
       setTimeout(() => {
         refetch();
-      }, 1000);
+      }, 5000);
     } catch (error: any) {
       toast({
         title: 'Erro ao atualizar ativo',
@@ -121,15 +202,19 @@ export default function AssetsPage() {
         variant: 'destructive',
       });
     } finally {
-      setSyncingAsset(null);
+      // Keep spinner visible for at least MIN_SPINNER_DURATION for better UX
+      const elapsed = Date.now() - startTime;
+      const remainingTime = Math.max(0, MIN_SPINNER_DURATION - elapsed);
+      setTimeout(() => setSyncingAsset(null), remainingTime);
     }
   };
 
   const lastCollectedAt = useMemo(() => {
     if (!assets || assets.length === 0) return null;
 
+    // Usar lastUpdated (atualização completa via scrapers)
     const timestamps = assets
-      .map((asset: any) => asset.currentPrice?.collectedAt)
+      .map((asset: any) => asset.lastUpdated)
       .filter(Boolean)
       .map((date: string) => new Date(date).getTime());
 
@@ -241,14 +326,48 @@ export default function AssetsPage() {
             </p>
           )}
         </div>
-        <Button onClick={handleSyncAll} disabled={bulkUpdateState.isRunning} className="gap-2">
-          {bulkUpdateState.isRunning ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4" />
+        <div className="flex items-center gap-2">
+          {bulkUpdateState.isRunning && (
+            <>
+              <Button
+                variant="outline"
+                onClick={handlePauseResume}
+                disabled={isPausing}
+                className="gap-2"
+              >
+                {isPausing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isPaused ? (
+                  <Play className="h-4 w-4" />
+                ) : (
+                  <Pause className="h-4 w-4" />
+                )}
+                {isPaused ? 'Retomar' : 'Pausar'}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleCancelUpdate}
+                disabled={isCancelling}
+                className="gap-2"
+              >
+                {isCancelling ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <XCircle className="h-4 w-4" />
+                )}
+                Cancelar
+              </Button>
+            </>
           )}
-          {bulkUpdateState.isRunning ? 'Atualizando...' : 'Atualizar Todos'}
-        </Button>
+          <Button onClick={handleSyncAll} disabled={bulkUpdateState.isRunning} className="gap-2">
+            {bulkUpdateState.isRunning ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            {bulkUpdateState.isRunning ? 'Atualizando...' : 'Atualizar Todos'}
+          </Button>
+        </div>
       </div>
 
       {bulkUpdateState.isRunning && (
@@ -256,19 +375,57 @@ export default function AssetsPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                <span className="font-medium">Atualização em andamento</span>
+                {isPaused ? (
+                  <Pause className="h-4 w-4 text-yellow-500" />
+                ) : (
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                )}
+                <span className="font-medium">
+                  {isPaused ? 'Atualização pausada' : 'Atualização em andamento'}
+                </span>
                 {bulkUpdateState.currentTicker && (
                   <span className="text-muted-foreground">- {bulkUpdateState.currentTicker}</span>
                 )}
               </div>
-              <span className="text-muted-foreground">
-                {bulkUpdateState.current}/{bulkUpdateState.total}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">
+                  {bulkUpdateState.current}/{bulkUpdateState.total}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePauseResume}
+                  disabled={isPausing}
+                  className="gap-1"
+                >
+                  {isPausing ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : isPaused ? (
+                    <Play className="h-3 w-3" />
+                  ) : (
+                    <Pause className="h-3 w-3" />
+                  )}
+                  {isPaused ? 'Retomar' : 'Pausar'}
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleCancelUpdate}
+                  disabled={isCancelling}
+                  className="gap-1"
+                >
+                  {isCancelling ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <XCircle className="h-3 w-3" />
+                  )}
+                  Cancelar
+                </Button>
+              </div>
             </div>
             <Progress value={bulkUpdateState.progress} className="h-2" />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{bulkUpdateState.progress}% completo</span>
+              <span>{bulkUpdateState.progress}% completo{isPaused && ' (pausado)'}</span>
               <div className="flex items-center gap-3">
                 <span className="text-green-600">✓ {bulkUpdateState.successCount} sucesso</span>
                 {bulkUpdateState.failedCount > 0 && (
@@ -383,6 +540,7 @@ export default function AssetsPage() {
                 assets={typeAssets}
                 onAssetClick={handleAssetClick}
                 onSyncAsset={handleSyncAsset}
+                syncingAsset={syncingAsset}
               />
             </Card>
           ))}
@@ -401,6 +559,7 @@ export default function AssetsPage() {
                 assets={sectorAssets}
                 onAssetClick={handleAssetClick}
                 onSyncAsset={handleSyncAsset}
+                syncingAsset={syncingAsset}
               />
             </Card>
           ))}
@@ -419,6 +578,7 @@ export default function AssetsPage() {
                 assets={groupAssets}
                 onAssetClick={handleAssetClick}
                 onSyncAsset={handleSyncAsset}
+                syncingAsset={syncingAsset}
               />
             </Card>
           ))}
@@ -429,6 +589,7 @@ export default function AssetsPage() {
             assets={sortedAndFilteredAssets}
             onAssetClick={handleAssetClick}
             onSyncAsset={handleSyncAsset}
+            syncingAsset={syncingAsset}
           />
         </Card>
       )}

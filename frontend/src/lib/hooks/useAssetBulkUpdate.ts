@@ -4,10 +4,12 @@
  *
  * ✅ UPDATED: Agora captura logs individuais (asset_update_*) para exibição em tempo real
  * ✅ FIX: Changed to static import to fix browser module resolution
+ * ✅ FIX: Persiste estado após page refresh verificando queue status via API
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { api } from '@/lib/api';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3101';
 
@@ -122,6 +124,8 @@ export function useAssetBulkUpdate(options?: {
   });
 
   const socketRef = useRef<Socket | null>(null);
+  // ✅ FIX: Store total assets count dynamically (fetched from API)
+  const totalAssetsRef = useRef<number>(0);
 
   // ✅ FIX: Use refs for callbacks to prevent reconnection on every render
   const onUpdateCompleteRef = useRef(options?.onUpdateComplete);
@@ -132,6 +136,123 @@ export function useAssetBulkUpdate(options?: {
     console.log('[ASSET BULK WS] Component mounted on CLIENT! Setting isMounted = true');
     setIsMounted(true);
   }, []);
+
+  // ✅ FIX: Fetch total assets count dynamically (no hardcoded 861)
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const fetchTotalAssets = async () => {
+      try {
+        // Fetch all assets to get the count (API returns array directly)
+        const assets = await api.getAssets();
+        // API returns array directly, use length
+        const count = Array.isArray(assets) ? assets.length : (assets.total || assets.length || 0);
+        totalAssetsRef.current = count;
+        console.log(`[ASSET BULK WS] Total assets fetched from API: ${count}`);
+      } catch (error) {
+        console.log('[ASSET BULK WS] Could not fetch total assets:', error);
+        // Fallback: use 0, will be updated when batch starts via WebSocket
+        totalAssetsRef.current = 0;
+      }
+    };
+
+    fetchTotalAssets();
+  }, [isMounted]);
+
+  // ✅ FIX: Check queue status on mount to restore state after page refresh
+  // Also poll periodically to keep state in sync
+  useEffect(() => {
+    console.log('[ASSET BULK WS] Queue status useEffect triggered! isMounted:', isMounted);
+    if (!isMounted) return;
+
+    const checkQueueStatus = async () => {
+      try {
+        console.log('[ASSET BULK WS] Checking queue status...');
+        const queueStats = await api.getBulkUpdateStatus();
+        console.log('[ASSET BULK WS] Queue stats:', JSON.stringify(queueStats));
+
+        // If there are active or waiting jobs, restore running state
+        const activeCount = queueStats.active || 0;
+        const waitingCount = queueStats.waiting || 0;
+        const totalPending = activeCount + waitingCount;
+
+        console.log(`[ASSET BULK WS] Active: ${activeCount}, Waiting: ${waitingCount}, Total Pending: ${totalPending}`);
+
+        if (totalPending > 0) {
+          console.log(`[ASSET BULK WS] Found ${totalPending} pending jobs, restoring/updating running state`);
+
+          // Get current ticker from active jobs if available
+          const currentTicker = queueStats.jobs?.active?.[0]?.data?.ticker || null;
+
+          setState((prev) => {
+            // ✅ FIX: If already running with a higher total, keep the existing total
+            // This prevents resetting progress when polling updates
+            const shouldUpdateTotal = !prev.isRunning || prev.total === 0;
+
+            // ✅ FIX: Use dynamic total from API instead of hardcoded 861
+            // Use existing total if we have one, otherwise use fetched total or queue count
+            const estimatedTotal = shouldUpdateTotal
+              ? Math.max(totalPending, totalAssetsRef.current || totalPending)
+              : prev.total;
+
+            // Calculate current progress based on remaining jobs
+            const currentProcessed = estimatedTotal - totalPending;
+            const progress = estimatedTotal > 0 ? Math.round((currentProcessed / estimatedTotal) * 100) : 0;
+
+            // Only add system log on first detection (when not already running)
+            const newLogs = prev.isRunning
+              ? prev.logs
+              : [
+                  {
+                    timestamp: new Date(),
+                    ticker: 'SYSTEM',
+                    status: 'system' as const,
+                    message: `Atualização em andamento: ${totalPending} ativos pendentes...`,
+                  },
+                ];
+
+            return {
+              ...prev,
+              isRunning: true,
+              currentTicker,
+              total: estimatedTotal,
+              current: currentProcessed,
+              progress,
+              // Keep existing success/failed counts if already running
+              successCount: prev.isRunning ? prev.successCount : 0,
+              failedCount: prev.isRunning ? prev.failedCount : 0,
+              logs: newLogs,
+            };
+          });
+        } else {
+          // No pending jobs - if we were running, mark as completed
+          setState((prev) => {
+            if (prev.isRunning) {
+              console.log('[ASSET BULK WS] No pending jobs, marking as completed');
+              return {
+                ...prev,
+                isRunning: false,
+                progress: 100,
+              };
+            }
+            return prev;
+          });
+        }
+      } catch (error) {
+        console.log('[ASSET BULK WS] Could not check queue status:', error);
+      }
+    };
+
+    // Check immediately on mount
+    checkQueueStatus();
+
+    // Also poll every 10 seconds to keep state in sync (useful after refresh)
+    const pollInterval = setInterval(checkQueueStatus, 10000);
+
+    return () => {
+      clearInterval(pollInterval);
+    };
+  }, [isMounted]);
 
   // Keep refs updated
   useEffect(() => {
@@ -222,41 +343,59 @@ export function useAssetBulkUpdate(options?: {
       });
 
       // ✅ NEW: Event: asset_update_completed (individual asset)
+      // ✅ FIX: Now also updates current and progress to show real-time progress
       socket.on('asset_update_completed', (data: AssetUpdateCompletedEvent) => {
         console.log('[ASSET BULK WS] Asset update completed:', data.ticker);
-        setState((prev) => ({
-          ...prev,
-          successCount: prev.successCount + 1,
-          logs: [
-            ...prev.logs,
-            {
-              timestamp: new Date(data.timestamp),
-              ticker: data.ticker,
-              status: 'success',
-              message: `✅ ${data.ticker} atualizado com sucesso`,
-              duration: data.duration / 1000, // Convert ms to seconds
-            },
-          ],
-        }));
+        setState((prev) => {
+          const newSuccessCount = prev.successCount + 1;
+          const newCurrent = prev.current + 1;
+          const newProgress = prev.total > 0 ? Math.round((newCurrent / prev.total) * 100) : 0;
+
+          return {
+            ...prev,
+            successCount: newSuccessCount,
+            current: newCurrent,
+            progress: newProgress,
+            logs: [
+              ...prev.logs,
+              {
+                timestamp: new Date(data.timestamp),
+                ticker: data.ticker,
+                status: 'success',
+                message: `✅ ${data.ticker} atualizado com sucesso`,
+                duration: data.duration / 1000, // Convert ms to seconds
+              },
+            ],
+          };
+        });
       });
 
       // ✅ NEW: Event: asset_update_failed (individual asset)
+      // ✅ FIX: Now also updates current and progress to show real-time progress
       socket.on('asset_update_failed', (data: AssetUpdateFailedEvent) => {
         console.log('[ASSET BULK WS] Asset update failed:', data.ticker, data.error);
-        setState((prev) => ({
-          ...prev,
-          failedCount: prev.failedCount + 1,
-          logs: [
-            ...prev.logs,
-            {
-              timestamp: new Date(data.timestamp),
-              ticker: data.ticker,
-              status: 'failed',
-              message: `❌ ${data.ticker} falhou: ${data.error}`,
-              duration: data.duration / 1000,
-            },
-          ],
-        }));
+        setState((prev) => {
+          const newFailedCount = prev.failedCount + 1;
+          const newCurrent = prev.current + 1;
+          const newProgress = prev.total > 0 ? Math.round((newCurrent / prev.total) * 100) : 0;
+
+          return {
+            ...prev,
+            failedCount: newFailedCount,
+            current: newCurrent,
+            progress: newProgress,
+            logs: [
+              ...prev.logs,
+              {
+                timestamp: new Date(data.timestamp),
+                ticker: data.ticker,
+                status: 'failed',
+                message: `❌ ${data.ticker} falhou: ${data.error}`,
+                duration: data.duration / 1000,
+              },
+            ],
+          };
+        });
       });
 
       // Event: batch_update_progress

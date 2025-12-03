@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { MoreVertical, RefreshCw, AlertTriangle, Eye, CheckCircle2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { MoreVertical, RefreshCw, AlertTriangle, Eye, CheckCircle2, ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
 
 interface Asset {
   ticker: string;
@@ -37,6 +37,7 @@ interface Asset {
     close: number;
     collectedAt: string | null;
   };
+  lastUpdated?: string | null; // Data da última atualização completa (scrapers)
   hasOptions?: boolean;
 }
 
@@ -45,6 +46,7 @@ interface AssetTableProps {
   isLoading?: boolean;
   onAssetClick?: (ticker: string) => void;
   onSyncAsset?: (ticker: string) => void;
+  syncingAsset?: string | null;
 }
 
 type SortColumn = 'ticker' | 'name' | 'sector' | 'price' | 'changePercent' | 'volume' | 'marketCap';
@@ -55,6 +57,7 @@ export function AssetTable({
   isLoading = false,
   onAssetClick,
   onSyncAsset,
+  syncingAsset,
 }: AssetTableProps) {
   const [sortColumn, setSortColumn] = React.useState<SortColumn>('ticker');
   const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
@@ -235,8 +238,9 @@ export function AssetTable({
             </thead>
             <tbody>
               {sortedAssets.map(asset => {
-                const collectedAt = asset.currentPrice?.collectedAt;
-                const isStale = isDataStale(collectedAt);
+                // Usar lastUpdated (atualização completa via scrapers) ao invés de collectedAt (apenas preço)
+                const lastUpdateDate = asset.lastUpdated;
+                const isStale = isDataStale(lastUpdateDate);
 
                 return (
                   <tr
@@ -324,34 +328,60 @@ export function AssetTable({
                                     : 'text-muted-foreground'
                                 )}
                               >
-                                {formatRelativeTime(collectedAt)}
+                                {formatRelativeTime(lastUpdateDate)}
                               </span>
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>{collectedAt ? formatDateTime(collectedAt) : 'Nunca atualizado'}</p>
+                            <p>{lastUpdateDate ? formatDateTime(lastUpdateDate) : 'Nunca atualizado'}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     </td>
                     <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => onAssetClick?.(asset.ticker)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Ver Detalhes
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onSyncAsset?.(asset.ticker)}>
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Atualizar Dados
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {syncingAsset === asset.ticker ? (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center justify-center">
+                                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Atualizando dados...</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onAssetClick?.(asset.ticker);
+                              }}
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              Ver Detalhes
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                onSyncAsset?.(asset.ticker);
+                              }}
+                            >
+                              <RefreshCw className="mr-2 h-4 w-4" />
+                              Atualizar Dados
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </td>
                   </tr>
                 );

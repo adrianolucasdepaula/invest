@@ -132,6 +132,12 @@ class ApiClient {
     return response.data;
   }
 
+  // Update a single asset's fundamental data (same process as bulk update)
+  async updateAssetFundamentals(ticker: string) {
+    const response = await this.client.post(`/assets/${ticker}/update-fundamentals`);
+    return response.data;
+  }
+
   async syncOptionsLiquidity() {
     const response = await this.client.post('/assets/sync-options-liquidity');
     return response.data;
@@ -140,6 +146,30 @@ class ApiClient {
   // Bulk update all assets with fundamental data (async with WebSocket)
   async bulkUpdateAllAssetsFundamentals(userId?: string) {
     const response = await this.client.post('/assets/updates/bulk-all', { userId });
+    return response.data;
+  }
+
+  // Get current bulk update status (for page refresh recovery)
+  async getBulkUpdateStatus() {
+    const response = await this.client.get('/assets/bulk-update-status');
+    return response.data;
+  }
+
+  // Cancel all pending bulk update jobs
+  async cancelBulkUpdate() {
+    const response = await this.client.post('/assets/bulk-update-cancel');
+    return response.data;
+  }
+
+  // Pause bulk update queue
+  async pauseBulkUpdate() {
+    const response = await this.client.post('/assets/bulk-update-pause');
+    return response.data;
+  }
+
+  // Resume bulk update queue
+  async resumeBulkUpdate() {
+    const response = await this.client.post('/assets/bulk-update-resume');
     return response.data;
   }
 

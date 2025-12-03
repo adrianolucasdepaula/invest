@@ -22,6 +22,138 @@ export class AssetsController {
     return this.assetsService.findAll(type);
   }
 
+  // ============================================================================
+  // STATIC ROUTES (must come BEFORE dynamic :ticker routes)
+  // ============================================================================
+
+  @Get('bulk-update-status')
+  @ApiOperation({
+    summary: 'Get current bulk update status',
+    description: 'Check if there is a bulk update in progress. Returns queue statistics with active jobs.',
+  })
+  async getBulkUpdateStatus() {
+    return this.assetUpdateJobsService.getQueueStats();
+  }
+
+  @Get('sync-status/:jobId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get sync job status',
+    description: 'Check the status of a queued sync job. Returns job progress and results.',
+  })
+  async getSyncStatus(@Param('jobId') jobId: string) {
+    return this.assetUpdateJobsService.getJobStatus(jobId);
+  }
+
+  @Post('sync-options-liquidity')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Sync options liquidity data from opcoes.net.br' })
+  async syncOptionsLiquidity(): Promise<SyncOptionsLiquidityResponseDto> {
+    return this.assetsService.syncOptionsLiquidity();
+  }
+
+  @Post('sync-all')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Queue bulk sync for all assets (ASYNC)',
+    description:
+      'Queues a background job to sync all assets. Returns immediately with job ID. Use GET /assets/sync-status/:jobId to check progress. Supports range parameter: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max. Default: 3mo',
+  })
+  async syncAllAssets(@Query('range') range?: string) {
+    console.log('[sync-all] Queueing bulk sync, range:', range || '3mo');
+
+    // Get all assets tickers
+    const assets = await this.assetsService.findAll();
+    const tickers = assets.map((asset: any) => asset.ticker);
+
+    // Queue the job (returns immediately)
+    const jobId = await this.assetUpdateJobsService.queueMultipleAssets(
+      tickers,
+      undefined, // userId (optional)
+      UpdateTrigger.MANUAL,
+    );
+
+    console.log(`[sync-all] Job queued successfully: ${jobId}`);
+
+    return {
+      jobId,
+      total: tickers.length,
+      message: `Sync job queued for ${tickers.length} assets. Use GET /assets/sync-status/${jobId} to check progress.`,
+      statusUrl: `/api/v1/assets/sync-status/${jobId}`,
+    };
+  }
+
+  @Post('bulk-update-cancel')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Cancel bulk update',
+    description: 'Cancel all pending jobs in the queue. Active jobs will complete but no new jobs will start.',
+  })
+  async cancelBulkUpdate() {
+    return this.assetUpdateJobsService.cancelAllPendingJobs();
+  }
+
+  @Post('bulk-update-pause')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Pause bulk update queue',
+    description: 'Pause the queue. Active jobs will complete but no new jobs will start until resumed.',
+  })
+  async pauseBulkUpdate() {
+    await this.assetUpdateJobsService.pauseQueue();
+    return { message: 'Queue paused. Active jobs will complete.' };
+  }
+
+  @Post('bulk-update-resume')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Resume bulk update queue',
+    description: 'Resume the queue after pause.',
+  })
+  async resumeBulkUpdate() {
+    await this.assetUpdateJobsService.resumeQueue();
+    return { message: 'Queue resumed.' };
+  }
+
+  @Post(':ticker/update-fundamentals')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Queue fundamental data update for a single asset (ASYNC)',
+    description:
+      'Queues a background job to update fundamental data for a single asset using the same process as bulk update. Returns immediately with job ID.',
+  })
+  async updateAssetFundamentals(@Param('ticker') ticker: string) {
+    console.log('[update-fundamentals] Queueing fundamental update for:', ticker);
+
+    const jobId = await this.assetUpdateJobsService.queueSingleAsset(
+      ticker,
+      undefined,
+      UpdateTrigger.MANUAL,
+    );
+
+    console.log(`[update-fundamentals] Job queued successfully: ${jobId}`);
+
+    return {
+      jobId,
+      ticker,
+      message: `Fundamental data update job queued for ${ticker}. Use GET /assets/sync-status/${jobId} to check progress.`,
+      statusUrl: `/api/v1/assets/sync-status/${jobId}`,
+    };
+  }
+
+  // ============================================================================
+  // DYNAMIC :ticker ROUTES (must come AFTER static routes)
+  // ============================================================================
+
   @Get(':ticker')
   @ApiOperation({ summary: 'Get asset by ticker' })
   async getAsset(@Param('ticker') ticker: string) {
@@ -73,57 +205,5 @@ export class AssetsController {
   })
   async populateFundamentalData(@Param('ticker') ticker: string) {
     return this.assetsService.populateFundamentalData(ticker);
-  }
-
-  @Post('sync-options-liquidity')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Sync options liquidity data from opcoes.net.br' })
-  async syncOptionsLiquidity(): Promise<SyncOptionsLiquidityResponseDto> {
-    return this.assetsService.syncOptionsLiquidity();
-  }
-
-  @Post('sync-all')
-  @HttpCode(HttpStatus.ACCEPTED)
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Queue bulk sync for all assets (ASYNC)',
-    description:
-      'Queues a background job to sync all assets. Returns immediately with job ID. Use GET /assets/sync-status/:jobId to check progress. Supports range parameter: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max. Default: 3mo',
-  })
-  async syncAllAssets(@Query('range') range?: string) {
-    console.log('[sync-all] Queueing bulk sync, range:', range || '3mo');
-
-    // Get all assets tickers
-    const assets = await this.assetsService.findAll();
-    const tickers = assets.map((asset: any) => asset.ticker);
-
-    // Queue the job (returns immediately)
-    const jobId = await this.assetUpdateJobsService.queueMultipleAssets(
-      tickers,
-      undefined, // userId (optional)
-      UpdateTrigger.MANUAL,
-    );
-
-    console.log(`[sync-all] Job queued successfully: ${jobId}`);
-
-    return {
-      jobId,
-      total: tickers.length,
-      message: `Sync job queued for ${tickers.length} assets. Use GET /assets/sync-status/${jobId} to check progress.`,
-      statusUrl: `/api/v1/assets/sync-status/${jobId}`,
-    };
-  }
-
-  @Get('sync-status/:jobId')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Get sync job status',
-    description: 'Check the status of a queued sync job. Returns job progress and results.',
-  })
-  async getSyncStatus(@Param('jobId') jobId: string) {
-    return this.assetUpdateJobsService.getJobStatus(jobId);
   }
 }

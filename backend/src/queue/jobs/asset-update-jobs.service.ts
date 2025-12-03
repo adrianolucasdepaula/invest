@@ -406,6 +406,52 @@ export class AssetUpdateJobsService implements OnModuleInit {
   }
 
   /**
+   * Cancel all pending jobs (waiting + active)
+   * Useful for stopping a bulk update in progress
+   */
+  async cancelAllPendingJobs() {
+    this.logger.warn('🛑 Cancelling all pending jobs...');
+
+    // Get all waiting jobs and remove them
+    const waiting = await this.assetUpdatesQueue.getWaiting();
+    const active = await this.assetUpdatesQueue.getActive();
+
+    let removedCount = 0;
+
+    // Remove waiting jobs
+    for (const job of waiting) {
+      await job.remove();
+      removedCount++;
+    }
+
+    // Note: Active jobs cannot be removed, they will complete naturally
+    // But we can pause the queue to prevent new jobs from starting
+
+    this.logger.log(`✅ Removed ${removedCount} waiting jobs. ${active.length} active jobs will complete.`);
+
+    // Emit WebSocket event to notify frontend
+    this.webSocketGateway.emitBatchUpdateCompleted({
+      totalAssets: removedCount + active.length,
+      successCount: 0,
+      failedCount: 0,
+      duration: 0,
+    });
+
+    return {
+      removedWaitingJobs: removedCount,
+      activeJobsInProgress: active.length,
+      message: `Removidos ${removedCount} jobs pendentes. ${active.length} jobs ativos irão completar.`,
+    };
+  }
+
+  /**
+   * Check if queue is paused
+   */
+  async isQueuePaused() {
+    return this.assetUpdatesQueue.isPaused();
+  }
+
+  /**
    * Get job status by ID
    */
   async getJobStatus(jobId: string) {
