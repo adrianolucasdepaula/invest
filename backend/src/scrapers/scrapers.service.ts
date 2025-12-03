@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Not, IsNull } from 'typeorm';
 import { FundamentusScraper } from './fundamental/fundamentus.scraper';
 import { BrapiScraper } from './fundamental/brapi.scraper';
 import { StatusInvestScraper } from './fundamental/statusinvest.scraper';
@@ -8,6 +10,7 @@ import { FundamenteiScraper } from './fundamental/fundamentei.scraper';
 import { InvestsiteScraper } from './fundamental/investsite.scraper';
 import { OpcoesScraper } from './options/opcoes.scraper';
 import { ScraperResult } from './base/base-scraper.interface';
+import { FundamentalData } from '../database/entities/fundamental-data.entity';
 import {
   FieldSourcesMap,
   FieldSourceValue,
@@ -17,6 +20,12 @@ import {
   TRACKABLE_FIELDS,
   DEFAULT_TOLERANCES,
 } from './interfaces';
+import {
+  QualityStatsResponseDto,
+  ScraperQualityStatsDto,
+  DiscrepanciesResponseDto,
+  DiscrepancyDto,
+} from './scrapers.controller';
 
 /**
  * Resultado individual de uma fonte para um campo específico
@@ -52,6 +61,8 @@ export class ScrapersService {
 
   constructor(
     private configService: ConfigService,
+    @InjectRepository(FundamentalData)
+    private fundamentalDataRepository: Repository<FundamentalData>,
     private fundamentusScraper: FundamentusScraper,
     private brapiScraper: BrapiScraper,
     private statusInvestScraper: StatusInvestScraper,
@@ -764,5 +775,290 @@ export class ScrapersService {
         requiresLogin: this.opcoesScraper.requiresLogin,
       },
     ];
+  }
+
+  /**
+   * Get quality statistics for all scrapers based on field_sources data
+   *
+   * FASE 4 - Dashboard de Qualidade de Scrapers
+   * Agrega estatísticas de consenso e discrepância por scraper
+   */
+  async getQualityStats(): Promise<QualityStatsResponseDto> {
+    this.logger.log('[QUALITY] Calculating quality statistics from field_sources');
+
+    // Scraper configurations (same as status endpoint)
+    const scraperConfigs: Record<string, string> = {
+      fundamentus: 'Fundamentus',
+      brapi: 'BRAPI',
+      statusinvest: 'Status Invest',
+      investidor10: 'Investidor10',
+      fundamentei: 'Fundamentei',
+      investsite: 'Investsite',
+    };
+
+    // Query all fundamental data with field_sources
+    const fundamentalData = await this.fundamentalDataRepository.find({
+      where: {
+        fieldSources: Not(IsNull()),
+      },
+      select: ['id', 'assetId', 'fieldSources', 'updatedAt'],
+    });
+
+    this.logger.log(`[QUALITY] Found ${fundamentalData.length} records with field_sources`);
+
+    // Initialize statistics per scraper
+    const scraperStats: Record<
+      string,
+      {
+        consensusSum: number;
+        consensusCount: number;
+        fieldsTracked: Set<string>;
+        fieldsWithDiscrepancy: Set<string>;
+        assetsAnalyzed: Set<string>;
+        lastUpdate: Date | null;
+      }
+    > = {};
+
+    for (const scraperId of Object.keys(scraperConfigs)) {
+      scraperStats[scraperId] = {
+        consensusSum: 0,
+        consensusCount: 0,
+        fieldsTracked: new Set(),
+        fieldsWithDiscrepancy: new Set(),
+        assetsAnalyzed: new Set(),
+        lastUpdate: null,
+      };
+    }
+
+    // Overall statistics
+    let totalDiscrepancies = 0;
+    const allAssetsAnalyzed = new Set<string>();
+    const allFieldsTracked = new Set<string>();
+
+    // Process each fundamental data record
+    for (const data of fundamentalData) {
+      if (!data.fieldSources) continue;
+
+      allAssetsAnalyzed.add(data.assetId);
+
+      // Process each field in field_sources
+      for (const [fieldName, fieldInfo] of Object.entries(data.fieldSources)) {
+        if (!fieldInfo || !fieldInfo.values) continue;
+
+        allFieldsTracked.add(fieldName);
+
+        // Track which scrapers contributed to this field
+        for (const valueEntry of fieldInfo.values) {
+          const scraperId = valueEntry.source;
+          if (!scraperStats[scraperId]) continue;
+
+          const stats = scraperStats[scraperId];
+          stats.fieldsTracked.add(fieldName);
+          stats.assetsAnalyzed.add(data.assetId);
+
+          // Track consensus for this scraper
+          if (typeof fieldInfo.consensus === 'number') {
+            stats.consensusSum += fieldInfo.consensus;
+            stats.consensusCount++;
+          }
+
+          // Track discrepancies
+          if (fieldInfo.hasDiscrepancy) {
+            stats.fieldsWithDiscrepancy.add(`${data.assetId}-${fieldName}`);
+          }
+
+          // Track last update
+          if (data.updatedAt) {
+            if (!stats.lastUpdate || data.updatedAt > stats.lastUpdate) {
+              stats.lastUpdate = data.updatedAt;
+            }
+          }
+        }
+
+        // Count discrepancies overall
+        if (fieldInfo.hasDiscrepancy) {
+          totalDiscrepancies++;
+        }
+      }
+    }
+
+    // Build response
+    const scrapers: ScraperQualityStatsDto[] = Object.entries(scraperConfigs).map(
+      ([id, name]) => {
+        const stats = scraperStats[id];
+        const avgConsensus =
+          stats.consensusCount > 0
+            ? Math.round((stats.consensusSum / stats.consensusCount) * 10) / 10
+            : 0;
+
+        return {
+          id,
+          name,
+          avgConsensus,
+          totalFieldsTracked: stats.fieldsTracked.size,
+          fieldsWithDiscrepancy: stats.fieldsWithDiscrepancy.size,
+          assetsAnalyzed: stats.assetsAnalyzed.size,
+          lastUpdate: stats.lastUpdate?.toISOString() || null,
+        };
+      },
+    );
+
+    // Calculate overall average consensus
+    const overallConsensusSum = scrapers.reduce((sum, s) => sum + s.avgConsensus, 0);
+    const scrapersWithData = scrapers.filter((s) => s.avgConsensus > 0).length;
+    const overallAvgConsensus =
+      scrapersWithData > 0
+        ? Math.round((overallConsensusSum / scrapersWithData) * 10) / 10
+        : 0;
+
+    const response: QualityStatsResponseDto = {
+      scrapers,
+      overall: {
+        avgConsensus: overallAvgConsensus,
+        totalDiscrepancies,
+        totalAssetsAnalyzed: allAssetsAnalyzed.size,
+        totalFieldsTracked: allFieldsTracked.size,
+        scrapersActive: scrapersWithData,
+      },
+    };
+
+    this.logger.log(
+      `[QUALITY] Stats calculated: ${response.overall.totalAssetsAnalyzed} assets, ${response.overall.avgConsensus}% avg consensus`,
+    );
+
+    return response;
+  }
+
+  /**
+   * Get list of field discrepancies across all assets
+   *
+   * FASE 5 - Alertas de Discrepância
+   * Retorna lista de discrepâncias ordenadas por severidade
+   */
+  async getDiscrepancies(options: {
+    limit?: number;
+    severity?: 'all' | 'high' | 'medium' | 'low';
+    field?: string;
+  }): Promise<DiscrepanciesResponseDto> {
+    const { limit = 50, severity = 'all', field } = options;
+
+    this.logger.log(`[DISCREPANCIES] Fetching discrepancies: limit=${limit}, severity=${severity}, field=${field}`);
+
+    // Field labels for display
+    const fieldLabels: Record<string, string> = {
+      pl: 'P/L',
+      pvp: 'P/VP',
+      psr: 'P/SR',
+      dividendYield: 'Dividend Yield',
+      roe: 'ROE',
+      roa: 'ROA',
+      roic: 'ROIC',
+      margemBruta: 'Margem Bruta',
+      margemEbit: 'Margem EBIT',
+      margemLiquida: 'Margem Líquida',
+      evEbit: 'EV/EBIT',
+      evEbitda: 'EV/EBITDA',
+      lpa: 'LPA',
+      vpa: 'VPA',
+      liquidezCorrente: 'Liquidez Corrente',
+      dividaBrutaPatrimonio: 'Dív. Bruta/Pat.',
+      dividaLiquidaEbitda: 'Dív. Líq./EBITDA',
+      patrimonioLiquido: 'Patrimônio Líquido',
+      receitaLiquida: 'Receita Líquida',
+      lucroLiquido: 'Lucro Líquido',
+      ebit: 'EBIT',
+      ebitda: 'EBITDA',
+    };
+
+    // Query all fundamental data with field_sources and asset info
+    const fundamentalData = await this.fundamentalDataRepository.find({
+      where: {
+        fieldSources: Not(IsNull()),
+      },
+      relations: ['asset'],
+      select: ['id', 'assetId', 'fieldSources', 'updatedAt', 'asset'],
+    });
+
+    this.logger.log(`[DISCREPANCIES] Found ${fundamentalData.length} records with field_sources`);
+
+    // Collect all discrepancies
+    const allDiscrepancies: DiscrepancyDto[] = [];
+
+    for (const data of fundamentalData) {
+      if (!data.fieldSources || !data.asset) continue;
+
+      const ticker = data.asset.ticker;
+
+      // Process each field in field_sources
+      for (const [fieldName, fieldInfo] of Object.entries(data.fieldSources)) {
+        if (!fieldInfo || !fieldInfo.hasDiscrepancy || !fieldInfo.divergentSources) continue;
+
+        // Filter by specific field if provided
+        if (field && fieldName !== field) continue;
+
+        // Calculate max deviation for severity
+        const maxDeviation = Math.max(...fieldInfo.divergentSources.map((s: any) => s.deviation || 0));
+
+        // Determine severity
+        let severityLevel: 'high' | 'medium' | 'low';
+        if (maxDeviation > 20) {
+          severityLevel = 'high';
+        } else if (maxDeviation > 10) {
+          severityLevel = 'medium';
+        } else {
+          severityLevel = 'low';
+        }
+
+        // Filter by severity if specified
+        if (severity !== 'all' && severityLevel !== severity) continue;
+
+        allDiscrepancies.push({
+          ticker,
+          field: fieldName,
+          fieldLabel: fieldLabels[fieldName] || fieldName,
+          consensusValue: fieldInfo.finalValue ?? 0,
+          consensusPercentage: fieldInfo.consensus ?? 0,
+          divergentSources: fieldInfo.divergentSources.map((s: any) => ({
+            source: s.source,
+            value: s.value,
+            deviation: s.deviation || 0,
+          })),
+          severity: severityLevel,
+          lastUpdate: data.updatedAt?.toISOString() || new Date().toISOString(),
+        });
+      }
+    }
+
+    // Sort by severity (high > medium > low) and then by max deviation
+    const severityOrder = { high: 0, medium: 1, low: 2 };
+    allDiscrepancies.sort((a, b) => {
+      const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
+      if (severityDiff !== 0) return severityDiff;
+
+      // Within same severity, sort by max deviation descending
+      const maxDeviationA = Math.max(...a.divergentSources.map((s) => s.deviation));
+      const maxDeviationB = Math.max(...b.divergentSources.map((s) => s.deviation));
+      return maxDeviationB - maxDeviationA;
+    });
+
+    // Apply limit
+    const limitedDiscrepancies = allDiscrepancies.slice(0, limit);
+
+    // Calculate summary
+    const summary = {
+      total: allDiscrepancies.length,
+      high: allDiscrepancies.filter((d) => d.severity === 'high').length,
+      medium: allDiscrepancies.filter((d) => d.severity === 'medium').length,
+      low: allDiscrepancies.filter((d) => d.severity === 'low').length,
+    };
+
+    this.logger.log(
+      `[DISCREPANCIES] Found ${summary.total} discrepancies (${summary.high} high, ${summary.medium} medium, ${summary.low} low)`,
+    );
+
+    return {
+      discrepancies: limitedDiscrepancies,
+      summary,
+    };
   }
 }

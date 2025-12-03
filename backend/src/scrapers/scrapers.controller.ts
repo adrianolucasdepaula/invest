@@ -4,11 +4,12 @@ import {
   Post,
   Param,
   Body,
+  Query,
   Logger,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ScrapersService } from './scrapers.service';
 import { ScraperMetricsService } from './scraper-metrics.service';
 
@@ -26,6 +27,55 @@ export interface DataSourceStatusDto {
   avgResponseTime: number;
   requiresAuth: boolean;
   errorMessage?: string;
+}
+
+export interface ScraperQualityStatsDto {
+  id: string;
+  name: string;
+  avgConsensus: number;
+  totalFieldsTracked: number;
+  fieldsWithDiscrepancy: number;
+  assetsAnalyzed: number;
+  lastUpdate: string | null;
+}
+
+export interface QualityStatsResponseDto {
+  scrapers: ScraperQualityStatsDto[];
+  overall: {
+    avgConsensus: number;
+    totalDiscrepancies: number;
+    totalAssetsAnalyzed: number;
+    totalFieldsTracked: number;
+    scrapersActive: number;
+  };
+}
+
+// FASE 5: Discrepancy Alert DTOs
+export interface DivergentSourceDto {
+  source: string;
+  value: number;
+  deviation: number; // percentage deviation from consensus
+}
+
+export interface DiscrepancyDto {
+  ticker: string;
+  field: string;
+  fieldLabel: string;
+  consensusValue: number;
+  consensusPercentage: number;
+  divergentSources: DivergentSourceDto[];
+  severity: 'high' | 'medium' | 'low';
+  lastUpdate: string;
+}
+
+export interface DiscrepanciesResponseDto {
+  discrepancies: DiscrepancyDto[];
+  summary: {
+    total: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
 }
 
 @ApiTags('Scrapers')
@@ -180,6 +230,59 @@ export class ScrapersController {
       this.logger.error(`Failed to test scraper ${scraperId}: ${error.message}`);
       throw new HttpException(
         `Failed to test scraper: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('quality-stats')
+  @ApiOperation({ summary: 'Get quality statistics for all scrapers based on consensus data' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns quality statistics aggregated from field_sources data',
+  })
+  async getQualityStats(): Promise<QualityStatsResponseDto> {
+    this.logger.log('Fetching quality statistics from field_sources');
+
+    try {
+      const stats = await this.scrapersService.getQualityStats();
+      return stats;
+    } catch (error) {
+      this.logger.error(`Failed to get quality stats: ${error.message}`);
+      throw new HttpException(
+        `Failed to get quality statistics: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('discrepancies')
+  @ApiOperation({ summary: 'Get list of field discrepancies across all assets' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max results (default 50)' })
+  @ApiQuery({ name: 'severity', required: false, enum: ['all', 'high', 'medium', 'low'], description: 'Filter by severity' })
+  @ApiQuery({ name: 'field', required: false, type: String, description: 'Filter by specific field' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns list of discrepancies ordered by severity',
+  })
+  async getDiscrepancies(
+    @Query('limit') limit?: string,
+    @Query('severity') severity?: string,
+    @Query('field') field?: string,
+  ): Promise<DiscrepanciesResponseDto> {
+    this.logger.log(`Fetching discrepancies: limit=${limit}, severity=${severity}, field=${field}`);
+
+    try {
+      const discrepancies = await this.scrapersService.getDiscrepancies({
+        limit: limit ? parseInt(limit, 10) : 50,
+        severity: severity as 'all' | 'high' | 'medium' | 'low' | undefined,
+        field,
+      });
+      return discrepancies;
+    } catch (error) {
+      this.logger.error(`Failed to get discrepancies: ${error.message}`);
+      throw new HttpException(
+        `Failed to get discrepancies: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

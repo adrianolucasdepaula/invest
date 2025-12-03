@@ -2,7 +2,7 @@
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
 **Última Atualização:** 2025-12-02
-**Versão:** 1.7.0
+**Versão:** 1.7.1
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -8626,10 +8626,11 @@ scripts/
 
 ---
 
-### FASE 61: Evolução do Sistema de Coleta de Dados 🔄 EM ANDAMENTO (2025-12-02)
+### FASE 61: Evolução do Sistema de Coleta de Dados ✅ 100% COMPLETO (2025-12-02)
 
 **Prioridade:** 🔴 **CRÍTICO** (Prioridade 1)
 **Data Início:** 2025-12-02
+**Data Conclusão:** 2025-12-02
 **Tipo:** Data Quality + Confidence Improvement
 
 **Objetivo:** Evoluir o sistema de coleta de dados fundamentalistas com rastreamento de origem por campo e validação por consenso.
@@ -8647,8 +8648,8 @@ scripts/
 | **FASE 1** | Sistema de Rastreamento de Origem por Campo | ✅ 100% | 2025-12-02 |
 | **FASE 2** | Aumentar MIN_SOURCES de 2 para 3 | ✅ 100% | 2025-12-02 |
 | **FASE 3** | API endpoint + Componentes de Qualidade de Dados | ✅ 100% | 2025-12-02 |
-| **FASE 4** | Dashboard de Qualidade de Scrapers | 🔵 PENDENTE | - |
-| **FASE 5** | Alertas de Discrepância | 🔵 PENDENTE | - |
+| **FASE 4** | Dashboard de Qualidade de Scrapers | ✅ 100% | 2025-12-02 |
+| **FASE 5** | Alertas de Discrepância | ✅ 100% | 2025-12-02 |
 
 **FASE 1 - Implementações Concluídas:**
 
@@ -8731,7 +8732,57 @@ backend/src/database/migrations/1764696740650-AddFieldSourcesToFundamentalData.t
 - ✅ Endpoint testado com sucesso (PETR4)
 - ✅ Componentes renderizando corretamente
 
-**Status:** 🟡 **FASES 1-3 COMPLETAS - FASES 4-5 PENDENTES**
+**FASE 4 - Implementações Concluídas:**
+
+- [x] **Backend:**
+  - `GET /scrapers/quality-stats` - Endpoint agregado de qualidade
+  - `QualityStatsResponseDto` - DTOs para resposta
+  - `getQualityStats()` em ScrapersService - Agregação de field_sources
+- [x] **Frontend:**
+  - Tabs na página `/data-sources` (Status | Qualidade)
+  - `useScrapersQualityStats` hook - React Query
+  - `api.getScrapersQualityStats()` - Método API
+  - Cards de resumo: Consenso Médio, Discrepâncias, Ativos, Campos
+  - Cards por scraper: consenso, discrepâncias, ativos analisados
+  - Badges com cores por nível de consenso
+  - Tooltips explicativos
+
+**Validação FASE 4:**
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Console do navegador: Sem erros
+- ✅ Endpoint retornando dados corretos
+- ✅ Tab "Qualidade" exibindo estatísticas
+- ✅ Screenshot: `docs/screenshots/FASE4_Quality_Tab_Working.png`
+
+**FASE 5 - Implementações Concluídas:**
+
+- [x] **Backend:**
+  - `GET /scrapers/discrepancies` - Endpoint para listar discrepâncias
+  - Query params: `limit`, `severity` (all/high/medium/low), `field`
+  - `DiscrepancyDto`, `DivergentSourceDto`, `DiscrepanciesResponseDto` - DTOs completos
+  - `getDiscrepancies()` em ScrapersService - Cálculo de severidade por desvio
+  - Severidade: high (>20% desvio), medium (>10%), low (>5%)
+- [x] **Frontend:**
+  - Tab "Alertas" na página `/data-sources` (3 tabs: Status | Qualidade | Alertas)
+  - Badge vermelho com contagem de alertas de alta severidade
+  - `useScrapersDiscrepancies` hook - React Query
+  - `api.getScrapersDiscrepancies()` - Método API
+  - Cards de resumo: Total, Alta, Média, Baixa severidade
+  - Filtros por severidade com contadores dinâmicos
+  - Lista de discrepâncias com: ticker, campo, valor de consenso, fontes divergentes
+  - Cada fonte divergente mostra valor e % de desvio
+
+**Validação FASE 5:**
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Console do navegador: Sem erros
+- ✅ Endpoint retornando ~2988 discrepâncias (2220 high, 215 medium, 553 low)
+- ✅ Tab "Alertas" funcional com filtros e lista completa
+
+**Status:** ✅ **100% COMPLETO - TODAS AS 5 FASES FINALIZADAS**
 
 ---
 

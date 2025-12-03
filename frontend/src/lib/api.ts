@@ -286,6 +286,22 @@ class ApiClient {
     return response.data;
   }
 
+  // Scrapers endpoints - FASE 4: Quality Stats
+  async getScrapersStatus() {
+    const response = await this.client.get('/scrapers/status');
+    return response.data;
+  }
+
+  async getScrapersQualityStats() {
+    const response = await this.client.get('/scrapers/quality-stats');
+    return response.data;
+  }
+
+  async getScrapersDiscrepancies(params?: { limit?: number; severity?: string; field?: string }) {
+    const response = await this.client.get('/scrapers/discrepancies', { params });
+    return response.data;
+  }
+
   // Economic Indicators endpoints - FASE 1.4 (8 indicator types)
   async getEconomicIndicators(params?: { type?: string; limit?: number }) {
     const response = await this.client.get('/economic-indicators', { params });

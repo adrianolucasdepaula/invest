@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ScraperMetric } from '@database/entities';
+import { ScraperMetric, FundamentalData } from '@database/entities';
 import { FundamentusScraper } from './fundamental/fundamentus.scraper';
 import { BrapiScraper } from './fundamental/brapi.scraper';
 import { StatusInvestScraper } from './fundamental/statusinvest.scraper';
@@ -14,7 +14,7 @@ import { ScrapersController } from './scrapers.controller';
 import { RateLimiterService } from './rate-limiter.service'; // ✅ FASE 3
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ScraperMetric])],
+  imports: [TypeOrmModule.forFeature([ScraperMetric, FundamentalData])], // ✅ FASE 4: Added FundamentalData
   controllers: [ScrapersController],
   providers: [
     FundamentusScraper,

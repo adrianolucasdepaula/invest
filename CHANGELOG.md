@@ -13,9 +13,37 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - População de dados no banco após wipe (Issue #5)
 - Validação visual final da UI de opções
 - Migração dos 24 scrapers Python restantes (Selenium → Playwright)
-- FASE 61.4-5: Dashboard de Qualidade + Alertas de Discrepância
 - FASE 63: Git Workflow Automation (Prioridade 2)
 - FASE 64: Architecture Visual Diagrams (Prioridade 2)
+
+---
+
+## [1.7.1] - 2025-12-02
+
+### Added
+
+- **FASE 5 - Alertas de Discrepância:**
+  - **Backend:**
+    - `GET /scrapers/discrepancies` - Endpoint para listar discrepâncias de dados
+    - Query params: `limit`, `severity` (all/high/medium/low), `field`
+    - `DiscrepancyDto`, `DivergentSourceDto`, `DiscrepanciesResponseDto` - DTOs completos
+    - `getDiscrepancies()` em ScrapersService - Cálculo de severidade por desvio
+    - Severidade: high (>20%), medium (>10%), low (>5%)
+  - **Frontend:**
+    - Tab "Alertas" na página `/data-sources` (3 tabs: Status | Qualidade | Alertas)
+    - Badge vermelho com contagem de alertas de alta severidade
+    - `useScrapersDiscrepancies` hook - React Query para buscar discrepâncias
+    - `api.getScrapersDiscrepancies()` - Método API client
+    - Cards de resumo: Total, Alta, Média, Baixa severidade
+    - Filtros por severidade com contadores dinâmicos
+    - Lista de discrepâncias com: ticker, campo, valor de consenso, fontes divergentes
+    - Cada fonte divergente mostra valor e % de desvio
+
+### Validated
+
+- TypeScript: 0 erros (backend + frontend)
+- Console: 0 erros
+- Visual: Tab Alertas funcional com ~2988 discrepâncias detectadas
 
 ---
 
@@ -55,6 +83,34 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **Gemini = ADVISOR** (segunda opinião, não implementa)
 - Consultar para: análises grandes (>50 arquivos), decisões arquiteturais, dados financeiros
 - Não consultar para: tarefas triviais (<50 linhas), debugging simples
+
+---
+
+## [1.6.3] - 2025-12-02
+
+### Added
+
+- **FASE 4 - Dashboard de Qualidade de Scrapers:**
+  - **Backend:**
+    - `GET /scrapers/quality-stats` - Endpoint agregado de qualidade por scraper
+    - `QualityStatsResponseDto` - DTOs para resposta
+    - `getQualityStats()` em ScrapersService - Agregação de field_sources
+  - **Frontend:**
+    - Tabs na página `/data-sources` (Status | Qualidade)
+    - `useScrapersQualityStats` hook - React Query para buscar estatísticas
+    - `api.getScrapersQualityStats()` - Método API client
+    - Cards de resumo: Consenso Médio, Discrepâncias, Ativos Analisados, Campos Rastreados
+    - Cards por scraper: consenso %, discrepâncias, ativos analisados
+    - Badges com cores por nível de consenso (verde >=80%, amarelo >=50%, vermelho <50%)
+    - Tooltips explicativos em badges de consenso e discrepância
+
+### Validated
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Console do navegador: Sem erros
+- ✅ Endpoint retornando dados corretos (6 scrapers, 842 ativos)
+- ✅ Tab "Qualidade" exibindo estatísticas corretamente
 
 ---
 
