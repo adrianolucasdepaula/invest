@@ -9305,53 +9305,254 @@ Validação ultra-completa do ecossistema com Playwright + DevTools, incluindo c
 
 ---
 
-## 📊 RESUMO DE STATUS
+## FASE 61: Evolucao Sistema Coleta de Dados ✅ 100% COMPLETO (2025-12-01)
 
-### Fases Completas (61 fases)
+**Data:** 2025-12-01
+**Tipo:** Feature + Data Quality
+**Prioridade:** 🔴 CRITICA
+**Versao:** 1.6.0 → 1.7.0
 
-- ✅ FASE 1-57: Implementadas e validadas (ver histórico acima)
-- ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
-- ✅ FASE 59: Fundamentus Scraper - Validação 100% (2025-11-28)
-- ✅ FASE 60: Validação Ultra-Completa + Correções Críticas (2025-11-29)
-- ✅ FASE 60b: Dependency Management System (2025-11-29)
+Implementacao completa do sistema de consenso de dados com cross-validation de multiplas fontes.
 
-### Fases Planejadas (2 fases)
+### Sub-Fases Implementadas
 
-- 🔵 FASE 61: Git Workflow Automation (Prioridade 2)
-- 🔵 FASE 62: Architecture Visual Diagrams (Prioridade 2)
+- ✅ **FASE 61.1:** Field Source Tracking - Rastreamento de fonte por campo
+- ✅ **FASE 61.2:** MIN_SOURCES = 3 - Minimo 3 fontes para validacao
+- ✅ **FASE 61.3:** Data Sources API - Endpoint + frontend quality indicators
+- ✅ **FASE 61.4:** Scraper Quality Stats - Dashboard com metricas por scraper
+- ✅ **FASE 61.5:** Discrepancy Alerts - Sistema de alertas com severidade
 
-### Compliance Status
+### Metricas
 
-**Após FASE 60b (Atual):**
-```
-✅ Contemplado Completamente:    ~90% (54/60 regras)
-⚠️ Parcialmente Contemplado:     ~8% (5/60 regras)
-❌ Não Contemplado:               ~2% (1/60 regras)
-```
+- **Discrepancias Detectadas:** 2988
+- **Scrapers Ativos:** 6 (fundamentus, statusinvest, investidor10, fundamentei, investsite, BCB)
+- **Consenso Medio:** 67-80% por campo
 
-**Regra "Apps/bibliotecas atualizados":** ✅ 100% COMPLETO
-- NestJS 11, Next.js 16, React 19, TailwindCSS 4
-- Todas dependências Python atualizadas
-- Scripts de manutenção criados
-
-### Próximos Passos Recomendados
-
-1. **Curto Prazo (Esta Semana):**
-   - Implementar FASE 61: Git Workflow Automation
-   - Testar hooks com time de desenvolvimento
-
-2. **Médio Prazo (Este Mês):**
-   - Implementar FASE 62: Architecture Visual Diagrams
-   - Executar ciclo de manutenção de dependências
-
-3. **Longo Prazo (Próximo Sprint):**
-   - GitHub Branch Protection Rules (Prioridade 3)
-   - Guia de React DevTools (Prioridade 3)
-   - Monitoramento e manutenção contínua
+**Status:** ✅ **100% COMPLETO**
 
 ---
 
-**Última Atualização:** 2025-11-29
-**Total de Fases:** 61 completas + 2 planejadas = **63 fases**
-**Versão:** 1.5.0
-**Responsável:** Claude Code (Opus 4.5)
+## FASE 62: MCP Gemini Advisor Integration ✅ 100% COMPLETO (2025-12-02)
+
+**Data:** 2025-12-02
+**Tipo:** AI Integration
+**Prioridade:** 🟡 MEDIA
+**Versao:** 1.7.0
+
+Integracao do Gemini 3 Pro como advisor/segunda opiniao para decisoes complexas.
+
+### Implementacao
+
+- ✅ MCP Server `gemini-advisor` instalado e configurado
+- ✅ Protocolo de consulta documentado em CLAUDE.md
+- ✅ Limitacoes conhecidas documentadas (taxa de alucinacao 88%)
+- ✅ Workflow de decisao hibrido (Claude decisor + Gemini advisor)
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
+## FASE 63: Atualizar Dados Individual por Ativo ✅ 100% COMPLETO (2025-12-03)
+
+**Data:** 2025-12-03
+**Tipo:** Feature
+**Prioridade:** 🟢 ALTA
+**Versao:** 1.7.2
+
+Endpoint e UI para atualizar dados de um ativo individual.
+
+### Implementacao
+
+- ✅ Endpoint `POST /assets/{ticker}/update` no backend
+- ✅ Botao "Atualizar" na pagina do ativo
+- ✅ Feedback visual de progresso
+- ✅ Integracao com sistema de consenso
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
+## FASE 64: Migracao Playwright Completa 🔵 PLANEJADO
+
+**Tipo:** Technical Debt
+**Prioridade:** 🔴 CRITICA
+**Estimativa:** 40-60h
+
+**Objetivo:** Migrar todos os 24 scrapers pendentes de Selenium para Playwright
+
+### Scrapers a Migrar
+
+| # | Scraper | Categoria | Complexidade |
+|---|---------|-----------|--------------|
+| 1 | statusinvest_scraper.py | Fundamentalista | Media |
+| 2 | fundamentei_scraper.py | Fundamentalista | Alta |
+| 3 | investidor10_scraper.py | Fundamentalista | Media |
+| 4 | investsite_scraper.py | Fundamentalista | Media |
+| 5 | tradingview_scraper.py | Tecnico | Alta |
+| 6 | investing_scraper.py | Tecnico | Media |
+| 7 | google_finance_scraper.py | Tecnico | Media |
+| 8 | google_news_scraper.py | Noticias | Media |
+| 9-24 | (demais scrapers) | Diversos | Media-Alta |
+
+### Padrao Obrigatorio
+
+```python
+# Single HTML fetch + BeautifulSoup local parsing
+html_content = await page.content()  # await UNICO
+soup = BeautifulSoup(html_content, 'html.parser')
+```
+
+**Documentacao:** `backend/python-scrapers/PLAYWRIGHT_SCRAPER_PATTERN.md`
+
+**Entregaveis:**
+- [ ] Todos 24 scrapers migrados
+- [ ] Testes unitarios por scraper
+- [ ] main.py atualizado com todos scrapers habilitados
+
+**Status:** 🔵 **PLANEJADO**
+
+---
+
+## FASE 65: TimescaleDB + Dados Intraday 🔵 PLANEJADO
+
+**Tipo:** Infrastructure
+**Prioridade:** 🟢 ALTA
+**Estimativa:** 15-20h
+
+**Objetivo:** Suportar dados de alta frequencia (1h, 15min, 5min)
+
+### Tarefas
+
+- [ ] **65.1.** Adicionar `timescaledb` ao docker-compose.yml
+- [ ] **65.2.** Converter `asset_prices` em Hypertable
+- [ ] **65.3.** Criar Continuous Aggregates (1h, 1d, 1sem)
+- [ ] **65.4.** Endpoint `/market-data/{ticker}/intraday`
+- [ ] **65.5.** Frontend com opcoes de timeframe intraday
+
+**Status:** 🔵 **PLANEJADO**
+
+---
+
+## FASE 66: FundamentalGrid Frontend 🔵 PLANEJADO
+
+**Tipo:** Feature
+**Prioridade:** 🟢 ALTA
+**Estimativa:** 6-8h
+
+**Objetivo:** Conectar API de fundamentals ao frontend (atualmente placeholder)
+
+### Tarefas
+
+- [ ] Criar componente `FundamentalGrid` responsivo
+- [ ] Exibir indicadores: P/L, P/VP, ROE, ROA, Margens, DY
+- [ ] Tooltips educativos por indicador
+- [ ] Source badges com consenso (verde/amarelo/vermelho)
+
+**Status:** 🔵 **PLANEJADO**
+
+---
+
+## FASE 67: Dashboard de Discrepancias 🔵 PLANEJADO
+
+**Tipo:** Feature
+**Prioridade:** 🟢 ALTA
+**Estimativa:** 8-10h
+
+**Objetivo:** Visualizar as 2988 discrepancias detectadas pelo backend
+
+### Tarefas
+
+- [ ] Nova pagina `/discrepancies` no App Router
+- [ ] Filtros por severidade, ativo, campo, data
+- [ ] Tabela com ordenacao por severidade
+- [ ] Drill-down para pagina do ativo
+- [ ] Metricas agregadas (top 10 ativos/campos)
+
+**Status:** 🔵 **PLANEJADO**
+
+---
+
+## FASE 68: AI Sentiment (Gemini) 🔵 PLANEJADO
+
+**Tipo:** Feature + AI
+**Prioridade:** 🟡 MEDIA
+**Estimativa:** 12-15h
+
+**Objetivo:** Analise automatica de noticias com sentimento
+
+### Tarefas
+
+- [ ] Criar entidade `News` no banco
+- [ ] Pipeline de coleta (Google News scraper)
+- [ ] Analise de sentimento via Gemini MCP
+- [ ] Widget "Termometro do Mercado" no Dashboard
+- [ ] Noticias por ativo na pagina `/assets/[ticker]`
+
+**Status:** 🔵 **PLANEJADO**
+
+---
+
+## FASE 69+: Infraestrutura Avancada (Opcional) 🔵 PLANEJADO
+
+**Tipo:** Infrastructure
+**Prioridade:** 🔵 BAIXA
+
+### Sub-Fases
+
+- **69.1. Meilisearch** - Busca textual inteligente (assets, noticias)
+- **69.2. MinIO** - Data Lake para backup de HTML bruto
+- **69.3. Sistema de Alertas** - Notificacoes de preco/indicador
+- **69.4. Opcoes** - Entidade OptionPrice + cadeia de opcoes
+
+**Status:** 🔵 **PLANEJADO (OPCIONAL)**
+
+---
+
+## 📊 RESUMO DE STATUS
+
+### Fases Completas (63 fases)
+
+- ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
+- ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
+- ✅ FASE 59: Fundamentus Scraper - Validacao 100% (2025-11-28)
+- ✅ FASE 60: Validacao Ultra-Completa + Correcoes Criticas (2025-11-29)
+- ✅ FASE 60b: Dependency Management System (2025-11-29)
+- ✅ FASE 61: Evolucao Sistema Coleta de Dados (2025-12-01)
+- ✅ FASE 62: MCP Gemini Advisor Integration (2025-12-02)
+- ✅ FASE 63: Atualizar Dados Individual por Ativo (2025-12-03)
+
+### Fases Planejadas (6 fases)
+
+- 🔵 FASE 64: Migracao Playwright Completa (Prioridade CRITICA)
+- 🔵 FASE 65: TimescaleDB + Dados Intraday (Prioridade ALTA)
+- 🔵 FASE 66: FundamentalGrid Frontend (Prioridade ALTA)
+- 🔵 FASE 67: Dashboard de Discrepancias (Prioridade ALTA)
+- 🔵 FASE 68: AI Sentiment (Gemini) (Prioridade MEDIA)
+- 🔵 FASE 69+: Infraestrutura Avancada (Prioridade BAIXA)
+
+### Cronograma Estimado
+
+| Fase | Descricao | Estimativa | Dependencias |
+|------|-----------|------------|--------------|
+| 64 | Migracao Playwright | 40-60h | Nenhuma |
+| 65 | TimescaleDB + Intraday | 15-20h | Nenhuma |
+| 66 | FundamentalGrid | 6-8h | Scrapers fundamentalistas (64) |
+| 67 | Dashboard Discrepancias | 8-10h | Nenhuma |
+| 68 | AI Sentiment | 12-15h | Scraper noticias (64) |
+| 69+ | Avancado | Variavel | Fases 64-68 |
+
+**Total Estimado:** 80-115h para fases 64-68
+
+### Proximos Passos Imediatos
+
+1. **Iniciar FASE 64** - Migracao Playwright (maior bloqueador tecnico)
+2. **Em paralelo:** Preparar docker-compose para TimescaleDB
+3. **Apos primeiros 5 scrapers:** Iniciar FundamentalGrid
+
+---
+
+**Ultima Atualizacao:** 2025-12-03
+**Total de Fases:** 63 completas + 6 planejadas = **69 fases**
+**Versao:** 1.7.2
+**Responsavel:** Claude Code (Opus 4.5)
+**Referencia:** MASTER_ROADMAP.md v2.0
