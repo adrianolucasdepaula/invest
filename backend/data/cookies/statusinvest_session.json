@@ -1,0 +1,334 @@
+[
+  {
+    "name": "_adasys",
+    "value": "9fa795f6-de30-4ba0-a742-b47f0851e1d8",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1799350720.084773,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": ".AspNetCore.Antiforgery.V4SpcJMET5M",
+    "value": "CfDJ8J7YUItSKexIhwpRsncieoYxilJnOblqjTvadaH16aD62J_Q332zPoLwHfY3SL_BPoMDChWluVnZJRX6cRETAFsyL5aHHb8yEY0jQ4PMRQgHoNTGS4snBmhZsZLbdXLnzOCw_USvAU69fKcXb66GrsU",
+    "domain": "statusinvest.com.br",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": true,
+    "secure": false,
+    "sameSite": "Strict"
+  },
+  {
+    "name": "suno_checkout_userid",
+    "value": "7f94b04c-6258-403c-af06-eeaaab152e86",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1796326719,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_gcl_au",
+    "value": "1.1.2133804569.1764790720",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1772566720,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": ".StatusAdThin",
+    "value": "1",
+    "domain": "statusinvest.com.br",
+    "path": "/",
+    "expires": 1764877120,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "CLID",
+    "value": "32ce1fcce36a48ec992fadf0e98f2bc5.20251203.20261203",
+    "domain": "www.clarity.ms",
+    "path": "/",
+    "expires": 1796326720.613606,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "cf_clearance",
+    "value": "8rNMY3zoU0b0jVSxRePkD2Be9Wh81rIRk8OPHKuNe68-1764790721-1.2.1.1-TgkRzlChNx_dYxKsHpskJ3tk4erpwQA1SN_rgIoqaut0SQMLDHR_90V18It6QifujUX2lL93pYM8v3lMlKaAnH8m9vRIf0NY8lUnKDmWfFiV0zdg4QL.KBFImQEIkQZkpdllCDp85SmEZ93_HP5o9Aku2TIm4hnKvaMT9PA20dt2vhqOpocHnBzqRKo5kAM4pe70WuqruWod1JGdk3DJSRl7oa6WzZQscmxyU8gxxus",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1796326720.686338,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None",
+    "partitionKey": "https://statusinvest.com.br",
+    "_crHasCrossSiteAncestor": false
+  },
+  {
+    "name": "wisepops",
+    "value": "%7B%22popups%22%3A%7B%7D%2C%22sub%22%3A0%2C%22ucrn%22%3A40%2C%22cid%22%3A%2252100%22%2C%22v%22%3A5%7D",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1799350720.695713,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_ga",
+    "value": "GA1.1.2090387893.1764790721",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1799350721.018614,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "test_cookie",
+    "value": "CheckForPermission",
+    "domain": ".doubleclick.net",
+    "path": "/",
+    "expires": 1764791621.167862,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "_fbp",
+    "value": "fb.2.1764790721222.219802522146363648",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1772566721,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "wisepops_visitor",
+    "value": "%7B%22TfwCNQSfMg%22%3A%229bc38e60-a657-4268-8a47-7b0cdc306313%22%7D",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1799350721.348471,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "wisepops_visits",
+    "value": "%5B%222025-12-03T19%3A38%3A40.035Z%22%5D",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1799350721.349728,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "wisepops_session",
+    "value": "%7B%22mtime%22%3A1764790721350%2C%22pageviews%22%3A1%2C%22popups%22%3A%7B%7D%2C%22bars%22%3A%7B%7D%2C%22embeds%22%3A%7B%7D%2C%22sticky%22%3A%7B%7D%2C%22countdowns%22%3A%7B%7D%2C%22src%22%3Anull%2C%22utm%22%3A%7B%7D%2C%22testIp%22%3Anull%2C%22debugToken%22%3Anull%2C%22closed%22%3A%5B%5D%7D",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_clck",
+    "value": "d1xz60%5E2%5Eg1j%5E0%5E2163",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1796326721,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "g_state",
+    "value": "{\"i_l\":0,\"i_ll\":1764790721623,\"i_b\":\"FsCF/0+ibN9ywUE07L9q14tS7kgqaQzAOPkrevATt2M\"}",
+    "domain": "statusinvest.com.br",
+    "path": "/",
+    "expires": 1780342721,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_ga_69GS6KP6TJ",
+    "value": "GS2.1.s1764790721$o1$g0$t1764790721$j60$l0$h0",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1799350721.661604,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "MUID",
+    "value": "17D5BBA47BF364532891AD137AE76585",
+    "domain": ".bing.com",
+    "path": "/",
+    "expires": 1798486722.102558,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "MR",
+    "value": "0",
+    "domain": ".c.bing.com",
+    "path": "/",
+    "expires": 1765395522.102671,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "SRM_B",
+    "value": "17D5BBA47BF364532891AD137AE76585",
+    "domain": ".c.bing.com",
+    "path": "/",
+    "expires": 1798486722.102702,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "SM",
+    "value": "C",
+    "domain": ".c.clarity.ms",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "MUID",
+    "value": "17D5BBA47BF364532891AD137AE76585",
+    "domain": ".clarity.ms",
+    "path": "/",
+    "expires": 1798486722.254992,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "MR",
+    "value": "0",
+    "domain": ".c.clarity.ms",
+    "path": "/",
+    "expires": 1765395522.255058,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "ANONCHK",
+    "value": "0",
+    "domain": ".c.clarity.ms",
+    "path": "/",
+    "expires": 1764791322.255078,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "_clsk",
+    "value": "iiw4be%5E1764790722340%5E1%5E1%5Ei.clarity.ms%2Fcollect",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1764877122,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "__hstc",
+    "value": "176625274.f032cfdb0d8ec8e50ce00fe34379f7e7.1764790727539.1764790727539.1764790727539.1",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1780342727,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "hubspotutk",
+    "value": "f032cfdb0d8ec8e50ce00fe34379f7e7",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1780342727,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "__hssrc",
+    "value": "1",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "__hssc",
+    "value": "176625274.1.1764790727539",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1764792527,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "__cf_bm",
+    "value": "03p0B5NSho4iIYwtB0n0bvjkv9jhkqKniFrdP5eVmzw-1764790728-1.0.1.1-dMG9sEyN01WPE9W.02vFcbSSf5AQTtACXlp8WBqAcKbxoB1kMnffd5N2yLMigtHYaRFW_OVIwShZ_4FdBQZv.g7aLnyB8UYNfJxEZHFuCr4",
+    "domain": ".hubspot.com",
+    "path": "/",
+    "expires": 1764792527.827716,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "_cfuvid",
+    "value": "ti464hXahxvQ.gq.u9gRsqRzDq6flTXaL68efmX9NAw-1764790728492-0.0.1.1-604800000",
+    "domain": ".hubspot.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "_cfuvid",
+    "value": "xp7W0AP5kp7f4zOiG8LnFyrS4LAuQvMmEOJa2v8vqdc-1764790729018-0.0.1.1-604800000",
+    "domain": ".hsforms.com",
+    "path": "/",
+    "expires": -1,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "messagesUtk",
+    "value": "5d8fb432c83b49e9a5eb6181d7895e54",
+    "domain": ".statusinvest.com.br",
+    "path": "/",
+    "expires": 1780342728,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "Lax"
+  }
+]

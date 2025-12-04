@@ -6,6 +6,8 @@ import * as cheerio from 'cheerio';
 export interface StatusInvestData {
   ticker: string;
   companyName: string;
+  sector: string; // Setor da empresa
+  segment: string; // Segmento da empresa
   price: number;
   dy: number;
   pl: number;
@@ -61,93 +63,135 @@ export class StatusInvestScraper extends AbstractScraper<StatusInvestData> {
     const assetType = this.isFII(ticker) ? 'fundos-imobiliarios' : 'acoes';
     const url = `https://statusinvest.com.br/${assetType}/${ticker.toLowerCase()}`;
 
-    await this.page.goto(url, { waitUntil: 'networkidle', timeout: this.config.timeout });
+    // Using 'load' instead of 'networkidle' - StatusInvest loads many analytics scripts that cause timeout
+    await this.page.goto(url, { waitUntil: 'load', timeout: 60000 });
 
-    // Wait for main content to load
-    await this.page.waitForSelector('.top-info', { timeout: 10000 }).catch(() => {
-      // If element doesn't exist, continue anyway
-    });
+    // Wait for indicators section to load
+    await this.page.waitForSelector('h3', { timeout: 15000 }).catch(() => {});
 
     const content = await this.page.content();
     const $ = cheerio.load(content);
 
-    const getValue = (selector: string, attr?: string): number => {
-      let text: string;
-      if (attr) {
-        text = $(selector).attr(attr) || '0';
-      } else {
-        text = $(selector).text().trim();
-      }
-
-      // Clean the text
+    // Helper to clean and parse numeric values
+    const cleanValue = (text: string): number => {
+      if (!text) return 0;
       text = text
         .replace(/\./g, '')
         .replace(',', '.')
         .replace('%', '')
         .replace('R$', '')
         .replace(/\s/g, '')
+        .replace(/[^\d.-]/g, '')
         .trim();
-
       return parseFloat(text) || 0;
     };
 
-    const getValueByLabel = (label: string): number => {
-      const element = $(`strong:contains("${label}")`).parent().find('.value');
-      return getValue(element.first().text());
+    // StatusInvest 2024-12 structure: h3 (label) in link, strong (value) in sibling container
+    const getIndicatorValue = (label: string): number => {
+      // Find h3 elements that contain the label
+      const h3Elements = $('h3').filter(function () {
+        const text = $(this).text().trim();
+        return text === label || text.startsWith(label);
+      });
+
+      if (h3Elements.length > 0) {
+        // Navigate up to find the container with strong value
+        // Structure: grandparent > (link with h3) + (sibling div with strong)
+        const grandparent = h3Elements.first().parent().parent();
+        const strongValue = grandparent.find('strong').first();
+        if (strongValue.length > 0) {
+          return cleanValue(strongValue.text().trim());
+        }
+        // Fallback: try parent's siblings
+        const parent = h3Elements.first().parent();
+        const siblingStrong = parent.siblings().find('strong').first();
+        if (siblingStrong.length > 0) {
+          return cleanValue(siblingStrong.text().trim());
+        }
+      }
+      return 0;
     };
 
-    // Get company name
+    // Get company name from h1
     const companyName =
-      $('.company-name').text().trim() || $('h1.lh-4').text().trim() || ticker.toUpperCase();
+      $('h1').first().text().trim().split(' - ')[0] || ticker.toUpperCase();
 
-    // Get price
-    const price = getValue('.value') || getValue('.top-info-price');
+    // Get price from the "Valor atual" section
+    let price = 0;
+    const valorAtualH3 = $('h3:contains("Valor atual")');
+    if (valorAtualH3.length > 0) {
+      const priceStrong = valorAtualH3.parent().find('strong').first();
+      price = cleanValue(priceStrong.text());
+    }
+
+    // Get sector from "Setor de Atuação" link
+    let sector = '';
+    let segment = '';
+    const sectorLink = $('a[href*="/setor/"]').first();
+    if (sectorLink.length > 0) {
+      sector = sectorLink.find('strong').text().trim() || sectorLink.text().trim();
+    }
+    const segmentLink = $('a[href*="/segmento/"]').first();
+    if (segmentLink.length > 0) {
+      segment = segmentLink.find('strong').text().trim() || segmentLink.text().trim();
+    }
+
+    // Clean sector/segment text
+    const cleanText = (text: string): string => {
+      return text
+        .replace(/arrow_forward|arrow_back/gi, '')
+        .replace(/[\n\r\t]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+    sector = cleanText(sector);
+    segment = cleanText(segment);
 
     const data: StatusInvestData = {
       ticker: ticker.toUpperCase(),
       companyName,
+      sector,
+      segment,
       price,
 
-      // Valuation indicators
-      dy: getValueByLabel('DY') || getValue('[title="Dividend Yield"]'),
-      pl: getValueByLabel('P/L') || getValue('[title="Preço sobre Lucro"]'),
-      pvp: getValueByLabel('P/VP') || getValue('[title="Preço sobre Valor Patrimonial"]'),
-      psr: getValueByLabel('PSR') || getValue('[title="Price Sales Ratio"]'),
-      pAtivos: getValueByLabel('P/ATIVOS') || getValue('[title="Preço sobre Ativos"]'),
-      pCapGiro: getValueByLabel('P/CAP. GIRO') || getValue('[title="Preço sobre Capital de Giro"]'),
-      pEbit: getValueByLabel('P/EBIT') || getValue('[title="Preço sobre EBIT"]'),
-      pAtivCircLiq:
-        getValueByLabel('P/ATIV CIRC LIQ') ||
-        getValue('[title="Preço sobre Ativo Circulante Líquido"]'),
-      evEbit: getValueByLabel('EV/EBIT') || getValue('[title="Enterprise Value sobre EBIT"]'),
-      evEbitda: getValueByLabel('EV/EBITDA') || getValue('[title="Enterprise Value sobre EBITDA"]'),
+      // Valuation indicators (from INDICADORES section)
+      dy: getIndicatorValue('D.Y'),
+      pl: getIndicatorValue('P/L'),
+      pvp: getIndicatorValue('P/VP'),
+      psr: getIndicatorValue('P/SR'),
+      pAtivos: getIndicatorValue('P/Ativo'),
+      pCapGiro: getIndicatorValue('P/Cap. Giro'),
+      pEbit: getIndicatorValue('P/EBIT'),
+      pAtivCircLiq: getIndicatorValue('P/Ativo Circ. Liq.'),
+      evEbit: getIndicatorValue('EV/EBIT'),
+      evEbitda: getIndicatorValue('EV/EBITDA'),
 
       // Efficiency indicators
-      margemEbit: getValueByLabel('M. EBIT') || getValue('[title="Margem EBIT"]'),
-      margemLiquida: getValueByLabel('M. LÍQUIDA') || getValue('[title="Margem Líquida"]'),
-      liquidezCorr: getValueByLabel('LIQ. CORR.') || getValue('[title="Liquidez Corrente"]'),
-      roic: getValueByLabel('ROIC') || getValue('[title="Return on Invested Capital"]'),
-      roe: getValueByLabel('ROE') || getValue('[title="Return on Equity"]'),
+      margemEbit: getIndicatorValue('M. EBIT'),
+      margemLiquida: getIndicatorValue('M. Líquida'),
+      liquidezCorr: getIndicatorValue('Liq. corrente'),
+      roic: getIndicatorValue('ROIC'),
+      roe: getIndicatorValue('ROE'),
 
-      // Liquidity
-      liquidez2meses: getValueByLabel('LIQ. 2 MESES') || getValue('[title="Liquidez 2 meses"]'),
+      // Liquidity (from header section)
+      liquidez2meses: 0, // Not visible in current structure
 
-      // Financial data
-      patrimonioLiq: getValueByLabel('PATRIM. LÍQ') || getValue('[title="Patrimônio Líquido"]'),
-      dividaBruta: getValueByLabel('DÍV. BRUTA') || getValue('[title="Dívida Bruta"]'),
-      disponibilidades:
-        getValueByLabel('DISPONIBILIDADES') || getValue('[title="Disponibilidades"]'),
-      ativoTotal: getValueByLabel('ATIVO') || getValue('[title="Ativo Total"]'),
-      receitaLiquida: getValueByLabel('RECEITA LÍQUIDA') || getValue('[title="Receita Líquida"]'),
-      ebit: getValueByLabel('EBIT') || getValue('[title="EBIT"]'),
-      lucroLiquido: getValueByLabel('LUCRO LÍQUIDO') || getValue('[title="Lucro Líquido"]'),
+      // Financial data (from company info section)
+      patrimonioLiq: getIndicatorValue('Patrimônio líquido'),
+      dividaBruta: getIndicatorValue('Dívida bruta'),
+      disponibilidades: getIndicatorValue('Disponibilidade'),
+      ativoTotal: getIndicatorValue('Ativos'),
+      receitaLiquida: 0, // In DRE section, complex to extract
+      ebit: 0, // In DRE section, complex to extract
+      lucroLiquido: 0, // In DRE section, complex to extract
 
       // Market data
-      valorMercado: getValueByLabel('VALOR DE MERCADO') || getValue('[title="Valor de Mercado"]'),
-      valorFirma: getValueByLabel('VALOR DA FIRMA') || getValue('[title="Valor da Firma"]'),
-      numeroAcoes: getValueByLabel('NRO. AÇÕES') || getValue('[title="Número de Ações"]'),
+      valorMercado: getIndicatorValue('Valor de mercado'),
+      valorFirma: getIndicatorValue('Valor de firma'),
+      numeroAcoes: getIndicatorValue('Nº total de papéis'),
     };
 
+    this.logger.debug(`[STATUSINVEST] Extracted: ${JSON.stringify(data)}`);
     return data;
   }
 

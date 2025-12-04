@@ -51,9 +51,9 @@ class OAuthController:
             session_id = str(uuid.uuid4())
             session = manager.create_session(session_id)
 
-            # Iniciar Chrome
+            # Iniciar Chrome (usando versão async)
             session.status = SessionStatus.STARTING
-            chrome_started = manager.start_chrome()
+            chrome_started = await manager.start_browser()
 
             if not chrome_started:
                 return {
@@ -348,7 +348,7 @@ class OAuthController:
                 session_data = manager.current_session.to_dict()
 
                 # Limpar recursos
-                manager.cleanup()
+                await manager.cleanup()
 
                 return {
                     "success": True,
@@ -395,7 +395,7 @@ class OAuthController:
                     "error": "Nenhuma sessão OAuth ativa"
                 }
 
-            manager.cancel_session()
+            await manager.cancel_session()
 
             return {
                 "success": True,

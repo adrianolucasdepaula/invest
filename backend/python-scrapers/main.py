@@ -15,6 +15,8 @@ from scrapers import (
     # ✅ MIGRATED TO PLAYWRIGHT - Active
     FundamentusScraper,
     BCBScraper,
+    StatusInvestScraper,
+    InvestsiteScraper,
 )
 
 # ⏸️ TEMPORARILY DISABLED - Awaiting Playwright migration
@@ -69,10 +71,11 @@ class ScraperService:
         # ✅ MIGRATED TO PLAYWRIGHT - Active scrapers
         self.scrapers["FUNDAMENTUS"] = FundamentusScraper
         self.scrapers["BCB"] = BCBScraper
+        self.scrapers["STATUSINVEST"] = StatusInvestScraper
+        self.scrapers["INVESTSITE"] = InvestsiteScraper
 
         # ⏸️ TEMPORARILY DISABLED - Awaiting Playwright migration
         # Public scrapers (no login required)
-        # self.scrapers["INVESTSITE"] = InvestsiteScraper
         # self.scrapers["B3"] = B3Scraper
         # self.scrapers["GRIFFIN"] = GriffinScraper
         # self.scrapers["COINMARKETCAP"] = CoinMarketCapScraper
@@ -81,8 +84,8 @@ class ScraperService:
         # Scrapers with specific credentials
         # self.scrapers["OPCOES_NET"] = OpcoesNetScraper
 
-        # Fundamental analysis (Google OAuth)
-        # self.scrapers["STATUSINVEST"] = StatusInvestScraper
+        # Fundamental analysis (Google OAuth) - StatusInvest MOVED TO ACTIVE
+        # (StatusInvestScraper migrated above)
         # self.scrapers["FUNDAMENTEI"] = FundamenteiScraper
         # self.scrapers["INVESTIDOR10"] = Investidor10Scraper
 
@@ -111,7 +114,7 @@ class ScraperService:
         # self.scrapers["MAISRETORNO"] = MaisRetornoScraper
 
         logger.info(f"✅ PLAYWRIGHT MIGRATION: Registered {len(self.scrapers)} scrapers: {list(self.scrapers.keys())}")
-        logger.info(f"⏸️  {24} scrapers temporarily disabled (awaiting Playwright migration)")
+        logger.info(f"⏸️  {22} scrapers temporarily disabled (awaiting Playwright migration)")
 
     async def initialize(self):
         """Initialize connections and resources"""

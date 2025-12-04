@@ -2,22 +2,36 @@
 Investidor10 Scraper - Análise fundamentalista e rankings
 Fonte: https://investidor10.com.br/
 Requer login via Google OAuth
+
+MIGRATED TO PLAYWRIGHT - 2025-12-04
 """
 import asyncio
-import pickle
+import json
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, Any, Optional
-from selenium.webdriver.common.by import By
 from loguru import logger
+from bs4 import BeautifulSoup
 
 from base_scraper import BaseScraper, ScraperResult
 
 
 class Investidor10Scraper(BaseScraper):
-    """Scraper for Investidor10 fundamental analysis"""
+    """
+    Scraper for Investidor10 fundamental analysis
+
+    OPTIMIZED: Uses single HTML fetch + BeautifulSoup local parsing
+    instead of multiple Selenium find_element calls. ~10x faster!
+
+    Dados extraídos:
+    - Indicadores de valuation (P/L, P/VP, EV/EBITDA, etc.)
+    - Indicadores de rentabilidade (ROE, ROIC, Margens, etc.)
+    - Indicadores de endividamento
+    - Scores e rankings do Investidor10
+    """
 
     BASE_URL = "https://investidor10.com.br"
-    COOKIES_FILE = "/app/browser-profiles/google_cookies.pkl"
+    COOKIES_FILE = "/app/data/cookies/investidor10_session.json"
 
     def __init__(self):
         super().__init__(
@@ -27,38 +41,47 @@ class Investidor10Scraper(BaseScraper):
         )
 
     async def initialize(self):
-        """Load Google OAuth cookies"""
+        """Initialize Playwright browser and load cookies"""
         if self._initialized:
             return
 
-        if not self.driver:
-            self.driver = self._create_driver()
+        # Call parent initialize to create browser/page
+        await super().initialize()
 
         try:
-            self.driver.get(self.BASE_URL)
+            # Navigate to base URL first
+            await self.page.goto(self.BASE_URL, wait_until="load", timeout=60000)
             await asyncio.sleep(2)
 
-            try:
-                with open(self.COOKIES_FILE, 'rb') as f:
-                    cookies = pickle.load(f)
+            # Load cookies if available
+            cookies_path = Path(self.COOKIES_FILE)
+            if cookies_path.exists():
+                try:
+                    with open(cookies_path, 'r') as f:
+                        session_data = json.load(f)
 
-                for cookie in cookies:
-                    if 'investidor10.com.br' in cookie.get('domain', ''):
-                        try:
-                            self.driver.add_cookie(cookie)
-                        except Exception as e:
-                            logger.debug(f"Could not add cookie: {e}")
+                    # Handle both formats: list [...] or dict {"cookies": [...]}
+                    if isinstance(session_data, list):
+                        cookies = session_data
+                    else:
+                        cookies = session_data.get('cookies', [])
 
-                self.driver.refresh()
-                await asyncio.sleep(3)
+                    if cookies:
+                        await self.page.context.add_cookies(cookies)
+                        logger.info(f"Loaded {len(cookies)} cookies for Investidor10")
 
-            except FileNotFoundError:
-                logger.warning("Google cookies not found. Will attempt without login.")
+                        # Refresh to apply cookies
+                        await self.page.reload(wait_until="load")
+                        await asyncio.sleep(2)
 
+                except Exception as e:
+                    logger.warning(f"Could not load cookies: {e}")
+            else:
+                logger.warning("Investidor10 cookies not found. Will attempt without login.")
+
+            # Verify login status
             if self.requires_login and not await self._verify_logged_in():
                 logger.warning("Login verification failed - some data may not be accessible")
-
-            self._initialized = True
 
         except Exception as e:
             logger.error(f"Error initializing Investidor10 scraper: {e}")
@@ -66,48 +89,60 @@ class Investidor10Scraper(BaseScraper):
 
     async def _verify_logged_in(self) -> bool:
         """Check if logged in"""
-        logout_selectors = [
-            "//a[contains(text(), 'Sair')]",
-            "//a[contains(@href, 'logout')]",
-            ".user-avatar",
-            ".profile-menu",
-        ]
-
-        for selector in logout_selectors:
-            try:
-                if selector.startswith("//"):
-                    elements = self.driver.find_elements(By.XPATH, selector)
-                else:
-                    elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
-
-                if elements:
-                    return True
-            except:
-                continue
-
-        return False
+        try:
+            html = await self.page.content()
+            # Check for logout indicators
+            logout_indicators = ['sair', 'logout', 'minha-conta', 'profile']
+            html_lower = html.lower()
+            return any(indicator in html_lower for indicator in logout_indicators)
+        except:
+            return False
 
     async def scrape(self, ticker: str) -> ScraperResult:
-        """Scrape fundamental data from Investidor10"""
-        await self.initialize()
+        """
+        Scrape fundamental data from Investidor10
 
+        Args:
+            ticker: Stock ticker (e.g., 'PETR4')
+
+        Returns:
+            ScraperResult with fundamental data
+        """
         try:
+            # Ensure page is initialized
+            if not self.page:
+                await self.initialize()
+
             url = f"{self.BASE_URL}/acoes/{ticker.lower()}"
-            logger.info(f"Scraping Investidor10 for {ticker}: {url}")
+            logger.info(f"Navigating to {url}")
 
-            self.driver.get(url)
-            await asyncio.sleep(4)
+            # Navigate (Playwright)
+            await self.page.goto(url, wait_until="load", timeout=60000)
+            await asyncio.sleep(3)
 
-            if "não encontrada" in self.driver.page_source.lower() or "404" in self.driver.page_source:
+            # Check if ticker exists (more specific check to avoid false positives)
+            page_source = await self.page.content()
+            page_lower = page_source.lower()
+            # Check for actual "not found" page indicators
+            not_found_indicators = [
+                "página não encontrada",
+                "ação não encontrada",
+                "ativo não encontrado",
+                "error 404",
+                "<title>404</title>",
+                "não foi possível encontrar",
+            ]
+            if any(indicator in page_lower for indicator in not_found_indicators):
                 return ScraperResult(
                     success=False,
                     error=f"Ticker {ticker} not found",
                     source=self.source,
                 )
 
+            # Extract data
             data = await self._extract_data(ticker)
 
-            if data:
+            if data and (data.get("indicators") or data.get("price")):
                 return ScraperResult(
                     success=True,
                     data=data,
@@ -130,132 +165,151 @@ class Investidor10Scraper(BaseScraper):
             )
 
     async def _extract_data(self, ticker: str) -> Optional[Dict[str, Any]]:
-        """Extract fundamental data"""
-        data = {
-            "ticker": ticker.upper(),
-            "source": "Investidor10",
-            "scraped_at": datetime.now().isoformat(),
-            "indicators": {},
-            "scores": {},
-        }
+        """
+        Extract fundamental data
 
+        OPTIMIZED: Uses single HTML fetch + local parsing (BeautifulSoup)
+        """
         try:
+            data = {
+                "ticker": ticker.upper(),
+                "source": "Investidor10",
+                "scraped_at": datetime.now().isoformat(),
+                "company_name": None,
+                "price": None,
+                "indicators": {},
+                "scores": {},
+            }
+
+            # OPTIMIZATION: Get HTML content once and parse locally
+            html_content = await self.page.content()
+            soup = BeautifulSoup(html_content, 'html.parser')
+
             # Company name
             try:
-                name_elem = self.driver.find_element(By.CSS_SELECTOR, "h1, .company-name, ._card-header h2")
-                data["company_name"] = name_elem.text.strip()
-            except:
-                pass
+                name_elem = soup.select_one("h1, .company-name, ._card-header h2")
+                if name_elem:
+                    data["company_name"] = name_elem.get_text().strip()
+            except Exception as e:
+                logger.debug(f"Could not extract company name: {e}")
 
             # Current price
             try:
-                price_elem = self.driver.find_element(By.CSS_SELECTOR, "._card-body .value, .cotacao, [data-testid='price']")
-                price_text = price_elem.text.strip().replace("R$", "").replace(",", ".").strip()
-                data["price"] = self._parse_number(price_text)
-            except:
-                pass
+                price_elem = soup.select_one("._card-body .value, .cotacao, [data-testid='price'], .price-value")
+                if price_elem:
+                    price_text = price_elem.get_text().strip()
+                    data["price"] = self._parse_number(price_text)
+            except Exception as e:
+                logger.debug(f"Could not extract price: {e}")
 
             # Investidor10 score
             try:
-                score_elem = self.driver.find_element(By.CSS_SELECTOR, ".nota, .score, [data-testid='score']")
-                score_text = score_elem.text.strip()
-                data["scores"]["nota_investidor10"] = self._parse_number(score_text)
-            except:
-                pass
+                score_elem = soup.select_one(".nota, .score, [data-testid='score']")
+                if score_elem:
+                    score_text = score_elem.get_text().strip()
+                    data["scores"]["nota_investidor10"] = self._parse_number(score_text)
+            except Exception as e:
+                logger.debug(f"Could not extract score: {e}")
 
             # Extract indicators
-            indicators = await self._extract_indicators()
+            indicators = self._extract_indicators(soup)
             if indicators:
                 data["indicators"] = indicators
 
             # Extract scores/rankings
-            scores = await self._extract_scores()
+            scores = self._extract_scores(soup)
             if scores:
                 data["scores"].update(scores)
 
-            return data if (data.get("indicators") or data.get("scores")) else None
+            return data if (data.get("indicators") or data.get("price")) else None
 
         except Exception as e:
             logger.error(f"Error extracting data: {e}")
             return None
 
-    async def _extract_indicators(self) -> Dict[str, Any]:
-        """Extract financial indicators"""
+    def _extract_indicators(self, soup: BeautifulSoup) -> Dict[str, Any]:
+        """Extract financial indicators using BeautifulSoup"""
         indicators = {}
 
         indicator_map = {
-            "P/L": "pl",
-            "P/VP": "pvp",
-            "PSR": "psr",
-            "Dividend Yield": "dividend_yield",
-            "DY": "dividend_yield",
-            "P/Ativo": "p_ativo",
-            "P/Cap.Giro": "p_cap_giro",
-            "P/EBIT": "p_ebit",
-            "P/Ativ Circ.Liq": "p_ativo_circ_liq",
-            "EV/EBIT": "ev_ebit",
-            "EV/EBITDA": "ev_ebitda",
-            "Marg. Bruta": "margem_bruta",
-            "Marg. EBIT": "margem_ebit",
-            "Marg. Líquida": "margem_liquida",
-            "EBIT/Ativo": "ebit_ativo",
-            "ROIC": "roic",
-            "ROE": "roe",
-            "ROA": "roa",
-            "Liquidez Corr": "liquidez_corrente",
-            "Div Br/Patrim": "divida_bruta_patrimonio",
-            "Giro Ativos": "giro_ativos",
-            "Cresc. Rec 5a": "crescimento_receita_5a",
-            "LPA": "lpa",
-            "VPA": "vpa",
-            "Payout": "payout",
+            "p/l": "p_l",
+            "p/vp": "p_vp",
+            "psr": "psr",
+            "dividend yield": "dy",
+            "dy": "dy",
+            "p/ativo": "p_ativos",
+            "p/cap.giro": "p_cap_giro",
+            "p/cap. giro": "p_cap_giro",
+            "p/ebit": "p_ebit",
+            "p/ativ circ.liq": "p_ativ_circ_liq",
+            "ev/ebit": "ev_ebit",
+            "ev/ebitda": "ev_ebitda",
+            "marg. bruta": "margem_bruta",
+            "margem bruta": "margem_bruta",
+            "marg. ebit": "margem_ebit",
+            "margem ebit": "margem_ebit",
+            "marg. líquida": "margem_liquida",
+            "margem líquida": "margem_liquida",
+            "ebit/ativo": "ebit_ativo",
+            "roic": "roic",
+            "roe": "roe",
+            "roa": "roa",
+            "liquidez corr": "liquidez_corrente",
+            "liquidez corrente": "liquidez_corrente",
+            "div br/patrim": "div_bruta_patrim",
+            "dív. bruta/patrim": "div_bruta_patrim",
+            "giro ativos": "giro_ativos",
+            "cresc. rec 5a": "crescimento_receita_5a",
+            "crescimento receita 5a": "crescimento_receita_5a",
+            "lpa": "lpa",
+            "vpa": "vpa",
+            "payout": "payout",
+            "dív. líquida/ebitda": "div_liquida_ebitda",
+            "div. líquida/ebitda": "div_liquida_ebitda",
         }
 
         try:
-            # Find all table cells with labels and values
-            tables = self.driver.find_elements(By.CSS_SELECTOR, "table, ._table, .indicators-table")
+            # Find all table rows
+            rows = soup.select("tr")
 
-            for table in tables:
-                rows = table.find_elements(By.CSS_SELECTOR, "tr")
-
-                for row in rows:
-                    try:
-                        cells = row.find_elements(By.CSS_SELECTOR, "td, th")
-
-                        if len(cells) >= 2:
-                            label = cells[0].text.strip()
-                            value_text = cells[1].text.strip()
-
-                            for indicator_label, indicator_key in indicator_map.items():
-                                if indicator_label.lower() in label.lower():
-                                    value = self._parse_indicator_value(value_text)
-                                    if value is not None:
-                                        indicators[indicator_key] = value
-                                    break
-
-                    except:
-                        continue
-
-            # Also try divs with _card-body class (common in Investidor10)
-            cards = self.driver.find_elements(By.CSS_SELECTOR, "._card-body, .indicator-card")
-
-            for card in cards:
+            for row in rows:
                 try:
-                    label_elem = card.find_element(By.CSS_SELECTOR, ".title, .label, ._card-title")
-                    value_elem = card.find_element(By.CSS_SELECTOR, ".value, ._card-value")
+                    cells = row.select("td, th")
 
-                    if label_elem and value_elem:
-                        label = label_elem.text.strip()
-                        value_text = value_elem.text.strip()
+                    if len(cells) >= 2:
+                        label = cells[0].get_text().strip().lower()
+                        value_text = cells[1].get_text().strip()
 
                         for indicator_label, indicator_key in indicator_map.items():
-                            if indicator_label.lower() in label.lower():
+                            if indicator_label in label:
                                 value = self._parse_indicator_value(value_text)
-                                if value is not None:
+                                if value is not None and indicator_key not in indicators:
                                     indicators[indicator_key] = value
                                 break
 
-                except:
+                except Exception:
+                    continue
+
+            # Also try divs with _card-body class (common in Investidor10)
+            cards = soup.select("._card-body, .indicator-card, .cell")
+
+            for card in cards:
+                try:
+                    label_elem = card.select_one(".title, .label, ._card-title, span:first-child")
+                    value_elem = card.select_one(".value, ._card-value, span:last-child")
+
+                    if label_elem and value_elem:
+                        label = label_elem.get_text().strip().lower()
+                        value_text = value_elem.get_text().strip()
+
+                        for indicator_label, indicator_key in indicator_map.items():
+                            if indicator_label in label:
+                                value = self._parse_indicator_value(value_text)
+                                if value is not None and indicator_key not in indicators:
+                                    indicators[indicator_key] = value
+                                break
+
+                except Exception:
                     continue
 
         except Exception as e:
@@ -263,8 +317,8 @@ class Investidor10Scraper(BaseScraper):
 
         return indicators
 
-    async def _extract_scores(self) -> Dict[str, Any]:
-        """Extract ranking scores"""
+    def _extract_scores(self, soup: BeautifulSoup) -> Dict[str, Any]:
+        """Extract ranking scores using BeautifulSoup"""
         scores = {}
 
         try:
@@ -277,16 +331,16 @@ class Investidor10Scraper(BaseScraper):
 
             for selector in score_selectors:
                 try:
-                    elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                    elements = soup.select(selector)
 
                     for elem in elements:
-                        score_name = elem.get_attribute("data-score") or elem.get_attribute("title")
-                        score_value = elem.text.strip()
+                        score_name = elem.get("data-score") or elem.get("title")
+                        score_value = elem.get_text().strip()
 
                         if score_name and score_value:
                             scores[score_name] = self._parse_number(score_value)
 
-                except:
+                except Exception:
                     continue
 
         except Exception as e:
@@ -297,22 +351,30 @@ class Investidor10Scraper(BaseScraper):
     def _parse_indicator_value(self, value_text: str) -> Optional[float]:
         """Parse indicator value"""
         try:
-            value_text = value_text.replace("%", "").replace("R$", "").replace(".", "").replace(",", ".").strip()
-
-            if value_text in ["-", "N/A", "n/a", "", "—", "–"]:
+            if not value_text or value_text in ["-", "N/A", "n/a", "", "—", "–"]:
                 return None
+
+            value_text = value_text.replace("%", "").replace("R$", "").strip()
+
+            # Handle Brazilian number format
+            # Remove thousand separators and convert decimal
+            value_text = value_text.replace(".", "").replace(",", ".")
 
             return float(value_text)
 
-        except:
+        except Exception:
             return None
 
     def _parse_number(self, text: str) -> Optional[float]:
         """Parse number from text"""
         try:
-            text = text.replace(" ", "").replace(".", "").replace(",", ".").strip()
+            if not text:
+                return None
+
+            text = text.replace("R$", "").replace("%", "").strip()
+            text = text.replace(" ", "").replace(".", "").replace(",", ".")
             return float(text)
-        except:
+        except Exception:
             return None
 
     async def health_check(self) -> bool:
@@ -323,3 +385,26 @@ class Investidor10Scraper(BaseScraper):
         except Exception as e:
             logger.error(f"Health check failed: {e}")
             return False
+
+
+# Test function
+async def test_investidor10():
+    """Test Investidor10 scraper"""
+    scraper = Investidor10Scraper()
+
+    try:
+        await scraper.initialize()
+        result = await scraper.scrape("PETR4")
+
+        if result.success:
+            print("✅ Success!")
+            print(f"Data: {result.data}")
+        else:
+            print(f"❌ Error: {result.error}")
+
+    finally:
+        await scraper.cleanup()
+
+
+if __name__ == "__main__":
+    asyncio.run(test_investidor10())

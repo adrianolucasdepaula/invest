@@ -117,6 +117,7 @@ services:
     environment:
       # Server
       - NODE_ENV=${NODE_ENV:-development}
+      - NODE_OPTIONS=--max-old-space-size=1536
       - APP_PORT=3101
       - PORT=3101
 

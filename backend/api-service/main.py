@@ -17,8 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "python-scrapers"))
 from routes.scraper_test_routes import router as scraper_router
 from routes.config_routes import router as config_router
 from routes.job_routes import router as job_router
-# DISABLED: OAuth routes use Selenium (needs Playwright migration)
-# from routes.oauth_routes import router as oauth_router
+from routes.oauth_routes import router as oauth_router
 # Temporarily disabled - requires analysis-service volume mount
 # from routes.analysis_routes import router as analysis_router
 
@@ -131,11 +130,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(scraper_router)
 app.include_router(config_router)
 app.include_router(job_router)
-
-# DISABLED: OAuth routes use Selenium (needs Playwright migration)
-# logger.info(f"🔍 OAuth Router: prefix={oauth_router.prefix}, routes={len(oauth_router.routes)}")
-# app.include_router(oauth_router)
-# logger.success("✓ OAuth router included")
+app.include_router(oauth_router)
 
 # Temporarily disabled - requires analysis-service volume mount
 # app.include_router(analysis_router)
@@ -205,6 +200,19 @@ async def root():
                 "models": "GET /api/analysis/ai/models",
                 "examples": "GET /api/analysis/ai/examples/context",
                 "health": "GET /api/analysis/ai/health",
+            },
+            "oauth": {
+                "start_session": "POST /api/oauth/session/start",
+                "get_status": "GET /api/oauth/session/status",
+                "confirm_login": "POST /api/oauth/session/confirm-login",
+                "skip_site": "POST /api/oauth/session/skip-site",
+                "go_back": "POST /api/oauth/session/go-back",
+                "save_cookies": "POST /api/oauth/session/save",
+                "cancel_session": "DELETE /api/oauth/session/cancel",
+                "get_vnc_url": "GET /api/oauth/vnc-url",
+                "get_sites": "GET /api/oauth/sites",
+                "navigate_to_site": "POST /api/oauth/navigate/{site_id}",
+                "health": "GET /api/oauth/health",
             }
         }
     }

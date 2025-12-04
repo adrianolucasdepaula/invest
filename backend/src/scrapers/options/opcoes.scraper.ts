@@ -58,8 +58,8 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
       this.logger.log('Logging in to Opções.net.br');
 
       await this.page.goto('https://opcoes.net.br/login', {
-        waitUntil: 'networkidle',
-        timeout: this.config.timeout,
+        waitUntil: 'load',
+        timeout: 60000,
       });
 
       // Check if already logged in
@@ -76,7 +76,7 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
       await this.page.type('#Password', password);
 
       await Promise.all([
-        this.page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }),
+        this.page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }),
         this.page.click('button[type="submit"]'),
       ]);
 
@@ -90,16 +90,19 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
   protected async scrapeData(ticker: string): Promise<OpcoesData> {
     const url = `https://opcoes.net.br/opcoes/bovespa/${ticker.toUpperCase()}`;
 
-    await this.page.goto(url, { waitUntil: 'networkidle', timeout: this.config.timeout });
+    await this.page.goto(url, { waitUntil: 'load', timeout: 60000 });
 
-    // Wait for options table
+    // Wait for main table with options data (updated selector 2024-12)
     await this.page
-      .waitForSelector('.options-table, .opcoes-table', {
-        timeout: 10000,
+      .waitForSelector('table tbody tr td', {
+        timeout: 15000,
       })
       .catch(() => {
-        this.logger.warn('Options table not found');
+        this.logger.warn('Options table not found - page may still be loading');
       });
+
+    // Small delay to ensure data is loaded
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     const data = await this.page.evaluate(() => {
       const getNumber = (text: string): number => {
@@ -120,54 +123,96 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
         return new Date();
       };
 
-      // Get asset price
-      const priceElement = document.querySelector('.cotacao-atual, .preco-ativo');
-      const precoAtivo = getNumber(priceElement?.textContent || '0');
+      // Get asset price - 2024-12: price is in a div after the volatility table
+      // Format: "R$ 32,07 +0,69% 02/12/2025"
+      let precoAtivo = 0;
+      const allText = document.body.innerText;
+      const priceMatch = allText.match(/R\$\s*([\d.,]+)\s*[+-][\d.,]+%/);
+      if (priceMatch) {
+        precoAtivo = getNumber(priceMatch[1]);
+      }
 
-      // Get volatility data
-      const volElement = document.querySelector('.volatilidade, [data-field="volatility"]');
-      const volatilidade = getNumber(volElement?.textContent || '0');
+      // Get volatility data from the volatility table
+      // Look for "Volatilidade Histórica" row
+      let volatilidade = 0;
+      let ivRank = 0;
+      const tables = document.querySelectorAll('table');
+      tables.forEach((table) => {
+        const rows = table.querySelectorAll('tr');
+        rows.forEach((row) => {
+          const text = row.textContent || '';
+          if (text.includes('Volatilidade Histórica')) {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 2) {
+              volatilidade = getNumber(cells[1]?.textContent || '0');
+            }
+            if (cells.length >= 3) {
+              ivRank = getNumber(cells[2]?.textContent || '0');
+            }
+          }
+        });
+      });
 
-      const ivRankElement = document.querySelector('.iv-rank, [data-field="ivrank"]');
-      const ivRank = getNumber(ivRankElement?.textContent || '0');
+      // Get first checked expiration date from checkboxes
+      let proximoVencimento = new Date();
+      const checkedExp = document.querySelector('input[type="checkbox"]:checked + *');
+      if (checkedExp) {
+        const expText = checkedExp.textContent || '';
+        const dateMatch = expText.match(/(\d{2}\/\d{2}(?:\/\d{4})?)/);
+        if (dateMatch) {
+          proximoVencimento = getDate(dateMatch[1]);
+        }
+      }
 
-      // Get next expiration
-      const expElement = document.querySelector('.proximo-vencimento, [data-field="expiration"]');
-      const proximoVencimento = getDate(expElement?.textContent || '');
-
-      // Parse options table
+      // Parse options table - 2024-12 structure
+      // Columns: Ticker, Tipo, F.M., Mod., Strike, A/I/OTM, Dist.%, Último, Var.%, Data, Neg., Vol.Fin, Vol.Impl%, Delta, Gamma, Theta$, Theta%, Vega, IQ, Coberto, Travado, Descob, Tit, Lanç
       const calls: any[] = [];
       const puts: any[] = [];
 
-      document.querySelectorAll('.options-row, tr[data-option]').forEach((row: any) => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length < 5) return;
+      // Find the main data table (has tbody with actual option rows)
+      const dataTables = document.querySelectorAll('table tbody');
+      dataTables.forEach((tbody) => {
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach((row) => {
+          const cells = row.querySelectorAll('td');
+          // Valid option row has many columns (20+)
+          if (cells.length < 10) return;
 
-        const opcao = {
-          ticker: cells[0]?.textContent?.trim() || '',
-          strike: getNumber(cells[1]?.textContent || '0'),
-          tipo: cells[0]?.textContent?.includes('CALL') ? 'CALL' : 'PUT',
-          vencimento: proximoVencimento,
-          premium: getNumber(cells[2]?.textContent || '0'),
-          bid: getNumber(cells[3]?.textContent || '0'),
-          ask: getNumber(cells[4]?.textContent || '0'),
-          volume: getNumber(cells[5]?.textContent || '0'),
-          openInterest: getNumber(cells[6]?.textContent || '0'),
-          impliedVolatility: getNumber(cells[7]?.textContent || '0'),
-          delta: getNumber(cells[8]?.textContent || '0'),
-          gamma: getNumber(cells[9]?.textContent || '0'),
-          theta: getNumber(cells[10]?.textContent || '0'),
-          vega: getNumber(cells[11]?.textContent || '0'),
-          rho: getNumber(cells[12]?.textContent || '0'),
-          intrinsicValue: 0,
-          timeValue: 0,
-        };
+          const tickerCell = cells[0]?.textContent?.trim() || '';
+          const tipoCell = cells[1]?.textContent?.trim() || '';
 
-        if (opcao.tipo === 'CALL') {
-          calls.push(opcao);
-        } else {
-          puts.push(opcao);
-        }
+          // Skip header rows or invalid rows
+          if (!tickerCell || tickerCell.includes('Ticker') || !tipoCell) return;
+
+          const tipo = tipoCell === 'CALL' ? 'CALL' : tipoCell === 'PUT' ? 'PUT' : null;
+          if (!tipo) return;
+
+          const opcao = {
+            ticker: tickerCell,
+            strike: getNumber(cells[4]?.textContent || '0'), // Strike column
+            tipo: tipo,
+            vencimento: proximoVencimento,
+            premium: getNumber(cells[7]?.textContent || '0'), // Último (last price)
+            bid: 0, // Not directly available
+            ask: 0, // Not directly available
+            volume: getNumber(cells[10]?.textContent || '0'), // Núm. de Neg.
+            openInterest: 0, // Would need to calculate from Coberto/Travado/Descob
+            impliedVolatility: getNumber(cells[12]?.textContent || '0'), // Vol. Impl. (%)
+            delta: getNumber(cells[13]?.textContent || '0'),
+            gamma: getNumber(cells[14]?.textContent || '0'),
+            theta: getNumber(cells[15]?.textContent || '0'), // Theta ($)
+            vega: getNumber(cells[17]?.textContent || '0'),
+            rho: 0, // Not available
+            intrinsicValue: 0,
+            timeValue: 0,
+          };
+
+          if (tipo === 'CALL') {
+            calls.push(opcao);
+          } else {
+            puts.push(opcao);
+          }
+        });
       });
 
       return {
@@ -179,6 +224,10 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
         puts,
       };
     });
+
+    this.logger.debug(
+      `[OPCOES] Extracted: precoAtivo=${data.precoAtivo}, vol=${data.volatilidade}, calls=${data.calls.length}, puts=${data.puts.length}`,
+    );
 
     return {
       ticker: ticker.toUpperCase(),
@@ -203,8 +252,8 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
       const url = 'https://opcoes.net.br/estudos/liquidez/opcoes';
 
       await this.page.goto(url, {
-        waitUntil: 'networkidle',
-        timeout: this.config.timeout,
+        waitUntil: 'load',
+        timeout: 60000,
       });
 
       // Wait for table to load

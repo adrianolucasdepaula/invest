@@ -6,10 +6,10 @@ TEMPORARY: Only importing Playwright-migrated scrapers while migration is in pro
 # ✅ MIGRATED TO PLAYWRIGHT
 from .fundamentus_scraper import FundamentusScraper
 from .bcb_scraper import BCBScraper
+from .statusinvest_scraper import StatusInvestScraper
+from .investsite_scraper import InvestsiteScraper
 
 # ⏸️ TEMPORARILY DISABLED - Awaiting Playwright migration
-# from .statusinvest_scraper import StatusInvestScraper
-# from .investsite_scraper import InvestsiteScraper
 # from .fundamentei_scraper import FundamenteiScraper
 # from .investidor10_scraper import Investidor10Scraper
 # from .investing_scraper import InvestingScraper
@@ -38,4 +38,6 @@ __all__ = [
     # ✅ MIGRATED TO PLAYWRIGHT
     "FundamentusScraper",
     "BCBScraper",
+    "StatusInvestScraper",
+    "InvestsiteScraper",
 ]

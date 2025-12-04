@@ -6,6 +6,8 @@ import * as cheerio from 'cheerio';
 export interface Investidor10Data {
   ticker: string;
   companyName: string;
+  sector: string; // Setor
+  segment: string; // Segmento
   price: number;
   minPrice52w: number;
   maxPrice52w: number;
@@ -81,7 +83,8 @@ export class Investidor10Scraper extends AbstractScraper<Investidor10Data> {
     const assetType = this.isFII(ticker) ? 'fiis' : 'acoes';
     const url = `https://investidor10.com.br/${assetType}/${ticker.toLowerCase()}/`;
 
-    await this.page.goto(url, { waitUntil: 'networkidle', timeout: this.config.timeout });
+    // Using 'load' instead of 'networkidle' - Investidor10 loads many analytics scripts that cause timeout
+    await this.page.goto(url, { waitUntil: 'load', timeout: 60000 });
 
     // Wait for main content
     await this.page.waitForSelector('._card', { timeout: 10000 }).catch(() => {});
@@ -136,9 +139,73 @@ export class Investidor10Scraper extends AbstractScraper<Investidor10Data> {
       $('.cotacao').text() || $('.value').first().text() || $('[data-type="price"]').text();
     const price = cleanValue(priceText);
 
+    // Get sector and segment from Investidor10
+    // They have sector info in the company header or breadcrumb area
+    const getTextValue = (selector: string): string => {
+      return $(selector).text().trim();
+    };
+
+    // Helper to clean sector/segment text
+    const cleanSectorText = (text: string): string => {
+      return text
+        .replace(/[\n\r\t]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/^(Setor|Segmento)[:\s]*/i, '')
+        .trim();
+    };
+
+    // Generic values to ignore (these are not actual sectors)
+    const genericValues = ['ações', 'acoes', 'fiis', 'fii', 'home', 'início', 'inicio'];
+    const isGenericValue = (val: string): boolean => {
+      return genericValues.includes(val.toLowerCase());
+    };
+
+    // Try multiple selectors for sector
+    let sector = '';
+    let segment = '';
+
+    // Try specific sector selectors first
+    const sectorCandidates = [
+      getTextValue('.setor, [data-setor], .company-info .sector'),
+      $('span:contains("Setor:")').parent().find('a').text().trim(),
+      $('span:contains("Setor:")').next().text().trim(),
+      getTextValue('.info-company a[href*="/setor/"]'),
+    ].filter(s => s && !isGenericValue(s));
+
+    if (sectorCandidates.length > 0) {
+      sector = cleanSectorText(sectorCandidates[0]);
+    }
+
+    // Try segment selectors
+    const segmentCandidates = [
+      getTextValue('.segmento, [data-segmento], .company-info .segment'),
+      $('span:contains("Segmento:")').parent().find('a').text().trim(),
+      $('span:contains("Segmento:")').next().text().trim(),
+      getTextValue('a[href*="/segmento/"]'),
+    ].filter(s => s && !isGenericValue(s));
+
+    if (segmentCandidates.length > 0) {
+      segment = cleanSectorText(segmentCandidates[0]);
+    }
+
+    // Try breadcrumb if not found - skip generic entries like "Ações", "FIIs", "Home"
+    if (!sector) {
+      const breadcrumbLinks = $('.breadcrumb a').map((_, el) => $(el).text().trim()).get();
+      // Filter out generic values
+      const validLinks = breadcrumbLinks.filter(link => !isGenericValue(link));
+      if (validLinks.length >= 1) {
+        sector = cleanSectorText(validLinks[0]);
+        if (validLinks.length >= 2) {
+          segment = cleanSectorText(validLinks[1]);
+        }
+      }
+    }
+
     const data: Investidor10Data = {
       ticker: ticker.toUpperCase(),
       companyName,
+      sector: sector || '',
+      segment: segment || '',
       price,
 
       // Price range

@@ -120,7 +120,7 @@ class FundamentusScraper(BaseScraper):
                 "ticker": ticker.upper(),
                 "company_name": None,
 
-                # Classificação (NOVOS CAMPOS)
+                # Classificação
                 "tipo": None,             # Tipo (PN, ON, UNT, etc)
                 "setor": None,            # Setor
                 "subsetor": None,         # Subsetor
@@ -134,6 +134,7 @@ class FundamentusScraper(BaseScraper):
                 "p_cap_giro": None,   # P/Cap.Giro
                 "p_ebit": None,       # P/EBIT
                 "p_ativ_circ_liq": None,  # P/Ativ Circ.Liq
+                "market_cap": None,   # Valor de Mercado
 
                 # EV Multiples
                 "ev_ebit": None,      # EV/EBIT
@@ -142,6 +143,7 @@ class FundamentusScraper(BaseScraper):
                 # Margens
                 "margem_ebit": None,  # Margem EBIT
                 "margem_liquida": None,  # Margem Líquida
+                "margem_bruta": None,    # Margem Bruta
 
                 # Liquidez
                 "liquidez_corrente": None,  # Liquidez Corrente
@@ -158,11 +160,16 @@ class FundamentusScraper(BaseScraper):
                 "ebit": None,             # EBIT (12m)
                 "lucro_liquido": None,    # Lucro Líquido (12m)
 
+                # Per share values
+                "lpa": None,              # Lucro por Ação
+                "vpa": None,              # Valor Patrimonial por Ação
+
                 # Rentabilidade
                 "crescimento_receita_5a": None,  # Crescimento Receita (5a)
                 "roe": None,              # ROE
                 "roic": None,             # ROIC
                 "roa": None,              # ROA
+                "giro_ativos": None,      # Giro dos Ativos
 
                 # Dividendos
                 "dy": None,               # Dividend Yield
@@ -174,6 +181,8 @@ class FundamentusScraper(BaseScraper):
                 # Temporary fields for calculation
                 "_div_bruta": None,       # Dív. Bruta (temporary)
                 "_div_liquida": None,     # Dív. Líquida (temporary)
+                "_ativo_total": None,     # Ativo Total (temporary)
+                "_ebit_ativo": None,      # EBIT/Ativo (temporary)
             }
 
             # OPTIMIZATION: Get HTML content once and parse locally
@@ -300,11 +309,22 @@ class FundamentusScraper(BaseScraper):
                 if data.get("_div_liquida") and data.get("patrim_liquido"):
                     data["div_liquida_patrim"] = data["_div_liquida"] / data["patrim_liquido"]
 
-                # div_liquida_ebit = Dív. Líquida / EBIT (usar o EBIT dos últimos 12 meses)
-                # Precisamos do EBIT de 12 meses, mas só temos o EBIT de 3 meses
-                # Vamos deixar None por enquanto (não temos dado suficiente)
-                # if data.get("_div_liquida") and data.get("ebit"):
-                #     data["div_liquida_ebit"] = data["_div_liquida"] / data["ebit"]
+                # div_liquida_ebit = Dív. Líquida / EBIT (12 meses)
+                if data.get("_div_liquida") and data.get("ebit") and data["ebit"] != 0:
+                    data["div_liquida_ebit"] = round(data["_div_liquida"] / data["ebit"], 2)
+
+                # ROA = Lucro Líquido / Ativo Total * 100
+                if data.get("roa") is None and data.get("lucro_liquido") and data.get("_ativo_total"):
+                    if data["_ativo_total"] != 0:
+                        data["roa"] = round((data["lucro_liquido"] / data["_ativo_total"]) * 100, 2)
+
+                # Payout = DY * P/L (derived: DY=DPA/Price, P/L=Price/LPA, so DY*P/L=DPA/LPA=Payout)
+                if data.get("payout") is None and data.get("dy") and data.get("p_l"):
+                    calculated_payout = data["dy"] * data["p_l"]
+                    # Sanity check: payout should be between 0 and 200%
+                    if 0 <= calculated_payout <= 200:
+                        data["payout"] = round(calculated_payout, 2)
+                        logger.debug(f"Calculated payout: {data['payout']}% (DY={data['dy']} * P/L={data['p_l']})")
 
             except Exception as e:
                 logger.debug(f"Error calculating derived fields: {e}")
@@ -312,6 +332,8 @@ class FundamentusScraper(BaseScraper):
             # Remove temporary fields
             data.pop("_div_bruta", None)
             data.pop("_div_liquida", None)
+            data.pop("_ativo_total", None)
+            data.pop("_ebit_ativo", None)
 
             logger.debug(f"Extracted Fundamentus data for {ticker}: {data}")
             return data
@@ -397,6 +419,7 @@ class FundamentusScraper(BaseScraper):
             "marg. ebit": "margem_ebit",
             "mrg. líq.": "margem_liquida",
             "marg. líquida": "margem_liquida",
+            "marg. bruta": "margem_bruta",
 
             # Liquidity
             "liq. corr.": "liquidez_corrente",
@@ -421,15 +444,23 @@ class FundamentusScraper(BaseScraper):
             "receita líquida": "receita_liquida",
             "ebit": "ebit",
             "lucro líquido": "lucro_liquido",
+            "ativo": "_ativo_total",
+            "valor de mercado": "market_cap",
+
+            # Per share values
+            "lpa": "lpa",
+            "vpa": "vpa",
 
             # Growth & Returns
             "cresc. rec.5a": "crescimento_receita_5a",
             "cresc. rec (5a)": "crescimento_receita_5a",
-            "cres. rec (5a)": "crescimento_receita_5a",  # Fixed typo
+            "cres. rec (5a)": "crescimento_receita_5a",
             "crescimento receita 5a": "crescimento_receita_5a",
             "roe": "roe",
             "roic": "roic",
             "roa": "roa",
+            "ebit / ativo": "_ebit_ativo",
+            "giro ativos": "giro_ativos",
 
             # Dividends
             "div. yield": "dy",

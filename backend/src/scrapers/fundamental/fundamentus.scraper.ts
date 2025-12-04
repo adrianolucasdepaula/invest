@@ -5,6 +5,8 @@ import * as cheerio from 'cheerio';
 
 export interface FundamentusData {
   ticker: string;
+  sector: string; // Setor de atuação
+  subsetor: string; // Subsetor
   cotacao: number;
   pl: number;
   pvp: number;
@@ -78,8 +80,23 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
       return parseFloat(text) || 0;
     };
 
+    // Get text value (for sector, subsetor, etc.)
+    const getTextValue = (label: string): string => {
+      return $(`td:contains("${label}")`)
+        .next('td')
+        .text()
+        .trim();
+    };
+
+    // Extract sector and subsetor from Fundamentus
+    // Fundamentus has "Setor" and "Subsetor" fields in the company info table
+    const sector = getTextValue('Setor') || '';
+    const subsetor = getTextValue('Subsetor') || '';
+
     const data: FundamentusData = {
       ticker: ticker.toUpperCase(),
+      sector,
+      subsetor,
       cotacao: getValue('Cotação'),
       pl: getValue('P/L'),
       pvp: getValue('P/VP'),

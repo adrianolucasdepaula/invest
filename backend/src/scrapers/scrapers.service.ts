@@ -147,6 +147,7 @@ export class ScrapersService {
       investidor10: this.investidor10Scraper,
       fundamentei: this.fundamenteiScraper,
       investsite: this.investsiteScraper,
+      opcoes: this.opcoesScraper,
     };
 
     const scraper = scraperMap[scraperId];
