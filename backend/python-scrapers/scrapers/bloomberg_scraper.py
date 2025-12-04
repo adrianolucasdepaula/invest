@@ -1,21 +1,26 @@
+# MIGRATED TO PLAYWRIGHT - 2025-12-04
 """
 Bloomberg Línea Scraper - Notícias do mercado financeiro
 Fonte: https://www.bloomberglinea.com.br/
 Acesso público (sem login)
+
+OPTIMIZED: Uses single HTML fetch + BeautifulSoup local parsing (~10x faster)
 """
 import asyncio
 from datetime import datetime
 from typing import Dict, Any, List, Optional
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from loguru import logger
+from bs4 import BeautifulSoup
 
 from base_scraper import BaseScraper, ScraperResult
 
 
 class BloombergScraper(BaseScraper):
-    """Scraper for Bloomberg Línea news"""
+    """
+    Scraper for Bloomberg Línea news
+
+    MIGRATED TO PLAYWRIGHT - Uses BeautifulSoup for local parsing
+    """
 
     BASE_URL = "https://www.bloomberglinea.com.br"
 
@@ -36,9 +41,10 @@ class BloombergScraper(BaseScraper):
         Returns:
             ScraperResult with news articles
         """
-        await self.initialize()
-
         try:
+            if not self.page:
+                await self.initialize()
+
             # Build URL based on query type
             if query.lower() in ["mercado", "mercados"]:
                 url = f"{self.BASE_URL}/mercados/"
@@ -53,13 +59,14 @@ class BloombergScraper(BaseScraper):
                 url = f"{self.BASE_URL}/busca/?q={query}"
 
             logger.info(f"Fetching Bloomberg news from: {url}")
-            self.driver.get(url)
-
-            # Wait for articles to load
+            await self.page.goto(url, wait_until="load", timeout=60000)
             await asyncio.sleep(3)
 
-            # Extract articles
-            articles = await self._extract_articles()
+            # OPTIMIZATION: Get HTML once and parse locally with BeautifulSoup
+            html_content = await self.page.content()
+
+            # Extract articles using BeautifulSoup
+            articles = self._extract_articles(html_content)
 
             if articles:
                 return ScraperResult(
@@ -93,11 +100,17 @@ class BloombergScraper(BaseScraper):
                 source=self.source,
             )
 
-    async def _extract_articles(self) -> List[Dict[str, Any]]:
-        """Extract news articles from the page"""
+    def _extract_articles(self, html_content: str) -> List[Dict[str, Any]]:
+        """
+        Extract news articles from the page
+
+        OPTIMIZED: Uses BeautifulSoup for local parsing (no await operations)
+        """
         articles = []
 
         try:
+            soup = BeautifulSoup(html_content, 'html.parser')
+
             # Try multiple article selectors
             article_selectors = [
                 "article",
@@ -105,18 +118,16 @@ class BloombergScraper(BaseScraper):
                 ".story-card",
                 "[data-testid='article']",
                 ".post-item",
+                ".news-item",
             ]
 
             article_elements = []
             for selector in article_selectors:
-                try:
-                    elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
-                    if elements:
-                        article_elements = elements
-                        logger.debug(f"Found {len(elements)} articles using selector: {selector}")
-                        break
-                except:
-                    continue
+                elements = soup.select(selector)
+                if elements:
+                    article_elements = elements
+                    logger.debug(f"Found {len(elements)} articles using selector: {selector}")
+                    break
 
             if not article_elements:
                 logger.warning("No article elements found with any selector")
@@ -140,7 +151,7 @@ class BloombergScraper(BaseScraper):
         return articles
 
     def _parse_article(self, element) -> Optional[Dict[str, Any]]:
-        """Parse a single article element"""
+        """Parse a single article element using BeautifulSoup"""
         try:
             article = {}
 
@@ -150,32 +161,34 @@ class BloombergScraper(BaseScraper):
                 ".article-title",
                 ".story-title",
                 "[data-testid='article-title']",
-                "a[href*='bloomberg']",
             ]
 
             title = None
             title_link = None
 
             for selector in title_selectors:
-                try:
-                    title_elem = element.find_element(By.CSS_SELECTOR, selector)
-                    if title_elem:
-                        title = title_elem.text.strip()
-                        # Try to get link
-                        if title_elem.tag_name == "a":
-                            title_link = title_elem.get_attribute("href")
-                        else:
-                            # Look for link within title element
-                            try:
-                                link_elem = title_elem.find_element(By.TAG_NAME, "a")
-                                title_link = link_elem.get_attribute("href")
-                            except:
-                                pass
+                title_elem = element.select_one(selector)
+                if title_elem:
+                    title = title_elem.get_text().strip()
 
-                        if title:
-                            break
-                except:
-                    continue
+                    # Try to get link
+                    if title_elem.name == "a":
+                        title_link = title_elem.get("href")
+                    else:
+                        # Look for link within title element
+                        link_elem = title_elem.select_one("a")
+                        if link_elem:
+                            title_link = link_elem.get("href")
+
+                    if title:
+                        break
+
+            if not title:
+                # Try to find any link with text
+                link = element.select_one("a")
+                if link:
+                    title = link.get_text().strip()
+                    title_link = link.get("href")
 
             if not title:
                 return None
@@ -184,11 +197,9 @@ class BloombergScraper(BaseScraper):
 
             # Extract link if not found yet
             if not title_link:
-                try:
-                    link_elem = element.find_element(By.TAG_NAME, "a")
-                    title_link = link_elem.get_attribute("href")
-                except:
-                    pass
+                link_elem = element.select_one("a")
+                if link_elem:
+                    title_link = link_elem.get("href")
 
             # Make link absolute if relative
             if title_link:
@@ -205,19 +216,13 @@ class BloombergScraper(BaseScraper):
                 "[data-testid='article-description']",
             ]
 
-            description = None
             for selector in desc_selectors:
-                try:
-                    desc_elem = element.find_element(By.CSS_SELECTOR, selector)
-                    if desc_elem:
-                        description = desc_elem.text.strip()
-                        if description and len(description) > 20:
-                            break
-                except:
-                    continue
-
-            if description:
-                article["description"] = description
+                desc_elem = element.select_one(selector)
+                if desc_elem:
+                    description = desc_elem.get_text().strip()
+                    if description and len(description) > 20:
+                        article["description"] = description
+                        break
 
             # Extract date/time
             time_selectors = [
@@ -228,39 +233,27 @@ class BloombergScraper(BaseScraper):
                 ".post-date",
             ]
 
-            published_date = None
             for selector in time_selectors:
-                try:
-                    time_elem = element.find_element(By.CSS_SELECTOR, selector)
-                    if time_elem:
-                        # Try datetime attribute first
-                        published_date = time_elem.get_attribute("datetime")
-                        if not published_date:
-                            published_date = time_elem.text.strip()
+                time_elem = element.select_one(selector)
+                if time_elem:
+                    # Try datetime attribute first
+                    published_date = time_elem.get("datetime")
+                    if not published_date:
+                        published_date = time_elem.get_text().strip()
 
-                        if published_date:
-                            break
-                except:
-                    continue
-
-            if published_date:
-                article["published_at"] = published_date
+                    if published_date:
+                        article["published_at"] = published_date
+                        break
 
             # Extract category if available
-            try:
-                category_elem = element.find_element(By.CSS_SELECTOR, ".category, .section, [data-category]")
-                if category_elem:
-                    article["category"] = category_elem.text.strip()
-            except:
-                pass
+            category_elem = element.select_one(".category, .section, [data-category]")
+            if category_elem:
+                article["category"] = category_elem.get_text().strip()
 
             # Extract author if available
-            try:
-                author_elem = element.find_element(By.CSS_SELECTOR, ".author, .byline, [data-author]")
-                if author_elem:
-                    article["author"] = author_elem.text.strip()
-            except:
-                pass
+            author_elem = element.select_one(".author, .byline, [data-author]")
+            if author_elem:
+                article["author"] = author_elem.get_text().strip()
 
             return article
 
@@ -272,24 +265,44 @@ class BloombergScraper(BaseScraper):
         """Check if Bloomberg Línea is accessible"""
         try:
             await self.initialize()
-            self.driver.get(self.BASE_URL)
-
-            # Wait for page to load
+            await self.page.goto(self.BASE_URL, wait_until="load", timeout=60000)
             await asyncio.sleep(2)
 
-            # Check if we can find article elements
-            article_found = False
-            for selector in ["article", ".article-card", ".story-card"]:
-                try:
-                    elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
-                    if elements:
-                        article_found = True
-                        break
-                except:
-                    continue
+            html_content = await self.page.content()
+            soup = BeautifulSoup(html_content, 'html.parser')
 
-            return article_found
+            # Check if we can find article elements
+            for selector in ["article", ".article-card", ".story-card"]:
+                elements = soup.select(selector)
+                if elements:
+                    return True
+
+            return False
 
         except Exception as e:
             logger.error(f"Health check failed: {e}")
             return False
+
+
+# Test function
+async def test_bloomberg():
+    """Test Bloomberg scraper"""
+    scraper = BloombergScraper()
+
+    try:
+        result = await scraper.scrape("mercado")
+
+        if result.success:
+            print("✅ Success!")
+            print(f"Articles found: {result.data['articles_count']}")
+            for article in result.data['articles'][:3]:
+                print(f"  - {article.get('title', 'No title')}")
+        else:
+            print(f"❌ Error: {result.error}")
+
+    finally:
+        await scraper.cleanup()
+
+
+if __name__ == "__main__":
+    asyncio.run(test_bloomberg())

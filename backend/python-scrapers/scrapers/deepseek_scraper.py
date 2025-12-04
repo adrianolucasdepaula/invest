@@ -1,24 +1,30 @@
+# MIGRATED TO PLAYWRIGHT - 2025-12-04
 """
 DeepSeek Scraper - AI Analysis via DeepSeek
 Source: https://www.deepseek.com/
 Requires Google OAuth login
+
+OPTIMIZED: Uses Playwright for browser automation
 """
 import asyncio
-import pickle
+import json
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from loguru import logger
 
 from base_scraper import BaseScraper, ScraperResult
 
 
 class DeepSeekScraper(BaseScraper):
-    """Scraper for DeepSeek AI analysis via browser"""
+    """
+    Scraper for DeepSeek AI analysis via browser
+
+    MIGRATED TO PLAYWRIGHT - Uses Playwright for browser automation
+    """
 
     BASE_URL = "https://www.deepseek.com/"
-    COOKIES_FILE = "/app/browser-profiles/google_cookies.pkl"
+    COOKIES_FILE = Path("/app/data/cookies/deepseek_session.json")
 
     def __init__(self):
         super().__init__(
@@ -28,33 +34,51 @@ class DeepSeekScraper(BaseScraper):
         )
 
     async def initialize(self):
-        """Load Google OAuth cookies"""
+        """Initialize Playwright browser and load cookies"""
         if self._initialized:
             return
 
-        if not self.driver:
-            self.driver = self._create_driver()
+        # Call parent initialize to create browser/page
+        await super().initialize()
 
         try:
-            self.driver.get(self.BASE_URL)
+            await self.page.goto(self.BASE_URL, wait_until="load", timeout=60000)
             await asyncio.sleep(3)
 
-            try:
-                with open(self.COOKIES_FILE, 'rb') as f:
-                    cookies = pickle.load(f)
+            # Load cookies if available
+            if self.COOKIES_FILE.exists():
+                try:
+                    with open(self.COOKIES_FILE, 'r') as f:
+                        cookies = json.load(f)
 
-                for cookie in cookies:
-                    if 'deepseek.com' in cookie.get('domain', '') or 'google.com' in cookie.get('domain', ''):
-                        try:
-                            self.driver.add_cookie(cookie)
-                        except Exception as e:
-                            logger.debug(f"Could not add cookie: {e}")
+                    deepseek_cookies = []
+                    for cookie in cookies:
+                        if isinstance(cookie, dict) and ('deepseek.com' in cookie.get('domain', '') or 'google.com' in cookie.get('domain', '')):
+                            pw_cookie = {
+                                'name': cookie.get('name'),
+                                'value': cookie.get('value'),
+                                'domain': cookie.get('domain'),
+                                'path': cookie.get('path', '/'),
+                            }
+                            if 'expires' in cookie and cookie['expires']:
+                                pw_cookie['expires'] = cookie['expires']
+                            if 'httpOnly' in cookie:
+                                pw_cookie['httpOnly'] = cookie['httpOnly']
+                            if 'secure' in cookie:
+                                pw_cookie['secure'] = cookie['secure']
 
-                self.driver.refresh()
-                await asyncio.sleep(3)
+                            deepseek_cookies.append(pw_cookie)
 
-            except FileNotFoundError:
-                logger.warning("Google cookies not found. Manual login may be required.")
+                    if deepseek_cookies:
+                        await self.page.context.add_cookies(deepseek_cookies)
+                        logger.info(f"Loaded {len(deepseek_cookies)} cookies for DeepSeek")
+                        await self.page.reload()
+                        await asyncio.sleep(3)
+
+                except Exception as e:
+                    logger.warning(f"Could not load DeepSeek cookies: {e}")
+            else:
+                logger.debug("DeepSeek cookies not found. Manual login may be required.")
 
             self._initialized = True
 
@@ -72,9 +96,10 @@ class DeepSeekScraper(BaseScraper):
         Returns:
             ScraperResult with AI response
         """
-        await self.initialize()
-
         try:
+            if not self.page:
+                await self.initialize()
+
             logger.info(f"Sending prompt to DeepSeek: {prompt[:100]}...")
 
             # Find input field
@@ -88,20 +113,22 @@ class DeepSeekScraper(BaseScraper):
                 )
 
             # Send prompt
-            input_field.click()
+            await input_field.click()
             await asyncio.sleep(0.5)
-            input_field.send_keys(prompt)
+            await input_field.fill(prompt)
             await asyncio.sleep(0.5)
 
             # Submit (Enter or button)
             try:
-                send_button = self.driver.find_element(
-                    By.CSS_SELECTOR,
+                send_button = await self.page.query_selector(
                     "button[type='submit'], button[aria-label*='Send'], button[class*='send']"
                 )
-                send_button.click()
+                if send_button:
+                    await send_button.click()
+                else:
+                    await self.page.keyboard.press("Enter")
             except:
-                input_field.send_keys(Keys.RETURN)
+                await self.page.keyboard.press("Enter")
 
             logger.info("Prompt sent, waiting for response...")
 
@@ -151,8 +178,8 @@ class DeepSeekScraper(BaseScraper):
 
         for selector in input_selectors:
             try:
-                input_field = self.driver.find_element(By.CSS_SELECTOR, selector)
-                if input_field and input_field.is_displayed():
+                input_field = await self.page.query_selector(selector)
+                if input_field and await input_field.is_visible():
                     return input_field
             except:
                 continue
@@ -182,35 +209,31 @@ class DeepSeekScraper(BaseScraper):
                     "[class*='answer']",
                 ]
 
-                response_elements = []
                 for selector in response_selectors:
                     try:
-                        elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                        elements = await self.page.query_selector_all(selector)
                         if elements:
-                            response_elements = elements
-                            break
+                            # Get the last (most recent) response
+                            last_response = elements[-1]
+                            current_text = await last_response.text_content()
+                            current_text = current_text.strip() if current_text else ""
+
+                            # Check if response is meaningful
+                            if current_text and len(current_text) > 20:
+                                # Check if text has stopped changing (response complete)
+                                if current_text == previous_text:
+                                    stable_count += 1
+
+                                    if stable_count >= stability_threshold:
+                                        logger.info(f"Response received ({len(current_text)} chars)")
+                                        return current_text
+                                else:
+                                    # Text changed, reset stability counter
+                                    stable_count = 0
+                                    previous_text = current_text
+                                    logger.debug(f"Response growing... ({len(current_text)} chars)")
                     except:
                         continue
-
-                if response_elements:
-                    # Get the last (most recent) response
-                    last_response = response_elements[-1]
-                    current_text = last_response.text.strip()
-
-                    # Check if response is meaningful
-                    if current_text and len(current_text) > 20:
-                        # Check if text has stopped changing (response complete)
-                        if current_text == previous_text:
-                            stable_count += 1
-
-                            if stable_count >= stability_threshold:
-                                logger.info(f"Response received ({len(current_text)} chars)")
-                                return current_text
-                        else:
-                            # Text changed, reset stability counter
-                            stable_count = 0
-                            previous_text = current_text
-                            logger.debug(f"Response growing... ({len(current_text)} chars)")
 
             except Exception as e:
                 logger.debug(f"Error while waiting for response: {e}")
@@ -234,3 +257,25 @@ class DeepSeekScraper(BaseScraper):
         except Exception as e:
             logger.error(f"Health check failed: {e}")
             return False
+
+
+# Test function
+async def test_deepseek():
+    """Test DeepSeek scraper"""
+    scraper = DeepSeekScraper()
+
+    try:
+        result = await scraper.scrape("What is the capital of Brazil?")
+
+        if result.success:
+            print("✅ Success!")
+            print(f"Response: {result.data['response'][:200]}...")
+        else:
+            print(f"❌ Error: {result.error}")
+
+    finally:
+        await scraper.cleanup()
+
+
+if __name__ == "__main__":
+    asyncio.run(test_deepseek())

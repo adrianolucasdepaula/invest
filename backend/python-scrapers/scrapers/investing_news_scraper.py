@@ -1,23 +1,31 @@
+# MIGRATED TO PLAYWRIGHT - 2025-12-04
 """
 Investing News Scraper - Notícias de investimentos internacionais
 Fonte: https://br.investing.com/news/
 Requer login via Google OAuth
+
+OPTIMIZED: Uses Playwright for browser automation + BeautifulSoup for parsing
 """
 import asyncio
-import pickle
+import json
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, Any, List, Optional
-from selenium.webdriver.common.by import By
 from loguru import logger
+from bs4 import BeautifulSoup
 
 from base_scraper import BaseScraper, ScraperResult
 
 
 class InvestingNewsScraper(BaseScraper):
-    """Scraper for Investing.com News"""
+    """
+    Scraper for Investing.com News
+
+    MIGRATED TO PLAYWRIGHT - Uses BeautifulSoup for local parsing
+    """
 
     BASE_URL = "https://br.investing.com"
-    COOKIE_PATH = "/app/browser-profiles/google_cookies.pkl"
+    COOKIES_FILE = Path("/app/data/cookies/investing_session.json")
 
     def __init__(self):
         super().__init__(
@@ -27,35 +35,53 @@ class InvestingNewsScraper(BaseScraper):
         )
 
     async def initialize(self):
-        """Initialize scraper with Google OAuth cookies"""
+        """Initialize Playwright browser and load cookies"""
         if self._initialized:
             return
+
+        # Call parent initialize to create browser/page
+        await super().initialize()
 
         try:
             logger.info(f"Initializing {self.name} with Google OAuth...")
 
-            if not self.driver:
-                self.driver = self._create_driver()
-
-            # Navigate to site
-            self.driver.get(self.BASE_URL)
+            await self.page.goto(self.BASE_URL, wait_until="load", timeout=60000)
             await asyncio.sleep(2)
 
             # Load cookies if available
-            try:
-                with open(self.COOKIE_PATH, 'rb') as f:
-                    cookies = pickle.load(f)
+            if self.COOKIES_FILE.exists():
+                try:
+                    with open(self.COOKIES_FILE, 'r') as f:
+                        cookies = json.load(f)
+
+                    investing_cookies = []
                     for cookie in cookies:
-                        if cookie.get('domain', '') in ['.investing.com', 'investing.com']:
-                            try:
-                                self.driver.add_cookie(cookie)
-                            except:
-                                pass
-                logger.info("Google OAuth cookies loaded")
-            except FileNotFoundError:
-                logger.warning(f"Cookie file not found: {self.COOKIE_PATH}")
-            except Exception as e:
-                logger.warning(f"Error loading cookies: {e}")
+                        if isinstance(cookie, dict) and ('investing.com' in cookie.get('domain', '') or 'google.com' in cookie.get('domain', '')):
+                            pw_cookie = {
+                                'name': cookie.get('name'),
+                                'value': cookie.get('value'),
+                                'domain': cookie.get('domain'),
+                                'path': cookie.get('path', '/'),
+                            }
+                            if 'expires' in cookie and cookie['expires']:
+                                pw_cookie['expires'] = cookie['expires']
+                            if 'httpOnly' in cookie:
+                                pw_cookie['httpOnly'] = cookie['httpOnly']
+                            if 'secure' in cookie:
+                                pw_cookie['secure'] = cookie['secure']
+
+                            investing_cookies.append(pw_cookie)
+
+                    if investing_cookies:
+                        await self.page.context.add_cookies(investing_cookies)
+                        logger.info(f"Loaded {len(investing_cookies)} cookies for Investing")
+                        await self.page.reload()
+                        await asyncio.sleep(3)
+
+                except Exception as e:
+                    logger.warning(f"Could not load Investing cookies: {e}")
+            else:
+                logger.debug("Investing cookies not found. Manual login may be required.")
 
             self._initialized = True
 
@@ -73,9 +99,10 @@ class InvestingNewsScraper(BaseScraper):
         Returns:
             ScraperResult with news articles
         """
-        await self.initialize()
-
         try:
+            if not self.page:
+                await self.initialize()
+
             # Build URL based on query
             if query.lower() in ["latest", "ultimas", "últimas"]:
                 url = f"{self.BASE_URL}/news/latest-news"
@@ -92,11 +119,14 @@ class InvestingNewsScraper(BaseScraper):
                 url = f"{self.BASE_URL}/search/?q={query}&tab=news"
 
             logger.info(f"Fetching Investing News from: {url}")
-            self.driver.get(url)
+            await self.page.goto(url, wait_until="load", timeout=60000)
             await asyncio.sleep(3)
 
-            # Extract articles
-            articles = await self._extract_articles()
+            # OPTIMIZATION: Get HTML once and parse locally
+            html_content = await self.page.content()
+
+            # Extract articles using BeautifulSoup
+            articles = self._extract_articles(html_content)
 
             if articles:
                 return ScraperResult(
@@ -130,11 +160,17 @@ class InvestingNewsScraper(BaseScraper):
                 source=self.source,
             )
 
-    async def _extract_articles(self) -> List[Dict[str, Any]]:
-        """Extract news articles from the page"""
+    def _extract_articles(self, html_content: str) -> List[Dict[str, Any]]:
+        """
+        Extract news articles from the page
+
+        OPTIMIZED: Uses BeautifulSoup for local parsing
+        """
         articles = []
 
         try:
+            soup = BeautifulSoup(html_content, 'html.parser')
+
             # Try multiple article selectors
             article_selectors = [
                 "article",
@@ -142,18 +178,16 @@ class InvestingNewsScraper(BaseScraper):
                 ".articleItem",
                 "[data-test='article']",
                 ".js-article-item",
+                ".news-item",
             ]
 
             article_elements = []
             for selector in article_selectors:
-                try:
-                    elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
-                    if elements:
-                        article_elements = elements
-                        logger.debug(f"Found {len(elements)} articles using selector: {selector}")
-                        break
-                except:
-                    continue
+                elements = soup.select(selector)
+                if elements:
+                    article_elements = elements
+                    logger.debug(f"Found {len(elements)} articles using selector: {selector}")
+                    break
 
             if not article_elements:
                 logger.warning("No article elements found")
@@ -177,32 +211,27 @@ class InvestingNewsScraper(BaseScraper):
         return articles
 
     def _parse_article(self, element) -> Optional[Dict[str, Any]]:
-        """Parse a single article element"""
+        """Parse a single article element using BeautifulSoup"""
         try:
             article = {}
 
             # Extract title
-            title_selectors = ["h3", "h2", ".textDiv a", ".title"]
+            title_selectors = ["h3", "h2", ".textDiv a", ".title", "a"]
             title = None
             title_link = None
 
             for selector in title_selectors:
-                try:
-                    title_elem = element.find_element(By.CSS_SELECTOR, selector)
-                    if title_elem:
-                        title = title_elem.text.strip()
-                        if title_elem.tag_name == "a":
-                            title_link = title_elem.get_attribute("href")
-                        else:
-                            try:
-                                link_elem = title_elem.find_element(By.TAG_NAME, "a")
-                                title_link = link_elem.get_attribute("href")
-                            except:
-                                pass
-                        if title:
-                            break
-                except:
-                    continue
+                title_elem = element.select_one(selector)
+                if title_elem:
+                    title = title_elem.get_text().strip()
+                    if title_elem.name == "a":
+                        title_link = title_elem.get("href")
+                    else:
+                        link_elem = title_elem.select_one("a")
+                        if link_elem:
+                            title_link = link_elem.get("href")
+                    if title:
+                        break
 
             if not title:
                 return None
@@ -211,11 +240,9 @@ class InvestingNewsScraper(BaseScraper):
 
             # Extract link
             if not title_link:
-                try:
-                    link_elem = element.find_element(By.TAG_NAME, "a")
-                    title_link = link_elem.get_attribute("href")
-                except:
-                    pass
+                link_elem = element.select_one("a")
+                if link_elem:
+                    title_link = link_elem.get("href")
 
             if title_link:
                 if title_link.startswith("/"):
@@ -223,30 +250,24 @@ class InvestingNewsScraper(BaseScraper):
                 article["url"] = title_link
 
             # Extract description
-            desc_selectors = ["p", ".articleDesc", ".summary"]
+            desc_selectors = ["p", ".articleDesc", ".summary", ".excerpt"]
             for selector in desc_selectors:
-                try:
-                    desc_elem = element.find_element(By.CSS_SELECTOR, selector)
-                    if desc_elem:
-                        description = desc_elem.text.strip()
-                        if description and len(description) > 20:
-                            article["description"] = description
-                            break
-                except:
-                    continue
+                desc_elem = element.select_one(selector)
+                if desc_elem:
+                    description = desc_elem.get_text().strip()
+                    if description and len(description) > 20:
+                        article["description"] = description
+                        break
 
             # Extract date
-            time_selectors = ["time", ".articleDetails span", "[data-test='article-publish-date']"]
+            time_selectors = ["time", ".articleDetails span", "[data-test='article-publish-date']", ".date"]
             for selector in time_selectors:
-                try:
-                    time_elem = element.find_element(By.CSS_SELECTOR, selector)
-                    if time_elem:
-                        published_date = time_elem.get_attribute("datetime") or time_elem.text.strip()
-                        if published_date:
-                            article["published_at"] = published_date
-                            break
-                except:
-                    continue
+                time_elem = element.select_one(selector)
+                if time_elem:
+                    published_date = time_elem.get("datetime") or time_elem.get_text().strip()
+                    if published_date:
+                        article["published_at"] = published_date
+                        break
 
             return article
 
@@ -258,20 +279,44 @@ class InvestingNewsScraper(BaseScraper):
         """Check if Investing.com is accessible"""
         try:
             await self.initialize()
-            self.driver.get(f"{self.BASE_URL}/news/latest-news")
+            await self.page.goto(f"{self.BASE_URL}/news/latest-news", wait_until="load", timeout=60000)
             await asyncio.sleep(2)
+
+            html_content = await self.page.content()
+            soup = BeautifulSoup(html_content, 'html.parser')
 
             # Check if we can find article elements
             for selector in ["article", ".largeTitle", ".articleItem"]:
-                try:
-                    elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
-                    if elements:
-                        return True
-                except:
-                    continue
+                elements = soup.select(selector)
+                if elements:
+                    return True
 
             return False
 
         except Exception as e:
             logger.error(f"Health check failed: {e}")
             return False
+
+
+# Test function
+async def test_investing_news():
+    """Test Investing News scraper"""
+    scraper = InvestingNewsScraper()
+
+    try:
+        result = await scraper.scrape("latest")
+
+        if result.success:
+            print("✅ Success!")
+            print(f"Articles found: {result.data['articles_count']}")
+            for article in result.data['articles'][:3]:
+                print(f"  - {article.get('title', 'No title')[:60]}...")
+        else:
+            print(f"❌ Error: {result.error}")
+
+    finally:
+        await scraper.cleanup()
+
+
+if __name__ == "__main__":
+    asyncio.run(test_investing_news())

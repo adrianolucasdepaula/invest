@@ -1,14 +1,18 @@
+# MIGRATED TO PLAYWRIGHT - 2025-12-04
 """
 Opcoes.net.br Scraper - Análise de opções
 Fonte: https://opcoes.net.br/
 Requer login com credenciais específicas
+
+OPTIMIZED: Uses Playwright for browser automation + BeautifulSoup for parsing
 """
 import asyncio
+import json
+from datetime import datetime
+from pathlib import Path
 from typing import Dict, Any, Optional, List
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
 from loguru import logger
+from bs4 import BeautifulSoup
 import re
 
 from base_scraper import BaseScraper, ScraperResult
@@ -18,6 +22,8 @@ from config import settings
 class OpcoesNetScraper(BaseScraper):
     """
     Scraper para análise de opções do Opcoes.net.br
+
+    MIGRATED TO PLAYWRIGHT - Uses Playwright for browser automation
 
     REQUER LOGIN com credenciais específicas
 
@@ -32,6 +38,7 @@ class OpcoesNetScraper(BaseScraper):
 
     BASE_URL = "https://opcoes.net.br"
     LOGIN_URL = "https://opcoes.net.br/login"
+    COOKIES_FILE = Path("/app/data/cookies/opcoes_session.json")
 
     def __init__(self):
         super().__init__(
@@ -41,41 +48,80 @@ class OpcoesNetScraper(BaseScraper):
         )
 
     async def initialize(self):
-        """Initialize with login"""
+        """Initialize Playwright browser and perform login"""
         if self._initialized:
             return
 
-        try:
-            # Create driver
-            if not self.driver:
-                self.driver = self._create_driver()
+        # Call parent initialize to create browser/page
+        await super().initialize()
 
+        try:
             logger.info(f"Logging into {self.name}...")
 
             # Navigate to login page
-            self.driver.get(self.LOGIN_URL)
+            await self.page.goto(self.LOGIN_URL, wait_until="load", timeout=60000)
             await asyncio.sleep(2)
+
+            # Load cookies if available
+            if self.COOKIES_FILE.exists():
+                try:
+                    with open(self.COOKIES_FILE, 'r') as f:
+                        cookies = json.load(f)
+
+                    opcoes_cookies = []
+                    for cookie in cookies:
+                        if isinstance(cookie, dict) and 'opcoes.net.br' in cookie.get('domain', ''):
+                            pw_cookie = {
+                                'name': cookie.get('name'),
+                                'value': cookie.get('value'),
+                                'domain': cookie.get('domain'),
+                                'path': cookie.get('path', '/'),
+                            }
+                            if 'expires' in cookie and cookie['expires']:
+                                pw_cookie['expires'] = cookie['expires']
+                            if 'httpOnly' in cookie:
+                                pw_cookie['httpOnly'] = cookie['httpOnly']
+                            if 'secure' in cookie:
+                                pw_cookie['secure'] = cookie['secure']
+
+                            opcoes_cookies.append(pw_cookie)
+
+                    if opcoes_cookies:
+                        await self.page.context.add_cookies(opcoes_cookies)
+                        logger.info(f"Loaded {len(opcoes_cookies)} cookies for OpcoesNet")
+                        await self.page.reload()
+                        await asyncio.sleep(3)
+
+                        # Check if already logged in
+                        if await self._verify_logged_in():
+                            logger.success(f"{self.name} logged in via cookies")
+                            self._initialized = True
+                            return
+
+                except Exception as e:
+                    logger.warning(f"Could not load OpcoesNet cookies: {e}")
 
             # Get credentials from settings
             username = getattr(settings, 'OPCOES_USERNAME', None)
             password = getattr(settings, 'OPCOES_PASSWORD', None)
 
             if not username or not password:
-                raise Exception(
+                logger.warning(
                     "Opcoes.net.br credentials not configured. "
                     "Please set OPCOES_USERNAME and OPCOES_PASSWORD in .env"
                 )
+                self._initialized = True  # Initialize anyway, will fail on scrape
+                return
 
-            # Find login form and fill
+            # Perform login
             await self._perform_login(username, password)
 
             # Verify login successful
             await asyncio.sleep(3)
 
             if not await self._verify_logged_in():
-                raise Exception("Login failed - please check credentials")
+                logger.warning("Login failed - please check credentials or manual login required")
 
-            logger.success(f"{self.name} logged in successfully")
             self._initialized = True
 
         except Exception as e:
@@ -83,7 +129,7 @@ class OpcoesNetScraper(BaseScraper):
             raise
 
     async def _perform_login(self, username: str, password: str):
-        """Perform login"""
+        """Perform login using Playwright"""
         try:
             # Try multiple selectors for username/CPF field
             username_selectors = [
@@ -98,19 +144,18 @@ class OpcoesNetScraper(BaseScraper):
             username_filled = False
             for selector in username_selectors:
                 try:
-                    username_field = self.wait.until(
-                        EC.presence_of_element_located((By.CSS_SELECTOR, selector))
-                    )
-                    username_field.clear()
-                    username_field.send_keys(username)
-                    username_filled = True
-                    logger.debug(f"Username filled with selector: {selector}")
-                    break
+                    username_field = await self.page.query_selector(selector)
+                    if username_field and await username_field.is_visible():
+                        await username_field.fill(username)
+                        username_filled = True
+                        logger.debug(f"Username filled with selector: {selector}")
+                        break
                 except:
                     continue
 
             if not username_filled:
-                raise Exception("Could not find username/CPF field")
+                logger.warning("Could not find username/CPF field")
+                return
 
             # Password field
             password_selectors = [
@@ -124,17 +169,18 @@ class OpcoesNetScraper(BaseScraper):
             password_filled = False
             for selector in password_selectors:
                 try:
-                    password_field = self.driver.find_element(By.CSS_SELECTOR, selector)
-                    password_field.clear()
-                    password_field.send_keys(password)
-                    password_filled = True
-                    logger.debug(f"Password filled with selector: {selector}")
-                    break
+                    password_field = await self.page.query_selector(selector)
+                    if password_field and await password_field.is_visible():
+                        await password_field.fill(password)
+                        password_filled = True
+                        logger.debug(f"Password filled with selector: {selector}")
+                        break
                 except:
                     continue
 
             if not password_filled:
-                raise Exception("Could not find password field")
+                logger.warning("Could not find password field")
+                return
 
             # Submit form
             submit_selectors = [
@@ -148,80 +194,48 @@ class OpcoesNetScraper(BaseScraper):
             submitted = False
             for selector in submit_selectors:
                 try:
-                    submit_button = self.driver.find_element(By.CSS_SELECTOR, selector)
-                    submit_button.click()
-                    submitted = True
-                    logger.debug(f"Form submitted with selector: {selector}")
-                    break
+                    submit_button = await self.page.query_selector(selector)
+                    if submit_button and await submit_button.is_visible():
+                        await submit_button.click()
+                        submitted = True
+                        logger.debug(f"Form submitted with selector: {selector}")
+                        break
                 except:
                     continue
 
             if not submitted:
                 # Try pressing Enter as fallback
-                password_field.send_keys(Keys.RETURN)
+                await self.page.keyboard.press("Enter")
                 logger.debug("Form submitted via Enter key")
 
         except Exception as e:
             logger.error(f"Error performing login: {e}")
-            raise
 
     async def _verify_logged_in(self) -> bool:
         """Verify that user is logged in"""
         try:
-            # Look for indicators of successful login
-            # Logout button, user menu, or absence of login form
+            html_content = await self.page.content()
 
-            # Check for logout/sair button
-            logout_indicators = [
-                "//a[contains(text(), 'Sair')]",
-                "//button[contains(text(), 'Logout')]",
-                "//a[contains(text(), 'Logout')]",
-                ".logout-button",
-                ".user-menu",
-            ]
-
-            for indicator in logout_indicators:
-                try:
-                    if indicator.startswith("//"):
-                        # XPath
-                        elements = self.driver.find_elements(By.XPATH, indicator)
-                    else:
-                        # CSS
-                        elements = self.driver.find_elements(By.CSS_SELECTOR, indicator)
-
-                    if elements:
-                        logger.debug(f"Found logged-in indicator: {indicator}")
-                        return True
-                except:
-                    continue
+            # Check for logout/sair indicators
+            logout_keywords = ["sair", "logout", "minha conta", "meu perfil"]
+            for keyword in logout_keywords:
+                if keyword in html_content.lower():
+                    logger.debug(f"Found logged-in indicator: {keyword}")
+                    return True
 
             # Check if still on login page (indicates failure)
-            if "login" in self.driver.current_url.lower():
+            current_url = self.page.url
+            if "login" in current_url.lower():
                 return False
 
             # Check for error messages
-            error_indicators = [
-                "//div[contains(text(), 'inválid')]",
-                "//div[contains(text(), 'incorret')]",
-                ".error-message",
-                ".alert-danger",
-            ]
+            error_keywords = ["inválid", "incorret", "erro", "falha"]
+            for keyword in error_keywords:
+                if keyword in html_content.lower():
+                    logger.warning(f"Found error indicator: {keyword}")
+                    return False
 
-            for indicator in error_indicators:
-                try:
-                    if indicator.startswith("//"):
-                        elements = self.driver.find_elements(By.XPATH, indicator)
-                    else:
-                        elements = self.driver.find_elements(By.CSS_SELECTOR, indicator)
-
-                    if elements:
-                        logger.warning(f"Found error indicator: {indicator}")
-                        return False
-                except:
-                    continue
-
-            # If we got here and not on login page, assume success
-            return "login" not in self.driver.current_url.lower()
+            return "login" not in current_url.lower()
 
         except Exception as e:
             logger.debug(f"Login verification error: {e}")
@@ -238,29 +252,30 @@ class OpcoesNetScraper(BaseScraper):
             ScraperResult with options data
         """
         try:
-            # Ensure logged in
-            await self.initialize()
+            if not self.page:
+                await self.initialize()
 
             # Navigate to ticker options page
-            # Opcoes.net.br URL format may vary
             ticker_clean = re.sub(r'\d+$', '', ticker.upper())  # Remove trailing numbers
             url = f"{self.BASE_URL}/opcoes/{ticker_clean}"
 
             logger.info(f"Navigating to {url}")
-            self.driver.get(url)
-
+            await self.page.goto(url, wait_until="load", timeout=60000)
             await asyncio.sleep(3)
 
+            # OPTIMIZATION: Get HTML once and parse locally
+            html_content = await self.page.content()
+
             # Check if ticker exists
-            if "não encontrado" in self.driver.page_source.lower():
+            if "não encontrado" in html_content.lower():
                 return ScraperResult(
                     success=False,
                     error=f"Options for {ticker} not found",
                     source=self.source,
                 )
 
-            # Extract data
-            data = await self._extract_data(ticker_clean)
+            # Extract data using BeautifulSoup
+            data = self._extract_data(html_content, ticker_clean)
 
             if data:
                 return ScraperResult(
@@ -272,12 +287,12 @@ class OpcoesNetScraper(BaseScraper):
                         "requires_login": True,
                     },
                 )
-            else:
-                return ScraperResult(
-                    success=False,
-                    error="Failed to extract options data",
-                    source=self.source,
-                )
+
+            return ScraperResult(
+                success=False,
+                error="Failed to extract options data",
+                source=self.source,
+            )
 
         except Exception as e:
             logger.error(f"Error scraping {ticker}: {e}")
@@ -287,73 +302,67 @@ class OpcoesNetScraper(BaseScraper):
                 source=self.source,
             )
 
-    async def _extract_data(self, ticker: str) -> Optional[Dict[str, Any]]:
-        """Extract options data from page"""
+    def _extract_data(self, html_content: str, ticker: str) -> Optional[Dict[str, Any]]:
+        """
+        Extract options data from page
+
+        OPTIMIZED: Uses BeautifulSoup for local parsing
+        """
         try:
+            soup = BeautifulSoup(html_content, 'html.parser')
+
             data = {
                 "ticker": ticker.upper(),
                 "underlying_price": None,
                 "iv_rank": None,  # Implied Volatility Rank
                 "iv_percentile": None,
                 "options_chain": [],
+                "scraped_at": datetime.now().isoformat(),
             }
 
             # Underlying price
-            try:
-                price_selectors = [
-                    ".underlying-price",
-                    ".stock-price",
-                    "[data-field='price']",
-                ]
+            price_selectors = [
+                ".underlying-price",
+                ".stock-price",
+                "[data-field='price']",
+            ]
 
-                for selector in price_selectors:
+            for selector in price_selectors:
+                price_elem = soup.select_one(selector)
+                if price_elem:
+                    price_text = price_elem.get_text().strip().replace("R$", "").replace(",", ".")
                     try:
-                        price_elem = self.driver.find_element(By.CSS_SELECTOR, selector)
-                        price_text = price_elem.text.strip().replace("R$", "").replace(",", ".")
                         data["underlying_price"] = float(price_text)
                         break
                     except:
                         continue
 
-            except Exception as e:
-                logger.debug(f"Could not extract underlying price: {e}")
-
             # IV Rank
-            try:
-                iv_selectors = [
-                    ".iv-rank",
-                    "[data-field='iv-rank']",
-                ]
+            iv_selectors = [
+                ".iv-rank",
+                "[data-field='iv-rank']",
+            ]
 
-                for selector in iv_selectors:
+            for selector in iv_selectors:
+                iv_elem = soup.select_one(selector)
+                if iv_elem:
+                    iv_text = iv_elem.get_text().strip().replace("%", "")
                     try:
-                        iv_elem = self.driver.find_element(By.CSS_SELECTOR, selector)
-                        iv_text = iv_elem.text.strip().replace("%", "")
                         data["iv_rank"] = float(iv_text)
                         break
                     except:
                         continue
 
-            except Exception as e:
-                logger.debug(f"Could not extract IV rank: {e}")
-
             # Options chain (calls and puts)
-            try:
-                # Look for options table
-                tables = self.driver.find_elements(By.TAG_NAME, "table")
+            tables = soup.select("table")
 
-                for table in tables:
-                    # Check if this is an options table
-                    headers = table.find_elements(By.TAG_NAME, "th")
-                    header_text = " ".join([h.text.lower() for h in headers])
+            for table in tables:
+                headers = table.select("th")
+                header_text = " ".join([h.get_text().lower() for h in headers])
 
-                    if "strike" in header_text or "vencimento" in header_text or "prêmio" in header_text:
-                        # This is likely an options table
-                        options = await self._parse_options_table(table)
-                        data["options_chain"].extend(options)
-
-            except Exception as e:
-                logger.debug(f"Error extracting options chain: {e}")
+                if "strike" in header_text or "vencimento" in header_text or "prêmio" in header_text:
+                    options = self._parse_options_table(table)
+                    data["options_chain"].extend(options)
 
             logger.debug(f"Extracted Opcoes.net data for {ticker}: {len(data['options_chain'])} options")
             return data
@@ -362,15 +371,15 @@ class OpcoesNetScraper(BaseScraper):
             logger.error(f"Error in _extract_data: {e}")
             return None
 
-    async def _parse_options_table(self, table) -> List[Dict[str, Any]]:
-        """Parse options chain table"""
+    def _parse_options_table(self, table) -> List[Dict[str, Any]]:
+        """Parse options chain table using BeautifulSoup"""
         options = []
 
         try:
-            rows = table.find_elements(By.TAG_NAME, "tr")
+            rows = table.select("tr")
 
             for row in rows[1:]:  # Skip header
-                cells = row.find_elements(By.TAG_NAME, "td")
+                cells = row.select("td")
 
                 if len(cells) >= 3:
                     try:
@@ -391,9 +400,7 @@ class OpcoesNetScraper(BaseScraper):
                             "vega": None,
                         }
 
-                        # Extract data from cells
-                        # Format varies by site structure
-                        cell_texts = [cell.text.strip() for cell in cells]
+                        cell_texts = [cell.get_text().strip() for cell in cells]
 
                         # Try to identify and parse each field
                         for i, text in enumerate(cell_texts):
@@ -405,7 +412,6 @@ class OpcoesNetScraper(BaseScraper):
                                 option["symbol"] = text
                                 # Determine type from symbol
                                 if re.search(r'[A-Z]\d+$', text):
-                                    # Format like PETRA45 (call) or PETRN45 (put)
                                     option["type"] = "CALL" if text[-3].isalpha() and text[-3] < 'N' else "PUT"
 
                             # Numeric values
@@ -436,21 +442,28 @@ class OpcoesNetScraper(BaseScraper):
     def _parse_number(self, text: str) -> Optional[float]:
         """Parse number from text"""
         try:
-            # Remove formatting
             text = text.replace("R$", "").replace(".", "").replace(",", ".").strip()
             return float(text)
         except:
             return None
 
+    async def health_check(self) -> bool:
+        """Check if Opcoes.net.br is accessible"""
+        try:
+            await self.initialize()
+            return await self._verify_logged_in()
+        except Exception as e:
+            logger.error(f"Health check failed: {e}")
+            return False
 
-# Example usage
+
+# Test function
 async def test_opcoes():
     """Test Opcoes.net.br scraper"""
     scraper = OpcoesNetScraper()
 
     try:
-        # Test with PETR (PETR4 options)
-        result = await scraper.scrape_with_retry("PETR")
+        result = await scraper.scrape("PETR")
 
         if result.success:
             print("✅ Success!")
