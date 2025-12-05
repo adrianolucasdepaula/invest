@@ -27,6 +27,33 @@ import { useAsset, useMarketDataPrices, useAssetFundamentals, useAssetDataSource
 import { DataQualitySummary } from '@/components/assets/DataSourceIndicator';
 import { useAnalysis, useRequestAnalysis } from '@/lib/hooks/use-analysis';
 import { AdvancedChart } from '@/components/tradingview/widgets/AdvancedChart';
+import FundamentalMetrics from '@/components/FundamentalMetrics';
+
+// Helper function to map dataSources API response to FundamentalMetrics format
+function mapDataSourcesToMetrics(dataSources: any) {
+  if (!dataSources?.fields) return null;
+
+  const getFieldValue = (fieldName: string): number | null => {
+    const field = dataSources.fields[fieldName];
+    if (!field || field.finalValue === null || field.finalValue === undefined) return null;
+    return typeof field.finalValue === 'number' ? field.finalValue : null;
+  };
+
+  return {
+    pl: getFieldValue('pl'),
+    pvp: getFieldValue('pvp'),
+    roe: getFieldValue('roe'),
+    dividendYield: getFieldValue('dividendYield'),
+    debtEquity: getFieldValue('dividaLiquidaPatrimonio'),
+    ebitda: getFieldValue('evEbitda'),
+    netMargin: getFieldValue('margemLiquida'),
+    currentRatio: getFieldValue('liquidezCorrente'),
+    peg: getFieldValue('pegRatio'),
+    lpa: getFieldValue('lpa'),
+    vpa: getFieldValue('vpa'),
+    liquidezCorrente: getFieldValue('liquidezCorrente'),
+  };
+}
 
 export default function AssetDetailPage({ params }: { params: Promise<{ ticker: string }> }) {
   const { ticker } = use(params);
@@ -413,18 +440,44 @@ export default function AssetDetailPage({ params }: { params: Promise<{ ticker: 
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {/* Fundamental Analysis */}
-        <Card className="p-6">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold">Análise Fundamentalista</h3>
-            <p className="text-sm text-muted-foreground">Principais indicadores fundamentalistas</p>
-          </div>
-          {/* TODO: API de fundamentals não implementada ainda - exibindo mensagem padrão */}
-          <div className="flex flex-col items-center justify-center space-y-2 py-8">
-            <p className="text-muted-foreground">Dados fundamentalistas não disponíveis</p>
-            <p className="text-xs text-muted-foreground">API em desenvolvimento</p>
-          </div>
-        </Card>
+        {/* Fundamental Analysis - Integrated with dataSources API */}
+        {dataSourcesLoading ? (
+          <Card className="p-6">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">Análise Fundamentalista</h3>
+              <p className="text-sm text-muted-foreground">Carregando indicadores...</p>
+            </div>
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-full" />
+              <div className="grid grid-cols-2 gap-4">
+                {Array(6).fill(0).map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-6 w-16" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+        ) : dataSources?.fields ? (
+          <FundamentalMetrics
+            ticker={ticker}
+            metrics={mapDataSourcesToMetrics(dataSources) || {}}
+            dataSources={dataSources.totalSourcesSuccessful || 1}
+            confidenceScore={Math.round((dataSources.overallConfidence || 0) * 100)}
+          />
+        ) : (
+          <Card className="p-6">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">Análise Fundamentalista</h3>
+              <p className="text-sm text-muted-foreground">Principais indicadores fundamentalistas</p>
+            </div>
+            <div className="flex flex-col items-center justify-center space-y-2 py-8">
+              <p className="text-muted-foreground">Dados fundamentalistas não disponíveis</p>
+              <p className="text-xs text-muted-foreground">Sincronize os dados para visualizar</p>
+            </div>
+          </Card>
+        )}
 
         {/* Technical Analysis Summary */}
         <Card className="p-6">
