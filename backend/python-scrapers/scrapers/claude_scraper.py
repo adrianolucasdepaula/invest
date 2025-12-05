@@ -34,7 +34,7 @@ class ClaudeScraper(BaseScraper):
         )
 
     async def initialize(self):
-        """Initialize Playwright browser and load cookies"""
+        """Initialize Playwright browser and load cookies BEFORE navigation"""
         if self._initialized:
             return
 
@@ -42,10 +42,8 @@ class ClaudeScraper(BaseScraper):
         await super().initialize()
 
         try:
-            await self.page.goto(self.BASE_URL, wait_until="load", timeout=60000)
-            await asyncio.sleep(3)
-
-            # Load cookies if available
+            # Load cookies BEFORE navigating (critical for session authentication)
+            cookies_loaded = False
             if self.COOKIES_FILE.exists():
                 try:
                     with open(self.COOKIES_FILE, 'r') as f:
@@ -53,32 +51,46 @@ class ClaudeScraper(BaseScraper):
 
                     claude_cookies = []
                     for cookie in cookies:
-                        if isinstance(cookie, dict) and ('claude.ai' in cookie.get('domain', '') or 'anthropic.com' in cookie.get('domain', '') or 'google.com' in cookie.get('domain', '')):
-                            pw_cookie = {
-                                'name': cookie.get('name'),
-                                'value': cookie.get('value'),
-                                'domain': cookie.get('domain'),
-                                'path': cookie.get('path', '/'),
-                            }
-                            if 'expires' in cookie and cookie['expires']:
-                                pw_cookie['expires'] = cookie['expires']
-                            if 'httpOnly' in cookie:
-                                pw_cookie['httpOnly'] = cookie['httpOnly']
-                            if 'secure' in cookie:
-                                pw_cookie['secure'] = cookie['secure']
+                        if isinstance(cookie, dict):
+                            domain = cookie.get('domain', '')
+                            # Accept claude.ai, anthropic.com and google.com cookies
+                            if 'claude.ai' in domain or 'anthropic.com' in domain or 'google.com' in domain:
+                                pw_cookie = {
+                                    'name': cookie.get('name'),
+                                    'value': cookie.get('value'),
+                                    'domain': domain,
+                                    'path': cookie.get('path', '/'),
+                                }
+                                if 'expires' in cookie and cookie['expires']:
+                                    pw_cookie['expires'] = cookie['expires']
+                                if 'httpOnly' in cookie:
+                                    pw_cookie['httpOnly'] = cookie['httpOnly']
+                                if 'secure' in cookie:
+                                    pw_cookie['secure'] = cookie['secure']
+                                if 'sameSite' in cookie:
+                                    pw_cookie['sameSite'] = cookie['sameSite']
 
-                            claude_cookies.append(pw_cookie)
+                                claude_cookies.append(pw_cookie)
 
                     if claude_cookies:
                         await self.page.context.add_cookies(claude_cookies)
-                        logger.info(f"Loaded {len(claude_cookies)} cookies for Claude")
-                        await self.page.reload()
-                        await asyncio.sleep(3)
+                        logger.info(f"Loaded {len(claude_cookies)} cookies for Claude BEFORE navigation")
+                        cookies_loaded = True
 
                 except Exception as e:
                     logger.warning(f"Could not load Claude cookies: {e}")
             else:
                 logger.debug("Claude cookies not found. Manual login may be required.")
+
+            # Now navigate to Claude with cookies already set
+            await self.page.goto(self.BASE_URL, wait_until="load", timeout=60000)
+            await asyncio.sleep(3)
+
+            # Log session status
+            if cookies_loaded:
+                logger.info("Claude page loaded with pre-loaded cookies")
+            else:
+                logger.warning("Claude page loaded WITHOUT cookies - login may be required")
 
             self._initialized = True
 
@@ -166,23 +178,39 @@ class ClaudeScraper(BaseScraper):
             )
 
     async def _find_input_field(self):
-        """Find the chat input field"""
+        """Find the chat input field for Claude.ai interface"""
         input_selectors = [
+            # Claude.ai specific selectors (2024-2025 interface)
+            "div[contenteditable='true'][data-placeholder]",
+            "div.ProseMirror[contenteditable='true']",
             "div[contenteditable='true'][placeholder*='Talk']",
-            "div[contenteditable='true']",
+            "div[contenteditable='true'][placeholder*='Message']",
+            "div[contenteditable='true'][aria-label*='Message']",
+            # Textarea fallbacks
             "textarea[placeholder*='Talk']",
             "textarea[placeholder*='Message']",
+            "textarea[aria-label*='Message']",
+            # Generic contenteditable
+            "div[contenteditable='true']",
             "textarea",
-            "input[type='text']",
         ]
 
         for selector in input_selectors:
             try:
                 input_field = await self.page.query_selector(selector)
                 if input_field and await input_field.is_visible():
+                    logger.debug(f"Found input field with selector: {selector}")
                     return input_field
             except:
                 continue
+
+        # Log what's on the page for debugging
+        try:
+            page_text = await self.page.content()
+            if "login" in page_text.lower() or "sign in" in page_text.lower() or "continue with" in page_text.lower():
+                logger.warning("Claude login page detected - cookies may be required")
+        except:
+            pass
 
         return None
 

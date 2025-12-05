@@ -101,42 +101,64 @@ class GoogleNewsScraper(BaseScraper):
         Extract news articles from the page
 
         OPTIMIZED: Uses BeautifulSoup for local parsing (no await operations)
+
+        Google News uses a unique structure where articles are links with
+        href containing "./read/" and significant text content.
         """
         articles = []
+        seen_urls = set()  # Avoid duplicates
 
         try:
             soup = BeautifulSoup(html_content, 'html.parser')
 
-            # Try multiple article selectors
-            article_selectors = [
-                "article",
-                ".xrnccd",
-                ".IBr9hb",
-                "[data-n-tid]",
-                ".JKIgvd",
-            ]
+            # Google News structure: articles are <a> tags with href containing "./read/"
+            # and text > 30 chars (to filter out navigation links)
+            news_links = soup.select('a[href*="./read/"]')
+            logger.debug(f"Found {len(news_links)} news links")
 
-            article_elements = []
-            for selector in article_selectors:
-                elements = soup.select(selector)
-                if elements:
-                    article_elements = elements
-                    logger.debug(f"Found {len(elements)} articles using selector: {selector}")
-                    break
+            for link in news_links:
+                text = link.get_text(strip=True)
+                href = link.get('href', '')
 
-            if not article_elements:
-                logger.warning("No article elements found with any selector")
-                return articles
-
-            # Limit to first 20 articles
-            for element in article_elements[:20]:
-                try:
-                    article_data = self._parse_article(element)
-                    if article_data:
-                        articles.append(article_data)
-                except Exception as e:
-                    logger.debug(f"Error parsing article: {e}")
+                # Filter: must have meaningful text (> 30 chars)
+                if not text or len(text) < 30:
                     continue
+
+                # Avoid duplicates
+                if href in seen_urls:
+                    continue
+                seen_urls.add(href)
+
+                # Build article data
+                article = {
+                    "title": text,
+                    "url": f"{self.BASE_URL}/{href[2:]}" if href.startswith("./") else href,
+                }
+
+                # Try to find publisher/source from sibling or parent elements
+                parent = link.parent
+                for _ in range(4):  # Go up 4 levels max
+                    if parent:
+                        # Look for source element (usually has class vr1PYe or similar)
+                        source_elem = parent.select_one('.vr1PYe, .wEwyrc, [data-n-tid] > div:first-child')
+                        if source_elem and source_elem != link:
+                            source_text = source_elem.get_text(strip=True)
+                            if source_text and len(source_text) < 50:  # Reasonable source name length
+                                article["publisher"] = source_text
+                                break
+
+                        # Look for time element
+                        time_elem = parent.select_one('time, [datetime]')
+                        if time_elem:
+                            article["published_at"] = time_elem.get('datetime') or time_elem.get_text(strip=True)
+
+                        parent = parent.parent
+
+                articles.append(article)
+
+                # Limit to 20 articles
+                if len(articles) >= 20:
+                    break
 
             logger.info(f"Successfully extracted {len(articles)} articles")
 

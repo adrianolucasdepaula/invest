@@ -1,3 +1,6 @@
+
+
+
 # MIGRATED TO PLAYWRIGHT - 2025-12-04
 """
 Investing News Scraper - Notícias de investimentos internacionais
@@ -35,20 +38,15 @@ class InvestingNewsScraper(BaseScraper):
         )
 
     async def initialize(self):
-        """Initialize Playwright browser and load cookies"""
+        """Initialize Playwright browser and load cookies (optimized - no home page visit)"""
         if self._initialized:
             return
 
-        # Call parent initialize to create browser/page
+        # Call parent initialize to create browser/page with stealth
         await super().initialize()
 
         try:
-            logger.info(f"Initializing {self.name} with Google OAuth...")
-
-            await self.page.goto(self.BASE_URL, wait_until="load", timeout=60000)
-            await asyncio.sleep(2)
-
-            # Load cookies if available
+            # Load cookies if available (before any navigation)
             if self.COOKIES_FILE.exists():
                 try:
                     with open(self.COOKIES_FILE, 'r') as f:
@@ -75,13 +73,11 @@ class InvestingNewsScraper(BaseScraper):
                     if investing_cookies:
                         await self.page.context.add_cookies(investing_cookies)
                         logger.info(f"Loaded {len(investing_cookies)} cookies for Investing")
-                        await self.page.reload()
-                        await asyncio.sleep(3)
 
                 except Exception as e:
                     logger.warning(f"Could not load Investing cookies: {e}")
             else:
-                logger.debug("Investing cookies not found. Manual login may be required.")
+                logger.debug("Investing cookies not found. Will scrape without login.")
 
             self._initialized = True
 
@@ -103,19 +99,27 @@ class InvestingNewsScraper(BaseScraper):
             if not self.page:
                 await self.initialize()
 
-            # Build URL based on query
-            if query.lower() in ["latest", "ultimas", "últimas"]:
-                url = f"{self.BASE_URL}/news/latest-news"
-            elif query.lower() in ["acoes", "ações", "stocks"]:
-                url = f"{self.BASE_URL}/news/stock-market-news"
-            elif query.lower() in ["commodities", "commodity"]:
-                url = f"{self.BASE_URL}/news/commodities-news"
-            elif query.lower() in ["forex", "cambio", "câmbio"]:
-                url = f"{self.BASE_URL}/news/forex-news"
-            elif query.lower() in ["economia", "economy"]:
-                url = f"{self.BASE_URL}/news/economy"
-            else:
-                # Search query
+            # Build URL - Using direct news pages (Cloudflare bypassed via playwright-stealth)
+            # Map categories to appropriate URLs
+            category_urls = {
+                "latest": f"{self.BASE_URL}/news/latest-news",
+                "ultimas": f"{self.BASE_URL}/news/latest-news",
+                "últimas": f"{self.BASE_URL}/news/latest-news",
+                "acoes": f"{self.BASE_URL}/news/stock-market-news",
+                "ações": f"{self.BASE_URL}/news/stock-market-news",
+                "stocks": f"{self.BASE_URL}/news/stock-market-news",
+                "commodities": f"{self.BASE_URL}/news/commodities-news",
+                "commodity": f"{self.BASE_URL}/news/commodities-news",
+                "forex": f"{self.BASE_URL}/news/forex-news",
+                "cambio": f"{self.BASE_URL}/news/forex-news",
+                "câmbio": f"{self.BASE_URL}/news/forex-news",
+                "economia": f"{self.BASE_URL}/news/economy",
+                "economy": f"{self.BASE_URL}/news/economy",
+            }
+
+            # Use category URL if available, otherwise search
+            url = category_urls.get(query.lower())
+            if not url:
                 url = f"{self.BASE_URL}/search/?q={query}&tab=news"
 
             logger.info(f"Fetching Investing News from: {url}")

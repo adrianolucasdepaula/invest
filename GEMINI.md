@@ -62,10 +62,10 @@ docker restart invest_backend invest_frontend  # Restart services
 ## Architecture
 
 ```
-Frontend (Next.js :3100) <-> Backend (NestJS :3101) <-> PostgreSQL (:5532)
-                                    |
+Frontend (Next.js :3100) ←→ Backend (NestJS :3101) ←→ PostgreSQL (:5532)
+                                    ↓
                               BullMQ + Redis (:6479)
-                                    |
+                                    ↓
                            Python Scrapers (Playwright)
 ```
 
@@ -85,7 +85,7 @@ Frontend (Next.js :3100) <-> Backend (NestJS :3101) <-> PostgreSQL (:5532)
 
 - `Asset` - Stock tickers (861 B3 assets)
 - `AssetPrice` - Historical OHLCV data (1986-2025 from COTAHIST)
-- `TickerChange` - Ticker rebranding history (e.g., ELET3->AXIA3)
+- `TickerChange` - Ticker rebranding history (e.g., ELET3→AXIA3)
 - `Analysis` - Fundamental/technical analysis results
 - `Portfolio` / `PortfolioPosition` - User portfolios
 
@@ -141,81 +141,81 @@ export class IsEndYearGreaterThanStartYear implements ValidatorConstraintInterfa
 
 ## Development Principles
 
-### 1. Quality > Velocity ("Nao Ter Pressa")
+### 1. Quality > Velocity ("Não Ter Pressa")
 
-**Principio Fundamental:** Priorizar correcao definitiva sobre fix rapido.
+**Princípio Fundamental:** Priorizar correção definitiva sobre fix rápido.
 
-- OK Tempo adequado para analise profunda (Ultra-Thinking)
-- OK Nao pular etapas de validacao
-- OK Code review obrigatorio antes de proxima fase
-- NO Pressao por deadlines NAO justifica baixa qualidade
-- NO NUNCA fazer workarounds temporarios que se tornam permanentes
+- ✅ Tempo adequado para análise profunda (Ultra-Thinking)
+- ✅ Não pular etapas de validação
+- ✅ Code review obrigatório antes de próxima fase
+- ❌ Pressão por deadlines NÃO justifica baixa qualidade
+- ❌ NUNCA fazer workarounds temporários que se tornam permanentes
 
-**Referencia:** `VALIDACAO_REGRAS_DOCUMENTACAO_2025-11-27.md` - Regra 1.6
+**Referência:** `VALIDACAO_REGRAS_DOCUMENTACAO_2025-11-27.md` - Regra 1.6
 
 ---
 
 ### 2. KISS Principle (Keep It Simple, Stupid)
 
-**Evitar complexidade desnecessaria:**
+**Evitar complexidade desnecessária:**
 
-- OK Usar melhores praticas comprovadas e modernas
-- OK Solucoes simples e diretas quando possivel
-- OK Codigo legivel > Codigo "inteligente"
-- NO Over-engineering
-- NO Abstracoes prematuras
+- ✅ Usar melhores práticas comprovadas e modernas
+- ✅ Soluções simples e diretas quando possível
+- ✅ Código legível > Código "inteligente"
+- ❌ Over-engineering
+- ❌ Abstrações prematuras
 
-**Nota:** "Moderno e funcional" != "Complexo". Simplicidade e sofisticacao.
+**Nota:** "Moderno e funcional" ≠ "Complexo". Simplicidade é sofisticação.
 
 ---
 
-### 3. Root Cause Analysis Obrigatorio
+### 3. Root Cause Analysis Obrigatório
 
 **Para TODOS os bugs e problemas:**
 
-- OK Identificar causa raiz (nao apenas sintoma)
-- OK Corrigir problema original (nao workaround)
-- OK Documentar em `KNOWN-ISSUES.md` ou `.gemini/context/known-issues.md`
-- OK Implementar prevencao (nao apenas correcao)
-- NO NUNCA simplificar para "terminar rapido"
+- ✅ Identificar causa raiz (não apenas sintoma)
+- ✅ Corrigir problema original (não workaround)
+- ✅ Documentar em `KNOWN-ISSUES.md` ou `.gemini/context/known-issues.md`
+- ✅ Implementar prevenção (não apenas correção)
+- ❌ NUNCA simplificar para "terminar rápido"
 
 **Exemplo:**
 ```
-NO ERRADO: Adicionar try-catch para suprimir erro
-OK CORRETO: Investigar por que erro ocorre e corrigir causa
+❌ ERRADO: Adicionar try-catch para suprimir erro
+✅ CORRETO: Investigar por que erro ocorre e corrigir causa
 ```
 
-**Referencia:** `.gemini/context/known-issues.md` - 8 issues com root cause completo
+**Referência:** `.gemini/context/known-issues.md` - 8 issues com root cause completo
 
 ---
 
 ### 4. Anti-Workaround Policy
 
-**Regra Explicita:**
+**Regra Explícita:**
 
-- NO Workarounds temporarios que se tornam permanentes
-- NO "Resolver depois" sem issue/TODO rastreavel
-- NO Comentarios tipo `// FIXME`, `// HACK` sem plano de correcao
-- OK Se problema e critico -> corrigir agora
-- OK Se nao e critico -> criar issue rastreavel com prioridade
+- ❌ Workarounds temporários que se tornam permanentes
+- ❌ "Resolver depois" sem issue/TODO rastreável
+- ❌ Comentários tipo `// FIXME`, `// HACK` sem plano de correção
+- ✅ Se problema é crítico → corrigir agora
+- ✅ Se não é crítico → criar issue rastreável com prioridade
 
 **Fluxo Correto:**
 
 ```
 Problema Encontrado
-    |
-E bloqueante?
-    +- SIM -> Corrigir AGORA (root cause analysis)
-    +- NAO -> Criar issue no KNOWN-ISSUES.md + continuar
+    ↓
+É bloqueante?
+    ├─ SIM → Corrigir AGORA (root cause analysis)
+    └─ NÃO → Criar issue no KNOWN-ISSUES.md + continuar
 ```
 
 ---
 
-## Critical Rules (Regras Criticas)
+## Critical Rules (Regras Críticas)
 
 ### Zero Tolerance Policy
 
-**0 erros obrigatorio em:**
+**0 erros obrigatório em:**
 
 - TypeScript: `npx tsc --noEmit` (backend + frontend)
 - Build: `npm run build` (backend + frontend)
@@ -241,98 +241,98 @@ npm run lint      # 0 critical warnings
 
 ### Git Workflow
 
-**Regras Obrigatorias:**
+**Regras Obrigatórias:**
 
-- OK Git sempre atualizado (working tree clean antes de nova fase)
-- OK Branch sempre atualizada e mergeada com main
-- OK Commits frequentes com mensagens descritivas (Conventional Commits)
-- OK Documentacao atualizada no mesmo commit (nao separado)
-- NO NUNCA commitar codigo que nao compila
-- NO NUNCA commitar com erros TypeScript
+- ✅ Git sempre atualizado (working tree clean antes de nova fase)
+- ✅ Branch sempre atualizada e mergeada com main
+- ✅ Commits frequentes com mensagens descritivas (Conventional Commits)
+- ✅ Documentação atualizada no mesmo commit (não separado)
+- ❌ NUNCA commitar código que não compila
+- ❌ NUNCA commitar com erros TypeScript
 
 **Commit Message Format:**
 
 ```bash
 git commit -m "feat: add new feature X
 
-OK Zero Tolerance validado
-OK Documentacao atualizada
+✅ Zero Tolerance validado
+✅ Documentação atualizada
 
-Generated with Claude Code (https://claude.com/claude-code)
+🤖 Generated with Claude Code (https://claude.com/claude-code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
-**Referencia:** `CONTRIBUTING.md` - Git workflow completo
+**Referência:** `CONTRIBUTING.md` - Git workflow completo
 
 ---
 
-### Validacao Completa e Robusta
+### Validação Completa e Robusta
 
 **Para TODA nova funcionalidade:**
 
-- OK **MCP Triplo Obrigatorio:**
+- ✅ **MCP Triplo Obrigatório:**
   1. Playwright (E2E testing)
   2. Chrome DevTools (snapshot + console + network)
   3. React DevTools (component tree + state)
 
-- OK **Ultra-Thinking + TodoWrite:** Planejamento antes de execucao
-- OK **Screenshots de Evidencia:** Salvar em `docs/screenshots/`
-- OK **Relatorio de Validacao:** Criar `VALIDACAO_FASE_XX.md`
+- ✅ **Ultra-Thinking + TodoWrite:** Planejamento antes de execução
+- ✅ **Screenshots de Evidência:** Salvar em `docs/screenshots/`
+- ✅ **Relatório de Validação:** Criar `VALIDACAO_FASE_XX.md`
 
-**Referencia:** `METODOLOGIA_MCPS_INTEGRADA.md`
+**Referência:** `METODOLOGIA_MCPS_INTEGRADA.md`
 
 ---
 
-### Dados Financeiros - Precisao Absoluta
+### Dados Financeiros - Precisão Absoluta
 
-**Regras NAO-NEGOCIAVEIS:**
+**Regras NÃO-NEGOCIÁVEIS:**
 
-- OK **Decimal (nao Float)** para valores monetarios
-- OK **Cross-validation** minimo 3 fontes
-- OK **Timezone:** America/Sao_Paulo (sempre)
-- NO NUNCA arredondar/manipular dados financeiros
-- NO NUNCA usar dados mock em producao
-- NO NUNCA ajustar valores para "parecer melhor"
+- ✅ **Decimal (não Float)** para valores monetários
+- ✅ **Cross-validation** mínimo 3 fontes
+- ✅ **Timezone:** America/Sao_Paulo (sempre)
+- ❌ NUNCA arredondar/manipular dados financeiros
+- ❌ NUNCA usar dados mock em produção
+- ❌ NUNCA ajustar valores para "parecer melhor"
 
 **Exemplo:**
 
 ```typescript
-// NO ERRADO
-const price: number = 123.45;  // Float tem imprecisao
+// ❌ ERRADO
+const price: number = 123.45;  // Float tem imprecisão
 
-// OK CORRETO
+// ✅ CORRETO
 import { Decimal } from 'decimal.js';
 const price: Decimal = new Decimal('123.45');
 ```
 
-**Referencia CRITICA:** `.gemini/context/financial-rules.md` - Leitura obrigatoria
+**Referência CRÍTICA:** `.gemini/context/financial-rules.md` - Leitura obrigatória
 
 ---
 
-### Nao Duplicar Codigo/Funcionalidade
+### Não Duplicar Código/Funcionalidade
 
-**Antes de criar qualquer novo componente/servico/funcao:**
+**Antes de criar qualquer novo componente/serviço/função:**
 
-- OK Pesquisar no codigo: `grep -r "palavraChave"`
-- OK Consultar `ARCHITECTURE.md` (mapa de componentes)
-- OK Verificar se nao existe solucao similar
-- OK Se existir -> melhorar/evoluir o atual (nao duplicar)
-- NO NUNCA criar fluxo novo sendo que ja existe
+- ✅ Pesquisar no código: `grep -r "palavraChave"`
+- ✅ Consultar `ARCHITECTURE.md` (mapa de componentes)
+- ✅ Verificar se não existe solução similar
+- ✅ Se existir → melhorar/evoluir o atual (não duplicar)
+- ❌ NUNCA criar fluxo novo sendo que já existe
 
-**Referencia:** `CHECKLIST_TODO_MASTER.md` - Anti-Pattern #2
+**Referência:** `CHECKLIST_TODO_MASTER.md` - Anti-Pattern #2
 
 ---
 
 ## Planejamento de Fases
 
-### Template Obrigatorio
+### Template Obrigatório
 
 **Para TODA nova fase:**
 
 1. Criar `PLANO_FASE_XX_NOME.md` usando template de `IMPLEMENTATION_PLAN.md`
-2. Ultra-Thinking: Analise profunda (nao planejar so baseado em docs)
-3. Analisar TODOS artefatos relacionados (codigo + docs)
+2. Ultra-Thinking: Análise profunda (não planejar só baseado em docs)
+3. Analisar TODOS artefatos relacionados (código + docs)
 4. Code review do planejamento (antes de implementar)
 5. Versionamento do plano (v1.0, v1.1, v2.0)
 
@@ -340,41 +340,41 @@ const price: Decimal = new Decimal('123.45');
 
 ```
 Planejamento (PLANO_FASE_XX.md)
-    |
+    ↓
 Code Review Aprovado
-    |
-Implementacao
-    |
-Validacao MCP Triplo
-    |
+    ↓
+Implementação
+    ↓
+Validação MCP Triplo
+    ↓
 VALIDACAO_FASE_XX.md
-    |
+    ↓
 Commit + Atualizar ROADMAP.md
 ```
 
-**Referencia:** `IMPLEMENTATION_PLAN.md` - Template completo
+**Referência:** `IMPLEMENTATION_PLAN.md` - Template completo
 
 ---
 
-## Documentacao Sempre Atualizada
+## Documentação Sempre Atualizada
 
 ### Arquivos que DEVEM ser atualizados em CADA fase:
 
-| Arquivo | Quando Atualizar | Obrigatorio? |
+| Arquivo | Quando Atualizar | Obrigatório? |
 |---------|------------------|--------------|
-| **CLAUDE.md** / **GEMINI.md** | Novas regras/convencoes | OK SIM (sync obrigatorio) |
-| **ARCHITECTURE.md** | Novos componentes/fluxos | OK SIM |
-| **ROADMAP.md** | Fase completa | OK SIM |
-| **CHANGELOG.md** | Mudancas notaveis | OK SIM |
-| **KNOWN-ISSUES.md** | Novos issues conhecidos | OK SIM (se aplicavel) |
-| **DATABASE_SCHEMA.md** | Novas entities/migrations | OK SIM (se aplicavel) |
-| **INDEX.md** | Nova documentacao criada | IMPORTANTE |
+| **CLAUDE.md** / **GEMINI.md** | Novas regras/convenções | ✅ SIM (sync obrigatório) |
+| **ARCHITECTURE.md** | Novos componentes/fluxos | ✅ SIM |
+| **ROADMAP.md** | Fase completa | ✅ SIM |
+| **CHANGELOG.md** | Mudanças notáveis | ✅ SIM |
+| **KNOWN-ISSUES.md** | Novos issues conhecidos | ✅ SIM (se aplicável) |
+| **DATABASE_SCHEMA.md** | Novas entities/migrations | ✅ SIM (se aplicável) |
+| **INDEX.md** | Nova documentação criada | ⚠️ IMPORTANTE |
 
 ### Onde Armazenar Novos Dados
 
-**Consultar SEMPRE:** `ARCHITECTURE.md` secao "ONDE ARMAZENAR NOVOS DADOS"
+**Consultar SEMPRE:** `ARCHITECTURE.md` seção "ONDE ARMAZENAR NOVOS DADOS"
 
-**Tabela de decisao completa para:**
+**Tabela de decisão completa para:**
 - Entities vs Campo JSON
 - Onde criar novos endpoints
 - Onde adicionar novas funcionalidades
@@ -383,20 +383,20 @@ Commit + Atualizar ROADMAP.md
 
 ## Critical Files Reference (Arquivos em .gemini/context/)
 
-**IMPORTANTE:** Os arquivos abaixo estao em `.gemini/context/` mas sao **CRITICOS** para Claude Code:
+**⚠️ IMPORTANTE:** Os arquivos abaixo estão em `.gemini/context/` mas são **CRÍTICOS** para Claude Code:
 
-### 1. Convencoes de Codigo
+### 1. Convenções de Código
 
 **Arquivo:** `.gemini/context/conventions.md`
 
-**Conteudo:**
+**Conteúdo:**
 - Naming conventions (classes, files, variables, etc)
 - Code style (indentation, quotes, semicolons)
 - Imports organization
 - Types vs Interfaces
 - Git commit messages
 
-**Quando consultar:** Antes de criar qualquer arquivo/classe/funcao nova
+**Quando consultar:** Antes de criar qualquer arquivo/classe/função nova
 
 ---
 
@@ -404,17 +404,17 @@ Commit + Atualizar ROADMAP.md
 
 **Arquivo:** `.gemini/context/financial-rules.md`
 
-**Conteudo CRITICO:**
+**Conteúdo CRÍTICO:**
 - Tipos de dados (Decimal vs Float)
-- Precisao e arredondamento
+- Precisão e arredondamento
 - Timezone (America/Sao_Paulo)
-- Cross-validation (minimo 3 fontes)
+- Cross-validation (mínimo 3 fontes)
 - Outlier detection
 - Corporate actions (splits, dividends)
 
 **Quando consultar:** Antes de trabalhar com QUALQUER dado financeiro
 
-**LEITURA OBRIGATORIA - NAO-NEGOCIAVEL**
+**LEITURA OBRIGATÓRIA - NÃO-NEGOCIÁVEL**
 
 ---
 
@@ -422,20 +422,20 @@ Commit + Atualizar ROADMAP.md
 
 **Arquivo:** `.gemini/context/known-issues.md`
 
-**Conteudo:**
+**Conteúdo:**
 - 9 issues documentados com root cause
-- Solucoes aplicadas
-- Licoes aprendidas
-- Procedimentos de recuperacao
-- Checklist de prevencao
+- Soluções aplicadas
+- Lições aprendidas
+- Procedimentos de recuperação
+- Checklist de prevenção
 
 **Quando consultar:**
 - Antes de modificar Docker volumes
 - Antes de trabalhar com scrapers
 - Quando encontrar erro similar
-- Antes de operacoes destrutivas
+- Antes de operações destrutivas
 
-**Arquivo Publico (resumo):** `KNOWN-ISSUES.md` (raiz do projeto)
+**Arquivo Público (resumo):** `KNOWN-ISSUES.md` (raiz do projeto)
 
 ---
 
@@ -443,62 +443,62 @@ Commit + Atualizar ROADMAP.md
 
 ### system-manager.ps1
 
-**Localizacao:** `system-manager.ps1` (raiz do projeto)
+**Localização:** `system-manager.ps1` (raiz do projeto)
 
 **Funcionalidades:**
-- OK Check prerequisites (Docker, Node.js, etc)
-- OK Start/Stop/Restart services
-- OK Status de todos containers
-- OK View logs
-- OK Clean/rebuild
-- OK Validacao de environment
+- ✅ Check prerequisites (Docker, Node.js, etc)
+- ✅ Start/Stop/Restart services
+- ✅ Status de todos containers
+- ✅ View logs
+- ✅ Clean/rebuild
+- ✅ Validação de environment
 
-**Uso Obrigatorio:**
+**Uso Obrigatório:**
 - Antes de QUALQUER teste com MCPs
-- Antes de validacao de frontend/backend
-- Apos mudancas em docker-compose.yml
-- Para verificar saude do ambiente
+- Antes de validação de frontend/backend
+- Após mudanças em docker-compose.yml
+- Para verificar saúde do ambiente
 
 **Comando:**
 
 ```powershell
-.\system-manager.ps1 status    # Ver status de todos servicos
-.\system-manager.ps1 start     # Iniciar todos servicos
-.\system-manager.ps1 restart   # Reiniciar servicos especificos
+.\system-manager.ps1 status    # Ver status de todos serviços
+.\system-manager.ps1 start     # Iniciar todos serviços
+.\system-manager.ps1 restart   # Reiniciar serviços específicos
 ```
 
 ---
 
 ## Python Scrapers (Playwright)
 
-### Arquitetura e Padrao Standardizado
+### Arquitetura e Padrão Standardizado
 
-**Localizacao:** `backend/python-scrapers/`
+**Localização:** `backend/python-scrapers/`
 
 **Framework:** Playwright (migrado de Selenium em 2025-11-28)
 
 **Scrapers ativos:** 2 (fundamentus, bcb)
-**Scrapers aguardando migracao:** 24
+**Scrapers aguardando migração:** 24
 
-### Padrao Obrigatorio - BeautifulSoup Single Fetch
+### Padrão Obrigatório - BeautifulSoup Single Fetch
 
-**NO NUNCA fazer** (padrao antigo Selenium):
+**❌ NUNCA fazer** (padrão antigo Selenium):
 ```python
-# Multiplos await operations (lento, pode causar Exit 137)
+# Múltiplos await operations (lento, pode causar Exit 137)
 tables = await page.query_selector_all("table")
 for table in tables:
     rows = await table.query_selector_all("tr")
     for row in rows:
         cells = await row.query_selector_all("td")
-        # ... multiplos awaits = LENTO
+        # ... múltiplos awaits = LENTO
 ```
 
-**OK SEMPRE fazer** (padrao novo Playwright + BeautifulSoup):
+**✅ SEMPRE fazer** (padrão novo Playwright + BeautifulSoup):
 ```python
 from bs4 import BeautifulSoup
 
-# Single HTML fetch (rapido, ~10x mais rapido)
-html_content = await page.content()  # await #1 (UNICO)
+# Single HTML fetch (rápido, ~10x mais rápido)
+html_content = await page.content()  # await #1 (ÚNICO)
 soup = BeautifulSoup(html_content, 'html.parser')
 
 # All operations local (sem await)
@@ -507,18 +507,18 @@ for table in tables:
     rows = table.select("tr")  # local
     for row in rows:
         cells = row.select("td")  # local
-        # ... instantaneo!
+        # ... instantâneo!
 ```
 
-### Regras Criticas
+### Regras Críticas
 
-1. **Browser Individual** (nao compartilhado)
+1. **Browser Individual** (não compartilhado)
    - Cada scraper tem `self.playwright`, `self.browser`, `self.page`
-   - Seguir padrao do backend TypeScript (`abstract-scraper.ts`)
+   - Seguir padrão do backend TypeScript (`abstract-scraper.ts`)
 
 2. **Wait Strategy**
-   - OK Usar `wait_until='load'` (rapido)
-   - NO EVITAR `wait_until='networkidle'` (analytics lentos = timeout)
+   - ✅ Usar `wait_until='load'` (rápido)
+   - ❌ EVITAR `wait_until='networkidle'` (analytics lentos = timeout)
 
 3. **Cleanup Completo**
    - Sempre fechar: `page`, `browser`, `playwright` (nessa ordem)
@@ -527,19 +527,19 @@ for table in tables:
    - Meta: <10s por scrape
    - Usar single HTML fetch + BeautifulSoup local parsing
 
-### Arquivos Criticos
+### Arquivos Críticos
 
-- **PLAYWRIGHT_SCRAPER_PATTERN.md** - Template e padrao standardizado (LEITURA OBRIGATORIA)
-- **VALIDACAO_MIGRACAO_PLAYWRIGHT.md** - Validacao completa da migracao
-- **ERROR_137_ANALYSIS.md** - Analise do Exit Code 137 (resolvido)
+- **PLAYWRIGHT_SCRAPER_PATTERN.md** - Template e padrão standardizado (LEITURA OBRIGATÓRIA)
+- **VALIDACAO_MIGRACAO_PLAYWRIGHT.md** - Validação completa da migração
+- **ERROR_137_ANALYSIS.md** - Análise do Exit Code 137 (resolvido)
 - **base_scraper.py** - Classe base (arquitetura Playwright)
 
 ### Quando Consultar
 
-- **Antes de migrar qualquer scraper** -> Ler `PLAYWRIGHT_SCRAPER_PATTERN.md`
-- **Erro Exit 137** -> Verificar se esta usando BeautifulSoup pattern
-- **Scraper lento (>10s)** -> Verificar multiplos `await` operations
-- **Container restarting** -> Verificar `main.py` imports (apenas scrapers migrados)
+- **Antes de migrar qualquer scraper** → Ler `PLAYWRIGHT_SCRAPER_PATTERN.md`
+- **Erro Exit 137** → Verificar se está usando BeautifulSoup pattern
+- **Scraper lento (>10s)** → Verificar múltiplos `await` operations
+- **Container restarting** → Verificar `main.py` imports (apenas scrapers migrados)
 
 ### Testing
 
@@ -562,26 +562,26 @@ docker-compose restart scrapers
 ### Arquitetura de Integracao
 
 ```
-+---------------------------------------------------------------------+
-|                    MODELO DE DECISAO HIBRIDO                        |
-+---------------------------------------------------------------------+
-|                                                                     |
-|   +-----------------+         +-----------------+                   |
-|   |  CLAUDE CODE    | ------> |  GEMINI 3 PRO   |                   |
-|   |  (DECISOR)      | consulta|  (ADVISOR)      |                   |
-|   |                 | <------ |                 |                   |
-|   |  - Implementa   | opiniao |  - Analisa      |                   |
-|   |  - Decide       |         |  - Sugere       |                   |
-|   |  - Executa      |         |  - NAO executa  |                   |
-|   +-----------------+         +-----------------+                   |
-|          |                                                          |
-|          v                                                          |
-|   +-----------------+                                               |
-|   | DECISAO FINAL   | <-- Claude SEMPRE tem autoridade final        |
-|   | (CLAUDE CODE)   |                                               |
-|   +-----------------+                                               |
-|                                                                     |
-+---------------------------------------------------------------------+
+┌─────────────────────────────────────────────────────────────────────┐
+│                    MODELO DE DECISAO HIBRIDO                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│   ┌─────────────────┐         ┌─────────────────┐                  │
+│   │  CLAUDE CODE    │ ──────► │  GEMINI 3 PRO   │                  │
+│   │  (DECISOR)      │ consulta│  (ADVISOR)      │                  │
+│   │                 │ ◄────── │                 │                  │
+│   │  - Implementa   │ opiniao │  - Analisa      │                  │
+│   │  - Decide       │         │  - Sugere       │                  │
+│   │  - Executa      │         │  - NAO executa  │                  │
+│   └─────────────────┘         └─────────────────┘                  │
+│          │                                                          │
+│          ▼                                                          │
+│   ┌─────────────────┐                                              │
+│   │ DECISAO FINAL   │ ◄── Claude SEMPRE tem autoridade final       │
+│   │ (CLAUDE CODE)   │                                              │
+│   └─────────────────┘                                              │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 **Principio Fundamental:**
@@ -639,19 +639,19 @@ docker-compose restart scrapers
 
 ```
 1. Claude inicia Sequential Thinking
-   |
+   ↓
 2. Durante analise, Claude identifica necessidade de segunda opiniao
-   |
+   ↓
 3. Claude formula pergunta ESPECIFICA e CONTEXTUALIZADA para Gemini
-   |
+   ↓
 4. Gemini retorna analise/sugestao
-   |
+   ↓
 5. Claude AVALIA criticamente a resposta considerando limitacoes
-   |
+   ↓
 6. Claude DECIDE (aceita, rejeita ou adapta sugestao)
-   |
+   ↓
 7. Claude IMPLEMENTA a decisao final
-   |
+   ↓
 8. Claude valida com Zero Tolerance (tsc, build, lint)
 ```
 
@@ -742,9 +742,9 @@ RESTRICOES:
 
 | Fase | MCPs a Usar | Ordem |
 |------|-------------|-------|
-| Ultra-Thinking | Sequential Thinking + Gemini (se complexo) | 1. ST analisa -> 2. Gemini opina -> 3. ST decide |
-| Analise de Contexto | Filesystem + Gemini | 1. FS le arquivos -> 2. Gemini analisa contexto grande |
-| Code Review | Gemini + Sequential Thinking | 1. Gemini revisa -> 2. ST avalia criticas |
+| Ultra-Thinking | Sequential Thinking + Gemini (se complexo) | 1. ST analisa → 2. Gemini opina → 3. ST decide |
+| Analise de Contexto | Filesystem + Gemini | 1. FS le arquivos → 2. Gemini analisa contexto grande |
+| Code Review | Gemini + Sequential Thinking | 1. Gemini revisa → 2. ST avalia criticas |
 | Validacao | Shell + Chrome DevTools | SEM Gemini (validacao objetiva) |
 | Implementacao | Filesystem + Shell | SEM Gemini (Claude implementa sozinho) |
 
@@ -776,36 +776,36 @@ RESTRICOES:
 
 ### Core Documentation (Raiz do Projeto)
 
-- **README.md** - Overview do projeto, quick start, stack tecnologico, installation guide
+- **README.md** - Overview do projeto, quick start, stack tecnológico, installation guide
 - **ARCHITECTURE.md** - Arquitetura completa, fluxos, onde armazenar novos dados
 - **DATABASE_SCHEMA.md** - Schema completo, relacionamentos, indexes
-- **INSTALL.md** - Instalacao completa (Docker, portas, env vars)
-- **TROUBLESHOOTING.md** - 16+ problemas comuns com solucoes
-- **ROADMAP.md** - Historico de 60+ fases completas
-- **CHANGELOG.md** - Mudancas notaveis versionadas
-- **INDEX.md** - Indice mestre de toda documentacao (200+ arquivos)
+- **INSTALL.md** - Instalação completa (Docker, portas, env vars)
+- **TROUBLESHOOTING.md** - 16+ problemas comuns com soluções
+- **ROADMAP.md** - Histórico de 60+ fases completas
+- **CHANGELOG.md** - Mudanças notáveis versionadas
+- **INDEX.md** - Índice mestre de toda documentação (200+ arquivos)
 - **KNOWN-ISSUES.md** - Issues conhecidos (resumo executivo)
 - **IMPLEMENTATION_PLAN.md** - Template de planejamento de fases
 - **VALIDACAO_REGRAS_DOCUMENTACAO_2025-11-27.md** - Compliance de regras
-- **VALIDACAO_DOCUMENTACAO_CLAUDE_CODE.md** - Validacao de acessibilidade de docs pelo Claude Code
+- **VALIDACAO_DOCUMENTACAO_CLAUDE_CODE.md** - Validação de acessibilidade de docs pelo Claude Code
 
 ### Python Scrapers Documentation
 
-- **backend/python-scrapers/PLAYWRIGHT_SCRAPER_PATTERN.md** - Template e padrao standardizado (LEITURA OBRIGATORIA)
-- **backend/python-scrapers/VALIDACAO_MIGRACAO_PLAYWRIGHT.md** - Relatorio completo de validacao
-- **backend/python-scrapers/ERROR_137_ANALYSIS.md** - Analise tecnica Exit Code 137 (resolvido)
-- **backend/python-scrapers/MIGRATION_REPORT.md** - Status de migracao de todos scrapers
-- **backend/python-scrapers/SELENIUM_TO_PLAYWRIGHT_MIGRATION.md** - Guia de migracao
+- **backend/python-scrapers/PLAYWRIGHT_SCRAPER_PATTERN.md** - Template e padrão standardizado (LEITURA OBRIGATÓRIA)
+- **backend/python-scrapers/VALIDACAO_MIGRACAO_PLAYWRIGHT.md** - Relatório completo de validação
+- **backend/python-scrapers/ERROR_137_ANALYSIS.md** - Análise técnica Exit Code 137 (resolvido)
+- **backend/python-scrapers/MIGRATION_REPORT.md** - Status de migração de todos scrapers
+- **backend/python-scrapers/SELENIUM_TO_PLAYWRIGHT_MIGRATION.md** - Guia de migração
 
-### Gemini Context Files (Leitura Obrigatoria)
+### Gemini Context Files (Leitura Obrigatória)
 
-- **.gemini/context/conventions.md** - Convencoes de codigo
-- **.gemini/context/financial-rules.md** - Regras de dados financeiros (CRITICO)
-- **.gemini/context/known-issues.md** - Analise tecnica de issues
+- **.gemini/context/conventions.md** - Convenções de código
+- **.gemini/context/financial-rules.md** - Regras de dados financeiros (CRÍTICO)
+- **.gemini/context/known-issues.md** - Análise técnica de issues
 
 ### Process Documentation
 
 - **CHECKLIST_TODO_MASTER.md** - Checklist ultra-robusto antes de cada fase
-- **CHECKLIST_CODE_REVIEW_COMPLETO.md** - Code review obrigatorio
-- **METODOLOGIA_MCPS_INTEGRADA.md** - Integracao MCPs + Ultra-Thinking + TodoWrite
-- **MCPS_USAGE_GUIDE.md** - Guia tecnico dos 8 MCPs
+- **CHECKLIST_CODE_REVIEW_COMPLETO.md** - Code review obrigatório
+- **METODOLOGIA_MCPS_INTEGRADA.md** - Integração MCPs + Ultra-Thinking + TodoWrite
+- **MCPS_USAGE_GUIDE.md** - Guia técnico dos 8 MCPs

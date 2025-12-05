@@ -105,43 +105,64 @@ class BloombergScraper(BaseScraper):
         Extract news articles from the page
 
         OPTIMIZED: Uses BeautifulSoup for local parsing (no await operations)
+
+        Bloomberg Línea uses a link-based structure without traditional article tags.
+        We extract news from anchor elements with meaningful text and news URLs.
         """
         articles = []
+        seen_urls = set()  # Avoid duplicates
 
         try:
             soup = BeautifulSoup(html_content, 'html.parser')
 
-            # Try multiple article selectors
-            article_selectors = [
-                "article",
-                ".article-card",
-                ".story-card",
-                "[data-testid='article']",
-                ".post-item",
-                ".news-item",
-            ]
+            # Bloomberg Línea structure: news are links with text > 20 chars
+            # and URLs containing category paths like /mercados/, /economia/, etc.
+            news_categories = ['/mercados/', '/economia/', '/negocios/', '/politica/', '/tecnologia/']
 
-            article_elements = []
-            for selector in article_selectors:
-                elements = soup.select(selector)
-                if elements:
-                    article_elements = elements
-                    logger.debug(f"Found {len(elements)} articles using selector: {selector}")
-                    break
+            all_links = soup.select('a')
+            logger.debug(f"Found {len(all_links)} total links")
 
-            if not article_elements:
-                logger.warning("No article elements found with any selector")
-                return articles
+            for link in all_links:
+                href = link.get('href', '')
+                text = link.get_text(strip=True)
 
-            # Limit to first 20 articles
-            for element in article_elements[:20]:
-                try:
-                    article_data = self._parse_article(element)
-                    if article_data:
-                        articles.append(article_data)
-                except Exception as e:
-                    logger.debug(f"Error parsing article: {e}")
+                # Filter: must have text > 20 chars and be a news URL (not category root)
+                if not text or len(text) < 20:
                     continue
+
+                # Must be a news URL (contains category but is not just the category)
+                is_news_url = any(cat in href for cat in news_categories)
+                is_category_root = href in news_categories
+
+                if not is_news_url or is_category_root:
+                    continue
+
+                # Avoid duplicates
+                if href in seen_urls:
+                    continue
+                seen_urls.add(href)
+
+                # Build article data
+                article = {
+                    "title": text,
+                    "url": href if href.startswith('http') else f"{self.BASE_URL}{href}",
+                }
+
+                # Try to find parent with date/time info
+                parent = link.parent
+                for _ in range(3):  # Go up 3 levels max
+                    if parent:
+                        time_elem = parent.select_one('time, [datetime], .date, .time')
+                        if time_elem:
+                            article["published_at"] = time_elem.get('datetime') or time_elem.get_text(strip=True)
+                            break
+                        parent = parent.parent
+
+                articles.append(article)
+
+                # Limit to 20 articles
+                if len(articles) >= 20:
+                    break
 
             logger.info(f"Successfully extracted {len(articles)} articles")
 

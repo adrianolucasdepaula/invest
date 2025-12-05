@@ -113,18 +113,30 @@ class FundamenteiScraper(BaseScraper):
             if not self.page:
                 await self.initialize()
 
-            # Build URL
-            url = f"{self.BASE_URL}/acoes/{ticker.upper()}"
-            logger.info(f"Navigating to {url}")
+            data = {
+                "ticker": ticker.upper(),
+                "source": "Fundamentei",
+                "scraped_at": datetime.now().isoformat(),
+                "company_name": None,
+                "price": None,
+                "sector": None,
+                "indicators": {},
+            }
 
-            # Navigate (Playwright)
-            await self.page.goto(url, wait_until="load", timeout=60000)
+            # Step 1: Get company info from main page
+            main_url = f"{self.BASE_URL}/br/{ticker.lower()}"
+            logger.info(f"Navigating to {main_url}")
+
+            await self.page.goto(main_url, wait_until="load", timeout=60000)
             await asyncio.sleep(3)
 
-            # Check if page loaded correctly (more specific check to avoid false positives)
+            # Check if page loaded correctly
             page_source = await self.page.content()
             page_lower = page_source.lower()
+
+            # Check for "page not available" message
             not_found_indicators = [
+                "essa página não está disponível",
                 "página não encontrada",
                 "ação não encontrada",
                 "ativo não encontrado",
@@ -139,15 +151,34 @@ class FundamenteiScraper(BaseScraper):
                     source=self.source,
                 )
 
-            # Extract data
-            data = await self._extract_data(ticker)
+            # Extract company name from main page
+            soup = BeautifulSoup(page_source, 'html.parser')
+            h1 = soup.select_one("h1")
+            if h1:
+                data["company_name"] = h1.get_text().strip()
 
-            if data and (data.get("indicators") or data.get("price")):
+            # Step 2: Get valuation indicators from /valuation page
+            valuation_url = f"{self.BASE_URL}/br/{ticker.lower()}/valuation"
+            logger.info(f"Navigating to {valuation_url}")
+
+            await self.page.goto(valuation_url, wait_until="load", timeout=60000)
+            await asyncio.sleep(3)
+
+            # Extract indicators from valuation page
+            valuation_html = await self.page.content()
+            valuation_soup = BeautifulSoup(valuation_html, 'html.parser')
+
+            indicators = self._extract_valuation_indicators(valuation_soup)
+            if indicators:
+                data["indicators"].update(indicators)
+
+            # Return result
+            if data.get("indicators") or data.get("company_name"):
                 return ScraperResult(
                     success=True,
                     data=data,
                     source=self.source,
-                    metadata={"url": url, "requires_login": True},
+                    metadata={"url": main_url, "requires_login": True},
                 )
 
             return ScraperResult(
@@ -168,7 +199,7 @@ class FundamenteiScraper(BaseScraper):
         """
         Extract fundamental data from page
 
-        OPTIMIZED: Uses single HTML fetch + local parsing (BeautifulSoup)
+        Fundamentei uses Next.js with data in __NEXT_DATA__ script
         """
         try:
             data = {
@@ -181,48 +212,172 @@ class FundamenteiScraper(BaseScraper):
                 "indicators": {},
             }
 
-            # OPTIMIZATION: Get HTML content once and parse locally
+            # Get HTML content
             html_content = await self.page.content()
             soup = BeautifulSoup(html_content, 'html.parser')
 
-            # Extract company name
+            # Extract company name from H1
             try:
-                name_elem = soup.select_one("h1, .company-name, [data-testid='company-name']")
-                if name_elem:
-                    data["company_name"] = name_elem.get_text().strip()
+                h1 = soup.select_one("h1")
+                if h1:
+                    data["company_name"] = h1.get_text().strip()
             except Exception as e:
                 logger.debug(f"Could not extract company name: {e}")
 
-            # Extract price
+            # Try to extract from __NEXT_DATA__ JSON (primary method)
+            next_data = await self._extract_next_data(soup)
+            if next_data:
+                # Extract from Apollo State if available
+                apollo_state = next_data.get("props", {}).get("pageProps", {})
+                if apollo_state:
+                    logger.debug(f"Found pageProps: {list(apollo_state.keys())}")
+
+                # Try to get data from apolloState (contains actual financial data)
+                apollo_data = next_data.get("props", {}).get("apolloState", {})
+                if apollo_data and isinstance(apollo_data, dict):
+                    # apolloState.data contains encoded financial data
+                    data_str = apollo_data.get("data", "")
+                    if data_str:
+                        indicators = self._parse_apollo_data(data_str, ticker)
+                        if indicators:
+                            data["indicators"] = indicators
+
+            # Fallback: try HTML parsing if no JSON data found
+            if not data["indicators"]:
+                indicators = self._extract_indicators(soup)
+                if indicators:
+                    data["indicators"] = indicators
+
+            # Extract price from page (if visible)
             try:
-                price_elem = soup.select_one(".price, .stock-price, [data-testid='price']")
-                if price_elem:
-                    price_text = price_elem.get_text().strip()
-                    data["price"] = self._parse_number(price_text)
+                price_patterns = [
+                    'span[class*="price"]',
+                    'div[class*="price"]',
+                    '[class*="cotacao"]',
+                    '[class*="quote"]'
+                ]
+                for pattern in price_patterns:
+                    price_elem = soup.select_one(pattern)
+                    if price_elem:
+                        price_text = price_elem.get_text().strip()
+                        price = self._parse_number(price_text)
+                        if price and price > 0:
+                            data["price"] = price
+                            break
             except Exception as e:
                 logger.debug(f"Could not extract price: {e}")
 
-            # Extract indicators
-            indicators = self._extract_indicators(soup)
-            if indicators:
-                data["indicators"] = indicators
-
-            # Extract sector/segment
-            try:
-                sector_elem = soup.select_one(".sector, .segment, [data-testid='sector']")
-                if sector_elem:
-                    data["sector"] = sector_elem.get_text().strip()
-            except Exception as e:
-                logger.debug(f"Could not extract sector: {e}")
-
-            return data if (data.get("indicators") or data.get("price")) else None
+            return data if (data.get("indicators") or data.get("company_name")) else None
 
         except Exception as e:
             logger.error(f"Error extracting data: {e}")
             return None
 
+    async def _extract_next_data(self, soup: BeautifulSoup) -> Optional[Dict]:
+        """Extract __NEXT_DATA__ JSON from page"""
+        try:
+            script = soup.select_one('script#__NEXT_DATA__')
+            if script:
+                json_text = script.get_text()
+                return json.loads(json_text)
+        except Exception as e:
+            logger.debug(f"Could not parse __NEXT_DATA__: {e}")
+        return None
+
+    def _parse_apollo_data(self, data_str: str, ticker: str) -> Dict[str, Any]:
+        """
+        Parse encoded Apollo state data
+
+        The apolloState.data is a compressed/encoded string containing financial metrics.
+        We need to look for patterns related to the ticker.
+        """
+        indicators = {}
+
+        try:
+            # The data appears to be a custom encoding
+            # Look for numeric patterns that could be financial data
+            # Common indicators to look for in the decoded data
+
+            # Try to find trailing returns data (common in Fundamentei)
+            # Format: trailing returns with dates and values
+
+            ticker_upper = ticker.upper()
+
+            # Check if ticker appears in data
+            if ticker_upper.lower() in data_str.lower():
+                logger.debug(f"Found ticker {ticker_upper} in Apollo data")
+
+                # Since the data is encoded, we'll need to rely on other methods
+                # The encoding appears to be custom, not standard base64
+                pass
+
+        except Exception as e:
+            logger.debug(f"Error parsing Apollo data: {e}")
+
+        return indicators
+
+    def _extract_valuation_indicators(self, soup: BeautifulSoup) -> Dict[str, Any]:
+        """
+        Extract valuation indicators from Fundamentei /valuation page
+
+        Structure: H2 contains indicator name, H4 in same parent contains value
+        """
+        indicators = {}
+
+        # Map indicator names (as they appear in H2) to output keys
+        indicator_map = {
+            'P/L': 'p_l',
+            'P/VPA': 'p_vp',
+            'P/VP': 'p_vp',
+            'VPA': 'vpa',
+            'LPA': 'lpa',
+            'ROE': 'roe',
+            'ROIC': 'roic',
+            'DY': 'dy',
+            'DIVIDEND YIELD': 'dy',
+            'EV/EBITDA': 'ev_ebitda',
+            'EV/EBIT': 'ev_ebit',
+            'PAYOUT': 'payout',
+            'MARGEM BRUTA': 'margem_bruta',
+            'MARGEM EBITDA': 'margem_ebitda',
+            'MARGEM LÍQUIDA': 'margem_liquida',
+            'PSR': 'psr',
+            'P/EBIT': 'p_ebit',
+            'P/ATIVOS': 'p_ativos',
+            'DÍVIDA LÍQUIDA/PL': 'div_liquida_pl',
+            'DÍV. LÍQUIDA/EBITDA': 'div_liquida_ebitda',
+        }
+
+        try:
+            # Find all H2 elements (indicator names)
+            h2_elements = soup.select('h2')
+
+            for h2 in h2_elements:
+                h2_text = h2.get_text(strip=True).upper()
+
+                for indicator_name, key in indicator_map.items():
+                    if indicator_name in h2_text:
+                        # Found an indicator - get the parent container
+                        parent = h2.parent
+                        if parent:
+                            # Look for H4 in the same parent (contains the value)
+                            h4 = parent.select_one('h4')
+                            if h4:
+                                value_text = h4.get_text(strip=True)
+                                # Parse value
+                                value = self._parse_indicator_value(value_text)
+                                if value is not None and key not in indicators:
+                                    indicators[key] = value
+                                    logger.debug(f"Extracted {indicator_name}: {value}")
+                        break  # Found match, move to next H2
+
+        except Exception as e:
+            logger.error(f"Error extracting valuation indicators: {e}")
+
+        return indicators
+
     def _extract_indicators(self, soup: BeautifulSoup) -> Dict[str, Any]:
-        """Extract financial indicators using BeautifulSoup"""
+        """Extract financial indicators using BeautifulSoup (legacy fallback)"""
         indicators = {}
 
         # Common indicator labels and their keys

@@ -109,9 +109,10 @@ class GoogleFinanceScraper(BaseScraper):
             if not self.page:
                 await self.initialize()
 
-            # Format ticker for Google Finance (BVMF for Brazilian stocks)
+            # Format ticker for Google Finance
+            # Google Finance uses format: TICKER:EXCHANGE (e.g., PETR4:BVMF)
             if ":" not in ticker:
-                formatted_ticker = f"BVMF:{ticker.upper()}"
+                formatted_ticker = f"{ticker.upper()}:BVMF"
             else:
                 formatted_ticker = ticker.upper()
 
@@ -125,13 +126,17 @@ class GoogleFinanceScraper(BaseScraper):
             # OPTIMIZATION: Get HTML once and parse locally with BeautifulSoup
             html_content = await self.page.content()
 
-            # Check if ticker exists
-            html_lower = html_content.lower()
-            if "não encontrado" in html_lower or "not found" in html_lower or "we couldn't find" in html_lower:
-                # Try without BVMF prefix
-                if formatted_ticker.startswith("BVMF:"):
-                    ticker_no_prefix = formatted_ticker.replace("BVMF:", "")
-                    url = f"{self.BASE_URL}/quote/{ticker_no_prefix}"
+            # Check if ticker exists by looking for the price element
+            # Don't check for "not found" text as it may appear in JavaScript/other contexts
+            soup_check = BeautifulSoup(html_content, 'html.parser')
+            price_check = soup_check.select_one("[class*='fxKbKc']")
+
+            if not price_check:
+                # No price element found - try without exchange suffix
+                if ":BVMF" in formatted_ticker:
+                    ticker_only = formatted_ticker.replace(":BVMF", "")
+                    url = f"{self.BASE_URL}/quote/{ticker_only}"
+                    logger.info(f"Retrying with URL: {url}")
                     await self.page.goto(url, wait_until="load", timeout=60000)
                     await asyncio.sleep(2)
                     html_content = await self.page.content()
@@ -202,21 +207,39 @@ class GoogleFinanceScraper(BaseScraper):
                     data["company_name"] = name_elem.get_text().strip()
                     break
 
-            # Current price - div.YMlKec.fxKbKc
-            price_selectors = ["div.YMlKec.fxKbKc", "div[class*='YMlKec']", "[data-last-price]"]
+            # Current price - use specific selector with fxKbKc class (main price display)
+            # IMPORTANT: Use [class*='fxKbKc'] first as it's the specific price element
+            # The generic 'YMlKec' class appears on many elements including market cap
+            price_selectors = [
+                "[class*='fxKbKc']",  # Most specific - main price element
+                "div.YMlKec.fxKbKc",  # Alternative specific selector
+                "[data-last-price]",   # Fallback data attribute
+            ]
             for selector in price_selectors:
                 price_elem = soup.select_one(selector)
                 if price_elem:
                     price_text = price_elem.get_text().strip()
-                    # Remove currency symbols and format
-                    price_text = re.sub(r'[R$\s,]', '', price_text).replace('.', '')
-                    # Handle Brazilian format (123,45 -> 123.45)
+                    logger.debug(f"Price element text: '{price_text}' from selector: {selector}")
+                    # Remove currency symbols (R$) and spaces
+                    price_text = re.sub(r'[R$\s]', '', price_text)
+                    # Handle Brazilian format: 32,63 -> 32.63
+                    # Brazilian uses comma as decimal separator
                     if ',' in price_text:
-                        price_text = price_text.replace(',', '.')
-                    price_match = re.search(r'[\d.]+', price_text)
+                        # If there's a dot before comma, it's thousand separator (1.234,56)
+                        # If no dot, just replace comma with dot (32,63 -> 32.63)
+                        price_text = price_text.replace('.', '').replace(',', '.')
+                    # Extract numeric value
+                    price_match = re.search(r'^[\d.]+$', price_text)
                     if price_match:
-                        data["price"] = float(price_match.group())
-                        break
+                        price_val = float(price_match.group())
+                        # Sanity check - stock prices typically under 1000 BRL
+                        # Market cap values are much larger (billions)
+                        if price_val < 1000:
+                            data["price"] = price_val
+                            logger.debug(f"Extracted price: {price_val}")
+                            break
+                        else:
+                            logger.debug(f"Skipping value {price_val} - likely not a stock price")
 
             # Try data attribute for price
             if not data["price"]:

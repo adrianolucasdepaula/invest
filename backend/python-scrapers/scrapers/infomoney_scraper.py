@@ -158,42 +158,66 @@ class InfoMoneyScraper(BaseScraper):
         Extract news articles from the page
 
         OPTIMIZED: Uses BeautifulSoup for local parsing (no await operations)
+
+        InfoMoney uses link-based structure. Articles are links with
+        infomoney.com.br/mercados/ in URL and meaningful text (> 30 chars).
         """
         articles = []
+        seen_urls = set()  # Avoid duplicates
 
         try:
             soup = BeautifulSoup(html_content, 'html.parser')
 
-            # Try multiple article selectors
-            article_selectors = [
-                "article",
-                ".im-article-card",
-                ".post-item",
-                ".article-item",
-                "[data-article-id]",
-            ]
+            # InfoMoney structure: news are links with domain URL and text > 30 chars
+            # Filter out landing pages and non-article content
+            all_links = soup.select('a')
+            logger.debug(f"Found {len(all_links)} total links")
 
-            article_elements = []
-            for selector in article_selectors:
-                elements = soup.select(selector)
-                if elements:
-                    article_elements = elements
-                    logger.debug(f"Found {len(elements)} articles using selector: {selector}")
-                    break
+            # URLs patterns to exclude
+            exclude_patterns = ['lps.infomoney', '/onde-investir/', '/glossario/', '/calculadora/']
 
-            if not article_elements:
-                logger.warning("No article elements found with any selector")
-                return articles
+            for link in all_links:
+                href = link.get('href', '')
+                text = link.get_text(strip=True)
 
-            # Limit to first 20 articles
-            for element in article_elements[:20]:
-                try:
-                    article_data = self._parse_article(element)
-                    if article_data:
-                        articles.append(article_data)
-                except Exception as e:
-                    logger.debug(f"Error parsing article: {e}")
+                # Skip if no meaningful text
+                if not text or len(text) < 30:
                     continue
+
+                # Must be an infomoney article URL
+                if 'www.infomoney.com.br/' not in href:
+                    continue
+
+                # Skip excluded patterns
+                if any(pattern in href for pattern in exclude_patterns):
+                    continue
+
+                # Avoid duplicates
+                if href in seen_urls:
+                    continue
+                seen_urls.add(href)
+
+                # Build article data
+                article = {
+                    "title": text,
+                    "url": href,
+                }
+
+                # Try to find date from parent elements
+                parent = link.parent
+                for _ in range(4):
+                    if parent:
+                        time_elem = parent.select_one('time, [datetime], .date, .im-date')
+                        if time_elem:
+                            article["published_at"] = time_elem.get('datetime') or time_elem.get_text(strip=True)
+                            break
+                        parent = parent.parent
+
+                articles.append(article)
+
+                # Limit to 20 articles
+                if len(articles) >= 20:
+                    break
 
             logger.info(f"Successfully extracted {len(articles)} articles")
 
