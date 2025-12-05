@@ -7,7 +7,7 @@ const publicRoutes = ['/login', '/register', '/forgot-password', '/auth/google/c
 // Rotas de autenticação que redirecionam para dashboard se já autenticado
 const authRoutes = ['/login', '/register'];
 
-// Matcher para aplicar middleware apenas em rotas específicas
+// Matcher para aplicar proxy apenas em rotas específicas
 export const config = {
   matcher: [
     /*
@@ -22,7 +22,17 @@ export const config = {
   ],
 };
 
-export function middleware(request: NextRequest) {
+/**
+ * Next.js 16 Proxy Function
+ * Replaces the deprecated middleware.ts convention
+ *
+ * Purpose: Authentication routing
+ * - Redirect authenticated users away from login/register
+ * - Redirect unauthenticated users to login
+ *
+ * @see https://nextjs.org/docs/app/api-reference/file-conventions/proxy
+ */
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Verificar se há token de acesso
