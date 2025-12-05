@@ -409,12 +409,17 @@ services:
       - NEXT_PUBLIC_ENABLE_AI_ANALYSIS=${NEXT_PUBLIC_ENABLE_AI_ANALYSIS:-true}
       - NEXT_PUBLIC_ENABLE_REALTIME_DATA=${NEXT_PUBLIC_ENABLE_REALTIME_DATA:-true}
       - NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN=${NEXT_PUBLIC_ENABLE_SOCIAL_LOGIN:-true}
+
+      # Hot Reload Fix (Issue #4) - Better file change detection in Docker
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
     ports:
       - "3100:3000"
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
-      - frontend_next:/app/.next
+      # NOTE: .next cache NOT persisted - rebuilt on container start
+      # This fixes Issue #4 (Frontend Cache inconsistency)
     depends_on:
       backend:
         condition: service_healthy
@@ -502,19 +507,23 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
+  # CRITICAL VOLUMES (backup before removing)
+  postgres_data:      # Database - ALWAYS backup before any destructive operation
     driver: local
-  redis_data:
+  redis_data:         # Cache - Can be recreated without data loss
     driver: local
+
+  # DEVELOPMENT VOLUMES (safe to remove/recreate)
   pgadmin_data:
     driver: local
   backend_node_modules:
     driver: local
   frontend_node_modules:
     driver: local
-  frontend_next:
-    driver: local
+  # NOTE: frontend_next volume REMOVED - Issue #4 fix
+  # .next cache is now ephemeral (rebuilt on container start)
+  # This ensures hot reload works correctly in Docker
   data:
     driver: local
   x11_socket:
-    driver: local  # Compartilhar X11 socket entre scrapers e api-service
+    driver: local  # Share X11 socket between scrapers and api-service

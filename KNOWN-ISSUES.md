@@ -34,65 +34,6 @@ Este documento centraliza **todos os problemas conhecidos** encontrados durante 
 
 ## 🔴 ISSUES ATIVOS (NÃO RESOLVIDOS)
 
-### Issue #4: Frontend Cache - Docker Volume
-
-**Severidade:** 🔴 **CRÍTICA**
-**Status:** ⚠️ **EM ABERTO**
-**Data Identificado:** 2025-11-24
-**Última Atualização:** 2025-11-27
-
-#### Sintomas
-
-- Mudanças em arquivos `.tsx` presentes no filesystem local
-- Container Docker mostra conteúdo **antigo** (`docker exec invest_frontend cat ...`)
-- Browser continua exibindo UI desatualizada
-- Hot reload do Next.js não detecta mudanças
-
-#### Root Cause
-
-1. Volume Docker `frontend_next` cacheia artefatos do build `.next`
-2. Configuração de volume mount causa sincronização inconsistente
-3. Next.js hot reload não funciona corretamente dentro do container
-4. Build artifacts sobrescrevem código fonte montado
-
-#### Workaround Temporário
-
-```bash
-# OPÇÃO 1: Rebuild completo do frontend (mais confiável)
-docker stop invest_frontend
-docker volume rm invest-claude-web_frontend_next
-docker-compose up -d --build frontend
-
-# OPÇÃO 2: Rebuild sem remover volume (mais rápido)
-docker-compose up -d --build frontend
-docker logs invest_frontend --tail 50  # Verificar rebuild
-```
-
-#### Solução Definitiva (PENDENTE)
-
-**Modificar `docker-compose.yml`:**
-
-```yaml
-frontend:
-  volumes:
-    - ./frontend:/app
-    - frontend_node_modules:/app/node_modules
-    # NÃO persistir .next OU limpar regularmente
-    # - frontend_next:/app/.next  # REMOVER ou adicionar limpeza automática
-  environment:
-    - CHOKIDAR_USEPOLLING=true  # Melhor detecção de mudanças
-    - WATCHPACK_POLLING=true     # Polling para detectar mudanças
-```
-
-#### Ação Necessária
-
-- [ ] Testar configuração sem volume `frontend_next`
-- [ ] Validar hot reload funciona corretamente
-- [ ] Documentar tempo de rebuild sem cache persistente
-- [ ] Decidir: remover volume OU adicionar script de limpeza automática
-
----
-
 ### Issue #5: População de Dados Após Database Wipe
 
 **Severidade:** 🔴 **CRÍTICA**
@@ -198,6 +139,7 @@ volumes:
 
 | Issue | Descrição | Severidade | Data Resolução | Documentação |
 |-------|-----------|-----------|----------------|--------------|
+| #4 | Frontend Cache - Docker Volume | 🔴 Crítica | 2025-12-04 | `docker-compose.yml` (volume removed) |
 | #NEW | Validação Visual Final da UI de Opções | 🟡 Média | 2025-12-04 | `VALIDACAO_UI_OPCOES_2025-12-04.md` |
 | #1 | Incorrect Login Selectors (OpcoesScraper) | 🔴 Alta | 2025-11-24 | `.gemini/context/known-issues.md` #1 |
 | #2 | Pagination Only First Page | 🔴 Alta | 2025-11-24 | `.gemini/context/known-issues.md` #2 |
@@ -212,8 +154,8 @@ volumes:
 | #BUG5 | Broken DTO Validation (Sync Bulk) | 🔴 Crítica | 2025-11-25 | `CHANGELOG.md` v1.2.1 |
 | #EXIT137 | Exit Code 137 (SIGKILL) - Python Scrapers | 🔴 Crítica | 2025-11-28 | `ERROR_137_ANALYSIS.md`, `FASE_ATUAL_SUMMARY.md` |
 
-**Total Resolvidos:** 13 issues
-**Taxa de Resolução:** 81% (13/16 issues totais)
+**Total Resolvidos:** 14 issues
+**Taxa de Resolução:** 87.5% (14/16 issues totais)
 
 ---
 
@@ -659,15 +601,15 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 | Categoria | Quantidade | Taxa de Resolução |
 |-----------|-----------|------------------|
 | **Total de Issues Documentados** | 16 | - |
-| **Issues Resolvidos** | 13 | 81% |
-| **Issues Ativos (Em Aberto)** | 2 | 13% |
+| **Issues Resolvidos** | 14 | 87.5% |
+| **Issues Ativos (Em Aberto)** | 1 | 6% |
 | **Issues Comportamento Normal** | 1 | 6% |
 
 ### Por Severidade
 
 | Severidade | Total | Resolvidos | Em Aberto |
 |-----------|-------|-----------|-----------|
-| 🔴 **Crítica** | 9 | 7 | 2 |
+| 🔴 **Crítica** | 9 | 8 | 1 |
 | 🟡 **Média** | 5 | 6 | 0 |
 | 🟢 **Baixa** | 2 | 1 | 0 |
 

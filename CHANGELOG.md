@@ -9,10 +9,18 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Pendente
 
-- Resolução de cache do frontend Docker (Issue #4)
 - População de dados no banco após wipe (Issue #5)
 - FASE 65: Git Workflow Automation (Prioridade 2)
 - FASE 66: Architecture Visual Diagrams (Prioridade 2)
+
+### Fixed
+
+- **Issue #4: Frontend Cache - Docker Volume - RESOLVIDO (2025-12-04)**
+  - Volume `frontend_next` removido do docker-compose.yml
+  - Cache `.next` agora é efêmero (rebuilda no start do container)
+  - Adicionado `CHOKIDAR_USEPOLLING=true` para melhor detecção de mudanças
+  - Adicionado `WATCHPACK_POLLING=true` para hot reload em Docker
+  - Hot reload agora funciona corretamente
 
 ### Validated
 
