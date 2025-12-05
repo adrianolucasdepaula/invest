@@ -1,0 +1,51 @@
+#!/bin/sh
+# Pre-push hook for B3 AI Analysis Platform
+# Validates: Build success (backend + frontend)
+
+echo "🚀 Pre-push validation starting..."
+echo ""
+echo "This may take a few minutes..."
+echo ""
+
+ERRORS=0
+
+# Backend build check
+echo "📦 [Backend] Build validation..."
+cd backend
+BUILD_OUTPUT=$(npm run build 2>&1)
+if [ $? -ne 0 ]; then
+    echo "❌ Backend build FAILED!"
+    echo "$BUILD_OUTPUT" | tail -20
+    ERRORS=$((ERRORS + 1))
+else
+    echo "✅ Backend build: SUCCESS"
+fi
+cd ..
+
+# Frontend build check
+echo ""
+echo "🖥️  [Frontend] Build validation..."
+cd frontend
+BUILD_OUTPUT=$(npm run build 2>&1)
+if [ $? -ne 0 ]; then
+    echo "❌ Frontend build FAILED!"
+    echo "$BUILD_OUTPUT" | tail -20
+    ERRORS=$((ERRORS + 1))
+else
+    echo "✅ Frontend build: SUCCESS"
+fi
+cd ..
+
+# Summary
+echo ""
+echo "=========================================="
+if [ $ERRORS -gt 0 ]; then
+    echo "❌ Pre-push FAILED: $ERRORS error(s)"
+    echo ""
+    echo "Fix the build errors before pushing."
+    echo "To bypass (emergency only): git push --no-verify"
+    exit 1
+else
+    echo "✅ Pre-push PASSED - Ready to push!"
+    echo "=========================================="
+fi

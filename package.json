@@ -1,6 +1,35 @@
 {
   "devDependencies": {
     "@playwright/test": "^1.56.1",
+    "husky": "^9.1.7",
     "socket.io-client": "^4.8.1"
-  }
+  },
+  "name": "invest-claude-web",
+  "version": "1.0.0",
+  "description": "[![Playwright Tests](https://github.com/adrianolucasdepaula/invest/actions/workflows/playwright.yml/badge.svg)](https://github.com/adrianolucasdepaula/invest/actions/workflows/playwright.yml)\r [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)\r [![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)\r [![NestJS](https://img.shields.io/badge/NestJS-10-red.svg)](https://nestjs.com/)",
+  "main": "login.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "dependencies": {
+    "playwright": "^1.56.1",
+    "playwright-core": "^1.56.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adrianolucasdepaula/invest.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/adrianolucasdepaula/invest/issues"
+  },
+  "homepage": "https://github.com/adrianolucasdepaula/invest#readme"
 }

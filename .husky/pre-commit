@@ -1,0 +1,49 @@
+#!/bin/sh
+# Pre-commit hook for B3 AI Analysis Platform
+# Validates: TypeScript (0 errors) in backend and frontend
+
+echo "🔍 Pre-commit validation starting..."
+echo ""
+
+ERRORS=0
+
+# Backend TypeScript check
+echo "📦 [Backend] TypeScript validation..."
+cd backend
+TSC_OUTPUT=$(npx tsc --noEmit 2>&1)
+if echo "$TSC_OUTPUT" | grep -q "error TS"; then
+    echo "❌ Backend TypeScript errors found!"
+    echo "$TSC_OUTPUT" | grep "error TS" | head -5
+    ERRORS=$((ERRORS + 1))
+else
+    echo "✅ Backend TypeScript: 0 errors"
+fi
+cd ..
+
+# Frontend TypeScript check
+echo ""
+echo "🖥️  [Frontend] TypeScript validation..."
+cd frontend
+TSC_OUTPUT=$(npx tsc --noEmit 2>&1)
+if echo "$TSC_OUTPUT" | grep -q "error TS"; then
+    echo "❌ Frontend TypeScript errors found!"
+    echo "$TSC_OUTPUT" | grep "error TS" | head -5
+    ERRORS=$((ERRORS + 1))
+else
+    echo "✅ Frontend TypeScript: 0 errors"
+fi
+cd ..
+
+# Summary
+echo ""
+echo "=========================================="
+if [ $ERRORS -gt 0 ]; then
+    echo "❌ Pre-commit FAILED: $ERRORS error(s)"
+    echo ""
+    echo "Fix the errors above before committing."
+    echo "To bypass (emergency only): git commit --no-verify"
+    exit 1
+else
+    echo "✅ Pre-commit PASSED"
+    echo "=========================================="
+fi

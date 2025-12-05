@@ -325,6 +325,44 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 | `ci` | CI/CD | `ci: Adicionar workflow de testes` |
 | `build` | Build system | `build: Configurar esbuild` |
 
+### Git Hooks (Husky)
+
+O projeto usa **Husky** para automatizar validações antes de commits e pushes.
+
+**Hooks configurados:**
+
+| Hook | Validação | Quando Executa |
+|------|-----------|----------------|
+| `pre-commit` | TypeScript (0 erros) backend + frontend | Antes de cada commit |
+| `commit-msg` | Conventional Commits format | Valida mensagem do commit |
+| `pre-push` | Build completo backend + frontend | Antes de cada push |
+
+**Bypass (apenas emergências):**
+
+```bash
+# Bypass pre-commit/commit-msg
+git commit --no-verify -m "emergency fix"
+
+# Bypass pre-push
+git push --no-verify
+```
+
+**Instalação (automática):**
+
+```bash
+# Hooks são instalados automaticamente via npm prepare
+npm install  # Na raiz do projeto
+```
+
+**Se hooks não funcionarem:**
+
+```bash
+# Reinstalar Husky
+npx husky init
+```
+
+---
+
 ### Pull Requests
 
 **Template obrigatório de PR:**
