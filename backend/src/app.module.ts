@@ -39,6 +39,7 @@ import {
   SyncHistory, // FASE 34.6
   EconomicIndicator, // FASE 2
   TickerChange, // FASE 55
+  IntradayPrice, // FASE 67 - TimescaleDB hypertable (migrations only, no sync)
 } from './database/entities';
 
 @Module({
@@ -74,9 +75,10 @@ import {
           SyncHistory, // FASE 34.6
           EconomicIndicator, // FASE 2
           TickerChange, // FASE 55
+          IntradayPrice, // FASE 67 - TimescaleDB hypertable
         ],
-        synchronize: configService.get('DB_SYNCHRONIZE', false),
-        logging: configService.get('DB_LOGGING', false),
+        synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
+        logging: configService.get('DB_LOGGING', 'false') === 'true',
         ssl: configService.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
       }),
       inject: [ConfigService],
