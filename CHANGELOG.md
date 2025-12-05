@@ -9,9 +9,22 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Pendente
 
-- População de dados no banco após wipe (Issue #5)
 - FASE 65: Git Workflow Automation (Prioridade 2)
 - FASE 66: Architecture Visual Diagrams (Prioridade 2)
+
+### Added
+
+- **Issue #5: Database Backup/Restore Scripts - RESOLVIDO (2025-12-04)**
+  - `scripts/backup-db.ps1` - Script de backup do banco de dados
+    - Suporte para backup full, schema-only, data-only
+    - Limpeza automática de backups antigos (mantém últimos 7)
+    - Validação do container e contagem de tabelas/ativos
+  - `scripts/restore-db.ps1` - Script de restore do banco de dados
+    - Listagem de backups disponíveis
+    - Restore do backup mais recente com `-Latest`
+    - Confirmação de segurança antes do restore
+  - `backups/` - Diretório para armazenamento de backups
+  - Testado com sucesso: 154MB backup com 861 ativos
 
 ### Fixed
 

@@ -34,102 +34,7 @@ Este documento centraliza **todos os problemas conhecidos** encontrados durante 
 
 ## 🔴 ISSUES ATIVOS (NÃO RESOLVIDOS)
 
-### Issue #5: População de Dados Após Database Wipe
-
-**Severidade:** 🔴 **CRÍTICA**
-**Status:** ⚠️ **EM ABERTO**
-**Data Identificado:** 2025-11-24
-**Última Atualização:** 2025-11-27
-
-#### Sintomas
-
-- Executado `docker-compose down -v` (acidentalmente ou intencionalmente)
-- Banco de dados completamente vazio
-- Precisa re-popular **861 ativos B3** + preços históricos
-
-#### Root Cause
-
-1. Comando `docker-compose down -v` remove **TODOS** os volumes
-2. Volume `postgres_data` destruído junto com outros
-3. Não havia sistema de backup automático
-4. Re-população manual é lenta e propensa a erros
-
-#### Workaround Temporário
-
-```bash
-# 1. Recriar containers e schema
-docker-compose up -d --build
-docker exec invest_backend npm run migration:run
-
-# 2. Seed dados básicos (usuário admin)
-docker exec invest_backend npm run seed
-
-# 3. Re-popular assets (LENTO - via UI)
-# Acessar: http://localhost:3100/assets
-# Clicar: "Atualizar Todos" (sincroniza via BRAPI)
-# Aguardar: ~10-15 minutos para 861 ativos
-
-# 4. Re-popular preços históricos (LENTO)
-# Usar endpoint: POST /api/v1/assets/sync-bulk
-# Período: 1986-2025 (pode levar horas)
-```
-
-#### Solução Definitiva (PENDENTE)
-
-**1. Sistema de Backup Automático**
-
-Criar `scripts/backup-db.sh`:
-
-```bash
-#!/bin/bash
-DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR="./backups"
-
-# Criar diretório se não existir
-mkdir -p $BACKUP_DIR
-
-# Backup completo
-docker exec invest_postgres pg_dump -U invest_user invest_db > $BACKUP_DIR/backup_$DATE.sql
-
-# Backup apenas schema (mais rápido)
-docker exec invest_postgres pg_dump -U invest_user -s invest_db > $BACKUP_DIR/schema_$DATE.sql
-
-echo "✅ Backup criado: $BACKUP_DIR/backup_$DATE.sql"
-
-# Manter apenas últimos 7 backups
-ls -t $BACKUP_DIR/backup_*.sql | tail -n +8 | xargs rm -f
-```
-
-**2. Seed Script Completo**
-
-Criar `backend/src/database/seeds/complete-restore.seed.ts`:
-
-```typescript
-// Seed que:
-// 1. Popula 861 assets B3 (all-b3-assets.seed.ts)
-// 2. Popula ticker changes (ticker-changes.seed.ts)
-// 3. Popula usuário admin
-// 4. Dispara sync de preços históricos (via job)
-```
-
-**3. Documentar Volumes Críticos**
-
-```yaml
-volumes:
-  postgres_data:     # 🔴 CRÍTICO - SEMPRE backup antes de remover
-  redis_data:        # 🟡 Cache - Pode recriar sem perda
-  frontend_next:     # 🟢 Build - Pode limpar
-  frontend_node_modules:  # 🟢 Deps - Pode reinstalar
-  backend_node_modules:   # 🟢 Deps - Pode reinstalar
-```
-
-#### Ação Necessária
-
-- [ ] Criar script `scripts/backup-db.sh`
-- [ ] Configurar cron job para backup diário
-- [ ] Criar seed script `complete-restore.seed.ts`
-- [ ] Documentar procedimento de restore em `TROUBLESHOOTING.md`
-- [ ] Adicionar warnings em `docker-compose.yml` sobre volumes críticos
+*Nenhum issue crítico em aberto no momento.*
 
 ---
 
@@ -139,6 +44,7 @@ volumes:
 
 | Issue | Descrição | Severidade | Data Resolução | Documentação |
 |-------|-----------|-----------|----------------|--------------|
+| #5 | População de Dados Após Database Wipe | 🔴 Crítica | 2025-12-04 | `scripts/backup-db.ps1`, `scripts/restore-db.ps1` |
 | #4 | Frontend Cache - Docker Volume | 🔴 Crítica | 2025-12-04 | `docker-compose.yml` (volume removed) |
 | #NEW | Validação Visual Final da UI de Opções | 🟡 Média | 2025-12-04 | `VALIDACAO_UI_OPCOES_2025-12-04.md` |
 | #1 | Incorrect Login Selectors (OpcoesScraper) | 🔴 Alta | 2025-11-24 | `.gemini/context/known-issues.md` #1 |
@@ -154,8 +60,8 @@ volumes:
 | #BUG5 | Broken DTO Validation (Sync Bulk) | 🔴 Crítica | 2025-11-25 | `CHANGELOG.md` v1.2.1 |
 | #EXIT137 | Exit Code 137 (SIGKILL) - Python Scrapers | 🔴 Crítica | 2025-11-28 | `ERROR_137_ANALYSIS.md`, `FASE_ATUAL_SUMMARY.md` |
 
-**Total Resolvidos:** 14 issues
-**Taxa de Resolução:** 87.5% (14/16 issues totais)
+**Total Resolvidos:** 15 issues
+**Taxa de Resolução:** 93.75% (15/16 issues totais)
 
 ---
 
@@ -601,15 +507,15 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 | Categoria | Quantidade | Taxa de Resolução |
 |-----------|-----------|------------------|
 | **Total de Issues Documentados** | 16 | - |
-| **Issues Resolvidos** | 14 | 87.5% |
-| **Issues Ativos (Em Aberto)** | 1 | 6% |
+| **Issues Resolvidos** | 15 | 93.75% |
+| **Issues Ativos (Em Aberto)** | 0 | 0% |
 | **Issues Comportamento Normal** | 1 | 6% |
 
 ### Por Severidade
 
 | Severidade | Total | Resolvidos | Em Aberto |
 |-----------|-------|-----------|-----------|
-| 🔴 **Crítica** | 9 | 8 | 1 |
+| 🔴 **Crítica** | 9 | 9 | 0 |
 | 🟡 **Média** | 5 | 6 | 0 |
 | 🟢 **Baixa** | 2 | 1 | 0 |
 
