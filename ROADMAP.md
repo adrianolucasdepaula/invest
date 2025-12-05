@@ -2,7 +2,7 @@
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
 **Última Atualização:** 2025-12-04
-**Versão:** 1.7.3
+**Versão:** 1.7.4
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -8981,6 +8981,82 @@ backend/src/database/migrations/1764696740650-AddFieldSourcesToFundamentalData.t
 
 - Issue #9: Docker Volume Sync com Dropbox
 - Issue #10: Cookies BEFORE vs AFTER Navigation
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
+### FASE 65: Git Workflow Automation ✅ 100% COMPLETO (2025-12-04)
+
+**Prioridade:** ⚠️ **IMPORTANTE** (Prioridade 2)
+**Data:** 2025-12-04
+**Tipo:** Developer Experience + Quality Assurance
+**Versão:** 1.7.4
+
+**Objetivo:** Implementar automação de workflow Git com Husky para garantir qualidade do código em cada commit e push.
+
+**Motivação:**
+- Garantir Zero Tolerance Policy (0 erros TypeScript) automaticamente
+- Padronizar mensagens de commit (Conventional Commits)
+- Prevenir pushes com builds quebrados
+- Melhorar developer experience com feedback imediato
+
+**Implementações Concluídas:**
+
+1. **Husky v9.1.7 Instalado:**
+   - Instalação na raiz do projeto (monorepo)
+   - Configuração automática via `npm run prepare`
+   - Compatível com Git Bash no Windows
+
+2. **Pre-commit Hook:**
+   - Valida TypeScript no backend (`npx tsc --noEmit`)
+   - Valida TypeScript no frontend (`npx tsc --noEmit`)
+   - Bloqueia commit se houver erros
+   - Feedback visual com emojis e cores
+
+3. **Commit-msg Hook:**
+   - Valida formato Conventional Commits
+   - Tipos permitidos: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+   - Escopo opcional: `feat(auth):`, `fix(api):`
+   - Mínimo 15 caracteres
+
+4. **Pre-push Hook:**
+   - Valida build do backend (`npm run build`)
+   - Valida build do frontend (`npm run build`)
+   - Bloqueia push se build falhar
+   - Pode levar alguns minutos
+
+**Arquivos Criados:**
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `.husky/pre-commit` | TypeScript validation hook |
+| `.husky/commit-msg` | Conventional Commits validation |
+| `.husky/pre-push` | Build validation before push |
+| `package.json` | +husky dependency, +prepare script |
+
+**Bypass de Emergência:**
+
+```bash
+# Commits urgentes (não recomendado)
+git commit --no-verify -m "hotfix: ..."
+
+# Push urgente (não recomendado)
+git push --no-verify
+```
+
+**Validação:**
+
+- ✅ Pre-commit executado automaticamente
+- ✅ TypeScript backend: 0 erros
+- ✅ TypeScript frontend: 0 erros
+- ✅ Commit message validado
+- ✅ Hooks funcionando no Git Bash Windows
+
+**Documentação Atualizada:**
+
+- `CONTRIBUTING.md` - Seção Git Hooks adicionada
+- `CHANGELOG.md` - FASE 65 documentada
 
 **Status:** ✅ **100% COMPLETO**
 
