@@ -192,40 +192,13 @@ volumes:
 
 ---
 
-### Issue #NEW: Validação Visual Final da UI de Opções
-
-**Severidade:** 🟡 **MÉDIA**
-**Status:** ⚠️ **PENDENTE**
-**Data Identificado:** 2025-11-24
-**Última Atualização:** 2025-11-27
-
-#### Descrição
-
-- Coluna "Opções" implementada no backend e frontend
-- Funcionalidade técnica completa (scraper + filtro)
-- **Falta**: Validação visual final com MCPs (Playwright + Chrome DevTools)
-
-#### Ação Necessária
-
-- [ ] Validar coluna "Opções" aparece na tabela
-- [ ] Validar filtro "Com Opções" funciona corretamente
-- [ ] Validar ícone/badge de opções é claro e intuitivo
-- [ ] Validar responsividade (mobile, tablet)
-- [ ] Validar acessibilidade (screen readers, keyboard navigation)
-- [ ] Screenshots de evidência
-
-#### Arquivo de Validação
-
-Criar: `VALIDACAO_UI_OPCOES_2025-11-27.md`
-
----
-
 ## ✅ ISSUES RESOLVIDOS
 
 ### Resumo de Issues Resolvidos
 
 | Issue | Descrição | Severidade | Data Resolução | Documentação |
 |-------|-----------|-----------|----------------|--------------|
+| #NEW | Validação Visual Final da UI de Opções | 🟡 Média | 2025-12-04 | `VALIDACAO_UI_OPCOES_2025-12-04.md` |
 | #1 | Incorrect Login Selectors (OpcoesScraper) | 🔴 Alta | 2025-11-24 | `.gemini/context/known-issues.md` #1 |
 | #2 | Pagination Only First Page | 🔴 Alta | 2025-11-24 | `.gemini/context/known-issues.md` #2 |
 | #3 | TypeScript Error on Element Click | 🟡 Média | 2025-11-24 | `.gemini/context/known-issues.md` #3 |
@@ -239,8 +212,8 @@ Criar: `VALIDACAO_UI_OPCOES_2025-11-27.md`
 | #BUG5 | Broken DTO Validation (Sync Bulk) | 🔴 Crítica | 2025-11-25 | `CHANGELOG.md` v1.2.1 |
 | #EXIT137 | Exit Code 137 (SIGKILL) - Python Scrapers | 🔴 Crítica | 2025-11-28 | `ERROR_137_ANALYSIS.md`, `FASE_ATUAL_SUMMARY.md` |
 
-**Total Resolvidos:** 12 issues
-**Taxa de Resolução:** 75% (12/16 issues totais)
+**Total Resolvidos:** 13 issues
+**Taxa de Resolução:** 81% (13/16 issues totais)
 
 ---
 
@@ -686,8 +659,8 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 | Categoria | Quantidade | Taxa de Resolução |
 |-----------|-----------|------------------|
 | **Total de Issues Documentados** | 16 | - |
-| **Issues Resolvidos** | 12 | 75% |
-| **Issues Ativos (Em Aberto)** | 3 | 19% |
+| **Issues Resolvidos** | 13 | 81% |
+| **Issues Ativos (Em Aberto)** | 2 | 13% |
 | **Issues Comportamento Normal** | 1 | 6% |
 
 ### Por Severidade
@@ -695,8 +668,8 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 | Severidade | Total | Resolvidos | Em Aberto |
 |-----------|-------|-----------|-----------|
 | 🔴 **Crítica** | 9 | 7 | 2 |
-| 🟡 **Média** | 5 | 5 | 0 |
-| 🟢 **Baixa** | 2 | 1 | 1 |
+| 🟡 **Média** | 5 | 6 | 0 |
+| 🟢 **Baixa** | 2 | 1 | 0 |
 
 ### Tempo Médio de Resolução
 
@@ -754,6 +727,6 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 
 ---
 
-**Última Atualização:** 2025-11-28
+**Última Atualização:** 2025-12-04
 **Próxima Revisão:** Após resolução de issues #4 e #5
-**Responsável:** Claude Code (Sonnet 4.5)
+**Responsável:** Claude Code (Opus 4.5)

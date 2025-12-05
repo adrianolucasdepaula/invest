@@ -11,9 +11,17 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 - Resolução de cache do frontend Docker (Issue #4)
 - População de dados no banco após wipe (Issue #5)
-- Validação visual final da UI de opções
 - FASE 65: Git Workflow Automation (Prioridade 2)
 - FASE 66: Architecture Visual Diagrams (Prioridade 2)
+
+### Validated
+
+- **Issue #NEW: UI de Opções - RESOLVIDO (2025-12-04)**
+  - Coluna "Opções" validada na tabela de ativos
+  - Filtro "Com Opções" funcionando corretamente
+  - Ativos com opções exibidos: ABCB4, ABEV3, AGRO3, etc.
+  - Screenshots de evidência em `docs/screenshots/`
+  - Documentação: `VALIDACAO_UI_OPCOES_2025-12-04.md`
 
 ---
 
