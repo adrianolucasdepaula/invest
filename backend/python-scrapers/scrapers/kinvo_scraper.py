@@ -124,14 +124,18 @@ class KinvoScraper(BaseScraper):
                 self._initialized = True
                 return
 
-            # If not logged in, try credentials
-            if not cookies_loaded:
-                self._credentials = self._load_credentials()
+            # If not logged in (cookies expired or not present), try credentials
+            logger.info("Kinvo - cookies expired or invalid, attempting credential login...")
+            self._credentials = self._load_credentials()
 
-                if self._credentials:
-                    await self._perform_login()
+            if self._credentials:
+                login_success = await self._perform_login()
+                if login_success:
+                    logger.success("Kinvo - logged in with credentials")
                 else:
-                    logger.warning("Kinvo - no credentials found, some features may not be available")
+                    logger.warning("Kinvo - credential login failed")
+            else:
+                logger.warning("Kinvo - no credentials found, some features may not be available")
 
             self._initialized = True
 
