@@ -9757,6 +9757,45 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 
 ---
 
+## FASE 71: Next.js Warnings Fix 🔵 PLANEJADO
+
+**Tipo:** Maintenance/Deprecation Fix
+**Prioridade:** 🟡 MÉDIA
+**Estimativa:** 2-4h
+
+**Objetivo:** Resolver warnings de deprecação do Next.js 16
+
+### Warnings a Resolver
+
+1. **baseline-browser-mapping outdated**
+   - Versão atual: 2.8.32
+   - Versão mais recente: 2.9.2
+   - Comando: `npm i baseline-browser-mapping@latest -D`
+
+2. **middleware → proxy deprecation**
+   - Arquivo: `frontend/src/middleware.ts`
+   - Warning: "The middleware file convention is deprecated"
+   - Ação: Migrar para nova convenção "proxy"
+   - Referência: https://nextjs.org/docs/messages/middleware-to-proxy
+
+### Tarefas
+
+- [ ] Atualizar baseline-browser-mapping para 2.9.2
+- [ ] Pesquisar nova convenção proxy do Next.js 16
+- [ ] Migrar middleware.ts para proxy.ts (se aplicável)
+- [ ] Validar autenticação continua funcionando
+- [ ] TypeScript: 0 erros
+- [ ] Build: 0 warnings
+
+### Impacto
+
+- **Risco:** Baixo (middleware é simples, apenas auth redirect)
+- **Benefício:** Eliminar warnings, manter compatibilidade futura
+
+**Status:** 🔵 **PLANEJADO**
+
+---
+
 ## FASE 73+: Infraestrutura Avancada (Opcional) 🔵 PLANEJADO
 
 **Tipo:** Infrastructure
@@ -9791,10 +9830,11 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 - ✅ FASE 68: FundamentalGrid Frontend (2025-12-04)
 - ✅ FASE 69: Intraday Sync Integration (2025-12-05)
 
-### Fases Planejadas (4 fases)
+### Fases Planejadas (5 fases)
 
 - 🔵 FASE 66: Scrapers Pendentes - Correção OAuth/Login (Prioridade MEDIA)
 - 🔵 FASE 70: Dashboard de Discrepancias (Prioridade ALTA)
+- 🔵 FASE 71: Next.js Warnings Fix (Prioridade MEDIA) ⬅️ NOVO
 - 🔵 FASE 72: AI Sentiment (Gemini) (Prioridade MEDIA)
 - 🔵 FASE 73+: Infraestrutura Avancada (Prioridade BAIXA)
 
@@ -9804,23 +9844,24 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 |------|-----------|------------|--------------|
 | 66 | Scrapers OAuth/Login | 8-12h | Nenhuma |
 | 70 | Dashboard Discrepancias | 8-10h | Nenhuma |
+| 71 | Next.js Warnings Fix | 2-4h | Nenhuma |
 | 72 | AI Sentiment | 12-15h | Scraper noticias (66) |
 | 73+ | Avancado | Variavel | Fases anteriores |
 
-**Total Estimado:** 30-40h para fases planejadas
+**Total Estimado:** 32-44h para fases planejadas
 
 ### Proximos Passos Imediatos
 
-1. **Iniciar FASE 66** - Corrigir scrapers pendentes OAuth/Login
+1. **Rápido:** FASE 71 - Next.js Warnings Fix (2-4h, elimina deprecations)
 2. **Alta prioridade:** FASE 70 - Dashboard de Discrepâncias
-3. **Média prioridade:** FASE 72 - AI Sentiment (Gemini)
+3. **Média prioridade:** FASE 66 - Scrapers OAuth/Login
 
 > **Nota:** FASE 67, 68, 69 (TimescaleDB + Intraday Sync) concluídas em 2025-12-04/05
 
 ---
 
 **Ultima Atualizacao:** 2025-12-05
-**Total de Fases:** 67 completas + 4 planejadas = **71 fases**
-**Versao:** 1.7.4
+**Total de Fases:** 69 completas + 5 planejadas = **74 fases**
+**Versao:** 1.7.5
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0
