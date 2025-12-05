@@ -267,6 +267,34 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 ---
 
+### Git Hooks (Husky)
+
+O projeto utiliza **Husky v9** para automatizar validações de qualidade.
+
+**Hooks Configurados:**
+
+| Hook | Validação | Bloqueia se |
+|------|-----------|-------------|
+| `pre-commit` | TypeScript (backend + frontend) | Erros TS encontrados |
+| `commit-msg` | Conventional Commits format | Formato inválido |
+| `pre-push` | Build (backend + frontend) | Build falhar |
+
+**Arquivos:**
+- `.husky/pre-commit` - Executa `npx tsc --noEmit`
+- `.husky/commit-msg` - Valida pattern `^(feat|fix|docs|...):`
+- `.husky/pre-push` - Executa `npm run build`
+
+**Bypass de Emergência:**
+
+```bash
+git commit --no-verify -m "hotfix: ..."  # Pula pre-commit e commit-msg
+git push --no-verify                      # Pula pre-push
+```
+
+**IMPORTANTE:** Bypass só deve ser usado em emergências. Os hooks garantem Zero Tolerance.
+
+---
+
 ### Validação Completa e Robusta
 
 **Para TODA nova funcionalidade:**

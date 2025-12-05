@@ -9531,7 +9531,7 @@ Endpoint e UI para atualizar dados de um ativo individual.
 
 ---
 
-## FASE 64: Migracao Playwright Completa 🔵 PLANEJADO
+## FASE 66: Migracao Playwright Completa 🔵 PLANEJADO
 
 **Tipo:** Technical Debt
 **Prioridade:** 🔴 CRITICA
@@ -9572,7 +9572,7 @@ soup = BeautifulSoup(html_content, 'html.parser')
 
 ---
 
-## FASE 65: TimescaleDB + Dados Intraday 🔵 PLANEJADO
+## FASE 67: TimescaleDB + Dados Intraday 🔵 PLANEJADO
 
 **Tipo:** Infrastructure
 **Prioridade:** 🟢 ALTA
@@ -9582,17 +9582,17 @@ soup = BeautifulSoup(html_content, 'html.parser')
 
 ### Tarefas
 
-- [ ] **65.1.** Adicionar `timescaledb` ao docker-compose.yml
-- [ ] **65.2.** Converter `asset_prices` em Hypertable
-- [ ] **65.3.** Criar Continuous Aggregates (1h, 1d, 1sem)
-- [ ] **65.4.** Endpoint `/market-data/{ticker}/intraday`
-- [ ] **65.5.** Frontend com opcoes de timeframe intraday
+- [ ] **67.1.** Adicionar `timescaledb` ao docker-compose.yml
+- [ ] **67.2.** Converter `asset_prices` em Hypertable
+- [ ] **67.3.** Criar Continuous Aggregates (1h, 1d, 1sem)
+- [ ] **67.4.** Endpoint `/market-data/{ticker}/intraday`
+- [ ] **67.5.** Frontend com opcoes de timeframe intraday
 
 **Status:** 🔵 **PLANEJADO**
 
 ---
 
-## FASE 66: FundamentalGrid Frontend 🔵 PLANEJADO
+## FASE 68: FundamentalGrid Frontend 🔵 PLANEJADO
 
 **Tipo:** Feature
 **Prioridade:** 🟢 ALTA
@@ -9611,7 +9611,7 @@ soup = BeautifulSoup(html_content, 'html.parser')
 
 ---
 
-## FASE 67: Dashboard de Discrepancias 🔵 PLANEJADO
+## FASE 69: Dashboard de Discrepancias 🔵 PLANEJADO
 
 **Tipo:** Feature
 **Prioridade:** 🟢 ALTA
@@ -9631,7 +9631,7 @@ soup = BeautifulSoup(html_content, 'html.parser')
 
 ---
 
-## FASE 68: AI Sentiment (Gemini) 🔵 PLANEJADO
+## FASE 70: AI Sentiment (Gemini) 🔵 PLANEJADO
 
 **Tipo:** Feature + AI
 **Prioridade:** 🟡 MEDIA
@@ -9651,17 +9651,17 @@ soup = BeautifulSoup(html_content, 'html.parser')
 
 ---
 
-## FASE 69+: Infraestrutura Avancada (Opcional) 🔵 PLANEJADO
+## FASE 71+: Infraestrutura Avancada (Opcional) 🔵 PLANEJADO
 
 **Tipo:** Infrastructure
 **Prioridade:** 🔵 BAIXA
 
 ### Sub-Fases
 
-- **69.1. Meilisearch** - Busca textual inteligente (assets, noticias)
-- **69.2. MinIO** - Data Lake para backup de HTML bruto
-- **69.3. Sistema de Alertas** - Notificacoes de preco/indicador
-- **69.4. Opcoes** - Entidade OptionPrice + cadeia de opcoes
+- **71.1. Meilisearch** - Busca textual inteligente (assets, noticias)
+- **71.2. MinIO** - Data Lake para backup de HTML bruto
+- **71.3. Sistema de Alertas** - Notificacoes de preco/indicador
+- **71.4. Opcoes** - Entidade OptionPrice + cadeia de opcoes
 
 **Status:** 🔵 **PLANEJADO (OPCIONAL)**
 
@@ -9669,7 +9669,7 @@ soup = BeautifulSoup(html_content, 'html.parser')
 
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (63 fases)
+### Fases Completas (65 fases)
 
 - ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
 - ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
@@ -9679,39 +9679,41 @@ soup = BeautifulSoup(html_content, 'html.parser')
 - ✅ FASE 61: Evolucao Sistema Coleta de Dados (2025-12-01)
 - ✅ FASE 62: MCP Gemini Advisor Integration (2025-12-02)
 - ✅ FASE 63: Atualizar Dados Individual por Ativo (2025-12-03)
+- ✅ FASE 64: OAuth/Cookies Scrapers Authentication (2025-12-04)
+- ✅ FASE 65: Git Workflow Automation (2025-12-04)
 
 ### Fases Planejadas (6 fases)
 
-- 🔵 FASE 64: Migracao Playwright Completa (Prioridade CRITICA)
-- 🔵 FASE 65: TimescaleDB + Dados Intraday (Prioridade ALTA)
-- 🔵 FASE 66: FundamentalGrid Frontend (Prioridade ALTA)
-- 🔵 FASE 67: Dashboard de Discrepancias (Prioridade ALTA)
-- 🔵 FASE 68: AI Sentiment (Gemini) (Prioridade MEDIA)
-- 🔵 FASE 69+: Infraestrutura Avancada (Prioridade BAIXA)
+- 🔵 FASE 66: Migracao Playwright Completa (Prioridade CRITICA)
+- 🔵 FASE 67: TimescaleDB + Dados Intraday (Prioridade ALTA)
+- 🔵 FASE 68: FundamentalGrid Frontend (Prioridade ALTA)
+- 🔵 FASE 69: Dashboard de Discrepancias (Prioridade ALTA)
+- 🔵 FASE 70: AI Sentiment (Gemini) (Prioridade MEDIA)
+- 🔵 FASE 71+: Infraestrutura Avancada (Prioridade BAIXA)
 
 ### Cronograma Estimado
 
 | Fase | Descricao | Estimativa | Dependencias |
 |------|-----------|------------|--------------|
-| 64 | Migracao Playwright | 40-60h | Nenhuma |
-| 65 | TimescaleDB + Intraday | 15-20h | Nenhuma |
-| 66 | FundamentalGrid | 6-8h | Scrapers fundamentalistas (64) |
-| 67 | Dashboard Discrepancias | 8-10h | Nenhuma |
-| 68 | AI Sentiment | 12-15h | Scraper noticias (64) |
-| 69+ | Avancado | Variavel | Fases 64-68 |
+| 66 | Migracao Playwright | 40-60h | Nenhuma |
+| 67 | TimescaleDB + Intraday | 15-20h | Nenhuma |
+| 68 | FundamentalGrid | 6-8h | Scrapers fundamentalistas (66) |
+| 69 | Dashboard Discrepancias | 8-10h | Nenhuma |
+| 70 | AI Sentiment | 12-15h | Scraper noticias (66) |
+| 71+ | Avancado | Variavel | Fases 66-70 |
 
-**Total Estimado:** 80-115h para fases 64-68
+**Total Estimado:** 80-115h para fases 66-70
 
 ### Proximos Passos Imediatos
 
-1. **Iniciar FASE 64** - Migracao Playwright (maior bloqueador tecnico)
+1. **Iniciar FASE 66** - Migracao Playwright (maior bloqueador tecnico)
 2. **Em paralelo:** Preparar docker-compose para TimescaleDB
 3. **Apos primeiros 5 scrapers:** Iniciar FundamentalGrid
 
 ---
 
-**Ultima Atualizacao:** 2025-12-03
-**Total de Fases:** 63 completas + 6 planejadas = **69 fases**
-**Versao:** 1.7.2
+**Ultima Atualizacao:** 2025-12-04
+**Total de Fases:** 65 completas + 6 planejadas = **71 fases**
+**Versao:** 1.7.4
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0
