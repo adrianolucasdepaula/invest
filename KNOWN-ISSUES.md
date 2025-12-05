@@ -61,7 +61,8 @@ Este documento centraliza **todos os problemas conhecidos** encontrados durante 
 | #EXIT137 | Exit Code 137 (SIGKILL) - Python Scrapers | 🔴 Crítica | 2025-11-28 | `ERROR_137_ANALYSIS.md`, `FASE_ATUAL_SUMMARY.md` |
 
 **Total Resolvidos:** 15 issues
-**Taxa de Resolução:** 93.75% (15/16 issues totais)
+**Comportamento Normal:** 1 (não é bug, é comportamento esperado - Issue #7)
+**Taxa de Resolução:** 100% (15/15 issues reais)
 
 ---
 
@@ -507,9 +508,9 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 | Categoria | Quantidade | Taxa de Resolução |
 |-----------|-----------|------------------|
 | **Total de Issues Documentados** | 16 | - |
-| **Issues Resolvidos** | 15 | 93.75% |
+| **Issues Resolvidos** | 15 | 100% |
 | **Issues Ativos (Em Aberto)** | 0 | 0% |
-| **Issues Comportamento Normal** | 1 | 6% |
+| **Comportamento Normal (não é bug)** | 1 | N/A |
 
 ### Por Severidade
 
