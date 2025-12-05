@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { HttpModule } from '@nestjs/axios';
 import { ScraperMetric, FundamentalData } from '@database/entities';
 import { FundamentusScraper } from './fundamental/fundamentus.scraper';
 import { BrapiScraper } from './fundamental/brapi.scraper';
@@ -14,7 +15,13 @@ import { ScrapersController } from './scrapers.controller';
 import { RateLimiterService } from './rate-limiter.service'; // ✅ FASE 3
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ScraperMetric, FundamentalData])], // ✅ FASE 4: Added FundamentalData
+  imports: [
+    TypeOrmModule.forFeature([ScraperMetric, FundamentalData]), // ✅ FASE 4: Added FundamentalData
+    HttpModule.register({
+      timeout: 120000, // 2 minutos para fallback Python (múltiplos scrapers)
+      maxRedirects: 3,
+    }),
+  ],
   controllers: [ScrapersController],
   providers: [
     FundamentusScraper,

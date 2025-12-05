@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, IsNull } from 'typeorm';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 import { FundamentusScraper } from './fundamental/fundamentus.scraper';
 import { BrapiScraper } from './fundamental/brapi.scraper';
 import { StatusInvestScraper } from './fundamental/statusinvest.scraper';
@@ -59,10 +61,13 @@ export class ScrapersService {
   private readonly logger = new Logger(ScrapersService.name);
   private readonly minSources: number;
 
+  private readonly pythonApiUrl: string;
+
   constructor(
     private configService: ConfigService,
     @InjectRepository(FundamentalData)
     private fundamentalDataRepository: Repository<FundamentalData>,
+    private httpService: HttpService,
     private fundamentusScraper: FundamentusScraper,
     private brapiScraper: BrapiScraper,
     private statusInvestScraper: StatusInvestScraper,
@@ -74,6 +79,8 @@ export class ScrapersService {
     // FASE 2: Aumentado de 2 para 3 - maior confiança com sistema de consenso
     // Com 6 scrapers ativos, 3 fontes é o mínimo razoável para validação por consenso
     this.minSources = this.configService.get<number>('MIN_DATA_SOURCES', 3);
+    // URL da API Python para fallback
+    this.pythonApiUrl = this.configService.get<string>('PYTHON_API_URL', 'http://localhost:8000');
   }
 
   /**
@@ -125,13 +132,62 @@ export class ScrapersService {
       `[SCRAPE] ${ticker}: Collected from ${successfulResults.length}/${scrapers.length} sources`,
     );
 
-    if (successfulResults.length < this.minSources) {
+    // ✅ FASE 3: Cross-validate inicial para detectar discrepâncias
+    const initialValidation = this.crossValidateData(successfulResults, rawSourcesData);
+
+    // Detectar se precisa de fallback Python
+    const needsFallbackDueToSources = successfulResults.length < this.minSources;
+    const needsFallbackDueToDiscrepancy = this.hasSignificantDiscrepancies(initialValidation);
+
+    if (needsFallbackDueToSources || needsFallbackDueToDiscrepancy) {
+      const reason = needsFallbackDueToSources
+        ? `only ${successfulResults.length} sources (min: ${this.minSources})`
+        : `significant discrepancies detected (confidence: ${(initialValidation.confidence * 100).toFixed(1)}%)`;
+
       this.logger.warn(
-        `[SCRAPE] ${ticker}: Only ${successfulResults.length} sources available, minimum required: ${this.minSources}`,
+        `[SCRAPE] ${ticker}: Activating Python fallback - ${reason}`,
       );
+
+      // Solicitar mais fontes para resolver discrepâncias ou completar mínimo
+      const neededSources = needsFallbackDueToSources
+        ? this.minSources - successfulResults.length
+        : 2; // Pedir 2 fontes extras para resolver discrepâncias
+
+      const pythonResults = await this.runPythonFallbackScrapers(ticker, neededSources);
+
+      // Adicionar resultados do fallback Python
+      for (const pyResult of pythonResults) {
+        // Evitar duplicar fontes que já temos
+        const sourceKey = `python-${pyResult.source.toLowerCase()}`;
+        const alreadyHasSource = rawSourcesData.some(
+          (s) => s.source.toLowerCase().includes(pyResult.source.toLowerCase()),
+        );
+
+        if (!alreadyHasSource) {
+          successfulResults.push({
+            success: true,
+            source: sourceKey,
+            data: pyResult.data,
+            timestamp: new Date(),
+            responseTime: pyResult.execution_time * 1000, // Converter para ms
+          });
+          rawSourcesData.push({
+            source: sourceKey,
+            data: pyResult.data,
+            scrapedAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      this.logger.log(
+        `[SCRAPE] ${ticker}: After Python fallback: ${successfulResults.length} sources total`,
+      );
+
+      // Re-validar com as novas fontes
+      return this.crossValidateData(successfulResults, rawSourcesData);
     }
 
-    return this.crossValidateData(successfulResults, rawSourcesData);
+    return initialValidation;
   }
 
   /**
@@ -732,6 +788,135 @@ export class ScrapersService {
     } catch (error) {
       this.logger.error(`Failed to scrape options data for ${ticker}: ${error.message}`);
       throw error;
+    }
+  }
+
+  /**
+   * FASE 3 - Detecta se há discrepâncias significativas que justificam fallback
+   *
+   * Critérios para acionar fallback por discrepância:
+   * 1. Confidence < 60% (indica baixo consenso entre fontes)
+   * 2. Mais de 30% dos campos têm discrepâncias significativas (>20%)
+   * 3. Campos críticos (P/L, ROE, DY) com divergência > 15%
+   *
+   * @param validation - Resultado da cross-validation inicial
+   * @returns true se há discrepâncias significativas
+   */
+  private hasSignificantDiscrepancies(validation: CrossValidationResult): boolean {
+    // Se confidence já é baixa, precisa de mais fontes
+    if (validation.confidence < 0.6) {
+      this.logger.debug(
+        `[DISCREPANCY] Confidence ${(validation.confidence * 100).toFixed(1)}% < 60%, needs fallback`,
+      );
+      return true;
+    }
+
+    // Analisar fieldSources para discrepâncias
+    if (!validation.fieldSources) {
+      return false;
+    }
+
+    const criticalFields = ['pl', 'pvp', 'roe', 'roic', 'dividendYield', 'margemLiquida'];
+    let fieldsWithHighDiscrepancy = 0;
+    let totalFieldsAnalyzed = 0;
+    let criticalFieldsWithIssue = 0;
+
+    for (const [fieldName, fieldInfo] of Object.entries(validation.fieldSources)) {
+      if (!fieldInfo || fieldInfo.sourcesCount < 2) continue;
+
+      totalFieldsAnalyzed++;
+
+      // Verificar discrepância do campo
+      if (fieldInfo.hasDiscrepancy && fieldInfo.divergentSources) {
+        const maxDeviation = Math.max(
+          ...fieldInfo.divergentSources.map((s: any) => s.deviation || 0),
+        );
+
+        if (maxDeviation > 20) {
+          fieldsWithHighDiscrepancy++;
+        }
+
+        // Verificar campos críticos
+        if (criticalFields.includes(fieldName) && maxDeviation > 15) {
+          criticalFieldsWithIssue++;
+          this.logger.debug(
+            `[DISCREPANCY] Critical field ${fieldName} has ${maxDeviation.toFixed(1)}% deviation`,
+          );
+        }
+      }
+    }
+
+    // Critério: >30% dos campos com discrepância alta OU campos críticos com problema
+    const discrepancyRatio = totalFieldsAnalyzed > 0 ? fieldsWithHighDiscrepancy / totalFieldsAnalyzed : 0;
+
+    if (discrepancyRatio > 0.3) {
+      this.logger.debug(
+        `[DISCREPANCY] ${(discrepancyRatio * 100).toFixed(1)}% of fields have high discrepancy (>30%), needs fallback`,
+      );
+      return true;
+    }
+
+    if (criticalFieldsWithIssue >= 2) {
+      this.logger.debug(
+        `[DISCREPANCY] ${criticalFieldsWithIssue} critical fields have issues, needs fallback`,
+      );
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * FASE 3 - Fallback para scrapers Python quando TypeScript scrapers falham
+   *
+   * Chama a API Python em /api/scrapers/fundamental/{ticker} para obter
+   * dados de fontes adicionais quando os scrapers TypeScript não atingem
+   * o mínimo de fontes requerido.
+   *
+   * @param ticker - Código do ativo (ex: PETR4)
+   * @param minSources - Número mínimo de fontes necessárias
+   * @returns Array de resultados das fontes Python
+   */
+  async runPythonFallbackScrapers(
+    ticker: string,
+    minSources: number,
+  ): Promise<Array<{ source: string; data: any; execution_time: number }>> {
+    this.logger.log(
+      `[PYTHON-FALLBACK] Requesting ${minSources} sources for ${ticker} from Python API`,
+    );
+
+    try {
+      const url = `${this.pythonApiUrl}/api/scrapers/fundamental/${ticker}`;
+      const response = await firstValueFrom(
+        this.httpService.post(url, {
+          min_sources: minSources,
+          timeout_per_scraper: 60,
+        }),
+      );
+
+      const data = response.data;
+
+      if (!data.min_sources_met) {
+        this.logger.warn(
+          `[PYTHON-FALLBACK] ${ticker}: Python API got only ${data.sources_count}/${minSources} sources`,
+        );
+      } else {
+        this.logger.log(
+          `[PYTHON-FALLBACK] ${ticker}: Got ${data.sources_count} sources from Python API in ${data.execution_time}s`,
+        );
+      }
+
+      // Retornar apenas os dados bem-sucedidos
+      return data.data.map((result: any) => ({
+        source: result.source,
+        data: result.data,
+        execution_time: result.execution_time,
+      }));
+    } catch (error) {
+      this.logger.error(
+        `[PYTHON-FALLBACK] ${ticker}: Failed to call Python API - ${error.message}`,
+      );
+      return []; // Retorna array vazio em caso de erro
     }
   }
 

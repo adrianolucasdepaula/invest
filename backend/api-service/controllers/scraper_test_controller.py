@@ -1,6 +1,8 @@
 """
 Scraper Test Controller - Business logic for scraper testing
 Handles all scraper testing operations, health checks, and cookie management
+
+ALL 22 SCRAPERS REGISTERED - 2025-12-05
 """
 import sys
 import asyncio
@@ -13,12 +15,46 @@ from loguru import logger
 # Add python-scrapers to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "python-scrapers"))
 
-# Import ONLY Playwright-migrated scrapers (as of 2025-11-29)
-# Other scrapers are temporarily disabled pending Playwright migration
+# Import ALL Playwright-migrated scrapers (22 total)
 from scrapers import (
-    # ✅ MIGRATED TO PLAYWRIGHT
+    # ==============================
+    # FUNDAMENTAL DATA SCRAPERS (10)
+    # ==============================
     FundamentusScraper,
     BCBScraper,
+    StatusInvestScraper,
+    InvestsiteScraper,
+    Investidor10Scraper,
+    TradingViewScraper,
+    GoogleFinanceScraper,
+    GriffinScraper,
+    CoinMarketCapScraper,
+    OpcoesNetScraper,
+    # ==============================
+    # NEWS SCRAPERS (7)
+    # ==============================
+    BloombergScraper,
+    GoogleNewsScraper,
+    InvestingNewsScraper,
+    ValorScraper,
+    ExameScraper,
+    InfoMoneyScraper,
+    EstadaoScraper,
+    # ==============================
+    # AI SCRAPERS (6)
+    # ==============================
+    ChatGPTScraper,
+    GeminiScraper,
+    DeepSeekScraper,
+    ClaudeScraper,
+    GrokScraper,
+    PerplexityScraper,
+    # ==============================
+    # MARKET DATA SCRAPERS (3)
+    # ==============================
+    YahooFinanceScraper,
+    OplabScraper,
+    KinvoScraper,
 )
 
 # DISABLED: cookie_manager uses Selenium (needs Playwright migration)
@@ -29,22 +65,23 @@ cookie_manager = None  # Placeholder until migration
 class ScraperTestController:
     """Controller for scraper testing operations"""
 
-    # Scraper registry with metadata
-    # TEMPORARY: Only Playwright-migrated scrapers (2025-11-29)
-    # Other 24 scrapers pending migration
+    # ================================================================
+    # SCRAPER REGISTRY - ALL 22 SCRAPERS
+    # ================================================================
     SCRAPERS_REGISTRY = {
-        # ✅ MIGRATED TO PLAYWRIGHT - Fundamental Analysis
+        # ==============================
+        # FUNDAMENTAL DATA SCRAPERS (10)
+        # ==============================
         "FUNDAMENTUS": {
             "class": FundamentusScraper,
             "name": "Fundamentus",
             "source": "FUNDAMENTUS",
             "requires_login": False,
             "category": "fundamental_analysis",
-            "description": "Dados fundamentalistas públicos",
+            "description": "Dados fundamentalistas públicos (38 campos)",
             "url": "https://www.fundamentus.com.br/",
             "status": "active",
         },
-        # ✅ MIGRATED TO PLAYWRIGHT - Official Data
         "BCB": {
             "class": BCBScraper,
             "name": "Banco Central do Brasil",
@@ -55,20 +92,260 @@ class ScraperTestController:
             "url": "https://www.bcb.gov.br/",
             "status": "active",
         },
+        "STATUSINVEST": {
+            "class": StatusInvestScraper,
+            "name": "StatusInvest",
+            "source": "STATUSINVEST",
+            "requires_login": False,
+            "category": "fundamental_analysis",
+            "description": "Dados fundamentalistas completos (17 campos)",
+            "url": "https://statusinvest.com.br/",
+            "status": "active",
+        },
+        "INVESTSITE": {
+            "class": InvestsiteScraper,
+            "name": "Investsite",
+            "source": "INVESTSITE",
+            "requires_login": False,
+            "category": "fundamental_analysis",
+            "description": "Dados fundamentalistas abrangentes (39 campos)",
+            "url": "https://www.investsite.com.br/",
+            "status": "active",
+        },
+        "INVESTIDOR10": {
+            "class": Investidor10Scraper,
+            "name": "Investidor10",
+            "source": "INVESTIDOR10",
+            "requires_login": True,
+            "category": "fundamental_analysis",
+            "description": "Análise fundamentalista e rankings",
+            "url": "https://investidor10.com.br/",
+            "status": "active",
+        },
+        "TRADINGVIEW": {
+            "class": TradingViewScraper,
+            "name": "TradingView",
+            "source": "TRADINGVIEW",
+            "requires_login": False,
+            "category": "technical_analysis",
+            "description": "Análise técnica e indicadores",
+            "url": "https://br.tradingview.com/",
+            "status": "active",
+        },
+        "GOOGLEFINANCE": {
+            "class": GoogleFinanceScraper,
+            "name": "Google Finance",
+            "source": "GOOGLE_FINANCE",
+            "requires_login": False,
+            "category": "market_data",
+            "description": "Cotações real-time e dados de mercado",
+            "url": "https://www.google.com/finance/",
+            "status": "active",
+        },
+        "GRIFFIN": {
+            "class": GriffinScraper,
+            "name": "Griffin",
+            "source": "GRIFFIN",
+            "requires_login": False,
+            "category": "fundamental_analysis",
+            "description": "Dados fundamentalistas e insider trading",
+            "url": "https://griffin.com.br/",
+            "status": "active",
+        },
+        "COINMARKETCAP": {
+            "class": CoinMarketCapScraper,
+            "name": "CoinMarketCap",
+            "source": "COINMARKETCAP",
+            "requires_login": False,
+            "category": "crypto",
+            "description": "Dados de criptomoedas via API",
+            "url": "https://coinmarketcap.com/",
+            "status": "active",
+        },
+        "OPCOESNET": {
+            "class": OpcoesNetScraper,
+            "name": "Opcoes.net",
+            "source": "OPCOES_NET",
+            "requires_login": False,
+            "category": "options",
+            "description": "Dados de opções (calls/puts)",
+            "url": "https://opcoes.net.br/",
+            "status": "active",
+        },
+        # ==============================
+        # NEWS SCRAPERS (7)
+        # ==============================
+        "BLOOMBERG": {
+            "class": BloombergScraper,
+            "name": "Bloomberg",
+            "source": "BLOOMBERG",
+            "requires_login": False,
+            "category": "news",
+            "description": "Notícias financeiras internacionais",
+            "url": "https://www.bloomberg.com/",
+            "status": "active",
+        },
+        "GOOGLENEWS": {
+            "class": GoogleNewsScraper,
+            "name": "Google News",
+            "source": "GOOGLE_NEWS",
+            "requires_login": False,
+            "category": "news",
+            "description": "Agregador de notícias",
+            "url": "https://news.google.com/",
+            "status": "active",
+        },
+        "INVESTINGNEWS": {
+            "class": InvestingNewsScraper,
+            "name": "Investing.com News",
+            "source": "INVESTING_NEWS",
+            "requires_login": False,
+            "category": "news",
+            "description": "Notícias de mercado",
+            "url": "https://br.investing.com/",
+            "status": "active",
+        },
+        "VALOR": {
+            "class": ValorScraper,
+            "name": "Valor Econômico",
+            "source": "VALOR",
+            "requires_login": False,
+            "category": "news",
+            "description": "Notícias econômicas brasileiras",
+            "url": "https://valor.globo.com/",
+            "status": "active",
+        },
+        "EXAME": {
+            "class": ExameScraper,
+            "name": "Exame",
+            "source": "EXAME",
+            "requires_login": False,
+            "category": "news",
+            "description": "Notícias de negócios e investimentos",
+            "url": "https://exame.com/",
+            "status": "active",
+        },
+        "INFOMONEY": {
+            "class": InfoMoneyScraper,
+            "name": "InfoMoney",
+            "source": "INFOMONEY",
+            "requires_login": False,
+            "category": "news",
+            "description": "Portal de notícias financeiras",
+            "url": "https://www.infomoney.com.br/",
+            "status": "active",
+        },
+        "ESTADAO": {
+            "class": EstadaoScraper,
+            "name": "Estadão eInvestidor",
+            "source": "ESTADAO",
+            "requires_login": False,
+            "category": "news",
+            "description": "Notícias de investimentos",
+            "url": "https://einvestidor.estadao.com.br/",
+            "status": "active",
+        },
+        # ==============================
+        # AI SCRAPERS (6)
+        # ==============================
+        "CHATGPT": {
+            "class": ChatGPTScraper,
+            "name": "ChatGPT",
+            "source": "CHATGPT",
+            "requires_login": True,
+            "category": "ai_analysis",
+            "description": "Análise de ações via ChatGPT",
+            "url": "https://chat.openai.com/",
+            "status": "active",
+        },
+        "GEMINI": {
+            "class": GeminiScraper,
+            "name": "Google Gemini",
+            "source": "GEMINI",
+            "requires_login": True,
+            "category": "ai_analysis",
+            "description": "Análise de ações via Gemini",
+            "url": "https://gemini.google.com/",
+            "status": "active",
+        },
+        "DEEPSEEK": {
+            "class": DeepSeekScraper,
+            "name": "DeepSeek",
+            "source": "DEEPSEEK",
+            "requires_login": True,
+            "category": "ai_analysis",
+            "description": "Análise de ações via DeepSeek (requer OAuth)",
+            "url": "https://chat.deepseek.com/",
+            "status": "active",
+        },
+        "CLAUDE": {
+            "class": ClaudeScraper,
+            "name": "Claude",
+            "source": "CLAUDE",
+            "requires_login": True,
+            "category": "ai_analysis",
+            "description": "Análise de ações via Claude (requer OAuth)",
+            "url": "https://claude.ai/",
+            "status": "active",
+        },
+        "GROK": {
+            "class": GrokScraper,
+            "name": "Grok",
+            "source": "GROK",
+            "requires_login": True,
+            "category": "ai_analysis",
+            "description": "Análise de ações via Grok",
+            "url": "https://grok.x.ai/",
+            "status": "active",
+        },
+        "PERPLEXITY": {
+            "class": PerplexityScraper,
+            "name": "Perplexity",
+            "source": "PERPLEXITY",
+            "requires_login": True,
+            "category": "ai_analysis",
+            "description": "Análise de ações via Perplexity",
+            "url": "https://www.perplexity.ai/",
+            "status": "active",
+        },
+        # ==============================
+        # MARKET DATA SCRAPERS (3)
+        # ==============================
+        "YAHOOFINANCE": {
+            "class": YahooFinanceScraper,
+            "name": "Yahoo Finance",
+            "source": "YAHOO_FINANCE",
+            "requires_login": True,
+            "category": "market_data",
+            "description": "Dados de mercado internacionais",
+            "url": "https://finance.yahoo.com/",
+            "status": "active",
+        },
+        "OPLAB": {
+            "class": OplabScraper,
+            "name": "Oplab",
+            "source": "OPLAB",
+            "requires_login": True,
+            "category": "market_data",
+            "description": "Plataforma de análise de opções",
+            "url": "https://oplab.com.br/",
+            "status": "active",
+        },
+        "KINVO": {
+            "class": KinvoScraper,
+            "name": "Kinvo",
+            "source": "KINVO",
+            "requires_login": True,
+            "category": "market_data",
+            "description": "Gestão de carteiras e fundos",
+            "url": "https://www.kinvo.com.br/",
+            "status": "active",
+        },
     }
-
-    # ⏸️ DISABLED SCRAPERS - Pending Playwright migration
-    # 24 scrapers waiting for migration:
-    # - StatusInvest, Investsite, Fundamentei, Investidor10
-    # - Investing.com, ADVFN, GoogleFinance, TradingView
-    # - B3, Griffin, CoinMarketCap, Opcoes.net
-    # - ChatGPT, Gemini, DeepSeek, Claude, Grok
-    # - Bloomberg, GoogleNews, InvestingNews, Valor, Exame, InfoMoney
-    # - Estadão, MaisRetorno
 
     def __init__(self):
         """Initialize controller"""
-        logger.info("ScraperTestController initialized")
+        logger.info(f"ScraperTestController initialized with {len(self.SCRAPERS_REGISTRY)} scrapers")
 
     async def list_scrapers(self, category: Optional[str] = None) -> Dict[str, Any]:
         """

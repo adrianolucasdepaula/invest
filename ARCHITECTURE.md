@@ -216,7 +216,7 @@ export class SyncBulkDto {
 - Chamadas a APIs públicas (BRAPI, etc)
 - Retry logic e error handling
 
-**Scrapers Implementados:**
+**Scrapers Primários (TypeScript - NestJS):**
 
 - Fundamentus (público, sem auth)
 - BRAPI (API token)
@@ -224,6 +224,23 @@ export class SyncBulkDto {
 - Investidor10 (OAuth Google)
 - Fundamentei (OAuth Google)
 - Investsite (público, sem auth)
+
+**Scrapers Fallback (Python - FastAPI) - 26 scrapers:**
+
+Acionados automaticamente quando:
+1. Menos de 3 fontes TypeScript disponíveis
+2. Confidence < 60% (baixo consenso)
+3. >30% dos campos com discrepância > 20%
+4. 2+ campos críticos (P/L, ROE, DY) com desvio > 15%
+
+| Categoria | Scrapers |
+|-----------|----------|
+| Fundamental (10) | FUNDAMENTUS, BCB, STATUSINVEST, INVESTSITE, INVESTIDOR10, TRADINGVIEW, GOOGLEFINANCE, GRIFFIN, COINMARKETCAP, OPCOESNET |
+| News (7) | BLOOMBERG, GOOGLENEWS, INVESTINGNEWS, VALOR, EXAME, INFOMONEY, ESTADAO |
+| AI (6) | CHATGPT, GEMINI, DEEPSEEK, CLAUDE, GROK, PERPLEXITY |
+| Market Data (3) | YAHOOFINANCE, OPLAB, KINVO |
+
+**API Endpoint:** `POST /api/scrapers/fundamental/{ticker}` (porta 8000)
 
 **Tecnologias:**
 

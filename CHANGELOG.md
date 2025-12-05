@@ -13,6 +13,41 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **Scrapers Fallback Integration - COMPLETA (2025-12-05)**
+  - **FASE 1:** 26 Python scrapers registrados na API
+    - Fundamental (5): FUNDAMENTUS, STATUSINVEST, INVESTSITE, INVESTIDOR10, GRIFFIN
+    - Official Data (1): BCB
+    - Technical (1): TRADINGVIEW
+    - Market Data (4): GOOGLEFINANCE, YAHOOFINANCE, OPLAB, KINVO
+    - Crypto (1): COINMARKETCAP
+    - Options (1): OPCOESNET
+    - News (7): BLOOMBERG, GOOGLENEWS, INVESTINGNEWS, VALOR, EXAME, INFOMONEY, ESTADAO
+    - AI Analysis (6): CHATGPT, GEMINI, GROK, DEEPSEEK, CLAUDE, PERPLEXITY
+  - **FASE 2:** Novo endpoint `/api/scrapers/fundamental/{ticker}` (Python API)
+    - Executa scrapers em ordem de prioridade
+    - Garante mínimo de fontes especificado
+    - Retorna dados consolidados
+  - **FASE 3:** Integração NestJS com fallback Python
+    - `HttpModule` adicionado ao `ScrapersModule`
+    - Método `runPythonFallbackScrapers()` em `scrapers.service.ts`
+    - Método `hasSignificantDiscrepancies()` para detectar discrepâncias
+    - Fallback ativado por 4 critérios:
+      1. Menos de 3 fontes TypeScript
+      2. Confidence < 60%
+      3. >30% dos campos com discrepância > 20%
+      4. 2+ campos críticos com desvio > 15%
+  - **FASE 4:** Validação e testes completos
+    - TypeScript 0 erros (backend + frontend)
+    - Endpoint Python testado com VALE3 (3 fontes em 121s)
+    - Conectividade backend→Python verificada via hostname `scrapers:8000`
+
+### Fixed
+
+- **PYTHON_API_URL Hostname Bug (2025-12-05)**
+  - Problema: `PYTHON_API_URL=http://api-service:8000` não funcionava
+  - Causa raiz: `api-service` usa `network_mode: "service:scrapers"`, compartilhando rede
+  - Solução: Alterado para `http://scrapers:8000` em `docker-compose.yml`
+
 - **FASE 65: Git Workflow Automation - COMPLETA (2025-12-04)**
   - Husky v9 instalado para Git Hooks
   - `pre-commit`: Valida TypeScript (0 erros) em backend e frontend

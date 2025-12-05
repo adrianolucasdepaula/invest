@@ -9800,6 +9800,85 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 
 ---
 
+## FASE 72: Scrapers Fallback Integration ✅ 100% COMPLETO
+
+**Tipo:** Feature/Infrastructure
+**Prioridade:** 🔴 ALTA
+**Data Conclusão:** 2025-12-05
+
+**Objetivo:** Garantir sempre ≥3 fontes de dados fundamentalistas integrando scrapers Python como fallback
+
+### Problema Resolvido
+
+- ❌ Se 4+ scrapers TypeScript falham, confidence < 0.5 = FAIL
+- ❌ Assets com dados incompletos (192 assets failed)
+- ❌ Sem mecanismo de fallback quando fontes primárias falham
+
+### Solução Implementada (4 Sub-Fases)
+
+#### FASE 72.1: Registrar Scrapers na API ✅ COMPLETA
+
+26 scrapers Python registrados e testados:
+
+| Categoria | Quantidade | Scrapers |
+|-----------|------------|----------|
+| Fundamental | 5 | FUNDAMENTUS, STATUSINVEST, INVESTSITE, INVESTIDOR10, GRIFFIN |
+| Official Data | 1 | BCB |
+| Technical | 1 | TRADINGVIEW |
+| Market Data | 4 | GOOGLEFINANCE, YAHOOFINANCE, OPLAB, KINVO |
+| Crypto | 1 | COINMARKETCAP |
+| Options | 1 | OPCOESNET |
+| News | 7 | BLOOMBERG, GOOGLENEWS, INVESTINGNEWS, VALOR, EXAME, INFOMONEY, ESTADAO |
+| AI Analysis | 6 | CHATGPT, GEMINI, GROK, DEEPSEEK, CLAUDE, PERPLEXITY |
+
+#### FASE 72.2: Endpoint de Scraping Agregado ✅ COMPLETA
+
+- Novo endpoint: `POST /api/scrapers/fundamental/{ticker}`
+- Executa scrapers em ordem de prioridade até atingir mínimo de fontes
+- Arquivo: `backend/api-service/routes/scraper_test_routes.py`
+
+#### FASE 72.3: Integração NestJS com Fallback ✅ COMPLETA
+
+- `HttpModule` adicionado ao `ScrapersModule` (timeout 120s)
+- `runPythonFallbackScrapers()` em `scrapers.service.ts`
+- `hasSignificantDiscrepancies()` para detectar problemas de qualidade
+- Fallback ativado por **4 critérios**:
+  1. Menos de 3 fontes TypeScript disponíveis
+  2. Confidence < 60%
+  3. >30% dos campos com discrepância > 20%
+  4. 2+ campos críticos (P/L, ROE, DY) com desvio > 15%
+
+#### FASE 72.4: Validação e Testes ✅ COMPLETA
+
+- TypeScript 0 erros (backend + frontend)
+- Endpoint Python testado com VALE3 (3 fontes em 121s)
+- Conectividade backend→Python via hostname `scrapers:8000`
+
+### Arquivos Modificados
+
+- `backend/api-service/routes/scraper_test_routes.py` - Novo endpoint
+- `backend/src/scrapers/scrapers.module.ts` - HttpModule adicionado
+- `backend/src/scrapers/scrapers.service.ts` - Métodos fallback
+- `docker-compose.yml` - PYTHON_API_URL corrigido
+
+### Bug Fix Crítico
+
+- **PYTHON_API_URL Hostname:** Alterado de `http://api-service:8000` para `http://scrapers:8000`
+- **Causa:** `api-service` usa `network_mode: "service:scrapers"`, compartilhando rede
+
+### Validação
+
+- ✅ TypeScript: 0 erros (backend + frontend)
+- ✅ Build: Success (ambos)
+- ✅ Endpoint Python: Testado OK
+- ✅ Conectividade: Backend→Python verificada
+- ✅ Docker: Containers healthy
+
+**Documentação:** `PLANO_INTEGRACAO_SCRAPERS_FALLBACK.md`
+**Status:** ✅ **100% COMPLETO**
+
+---
+
 ## FASE 73+: Infraestrutura Avancada (Opcional) 🔵 PLANEJADO
 
 **Tipo:** Infrastructure
@@ -9818,7 +9897,7 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (70 fases)
+### Fases Completas (71 fases)
 
 - ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
 - ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
@@ -9834,12 +9913,13 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 - ✅ FASE 68: FundamentalGrid Frontend (2025-12-04)
 - ✅ FASE 69: Intraday Sync Integration (2025-12-05)
 - ✅ FASE 71: Next.js Warnings Fix (2025-12-05)
+- ✅ FASE 72: Scrapers Fallback Integration (2025-12-05)
 
 ### Fases Planejadas (4 fases)
 
 - 🔵 FASE 66: Scrapers Pendentes - Correção OAuth/Login (Prioridade MEDIA)
 - 🔵 FASE 70: Dashboard de Discrepancias (Prioridade ALTA)
-- 🔵 FASE 72: AI Sentiment (Gemini) (Prioridade MEDIA)
+- 🔵 FASE 74: AI Sentiment (Gemini) (Prioridade MEDIA)
 - 🔵 FASE 73+: Infraestrutura Avancada (Prioridade BAIXA)
 
 ### Cronograma Estimado
@@ -9848,7 +9928,7 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 |------|-----------|------------|--------------|
 | 66 | Scrapers OAuth/Login | 8-12h | Nenhuma |
 | 70 | Dashboard Discrepancias | 8-10h | Nenhuma |
-| 72 | AI Sentiment | 12-15h | Scraper noticias (66) |
+| 74 | AI Sentiment | 12-15h | Scraper noticias (66) |
 | 73+ | Avancado | Variavel | Fases anteriores |
 
 **Total Estimado:** 28-40h para fases planejadas
@@ -9857,14 +9937,14 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 
 1. **Alta prioridade:** FASE 70 - Dashboard de Discrepâncias
 2. **Média prioridade:** FASE 66 - Scrapers OAuth/Login
-3. **Média prioridade:** FASE 72 - AI Sentiment (Gemini)
+3. **Média prioridade:** FASE 74 - AI Sentiment (Gemini)
 
-> **Nota:** FASE 67, 68, 69, 71 concluídas em 2025-12-05
+> **Nota:** FASE 67, 68, 69, 71, 72 concluídas em 2025-12-05
 
 ---
 
 **Ultima Atualizacao:** 2025-12-05
-**Total de Fases:** 70 completas + 4 planejadas = **74 fases**
-**Versao:** 1.7.6
+**Total de Fases:** 71 completas + 4 planejadas = **75 fases**
+**Versao:** 1.7.7
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

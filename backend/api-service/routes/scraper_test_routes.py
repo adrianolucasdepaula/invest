@@ -96,6 +96,41 @@ class CookiesStatusResponse(BaseModel):
     action_required: str = Field(..., description="Action required message")
 
 
+class FundamentalScrapeRequest(BaseModel):
+    """Request model for fundamental data aggregated scraping"""
+    min_sources: int = Field(
+        3,
+        description="Minimum number of successful sources required",
+        ge=1,
+        le=6
+    )
+    timeout_per_scraper: int = Field(
+        60,
+        description="Timeout per scraper in seconds",
+        ge=10,
+        le=120
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "min_sources": 3,
+                "timeout_per_scraper": 60
+            }
+        }
+
+
+class FundamentalScrapeResponse(BaseModel):
+    """Response model for fundamental data aggregated scraping"""
+    ticker: str = Field(..., description="Stock ticker")
+    sources_count: int = Field(..., description="Number of successful sources")
+    min_sources_met: bool = Field(..., description="Whether minimum sources requirement was met")
+    sources: list = Field(..., description="List of successful source names")
+    failed_sources: list = Field(..., description="List of failed source names")
+    execution_time: float = Field(..., description="Total execution time in seconds")
+    data: list = Field(..., description="Data from each successful source")
+
+
 # Endpoints
 
 @router.get(
@@ -463,6 +498,176 @@ async def get_cookies_status() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post(
+    "/fundamental/{ticker}",
+    response_model=FundamentalScrapeResponse,
+    summary="Scrape fundamental data from multiple sources",
+    description="""
+    Scrape fundamental data for a stock ticker from multiple sources.
+
+    Executes scrapers in priority order until minimum sources requirement is met.
+
+    **Priority Order (Fundamental Scrapers):**
+    1. FUNDAMENTUS - Brazilian fundamental data (38 campos)
+    2. STATUSINVEST - Comprehensive fundamentals (17 campos)
+    3. INVESTSITE - Detailed fundamentals (39 campos)
+    4. INVESTIDOR10 - Rankings and indicators
+    5. GRIFFIN - Insider trading data
+    6. GOOGLEFINANCE - Real-time market data
+
+    **Use Case:**
+    This endpoint is designed for fallback scenarios when TypeScript scrapers
+    in the NestJS backend fail to meet the minimum sources requirement (3).
+    """,
+    responses={
+        200: {
+            "description": "Fundamental data scraped successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "ticker": "PETR4",
+                        "sources_count": 4,
+                        "min_sources_met": True,
+                        "sources": ["FUNDAMENTUS", "STATUSINVEST", "INVESTSITE", "INVESTIDOR10"],
+                        "failed_sources": ["GRIFFIN"],
+                        "execution_time": 25.34,
+                        "data": [
+                            {
+                                "source": "FUNDAMENTUS",
+                                "success": True,
+                                "execution_time": 5.2,
+                                "data": {"ticker": "PETR4", "pl_ratio": 5.2}
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        400: {"description": "Invalid ticker format"},
+        500: {"description": "Server error"}
+    }
+)
+async def scrape_fundamental_data(
+    ticker: str,
+    request: FundamentalScrapeRequest = Body(
+        default=FundamentalScrapeRequest(),
+        example={
+            "min_sources": 3,
+            "timeout_per_scraper": 60
+        }
+    )
+) -> Dict[str, Any]:
+    """
+    Scrape fundamental data from multiple sources with guaranteed minimum sources.
+
+    This endpoint implements the fallback strategy for cross-validation:
+    - Executes scrapers in priority order
+    - Stops when minimum sources requirement is met
+    - Returns both successful and failed sources for debugging
+
+    Args:
+    - ticker: Stock ticker (e.g., 'PETR4', 'VALE3')
+    - min_sources: Minimum number of successful sources required (default: 3)
+    - timeout_per_scraper: Timeout per scraper in seconds (default: 60)
+
+    Returns:
+    - ticker: The requested ticker
+    - sources_count: Number of successful sources
+    - min_sources_met: Whether the minimum was achieved
+    - sources: List of successful source names
+    - failed_sources: List of failed source names
+    - execution_time: Total execution time
+    - data: Array of results from each successful source
+    """
+    import time
+
+    # Validate ticker format
+    ticker = ticker.upper().strip()
+    if not ticker or len(ticker) < 4 or len(ticker) > 6:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid ticker format: {ticker}. Expected 4-6 characters."
+        )
+
+    # Priority order for fundamental scrapers
+    FUNDAMENTAL_SCRAPERS_PRIORITY = [
+        "FUNDAMENTUS",
+        "STATUSINVEST",
+        "INVESTSITE",
+        "INVESTIDOR10",
+        "GRIFFIN",
+        "GOOGLEFINANCE",
+    ]
+
+    logger.info(
+        f"Starting fundamental scrape for {ticker} "
+        f"(min_sources={request.min_sources}, timeout={request.timeout_per_scraper}s)"
+    )
+
+    start_time = time.time()
+    successful_results = []
+    failed_sources = []
+
+    for scraper_name in FUNDAMENTAL_SCRAPERS_PRIORITY:
+        try:
+            logger.info(f"Trying {scraper_name} for {ticker}...")
+            result = await scraper_controller.test_scraper(
+                scraper_name=scraper_name,
+                query=ticker
+            )
+
+            if result.get("success"):
+                successful_results.append({
+                    "source": scraper_name,
+                    "success": True,
+                    "execution_time": result.get("execution_time", 0),
+                    "data": result.get("data", {})
+                })
+                logger.info(
+                    f"✅ {scraper_name} succeeded for {ticker} "
+                    f"({len(successful_results)}/{request.min_sources} sources)"
+                )
+
+                # Check if we have enough sources
+                if len(successful_results) >= request.min_sources:
+                    logger.info(
+                        f"✅ Minimum sources reached ({request.min_sources}). "
+                        f"Stopping early."
+                    )
+                    break
+            else:
+                failed_sources.append(scraper_name)
+                logger.warning(
+                    f"❌ {scraper_name} failed for {ticker}: "
+                    f"{result.get('error', 'Unknown error')}"
+                )
+
+        except Exception as e:
+            failed_sources.append(scraper_name)
+            logger.error(f"❌ {scraper_name} exception for {ticker}: {e}")
+
+    total_time = time.time() - start_time
+    sources_count = len(successful_results)
+    min_sources_met = sources_count >= request.min_sources
+
+    logger.info(
+        f"Fundamental scrape complete for {ticker}: "
+        f"{sources_count}/{request.min_sources} sources "
+        f"({'✅ MET' if min_sources_met else '❌ NOT MET'}) "
+        f"in {total_time:.2f}s"
+    )
+
+    return {
+        "ticker": ticker,
+        "sources_count": sources_count,
+        "min_sources_met": min_sources_met,
+        "sources": [r["source"] for r in successful_results],
+        "failed_sources": failed_sources,
+        "execution_time": round(total_time, 2),
+        "data": successful_results
+    }
+
+
 # Health check endpoint for the API itself
 @router.get(
     "/ping",
@@ -483,7 +688,7 @@ async def get_cookies_status() -> Dict[str, Any]:
         }
     }
 )
-async def ping() -> Dict[str, str]:
+async def ping() -> Dict[str, Any]:
     """
     Simple health check for the API itself
 

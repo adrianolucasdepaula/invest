@@ -138,6 +138,10 @@ export class IsEndYearGreaterThanStartYear implements ValidatorConstraintInterfa
 | Redis | 6479 | localhost:6479 |
 | PgAdmin | 5150 | http://localhost:5150 |
 | noVNC (OAuth) | 6080 | http://localhost:6080 |
+| OAuth API | 8080 | http://localhost:8080/api/oauth |
+| API Service (Python) | 8000 | http://localhost:8000 |
+| Python Technical Analysis | 8001 | http://localhost:8001 |
+| VNC Direct | 5900 | vnc://localhost:5900 |
 
 ## Development Principles
 
