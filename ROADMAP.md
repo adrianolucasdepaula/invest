@@ -9531,42 +9531,48 @@ Endpoint e UI para atualizar dados de um ativo individual.
 
 ---
 
-## FASE 66: Migracao Playwright Completa 🔵 PLANEJADO
+## FASE 66: Scrapers Pendentes - Correção OAuth/Login 🔵 PLANEJADO
 
 **Tipo:** Technical Debt
-**Prioridade:** 🔴 CRITICA
-**Estimativa:** 40-60h
+**Prioridade:** 🟡 MEDIA
+**Estimativa:** 8-12h
 
-**Objetivo:** Migrar todos os 24 scrapers pendentes de Selenium para Playwright
+**Objetivo:** Corrigir os 5 scrapers pendentes que requerem OAuth ou correções específicas.
 
-### Scrapers a Migrar
+**NOTA:** A migração Playwright foi concluída em 2025-12-04 com 28/33 scrapers ativos (91%).
+Ver: `backend/python-scrapers/VALIDACAO_SCRAPERS_2025-12-04.md`
 
-| # | Scraper | Categoria | Complexidade |
-|---|---------|-----------|--------------|
-| 1 | statusinvest_scraper.py | Fundamentalista | Media |
-| 2 | fundamentei_scraper.py | Fundamentalista | Alta |
-| 3 | investidor10_scraper.py | Fundamentalista | Media |
-| 4 | investsite_scraper.py | Fundamentalista | Media |
-| 5 | tradingview_scraper.py | Tecnico | Alta |
-| 6 | investing_scraper.py | Tecnico | Media |
-| 7 | google_finance_scraper.py | Tecnico | Media |
-| 8 | google_news_scraper.py | Noticias | Media |
-| 9-24 | (demais scrapers) | Diversos | Media-Alta |
+### Scrapers Pendentes de Correção
 
-### Padrao Obrigatorio
+| # | Scraper | Problema | Prioridade |
+|---|---------|----------|------------|
+| 1 | FundamenteiScraper | OAuth session expired | Alta |
+| 2 | MaisRetornoScraper | Needs cookies | Media |
+| 3 | B3Scraper | URL needs CVM code | Baixa |
+| 4 | InvestingScraper | Complex login flow | Media |
+| 5 | ADVFNScraper | Partial migration needed | Baixa |
 
-```python
-# Single HTML fetch + BeautifulSoup local parsing
-html_content = await page.content()  # await UNICO
-soup = BeautifulSoup(html_content, 'html.parser')
-```
+### Scrapers AI Pendentes de OAuth
+
+| # | Scraper | Status | Ação Necessária |
+|---|---------|--------|-----------------|
+| 1 | DeepSeekScraper | ⚠️ AUTH | Cookies OAuth Google |
+| 2 | ClaudeScraper | ⚠️ AUTH | Cookies OAuth Google |
+
+### Scrapers Macro (Não Exportados)
+
+| # | Scraper | Status | Uso |
+|---|---------|--------|-----|
+| 1 | FREDScraper | ✅ Migrado | Federal Reserve Economic Data |
+| 2 | ANBIMAScraper | ✅ Migrado | Taxas de referência Brasil |
+| 3 | IPEADATAScraper | ✅ Migrado | Indicadores macroeconômicos |
 
 **Documentacao:** `backend/python-scrapers/PLAYWRIGHT_SCRAPER_PATTERN.md`
 
 **Entregaveis:**
-- [ ] Todos 24 scrapers migrados
-- [ ] Testes unitarios por scraper
-- [ ] main.py atualizado com todos scrapers habilitados
+- [ ] Corrigir FundamenteiScraper (OAuth)
+- [ ] Configurar cookies DeepSeek e Claude
+- [ ] Habilitar scrapers macro se necessário
 
 **Status:** 🔵 **PLANEJADO**
 
@@ -9684,7 +9690,7 @@ soup = BeautifulSoup(html_content, 'html.parser')
 
 ### Fases Planejadas (6 fases)
 
-- 🔵 FASE 66: Migracao Playwright Completa (Prioridade CRITICA)
+- 🔵 FASE 66: Scrapers Pendentes - Correção OAuth/Login (Prioridade MEDIA)
 - 🔵 FASE 67: TimescaleDB + Dados Intraday (Prioridade ALTA)
 - 🔵 FASE 68: FundamentalGrid Frontend (Prioridade ALTA)
 - 🔵 FASE 69: Dashboard de Discrepancias (Prioridade ALTA)
@@ -9695,20 +9701,20 @@ soup = BeautifulSoup(html_content, 'html.parser')
 
 | Fase | Descricao | Estimativa | Dependencias |
 |------|-----------|------------|--------------|
-| 66 | Migracao Playwright | 40-60h | Nenhuma |
+| 66 | Scrapers OAuth/Login | 8-12h | Nenhuma |
 | 67 | TimescaleDB + Intraday | 15-20h | Nenhuma |
 | 68 | FundamentalGrid | 6-8h | Scrapers fundamentalistas (66) |
 | 69 | Dashboard Discrepancias | 8-10h | Nenhuma |
 | 70 | AI Sentiment | 12-15h | Scraper noticias (66) |
 | 71+ | Avancado | Variavel | Fases 66-70 |
 
-**Total Estimado:** 80-115h para fases 66-70
+**Total Estimado:** 50-65h para fases 66-70
 
 ### Proximos Passos Imediatos
 
-1. **Iniciar FASE 66** - Migracao Playwright (maior bloqueador tecnico)
-2. **Em paralelo:** Preparar docker-compose para TimescaleDB
-3. **Apos primeiros 5 scrapers:** Iniciar FundamentalGrid
+1. **Iniciar FASE 66** - Corrigir scrapers pendentes OAuth/Login
+2. **Em paralelo:** FASE 67 - Preparar TimescaleDB para dados intraday
+3. **Alta prioridade:** FASE 68 - FundamentalGrid Frontend (28 scrapers ativos)
 
 ---
 
