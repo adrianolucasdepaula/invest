@@ -3,8 +3,20 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getSyncStatus, startBulkSync, startIndividualSync, getSyncStats } from '../api/data-sync';
-import type { SyncBulkRequestDto, SyncIndividualRequestDto } from '../types/data-sync';
+import {
+  getSyncStatus,
+  startBulkSync,
+  startIndividualSync,
+  getSyncStats,
+  startIntradaySync,
+  startIntradayBulkSync,
+} from '../api/data-sync';
+import type {
+  SyncBulkRequestDto,
+  SyncIndividualRequestDto,
+  SyncIntradayRequestDto,
+  SyncIntradayBulkRequestDto,
+} from '../types/data-sync';
 
 /**
  * Hook para obter status de sincronização de todos os ativos
@@ -137,4 +149,59 @@ export function useSyncHelpers() {
   };
 
   return { refetchSyncStatus };
+}
+
+// ============================================================================
+// FASE 69: Intraday Sync Hooks
+// ============================================================================
+
+/**
+ * Hook para sincronizar dados intraday de um único ticker
+ *
+ * @example
+ * const syncMutation = useStartIntradaySync();
+ * await syncMutation.mutateAsync({
+ *   ticker: 'PETR4',
+ *   timeframe: '1h',
+ *   range: '5d'
+ * });
+ * console.log(syncMutation.data?.recordsSynced); // 120
+ */
+export function useStartIntradaySync() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: SyncIntradayRequestDto) => startIntradaySync(request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sync-status'] });
+    },
+  });
+}
+
+/**
+ * Hook para sincronizar dados intraday em massa
+ *
+ * Comportamento:
+ * 1. Envia requisição POST /sync-intraday-bulk
+ * 2. Backend retorna HTTP 202 Accepted imediatamente
+ * 3. Progresso monitorado via useSyncWebSocket
+ *
+ * @example
+ * const syncMutation = useStartIntradayBulkSync();
+ * await syncMutation.mutateAsync({
+ *   tickers: ['PETR4', 'VALE3', 'ITUB4'],
+ *   timeframe: '1h',
+ *   range: '5d'
+ * });
+ * console.log(syncMutation.data?.estimatedMinutes); // 0.8
+ */
+export function useStartIntradayBulkSync() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: SyncIntradayBulkRequestDto) => startIntradayBulkSync(request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sync-status'] });
+    },
+  });
 }

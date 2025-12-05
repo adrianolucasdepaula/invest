@@ -15,6 +15,12 @@ import { GetPricesDto, GetTechnicalDataDto, TechnicalDataResponseDto } from './d
 import { SyncCotahistDto, SyncCotahistResponseDto } from './dto/sync-cotahist.dto';
 import { SyncStatusResponseDto, SyncBulkDto, SyncBulkResponseDto } from './dto'; // FASE 35
 import { GetIntradayDto, IntradayDataResponseDto, IntradayTimeframeParam, IntradayRangeParam } from './dto'; // FASE 67
+import {
+  SyncIntradayDto,
+  SyncIntradayBulkDto,
+  SyncIntradayResponseDto,
+  SyncIntradayBulkResponseDto,
+} from './dto'; // FASE 69
 
 import { TickerMergeService } from './ticker-merge.service';
 
@@ -319,5 +325,76 @@ export class MarketDataController {
       query.startTime,
       query.endTime,
     );
+  }
+
+  // ============================================================================
+  // FASE 69: Intraday Sync Endpoints
+  // ============================================================================
+
+  /**
+   * FASE 69: Sync intraday data for a single ticker
+   */
+  @Post('sync-intraday')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Sync intraday price data from BRAPI',
+    description:
+      'Fetches intraday price data (1m, 5m, 15m, 30m, 1h, 4h) from BRAPI API and stores in TimescaleDB hypertable. ' +
+      'Uses existing BRAPI scraper with rate limiting. FREE plan: max 3mo range, 10k requests/month.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Intraday data synced successfully',
+    type: SyncIntradayResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid parameters' })
+  @ApiResponse({ status: 500, description: 'Sync failed' })
+  async syncIntraday(@Body() dto: SyncIntradayDto): Promise<SyncIntradayResponseDto> {
+    this.logger.log(`Sync Intraday request: ${dto.ticker} ${dto.timeframe} (range: ${dto.range})`);
+
+    return this.marketDataService.syncIntradayData(dto.ticker, dto.timeframe, dto.range);
+  }
+
+  /**
+   * FASE 69: Bulk sync intraday data for multiple tickers
+   */
+  @Post('sync-intraday-bulk')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({
+    summary: 'Bulk sync intraday data for multiple tickers',
+    description:
+      'Starts bulk intraday sync for up to 10 tickers in background. ' +
+      'Processes sequentially to respect BRAPI rate limits (12s between requests). ' +
+      'Track progress via WebSocket events. Estimated: ~15s per ticker.',
+  })
+  @ApiResponse({
+    status: 202,
+    description: 'Bulk sync started in background',
+    type: SyncIntradayBulkResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid parameters' })
+  @ApiResponse({ status: 500, description: 'Failed to start bulk sync' })
+  async syncIntradayBulk(@Body() dto: SyncIntradayBulkDto): Promise<SyncIntradayBulkResponseDto> {
+    this.logger.log(
+      `Sync Intraday Bulk request: ${dto.tickers.length} tickers (${dto.timeframe}, ${dto.range})`,
+    );
+
+    // Process in background (don't wait)
+    this.marketDataService
+      .syncIntradayBulk(dto.tickers, dto.timeframe, dto.range)
+      .catch((error) => {
+        this.logger.error(`Sync Intraday Bulk background error: ${error.message}`, error.stack);
+      });
+
+    // Return immediately (HTTP 202 Accepted)
+    const estimatedMinutes = (dto.tickers.length * 15) / 60; // ~15s per ticker
+    return {
+      message: 'Intraday sync started in background',
+      totalTickers: dto.tickers.length,
+      timeframe: dto.timeframe || '1h',
+      range: dto.range || '5d',
+      estimatedMinutes: Math.round(estimatedMinutes * 10) / 10,
+      instructions: 'Monitor progress via WebSocket events: sync:progress, sync:completed',
+    };
   }
 }

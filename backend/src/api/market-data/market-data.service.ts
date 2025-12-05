@@ -6,9 +6,16 @@ import { AssetsService } from '../assets/assets.service';
 import { PriceRange } from '../assets/dto/historical-prices-query.dto';
 import { PythonServiceClient } from './clients/python-service.client';
 import { SyncGateway } from './sync.gateway'; // FASE 35
+import { BrapiScraper } from '../../scrapers/fundamental/brapi.scraper'; // FASE 69
 import { PriceDataPoint, TechnicalIndicators } from './interfaces';
 import { TechnicalDataResponseDto } from './dto/technical-data-response.dto';
 import { SyncCotahistResponseDto } from './dto/sync-cotahist.dto';
+import {
+  SyncIntradayTimeframe,
+  SyncIntradayRange,
+  SyncIntradayResponseDto,
+  SyncIntradayBulkResponseDto,
+} from './dto/sync-intraday.dto'; // FASE 69
 import {
   Asset,
   AssetPrice,
@@ -18,6 +25,7 @@ import {
   SyncOperationType,
   IntradayPrice,
   IntradayTimeframe,
+  IntradaySource,
 } from '../../database/entities';
 import { IntradayRangeParam, IntradayTimeframeParam, IntradayCandleDto } from './dto';
 
@@ -47,6 +55,7 @@ export class MarketDataService {
     private readonly assetsService: AssetsService,
     private readonly pythonServiceClient: PythonServiceClient,
     private readonly syncGateway: SyncGateway, // FASE 35
+    private readonly brapiScraper: BrapiScraper, // FASE 69: Intraday sync
     @InjectRepository(Asset)
     private readonly assetRepository: Repository<Asset>,
     @InjectRepository(AssetPrice)
@@ -1319,5 +1328,259 @@ export class MarketDataService {
       [IntradayTimeframeParam.H4]: IntradayTimeframe.H4,
     };
     return mapping[param];
+  }
+
+  // ============================================================================
+  // FASE 69: Intraday Sync Methods
+  // ============================================================================
+
+  /**
+   * FASE 69: Sync intraday data from BRAPI to TimescaleDB hypertable
+   *
+   * Fetches high-frequency price data from BRAPI API and stores in intraday_prices.
+   * Uses the existing BrapiScraper which already supports interval parameter.
+   *
+   * @param ticker Ticker symbol (e.g., PETR4)
+   * @param timeframe Candle timeframe (1m, 5m, 15m, 30m, 1h, 4h)
+   * @param range Period range (1d, 5d, 1mo, 3mo)
+   * @returns Sync result with records count and period
+   */
+  async syncIntradayData(
+    ticker: string,
+    timeframe: SyncIntradayTimeframe = SyncIntradayTimeframe.H1,
+    range: SyncIntradayRange = SyncIntradayRange.D5,
+  ): Promise<SyncIntradayResponseDto> {
+    const startTime = Date.now();
+    this.logger.log(`🔄 Sync Intraday: ${ticker} ${timeframe} (range: ${range})`);
+
+    try {
+      // 1. Find or create asset
+      let asset = await this.assetRepository.findOne({ where: { ticker } });
+      if (!asset) {
+        this.logger.log(`Creating new asset: ${ticker}`);
+        asset = this.assetRepository.create({ ticker });
+        await this.assetRepository.save(asset);
+      }
+
+      // 2. Fetch intraday data from BRAPI
+      this.logger.debug(`Fetching BRAPI intraday data: ${ticker} ${timeframe} ${range}`);
+      const brapiData = await this.brapiScraper.getHistoricalPrices(ticker, range, timeframe);
+
+      if (!brapiData || brapiData.length === 0) {
+        this.logger.warn(`No intraday data returned from BRAPI for ${ticker}`);
+        return {
+          ticker,
+          timeframe,
+          recordsSynced: 0,
+          processingTime: (Date.now() - startTime) / 1000,
+          period: { start: '', end: '' },
+          source: 'brapi',
+        };
+      }
+
+      this.logger.log(`✅ BRAPI returned ${brapiData.length} intraday records for ${ticker}`);
+
+      // 3. Transform BRAPI data to IntradayPrice entities
+      const dbTimeframe = this.mapSyncTimeframeToDbEnum(timeframe);
+      const entities = brapiData.map((d: any) => {
+        // BRAPI returns date as Unix timestamp (seconds)
+        const timestamp = new Date(d.date * 1000);
+
+        return this.intradayPriceRepository.create({
+          assetId: asset.id,
+          timestamp,
+          timeframe: dbTimeframe,
+          open: d.open,
+          high: d.high,
+          low: d.low,
+          close: d.close,
+          volume: d.volume,
+          volumeFinancial: null, // BRAPI doesn't provide this
+          numberOfTrades: null, // BRAPI doesn't provide this
+          vwap: null, // BRAPI doesn't provide this
+          source: IntradaySource.BRAPI,
+          collectedAt: new Date(),
+        });
+      });
+
+      // 4. Batch UPSERT to hypertable
+      await this.batchUpsertIntradayPrices(entities);
+
+      // 5. Calculate period
+      const sortedEntities = entities.sort(
+        (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
+      );
+      const periodStart = sortedEntities[0]?.timestamp.toISOString() || '';
+      const periodEnd = sortedEntities[sortedEntities.length - 1]?.timestamp.toISOString() || '';
+
+      const processingTime = (Date.now() - startTime) / 1000;
+      this.logger.log(
+        `✅ Sync Intraday complete: ${ticker} ${timeframe} (${entities.length} records, ${processingTime.toFixed(2)}s)`,
+      );
+
+      return {
+        ticker,
+        timeframe,
+        recordsSynced: entities.length,
+        processingTime,
+        period: { start: periodStart, end: periodEnd },
+        source: 'brapi',
+      };
+    } catch (error: any) {
+      this.logger.error(`Failed to sync intraday for ${ticker}: ${error.message}`);
+      throw new InternalServerErrorException(`Failed to sync intraday data: ${error.message}`);
+    }
+  }
+
+  /**
+   * FASE 69: Bulk sync intraday data for multiple tickers
+   *
+   * Processes tickers sequentially to avoid BRAPI rate limits.
+   * Emits WebSocket events for progress tracking.
+   *
+   * @param tickers List of tickers to sync
+   * @param timeframe Candle timeframe
+   * @param range Period range
+   * @returns Summary of sync operation
+   */
+  async syncIntradayBulk(
+    tickers: string[],
+    timeframe: SyncIntradayTimeframe = SyncIntradayTimeframe.H1,
+    range: SyncIntradayRange = SyncIntradayRange.D5,
+  ): Promise<{ successCount: number; failedTickers: string[]; totalRecords: number }> {
+    const startTime = Date.now();
+    this.logger.log(`🔄 Bulk Intraday Sync: ${tickers.length} tickers (${timeframe}, ${range})`);
+
+    // Emit WebSocket event - sync started
+    this.syncGateway.emitSyncStarted({
+      tickers,
+      totalAssets: tickers.length,
+      startYear: 0, // Not applicable for intraday
+      endYear: 0,
+    });
+
+    const results = {
+      successCount: 0,
+      failedTickers: [] as string[],
+      totalRecords: 0,
+    };
+
+    for (let i = 0; i < tickers.length; i++) {
+      const ticker = tickers[i];
+      const current = i + 1;
+      const total = tickers.length;
+
+      this.logger.log(`📦 Processing intraday ${ticker} (${current}/${total})...`);
+
+      // Emit progress - processing
+      this.syncGateway.emitSyncProgress({
+        ticker,
+        current,
+        total,
+        status: 'processing',
+      });
+
+      try {
+        const result = await this.syncIntradayData(ticker, timeframe, range);
+        results.successCount++;
+        results.totalRecords += result.recordsSynced;
+
+        // Emit progress - success
+        this.syncGateway.emitSyncProgress({
+          ticker,
+          current,
+          total,
+          status: 'success',
+          recordsInserted: result.recordsSynced,
+          duration: Math.round(result.processingTime),
+        });
+      } catch (error: any) {
+        this.logger.error(`Failed to sync intraday for ${ticker}: ${error.message}`);
+        results.failedTickers.push(ticker);
+
+        // Emit progress - failed
+        this.syncGateway.emitSyncProgress({
+          ticker,
+          current,
+          total,
+          status: 'failed',
+          error: error.message,
+        });
+      }
+    }
+
+    const duration = (Date.now() - startTime) / 1000;
+    this.logger.log(
+      `✅ Bulk Intraday Sync completed: ${results.successCount}/${tickers.length} successful (${results.totalRecords} records, ${duration.toFixed(1)}s)`,
+    );
+
+    // Emit WebSocket event - sync completed
+    this.syncGateway.emitSyncCompleted({
+      totalAssets: tickers.length,
+      successCount: results.successCount,
+      failedCount: results.failedTickers.length,
+      duration: Math.round(duration),
+      failedTickers: results.failedTickers.length > 0 ? results.failedTickers : undefined,
+    });
+
+    return results;
+  }
+
+  /**
+   * Map SyncIntradayTimeframe to database IntradayTimeframe enum
+   */
+  private mapSyncTimeframeToDbEnum(timeframe: SyncIntradayTimeframe): IntradayTimeframe {
+    const mapping: Record<SyncIntradayTimeframe, IntradayTimeframe> = {
+      [SyncIntradayTimeframe.M1]: IntradayTimeframe.M1,
+      [SyncIntradayTimeframe.M5]: IntradayTimeframe.M5,
+      [SyncIntradayTimeframe.M15]: IntradayTimeframe.M15,
+      [SyncIntradayTimeframe.M30]: IntradayTimeframe.M30,
+      [SyncIntradayTimeframe.H1]: IntradayTimeframe.H1,
+      [SyncIntradayTimeframe.H4]: IntradayTimeframe.H4,
+    };
+    return mapping[timeframe];
+  }
+
+  /**
+   * Batch UPSERT intraday prices to TimescaleDB hypertable
+   *
+   * Uses INSERT ... ON CONFLICT for efficient upsert.
+   * Processes in batches of 1000 to avoid memory issues.
+   */
+  private async batchUpsertIntradayPrices(entities: IntradayPrice[]): Promise<void> {
+    if (entities.length === 0) {
+      this.logger.warn('No intraday data to upsert');
+      return;
+    }
+
+    const BATCH_SIZE = 1000;
+
+    try {
+      for (let i = 0; i < entities.length; i += BATCH_SIZE) {
+        const batch = entities.slice(i, i + BATCH_SIZE);
+
+        // Use raw query for better control over ON CONFLICT
+        await this.intradayPriceRepository
+          .createQueryBuilder()
+          .insert()
+          .into(IntradayPrice)
+          .values(batch)
+          .orUpdate(
+            ['open', 'high', 'low', 'close', 'volume', 'volume_financial', 'number_of_trades', 'vwap', 'source', 'collected_at'],
+            ['asset_id', 'timestamp', 'timeframe'], // Composite PK
+          )
+          .execute();
+
+        const progress = ((i + batch.length) / entities.length) * 100;
+        this.logger.debug(
+          `📦 Intraday UPSERT progress: ${i + batch.length}/${entities.length} (${progress.toFixed(1)}%)`,
+        );
+      }
+
+      this.logger.log(`✅ Intraday batch UPSERT complete: ${entities.length} records`);
+    } catch (error: any) {
+      this.logger.error(`Intraday batch UPSERT failed: ${error.message}`);
+      throw error;
+    }
   }
 }

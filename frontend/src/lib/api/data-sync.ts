@@ -10,6 +10,10 @@ import type {
   SyncBulkResponseDto,
   SyncIndividualRequestDto,
   SyncIndividualResponseDto,
+  SyncIntradayRequestDto,
+  SyncIntradayResponseDto,
+  SyncIntradayBulkRequestDto,
+  SyncIntradayBulkResponseDto,
 } from '../types/data-sync';
 
 /**
@@ -164,4 +168,57 @@ export async function getSyncStats() {
       leastData: leastData.map((a) => ({ ticker: a.ticker, records: a.recordsLoaded })),
     },
   };
+}
+
+// ============================================================================
+// FASE 69: Intraday Sync API Functions
+// ============================================================================
+
+/**
+ * Sync intraday data for a single ticker
+ *
+ * @param request Ticker with optional timeframe and range
+ * @returns HTTP 200 OK with sync result
+ * @throws AxiosError if validation fails (400) or server error (500)
+ *
+ * @example
+ * const response = await startIntradaySync({
+ *   ticker: 'PETR4',
+ *   timeframe: '1h',
+ *   range: '5d'
+ * });
+ * console.log(response.recordsSynced); // 120
+ */
+export async function startIntradaySync(
+  request: SyncIntradayRequestDto
+): Promise<SyncIntradayResponseDto> {
+  const response = await api.post('/market-data/sync-intraday', request);
+  return response.data;
+}
+
+/**
+ * Start bulk intraday sync for multiple tickers
+ *
+ * @param request Tickers with optional timeframe and range
+ * @returns HTTP 202 Accepted with estimated time
+ * @throws AxiosError if validation fails (400) or server error (500)
+ *
+ * Async Pattern:
+ * 1. Endpoint returns immediately (HTTP 202 Accepted)
+ * 2. Processing continues in background (sequential, ~15s per ticker)
+ * 3. Progress sent via WebSocket
+ *
+ * @example
+ * const response = await startIntradayBulkSync({
+ *   tickers: ['PETR4', 'VALE3', 'ITUB4'],
+ *   timeframe: '1h',
+ *   range: '5d'
+ * });
+ * console.log(response.estimatedMinutes); // 0.8
+ */
+export async function startIntradayBulkSync(
+  request: SyncIntradayBulkRequestDto
+): Promise<SyncIntradayBulkResponseDto> {
+  const response = await api.post('/market-data/sync-intraday-bulk', request);
+  return response.data;
 }

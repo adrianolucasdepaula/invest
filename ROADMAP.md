@@ -1,8 +1,8 @@
 # 🗺️ ROADMAP - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-04
-**Versão:** 1.7.4
+**Última Atualização:** 2025-12-05
+**Versão:** 1.7.5
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -9662,7 +9662,62 @@ Ver: `backend/python-scrapers/VALIDACAO_SCRAPERS_2025-12-04.md`
 
 ---
 
-## FASE 69: Dashboard de Discrepancias 🔵 PLANEJADO
+## FASE 69: Intraday Sync Integration ✅ 100% COMPLETO
+
+**Tipo:** Feature
+**Prioridade:** 🟢 ALTA
+**Data Conclusão:** 2025-12-05
+
+**Objetivo:** Integrar coleta de dados intraday BRAPI com sistema de sync existente
+
+### Implementações
+
+- [x] Injetar BrapiScraper no MarketDataModule
+- [x] Criar DTOs para sync intraday (SyncIntradayDto, SyncIntradayBulkDto)
+- [x] Criar método syncIntradayData() no MarketDataService
+- [x] Criar método syncIntradayBulk() para sync em massa
+- [x] Criar endpoint POST /sync-intraday
+- [x] Criar endpoint POST /sync-intraday-bulk
+- [x] Criar tipos TypeScript no frontend (SyncIntradayRequestDto, etc)
+- [x] Criar API client functions (startIntradaySync, startIntradayBulkSync)
+- [x] Criar React Query hooks (useStartIntradaySync, useStartIntradayBulkSync)
+- [x] Criar componente IntradaySyncButton com modal de configuração
+- [x] Adicionar botão na página /data-management
+
+### Arquitetura
+
+```
+BrapiScraper.getHistoricalPrices(ticker, range, interval)
+    ↓
+MarketDataService.syncIntradayData()
+    ↓
+Batch UPSERT → intraday_prices (TimescaleDB hypertable)
+    ↓
+GET /market-data/:ticker/intraday (leitura dos dados)
+```
+
+### Endpoints Criados
+
+| Endpoint | Método | Descrição |
+|----------|--------|-----------|
+| `/market-data/sync-intraday` | POST | Sync single ticker (HTTP 200) |
+| `/market-data/sync-intraday-bulk` | POST | Sync multiple tickers (HTTP 202) |
+
+### Timeframes Suportados
+
+- 1m, 5m, 15m, 30m, 1h, 4h
+
+### Limitações BRAPI (FREE Plan)
+
+- Range máximo: 3 meses
+- Rate limit: ~12s entre requests (mutex implementado)
+- 10.000 requests/mês
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
+## FASE 70: Dashboard de Discrepancias 🔵 PLANEJADO
 
 **Tipo:** Feature
 **Prioridade:** 🟢 ALTA
@@ -9682,7 +9737,7 @@ Ver: `backend/python-scrapers/VALIDACAO_SCRAPERS_2025-12-04.md`
 
 ---
 
-## FASE 70: AI Sentiment (Gemini) 🔵 PLANEJADO
+## FASE 72: AI Sentiment (Gemini) 🔵 PLANEJADO
 
 **Tipo:** Feature + AI
 **Prioridade:** 🟡 MEDIA
@@ -9702,17 +9757,17 @@ Ver: `backend/python-scrapers/VALIDACAO_SCRAPERS_2025-12-04.md`
 
 ---
 
-## FASE 71+: Infraestrutura Avancada (Opcional) 🔵 PLANEJADO
+## FASE 73+: Infraestrutura Avancada (Opcional) 🔵 PLANEJADO
 
 **Tipo:** Infrastructure
 **Prioridade:** 🔵 BAIXA
 
 ### Sub-Fases
 
-- **71.1. Meilisearch** - Busca textual inteligente (assets, noticias)
-- **71.2. MinIO** - Data Lake para backup de HTML bruto
-- **71.3. Sistema de Alertas** - Notificacoes de preco/indicador
-- **71.4. Opcoes** - Entidade OptionPrice + cadeia de opcoes
+- **73.1. Meilisearch** - Busca textual inteligente (assets, noticias)
+- **73.2. MinIO** - Data Lake para backup de HTML bruto
+- **73.3. Sistema de Alertas** - Notificacoes de preco/indicador
+- **73.4. Opcoes** - Entidade OptionPrice + cadeia de opcoes
 
 **Status:** 🔵 **PLANEJADO (OPCIONAL)**
 
@@ -9720,7 +9775,7 @@ Ver: `backend/python-scrapers/VALIDACAO_SCRAPERS_2025-12-04.md`
 
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (67 fases)
+### Fases Completas (69 fases)
 
 - ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
 - ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
@@ -9734,34 +9789,33 @@ Ver: `backend/python-scrapers/VALIDACAO_SCRAPERS_2025-12-04.md`
 - ✅ FASE 65: Git Workflow Automation (2025-12-04)
 - ✅ FASE 67: TimescaleDB + Dados Intraday (2025-12-05)
 - ✅ FASE 68: FundamentalGrid Frontend (2025-12-04)
+- ✅ FASE 69: Intraday Sync Integration (2025-12-05)
 
 ### Fases Planejadas (4 fases)
 
 - 🔵 FASE 66: Scrapers Pendentes - Correção OAuth/Login (Prioridade MEDIA)
-- 🔵 FASE 69: Dashboard de Discrepancias (Prioridade ALTA)
-- 🔵 FASE 70: AI Sentiment (Gemini) (Prioridade MEDIA)
-- 🔵 FASE 71+: Infraestrutura Avancada (Prioridade BAIXA)
+- 🔵 FASE 70: Dashboard de Discrepancias (Prioridade ALTA)
+- 🔵 FASE 72: AI Sentiment (Gemini) (Prioridade MEDIA)
+- 🔵 FASE 73+: Infraestrutura Avancada (Prioridade BAIXA)
 
 ### Cronograma Estimado
 
 | Fase | Descricao | Estimativa | Dependencias |
 |------|-----------|------------|--------------|
 | 66 | Scrapers OAuth/Login | 8-12h | Nenhuma |
-| 67 | TimescaleDB + Intraday | 15-20h | Nenhuma |
-| 68 | FundamentalGrid | 6-8h | Scrapers fundamentalistas (66) |
-| 69 | Dashboard Discrepancias | 8-10h | Nenhuma |
-| 70 | AI Sentiment | 12-15h | Scraper noticias (66) |
-| 71+ | Avancado | Variavel | Fases 66-70 |
+| 70 | Dashboard Discrepancias | 8-10h | Nenhuma |
+| 72 | AI Sentiment | 12-15h | Scraper noticias (66) |
+| 73+ | Avancado | Variavel | Fases anteriores |
 
-**Total Estimado:** 50-65h para fases 66-70
+**Total Estimado:** 30-40h para fases planejadas
 
 ### Proximos Passos Imediatos
 
 1. **Iniciar FASE 66** - Corrigir scrapers pendentes OAuth/Login
-2. **Alta prioridade:** FASE 69 - Dashboard de Discrepâncias
-3. **Média prioridade:** FASE 70 - AI Sentiment (Gemini)
+2. **Alta prioridade:** FASE 70 - Dashboard de Discrepâncias
+3. **Média prioridade:** FASE 72 - AI Sentiment (Gemini)
 
-> **Nota:** FASE 67 (TimescaleDB) e FASE 68 (FundamentalGrid) concluídas em 2025-12-04/05
+> **Nota:** FASE 67, 68, 69 (TimescaleDB + Intraday Sync) concluídas em 2025-12-04/05
 
 ---
 

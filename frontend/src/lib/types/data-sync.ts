@@ -172,3 +172,74 @@ export interface SyncStatusTableFilters {
   sortBy?: 'ticker' | 'name' | 'recordsLoaded' | 'lastSyncAt';
   sortOrder?: 'asc' | 'desc';
 }
+
+// ============================================================================
+// FASE 69: Intraday Sync Types
+// ============================================================================
+
+/**
+ * Intraday timeframe options for sync
+ */
+export enum SyncIntradayTimeframe {
+  M1 = '1m',
+  M5 = '5m',
+  M15 = '15m',
+  M30 = '30m',
+  H1 = '1h',
+  H4 = '4h',
+}
+
+/**
+ * Range options for intraday sync
+ */
+export enum SyncIntradayRange {
+  D1 = '1d',
+  D5 = '5d',
+  MO1 = '1mo',
+  MO3 = '3mo',
+}
+
+/**
+ * Request for single ticker intraday sync (POST /sync-intraday)
+ */
+export interface SyncIntradayRequestDto {
+  ticker: string;
+  timeframe?: SyncIntradayTimeframe;
+  range?: SyncIntradayRange;
+}
+
+/**
+ * Request for bulk intraday sync (POST /sync-intraday-bulk)
+ */
+export interface SyncIntradayBulkRequestDto {
+  tickers: string[];
+  timeframe?: SyncIntradayTimeframe;
+  range?: SyncIntradayRange;
+}
+
+/**
+ * Response for single ticker intraday sync (HTTP 200 OK)
+ */
+export interface SyncIntradayResponseDto {
+  ticker: string;
+  timeframe: string;
+  recordsSynced: number;
+  processingTime: number;
+  period: {
+    start: string;
+    end: string;
+  };
+  source: string;
+}
+
+/**
+ * Response for bulk intraday sync (HTTP 202 Accepted)
+ */
+export interface SyncIntradayBulkResponseDto {
+  message: string;
+  totalTickers: number;
+  timeframe: string;
+  range: string;
+  estimatedMinutes: number;
+  instructions?: string;
+}
