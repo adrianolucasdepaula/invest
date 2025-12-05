@@ -16,6 +16,7 @@ loguru==0.7.3
 # Web scraping (from python-scrapers)
 # Migrated from Selenium to Playwright (2025-11-28)
 playwright==1.56.0
+playwright-stealth==2.0.0  # Updated to match scrapers container - version 2.0 has Stealth class
 beautifulsoup4==4.14.2
 lxml==6.0.2
 requests==2.32.5

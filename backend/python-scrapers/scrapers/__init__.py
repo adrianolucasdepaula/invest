@@ -38,6 +38,14 @@ from .gemini_scraper import GeminiScraper
 from .deepseek_scraper import DeepSeekScraper
 from .claude_scraper import ClaudeScraper
 from .grok_scraper import GrokScraper
+from .perplexity_scraper import PerplexityScraper
+
+# ==============================
+# MARKET DATA SCRAPERS
+# ==============================
+from .yahoo_finance_scraper import YahooFinanceScraper
+from .oplab_scraper import OplabScraper
+from .kinvo_scraper import KinvoScraper
 
 # ==============================
 # AWAITING OAUTH/FIXES
@@ -74,4 +82,9 @@ __all__ = [
     "DeepSeekScraper",
     "ClaudeScraper",
     "GrokScraper",
+    "PerplexityScraper",
+    # Market Data
+    "YahooFinanceScraper",
+    "OplabScraper",
+    "KinvoScraper",
 ]

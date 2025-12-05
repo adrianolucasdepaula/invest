@@ -2,10 +2,12 @@
 Main entry point for Python Scrapers Service
 
 ALL SCRAPERS MIGRATED TO PLAYWRIGHT - 2025-12-04
+OAuth API added - 2025-12-04
 """
 import asyncio
 import signal
 import sys
+import threading
 from loguru import logger
 from typing import Dict, Type
 
@@ -39,6 +41,11 @@ from scrapers import (
     DeepSeekScraper,
     ClaudeScraper,
     GrokScraper,
+    PerplexityScraper,
+    # Market Data Scrapers
+    YahooFinanceScraper,
+    OplabScraper,
+    KinvoScraper,
 )
 
 
@@ -90,6 +97,14 @@ class ScraperService:
         self.scrapers["DEEPSEEK"] = DeepSeekScraper
         self.scrapers["CLAUDE"] = ClaudeScraper
         self.scrapers["GROK"] = GrokScraper
+        self.scrapers["PERPLEXITY"] = PerplexityScraper
+
+        # ===========================================
+        # MARKET DATA SCRAPERS
+        # ===========================================
+        self.scrapers["YAHOO_FINANCE"] = YahooFinanceScraper
+        self.scrapers["OPLAB"] = OplabScraper  # Options market - no login required
+        self.scrapers["KINVO"] = KinvoScraper  # Portfolio management - credential login
 
         # ===========================================
         # AWAITING FIXES
@@ -103,8 +118,8 @@ class ScraperService:
         logger.info(f"✅ PLAYWRIGHT MIGRATION COMPLETE: Registered {len(self.scrapers)} scrapers")
         logger.info(f"📊 Fundamental: FUNDAMENTUS, BCB, STATUSINVEST, INVESTSITE, INVESTIDOR10, TRADINGVIEW, GOOGLEFINANCE, GRIFFIN, COINMARKETCAP")
         logger.info(f"📰 News: BLOOMBERG, GOOGLENEWS, INVESTING_NEWS, VALOR, EXAME, INFOMONEY, ESTADAO")
-        logger.info(f"🤖 AI: CHATGPT, GEMINI, DEEPSEEK, CLAUDE, GROK")
-        logger.info(f"📈 Options: OPCOES_NET")
+        logger.info(f"🤖 AI: CHATGPT, GEMINI, DEEPSEEK, CLAUDE, GROK, PERPLEXITY")
+        logger.info(f"📈 Market: YAHOO_FINANCE, OPLAB, OPCOES_NET, KINVO")
 
     async def initialize(self):
         """Initialize connections and resources"""
@@ -301,13 +316,36 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 
+def start_oauth_api():
+    """Start OAuth API server in a separate thread"""
+    try:
+        import uvicorn
+        from oauth_api import app
+
+        # Use port 8080 to avoid conflict with api-service (port 8000)
+        logger.info("Starting OAuth API server on port 8080...")
+        uvicorn.run(
+            app,
+            host="0.0.0.0",
+            port=8080,
+            log_level="warning",  # Reduce uvicorn logs
+        )
+    except Exception as e:
+        logger.error(f"Failed to start OAuth API: {e}")
+
+
 def main():
     """Main entry point"""
     # Register signal handlers
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    # Create and run service
+    # Start OAuth API in background thread (port 8080 - separate from api-service)
+    oauth_thread = threading.Thread(target=start_oauth_api, daemon=True)
+    oauth_thread.start()
+    logger.info("OAuth API thread started (port 8080)")
+
+    # Create and run scraper service
     service = ScraperService()
     asyncio.run(service.run())
 

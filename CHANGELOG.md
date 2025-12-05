@@ -12,9 +12,54 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Resolução de cache do frontend Docker (Issue #4)
 - População de dados no banco após wipe (Issue #5)
 - Validação visual final da UI de opções
-- Migração dos 24 scrapers Python restantes (Selenium → Playwright)
-- FASE 64: Git Workflow Automation (Prioridade 2)
-- FASE 65: Architecture Visual Diagrams (Prioridade 2)
+- FASE 65: Git Workflow Automation (Prioridade 2)
+- FASE 66: Architecture Visual Diagrams (Prioridade 2)
+
+---
+
+## [1.7.3] - 2025-12-04
+
+### Added
+
+- **FASE 64 - OAuth/Cookies Scrapers Authentication:**
+  - **Padrão "Cookies BEFORE Navigation":**
+    - Cookies devem ser carregados ANTES de navegar para o site
+    - Crítico para Google OAuth funcionar corretamente
+    - Aplicado em: GeminiScraper, ChatGPTScraper, KinvoScraper
+  - **Novo Scraper - KinvoScraper:**
+    - Login via email/password (credential-based)
+    - Arquivo de credenciais: `/app/data/credentials/kinvo.json`
+    - Scraping de portfolio, assets, performance, history
+    - Persistência de sessão com cookies
+  - **OAuth API (porta 8080):**
+    - FastAPI para gerenciar sessões OAuth
+    - Endpoints para navegação entre sites OAuth
+    - Coleta e persistência de cookies
+    - Separado do api-service (porta 8000)
+  - **Sync Script:**
+    - `sync_cookies.ps1` - Workaround para Docker + Dropbox sync
+
+### Fixed
+
+- **Port Conflict:**
+  - api-service (porta 8000) conflitava com OAuth API
+  - OAuth API movido para porta 8080
+- **playwright-stealth Version Mismatch:**
+  - Containers tinham versões diferentes (1.0.6 vs 2.0.0)
+  - Padronizado para 2.0.0 em todos containers
+- **Cookies Not Authenticating:**
+  - Cookies eram carregados DEPOIS da navegação (não funcionava)
+  - Corrigido: cookies carregados ANTES da navegação
+
+### Improved
+
+- Scrapers OAuth agora funcionam com sessões persistentes
+- 6 scrapers configurados com autenticação (Gemini, ChatGPT, Kinvo, Claude, DeepSeek, Perplexity)
+
+### Documented
+
+- Known Issue #9: Docker Volume Sync com Dropbox
+- Known Issue #10: Cookies BEFORE vs AFTER Navigation pattern
 
 ---
 

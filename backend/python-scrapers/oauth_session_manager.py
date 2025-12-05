@@ -559,9 +559,27 @@ class OAuthSessionManager:
             cookies = await self.context.cookies()
             logger.debug(f"[COLLECT] {len(cookies)} cookies obtidos do navegador")
 
-            # Armazenar cookies do site
+            # Coletar localStorage (importante para sites como DeepSeek que usam tokens no localStorage)
+            try:
+                local_storage_data = await self.page.evaluate('() => JSON.stringify(localStorage)')
+                import json as json_module
+                local_storage = json_module.loads(local_storage_data)
+                logger.debug(f"[COLLECT] {len(local_storage)} itens obtidos do localStorage")
+
+                # Log auth-related keys
+                auth_keys = [k for k in local_storage.keys() if 'token' in k.lower() or 'auth' in k.lower() or 'user' in k.lower()]
+                if auth_keys:
+                    logger.info(f"[COLLECT] Chaves de autenticação encontradas no localStorage: {auth_keys}")
+            except Exception as ls_error:
+                logger.warning(f"[COLLECT] Não foi possível coletar localStorage: {ls_error}")
+                local_storage = {}
+
+            # Armazenar cookies e localStorage do site
             site_name = site_config["name"]
-            self.collected_cookies[site_name] = cookies
+            self.collected_cookies[site_name] = {
+                'cookies': cookies,
+                'localStorage': local_storage
+            }
 
             # Atualizar progresso
             current_site_progress.cookies_count = len(cookies)
@@ -678,7 +696,7 @@ class OAuthSessionManager:
 
     async def save_cookies_to_file(self, finalize_session: bool = True) -> bool:
         """
-        Salvar cookies coletados em arquivo pickle
+        Salvar cookies coletados em arquivo pickle E JSON individual por site
 
         Args:
             finalize_session: Se True, marca sessão como COMPLETED. Se False, apenas salva cookies incrementalmente.
@@ -686,6 +704,8 @@ class OAuthSessionManager:
         Returns:
             True se salvou com sucesso, False caso contrário
         """
+        import json
+
         save_start = time.time()
 
         try:
@@ -703,13 +723,51 @@ class OAuthSessionManager:
             logger.debug(f"[SAVE] Criando diretório: {self.COOKIES_FILE.parent}")
             self.COOKIES_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-            # Salvar cookies
-            logger.debug(f"[SAVE] Gravando arquivo: {self.COOKIES_FILE}")
+            # Salvar cookies em pickle (formato legado)
+            logger.debug(f"[SAVE] Gravando arquivo pickle: {self.COOKIES_FILE}")
             with open(self.COOKIES_FILE, 'wb') as f:
                 pickle.dump(self.collected_cookies, f)
 
+            # Salvar cookies em JSON individual por site (formato usado pelos scrapers)
+            json_cookies_dir = Path("/app/data/cookies")
+            json_cookies_dir.mkdir(parents=True, exist_ok=True)
+
+            # Mapeamento de nomes de sites para arquivos JSON
+            site_to_file = {
+                "DeepSeek": "deepseek_session.json",
+                "Claude": "claude_session.json",
+                "ChatGPT": "chatgpt_session.json",
+                "Gemini": "gemini_session.json",
+                "Grok": "grok_session.json",
+                "Yahoo Finance": "yahoo_finance_session.json",
+                "Perplexity": "perplexity_session.json",
+            }
+
+            total_cookies = 0
+            for site_name, site_data in self.collected_cookies.items():
+                # Handle both old format (list of cookies) and new format (dict with cookies + localStorage)
+                if isinstance(site_data, dict) and 'cookies' in site_data:
+                    cookies = site_data['cookies']
+                    local_storage = site_data.get('localStorage', {})
+                else:
+                    # Old format - just cookies list
+                    cookies = site_data
+                    local_storage = {}
+
+                total_cookies += len(cookies)
+
+                if site_name in site_to_file:
+                    json_file = json_cookies_dir / site_to_file[site_name]
+                    # Save both cookies and localStorage
+                    save_data = {
+                        'cookies': cookies,
+                        'localStorage': local_storage
+                    }
+                    with open(json_file, 'w') as f:
+                        json.dump(save_data, f, indent=2)
+                    logger.info(f"[SAVE] ✓ {site_name}: {len(cookies)} cookies + {len(local_storage)} localStorage items salvos em: {json_file}")
+
             # Atualizar estatísticas
-            total_cookies = sum(len(cookies) for cookies in self.collected_cookies.values())
             self.current_session.total_cookies = total_cookies
 
             if finalize_session:
@@ -720,7 +778,8 @@ class OAuthSessionManager:
 
             elapsed = time.time() - save_start
             logger.success(f"[SAVE] ✓ Cookies salvos com sucesso em {elapsed:.2f}s!")
-            logger.success(f"[SAVE]   Arquivo: {self.COOKIES_FILE}")
+            logger.success(f"[SAVE]   Arquivo pickle: {self.COOKIES_FILE}")
+            logger.success(f"[SAVE]   Arquivos JSON: {json_cookies_dir}")
             logger.success(f"[SAVE]   Total de sites: {len(self.collected_cookies)}")
             logger.success(f"[SAVE]   Total de cookies: {total_cookies}")
 

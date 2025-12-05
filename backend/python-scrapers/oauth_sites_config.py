@@ -152,8 +152,23 @@ OAUTH_SITES_CONFIG: List[Dict[str, Any]] = [
         "auto_click_oauth": True,
         "verification_url": "https://www.tradingview.com/",
     },
+    {
+        "id": "yahoo_finance",
+        "name": "Yahoo Finance",
+        "category": SiteCategory.MARKET,
+        "url": "https://finance.yahoo.com/",
+        "login_type": "oauth",
+        "login_selector": "//a[contains(@href, '/portfolios')]",
+        "oauth_button": "//button[contains(., 'Google')]",
+        "instructions": "Clique em 'Sign in' e faça login com Google para acesso completo.",
+        "wait_time": 25,
+        "order": 9,
+        "required": False,  # Funciona sem login também
+        "auto_click_oauth": True,
+        "verification_url": "https://finance.yahoo.com/",
+    },
 
-    # 9-13. AI ANALYSIS
+    # 10-14. AI ANALYSIS
     {
         "id": "chatgpt",
         "name": "ChatGPT",
@@ -224,13 +239,28 @@ OAUTH_SITES_CONFIG: List[Dict[str, Any]] = [
         "oauth_button": None,
         "instructions": "Faça login com sua conta X (Twitter). Se não tiver, pode pular.",
         "wait_time": 25,
-        "order": 13,
+        "order": 14,
         "required": False,  # Opcional
         "auto_click_oauth": False,
         "verification_url": "https://grok.x.ai/",
     },
+    {
+        "id": "perplexity",
+        "name": "Perplexity",
+        "category": SiteCategory.AI,
+        "url": "https://www.perplexity.ai/",
+        "login_type": "oauth",
+        "login_selector": "//textarea[contains(@placeholder, 'Ask')]",
+        "oauth_button": "//button[contains(., 'Google')]",
+        "instructions": "Faça login com Google para acesso completo às funcionalidades de busca AI.",
+        "wait_time": 30,
+        "order": 15,
+        "required": False,  # Opcional
+        "auto_click_oauth": True,
+        "verification_url": "https://www.perplexity.ai/",
+    },
 
-    # 14-19. NEWS & REPORTS
+    # 16-21. NEWS & REPORTS
     {
         "id": "valor",
         "name": "Valor Econômico",
@@ -241,7 +271,7 @@ OAUTH_SITES_CONFIG: List[Dict[str, Any]] = [
         "oauth_button": None,
         "instructions": "Se tiver assinatura, faça login. Senão, pode pular.",
         "wait_time": 20,
-        "order": 14,
+        "order": 16,
         "required": False,
         "auto_click_oauth": False,
         "verification_url": "https://valor.globo.com/",
@@ -256,7 +286,7 @@ OAUTH_SITES_CONFIG: List[Dict[str, Any]] = [
         "oauth_button": None,
         "instructions": "Se tiver conta premium, faça login. Senão, pode pular.",
         "wait_time": 20,
-        "order": 15,
+        "order": 17,
         "required": False,
         "auto_click_oauth": False,
         "verification_url": "https://exame.com/",
@@ -271,7 +301,7 @@ OAUTH_SITES_CONFIG: List[Dict[str, Any]] = [
         "oauth_button": None,
         "instructions": "Login opcional. Se tiver conta, faça login.",
         "wait_time": 20,
-        "order": 16,
+        "order": 18,
         "required": False,
         "auto_click_oauth": False,
         "verification_url": "https://www.infomoney.com.br/",
@@ -286,7 +316,7 @@ OAUTH_SITES_CONFIG: List[Dict[str, Any]] = [
         "oauth_button": None,
         "instructions": "Se tiver assinatura, faça login. Senão, pode pular.",
         "wait_time": 20,
-        "order": 17,
+        "order": 19,
         "required": False,
         "auto_click_oauth": False,
         "verification_url": "https://www.estadao.com.br/",
@@ -301,7 +331,7 @@ OAUTH_SITES_CONFIG: List[Dict[str, Any]] = [
         "oauth_button": "//button[contains(., 'Google')]",
         "instructions": "Faça login com Google.",
         "wait_time": 20,
-        "order": 18,
+        "order": 20,
         "required": True,
         "auto_click_oauth": True,
         "verification_url": "https://maisretorno.com/",
@@ -316,13 +346,13 @@ OAUTH_SITES_CONFIG: List[Dict[str, Any]] = [
         "oauth_button": None,
         "instructions": "Deve estar automaticamente logado com conta Google.",
         "wait_time": 10,
-        "order": 19,
+        "order": 21,
         "required": True,
         "auto_click_oauth": False,
         "verification_url": "https://news.google.com/",
     },
 
-    # 20-21. PORTFOLIO MANAGEMENT
+    # 22-23. PORTFOLIO MANAGEMENT
     {
         "id": "myprofit",
         "name": "MyProfit Web",
@@ -333,7 +363,7 @@ OAUTH_SITES_CONFIG: List[Dict[str, Any]] = [
         "oauth_button": None,  # Não tem OAuth Google
         "instructions": "Faça login com suas credenciais do MyProfit Web. Se não tiver conta, pode pular.",
         "wait_time": 25,
-        "order": 20,
+        "order": 22,
         "required": False,  # Opcional
         "auto_click_oauth": False,
         "verification_url": "https://myprofitweb.com/",
@@ -348,7 +378,7 @@ OAUTH_SITES_CONFIG: List[Dict[str, Any]] = [
         "oauth_button": "//button[contains(., 'Google')]",  # Tentar clicar no botão Google se existir
         "instructions": "Faça login com Google ou credenciais Kinvo. Se não tiver conta, pode pular.",
         "wait_time": 25,
-        "order": 21,
+        "order": 23,
         "required": False,  # Opcional
         "auto_click_oauth": True,  # Tentar clicar automaticamente se encontrar botão Google
         "verification_url": "https://app.kinvo.com.br/",

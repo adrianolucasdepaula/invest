@@ -1,8 +1,8 @@
 # 🗺️ ROADMAP - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-03
-**Versão:** 1.7.2
+**Última Atualização:** 2025-12-04
+**Versão:** 1.7.3
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -8898,6 +8898,89 @@ backend/src/database/migrations/1764696740650-AddFieldSourcesToFundamentalData.t
 - ✅ TypeScript Frontend: 0 erros
 - ✅ Build: Sucesso
 - ✅ MCP Playwright: Validação visual
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
+### FASE 64: OAuth/Cookies Scrapers Authentication ✅ 100% COMPLETO (2025-12-04)
+
+**Prioridade:** 🔴 **CRÍTICO** (Prioridade 1)
+**Data:** 2025-12-04
+**Tipo:** Authentication + Scraper Integration
+**Versão:** 1.7.3
+
+**Objetivo:** Implementar sistema completo de autenticação OAuth e cookies para scrapers que requerem login.
+
+**Motivação:**
+- Scrapers de IA (Gemini, ChatGPT, Claude, etc.) requerem autenticação
+- Scrapers de portfólio (Kinvo) requerem login com credenciais
+- Necessidade de persistir sessões entre reinicializações
+
+**Implementações Concluídas:**
+
+1. **Padrão "Cookies BEFORE Navigation":**
+   - Cookies devem ser carregados ANTES de navegar para o site
+   - Padrão crítico para Google OAuth funcionar corretamente
+   - Aplicado em: Gemini, ChatGPT, Kinvo scrapers
+
+2. **Novo Scraper - KinvoScraper:**
+   - Login via email/password (credential-based)
+   - Arquivo de credenciais: `/app/data/credentials/kinvo.json`
+   - Persistência de sessão com cookies
+   - Scraping de portfolio, assets, performance, history
+
+3. **OAuth API (porta 8080):**
+   - FastAPI para gerenciar sessões OAuth
+   - Endpoints para navegação entre sites OAuth
+   - Coleta e persistência de cookies
+   - Separado do api-service (porta 8000)
+
+4. **Resolução de Conflitos:**
+   - Port conflict: api-service (8000) vs OAuth API (8080)
+   - playwright-stealth versão sync (2.0.0 em todos containers)
+   - Docker volume sync com Dropbox (workaround via C:\Temp)
+
+**Arquivos Modificados/Criados:**
+
+| Arquivo | Mudanças |
+|---------|----------|
+| `scrapers/gemini_scraper.py` | Cookies BEFORE navigation |
+| `scrapers/chatgpt_scraper.py` | Cookies BEFORE navigation |
+| `scrapers/kinvo_scraper.py` | **NOVO** - Credential login |
+| `scrapers/__init__.py` | +KinvoScraper export |
+| `main.py` | OAuth API porta 8080, +KINVO |
+| `oauth_api.py` | FastAPI OAuth endpoints |
+| `docker-compose.yml` | +porta 8080 |
+| `api-service/requirements.txt` | playwright-stealth 2.0.0 |
+| `data/credentials/kinvo.json` | **NOVO** - Kinvo credentials |
+| `.gemini/context/known-issues.md` | +Issue #9, #10 |
+| `sync_cookies.ps1` | Workaround Dropbox sync |
+
+**Validação:**
+
+- ✅ Containers: Todos healthy (8/8)
+- ✅ Porta 8000 (api-service): Funcionando
+- ✅ Porta 8080 (OAuth API): Funcionando
+- ✅ Scrapers import: GeminiScraper, ChatGPTScraper, KinvoScraper
+- ✅ Cookies sync: 9 arquivos sincronizados
+- ✅ Kinvo credentials: Carregadas corretamente
+
+**Scrapers OAuth Configurados:**
+
+| Scraper | Tipo Auth | Status |
+|---------|-----------|--------|
+| Gemini | Google OAuth cookies | ✅ Configurado |
+| ChatGPT | Session cookies | ✅ Configurado |
+| Kinvo | Email/Password | ✅ Implementado |
+| Claude | Session cookies | ✅ Cookies disponíveis |
+| DeepSeek | Session cookies | ✅ Cookies disponíveis |
+| Perplexity | Session cookies | ✅ Cookies disponíveis |
+
+**Known Issues Documentados:**
+
+- Issue #9: Docker Volume Sync com Dropbox
+- Issue #10: Cookies BEFORE vs AFTER Navigation
 
 **Status:** ✅ **100% COMPLETO**
 

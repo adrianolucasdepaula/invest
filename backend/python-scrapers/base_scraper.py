@@ -1,12 +1,14 @@
 """
 Base scraper class - abstract interface with Playwright
 Migrated from Selenium to Playwright on 2025-11-27
+Updated 2025-12-04: Added playwright-stealth for Cloudflare bypass
 """
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 from datetime import datetime
 from dataclasses import dataclass, asdict
 from playwright.async_api import async_playwright, Browser, Page, Playwright
+from playwright_stealth import Stealth
 from loguru import logger
 import time
 import asyncio
@@ -62,15 +64,29 @@ class BaseScraper(ABC):
         self.playwright: Optional[Playwright] = None
         self.browser: Optional[Browser] = None
         self.page: Optional[Page] = None
+        self._stealth_context = None  # Stealth context manager
         self._initialized = False
         # Note: _initialization_queue lock is created lazily in async context
 
     async def _create_browser_and_page(self):
-        """Create individual browser and page for this scraper instance (matches backend pattern)"""
+        """
+        Create individual browser and page for this scraper instance (matches backend pattern)
+
+        Updated 2025-12-04: Uses playwright-stealth for Cloudflare bypass
+        """
         try:
-            # Start Playwright
+            # Start Playwright with Stealth (Cloudflare bypass)
             if not self.playwright:
-                self.playwright = await async_playwright().start()
+                # Configure stealth to mimic real browser
+                stealth = Stealth(
+                    navigator_languages_override=('pt-BR', 'pt', 'en-US', 'en'),
+                    navigator_platform_override='Win32',
+                    navigator_user_agent_override='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                )
+                # Use stealth wrapper around async_playwright
+                self._stealth_context = stealth.use_async(async_playwright())
+                self.playwright = await self._stealth_context.__aenter__()
+                logger.debug(f"Playwright with Stealth started for {self.name}")
 
             # Launch browser with configuration matching backend TypeScript
             # Try Playwright's Chromium first (more stable in Docker)
@@ -95,7 +111,7 @@ class BaseScraper(ABC):
                 launch_args['executable_path'] = executable_path
 
             self.browser = await self.playwright.chromium.launch(**launch_args)
-            logger.debug(f"Playwright browser created for {self.name}")
+            logger.debug(f"Playwright browser created for {self.name} (with Stealth)")
 
             # Create page
             self.page = await self.browser.new_page()
@@ -161,7 +177,7 @@ class BaseScraper(ABC):
         pass
 
     async def cleanup(self):
-        """Cleanup resources (page, browser, and playwright - individual per scraper)"""
+        """Cleanup resources (page, browser, playwright, and stealth context - individual per scraper)"""
         try:
             if self.page:
                 await self.page.close()
@@ -173,7 +189,16 @@ class BaseScraper(ABC):
                 self.browser = None
                 logger.debug(f"Browser closed for {self.name}")
 
-            if self.playwright:
+            # Close stealth context (which closes playwright internally)
+            if self._stealth_context:
+                try:
+                    await self._stealth_context.__aexit__(None, None, None)
+                except Exception:
+                    pass  # Ignore errors on stealth context cleanup
+                self._stealth_context = None
+                self.playwright = None
+                logger.debug(f"Stealth context closed for {self.name}")
+            elif self.playwright:
                 await self.playwright.stop()
                 self.playwright = None
                 logger.debug(f"Playwright stopped for {self.name}")

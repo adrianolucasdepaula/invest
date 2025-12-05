@@ -230,6 +230,7 @@ services:
       - "5900:5900"  # VNC direct connection
       - "6080:6080"  # noVNC web interface
       - "8000:8000"  # API Service (compartilhado via network_mode)
+      - "8080:8080"  # OAuth API (scrapers service)
     volumes:
       - ./backend/python-scrapers:/app
       - ./browser-profiles:/app/browser-profiles

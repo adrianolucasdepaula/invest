@@ -674,10 +674,160 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 | #6 JWT Errors       | 🟡 Média   | 10 min              | Médio       | ✅ Resolvido |
 | #7 Sync 0 Updates   | 🟢 Baixa   | N/A                 | Nenhum      | ✅ Normal    |
 | #8 Migration Error  | 🟡 Média   | 20 min              | Baixo       | ✅ Resolvido |
+| #9 Docker+Dropbox   | 🟡 Média   | Workaround          | Médio       | ⚠️ Workaround|
+| #10 Cookies Before  | 🔴 Alta    | 15 min/scraper      | Alto        | ✅ Resolvido |
 
-**Total de Issues Críticos**: 2  
-**Total de Issues Resolvidos**: 6/8 (75%)  
+**Total de Issues Críticos**: 2
+**Total de Issues Resolvidos**: 8/10 (80%)
 **Lições Aprendidas Documentadas**: 15+
+
+---
+
+## Issue #9: Docker Volume Sync com Dropbox
+
+**Componente:** Infraestrutura - Docker + Dropbox
+**Severidade:** 🟡 Média
+**Status:** ⚠️ Workaround documentado
+
+### Problema
+
+Volumes Docker montados em diretórios sincronizados pelo Dropbox não refletem mudanças em tempo real. Arquivos criados no Windows não aparecem imediatamente no container, e vice-versa.
+
+### Sintomas
+
+```bash
+# Windows mostra 8 arquivos
+dir data\cookies\
+# chatgpt_session.json, gemini_session.json, etc.
+
+# Container mostra diretório vazio ou com arquivos de 0 bytes
+docker exec invest_scrapers ls -la /app/data/cookies/
+# drwxr-xr-x ... .
+# drwxr-xr-x ... ..
+# -rw-r--r-- 0 bytes chatgpt_session.json  # ← VAZIO!
+```
+
+### Root Cause
+
+1. **Dropbox Smart Sync**: Arquivos podem estar "online-only" e não disponíveis localmente
+2. **Docker Desktop + Dropbox**: Conflito de sincronização entre Docker WSL2 e Dropbox
+3. **9p filesystem**: Docker Desktop usa protocolo 9p para compartilhar volumes Windows/WSL2, que tem problemas de cache com Dropbox
+
+### Solução Aplicada
+
+**Workaround via docker cp através de diretório temporário:**
+
+```powershell
+# 1. Copiar arquivo para diretório fora do Dropbox
+Copy-Item 'C:\Users\...\Dropbox\...\data\cookies\file.json' -Destination 'C:\Temp\file.json' -Force
+
+# 2. Copiar do temp para o container via docker cp
+docker cp 'C:\Temp\file.json' 'invest_scrapers:/tmp/file.json'
+
+# 3. Mover dentro do container para destino final
+docker exec invest_scrapers cp /tmp/file.json /app/data/cookies/file.json
+```
+
+**Script automatizado:** `backend/python-scrapers/sync_cookies.ps1`
+
+### Solução Recomendada (Permanente)
+
+1. **Mover projeto para fora do Dropbox:**
+   ```
+   C:\Projects\invest-claude-web\  # ← Fora do Dropbox
+   ```
+
+2. **Ou desabilitar Smart Sync para a pasta do projeto:**
+   - Dropbox → Preferences → Sync → Make files available offline
+
+3. **Ou usar volumes nomeados Docker:**
+   ```yaml
+   volumes:
+     cookies_data:  # Volume nomeado, não bind mount
+
+   services:
+     scrapers:
+       volumes:
+         - cookies_data:/app/data/cookies
+   ```
+
+### Lições Aprendidas
+
+- Volumes Docker em pastas Dropbox causam problemas de sincronização
+- `docker cp` para bind mounts não funciona se o destino está em sync
+- Usar diretório temporário (`C:\Temp`) como intermediário resolve o problema
+- Preferir volumes nomeados sobre bind mounts para dados que precisam persistir
+
+---
+
+## Issue #10: Cookies ANTES vs DEPOIS da Navegação
+
+**Componente:** Python Scrapers - Playwright
+**Severidade:** 🔴 Alta
+**Status:** ✅ Resolvido - Pattern documentado
+
+### Problema
+
+Scrapers que carregam cookies DEPOIS de navegar para o site falham na autenticação, mesmo com cookies válidos.
+
+### Sintomas
+
+```python
+# ❌ ERRADO - Cookies não funcionam
+await page.goto(url)           # Navega primeiro
+await context.add_cookies(c)   # Adiciona cookies depois
+await page.reload()            # Reload não ajuda
+# Resultado: Sessão não autenticada, página de login exibida
+```
+
+### Root Cause
+
+1. Sites verificam autenticação no primeiro request
+2. Cookies adicionados após navegação não afetam o contexto atual
+3. Reload pode não ser suficiente para reprocessar cookies de sessão
+4. Google OAuth especialmente sensível - cookies devem existir ANTES do primeiro request
+
+### Solução Aplicada
+
+**Pattern correto - Cookies ANTES da navegação:**
+
+```python
+async def initialize(self):
+    await super().initialize()  # Cria browser/page
+
+    # 1. Carregar cookies ANTES de navegar
+    if cookies_file.exists():
+        cookies = load_cookies()
+        await self.page.context.add_cookies(cookies)  # ← ANTES
+
+    # 2. Navegar DEPOIS que cookies estão no contexto
+    await self.page.goto(url)  # ← DEPOIS
+
+    # 3. Injetar localStorage se necessário
+    if local_storage_data:
+        for key, value in local_storage_data.items():
+            await page.evaluate(f'localStorage.setItem("{key}", {value})')
+        await page.reload()  # Reload para aplicar localStorage
+```
+
+### Scrapers Atualizados
+
+- ✅ `gemini_scraper.py` - Cookies ANTES
+- ✅ `chatgpt_scraper.py` - Cookies ANTES
+- ✅ `claude_scraper.py` - Cookies ANTES (já estava correto)
+- ✅ `kinvo_scraper.py` - Novo, já com pattern correto
+- ⚠️ `maisretorno_scraper.py` - Ainda usa pattern antigo (DEPOIS)
+
+### Template de Implementação
+
+Ver `PLAYWRIGHT_SCRAPER_PATTERN.md` para template completo.
+
+### Lições Aprendidas
+
+- Cookies OAuth devem ser injetados ANTES do primeiro request
+- localStorage requer reload após injeção
+- Validar sameSite para evitar erros de Protocol
+- Tratar expires=-1 como session cookie (não incluir no Playwright)
 
 ---
 
