@@ -7,7 +7,7 @@ import { MarketDataService } from './market-data.service';
 import { PythonServiceClient } from './clients/python-service.client';
 import { SyncGateway } from './sync.gateway'; // FASE 35
 import { AssetsModule } from '../assets/assets.module';
-import { Asset, AssetPrice, SyncHistory, TickerChange } from '../../database/entities';
+import { Asset, AssetPrice, SyncHistory, TickerChange, IntradayPrice } from '../../database/entities';
 import { TickerMergeService } from './ticker-merge.service';
 
 @Module({
@@ -16,7 +16,7 @@ import { TickerMergeService } from './ticker-merge.service';
       timeout: 300000, // 5min timeout (COTAHIST pode demorar 2-3min)
       maxRedirects: 0,
     }),
-    TypeOrmModule.forFeature([Asset, AssetPrice, SyncHistory, TickerChange]), // FASE 34.6: Add SyncHistory, FASE 55: Add TickerChange
+    TypeOrmModule.forFeature([Asset, AssetPrice, SyncHistory, TickerChange, IntradayPrice]), // FASE 34.6: Add SyncHistory, FASE 55: Add TickerChange, FASE 67: Add IntradayPrice
     ConfigModule,
     AssetsModule, // Para reutilizar AssetsService
   ],

@@ -14,6 +14,7 @@ import { MarketDataService } from './market-data.service';
 import { GetPricesDto, GetTechnicalDataDto, TechnicalDataResponseDto } from './dto';
 import { SyncCotahistDto, SyncCotahistResponseDto } from './dto/sync-cotahist.dto';
 import { SyncStatusResponseDto, SyncBulkDto, SyncBulkResponseDto } from './dto'; // FASE 35
+import { GetIntradayDto, IntradayDataResponseDto, IntradayTimeframeParam, IntradayRangeParam } from './dto'; // FASE 67
 
 import { TickerMergeService } from './ticker-merge.service';
 
@@ -255,5 +256,68 @@ export class MarketDataController {
       estimatedMinutes: Math.round(estimatedMinutes),
       instructions: 'Acompanhe o progresso em tempo real via WebSocket (evento: sync:progress)',
     };
+  }
+
+  /**
+   * FASE 67: Get intraday price data from TimescaleDB hypertable
+   */
+  @Get(':ticker/intraday')
+  @ApiOperation({
+    summary: 'Get intraday price data (1m, 5m, 15m, 30m, 1h, 4h)',
+    description:
+      'Fetches high-frequency price data from TimescaleDB hypertable. Supports multiple timeframes and uses Continuous Aggregates for 1h and 4h candles. Data retention: 90 days.',
+  })
+  @ApiParam({ name: 'ticker', example: 'PETR4', description: 'Ticker symbol' })
+  @ApiQuery({
+    name: 'timeframe',
+    required: false,
+    enum: IntradayTimeframeParam,
+    description: 'Candle timeframe: 1m, 5m, 15m, 30m, 1h, 4h',
+    example: '15m',
+  })
+  @ApiQuery({
+    name: 'range',
+    required: false,
+    enum: IntradayRangeParam,
+    description: 'Period range: 1h, 4h, 1d, 5d, 1w, 2w, 1mo',
+    example: '1d',
+  })
+  @ApiQuery({
+    name: 'startTime',
+    required: false,
+    type: String,
+    description: 'Start time (ISO 8601). Overrides range if provided.',
+    example: '2025-12-04T10:00:00-03:00',
+  })
+  @ApiQuery({
+    name: 'endTime',
+    required: false,
+    type: String,
+    description: 'End time (ISO 8601). Default: now.',
+    example: '2025-12-04T18:00:00-03:00',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Intraday data retrieved successfully',
+    type: IntradayDataResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Asset not found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getIntradayData(
+    @Param('ticker') ticker: string,
+    @Query() query: GetIntradayDto,
+  ): Promise<IntradayDataResponseDto> {
+    const timeframe = query.timeframe || IntradayTimeframeParam.M15;
+    const range = query.range || IntradayRangeParam.D1;
+
+    this.logger.log(`Intraday request: ${ticker} ${timeframe} ${range}`);
+
+    return this.marketDataService.getIntradayData(
+      ticker,
+      timeframe,
+      range,
+      query.startTime,
+      query.endTime,
+    );
   }
 }

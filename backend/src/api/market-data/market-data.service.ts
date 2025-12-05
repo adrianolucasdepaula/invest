@@ -16,7 +16,10 @@ import {
   SyncHistory,
   SyncStatus,
   SyncOperationType,
+  IntradayPrice,
+  IntradayTimeframe,
 } from '../../database/entities';
+import { IntradayRangeParam, IntradayTimeframeParam, IntradayCandleDto } from './dto';
 
 const CACHE_TTL = {
   TECHNICAL_DATA: 300, // 5 minutes (seconds)
@@ -50,6 +53,8 @@ export class MarketDataService {
     private readonly assetPriceRepository: Repository<AssetPrice>,
     @InjectRepository(SyncHistory)
     private readonly syncHistoryRepository: Repository<SyncHistory>,
+    @InjectRepository(IntradayPrice)
+    private readonly intradayPriceRepository: Repository<IntradayPrice>, // FASE 67
   ) {}
 
   /**
@@ -1094,5 +1099,225 @@ export class MarketDataService {
     });
 
     return results;
+  }
+
+  /**
+   * FASE 67: Get intraday price data from TimescaleDB hypertable
+   *
+   * Suporta timeframes: 1m, 5m, 15m, 30m, 1h, 4h
+   * Usa Continuous Aggregates para timeframes maiores (1h, 4h)
+   *
+   * @param ticker Ticker symbol (ex: PETR4)
+   * @param timeframe Candle timeframe (1m, 5m, 15m, 30m, 1h, 4h)
+   * @param range Period range (1h, 4h, 1d, 5d, 1w, 2w, 1mo)
+   * @param startTime Optional start time (ISO 8601)
+   * @param endTime Optional end time (ISO 8601)
+   * @returns Array of intraday candles with metadata
+   */
+  async getIntradayData(
+    ticker: string,
+    timeframe: IntradayTimeframeParam = IntradayTimeframeParam.M15,
+    range: IntradayRangeParam = IntradayRangeParam.D1,
+    startTime?: string,
+    endTime?: string,
+  ): Promise<{
+    ticker: string;
+    timeframe: string;
+    count: number;
+    data: IntradayCandleDto[];
+    metadata: {
+      source: string;
+      startTime: string;
+      endTime: string;
+      cached: boolean;
+    };
+  }> {
+    const startProcessing = Date.now();
+
+    try {
+      // 1. Find asset
+      const asset = await this.assetRepository.findOne({ where: { ticker } });
+      if (!asset) {
+        throw new InternalServerErrorException(`Asset ${ticker} not found`);
+      }
+
+      // 2. Calculate time range
+      const { start, end } = this.calculateIntradayRange(range, startTime, endTime);
+
+      // 3. Map timeframe param to enum
+      const timeframeEnum = this.mapTimeframeParamToEnum(timeframe);
+
+      // 4. Determine source (hypertable or continuous aggregate)
+      let source: string;
+      let query: string;
+
+      if (timeframe === IntradayTimeframeParam.H1) {
+        // Use continuous aggregate intraday_1h
+        source = 'continuous_aggregate:intraday_1h';
+        query = `
+          SELECT
+            bucket as timestamp,
+            open,
+            high,
+            low,
+            close,
+            volume,
+            volume_financial,
+            number_of_trades
+          FROM intraday_1h
+          WHERE asset_id = $1
+            AND bucket >= $2
+            AND bucket <= $3
+          ORDER BY bucket ASC
+        `;
+      } else if (timeframe === IntradayTimeframeParam.H4) {
+        // Use continuous aggregate intraday_4h
+        source = 'continuous_aggregate:intraday_4h';
+        query = `
+          SELECT
+            bucket as timestamp,
+            open,
+            high,
+            low,
+            close,
+            volume,
+            volume_financial,
+            number_of_trades
+          FROM intraday_4h
+          WHERE asset_id = $1
+            AND bucket >= $2
+            AND bucket <= $3
+          ORDER BY bucket ASC
+        `;
+      } else {
+        // Use hypertable directly for smaller timeframes
+        source = 'hypertable:intraday_prices';
+        query = `
+          SELECT
+            timestamp,
+            open,
+            high,
+            low,
+            close,
+            volume,
+            volume_financial,
+            number_of_trades,
+            vwap
+          FROM intraday_prices
+          WHERE asset_id = $1
+            AND timestamp >= $2
+            AND timestamp <= $3
+            AND timeframe = $4
+          ORDER BY timestamp ASC
+        `;
+      }
+
+      // 5. Execute query
+      let results: any[];
+      if (timeframe === IntradayTimeframeParam.H1 || timeframe === IntradayTimeframeParam.H4) {
+        results = await this.intradayPriceRepository.query(query, [asset.id, start, end]);
+      } else {
+        results = await this.intradayPriceRepository.query(query, [asset.id, start, end, timeframe]);
+      }
+
+      // 6. Transform to DTO
+      const data: IntradayCandleDto[] = results.map((row) => ({
+        timestamp: row.timestamp instanceof Date ? row.timestamp.toISOString() : row.timestamp,
+        open: parseFloat(row.open),
+        high: parseFloat(row.high),
+        low: parseFloat(row.low),
+        close: parseFloat(row.close),
+        volume: parseInt(row.volume),
+        volumeFinancial: row.volume_financial ? parseFloat(row.volume_financial) : undefined,
+        numberOfTrades: row.number_of_trades || undefined,
+        vwap: row.vwap ? parseFloat(row.vwap) : undefined,
+      }));
+
+      const duration = Date.now() - startProcessing;
+      this.logger.log(
+        `📊 Intraday data: ${ticker} ${timeframe} (${data.length} candles, ${duration}ms)`,
+      );
+
+      return {
+        ticker,
+        timeframe,
+        count: data.length,
+        data,
+        metadata: {
+          source,
+          startTime: start.toISOString(),
+          endTime: end.toISOString(),
+          cached: false,
+        },
+      };
+    } catch (error: any) {
+      this.logger.error(`Failed to fetch intraday data for ${ticker}: ${error.message}`);
+      throw new InternalServerErrorException('Failed to fetch intraday data');
+    }
+  }
+
+  /**
+   * Calculate time range for intraday queries
+   */
+  private calculateIntradayRange(
+    range: IntradayRangeParam,
+    startTime?: string,
+    endTime?: string,
+  ): { start: Date; end: Date } {
+    // If explicit times provided, use them
+    if (startTime && endTime) {
+      return {
+        start: new Date(startTime),
+        end: new Date(endTime),
+      };
+    }
+
+    const end = endTime ? new Date(endTime) : new Date();
+    const start = startTime ? new Date(startTime) : new Date(end);
+
+    if (!startTime) {
+      switch (range) {
+        case IntradayRangeParam.H1:
+          start.setHours(end.getHours() - 1);
+          break;
+        case IntradayRangeParam.H4:
+          start.setHours(end.getHours() - 4);
+          break;
+        case IntradayRangeParam.D1:
+          start.setDate(end.getDate() - 1);
+          break;
+        case IntradayRangeParam.D5:
+          start.setDate(end.getDate() - 5);
+          break;
+        case IntradayRangeParam.W1:
+          start.setDate(end.getDate() - 7);
+          break;
+        case IntradayRangeParam.W2:
+          start.setDate(end.getDate() - 14);
+          break;
+        case IntradayRangeParam.M1:
+          start.setMonth(end.getMonth() - 1);
+          break;
+        default:
+          start.setDate(end.getDate() - 1);
+      }
+    }
+
+    return { start, end };
+  }
+
+  /**
+   * Map timeframe param to database enum
+   */
+  private mapTimeframeParamToEnum(param: IntradayTimeframeParam): IntradayTimeframe {
+    const mapping: Record<IntradayTimeframeParam, IntradayTimeframe> = {
+      [IntradayTimeframeParam.M1]: IntradayTimeframe.M1,
+      [IntradayTimeframeParam.M5]: IntradayTimeframe.M5,
+      [IntradayTimeframeParam.M15]: IntradayTimeframe.M15,
+      [IntradayTimeframeParam.M30]: IntradayTimeframe.M30,
+      [IntradayTimeframeParam.H1]: IntradayTimeframe.H1,
+      [IntradayTimeframeParam.H4]: IntradayTimeframe.H4,
+    };
+    return mapping[param];
   }
 }
