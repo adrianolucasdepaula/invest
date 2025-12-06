@@ -34,7 +34,42 @@ Este documento centraliza **todos os problemas conhecidos** encontrados durante 
 
 ## 🔴 ISSUES ATIVOS (NÃO RESOLVIDOS)
 
-*Nenhum issue crítico em aberto no momento.*
+### Issue #NEXTJS16_BUILD: Next.js 16 Build Fail (SSG useContext null)
+
+**Severidade:** 🟡 **MÉDIA** (não bloqueia desenvolvimento, apenas build de produção)
+**Status:** ⏳ **AGUARDANDO FIX UPSTREAM**
+**Data Identificado:** 2025-12-05
+**GitHub Issue:** [vercel/next.js#85668](https://github.com/vercel/next.js/issues/85668)
+
+#### Sintomas
+
+- `npm run build` falha com erro: `Cannot read properties of null (reading 'useContext')`
+- Erro ocorre durante prerendering de páginas estáticas (`/_global-error`, `/analysis`, etc.)
+- Ambiente de desenvolvimento (`npm run dev`) funciona normalmente
+- Afeta Next.js 16.0.1 - 16.0.5
+
+#### Root Cause
+
+Bug conhecido no Next.js 16 relacionado a Static Site Generation (SSG) com componentes que usam React hooks (`useContext`, `useState`). Ocorre mesmo em componentes marcados com `'use client'`.
+
+**Nota:** React 19.2.0 instalado sem duplicatas (verificado com `npm ls react`).
+
+#### Workarounds Disponíveis
+
+1. **Downgrade para Next.js 15.x** - Funciona, mas perde features do 16
+2. **Usar apenas modo desenvolvimento** - Atual (não bloqueia dev)
+3. **Aguardar fix upstream** - Monitorar GitHub Issue #85668
+
+#### Impacto
+
+- ❌ Build de produção bloqueado
+- ✅ Desenvolvimento local funciona normalmente
+- ✅ Hot reload funciona
+- ✅ Todas features funcionam em dev mode
+
+#### Ação Recomendada
+
+Monitorar [GitHub Issue #85668](https://github.com/vercel/next.js/issues/85668) e atualizar Next.js quando fix for lançado.
 
 ---
 
@@ -59,8 +94,9 @@ Este documento centraliza **todos os problemas conhecidos** encontrados durante 
 | #BUG4 | Silent Invalid Date (Ticker Changes) | 🔴 Crítica | 2025-11-25 | `CHANGELOG.md` v1.2.1 |
 | #BUG5 | Broken DTO Validation (Sync Bulk) | 🔴 Crítica | 2025-11-25 | `CHANGELOG.md` v1.2.1 |
 | #EXIT137 | Exit Code 137 (SIGKILL) - Python Scrapers | 🔴 Crítica | 2025-11-28 | `ERROR_137_ANALYSIS.md`, `FASE_ATUAL_SUMMARY.md` |
+| #QUEUE_PAUSED | BullMQ Queue Pausada - Botão "Atualizar Todos" | 🔴 Crítica | 2025-12-05 | `PLANO_DIAGNOSTICO_ATUALIZAR_TODOS.md` |
 
-**Total Resolvidos:** 15 issues
+**Total Resolvidos:** 16 issues
 **Comportamento Normal:** 1 (não é bug, é comportamento esperado - Issue #7)
 **Taxa de Resolução:** 100% (15/15 issues reais)
 
@@ -211,6 +247,76 @@ for table in tables:
 - **Análise Técnica:** `backend/python-scrapers/ERROR_137_ANALYSIS.md`
 - **Summary Executivo:** `FASE_ATUAL_SUMMARY.md`
 - **Changelog:** `CHANGELOG.md` v1.3.0
+
+---
+
+### Issue #QUEUE_PAUSED: BullMQ Queue Pausada - Botão "Atualizar Todos"
+
+**Severidade:** 🔴 **CRÍTICA**
+**Status:** ✅ **RESOLVIDO**
+**Data Identificado:** 2025-12-05
+**Data Resolução:** 2025-12-05
+**Tempo de Resolução:** ~2 horas (investigação + diagnóstico + correção)
+
+#### Sintomas
+
+- Botão "Atualizar todos" na página `/assets` não funcionava
+- Nenhum erro visível no console do navegador
+- WebSocket conectado corretamente
+- API respondia mas jobs não eram processados
+- Queue status mostrava `"paused": 1`
+
+#### Root Cause Identificado
+
+**Causa Real:** Queue BullMQ estava **PAUSADA** no Redis.
+
+O Redis continha chaves de pausa que impediam o processamento de jobs:
+- `bull:asset-updates:meta-paused`
+- `bull:asset-updates:paused`
+
+**Como Identificar:**
+```powershell
+# Verificar status da queue
+curl http://localhost:3101/api/v1/assets/bulk-update-status
+
+# Resposta mostrava paused:1
+{"counts":{"waiting":0,"active":0,"completed":100,"failed":0,"delayed":0,"paused":1}}
+```
+
+#### Correção Aplicada
+
+```powershell
+# Remover chaves de pausa do Redis
+docker exec invest_redis redis-cli DEL "bull:asset-updates:meta-paused"
+docker exec invest_redis redis-cli DEL "bull:asset-updates:paused"
+```
+
+#### Validação
+
+Testado via Chrome DevTools MCP:
+- ✅ WebSocket conectado: `[ASSET BULK WS] Conectado ao WebSocket`
+- ✅ Botão clicou com sucesso
+- ✅ Batch iniciado: `[ASSET BULK WS] Batch update started`
+- ✅ Assets sendo processados: `AALR3, ABEV3, AERI3...`
+- ✅ Queue stats: `{"waiting":855,"active":6,"completed":100,"failed":0,"delayed":0,"paused":0}`
+
+#### Lições Aprendidas
+
+1. **Sempre verificar status da queue** antes de investigar outros pontos
+2. **`paused:1` no status** é indicador claro de queue pausada
+3. **Redis pode manter estado de pausa** mesmo após restart do backend
+4. **Endpoint `/bulk-update-status`** é ferramenta essencial de diagnóstico
+
+#### Procedimento de Prevenção
+
+- ✅ Verificar `paused` no response do `/bulk-update-status`
+- ✅ Adicionar alerta visual no frontend quando queue está pausada
+- ✅ Documentar comando de recuperação em `TROUBLESHOOTING.md`
+
+#### Referências
+
+- **Diagnóstico Completo:** `PLANO_DIAGNOSTICO_ATUALIZAR_TODOS.md`
+- **Endpoint Status:** `GET /api/v1/assets/bulk-update-status`
 
 ---
 
@@ -507,8 +613,8 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 
 | Categoria | Quantidade | Taxa de Resolução |
 |-----------|-----------|------------------|
-| **Total de Issues Documentados** | 16 | - |
-| **Issues Resolvidos** | 15 | 100% |
+| **Total de Issues Documentados** | 17 | - |
+| **Issues Resolvidos** | 16 | 100% |
 | **Issues Ativos (Em Aberto)** | 0 | 0% |
 | **Comportamento Normal (não é bug)** | 1 | N/A |
 
@@ -516,9 +622,9 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 
 | Severidade | Total | Resolvidos | Em Aberto |
 |-----------|-------|-----------|-----------|
-| 🔴 **Crítica** | 9 | 9 | 0 |
-| 🟡 **Média** | 5 | 6 | 0 |
-| 🟢 **Baixa** | 2 | 1 | 0 |
+| 🔴 **Crítica** | 10 | 10 | 0 |
+| 🟡 **Média** | 5 | 5 | 0 |
+| 🟢 **Baixa** | 1 | 1 | 0 |
 
 ### Tempo Médio de Resolução
 
@@ -576,6 +682,6 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 
 ---
 
-**Última Atualização:** 2025-12-04
-**Próxima Revisão:** Após resolução de issues #4 e #5
+**Última Atualização:** 2025-12-05
+**Próxima Revisão:** Conforme necessário
 **Responsável:** Claude Code (Opus 4.5)

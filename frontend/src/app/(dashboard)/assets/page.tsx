@@ -327,38 +327,6 @@ export default function AssetsPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {bulkUpdateState.isRunning && (
-            <>
-              <Button
-                variant="outline"
-                onClick={handlePauseResume}
-                disabled={isPausing}
-                className="gap-2"
-              >
-                {isPausing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : isPaused ? (
-                  <Play className="h-4 w-4" />
-                ) : (
-                  <Pause className="h-4 w-4" />
-                )}
-                {isPaused ? 'Retomar' : 'Pausar'}
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleCancelUpdate}
-                disabled={isCancelling}
-                className="gap-2"
-              >
-                {isCancelling ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <XCircle className="h-4 w-4" />
-                )}
-                Cancelar
-              </Button>
-            </>
-          )}
           <Button onClick={handleSyncAll} disabled={bulkUpdateState.isRunning} className="gap-2">
             {bulkUpdateState.isRunning ? (
               <Loader2 className="h-4 w-4 animate-spin" />
