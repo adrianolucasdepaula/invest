@@ -213,12 +213,12 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 - [x] TypeScript compila sem erros
 - [x] Documentação CLAUDE.md/GEMINI.md atualizada
 
-### Fase 2 (TODO)
-- [ ] React Query onError configurado
-- [ ] Frontend logger criado
-- [ ] DB_LOGGING env var configurada
-- [ ] Error Boundaries implementados
-- [ ] Logs testados em desenvolvimento
+### Fase 2 ✅ (2025-12-06)
+- [x] React Query onError configurado (QueryCache + MutationCache)
+- [x] Frontend logger criado (`frontend/src/lib/logger.ts`)
+- [x] DB_LOGGING env var configurada (já existia)
+- [ ] Error Boundaries implementados (futuro)
+- [x] TypeScript compila sem erros (backend + frontend)
 
 ### Fase 3 (TODO)
 - [ ] Loki/ELK escolhido e configurado

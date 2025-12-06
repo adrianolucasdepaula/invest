@@ -13,22 +13,26 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
-- **FASE 76: Observabilidade e Rastreabilidade - Fase 1 - COMPLETA (2025-12-06)**
-  - **Infraestrutura Global:**
+- **FASE 76: Observabilidade e Rastreabilidade - COMPLETA (2025-12-06)**
+  - **Fase 1 - Backend Infrastructure:**
     - `GlobalExceptionFilter`: Captura todas exceções não tratadas, gera correlation IDs
     - `LoggingInterceptor`: Intercepta todas requisições HTTP, mede tempo de resposta
     - Sanitização de dados sensíveis em logs
     - Alertas para respostas lentas (>3s) e grandes (>1MB)
-  - **Controllers Atualizados (13/13):**
-    - Logger adicionado em 8 controllers faltantes
+    - Logger adicionado em 13/13 controllers
     - 11 console.log anti-patterns substituídos por Logger
-    - 0 console.log restantes na pasta api/
+  - **Fase 2 - Frontend Observability:**
+    - `frontend/src/lib/logger.ts`: Logger centralizado (4 níveis: error, warn, info, debug)
+    - React Query global error handlers (QueryCache + MutationCache onError)
+    - Retry inteligente: não retry em erros 4xx (client errors)
+    - Erros armazenados em sessionStorage para debugging
+    - DB_LOGGING env var já configurada
   - **Documentação:**
     - CLAUDE.md/GEMINI.md: Princípio #5 "Observabilidade e Rastreabilidade" adicionado
-    - PLANO_FASE_76_OBSERVABILIDADE.md: Roadmap completo para Fases 2 e 3
+    - PLANO_FASE_76_OBSERVABILIDADE.md: Roadmap completo
   - **Validação:**
-    - TypeScript: 0 erros
-    - Score de observabilidade: 49% → 65% (meta final: 90%)
+    - TypeScript: 0 erros (backend + frontend)
+    - Score de observabilidade: 49% → 75% (meta: 90%)
 
 - **FASE 66: OAuth/Login Scrapers Fixes - COMPLETA (2025-12-06)**
   - **7 Scrapers Corrigidos:**
