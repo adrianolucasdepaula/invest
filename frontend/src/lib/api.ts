@@ -173,6 +173,12 @@ class ApiClient {
     return response.data;
   }
 
+  // Clean stale/orphaned jobs from queue
+  async cleanStaleJobs() {
+    const response = await this.client.post('/assets/bulk-update-clean-stale');
+    return response.data;
+  }
+
   // Analysis endpoints
   async getAnalysis(ticker: string, type?: 'fundamental' | 'technical' | 'complete') {
     const response = await this.client.get(`/analysis/${ticker}`, {

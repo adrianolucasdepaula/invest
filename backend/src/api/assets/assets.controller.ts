@@ -61,14 +61,21 @@ export class AssetsController {
   @ApiOperation({
     summary: 'Queue bulk sync for all assets (ASYNC)',
     description:
-      'Queues a background job to sync all assets. Returns immediately with job ID. Use GET /assets/sync-status/:jobId to check progress. Supports range parameter: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max. Default: 3mo',
+      'Queues a background job to sync all assets with smart prioritization: options-enabled assets first, then by last update date (never updated first, oldest to newest). Returns immediately with job ID. Use GET /assets/sync-status/:jobId to check progress.',
   })
   async syncAllAssets(@Query('range') range?: string) {
-    console.log('[sync-all] Queueing bulk sync, range:', range || '3mo');
+    console.log('[sync-all] Queueing bulk sync with smart prioritization, range:', range || '3mo');
 
-    // Get all assets tickers
-    const assets = await this.assetsService.findAll();
-    const tickers = assets.map((asset: any) => asset.ticker);
+    // Get all assets with prioritized ordering:
+    // 1. Options-enabled assets first (hasOptions = true)
+    // 2. Never updated assets first (lastUpdated IS NULL)
+    // 3. Then oldest to newest (lastUpdated ASC)
+    const assets = await this.assetsService.findAllForBulkUpdate();
+    const tickers = assets.map((asset) => asset.ticker);
+
+    const optionsCount = assets.filter(a => a.hasOptions).length;
+    const neverUpdatedCount = assets.filter(a => !a.lastUpdated).length;
+    console.log(`[sync-all] Prioritization: ${optionsCount} with options, ${neverUpdatedCount} never updated, ${tickers.length} total`);
 
     // Queue the job (returns immediately)
     const jobId = await this.assetUpdateJobsService.queueMultipleAssets(
@@ -82,7 +89,9 @@ export class AssetsController {
     return {
       jobId,
       total: tickers.length,
-      message: `Sync job queued for ${tickers.length} assets. Use GET /assets/sync-status/${jobId} to check progress.`,
+      optionsFirst: optionsCount,
+      neverUpdated: neverUpdatedCount,
+      message: `Sync job queued for ${tickers.length} assets (${optionsCount} with options first). Use GET /assets/sync-status/${jobId} to check progress.`,
       statusUrl: `/api/v1/assets/sync-status/${jobId}`,
     };
   }
@@ -120,6 +129,18 @@ export class AssetsController {
   async resumeBulkUpdate() {
     await this.assetUpdateJobsService.resumeQueue();
     return { message: 'Queue resumed.' };
+  }
+
+  @Post('bulk-update-clean-stale')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Clean stale jobs from queue',
+    description: 'Remove orphaned jobs that have been waiting for more than 2 hours. Useful to clear "ghost" updates from previous sessions.',
+  })
+  async cleanStaleJobs() {
+    await this.assetUpdateJobsService.cleanStaleJobs();
+    return { message: 'Stale jobs cleaned.' };
   }
 
   @Post(':ticker/update-fundamentals')

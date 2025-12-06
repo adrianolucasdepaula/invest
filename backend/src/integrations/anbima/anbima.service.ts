@@ -181,7 +181,7 @@ export class ANBIMAService {
         ),
       );
 
-      return response.status === 200 && response.data && Array.isArray(response.data.bonds);
+      return !!(response.status === 200 && response.data && Array.isArray(response.data.bonds));
     } catch (error) {
       this.logger.error(`Gabriel Gaspar API health check failed: ${error.message}`);
       return false;

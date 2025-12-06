@@ -865,11 +865,16 @@ export class MarketDataService {
 
     try {
       // Query SQL otimizada com LEFT JOIN (99.5% mais rápida que queries individuais)
-      // Busca: assets + count prices + min/max dates + last sync history
+      // Busca: assets + count prices + min/max dates + last sync history + hasOptions
+      // ORDENAÇÃO PRIORITÁRIA:
+      // 1. Ativos com opções primeiro (has_options DESC)
+      // 2. Dentro de cada grupo: nunca atualizados primeiro (last_sync_at NULLS FIRST)
+      // 3. Depois: do mais antigo para o mais novo (last_sync_at ASC)
       const query = `
         SELECT
           a.ticker,
           a.name,
+          a.has_options,
           COUNT(ap.id)::int as records_loaded,
           MIN(ap.date) as oldest_date,
           MAX(ap.date) as newest_date,
@@ -886,8 +891,8 @@ export class MarketDataService {
           LIMIT 1
         ) sh ON true
         WHERE a.is_active = true
-        GROUP BY a.id, a.ticker, a.name, sh.status, sh.created_at, sh.processing_time
-        ORDER BY a.ticker ASC
+        GROUP BY a.id, a.ticker, a.name, a.has_options, sh.status, sh.created_at, sh.processing_time
+        ORDER BY a.has_options DESC, sh.created_at NULLS FIRST, sh.created_at ASC
       `;
 
       const results = await this.assetRepository.query(query);
@@ -921,6 +926,7 @@ export class MarketDataService {
           status,
           lastSyncAt: row.last_sync_at || null,
           lastSyncDuration: row.last_sync_duration ? parseFloat(row.last_sync_duration) : null,
+          hasOptions: row.has_options || false,
         };
       });
 

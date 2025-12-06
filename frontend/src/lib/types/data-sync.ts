@@ -25,6 +25,7 @@ export interface AssetSyncStatusDto {
   status: AssetSyncStatus;
   lastSyncAt: Date | null;
   lastSyncDuration: number | null; // segundos
+  hasOptions: boolean; // Prioridade de atualização
 }
 
 /**

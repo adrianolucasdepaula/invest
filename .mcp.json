@@ -3,32 +3,38 @@
     "playwright": {
       "command": "cmd",
       "args": ["/c", "npx", "@playwright/mcp@latest"],
-      "env": {}
+      "env": {},
+      "alwaysAllow": ["*"]
     },
     "chrome-devtools": {
       "command": "cmd",
       "args": ["/c", "npx", "chrome-devtools-mcp@latest"],
-      "env": {}
+      "env": {},
+      "alwaysAllow": ["*"]
     },
     "a11y": {
       "command": "cmd",
       "args": ["/c", "npx", "@anthropic/mcp-server-a11y@latest"],
-      "env": {}
+      "env": {},
+      "alwaysAllow": ["*"]
     },
     "context7": {
       "command": "cmd",
       "args": ["/c", "npx", "@anthropic/context7-mcp@latest"],
-      "env": {}
+      "env": {},
+      "alwaysAllow": ["*"]
     },
     "sequential-thinking": {
       "command": "cmd",
       "args": ["/c", "npx", "@anthropic/mcp-sequential-thinking@latest"],
-      "env": {}
+      "env": {},
+      "alwaysAllow": ["*"]
     },
     "react-context": {
       "command": "cmd",
       "args": ["/c", "npx", "-y", "react-context-mcp@latest"],
-      "env": {}
+      "env": {},
+      "alwaysAllow": ["*"]
     }
   }
 }

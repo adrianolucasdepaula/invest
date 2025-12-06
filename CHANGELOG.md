@@ -9,9 +9,50 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Pendente
 
-- FASE 66: Architecture Visual Diagrams (Prioridade 2)
+- FASE 66: Scrapers Pendentes - Correção OAuth/Login (Prioridade MEDIA)
+- FASE 75: AI Sentiment (Gemini) (Prioridade MEDIA)
 
 ### Added
+
+- **FASE 74.5: Data Sources Page - Unified Scrapers View - COMPLETA (2025-12-06)**
+  - **Backend Integration (Python + TypeScript scrapers):**
+    - Novo método `getPythonScrapersList()` em ScrapersService
+    - Novo método `testPythonScraper()` para testes via Python API
+    - Método `getAllScrapersStatus()` combina scrapers TypeScript + Python
+    - Método `isPythonScraper()` para identificar runtime
+    - Integração com Python API (`/api/scrapers/list`, `/api/scrapers/test`)
+  - **Frontend Data Sources Page (`/data-sources`):**
+    - Exibe todos 29 scrapers (7 TypeScript + 22 Python)
+    - 8 filtros por categoria: Todas, Fundamental, News, AI, Market Data, Options, Crypto, Macro
+    - Badge de runtime (TypeScript/Python) em cada scraper
+    - Botão "Testar" funciona para ambos runtimes
+    - Settings Dialog com toggle enable/disable e rate limit
+    - Ordenação por nome, status e taxa de sucesso
+  - **API Client:**
+    - `api.testScraper(scraperId, ticker)` com suporte a body params
+    - Interface DataSource expandida com `runtime`, `category`, `description`
+  - **Validação:**
+    - TypeScript: 0 erros (backend + frontend)
+    - Build: Success (backend + frontend)
+    - 11 containers Docker healthy
+    - Console: 0 erros (exceto hydration warning pré-existente)
+
+- **FASE 74: System Infrastructure & Testing - COMPLETA (2025-12-06)**
+  - **system-manager.ps1 v2.0:** Script completo para gerenciamento de 11 serviços Docker
+    - Core (8): postgres, redis, python-service, backend, frontend, scrapers, api-service, orchestrator
+    - Dev (2): pgadmin, redis-commander
+    - Production (1): nginx
+    - Comandos: start, start-dev, start-prod, stop, status, health, restart-service
+  - **Cross-Validation Service:** Serviço de validação cruzada de dados financeiros
+    - Detecção de discrepâncias significativas
+    - Cálculo de consensus score
+    - Integração com pipeline de scraping
+  - **React Context MCP:** Configuração para inspeção de componentes React
+  - **Backend Unit Tests - 50% Coverage:**
+    - 901 testes passando (36 test suites)
+    - Coverage: 50.02% Statements, 48.89% Branches, 47.63% Functions
+    - Novos arquivos: pdf-generator.service.spec.ts, ai.service.spec.ts, app.controller.spec.ts
+    - Jest factory mocking pattern para playwright e fs modules
 
 - **Scrapers Fallback Integration - COMPLETA (2025-12-05)**
   - **FASE 1:** 26 Python scrapers registrados na API

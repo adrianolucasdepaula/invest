@@ -196,7 +196,7 @@ export class FREDService {
           ),
       );
 
-      return response.status === 200 && response.data && Array.isArray(response.data.observations);
+      return !!(response.status === 200 && response.data && Array.isArray(response.data.observations));
     } catch (error) {
       this.logger.error(`FRED API health check failed: ${error.message}`);
       return false;

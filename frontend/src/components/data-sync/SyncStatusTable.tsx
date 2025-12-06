@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Calendar,
   BarChart3,
+  Target,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSyncStatus } from '@/lib/hooks/useDataSync';
@@ -156,6 +157,9 @@ export function SyncStatusTable() {
   // Calculate partial count
   const partialCount = summary.total - summary.synced - summary.pending - summary.failed;
 
+  // Calculate options count (assets with hasOptions=true)
+  const optionsCount = assets.filter((a) => a.hasOptions).length;
+
   /**
    * FASE 37: Handle individual asset re-sync
    * Opens modal to configure period (startYear, endYear)
@@ -210,7 +214,7 @@ export function SyncStatusTable() {
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card className="p-6">
           <div className="flex items-center space-x-4">
             <div className="rounded-full bg-primary/10 p-3">
@@ -255,6 +259,18 @@ export function SyncStatusTable() {
             <div>
               <p className="text-sm text-muted-foreground">Pendentes</p>
               <p className="text-2xl font-bold">{summary.pending}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6 border-violet-500/30 bg-violet-500/5">
+          <div className="flex items-center space-x-4">
+            <div className="rounded-full bg-violet-500/10 p-3">
+              <Target className="h-6 w-6 text-violet-600" />
+            </div>
+            <div>
+              <p className="text-sm text-violet-600">Com Opções</p>
+              <p className="text-2xl font-bold text-violet-600">{optionsCount}</p>
             </div>
           </div>
         </Card>
@@ -333,6 +349,17 @@ export function SyncStatusTable() {
                     >
                       {getStatusLabel(asset.status)}
                     </Badge>
+
+                    {/* Options Badge - Prioridade de Atualização */}
+                    {asset.hasOptions && (
+                      <Badge
+                        variant="outline"
+                        className="rounded-full border bg-violet-500/10 text-violet-600 border-violet-500/30"
+                      >
+                        <Target className="mr-1 h-3 w-3" />
+                        Opções
+                      </Badge>
+                    )}
                   </div>
 
                   {/* Period Badge - DESTAQUE DO PERÍODO DE DADOS */}

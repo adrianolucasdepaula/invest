@@ -128,6 +128,19 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1",
+      "^@api/(.*)$": "<rootDir>/api/$1",
+      "^@services/(.*)$": "<rootDir>/services/$1",
+      "^@scrapers/(.*)$": "<rootDir>/scrapers/$1",
+      "^@validators/(.*)$": "<rootDir>/validators/$1",
+      "^@ai/(.*)$": "<rootDir>/ai/$1",
+      "^@analysis/(.*)$": "<rootDir>/analysis/$1",
+      "^@database/(.*)$": "<rootDir>/database/$1",
+      "^@queue/(.*)$": "<rootDir>/queue/$1",
+      "^@config/(.*)$": "<rootDir>/config/$1",
+      "^@common/(.*)$": "<rootDir>/common/$1"
+    }
   }
 }

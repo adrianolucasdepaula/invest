@@ -111,6 +111,7 @@ user-data-dir/
 # Reports and exports
 reports/
 !frontend/src/app/(dashboard)/reports/
+!backend/src/api/reports/
 exports/
 downloads/
 

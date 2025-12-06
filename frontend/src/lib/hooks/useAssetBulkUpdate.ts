@@ -179,49 +179,34 @@ export function useAssetBulkUpdate(options?: {
         console.log(`[ASSET BULK WS] Active: ${activeCount}, Waiting: ${waitingCount}, Total Pending: ${totalPending}`);
 
         if (totalPending > 0) {
-          console.log(`[ASSET BULK WS] Found ${totalPending} pending jobs, restoring/updating running state`);
-
           // Get current ticker from active jobs if available
           const currentTicker = queueStats.jobs?.active?.[0]?.data?.ticker || null;
 
           setState((prev) => {
-            // ✅ FIX: If already running with a higher total, keep the existing total
-            // This prevents resetting progress when polling updates
-            const shouldUpdateTotal = !prev.isRunning || prev.total === 0;
+            // ✅ FIX: Only update progress if user already initiated the update in this session
+            // This prevents auto-starting the UI update mode when page loads with stale jobs
+            if (!prev.isRunning) {
+              console.log(`[ASSET BULK WS] ${totalPending} jobs pendentes detectados (não iniciando automaticamente)`);
+              // Don't auto-activate running mode - user must click "Atualizar Todos"
+              return prev;
+            }
 
-            // ✅ FIX: Use dynamic total from API instead of hardcoded 861
-            // Use existing total if we have one, otherwise use fetched total or queue count
-            const estimatedTotal = shouldUpdateTotal
-              ? Math.max(totalPending, totalAssetsRef.current || totalPending)
-              : prev.total;
+            // Already running (user clicked the button) - update progress
+            console.log(`[ASSET BULK WS] Updating progress: ${totalPending} pending jobs`);
+
+            // Use existing total if we have one, otherwise estimate from queue
+            const estimatedTotal = prev.total > 0 ? prev.total : Math.max(totalPending, totalAssetsRef.current || totalPending);
 
             // Calculate current progress based on remaining jobs
             const currentProcessed = estimatedTotal - totalPending;
             const progress = estimatedTotal > 0 ? Math.round((currentProcessed / estimatedTotal) * 100) : 0;
 
-            // Only add system log on first detection (when not already running)
-            const newLogs = prev.isRunning
-              ? prev.logs
-              : [
-                  {
-                    timestamp: new Date(),
-                    ticker: 'SYSTEM',
-                    status: 'system' as const,
-                    message: `Atualização em andamento: ${totalPending} ativos pendentes...`,
-                  },
-                ];
-
             return {
               ...prev,
-              isRunning: true,
               currentTicker,
               total: estimatedTotal,
               current: currentProcessed,
               progress,
-              // Keep existing success/failed counts if already running
-              successCount: prev.isRunning ? prev.successCount : 0,
-              failedCount: prev.isRunning ? prev.failedCount : 0,
-              logs: newLogs,
             };
           });
         } else {

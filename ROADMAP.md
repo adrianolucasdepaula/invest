@@ -1,8 +1,8 @@
 # 🗺️ ROADMAP - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-05
-**Versão:** 1.7.5
+**Última Atualização:** 2025-12-06
+**Versão:** 1.8.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -10043,7 +10043,178 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 
 ---
 
-## FASE 74+: Infraestrutura Avancada (Opcional) 🔵 PLANEJADO
+## FASE 74: System Infrastructure & Testing ✅ 100% COMPLETO
+
+**Tipo:** Infrastructure/Testing
+**Prioridade:** 🟢 ALTA
+**Data Conclusão:** 2025-12-06
+
+**Objetivo:** Melhorar infraestrutura de gerenciamento do sistema e alcançar 50% de cobertura de testes unitários no backend.
+
+### Sub-Fases Implementadas
+
+#### FASE 74.1: system-manager.ps1 v2.0 ✅ COMPLETA
+
+Script PowerShell completo para gerenciamento dos 11 serviços Docker.
+
+**Serviços Gerenciados:**
+
+| Tipo | Serviços | Comando |
+|------|----------|---------|
+| Core (8) | postgres, redis, python-service, backend, frontend, scrapers, api-service, orchestrator | `start` |
+| Dev (2) | pgadmin, redis-commander | `start-dev` |
+| Production (1) | nginx | `start-prod` |
+
+**Funcionalidades:**
+- ✅ Check prerequisites (Docker, Node.js, etc)
+- ✅ Start/Stop/Restart services (individual ou em grupo)
+- ✅ Status de todos os 11 containers
+- ✅ Health check completo (HTTP + Docker inspect)
+- ✅ Suporte a profiles Docker (dev/production)
+- ✅ Verificação de volumes e rede
+
+#### FASE 74.2: Cross-Validation Service ✅ COMPLETA
+
+Serviço de validação cruzada de dados financeiros para garantir consistência.
+
+**Arquivo:** `backend/src/scrapers/validators/cross-validator.service.ts`
+
+**Funcionalidades:**
+- ✅ Validação de dados entre múltiplas fontes
+- ✅ Detecção de discrepâncias significativas
+- ✅ Cálculo de consensus score
+- ✅ Integração com pipeline de scraping
+
+#### FASE 74.3: React Context MCP ✅ COMPLETA
+
+Configuração do MCP para inspeção de componentes React no frontend.
+
+**Funcionalidades:**
+- ✅ Inspeção de árvore de componentes
+- ✅ Visualização de props e state
+- ✅ Integração com Chrome DevTools
+
+#### FASE 74.4: Backend Unit Tests - 50% Coverage ✅ COMPLETA
+
+Alcançada cobertura de 50% nos testes unitários do backend.
+
+**Métricas Finais:**
+
+| Métrica | Valor |
+|---------|-------|
+| Statements | 50.02% (3969/7934) |
+| Branches | 48.89% (1568/3207) |
+| Functions | 47.63% (523/1098) |
+| Lines | 49.63% (3634/7322) |
+| **Total Tests** | **901 passing** |
+| Test Suites | 36 passed |
+
+**Arquivos de Teste Criados:**
+- `pdf-generator.service.spec.ts` (26 tests) - Geração de PDF/JSON com mocks Playwright
+- `ai.service.spec.ts` (8 tests) - Stub AI service
+- `app.controller.spec.ts` (12 tests) - Controller raiz com health check
+- `scraping.processor.spec.ts` (24 tests) - Processador de filas
+- `asset-update.processor.spec.ts` (22 tests) - Atualização de ativos
+- `scheduled-jobs.service.spec.ts` (17 tests) - Jobs agendados
+
+**Técnicas de Mocking:**
+- Jest factory functions para evitar hoisting issues
+- `jest.requireActual()` dentro de factory para preservar módulos originais
+- Mocks de Playwright browser/page
+- Mocks de TypeORM repositories com `getRepositoryToken()`
+- Mocks de BullMQ queues e jobs
+
+### Validação
+
+- ✅ TypeScript: 0 erros (backend + frontend)
+- ✅ Build: Success (backend + frontend)
+- ✅ Tests: 901 passing (36 test suites)
+- ✅ Coverage: 50.02% (meta alcançada!)
+- ✅ Docker: 11 serviços gerenciados
+
+**Commits:**
+- `be70b95` - feat(devops): system-manager.ps1 v2.0 with full 11 services support
+- `b4c6d52` - feat(validators): add comprehensive cross-validation service
+- `9d71958` - feat(mcp): add React Context MCP for component inspection
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
+## FASE 74.5: Data Sources Page - Unified Scrapers View ✅ 100% COMPLETO
+
+**Tipo:** Feature/Integration
+**Prioridade:** 🟢 ALTA
+**Data Conclusão:** 2025-12-06
+
+**Objetivo:** Unificar a visualização de todos os scrapers (TypeScript + Python) na página Data Sources.
+
+### Problema Resolvido
+
+A página Data Sources mostrava apenas 6 scrapers hardcoded (TypeScript), quando existem 29+ scrapers ativos no sistema (7 TypeScript + 22 Python).
+
+### Implementações
+
+#### Backend Integration
+
+**Arquivo:** `backend/src/scrapers/scrapers.service.ts` (+277 linhas)
+
+- ✅ `getPythonScrapersList()` - Busca lista de scrapers da Python API
+- ✅ `testPythonScraper(scraperId, ticker)` - Testa scraper Python via API
+- ✅ `getAllScrapersStatus()` - Combina scrapers TypeScript + Python
+- ✅ `isPythonScraper()` - Identifica se scraper é Python ou TypeScript
+
+**Arquivo:** `backend/src/scrapers/scrapers.controller.ts` (+148 linhas modificadas)
+
+- ✅ DTOs expandidos com campos `runtime`, `category`, `description`
+- ✅ Endpoint `POST /scrapers/test/:scraperId` suporta ambos runtimes
+
+#### Frontend Data Sources Page
+
+**Arquivo:** `frontend/src/app/(dashboard)/data-sources/page.tsx`
+
+- ✅ Exibe todos 29 scrapers (7 TypeScript + 22 Python)
+- ✅ 8 filtros por categoria: Todas, Fundamental, News, AI, Market Data, Options, Crypto, Macro
+- ✅ Badge de runtime (TypeScript/Python) em cada card
+- ✅ Botão "Testar" funciona para ambos runtimes
+- ✅ Settings Dialog com toggle enable/disable e rate limit slider
+
+#### API Client
+
+**Arquivo:** `frontend/src/lib/api.ts` (+6 linhas)
+
+- ✅ `api.testScraper(scraperId, ticker)` com suporte a body params
+
+**Arquivo:** `frontend/src/lib/hooks/useDataSources.ts` (+6 linhas)
+
+- ✅ Interface `DataSource` expandida com `runtime`, `category`, `description`
+
+### Scrapers Disponíveis (29 total)
+
+| Categoria | Scrapers | Qtd |
+|-----------|----------|-----|
+| Fundamental | fundamentus, brapi, statusinvest, investidor10, fundamentei, investsite, griffin | 7 |
+| Official Data | bcb | 1 |
+| Technical | tradingview | 1 |
+| Market Data | googlefinance, yahoofinance, oplab, kinvo | 4 |
+| Crypto | coinmarketcap | 1 |
+| Options | opcoesnet | 1 |
+| News | bloomberg, googlenews, investingnews, valor, exame, infomoney, estadao | 7 |
+| AI Analysis | chatgpt, gemini, grok, deepseek, claude, perplexity | 6 |
+
+### Validação
+
+- ✅ TypeScript: 0 erros (backend + frontend)
+- ✅ Build: Success (backend + frontend)
+- ✅ Docker: 11 containers healthy
+- ✅ Console: 0 erros
+- ✅ UI: 29 scrapers visíveis, filtros funcionando, test button funcionando
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
+## FASE 75+: Infraestrutura Avancada (Opcional) 🔵 PLANEJADO
 
 **Tipo:** Infrastructure
 **Prioridade:** 🔵 BAIXA
@@ -10061,7 +10232,7 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (72 fases)
+### Fases Completas (74 fases)
 
 - ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
 - ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
@@ -10081,12 +10252,14 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 - ✅ FASE 72: Scrapers Fallback Integration (2025-12-05)
 - ✅ FASE 73: Claude Code Ecosystem Improvements (2025-12-06)
 - ✅ FASE 73.5: Opus 4.5 Ultra-Robust Configuration (2025-12-06)
+- ✅ FASE 74: System Infrastructure & Testing (2025-12-06)
+- ✅ FASE 74.5: Data Sources Page - Unified Scrapers View (2025-12-06)
 
 ### Fases Planejadas (2 fases)
 
 - 🔵 FASE 66: Scrapers Pendentes - Correção OAuth/Login (Prioridade MEDIA)
-- 🔵 FASE 74: AI Sentiment (Gemini) (Prioridade MEDIA)
-- 🔵 FASE 73+: Infraestrutura Avancada (Prioridade BAIXA)
+- 🔵 FASE 75: AI Sentiment (Gemini) (Prioridade MEDIA)
+- 🔵 FASE 75+: Infraestrutura Avancada (Prioridade BAIXA)
 
 ### Cronograma Estimado
 
@@ -10109,7 +10282,7 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 ---
 
 **Ultima Atualizacao:** 2025-12-06
-**Total de Fases:** 73 completas + 2 planejadas = **75 fases**
-**Versao:** 1.7.9
+**Total de Fases:** 74 completas + 2 planejadas = **76 fases**
+**Versao:** 1.8.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

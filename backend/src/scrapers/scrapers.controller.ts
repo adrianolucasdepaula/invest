@@ -17,7 +17,7 @@ export interface DataSourceStatusDto {
   id: string;
   name: string;
   url: string;
-  type: 'fundamental' | 'technical' | 'options' | 'prices' | 'news';
+  type: 'fundamental' | 'technical' | 'options' | 'prices' | 'news' | 'ai' | 'market_data' | 'crypto' | 'macro';
   status: 'active' | 'inactive' | 'error';
   lastTest: string | null;
   lastSync: string | null;
@@ -26,6 +26,9 @@ export interface DataSourceStatusDto {
   failedRequests: number;
   avgResponseTime: number;
   requiresAuth: boolean;
+  runtime: 'typescript' | 'python';
+  category: string;
+  description?: string;
   errorMessage?: string;
 }
 
@@ -125,82 +128,26 @@ export class ScrapersController {
   ) {}
 
   @Get('status')
-  @ApiOperation({ summary: 'Get status of all data sources' })
+  @ApiOperation({ summary: 'Get status of all data sources (TypeScript + Python)' })
   @ApiResponse({
     status: 200,
-    description: 'Returns status of all configured data sources',
+    description: 'Returns status of all configured data sources including Python scrapers',
   })
   async getDataSourcesStatus(): Promise<DataSourceStatusDto[]> {
-    this.logger.log('Fetching data sources status with real metrics');
+    this.logger.log('Fetching unified data sources status (TypeScript + Python)');
 
-    // Fetch real metrics from database
+    // Fetch real metrics from database for TypeScript scrapers
     const metricsMap = await this.scraperMetricsService.getAllMetricsSummaries();
 
-    // Static scraper configurations
-    const scraperConfigs = [
-      {
-        id: 'fundamentus',
-        name: 'Fundamentus',
-        url: 'https://fundamentus.com.br',
-        requiresAuth: false,
-      },
-      {
-        id: 'brapi',
-        name: 'BRAPI',
-        url: 'https://brapi.dev',
-        requiresAuth: true,
-      },
-      {
-        id: 'statusinvest',
-        name: 'Status Invest',
-        url: 'https://statusinvest.com.br',
-        requiresAuth: true,
-      },
-      {
-        id: 'investidor10',
-        name: 'Investidor10',
-        url: 'https://investidor10.com.br',
-        requiresAuth: true,
-      },
-      {
-        id: 'fundamentei',
-        name: 'Fundamentei',
-        url: 'https://fundamentei.com',
-        requiresAuth: true,
-      },
-      {
-        id: 'investsite',
-        name: 'Investsite',
-        url: 'https://www.investsite.com.br',
-        requiresAuth: false,
-      },
-    ];
+    // Get unified status from all scrapers (TypeScript + Python)
+    const sources = await this.scrapersService.getAllScrapersStatus(metricsMap);
 
-    // Combine static config with real metrics
-    const sources: DataSourceStatusDto[] = scraperConfigs.map((config) => {
-      const metrics = metricsMap.get(config.id);
-
-      return {
-        id: config.id,
-        name: config.name,
-        url: config.url,
-        type: 'fundamental' as const,
-        status: metrics && metrics.totalRequests > 0 ? 'active' : ('inactive' as const),
-        lastTest: metrics?.lastTest?.toISOString() || null,
-        lastSync: metrics?.lastSync?.toISOString() || null,
-        successRate: metrics?.successRate || 0,
-        totalRequests: metrics?.totalRequests || 0,
-        failedRequests: metrics?.failedRequests || 0,
-        avgResponseTime: metrics?.avgResponseTime || 0,
-        requiresAuth: config.requiresAuth,
-      };
-    });
-
+    this.logger.log(`Returning ${sources.length} data sources`);
     return sources;
   }
 
   @Post('test/:scraperId')
-  @ApiOperation({ summary: 'Test a specific scraper' })
+  @ApiOperation({ summary: 'Test a specific scraper (TypeScript or Python)' })
   @ApiParam({ name: 'scraperId', description: 'Scraper ID to test' })
   @ApiResponse({
     status: 200,
@@ -213,16 +160,70 @@ export class ScrapersController {
   async testScraper(@Param('scraperId') scraperId: string, @Body() body?: { ticker?: string }) {
     this.logger.log(`Testing scraper: ${scraperId}`);
 
+    // Use ticker from body if provided, otherwise default to PETR4
+    const testTicker = body?.ticker || 'PETR4';
+    const startTime = Date.now();
+
+    // Check if this is a Python scraper or TypeScript scraper
+    const isPythonScraper = this.scrapersService.isPythonScraper(scraperId);
+
+    if (isPythonScraper) {
+      // Test via Python API
+      this.logger.log(`Testing Python scraper: ${scraperId}`);
+
+      try {
+        const result = await this.scrapersService.testPythonScraper(scraperId, testTicker);
+        const responseTime = result.execution_time * 1000; // Convert to ms
+
+        // Save metrics to database
+        await this.scraperMetricsService.saveMetric(
+          scraperId,
+          'test',
+          testTicker,
+          result.success,
+          responseTime,
+          result.success ? null : result.error,
+        );
+
+        return {
+          success: result.success,
+          scraperId,
+          message: result.success
+            ? `Python scraper ${scraperId} tested successfully`
+            : `Python scraper ${scraperId} test failed: ${result.error}`,
+          data: result.data,
+          source: result.scraper,
+          responseTime,
+          testedAt: new Date().toISOString(),
+          runtime: 'python',
+        };
+      } catch (error) {
+        const responseTime = Date.now() - startTime;
+
+        await this.scraperMetricsService.saveMetric(
+          scraperId,
+          'test',
+          testTicker,
+          false,
+          responseTime,
+          error.message,
+        );
+
+        this.logger.error(`Failed to test Python scraper ${scraperId}: ${error.message}`);
+        throw new HttpException(
+          `Failed to test Python scraper: ${error.message}`,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+
+    // TypeScript scraper test
     const availableScrapers = this.scrapersService.getAvailableScrapers();
     const scraper = availableScrapers.find((s) => s.source === scraperId);
 
     if (!scraper) {
-      throw new HttpException('Scraper not found', HttpStatus.NOT_FOUND);
+      throw new HttpException(`Scraper ${scraperId} not found`, HttpStatus.NOT_FOUND);
     }
-
-    // Use ticker from body if provided, otherwise default to PETR4
-    const testTicker = body?.ticker || 'PETR4';
-    const startTime = Date.now();
 
     try {
       // Test ONLY this specific scraper with the specified ticker
@@ -243,12 +244,13 @@ export class ScrapersController {
         success: result.success,
         scraperId,
         message: result.success
-          ? `Scraper ${scraperId} tested successfully`
-          : `Scraper ${scraperId} test failed: ${result.error}`,
+          ? `TypeScript scraper ${scraperId} tested successfully`
+          : `TypeScript scraper ${scraperId} test failed: ${result.error}`,
         data: result.data,
         source: result.source,
         responseTime,
         testedAt: new Date().toISOString(),
+        runtime: 'typescript',
       };
     } catch (error) {
       const responseTime = Date.now() - startTime;
@@ -263,7 +265,7 @@ export class ScrapersController {
         error.message,
       );
 
-      this.logger.error(`Failed to test scraper ${scraperId}: ${error.message}`);
+      this.logger.error(`Failed to test TypeScript scraper ${scraperId}: ${error.message}`);
       throw new HttpException(
         `Failed to test scraper: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,

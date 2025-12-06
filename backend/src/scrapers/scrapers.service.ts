@@ -31,6 +31,58 @@ import {
 } from './scrapers.controller';
 
 /**
+ * Python API Scraper Information
+ * Matches the response from Python API /api/scrapers/list
+ */
+export interface PythonScraperInfo {
+  id: string;
+  name: string;
+  source: string;
+  requires_login: boolean;
+  category: string;
+  description: string;
+  url: string;
+}
+
+/**
+ * Python API Scraper Test Result
+ * Matches the response from Python API /api/scrapers/test
+ */
+export interface PythonScraperTestResult {
+  success: boolean;
+  scraper: string;
+  query: string;
+  data?: any;
+  error?: string;
+  execution_time: number;
+  timestamp?: string;
+  metadata?: any;
+}
+
+/**
+ * Unified Scraper Status for Data Sources page
+ * Combines TypeScript and Python scrapers
+ */
+export interface UnifiedScraperStatus {
+  id: string;
+  name: string;
+  url: string;
+  type: 'fundamental' | 'technical' | 'options' | 'prices' | 'news' | 'ai' | 'market_data' | 'crypto' | 'macro';
+  status: 'active' | 'inactive' | 'error';
+  lastTest: string | null;
+  lastSync: string | null;
+  successRate: number;
+  totalRequests: number;
+  failedRequests: number;
+  avgResponseTime: number;
+  requiresAuth: boolean;
+  runtime: 'typescript' | 'python';
+  category: string;
+  description?: string;
+  errorMessage?: string;
+}
+
+/**
  * Resultado individual de uma fonte para um campo específico
  */
 export interface SourceFieldData {
@@ -922,7 +974,7 @@ export class ScrapersService {
   }
 
   /**
-   * Get all available scrapers
+   * Get all available scrapers (TypeScript only)
    */
   getAvailableScrapers(): any[] {
     return [
@@ -962,6 +1014,229 @@ export class ScrapersService {
         requiresLogin: this.opcoesScraper.requiresLogin,
       },
     ];
+  }
+
+  /**
+   * Get list of all Python scrapers from Python API
+   *
+   * Calls GET http://localhost:8000/api/scrapers/list
+   * Returns list of 26 scrapers with metadata
+   */
+  async getPythonScrapersList(): Promise<PythonScraperInfo[]> {
+    this.logger.log('[PYTHON-API] Fetching scrapers list from Python API');
+
+    try {
+      const url = `${this.pythonApiUrl}/api/scrapers/list`;
+      const response = await firstValueFrom(
+        this.httpService.get(url, { timeout: 10000 }),
+      );
+
+      const data = response.data;
+      this.logger.log(`[PYTHON-API] Got ${data.total} scrapers (${data.public} public, ${data.private} private)`);
+
+      return data.scrapers || [];
+    } catch (error) {
+      this.logger.error(`[PYTHON-API] Failed to get scrapers list: ${error.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * Test a Python scraper via Python API
+   *
+   * Calls POST http://localhost:8000/api/scrapers/test
+   */
+  async testPythonScraper(scraperId: string, ticker: string): Promise<PythonScraperTestResult> {
+    this.logger.log(`[PYTHON-API] Testing scraper ${scraperId} with ticker ${ticker}`);
+
+    try {
+      const url = `${this.pythonApiUrl}/api/scrapers/test`;
+      const response = await firstValueFrom(
+        this.httpService.post(url, {
+          scraper: scraperId.toUpperCase(),
+          query: ticker,
+        }, { timeout: 120000 }), // 2 minute timeout for scraper tests
+      );
+
+      const result = response.data;
+      this.logger.log(
+        `[PYTHON-API] Scraper ${scraperId} test ${result.success ? 'SUCCESS' : 'FAILED'} in ${result.execution_time}s`,
+      );
+
+      return result;
+    } catch (error) {
+      this.logger.error(`[PYTHON-API] Failed to test scraper ${scraperId}: ${error.message}`);
+      return {
+        success: false,
+        scraper: scraperId,
+        query: ticker,
+        error: error.message,
+        execution_time: 0,
+      };
+    }
+  }
+
+  /**
+   * Map Python category to frontend type
+   */
+  private mapCategoryToType(category: string): UnifiedScraperStatus['type'] {
+    const categoryMap: Record<string, UnifiedScraperStatus['type']> = {
+      fundamental_analysis: 'fundamental',
+      technical_analysis: 'technical',
+      options: 'options',
+      news: 'news',
+      ai_analysis: 'ai',
+      market_data: 'market_data',
+      crypto: 'crypto',
+      official_data: 'macro',
+    };
+    return categoryMap[category] || 'fundamental';
+  }
+
+  /**
+   * Get unified status of ALL scrapers (TypeScript + Python)
+   *
+   * Merges TypeScript scrapers with Python API scrapers
+   * Returns comprehensive list for Data Sources page
+   */
+  async getAllScrapersStatus(
+    metricsMap: Map<string, any>,
+  ): Promise<UnifiedScraperStatus[]> {
+    this.logger.log('[UNIFIED] Building unified scrapers status');
+
+    const results: UnifiedScraperStatus[] = [];
+
+    // 1. Add TypeScript scrapers (with real metrics)
+    const typescriptScrapers = [
+      {
+        id: 'fundamentus',
+        name: 'Fundamentus',
+        url: 'https://fundamentus.com.br',
+        requiresAuth: false,
+        category: 'fundamental_analysis',
+        description: 'Dados fundamentalistas públicos - scraper TypeScript nativo',
+      },
+      {
+        id: 'brapi',
+        name: 'BRAPI',
+        url: 'https://brapi.dev',
+        requiresAuth: true,
+        category: 'fundamental_analysis',
+        description: 'API de dados financeiros brasileiros',
+      },
+      {
+        id: 'statusinvest',
+        name: 'Status Invest',
+        url: 'https://statusinvest.com.br',
+        requiresAuth: true,
+        category: 'fundamental_analysis',
+        description: 'Plataforma de análise fundamentalista',
+      },
+      {
+        id: 'investidor10',
+        name: 'Investidor10',
+        url: 'https://investidor10.com.br',
+        requiresAuth: true,
+        category: 'fundamental_analysis',
+        description: 'Portal de análise de investimentos',
+      },
+      {
+        id: 'fundamentei',
+        name: 'Fundamentei',
+        url: 'https://fundamentei.com',
+        requiresAuth: true,
+        category: 'fundamental_analysis',
+        description: 'Análise fundamentalista de ações',
+      },
+      {
+        id: 'investsite',
+        name: 'Investsite',
+        url: 'https://www.investsite.com.br',
+        requiresAuth: false,
+        category: 'fundamental_analysis',
+        description: 'Portal de dados de ações e FIIs',
+      },
+      {
+        id: 'opcoes',
+        name: 'Opções.net',
+        url: 'https://opcoes.net.br',
+        requiresAuth: false,
+        category: 'options',
+        description: 'Dados de opções (calls/puts) - scraper TypeScript',
+      },
+    ];
+
+    for (const config of typescriptScrapers) {
+      const metrics = metricsMap.get(config.id);
+
+      results.push({
+        id: config.id,
+        name: config.name,
+        url: config.url,
+        type: this.mapCategoryToType(config.category),
+        status: metrics && metrics.totalRequests > 0 ? 'active' : 'inactive',
+        lastTest: metrics?.lastTest?.toISOString() || null,
+        lastSync: metrics?.lastSync?.toISOString() || null,
+        successRate: metrics?.successRate || 0,
+        totalRequests: metrics?.totalRequests || 0,
+        failedRequests: metrics?.failedRequests || 0,
+        avgResponseTime: metrics?.avgResponseTime || 0,
+        requiresAuth: config.requiresAuth,
+        runtime: 'typescript',
+        category: config.category,
+        description: config.description,
+      });
+    }
+
+    // 2. Fetch Python scrapers and add them
+    const pythonScrapers = await this.getPythonScrapersList();
+
+    for (const pyScraper of pythonScrapers) {
+      // Skip if already added as TypeScript scraper (avoid duplicates)
+      const existingTs = results.find(
+        (r) => r.id.toLowerCase() === pyScraper.id.toLowerCase() ||
+               r.name.toLowerCase() === pyScraper.name.toLowerCase(),
+      );
+
+      if (existingTs) {
+        this.logger.debug(`[UNIFIED] Skipping Python scraper ${pyScraper.id} - already exists as TypeScript`);
+        continue;
+      }
+
+      // Add Python scraper
+      results.push({
+        id: pyScraper.id.toLowerCase(),
+        name: pyScraper.name,
+        url: pyScraper.url,
+        type: this.mapCategoryToType(pyScraper.category),
+        status: 'active', // Python scrapers are active if they appear in the list
+        lastTest: null,
+        lastSync: null,
+        successRate: 0,
+        totalRequests: 0,
+        failedRequests: 0,
+        avgResponseTime: 0,
+        requiresAuth: pyScraper.requires_login,
+        runtime: 'python',
+        category: pyScraper.category,
+        description: pyScraper.description,
+      });
+    }
+
+    this.logger.log(`[UNIFIED] Total scrapers: ${results.length} (${typescriptScrapers.length} TS + ${pythonScrapers.length} Python)`);
+
+    return results;
+  }
+
+  /**
+   * Check if a scraper ID belongs to a Python scraper
+   */
+  isPythonScraper(scraperId: string): boolean {
+    const typescriptScraperIds = [
+      'fundamentus', 'brapi', 'statusinvest',
+      'investidor10', 'fundamentei', 'investsite', 'opcoes',
+    ];
+    return !typescriptScraperIds.includes(scraperId.toLowerCase());
   }
 
   /**

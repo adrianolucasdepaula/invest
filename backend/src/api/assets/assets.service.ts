@@ -178,6 +178,37 @@ export class AssetsService {
     return enrichedAssets;
   }
 
+  /**
+   * Get all assets ordered for bulk update prioritization:
+   * 1. Assets with options (hasOptions = true) first
+   * 2. Within each group, never updated assets first (lastUpdated IS NULL)
+   * 3. Then ordered from oldest to newest (lastUpdated ASC)
+   *
+   * This ensures options-enabled assets are updated first for trading relevance,
+   * and stale/never-updated data gets refreshed before recently updated assets.
+   */
+  async findAllForBulkUpdate(): Promise<{ ticker: string; hasOptions: boolean; lastUpdated: Date | null }[]> {
+    this.logger.log('Fetching assets ordered for bulk update (options first, then by lastUpdated)');
+
+    const assets = await this.assetRepository
+      .createQueryBuilder('asset')
+      .select(['asset.ticker', 'asset.hasOptions', 'asset.lastUpdated'])
+      .orderBy('asset.hasOptions', 'DESC') // true first (options-enabled)
+      .addOrderBy('CASE WHEN asset.lastUpdated IS NULL THEN 0 ELSE 1 END', 'ASC') // NULL (never updated) first
+      .addOrderBy('asset.lastUpdated', 'ASC') // oldest to newest
+      .getMany();
+
+    this.logger.log(`Found ${assets.length} assets for bulk update. ` +
+      `Options-enabled: ${assets.filter(a => a.hasOptions).length}, ` +
+      `Never updated: ${assets.filter(a => !a.lastUpdated).length}`);
+
+    return assets.map(a => ({
+      ticker: a.ticker,
+      hasOptions: a.hasOptions,
+      lastUpdated: a.lastUpdated,
+    }));
+  }
+
   async findByTicker(ticker: string) {
     // Optimized query with LEFT JOIN to get latest 2 prices
     const result = await this.assetRepository

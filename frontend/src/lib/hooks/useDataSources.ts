@@ -5,14 +5,18 @@ export interface DataSource {
   id: string;
   name: string;
   url: string;
-  type: 'fundamental' | 'technical' | 'options' | 'prices' | 'news';
+  type: 'fundamental' | 'technical' | 'options' | 'prices' | 'news' | 'ai' | 'market_data' | 'crypto' | 'macro';
   status: 'active' | 'inactive' | 'error';
+  lastTest: string | null;
   lastSync: string | null;
   successRate: number;
   totalRequests: number;
   failedRequests: number;
   avgResponseTime: number;
   requiresAuth: boolean;
+  runtime: 'typescript' | 'python';
+  category: string;
+  description?: string;
   errorMessage?: string;
 }
 

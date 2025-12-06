@@ -220,6 +220,18 @@ Dividend Yield de 7.2% é muito atrativo para investidores de renda.
       ...partial,
     });
 
+    beforeEach(() => {
+      // Mock GPT-4 call for signal extraction tests
+      jest.spyOn(agent as any, 'callGPT4').mockResolvedValue(`
+Análise Fundamentalista - PETR4
+
+**Valuation:**
+Análise concluída.
+
+**Recomendação:** MANTER
+      `);
+    });
+
     it('should generate BUY signal for low P/E', async () => {
       const context: AnalysisContext = {
         ticker: 'PETR4',

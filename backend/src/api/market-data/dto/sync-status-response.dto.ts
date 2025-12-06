@@ -72,6 +72,12 @@ export class AssetSyncStatusDto {
     nullable: true,
   })
   lastSyncDuration: number | null;
+
+  @ApiProperty({
+    example: true,
+    description: 'Indica se o ativo possui opções negociadas (prioridade de atualização)',
+  })
+  hasOptions: boolean;
 }
 
 /**

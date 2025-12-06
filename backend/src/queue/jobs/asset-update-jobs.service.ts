@@ -31,7 +31,39 @@ export class AssetUpdateJobsService implements OnModuleInit {
     const jobCounts = await this.assetUpdatesQueue.getJobCounts();
     this.logger.log(`Asset Updates Queue initialized: ${JSON.stringify(jobCounts)}`);
 
+    // Clean stale jobs on startup (jobs older than 2 hours that are still waiting)
+    // This prevents "auto-start" behavior from orphaned jobs of previous sessions
+    await this.cleanStaleJobs();
+
     this.logger.log('🔄 Cron jobs ENABLED');
+  }
+
+  /**
+   * Clean stale jobs that have been waiting for too long (> 2 hours)
+   * This prevents orphaned jobs from previous sessions showing as "in progress"
+   */
+  async cleanStaleJobs() {
+    const maxAge = 2 * 60 * 60 * 1000; // 2 hours in ms
+    const now = Date.now();
+
+    try {
+      const waiting = await this.assetUpdatesQueue.getWaiting();
+      let cleanedCount = 0;
+
+      for (const job of waiting) {
+        const jobAge = now - job.timestamp;
+        if (jobAge > maxAge) {
+          await job.remove();
+          cleanedCount++;
+        }
+      }
+
+      if (cleanedCount > 0) {
+        this.logger.log(`🧹 Cleaned ${cleanedCount} stale jobs (older than 2 hours)`);
+      }
+    } catch (error) {
+      this.logger.warn(`Could not clean stale jobs: ${error.message}`);
+    }
   }
 
   // ============================================================================
