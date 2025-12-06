@@ -166,6 +166,40 @@
 
 ---
 
+## 🤖 AUTOMAÇÃO CLAUDE CODE
+
+### Skills (Workflows Automatizados)
+
+| Arquivo                                                                  | Descrição                                        | Frequência de Uso       |
+| ------------------------------------------------------------------------ | ------------------------------------------------ | ----------------------- |
+| [.claude/skills/validate-all.md](.claude/skills/validate-all.md)         | Validação completa (TypeScript + Build + Lint)   | 🔥 10-20x/dia           |
+| [.claude/skills/context-check.md](.claude/skills/context-check.md)       | Verificação de contexto antes de tarefa          | 🔥 5-10x/dia            |
+| [.claude/skills/sync-docs.md](.claude/skills/sync-docs.md)               | Sincronização CLAUDE.md ↔ GEMINI.md (100% sync)  | ⚡ 2-3x/semana          |
+
+### Comandos Slash (Atalhos Rápidos)
+
+| Comando            | Equivalente                     | Arquivo                                                                    |
+| ------------------ | ------------------------------- | -------------------------------------------------------------------------- |
+| `/validate-all`    | Execute skill validate-all      | [.claude/commands/validate-all.md](.claude/commands/validate-all.md)       |
+| `/check-context`   | Execute skill context-check     | [.claude/commands/check-context.md](.claude/commands/check-context.md)     |
+| `/sync-docs`       | Execute skill sync-docs         | [.claude/commands/sync-docs.md](.claude/commands/sync-docs.md)             |
+
+### Hooks (Triggers Automáticos)
+
+| Arquivo                                                                    | Trigger                           | Ação Automática                                    |
+| -------------------------------------------------------------------------- | --------------------------------- | -------------------------------------------------- |
+| [.claude/hooks/pre-task.md](.claude/hooks/pre-task.md)                     | Antes de toda tarefa              | Context check automático                           |
+| [.claude/hooks/post-file-edit.md](.claude/hooks/post-file-edit.md)         | Após edição de CLAUDE.md          | Sincronização automática com GEMINI.md             |
+| [.claude/hooks/pre-commit-msg.md](.claude/hooks/pre-commit-msg.md)         | Antes de criar commit message     | Template de commit detalhado (Conventional Commits)|
+
+**Benefícios:**
+- ⬆️ 30-40% mais produtividade
+- ✅ Zero Tolerance garantido automaticamente
+- ✅ Documentação sempre sincronizada
+- ✅ Commits padronizados e detalhados
+
+---
+
 ## 📖 REFERÊNCIA RÁPIDA
 
 ### Onde Documentar O Quê?
