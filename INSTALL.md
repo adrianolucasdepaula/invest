@@ -714,25 +714,45 @@ Para mais problemas, consulte **`TROUBLESHOOTING.md`**.
 
 ## 🛠️ GERENCIAMENTO DO SISTEMA
 
-O projeto inclui um script poderoso `system-manager.ps1` para facilitar a manutenção.
+O projeto inclui o script `system-manager.ps1` v2.0 para gerenciamento completo dos 11 serviços.
 
-### Comandos Principais
+### Serviços Gerenciados
 
-| Comando                               | Descrição                           |
-| ------------------------------------- | ----------------------------------- |
-| `.\system-manager.ps1 start`          | Inicia o sistema (com verificações) |
-| `.\system-manager.ps1 stop`           | Para todos os serviços              |
-| `.\system-manager.ps1 status`         | Mostra status detalhado             |
-| `.\system-manager.ps1 logs [service]` | Mostra logs (ex: `logs backend`)    |
+| Tipo | Serviços | Comando |
+|------|----------|---------|
+| Core (8) | postgres, redis, python-service, backend, frontend, scrapers, api-service, orchestrator | `start` |
+| Dev (2) | pgadmin, redis-commander | `start-dev` |
+| Production (1) | nginx | `start-prod` |
 
-### Comandos de Manutenção (NOVO)
+### Comandos de Inicialização
 
-| Comando                                 | Descrição                                   |
-| --------------------------------------- | ------------------------------------------- |
-| `.\system-manager.ps1 backup`           | Cria backup completo do banco em `backups/` |
-| `.\system-manager.ps1 restore`          | Restaura um backup existente                |
-| `.\system-manager.ps1 clean-cache`      | Limpa cache do frontend (seguro)            |
-| `.\system-manager.ps1 rebuild-frontend` | Força rebuild do frontend                   |
-| `.\system-manager.ps1 check-types`      | Verifica erros de TypeScript                |
-| `.\system-manager.ps1 prune`            | Limpeza profunda do Docker                  |
-| `.\system-manager.ps1 start -Verbose`   | Inicia com logs em tempo real               |
+| Comando                               | Descrição                                    |
+| ------------------------------------- | -------------------------------------------- |
+| `.\system-manager.ps1 start`          | Inicia core services (8 serviços)            |
+| `.\system-manager.ps1 start-dev`      | Inicia core + pgadmin + redis-commander      |
+| `.\system-manager.ps1 start-prod`     | Inicia core + nginx (reverse proxy)          |
+| `.\system-manager.ps1 stop`           | Para todos os serviços                       |
+| `.\system-manager.ps1 restart`        | Reinicia o sistema completo                  |
+| `.\system-manager.ps1 start -Verbose` | Inicia com logs em tempo real                |
+
+### Comandos de Status e Diagnóstico
+
+| Comando                               | Descrição                                    |
+| ------------------------------------- | -------------------------------------------- |
+| `.\system-manager.ps1 status`         | Status detalhado de todos os 11 serviços     |
+| `.\system-manager.ps1 health`         | Health check completo (HTTP + Docker)        |
+| `.\system-manager.ps1 logs [service]` | Mostra logs (ex: `logs backend`)             |
+| `.\system-manager.ps1 volumes`        | Lista volumes Docker do projeto              |
+| `.\system-manager.ps1 network`        | Mostra rede Docker e containers conectados   |
+
+### Comandos de Gerenciamento
+
+| Comando                                       | Descrição                                   |
+| --------------------------------------------- | ------------------------------------------- |
+| `.\system-manager.ps1 restart-service <nome>` | Reinicia serviço específico                 |
+| `.\system-manager.ps1 backup`                 | Cria backup completo do banco em `backups/` |
+| `.\system-manager.ps1 restore`                | Restaura um backup existente                |
+| `.\system-manager.ps1 clean-cache`            | Limpa cache do frontend (seguro)            |
+| `.\system-manager.ps1 rebuild-frontend`       | Força rebuild do frontend                   |
+| `.\system-manager.ps1 check-types`            | Verifica erros de TypeScript                |
+| `.\system-manager.ps1 prune`                  | Limpeza profunda do Docker                  |

@@ -477,13 +477,27 @@ Commit + Atualizar ROADMAP.md
 
 **Localização:** `system-manager.ps1` (raiz do projeto)
 
+**Versão:** 2.0 - Suporte completo a 11 serviços com profiles
+
+**Serviços Gerenciados:**
+
+| Tipo | Serviços | Comando |
+|------|----------|---------|
+| Core (8) | postgres, redis, python-service, backend, frontend, scrapers, api-service, orchestrator | `start` |
+| Dev (2) | pgadmin, redis-commander | `start-dev` |
+| Production (1) | nginx | `start-prod` |
+
 **Funcionalidades:**
 - ✅ Check prerequisites (Docker, Node.js, etc)
-- ✅ Start/Stop/Restart services
-- ✅ Status de todos containers
+- ✅ Start/Stop/Restart services (individual ou em grupo)
+- ✅ Status de todos os 11 containers
+- ✅ Health check completo (HTTP + Docker inspect)
 - ✅ View logs
 - ✅ Clean/rebuild
 - ✅ Validação de environment
+- ✅ Suporte a profiles Docker (dev/production)
+- ✅ Verificação de volumes e rede
+- ✅ Restart inteligente com dependências
 
 **Uso Obrigatório:**
 - Antes de QUALQUER teste com MCPs
@@ -491,12 +505,25 @@ Commit + Atualizar ROADMAP.md
 - Após mudanças em docker-compose.yml
 - Para verificar saúde do ambiente
 
-**Comando:**
+**Comandos Principais:**
 
 ```powershell
-.\system-manager.ps1 status    # Ver status de todos serviços
-.\system-manager.ps1 start     # Iniciar todos serviços
-.\system-manager.ps1 restart   # Reiniciar serviços específicos
+# Inicialização
+.\system-manager.ps1 start           # Core services (8)
+.\system-manager.ps1 start-dev       # Core + pgadmin + redis-commander
+.\system-manager.ps1 start-prod      # Core + nginx
+.\system-manager.ps1 stop            # Parar todos os serviços
+
+# Status e Diagnóstico
+.\system-manager.ps1 status          # Status de todos os serviços
+.\system-manager.ps1 health          # Health check completo
+.\system-manager.ps1 volumes         # Listar volumes Docker
+.\system-manager.ps1 network         # Verificar rede Docker
+
+# Gerenciamento
+.\system-manager.ps1 restart-service backend   # Reiniciar serviço específico
+.\system-manager.ps1 logs scrapers             # Ver logs de um serviço
+.\system-manager.ps1 help                      # Ajuda completa
 ```
 
 ---

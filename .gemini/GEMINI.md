@@ -118,6 +118,37 @@ Este arquivo é o ponto de entrada principal. Para detalhes específicos, consul
 
 ---
 
+## 🛠️ SCRIPT DE GERENCIAMENTO (system-manager.ps1 v2.0)
+
+**Serviços Gerenciados (11 total):**
+
+| Tipo | Serviços | Comando |
+|------|----------|---------|
+| Core (8) | postgres, redis, python-service, backend, frontend, scrapers, api-service, orchestrator | `start` |
+| Dev (2) | pgadmin, redis-commander | `start-dev` |
+| Production (1) | nginx | `start-prod` |
+
+**Comandos Principais:**
+
+```powershell
+# Inicialização
+.\system-manager.ps1 start           # Core services (8)
+.\system-manager.ps1 start-dev       # Core + pgadmin + redis-commander
+.\system-manager.ps1 start-prod      # Core + nginx
+
+# Status e Diagnóstico
+.\system-manager.ps1 status          # Status de todos os serviços
+.\system-manager.ps1 health          # Health check completo
+.\system-manager.ps1 volumes         # Listar volumes Docker
+.\system-manager.ps1 network         # Verificar rede Docker
+
+# Gerenciamento
+.\system-manager.ps1 restart-service backend   # Reiniciar serviço específico
+.\system-manager.ps1 logs scrapers             # Ver logs de um serviço
+```
+
+---
+
 ## 💰 DADOS FINANCEIROS (PRECISÃO ABSOLUTA)
 
 **CRÍTICO:** Dados financeiros NÃO podem ter imprecisão, arredondamento incorreto ou inconsistências.

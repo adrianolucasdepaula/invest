@@ -696,8 +696,8 @@ function Start-System {
     $imagesChanged = Test-DockerImages
 
     # Suggest rebuild if needed
-    if ($codeUpdated -or $depsChanged) {
-        Print-Warning "Código ou dependências foram atualizados"
+    if ($codeUpdated -or $depsChanged -or $imagesChanged) {
+        Print-Warning "Código, dependências ou imagens foram atualizados"
         $rebuild = Read-Host "Deseja fazer rebuild das imagens Docker? (y/n)"
         if ($rebuild -eq "y") {
             Build-DockerImages
@@ -741,11 +741,20 @@ function Start-System {
             Print-Success "Sistema iniciado com sucesso e todos os serviços estão prontos!"
             Write-Host ""
             Write-Host "URLs de acesso:"
-            Write-Host "  ${GREEN}Frontend:${RESET}  http://localhost:3100"
-            Write-Host "  ${GREEN}Backend:${RESET}   http://localhost:3101"
-            Write-Host "  ${GREEN}API Docs:${RESET}  http://localhost:3101/api/docs"
-            Write-Host "  ${CYAN}PgAdmin:${RESET}   http://localhost:5150 (dev profile)"
-            Write-Host "  ${CYAN}Redis UI:${RESET}  http://localhost:8181 (dev profile)"
+            Write-Host ""
+            Write-Host "  ${GREEN}Frontend:${RESET}       http://localhost:3100"
+            Write-Host "  ${GREEN}Backend API:${RESET}    http://localhost:3101/api/v1"
+            Write-Host "  ${GREEN}API Docs:${RESET}       http://localhost:3101/api/docs"
+            Write-Host ""
+            Write-Host "  ${CYAN}API Service:${RESET}    http://localhost:8000"
+            Write-Host "  ${CYAN}Python Svc:${RESET}     http://localhost:8001"
+            Write-Host "  ${CYAN}OAuth API:${RESET}      http://localhost:8080/api/oauth"
+            Write-Host ""
+            Write-Host "  ${YELLOW}noVNC:${RESET}          http://localhost:6080"
+            Write-Host "  ${YELLOW}VNC Direct:${RESET}     vnc://localhost:5900"
+            Write-Host ""
+            Write-Host "  ${MAGENTA}PgAdmin:${RESET}        http://localhost:5150 (use start-dev)"
+            Write-Host "  ${MAGENTA}Redis UI:${RESET}       http://localhost:8181 (use start-dev)"
             Write-Host ""
         } else {
             Write-Host ""
@@ -874,7 +883,7 @@ function Get-HealthCheck {
 
     # Check Python Service
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:8001/health" -TimeoutSec 5 -UseBasicParsing
+        $response = Invoke-WebRequest -Uri "http://127.0.0.1:8001/health" -TimeoutSec 10 -UseBasicParsing
         if ($response.StatusCode -eq 200) {
             Print-Success "Python Service (8001): OK"
         } else {
@@ -886,7 +895,7 @@ function Get-HealthCheck {
 
     # Check Backend
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:3101/api/v1/health" -TimeoutSec 5 -UseBasicParsing
+        $response = Invoke-WebRequest -Uri "http://127.0.0.1:3101/api/v1/health" -TimeoutSec 10 -UseBasicParsing
         if ($response.StatusCode -eq 200) {
             Print-Success "Backend API (3101): OK"
         } else {
@@ -898,7 +907,7 @@ function Get-HealthCheck {
 
     # Check API Service (via scrapers network)
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:8000/health" -TimeoutSec 5 -UseBasicParsing
+        $response = Invoke-WebRequest -Uri "http://127.0.0.1:8000/health" -TimeoutSec 10 -UseBasicParsing
         if ($response.StatusCode -eq 200) {
             Print-Success "API Service (8000): OK"
         } else {
@@ -921,16 +930,21 @@ function Get-HealthCheck {
     Write-Host ""
     Print-Info "Frontend Services:"
 
-    # Check Frontend
-    try {
-        $response = Invoke-WebRequest -Uri "http://localhost:3100" -TimeoutSec 5 -UseBasicParsing
-        if ($response.StatusCode -eq 200) {
+    # Check Frontend (Next.js returns 307 redirect for auth, which is OK)
+    # Use Docker health check status instead of HTTP for more reliability
+    $frontendHealth = docker inspect --format='{{.State.Health.Status}}' invest_frontend 2>$null
+    if ($frontendHealth -eq "healthy") {
+        Print-Success "Frontend (3100): OK (healthy)"
+    } elseif ($frontendHealth) {
+        Print-Warning "Frontend (3100): $frontendHealth"
+    } else {
+        # Fallback to HTTP check
+        try {
+            $response = Invoke-WebRequest -Uri "http://127.0.0.1:3100" -TimeoutSec 10 -UseBasicParsing
             Print-Success "Frontend (3100): OK"
-        } else {
-            Print-Warning "Frontend (3100): Resposta inesperada ($($response.StatusCode))"
+        } catch {
+            Print-Error "Frontend (3100): FALHOU"
         }
-    } catch {
-        Print-Error "Frontend (3100): FALHOU"
     }
 
     Write-Host ""
@@ -948,7 +962,7 @@ function Get-HealthCheck {
 
     # Check OAuth API
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:8080/api/oauth/status" -TimeoutSec 5 -UseBasicParsing
+        $response = Invoke-WebRequest -Uri "http://127.0.0.1:8080/api/oauth/status" -TimeoutSec 10 -UseBasicParsing
         Print-Success "OAuth API (8080): OK"
     } catch {
         Print-Warning "OAuth API (8080): Não disponível"
@@ -956,7 +970,7 @@ function Get-HealthCheck {
 
     # Check noVNC
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:6080" -TimeoutSec 5 -UseBasicParsing
+        $response = Invoke-WebRequest -Uri "http://127.0.0.1:6080" -TimeoutSec 10 -UseBasicParsing
         Print-Success "noVNC Web (6080): OK"
     } catch {
         Print-Warning "noVNC Web (6080): Não disponível"
@@ -969,7 +983,7 @@ function Get-HealthCheck {
     $pgadminRunning = docker ps -q --filter "name=invest_pgadmin" 2>$null
     if ($pgadminRunning) {
         try {
-            $response = Invoke-WebRequest -Uri "http://localhost:5150" -TimeoutSec 5 -UseBasicParsing
+            $response = Invoke-WebRequest -Uri "http://127.0.0.1:5150" -TimeoutSec 10 -UseBasicParsing
             Print-Success "PgAdmin (5150): OK"
         } catch {
             Print-Warning "PgAdmin (5150): Container rodando mas não responde"
@@ -982,7 +996,7 @@ function Get-HealthCheck {
     $redisCommRunning = docker ps -q --filter "name=invest_redis_commander" 2>$null
     if ($redisCommRunning) {
         try {
-            $response = Invoke-WebRequest -Uri "http://localhost:8181" -TimeoutSec 5 -UseBasicParsing
+            $response = Invoke-WebRequest -Uri "http://127.0.0.1:8181" -TimeoutSec 10 -UseBasicParsing
             Print-Success "Redis Commander (8181): OK"
         } catch {
             Print-Warning "Redis Commander (8181): Container rodando mas não responde"
@@ -998,7 +1012,7 @@ function Get-HealthCheck {
     $nginxRunning = docker ps -q --filter "name=invest_nginx" 2>$null
     if ($nginxRunning) {
         try {
-            $response = Invoke-WebRequest -Uri "http://localhost:180" -TimeoutSec 5 -UseBasicParsing
+            $response = Invoke-WebRequest -Uri "http://127.0.0.1:80" -TimeoutSec 10 -UseBasicParsing
             Print-Success "Nginx (80/443): OK"
         } catch {
             Print-Warning "Nginx: Container rodando mas não responde"
@@ -1116,7 +1130,7 @@ function Restore-Database {
                 return
             }
             
-            cat $selectedBackup.FullName | docker exec -i invest_postgres psql -U invest_user invest_db
+            Get-Content $selectedBackup.FullName | docker exec -i invest_postgres psql -U invest_user invest_db
 
             if ($LASTEXITCODE -eq 0) {
                 Print-Success "Banco de dados restaurado com sucesso!"
@@ -1261,8 +1275,8 @@ function Start-Production {
             Print-Success "Sistema PRODUCTION iniciado com sucesso!"
             Write-Host ""
             Write-Host "URLs de acesso (via Nginx):"
-            Write-Host "  ${GREEN}HTTP:${RESET}   http://localhost:180"
-            Write-Host "  ${GREEN}HTTPS:${RESET}  https://localhost:543"
+            Write-Host "  ${GREEN}HTTP:${RESET}   http://localhost:80"
+            Write-Host "  ${GREEN}HTTPS:${RESET}  https://localhost:443"
             Write-Host ""
             Write-Host "URLs diretas (bypass nginx):"
             Write-Host "  ${CYAN}Frontend:${RESET}   http://localhost:3100"
@@ -1294,9 +1308,6 @@ function Get-Volumes {
 
     foreach ($vol in $projectVolumes) {
         if ($existingVolumes -contains $vol.Name) {
-            # Get volume size using docker system df
-            $volumeInfo = docker volume inspect $vol.Name 2>$null | ConvertFrom-Json
-            $mountpoint = $volumeInfo.Mountpoint
             Print-Success "$($vol.Name)"
             Print-Info "  -> $($vol.Description)"
         } else {
@@ -1440,45 +1451,72 @@ function Check-Types {
 function Show-Help {
     Write-Host ""
     Write-Host "============================================================"
-    Write-Host "   B3 AI Analysis Platform - System Manager"
+    Write-Host "   B3 AI Analysis Platform - System Manager v2.0"
+    Write-Host "   Full 11-service support with profiles"
     Write-Host "============================================================"
     Write-Host ""
     Write-Host "Uso: .\system-manager.ps1 COMANDO [opcoes]"
     Write-Host ""
-    Write-Host "Comandos disponíveis:"
+    Write-Host "${GREEN}Comandos de Inicialização:${RESET}"
+    Write-Host "  start              Inicia core services (8 serviços)"
+    Write-Host "  start -Verbose     Inicia com logs em tempo real"
+    Write-Host "  start-dev          Inicia com profile DEV (+ pgadmin, redis-commander)"
+    Write-Host "  start-prod         Inicia com profile PRODUCTION (+ nginx)"
+    Write-Host "  stop               Para todos os serviços"
+    Write-Host "  restart            Reinicia o sistema completo"
+    Write-Host "  restart-service    Reinicia um serviço específico"
     Write-Host ""
-    Write-Host "  ${GREEN}start${RESET}              Inicia o sistema completo com verificações inteligentes"
-    Write-Host "  ${RED}stop${RESET}               Para todos os serviços"
-    Write-Host "  ${YELLOW}restart${RESET}            Reinicia o sistema completo"
-    Write-Host "  ${BLUE}status${RESET}             Mostra o status detalhado de todos os serviços"
-    Write-Host "  ${CYAN}health${RESET}             Health check rápido de todos os serviços"
-    Write-Host "  ${GREEN}install${RESET}            Instala/atualiza dependências (npm)"
-    Write-Host "  ${GREEN}build${RESET}              Faz build das imagens Docker"
-    Write-Host "  ${YELLOW}migrate${RESET}            Executa migrações do banco de dados"
-    Write-Host "  ${BLUE}logs [service]${RESET}     Mostra logs (opcional: especificar serviço)"
-    Write-Host "  ${MAGENTA}backup${RESET}             Cria backup do banco de dados"
-    Write-Host "  ${MAGENTA}restore${RESET}            Restaura backup do banco de dados"
-    Write-Host "  ${CYAN}clean-cache${RESET}        Limpa cache do frontend (seguro)"
-    Write-Host "  ${CYAN}rebuild-frontend${RESET}   Limpa cache e recria container frontend"
-    Write-Host "  ${CYAN}check-types${RESET}        Verifica erros de TypeScript (backend/frontend)"
-    Write-Host "  ${RED}prune${RESET}              Limpeza profunda do Docker (prune -a)"
-    Write-Host "  ${RED}clean${RESET}              Remove todos os dados e volumes (CUIDADO!)"
-    Write-Host "  ${BLUE}help${RESET}               Mostra esta mensagem de ajuda"
+    Write-Host "${BLUE}Comandos de Status:${RESET}"
+    Write-Host "  status             Status detalhado de todos os serviços"
+    Write-Host "  health             Health check completo (todas as portas)"
+    Write-Host "  logs [service]     Mostra logs (opcional: especificar serviço)"
+    Write-Host "  volumes            Lista volumes Docker do projeto"
+    Write-Host "  network            Mostra rede Docker e containers conectados"
+    Write-Host ""
+    Write-Host "${YELLOW}Comandos de Build:${RESET}"
+    Write-Host "  install            Instala/atualiza dependências (npm)"
+    Write-Host "  build              Faz build das imagens Docker"
+    Write-Host "  migrate            Executa migrações do banco de dados"
+    Write-Host "  check-types        Verifica erros de TypeScript"
+    Write-Host ""
+    Write-Host "${MAGENTA}Comandos de Backup:${RESET}"
+    Write-Host "  backup             Cria backup do banco de dados"
+    Write-Host "  restore            Restaura backup do banco de dados"
+    Write-Host ""
+    Write-Host "${CYAN}Comandos de Cache:${RESET}"
+    Write-Host "  clean-cache        Limpa cache do frontend (seguro)"
+    Write-Host "  rebuild-frontend   Limpa cache e recria container frontend"
+    Write-Host ""
+    Write-Host "${RED}Comandos de Limpeza:${RESET}"
+    Write-Host "  prune              Limpeza profunda do Docker (prune -a)"
+    Write-Host "  clean              Remove todos os dados e volumes (CUIDADO!)"
+    Write-Host ""
+    Write-Host "  help               Mostra esta mensagem de ajuda"
     Write-Host ""
     Write-Host "Exemplos:"
     Write-Host "  .\system-manager.ps1 start"
-    Write-Host "  .\system-manager.ps1 logs backend"
+    Write-Host "  .\system-manager.ps1 start-dev"
+    Write-Host "  .\system-manager.ps1 restart-service backend"
+    Write-Host "  .\system-manager.ps1 logs scrapers"
     Write-Host "  .\system-manager.ps1 health"
     Write-Host ""
-    Write-Host "Serviços disponíveis:"
-    Write-Host "  - postgres      (Banco de dados PostgreSQL + TimescaleDB)"
-    Write-Host "  - redis         (Cache e filas)"
-    Write-Host "  - python-service (Serviço Python para análise técnica)"
-    Write-Host "  - backend       (API NestJS)"
-    Write-Host "  - frontend      (Interface Next.js)"
-    Write-Host "  - scrapers      (Coletores Python)"
-    Write-Host "  - pgadmin       (Admin do PostgreSQL - profile dev)"
-    Write-Host "  - redis-commander (Admin do Redis - profile dev)"
+    Write-Host "${GREEN}Core Services (8):${RESET}"
+    Write-Host "  postgres, redis, python-service, backend, frontend,"
+    Write-Host "  scrapers, api-service, orchestrator"
+    Write-Host ""
+    Write-Host "${CYAN}Dev Profile Services (2):${RESET}"
+    Write-Host "  pgadmin (5150), redis-commander (8181)"
+    Write-Host ""
+    Write-Host "${YELLOW}Production Profile Services (1):${RESET}"
+    Write-Host "  nginx (80/443)"
+    Write-Host ""
+    Write-Host "${BLUE}Portas do Sistema:${RESET}"
+    Write-Host "  3100  Frontend         3101  Backend API"
+    Write-Host "  5532  PostgreSQL       6479  Redis"
+    Write-Host "  8000  API Service      8001  Python Service"
+    Write-Host "  8080  OAuth API        6080  noVNC Web"
+    Write-Host "  5900  VNC Direct       5150  PgAdmin"
+    Write-Host "  8181  Redis Commander  80/443 Nginx"
     Write-Host ""
 }
 
@@ -1503,10 +1541,15 @@ for ($i = 0; $i -lt $args.Count; $i++) {
 
 switch ($command) {
     "start" { Start-System -VerboseMode $verboseMode }
+    "start-dev" { Start-Dev }
+    "start-prod" { Start-Production }
     "stop" { Stop-System }
     "restart" { Restart-System }
+    "restart-service" { Restart-SingleService -ServiceName $param }
     "status" { Get-SystemStatus }
     "health" { Get-HealthCheck }
+    "volumes" { Get-Volumes }
+    "network" { Get-Network }
     "install" { Install-Dependencies }
     "build" { Build-DockerImages }
     "migrate" { Invoke-Migrations }
