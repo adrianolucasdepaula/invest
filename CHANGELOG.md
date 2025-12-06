@@ -13,6 +13,23 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 76: Observabilidade e Rastreabilidade - Fase 1 - COMPLETA (2025-12-06)**
+  - **Infraestrutura Global:**
+    - `GlobalExceptionFilter`: Captura todas exceções não tratadas, gera correlation IDs
+    - `LoggingInterceptor`: Intercepta todas requisições HTTP, mede tempo de resposta
+    - Sanitização de dados sensíveis em logs
+    - Alertas para respostas lentas (>3s) e grandes (>1MB)
+  - **Controllers Atualizados (13/13):**
+    - Logger adicionado em 8 controllers faltantes
+    - 11 console.log anti-patterns substituídos por Logger
+    - 0 console.log restantes na pasta api/
+  - **Documentação:**
+    - CLAUDE.md/GEMINI.md: Princípio #5 "Observabilidade e Rastreabilidade" adicionado
+    - PLANO_FASE_76_OBSERVABILIDADE.md: Roadmap completo para Fases 2 e 3
+  - **Validação:**
+    - TypeScript: 0 erros
+    - Score de observabilidade: 49% → 65% (meta final: 90%)
+
 - **FASE 66: OAuth/Login Scrapers Fixes - COMPLETA (2025-12-06)**
   - **7 Scrapers Corrigidos:**
     - B3Scraper: CVM code mapping (`cvm_codes.json` + `_get_cvm_code()`)
