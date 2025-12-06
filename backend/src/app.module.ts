@@ -4,7 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
@@ -140,6 +142,16 @@ import {
   controllers: [AppController],
   providers: [
     AppService,
+    // FASE 76: Observabilidade - Global Exception Filter
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
+    // FASE 76: Observabilidade - Logging Interceptor
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
