@@ -1,0 +1,57 @@
+# Prometheus Configuration
+# FASE 76.3: Metrics Collection
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: invest-local
+    environment: development
+
+# Alerting (optional)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# Rule files
+# rule_files:
+#   - /etc/prometheus/rules/*.yml
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Backend NestJS (via OpenTelemetry metrics)
+  - job_name: 'invest-backend'
+    static_configs:
+      - targets: ['backend:3101']
+    metrics_path: '/api/v1/metrics'
+    scrape_timeout: 10s
+
+  # PostgreSQL (via postgres_exporter if added)
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']
+
+  # Redis (via redis_exporter if added)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis-exporter:9121']
+
+  # Tempo metrics
+  - job_name: 'tempo'
+    static_configs:
+      - targets: ['tempo:3200']
+
+  # Loki metrics
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+
+# Remote write to Tempo for exemplars (optional)
+remote_write:
+  - url: http://tempo:3200/api/v1/push

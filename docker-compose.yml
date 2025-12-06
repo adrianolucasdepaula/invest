@@ -161,6 +161,11 @@ services:
       # Python API Service (FASE 3 - Scrapers Fallback)
       # Nota: api-service usa network_mode: "service:scrapers", então acesso via hostname scrapers
       - PYTHON_API_URL=http://scrapers:8000
+
+      # OpenTelemetry (FASE 76.3)
+      - OTEL_ENABLED=${OTEL_ENABLED:-true}
+      - OTEL_SERVICE_NAME=invest-backend
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318
     ports:
       - "3101:3101"
     volumes:
@@ -511,6 +516,130 @@ services:
     profiles:
       - dev
 
+  # ============================================================
+  # OBSERVABILITY STACK (FASE 76.3)
+  # Profile: observability
+  # ============================================================
+
+  # Grafana Tempo - Distributed Tracing Backend
+  tempo:
+    image: grafana/tempo:latest
+    container_name: invest_tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./docker/observability/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/tmp/tempo
+    ports:
+      - "3200:3200"   # Tempo HTTP
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    networks:
+      - invest_network
+    restart: unless-stopped
+    profiles:
+      - observability
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Grafana Loki - Log Aggregation
+  loki:
+    image: grafana/loki:latest
+    container_name: invest_loki
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - ./docker/observability/loki.yaml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - invest_network
+    restart: unless-stopped
+    profiles:
+      - observability
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Prometheus - Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: invest_prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./docker/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - invest_network
+    restart: unless-stopped
+    profiles:
+      - observability
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Grafana - Visualization Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: invest_grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor tempoSearch tempoServiceGraph
+    volumes:
+      - ./docker/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - tempo
+      - loki
+      - prometheus
+    networks:
+      - invest_network
+    restart: unless-stopped
+    profiles:
+      - observability
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Promtail - Log Collector (envia logs para Loki)
+  promtail:
+    image: grafana/promtail:latest
+    container_name: invest_promtail
+    command: ["-config.file=/etc/promtail/config.yml"]
+    volumes:
+      - ./docker/observability/promtail.yaml:/etc/promtail/config.yml:ro
+      - ./logs:/var/log/invest:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+    networks:
+      - invest_network
+    restart: unless-stopped
+    profiles:
+      - observability
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 networks:
   invest_network:
     driver: bridge
@@ -536,3 +665,13 @@ volumes:
     driver: local
   x11_socket:
     driver: local  # Share X11 socket between scrapers and api-service
+
+  # OBSERVABILITY VOLUMES (FASE 76.3)
+  tempo_data:
+    driver: local
+  loki_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

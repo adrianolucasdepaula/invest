@@ -4,11 +4,13 @@ import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@ta
 import { useState } from 'react'
 import { Toaster } from '@/components/ui/toaster'
 import { logger } from '@/lib/logger'
+import { ErrorBoundary } from '@/components/error-boundary'
 
 /**
- * FASE 76.2: Global Error Handlers for React Query
+ * FASE 76.2 + 76.3: Global Error Handlers + Error Boundaries
  *
  * Centralized error logging for all queries and mutations.
+ * Global ErrorBoundary captures React rendering errors.
  * Errors are logged via the frontend logger with full context.
  */
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -49,9 +51,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-      <Toaster />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        {children}
+        <Toaster />
+      </QueryClientProvider>
+    </ErrorBoundary>
   )
 }

@@ -1,0 +1,16 @@
+# Grafana Dashboards Provisioning
+# FASE 76.3: Observability Stack
+
+apiVersion: 1
+
+providers:
+  - name: 'invest-dashboards'
+    orgId: 1
+    folder: 'Invest Platform'
+    folderUid: invest
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json

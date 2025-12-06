@@ -26,6 +26,8 @@ import { WebSocketModule } from './websocket/websocket.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { CronModule } from './modules/cron/cron.module';
 import { EconomicIndicatorsModule } from './api/economic-indicators/economic-indicators.module'; // FASE 2
+import { NewsModule } from './api/news/news.module'; // FASE 75
+import { TelemetryModule } from './telemetry'; // FASE 76.3
 import {
   User,
   Asset,
@@ -41,7 +43,12 @@ import {
   SyncHistory, // FASE 34.6
   EconomicIndicator, // FASE 2
   TickerChange, // FASE 55
-  IntradayPrice, // FASE 67 - TimescaleDB hypertable (migrations only, no sync)
+  IntradayPrice, // FASE 67 - TimescaleDB hypertable
+  // FASE 75 - AI Sentiment Multi-Provider
+  News,
+  NewsAnalysis,
+  SentimentConsensus,
+  EconomicEvent,
 } from './database/entities';
 
 @Module({
@@ -78,6 +85,11 @@ import {
           EconomicIndicator, // FASE 2
           TickerChange, // FASE 55
           IntradayPrice, // FASE 67 - TimescaleDB hypertable
+          // FASE 75 - AI Sentiment Multi-Provider
+          News,
+          NewsAnalysis,
+          SentimentConsensus,
+          EconomicEvent,
         ],
         synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
         logging: configService.get('DB_LOGGING', 'false') === 'true',
@@ -122,6 +134,9 @@ import {
       inject: [ConfigService],
     }),
 
+    // Observabilidade (FASE 76.3)
+    TelemetryModule,
+
     // Application Modules
     CommonModule,
     DatabaseModule,
@@ -138,6 +153,7 @@ import {
     ValidatorsModule,
     WebSocketModule,
     EconomicIndicatorsModule, // FASE 2
+    NewsModule, // FASE 75 - AI Sentiment Multi-Provider
   ],
   controllers: [AppController],
   providers: [
