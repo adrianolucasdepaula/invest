@@ -370,7 +370,8 @@ function Wait-ForHealthy {
         $statusMessages = @()
 
         foreach ($service in $Services) {
-            $containerName = "invest_$service"
+            # Use ContainerMap to get correct container name (handles python-service -> invest_python_service)
+            $containerName = if ($ContainerMap.ContainsKey($service)) { $ContainerMap[$service].Container } else { "invest_$service" }
 
             try {
                 # Check if container exists and is running
@@ -962,7 +963,7 @@ function Get-HealthCheck {
 
     # Check OAuth API
     try {
-        $response = Invoke-WebRequest -Uri "http://127.0.0.1:8080/api/oauth/status" -TimeoutSec 10 -UseBasicParsing
+        $response = Invoke-WebRequest -Uri "http://127.0.0.1:8080/api/oauth/health" -TimeoutSec 10 -UseBasicParsing
         Print-Success "OAuth API (8080): OK"
     } catch {
         Print-Warning "OAuth API (8080): Não disponível"
@@ -1012,8 +1013,20 @@ function Get-HealthCheck {
     $nginxRunning = docker ps -q --filter "name=invest_nginx" 2>$null
     if ($nginxRunning) {
         try {
-            $response = Invoke-WebRequest -Uri "http://127.0.0.1:80" -TimeoutSec 10 -UseBasicParsing
-            Print-Success "Nginx (80/443): OK"
+            # Nginx returns 301 redirect to HTTPS, which is valid
+            $response = Invoke-WebRequest -Uri "http://127.0.0.1:80" -TimeoutSec 10 -UseBasicParsing -MaximumRedirection 0 -ErrorAction SilentlyContinue
+            if ($response.StatusCode -eq 200 -or $response.StatusCode -eq 301 -or $response.StatusCode -eq 302) {
+                Print-Success "Nginx (80/443): OK"
+            } else {
+                Print-Warning "Nginx: HTTP $($response.StatusCode)"
+            }
+        } catch [System.Net.WebException] {
+            # 301/302 throws WebException in PowerShell 5.1, check if it's a redirect
+            if ($_.Exception.Response -and $_.Exception.Response.StatusCode -match "Moved|Redirect|301|302") {
+                Print-Success "Nginx (80/443): OK (redirect to HTTPS)"
+            } else {
+                Print-Warning "Nginx: Container rodando mas não responde"
+            }
         } catch {
             Print-Warning "Nginx: Container rodando mas não responde"
         }

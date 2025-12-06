@@ -457,8 +457,8 @@ services:
     image: nginx:alpine
     container_name: invest_nginx
     ports:
-      - "180:80"
-      - "543:443"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./docker/nginx/ssl:/etc/nginx/ssl:ro
