@@ -1,4 +1,5 @@
 # MIGRATED TO PLAYWRIGHT - 2025-12-04
+# UPDATED: 2025-12-06 - Added localStorage verification
 """
 DeepSeek Scraper - AI Analysis via DeepSeek
 Source: https://chat.deepseek.com/
@@ -8,9 +9,10 @@ OPTIMIZED: Uses Playwright for browser automation with stealth
 """
 import asyncio
 import json
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 from loguru import logger
 
 from base_scraper import BaseScraper, ScraperResult
@@ -110,10 +112,13 @@ class DeepSeekScraper(BaseScraper):
                     logger.info(f"Injected {len(local_storage_data)} localStorage items")
                     local_storage_loaded = True
 
-                    # Check if userToken was loaded
-                    if 'userToken' in local_storage_data:
-                        token_preview = str(local_storage_data['userToken'])[:80]
-                        logger.info(f"userToken found: {token_preview}...")
+                    # VERIFICATION: Check if userToken was actually injected
+                    verified = await self._verify_local_storage_injection(local_storage_data)
+                    if verified:
+                        logger.success("localStorage injection VERIFIED")
+                    else:
+                        logger.warning("localStorage injection FAILED verification")
+                        local_storage_loaded = False
 
                     # Reload page to apply localStorage
                     logger.info("Reloading page to apply localStorage...")
@@ -123,17 +128,22 @@ class DeepSeekScraper(BaseScraper):
 
             await asyncio.sleep(3)
 
+            # Verify session is active
+            session_valid = await self._verify_session()
+
             # Log session status
             if cookies_loaded or local_storage_loaded:
-                logger.info(f"DeepSeek initialized (cookies={cookies_loaded}, localStorage={local_storage_loaded})")
+                logger.info(f"DeepSeek initialized (cookies={cookies_loaded}, localStorage={local_storage_loaded}, session={session_valid})")
             else:
                 logger.warning("DeepSeek initialized WITHOUT session data - login may be required")
 
             # Check final URL
             if 'sign_in' in self.page.url:
                 logger.warning(f"DeepSeek redirected to login: {self.page.url}")
-            else:
+            elif session_valid:
                 logger.success(f"DeepSeek authenticated: {self.page.url}")
+            else:
+                logger.warning(f"DeepSeek session may not be valid: {self.page.url}")
 
             self._initialized = True
 
@@ -306,12 +316,114 @@ class DeepSeekScraper(BaseScraper):
 
         return None
 
+    async def _verify_local_storage_injection(self, expected_data: Dict[str, Any]) -> bool:
+        """
+        Verify that localStorage items were actually injected
+
+        Args:
+            expected_data: Dictionary of expected localStorage items
+
+        Returns:
+            True if critical items (userToken) are present
+        """
+        try:
+            # Check for userToken specifically (required for DeepSeek auth)
+            if 'userToken' in expected_data:
+                retrieved_token = await self.page.evaluate('localStorage.getItem("userToken")')
+                if retrieved_token:
+                    # Compare with expected (first 50 chars to avoid logging full token)
+                    expected_preview = str(expected_data['userToken'])[:50]
+                    retrieved_preview = str(retrieved_token)[:50]
+
+                    if expected_preview == retrieved_preview:
+                        logger.info(f"userToken verified in localStorage: {retrieved_preview}...")
+                        return True
+                    else:
+                        logger.warning("userToken mismatch after injection")
+                        return False
+                else:
+                    logger.warning("userToken NOT found in localStorage after injection")
+                    return False
+
+            # If no userToken expected, check other items
+            for key in expected_data.keys():
+                retrieved = await self.page.evaluate(f'localStorage.getItem("{key}")')
+                if retrieved:
+                    logger.debug(f"localStorage[{key}] verified")
+                    return True
+
+            return False
+
+        except Exception as e:
+            logger.error(f"Error verifying localStorage: {e}")
+            return False
+
+    async def _verify_session(self) -> bool:
+        """
+        Verify that DeepSeek session is active (not redirected to login)
+
+        Returns:
+            True if session appears to be active
+        """
+        try:
+            await asyncio.sleep(2)  # Wait for any redirects
+
+            current_url = self.page.url.lower()
+
+            # Check for login/signin redirect
+            if 'sign_in' in current_url or 'login' in current_url:
+                logger.warning("Session invalid - redirected to login page")
+                return False
+
+            # Check for chat input field (indicates authenticated session)
+            input_field = await self._find_input_field()
+            if input_field:
+                logger.debug("Session valid - chat input field found")
+                return True
+
+            # Check page content for authentication indicators
+            html = await self.page.content()
+            html_lower = html.lower()
+
+            # Positive indicators
+            positive_indicators = ['new chat', 'nova conversa', 'history', 'histórico', 'chat-input']
+            if any(indicator in html_lower for indicator in positive_indicators):
+                logger.debug("Session valid - authenticated page indicators found")
+                return True
+
+            # Negative indicators
+            negative_indicators = ['sign in', 'login', 'log in', 'create account', 'register']
+            if any(indicator in html_lower for indicator in negative_indicators):
+                logger.warning("Session invalid - login page indicators found")
+                return False
+
+            # Unknown state
+            logger.debug("Session status uncertain")
+            return False
+
+        except Exception as e:
+            logger.error(f"Error verifying session: {e}")
+            return False
+
     async def health_check(self) -> bool:
-        """Check if DeepSeek is accessible"""
+        """Check if DeepSeek is accessible and authenticated"""
         try:
             await self.initialize()
+
+            # Check both input field and session validity
             input_field = await self._find_input_field()
-            return input_field is not None
+            session_valid = await self._verify_session()
+
+            if input_field and session_valid:
+                logger.success("DeepSeek health check: PASS")
+                return True
+            elif input_field:
+                logger.warning("DeepSeek health check: Input found but session uncertain")
+                return True
+            else:
+                logger.warning("DeepSeek health check: FAIL - no input field")
+                return False
+
         except Exception as e:
             logger.error(f"Health check failed: {e}")
             return False

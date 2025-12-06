@@ -1,4 +1,5 @@
 # MIGRATED TO PLAYWRIGHT - 2025-12-04
+# UPDATED: 2025-12-06 - Added session validation and dual cookie format support
 """
 Claude Scraper - AI Analysis via Anthropic Claude
 Source: https://claude.ai/new
@@ -8,9 +9,10 @@ OPTIMIZED: Uses Playwright for browser automation
 """
 import asyncio
 import json
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 from loguru import logger
 
 from base_scraper import BaseScraper, ScraperResult
@@ -42,61 +44,203 @@ class ClaudeScraper(BaseScraper):
         await super().initialize()
 
         try:
-            # Load cookies BEFORE navigating (critical for session authentication)
-            cookies_loaded = False
-            if self.COOKIES_FILE.exists():
-                try:
-                    with open(self.COOKIES_FILE, 'r') as f:
-                        cookies = json.load(f)
+            # STEP 1: Load cookies BEFORE navigation (critical for OAuth sessions)
+            cookies_loaded = await self._load_cookies_to_context()
 
-                    claude_cookies = []
-                    for cookie in cookies:
-                        if isinstance(cookie, dict):
-                            domain = cookie.get('domain', '')
-                            # Accept claude.ai, anthropic.com and google.com cookies
-                            if 'claude.ai' in domain or 'anthropic.com' in domain or 'google.com' in domain:
-                                pw_cookie = {
-                                    'name': cookie.get('name'),
-                                    'value': cookie.get('value'),
-                                    'domain': domain,
-                                    'path': cookie.get('path', '/'),
-                                }
-                                if 'expires' in cookie and cookie['expires']:
-                                    pw_cookie['expires'] = cookie['expires']
-                                if 'httpOnly' in cookie:
-                                    pw_cookie['httpOnly'] = cookie['httpOnly']
-                                if 'secure' in cookie:
-                                    pw_cookie['secure'] = cookie['secure']
-                                if 'sameSite' in cookie:
-                                    pw_cookie['sameSite'] = cookie['sameSite']
-
-                                claude_cookies.append(pw_cookie)
-
-                    if claude_cookies:
-                        await self.page.context.add_cookies(claude_cookies)
-                        logger.info(f"Loaded {len(claude_cookies)} cookies for Claude BEFORE navigation")
-                        cookies_loaded = True
-
-                except Exception as e:
-                    logger.warning(f"Could not load Claude cookies: {e}")
+            if cookies_loaded:
+                logger.info("Claude cookies loaded BEFORE navigation")
             else:
-                logger.debug("Claude cookies not found. Manual login may be required.")
+                logger.warning("Claude: No cookies loaded - login may be required")
 
-            # Now navigate to Claude with cookies already set
+            # STEP 2: Now navigate with cookies already set
             await self.page.goto(self.BASE_URL, wait_until="load", timeout=60000)
             await asyncio.sleep(3)
 
+            # STEP 3: Verify session is active
+            session_valid = await self._verify_session()
+
             # Log session status
-            if cookies_loaded:
-                logger.info("Claude page loaded with pre-loaded cookies")
+            if session_valid:
+                logger.success(f"Claude session verified: {self.page.url}")
+            elif cookies_loaded:
+                logger.warning("Claude cookies loaded but session may not be valid")
             else:
-                logger.warning("Claude page loaded WITHOUT cookies - login may be required")
+                logger.warning("Claude: No session - login required")
 
             self._initialized = True
 
         except Exception as e:
             logger.error(f"Error initializing Claude scraper: {e}")
             raise
+
+    async def _load_cookies_to_context(self) -> bool:
+        """
+        Load cookies to browser context BEFORE navigation
+
+        Supports both formats:
+        - List format: [{name, value, domain, ...}, ...]
+        - Dict format: {cookies: [...], localStorage: {...}}
+
+        Returns:
+            True if cookies were loaded successfully
+        """
+        if not self.COOKIES_FILE.exists():
+            logger.debug(f"Claude cookies file not found: {self.COOKIES_FILE}")
+            return False
+
+        try:
+            with open(self.COOKIES_FILE, 'r', encoding='utf-8') as f:
+                session_data = json.load(f)
+
+            # Handle both formats (list and dict with cookies key)
+            if isinstance(session_data, list):
+                cookies = session_data
+            else:
+                cookies = session_data.get('cookies', [])
+
+            if not cookies:
+                return False
+
+            # Filter and validate cookies
+            valid_cookies = []
+            for cookie in cookies:
+                if not isinstance(cookie, dict):
+                    continue
+
+                domain = cookie.get('domain', '')
+                # Accept claude.ai, anthropic.com and google.com cookies
+                if not ('claude.ai' in domain or 'anthropic.com' in domain or 'google.com' in domain):
+                    continue
+
+                # Check cookie expiration
+                if not self._is_cookie_valid(cookie):
+                    continue
+
+                converted = self._convert_cookie_for_playwright(cookie)
+                if converted:
+                    valid_cookies.append(converted)
+
+            if valid_cookies:
+                await self.page.context.add_cookies(valid_cookies)
+                logger.info(f"Loaded {len(valid_cookies)} valid cookies BEFORE navigation")
+                return True
+
+            return False
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in Claude cookies file: {e}")
+            return False
+        except Exception as e:
+            logger.warning(f"Could not load Claude cookies: {e}")
+            return False
+
+    def _is_cookie_valid(self, cookie: dict) -> bool:
+        """Check if cookie is not expired"""
+        expires = cookie.get('expires') or cookie.get('expirationDate')
+        if expires and expires > 0:
+            # expires is Unix timestamp
+            return expires > time.time()
+        # No expiration = session cookie = valid
+        return True
+
+    def _convert_cookie_for_playwright(self, cookie: dict) -> Optional[dict]:
+        """
+        Convert cookie to Playwright format
+
+        Playwright requires: name, value, domain (or url)
+        Optional: path, expires, httpOnly, secure, sameSite
+        """
+        try:
+            name = cookie.get('name')
+            value = cookie.get('value')
+            domain = cookie.get('domain', '')
+
+            if not name or value is None:
+                return None
+
+            # Ensure domain starts with dot for wildcard matching
+            if domain and not domain.startswith('.') and not domain.startswith('http'):
+                domain = '.' + domain
+
+            pw_cookie = {
+                'name': name,
+                'value': str(value),
+                'domain': domain,
+                'path': cookie.get('path', '/'),
+            }
+
+            # Optional fields
+            expires = cookie.get('expires') or cookie.get('expirationDate')
+            if expires and expires > 0:
+                pw_cookie['expires'] = expires
+
+            if 'httpOnly' in cookie:
+                pw_cookie['httpOnly'] = cookie['httpOnly']
+
+            if 'secure' in cookie:
+                pw_cookie['secure'] = cookie['secure']
+
+            if cookie.get('sameSite'):
+                # Playwright expects: "Strict", "Lax", "None"
+                same_site = cookie['sameSite']
+                if same_site.lower() in ['strict', 'lax', 'none']:
+                    pw_cookie['sameSite'] = same_site.capitalize()
+                    if same_site.lower() == 'none':
+                        pw_cookie['sameSite'] = 'None'
+
+            return pw_cookie
+
+        except Exception as e:
+            logger.debug(f"Error converting cookie: {e}")
+            return None
+
+    async def _verify_session(self) -> bool:
+        """
+        Verify that Claude session is active (not redirected to login)
+
+        Returns:
+            True if session appears to be active
+        """
+        try:
+            await asyncio.sleep(2)  # Wait for any redirects
+
+            current_url = self.page.url.lower()
+
+            # Check for login/signin redirect
+            login_indicators = ['login', 'sign', 'oauth', 'accounts.google', 'continue with']
+            if any(indicator in current_url for indicator in login_indicators):
+                logger.warning("Session invalid - redirected to login page")
+                return False
+
+            # Check for chat input field (indicates authenticated session)
+            input_field = await self._find_input_field()
+            if input_field:
+                logger.debug("Session valid - chat input field found")
+                return True
+
+            # Check page content for authentication indicators
+            html = await self.page.content()
+            html_lower = html.lower()
+
+            # Positive indicators
+            positive_indicators = ['new chat', 'start a new chat', 'type a message', 'send a message']
+            if any(indicator in html_lower for indicator in positive_indicators):
+                logger.debug("Session valid - authenticated page indicators found")
+                return True
+
+            # Negative indicators
+            negative_indicators = ['sign in', 'log in', 'continue with google', 'create account']
+            if any(indicator in html_lower for indicator in negative_indicators):
+                logger.warning("Session invalid - login page indicators found")
+                return False
+
+            # Unknown state
+            logger.debug("Session status uncertain")
+            return False
+
+        except Exception as e:
+            logger.error(f"Error verifying session: {e}")
+            return False
 
     async def scrape(self, prompt: str) -> ScraperResult:
         """
@@ -276,11 +420,24 @@ class ClaudeScraper(BaseScraper):
         return None
 
     async def health_check(self) -> bool:
-        """Check if Claude is accessible"""
+        """Check if Claude is accessible and authenticated"""
         try:
             await self.initialize()
+
+            # Check both input field and session validity
             input_field = await self._find_input_field()
-            return input_field is not None
+            session_valid = await self._verify_session()
+
+            if input_field and session_valid:
+                logger.success("Claude health check: PASS")
+                return True
+            elif input_field:
+                logger.warning("Claude health check: Input found but session uncertain")
+                return True
+            else:
+                logger.warning("Claude health check: FAIL - no input field")
+                return False
+
         except Exception as e:
             logger.error(f"Health check failed: {e}")
             return False

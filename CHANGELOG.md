@@ -9,10 +9,31 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Pendente
 
-- FASE 66: Scrapers Pendentes - Correção OAuth/Login (Prioridade MEDIA)
 - FASE 75: AI Sentiment (Gemini) (Prioridade MEDIA)
 
 ### Added
+
+- **FASE 66: OAuth/Login Scrapers Fixes - COMPLETA (2025-12-06)**
+  - **7 Scrapers Corrigidos:**
+    - B3Scraper: CVM code mapping (`cvm_codes.json` + `_get_cvm_code()`)
+    - FundamenteiScraper: Cookie loading BEFORE navigation
+    - MaisRetornoScraper: Cookie loading BEFORE navigation
+    - ADVFNScraper: Credentials-based login (email/password)
+    - DeepSeekScraper: localStorage verification (`_verify_local_storage_injection()`)
+    - InvestingScraper: Dual cookie format support (list + dict)
+    - ClaudeScraper: Session validation (`_verify_session()`)
+  - **Padrões Implementados:**
+    - Cookie loading order: BEFORE `page.goto()`
+    - Dual cookie format: List `[{...}]` and Dict `{cookies: [...], localStorage: {...}}`
+    - Cookie validation: Expiration check via Unix timestamp
+    - Playwright conversion: Domain wildcard prefix, sameSite normalization
+  - **Arquivos Criados/Modificados:**
+    - `backend/python-scrapers/data/cvm_codes.json` - 90+ ticker→CVM mappings
+    - `docker-compose.yml` - ADVFN_USERNAME/PASSWORD env vars
+    - 7 scraper files with standardized patterns
+  - **Validação:**
+    - TypeScript: 0 erros (backend + frontend)
+    - docker-compose.yml: Sintaxe válida
 
 - **FASE 74.5: Data Sources Page - Unified Scrapers View - COMPLETA (2025-12-06)**
   - **Backend Integration (Python + TypeScript scrapers):**

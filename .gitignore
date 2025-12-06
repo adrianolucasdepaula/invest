@@ -99,6 +99,7 @@ temp/
 credentials/
 secrets/
 backend/python-scrapers/data/
+!backend/python-scrapers/data/cvm_codes.json
 *.key
 *.pem
 *.p12

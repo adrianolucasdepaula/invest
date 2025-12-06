@@ -4,12 +4,14 @@ Fonte: https://fundamentei.com/
 Requer login via Google OAuth
 
 MIGRATED TO PLAYWRIGHT - 2025-12-04
+UPDATED: 2025-12-06 - Fixed cookie loading order (BEFORE navigation)
 """
 import asyncio
 import json
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from loguru import logger
 from bs4 import BeautifulSoup
 
@@ -41,7 +43,7 @@ class FundamenteiScraper(BaseScraper):
         )
 
     async def initialize(self):
-        """Initialize Playwright browser and load cookies"""
+        """Initialize Playwright browser and load cookies BEFORE navigation"""
         if self._initialized:
             return
 
@@ -49,43 +51,144 @@ class FundamenteiScraper(BaseScraper):
         await super().initialize()
 
         try:
-            # Navigate to site
+            # STEP 1: Load cookies BEFORE navigation (critical for OAuth sessions)
+            cookies_loaded = await self._load_cookies_to_context()
+
+            if cookies_loaded:
+                logger.info("Cookies loaded BEFORE navigation - session should be active")
+            else:
+                logger.warning("No cookies loaded - will attempt without login")
+
+            # STEP 2: Now navigate with cookies already set
             await self.page.goto(self.BASE_URL, wait_until="load", timeout=60000)
             await asyncio.sleep(2)
 
-            # Load cookies
-            cookies_path = Path(self.COOKIES_FILE)
-            if cookies_path.exists():
-                try:
-                    with open(cookies_path, 'r') as f:
-                        session_data = json.load(f)
-
-                    # Handle both formats: list [...] or dict {"cookies": [...]}
-                    if isinstance(session_data, list):
-                        cookies = session_data
-                    else:
-                        cookies = session_data.get('cookies', [])
-
-                    if cookies:
-                        await self.page.context.add_cookies(cookies)
-                        logger.info(f"Loaded {len(cookies)} cookies for Fundamentei")
-
-                        # Refresh page to apply cookies
-                        await self.page.reload(wait_until="load")
-                        await asyncio.sleep(2)
-
-                except Exception as e:
-                    logger.warning(f"Could not load cookies: {e}")
-            else:
-                logger.warning("Fundamentei cookies not found. Will attempt without login.")
-
-            # Verify login
+            # STEP 3: Verify login status
             if self.requires_login and not await self._verify_logged_in():
-                logger.warning("Login verification failed - some data may not be accessible")
+                logger.warning("Login verification failed - OAuth refresh may be needed")
+
+            self._initialized = True
 
         except Exception as e:
             logger.error(f"Error initializing Fundamentei scraper: {e}")
             raise
+
+    async def _load_cookies_to_context(self) -> bool:
+        """
+        Load cookies to browser context BEFORE navigation
+
+        Supports both formats:
+        - List format: [{"name": ..., "value": ...}, ...]
+        - Dict format: {"cookies": [...], "localStorage": {...}}
+
+        Returns:
+            True if cookies were loaded successfully
+        """
+        cookies_path = Path(self.COOKIES_FILE)
+
+        if not cookies_path.exists():
+            logger.warning(f"Cookies file not found: {self.COOKIES_FILE}")
+            return False
+
+        try:
+            with open(cookies_path, 'r', encoding='utf-8') as f:
+                session_data = json.load(f)
+
+            # Handle both formats
+            if isinstance(session_data, list):
+                cookies = session_data
+            else:
+                cookies = session_data.get('cookies', [])
+
+            if not cookies:
+                logger.warning("No cookies found in session file")
+                return False
+
+            # Filter and validate cookies
+            valid_cookies = []
+            for cookie in cookies:
+                # Check if cookie is for Fundamentei or Google (OAuth)
+                domain = cookie.get('domain', '')
+                if 'fundamentei.com' in domain or 'google.com' in domain:
+                    # Check cookie expiration
+                    if self._is_cookie_valid(cookie):
+                        converted = self._convert_cookie_for_playwright(cookie)
+                        if converted:
+                            valid_cookies.append(converted)
+
+            if valid_cookies:
+                await self.page.context.add_cookies(valid_cookies)
+                logger.info(f"Loaded {len(valid_cookies)} valid cookies BEFORE navigation")
+                return True
+            else:
+                logger.warning("No valid cookies after filtering")
+                return False
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in cookies file: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Error loading cookies: {e}")
+            return False
+
+    def _is_cookie_valid(self, cookie: dict) -> bool:
+        """Check if cookie is not expired"""
+        expires = cookie.get('expires') or cookie.get('expirationDate')
+        if expires and expires > 0:
+            # expires is Unix timestamp
+            return expires > time.time()
+        # No expiration = session cookie = valid
+        return True
+
+    def _convert_cookie_for_playwright(self, cookie: dict) -> Optional[dict]:
+        """
+        Convert cookie to Playwright format
+
+        Playwright requires: name, value, domain (or url)
+        Optional: path, expires, httpOnly, secure, sameSite
+        """
+        try:
+            name = cookie.get('name')
+            value = cookie.get('value')
+            domain = cookie.get('domain', '')
+
+            if not name or value is None:
+                return None
+
+            # Ensure domain starts with dot for wildcard matching
+            if domain and not domain.startswith('.') and not domain.startswith('http'):
+                domain = '.' + domain
+
+            pw_cookie = {
+                'name': name,
+                'value': str(value),
+                'domain': domain,
+                'path': cookie.get('path', '/'),
+            }
+
+            # Optional fields
+            if cookie.get('expires') or cookie.get('expirationDate'):
+                pw_cookie['expires'] = cookie.get('expires') or cookie.get('expirationDate')
+
+            if 'httpOnly' in cookie:
+                pw_cookie['httpOnly'] = cookie['httpOnly']
+
+            if 'secure' in cookie:
+                pw_cookie['secure'] = cookie['secure']
+
+            if cookie.get('sameSite'):
+                # Playwright expects: "Strict", "Lax", "None"
+                same_site = cookie['sameSite']
+                if same_site.lower() in ['strict', 'lax', 'none']:
+                    pw_cookie['sameSite'] = same_site.capitalize()
+                    if same_site.lower() == 'none':
+                        pw_cookie['sameSite'] = 'None'
+
+            return pw_cookie
+
+        except Exception as e:
+            logger.debug(f"Error converting cookie: {e}")
+            return None
 
     async def _verify_logged_in(self) -> bool:
         """Check if logged in via Google"""

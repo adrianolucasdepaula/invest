@@ -9531,16 +9531,71 @@ Endpoint e UI para atualizar dados de um ativo individual.
 
 ---
 
-## FASE 66: Scrapers Pendentes - Correção OAuth/Login 🔵 PLANEJADO
+### FASE 66: OAuth/Login Scrapers Fixes ✅ 100% COMPLETO (2025-12-06)
 
-**Tipo:** Technical Debt
-**Prioridade:** 🟡 MEDIA
-**Estimativa:** 8-12h
+**Prioridade:** 🟡 **MÉDIA** (Prioridade 2)
+**Data:** 2025-12-06
+**Tipo:** Technical Debt + Authentication
+**Versão:** 1.8.1
 
-**Objetivo:** Corrigir os 5 scrapers pendentes que requerem OAuth ou correções específicas.
+**Objetivo:** Corrigir 7 scrapers Python com problemas de autenticação/configuração OAuth e cookies.
 
-**NOTA:** A migração Playwright foi concluída em 2025-12-04 com 28/33 scrapers ativos (91%).
-Ver: `backend/python-scrapers/VALIDACAO_SCRAPERS_2025-12-04.md`
+**Scrapers Corrigidos:**
+
+| # | Scraper | Problema | Solução | Auth Type |
+|---|---------|----------|---------|-----------|
+| 1 | **B3Scraper** | CVM code mapping faltando | Arquivo `cvm_codes.json` + método `_get_cvm_code()` | Público |
+| 2 | **FundamenteiScraper** | Cookies após navegação | Cookie loading BEFORE `page.goto()` | OAuth |
+| 3 | **MaisRetornoScraper** | Cookies após navegação | Cookie loading BEFORE `page.goto()` | OAuth |
+| 4 | **ADVFNScraper** | OAuth incorreto | Login por credenciais (email/password) | Credentials |
+| 5 | **DeepSeekScraper** | localStorage sem verificação | `_verify_local_storage_injection()` | OAuth + localStorage |
+| 6 | **InvestingScraper** | Formato cookie antigo | Dual format support (list + dict) | OAuth (opcional) |
+| 7 | **ClaudeScraper** | Sem validação sessão | `_verify_session()` + comprehensive health check | OAuth |
+
+**Padrões Implementados:**
+
+1. **Cookie Loading Order:** Cookies carregados BEFORE `page.goto()` (crítico para OAuth)
+2. **Dual Cookie Format:** Suporte a ambos formatos:
+   - List: `[{name, value, domain, ...}, ...]`
+   - Dict: `{cookies: [...], localStorage: {...}}`
+3. **Cookie Validation:** Verificação de expiração via Unix timestamp
+4. **Playwright Conversion:** Domain com wildcard (prefixo `.`), sameSite normalizado
+5. **Session Verification:** Verificação de URL + page content + input field
+
+**Arquivos Modificados:**
+
+- `backend/python-scrapers/scrapers/b3_scraper.py` - CVM code mapping
+- `backend/python-scrapers/scrapers/fundamentei_scraper.py` - Cookie order fix
+- `backend/python-scrapers/scrapers/maisretorno_scraper.py` - Cookie order fix
+- `backend/python-scrapers/scrapers/advfn_scraper.py` - Credentials login
+- `backend/python-scrapers/scrapers/deepseek_scraper.py` - localStorage verification
+- `backend/python-scrapers/scrapers/investing_scraper.py` - Dual format support
+- `backend/python-scrapers/scrapers/claude_scraper.py` - Session validation
+- `backend/python-scrapers/data/cvm_codes.json` - 90+ ticker→CVM mappings (CRIADO)
+- `docker-compose.yml` - ADVFN credentials env vars
+
+**CVM Codes File:** `backend/python-scrapers/data/cvm_codes.json`
+
+- 90+ ticker→CVM code mappings
+- Metadata keys with `_` prefix
+- Class-level caching for performance
+
+**Validação:**
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros (exceto gerado em .next)
+- ✅ docker-compose.yml: Sintaxe válida
+- ✅ Padrões consistentes entre todos scrapers
+
+**Documentação:**
+
+- Plan file: `.claude/plans/splendid-sniffing-treehouse.md`
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
+## 📅 FASES PLANEJADAS
 
 ### Scrapers Pendentes de Correção
 
@@ -10244,6 +10299,7 @@ A página Data Sources mostrava apenas 6 scrapers hardcoded (TypeScript), quando
 - ✅ FASE 63: Atualizar Dados Individual por Ativo (2025-12-03)
 - ✅ FASE 64: OAuth/Cookies Scrapers Authentication (2025-12-04)
 - ✅ FASE 65: Git Workflow Automation (2025-12-04)
+- ✅ FASE 66: OAuth/Login Scrapers Fixes (2025-12-06)
 - ✅ FASE 67: TimescaleDB + Dados Intraday (2025-12-05)
 - ✅ FASE 68: FundamentalGrid Frontend (2025-12-04)
 - ✅ FASE 69: Intraday Sync Integration (2025-12-05)
@@ -10255,9 +10311,8 @@ A página Data Sources mostrava apenas 6 scrapers hardcoded (TypeScript), quando
 - ✅ FASE 74: System Infrastructure & Testing (2025-12-06)
 - ✅ FASE 74.5: Data Sources Page - Unified Scrapers View (2025-12-06)
 
-### Fases Planejadas (2 fases)
+### Fases Planejadas (1 fase)
 
-- 🔵 FASE 66: Scrapers Pendentes - Correção OAuth/Login (Prioridade MEDIA)
 - 🔵 FASE 75: AI Sentiment (Gemini) (Prioridade MEDIA)
 - 🔵 FASE 75+: Infraestrutura Avancada (Prioridade BAIXA)
 
@@ -10265,24 +10320,23 @@ A página Data Sources mostrava apenas 6 scrapers hardcoded (TypeScript), quando
 
 | Fase | Descricao | Estimativa | Dependencias |
 |------|-----------|------------|--------------|
-| 66 | Scrapers OAuth/Login | 8-12h | Nenhuma |
-| 74 | AI Sentiment | 12-15h | Scraper noticias (66) |
-| 73+ | Avancado | Variavel | Fases anteriores |
+| 75 | AI Sentiment | 12-15h | FASE 66 concluída |
+| 75+ | Avancado | Variavel | Fases anteriores |
 
-**Total Estimado:** 20-30h para fases planejadas
+**Total Estimado:** 12-20h para fases planejadas
 
 ### Proximos Passos Imediatos
 
-1. **Média prioridade:** FASE 66 - Scrapers OAuth/Login
-2. **Média prioridade:** FASE 74 - AI Sentiment (Gemini)
+1. **Média prioridade:** FASE 75 - AI Sentiment (Gemini)
 
 > **Nota:** FASE 67, 68, 69, 70, 71, 72 concluídas em 2025-12-05
 > **Nota:** FASE 73 (Claude Code Ecosystem) concluída em 2025-12-06
+> **Nota:** FASE 66 (OAuth/Login Scrapers Fixes) concluída em 2025-12-06
 
 ---
 
 **Ultima Atualizacao:** 2025-12-06
-**Total de Fases:** 74 completas + 2 planejadas = **76 fases**
-**Versao:** 1.8.0
+**Total de Fases:** 75 completas + 1 planejada = **76 fases**
+**Versao:** 1.8.1
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

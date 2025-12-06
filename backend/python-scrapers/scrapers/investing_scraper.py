@@ -1,4 +1,5 @@
 # MIGRATED TO PLAYWRIGHT - 2025-12-04
+# UPDATED: 2025-12-06 - Added dual cookie format support + BEFORE navigation loading
 """
 Investing.com Scraper - Market data and analysis
 Fonte: https://br.investing.com/
@@ -9,6 +10,7 @@ OPTIMIZED: Uses single HTML fetch + BeautifulSoup local parsing (~10x faster)
 import asyncio
 import json
 import re
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
@@ -43,7 +45,7 @@ class InvestingScraper(BaseScraper):
         )
 
     async def initialize(self):
-        """Initialize Playwright browser and optionally load cookies"""
+        """Initialize Playwright browser and optionally load cookies BEFORE navigation"""
         if self._initialized:
             return
 
@@ -51,49 +53,142 @@ class InvestingScraper(BaseScraper):
         await super().initialize()
 
         try:
+            # STEP 1: Load cookies BEFORE navigation (critical for OAuth sessions)
+            cookies_loaded = await self._load_cookies_to_context()
+
+            if cookies_loaded:
+                logger.info("Investing.com cookies loaded BEFORE navigation")
+            else:
+                logger.debug("Investing.com: No cookies loaded - using without login")
+
+            # STEP 2: Now navigate with cookies already set
             await self.page.goto(self.BASE_URL, wait_until="load", timeout=60000)
             await asyncio.sleep(2)
-
-            # Load cookies if available
-            if self.COOKIES_FILE.exists():
-                try:
-                    with open(self.COOKIES_FILE, 'r') as f:
-                        cookies = json.load(f)
-
-                    investing_cookies = []
-                    for cookie in cookies:
-                        if isinstance(cookie, dict) and 'investing.com' in cookie.get('domain', ''):
-                            pw_cookie = {
-                                'name': cookie.get('name'),
-                                'value': cookie.get('value'),
-                                'domain': cookie.get('domain'),
-                                'path': cookie.get('path', '/'),
-                            }
-                            if 'expires' in cookie and cookie['expires']:
-                                pw_cookie['expires'] = cookie['expires']
-                            if 'httpOnly' in cookie:
-                                pw_cookie['httpOnly'] = cookie['httpOnly']
-                            if 'secure' in cookie:
-                                pw_cookie['secure'] = cookie['secure']
-
-                            investing_cookies.append(pw_cookie)
-
-                    if investing_cookies:
-                        await self.page.context.add_cookies(investing_cookies)
-                        logger.info(f"Loaded {len(investing_cookies)} cookies for Investing.com")
-                        await self.page.reload()
-                        await asyncio.sleep(2)
-
-                except Exception as e:
-                    logger.warning(f"Could not load Investing.com cookies: {e}")
-            else:
-                logger.debug("Investing.com cookies not found. Using without login.")
 
             self._initialized = True
 
         except Exception as e:
             logger.error(f"Error initializing Investing.com scraper: {e}")
             raise
+
+    async def _load_cookies_to_context(self) -> bool:
+        """
+        Load cookies to browser context BEFORE navigation
+
+        Supports both formats:
+        - List format: [{name, value, domain, ...}, ...]
+        - Dict format: {cookies: [...], localStorage: {...}}
+
+        Returns:
+            True if cookies were loaded successfully
+        """
+        if not self.COOKIES_FILE.exists():
+            return False
+
+        try:
+            with open(self.COOKIES_FILE, 'r', encoding='utf-8') as f:
+                session_data = json.load(f)
+
+            # Handle both formats (list and dict with cookies key)
+            if isinstance(session_data, list):
+                cookies = session_data
+            else:
+                cookies = session_data.get('cookies', [])
+
+            if not cookies:
+                return False
+
+            # Filter and validate cookies
+            valid_cookies = []
+            for cookie in cookies:
+                if not isinstance(cookie, dict):
+                    continue
+
+                domain = cookie.get('domain', '')
+                if 'investing.com' not in domain:
+                    continue
+
+                # Check cookie expiration
+                if not self._is_cookie_valid(cookie):
+                    continue
+
+                converted = self._convert_cookie_for_playwright(cookie)
+                if converted:
+                    valid_cookies.append(converted)
+
+            if valid_cookies:
+                await self.page.context.add_cookies(valid_cookies)
+                logger.info(f"Loaded {len(valid_cookies)} valid cookies BEFORE navigation")
+                return True
+
+            return False
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in Investing.com cookies file: {e}")
+            return False
+        except Exception as e:
+            logger.warning(f"Could not load Investing.com cookies: {e}")
+            return False
+
+    def _is_cookie_valid(self, cookie: dict) -> bool:
+        """Check if cookie is not expired"""
+        expires = cookie.get('expires') or cookie.get('expirationDate')
+        if expires and expires > 0:
+            # expires is Unix timestamp
+            return expires > time.time()
+        # No expiration = session cookie = valid
+        return True
+
+    def _convert_cookie_for_playwright(self, cookie: dict) -> Optional[dict]:
+        """
+        Convert cookie to Playwright format
+
+        Playwright requires: name, value, domain (or url)
+        Optional: path, expires, httpOnly, secure, sameSite
+        """
+        try:
+            name = cookie.get('name')
+            value = cookie.get('value')
+            domain = cookie.get('domain', '')
+
+            if not name or value is None:
+                return None
+
+            # Ensure domain starts with dot for wildcard matching
+            if domain and not domain.startswith('.') and not domain.startswith('http'):
+                domain = '.' + domain
+
+            pw_cookie = {
+                'name': name,
+                'value': str(value),
+                'domain': domain,
+                'path': cookie.get('path', '/'),
+            }
+
+            # Optional fields
+            expires = cookie.get('expires') or cookie.get('expirationDate')
+            if expires and expires > 0:
+                pw_cookie['expires'] = expires
+
+            if 'httpOnly' in cookie:
+                pw_cookie['httpOnly'] = cookie['httpOnly']
+
+            if 'secure' in cookie:
+                pw_cookie['secure'] = cookie['secure']
+
+            if cookie.get('sameSite'):
+                # Playwright expects: "Strict", "Lax", "None"
+                same_site = cookie['sameSite']
+                if same_site.lower() in ['strict', 'lax', 'none']:
+                    pw_cookie['sameSite'] = same_site.capitalize()
+                    if same_site.lower() == 'none':
+                        pw_cookie['sameSite'] = 'None'
+
+            return pw_cookie
+
+        except Exception as e:
+            logger.debug(f"Error converting cookie: {e}")
+            return None
 
     async def scrape(self, ticker: str) -> ScraperResult:
         """

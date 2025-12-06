@@ -225,6 +225,10 @@ services:
       - SCRAPER_MAX_RETRIES=${SCRAPER_MAX_RETRIES:-3}
       - SCRAPER_CONCURRENT_JOBS=${SCRAPER_CONCURRENT_JOBS:-3}
 
+      # ADVFN Credentials (credentials-based login, NOT OAuth)
+      - ADVFN_USERNAME=${ADVFN_USERNAME:-}
+      - ADVFN_PASSWORD=${ADVFN_PASSWORD:-}
+
       # VNC Configuration
       - DISPLAY=:99
       - DISPLAY_WIDTH=1920

@@ -4,8 +4,11 @@ Fonte: https://www.b3.com.br/
 SEM necessidade de login - dados públicos
 
 MIGRATED TO PLAYWRIGHT - 2025-12-04
+UPDATED: 2025-12-06 - Added CVM code mapping
 """
 import asyncio
+import json
+from pathlib import Path
 from typing import Dict, Any, Optional
 from loguru import logger
 from bs4 import BeautifulSoup
@@ -30,6 +33,11 @@ class B3Scraper(BaseScraper):
     """
 
     BASE_URL = "https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/consultas/mercado-a-vista/empresas-listadas/ResumoEmpresaListada.htm"
+
+    # CVM code mapping file (inside Docker container)
+    CVM_CODES_FILE = Path("/app/data/cvm_codes.json")
+    # Class-level cache for CVM codes
+    _cvm_codes_cache: Dict[str, str] = {}
 
     def __init__(self):
         super().__init__(
@@ -227,13 +235,59 @@ class B3Scraper(BaseScraper):
         if value:
             logger.debug(f"Unmapped B3 field: '{label}' = {value}")
 
-    def _get_cvm_code(self, ticker: str) -> str:
+    def _load_cvm_codes(self) -> Dict[str, str]:
         """
-        Get CVM code for ticker (simplified)
-        In production, this should query a mapping table
+        Load CVM codes from JSON file with caching
+
+        Returns:
+            Dict mapping ticker to CVM code
         """
-        # For now, just return ticker - B3 API will handle it
-        return ticker.upper()
+        if not B3Scraper._cvm_codes_cache:
+            try:
+                if self.CVM_CODES_FILE.exists():
+                    with open(self.CVM_CODES_FILE, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        # Filter out metadata keys (start with _)
+                        B3Scraper._cvm_codes_cache = {
+                            k: v for k, v in data.items()
+                            if not k.startswith('_')
+                        }
+                    logger.debug(f"Loaded {len(B3Scraper._cvm_codes_cache)} CVM codes from file")
+                else:
+                    logger.warning(f"CVM codes file not found: {self.CVM_CODES_FILE}")
+            except Exception as e:
+                logger.error(f"Failed to load CVM codes: {e}")
+
+        return B3Scraper._cvm_codes_cache
+
+    def _get_cvm_code(self, ticker: str) -> Optional[str]:
+        """
+        Get CVM code for ticker from mapping file
+
+        Args:
+            ticker: Stock ticker (e.g., 'PETR4')
+
+        Returns:
+            CVM code string or None if not found
+        """
+        codes = self._load_cvm_codes()
+        ticker_upper = ticker.upper()
+
+        # Direct lookup
+        if ticker_upper in codes:
+            logger.debug(f"CVM code for {ticker_upper}: {codes[ticker_upper]}")
+            return codes[ticker_upper]
+
+        # Fallback: try base ticker (PETR4 -> PETR)
+        base_ticker = ticker_upper.rstrip('0123456789')
+        for key, value in codes.items():
+            if key.startswith(base_ticker):
+                logger.debug(f"CVM code for {ticker_upper} (via {key}): {value}")
+                return value
+
+        # If not found, return ticker as-is (B3 might accept it)
+        logger.warning(f"CVM code not found for {ticker_upper}, using ticker as fallback")
+        return ticker_upper
 
     async def health_check(self) -> bool:
         """Check if B3 is accessible"""
