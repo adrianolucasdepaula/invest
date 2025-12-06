@@ -10269,6 +10269,78 @@ A página Data Sources mostrava apenas 6 scrapers hardcoded (TypeScript), quando
 
 ---
 
+## FASE 76: Observabilidade e Rastreabilidade ✅ 100% COMPLETO
+
+**Data:** 2025-12-06
+**Tipo:** Infrastructure / DevOps
+**Prioridade:** 🔴 ALTA
+
+### Objetivos
+
+Implementar observabilidade completa no backend para rastreabilidade de requisições, detecção de erros e análise de performance.
+
+### Implementações
+
+#### FASE 76.0: GlobalExceptionFilter + LoggingInterceptor ✅ COMPLETA
+
+**Arquivos Adicionados:**
+
+- `backend/src/common/filters/global-exception.filter.ts` - Tratamento global de exceções
+- `backend/src/common/filters/index.ts` - Barrel export
+- `backend/src/common/interceptors/logging.interceptor.ts` - Logging de requisições
+
+**Funcionalidades:**
+
+- ✅ **GlobalExceptionFilter**:
+  - Captura TODAS as exceções não tratadas
+  - Gera correlation ID para rastreabilidade completa
+  - Classifica erros por tipo (HttpException, QueryFailedError, Error, Unknown)
+  - Loga com contexto completo (stack trace, request info, user, IP)
+  - Retorna resposta padronizada ao cliente
+  - Sanitiza dados sensíveis (password, token, apiKey)
+
+- ✅ **LoggingInterceptor**:
+  - Gera correlation ID para rastreabilidade (X-Correlation-ID header)
+  - Loga entrada e saída de requisições
+  - Mede tempo de resposta com alertas (>1s moderate, >3s slow)
+  - Detecta respostas grandes (>1MB) para otimização
+  - Sanitiza dados sensíveis no body
+
+#### FASE 76.1: Logger em Controllers ✅ COMPLETA
+
+**Controllers Atualizados:**
+
+- `AppController` - Health check
+- `AssetsController` - Gerenciamento de ativos
+- `AssetsUpdateController` - Atualização de ativos (+ getAssetsWithPriority)
+- `AuthController` - Autenticação
+- `ContextController` - AI Knowledge Base
+- `CronController` - Jobs agendados
+- `DataSourcesController` - Fontes de dados
+- `PortfolioController` - Portfólio
+
+#### FASE 76.2: Documentação ✅ COMPLETA
+
+- ✅ GEMINI.md/claude.md: Novo princípio #5 "Observabilidade e Rastreabilidade"
+- ✅ INSTALL.md: Nova seção "Validação de Frontend com MCPs"
+
+### Validação
+
+- ✅ TypeScript: 0 erros (backend + frontend)
+- ✅ Build: Success (backend + frontend)
+- ✅ Docker: 11 containers healthy
+- ✅ Husky hooks: Passaram em todos commits
+
+### Commits
+
+1. `c0b7179` - feat(observability): add GlobalExceptionFilter and LoggingInterceptor
+2. `88a8214` - feat(observability): add Logger to all controllers
+3. `02a4863` - docs(observability): add observability principles and MCP validation guide
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
 ## FASE 75+: Infraestrutura Avancada (Opcional) 🔵 PLANEJADO
 
 **Tipo:** Infrastructure
@@ -10287,7 +10359,7 @@ A página Data Sources mostrava apenas 6 scrapers hardcoded (TypeScript), quando
 
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (74 fases)
+### Fases Completas (76 fases)
 
 - ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
 - ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
@@ -10310,6 +10382,7 @@ A página Data Sources mostrava apenas 6 scrapers hardcoded (TypeScript), quando
 - ✅ FASE 73.5: Opus 4.5 Ultra-Robust Configuration (2025-12-06)
 - ✅ FASE 74: System Infrastructure & Testing (2025-12-06)
 - ✅ FASE 74.5: Data Sources Page - Unified Scrapers View (2025-12-06)
+- ✅ FASE 76: Observabilidade e Rastreabilidade - Fase 1 (2025-12-06)
 
 ### Fases Planejadas (1 fase)
 
@@ -10336,7 +10409,7 @@ A página Data Sources mostrava apenas 6 scrapers hardcoded (TypeScript), quando
 ---
 
 **Ultima Atualizacao:** 2025-12-06
-**Total de Fases:** 75 completas + 1 planejada = **76 fases**
-**Versao:** 1.8.1
+**Total de Fases:** 76 completas + 1 planejada = **77 fases**
+**Versao:** 1.8.2
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0
