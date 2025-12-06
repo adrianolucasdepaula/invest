@@ -9,13 +9,15 @@
 
 ## 📑 ÍNDICE
 
-1. [Pré-requisitos](#pré-requisitos)
-2. [Instalação Rápida](#instalação-rápida)
-3. [Instalação Detalhada](#instalação-detalhada)
-4. [Portas e Serviços](#portas-e-serviços)
-5. [Variáveis de Ambiente](#variáveis-de-ambiente)
-6. [Verificação da Instalação](#verificação-da-instalação)
-7. [Próximos Passos](#próximos-passos)
+1. [Pré-requisitos](#-pré-requisitos)
+2. [Instalação Rápida](#-instalação-rápida)
+3. [Instalação Detalhada](#-instalação-detalhada)
+4. [Portas e Serviços](#-portas-e-serviços)
+5. [Variáveis de Ambiente](#-variáveis-de-ambiente)
+6. [Verificação da Instalação](#-verificação-da-instalação)
+7. [Próximos Passos](#-próximos-passos)
+8. [Gerenciamento do Sistema](#️-gerenciamento-do-sistema)
+9. [Validação de Frontend com MCPs](#-validação-de-frontend-com-mcps)
 
 ---
 
@@ -756,3 +758,91 @@ O projeto inclui o script `system-manager.ps1` v2.0 para gerenciamento completo 
 | `.\system-manager.ps1 rebuild-frontend`       | Força rebuild do frontend                   |
 | `.\system-manager.ps1 check-types`            | Verifica erros de TypeScript                |
 | `.\system-manager.ps1 prune`                  | Limpeza profunda do Docker                  |
+
+---
+
+## 🧪 VALIDAÇÃO DE FRONTEND COM MCPs
+
+O projeto utiliza MCPs (Model Context Protocol) para validação automatizada do frontend. Os MCPs permitem análise de interface, acessibilidade e estado dos componentes React.
+
+### MCPs Disponíveis
+
+| MCP | Função | Uso Principal |
+|-----|--------|---------------|
+| **Playwright** | Navegação e E2E testing | Login, navegação, interações |
+| **Chrome DevTools** | Snapshots e console | Estado DOM, erros JS, network |
+| **a11y** | Acessibilidade | Auditoria WCAG |
+
+### Estratégia de Gerenciamento de Browser
+
+**PREFERÊNCIA:** Tentar abrir nova sessão primeiro. Só limpar processos se houver erro de conflito.
+
+### Fluxo de Validação Recomendado
+
+```text
+1. Verificar Docker: .\system-manager.ps1 status
+   ↓
+2. Tentar navegar: mcp__playwright__browser_navigate
+   ↓
+3. Se erro de conflito → Executar limpeza (ver abaixo)
+   ↓
+4. Capturar snapshot: mcp__playwright__browser_snapshot
+   ↓
+5. Análise detalhada: mcp__chrome-devtools__take_snapshot
+   ↓
+6. Verificar console: mcp__chrome-devtools__list_console_messages
+   ↓
+7. SEMPRE fechar: mcp__playwright__browser_close
+```
+
+### Limpeza de Sessões (Apenas quando necessário)
+
+**Executar APENAS se receber erros como:**
+
+- `"Another browser context is being closed"`
+- `"browser is already running"`
+- `"Target closed"` ou `"Browser disconnected"`
+
+```powershell
+# Opção 1: Matar apenas Chrome headless (preserva Chrome do usuário)
+Get-Process -Name "chrome" -ErrorAction SilentlyContinue |
+    Where-Object { $_.MainWindowTitle -eq "" } |
+    Stop-Process -Force -ErrorAction SilentlyContinue
+
+# Opção 2: Matar todo Chrome (usar se opção 1 não resolver)
+Get-Process chrome -ErrorAction SilentlyContinue | Stop-Process -Force
+```
+
+### Exemplo de Validação Completa
+
+```powershell
+# 1. Verificar ambiente
+.\system-manager.ps1 health
+
+# 2. Usar MCPs para validação (via Claude Code)
+# - mcp__playwright__browser_navigate → http://localhost:3100
+# - mcp__playwright__browser_snapshot → captura estado
+# - mcp__chrome-devtools__list_console_messages → verificar erros
+# - mcp__a11y__audit_webpage → auditoria de acessibilidade
+
+# 3. SEMPRE fechar ao final
+# - mcp__playwright__browser_close
+```
+
+### Comando Rápido: `/mcp-browser-reset`
+
+O projeto inclui um slash command para gerenciar sessões de browser:
+
+```bash
+# Executar via Claude Code
+/mcp-browser-reset
+```
+
+Este comando fornece instruções para limpeza inteligente de processos Chrome.
+
+### Notas Importantes
+
+- O **Playwright MCP** abre um browser próprio (não interfere no Chrome do usuário)
+- O **Chrome DevTools MCP** pode conflitar com sessões anteriores
+- Sempre feche o browser ao final dos testes com `mcp__playwright__browser_close`
+- Os MCPs estão configurados com `alwaysAllow: ["*"]` para auto-accept (ver `.mcp.json`)

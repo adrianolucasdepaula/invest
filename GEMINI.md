@@ -215,6 +215,87 @@ Problema Encontrado
 
 ---
 
+### 5. Observabilidade e Rastreabilidade (OBRIGATÓRIO)
+
+**Princípio Fundamental:** Sempre habilitar e manter habilitados logs, traces e ferramentas de debug/auditoria para rastreabilidade completa dos fluxos.
+
+**SEMPRE manter habilitados:**
+
+- ✅ **Logs estruturados** (NestJS Logger em controllers/services, Loguru em Python)
+- ✅ **Traces de execução** (request/response, tempo de resposta, correlation IDs)
+- ✅ **Ferramentas de debug e auditoria avançadas** (audit trails, update logs)
+- ✅ **Métricas de performance** (response time, success/failure rates)
+
+**Para rastreabilidade de:**
+
+| Categoria | Exemplos | Nível de Log |
+|-----------|----------|--------------|
+| Fluxos completos | Scraping → Processing → Storage | `log` |
+| Gaps e bugs | Erros não capturados, comportamentos inesperados | `error` |
+| Alarmes e warnings | Degradação de performance, thresholds atingidos | `warn` |
+| Exceções e falhas | Erros de conexão, timeouts, falhas de validação | `error` |
+| Divergências | Cross-validation discrepancies, dados inconsistentes | `warn` |
+| Não-bloqueantes | Oportunidades de melhoria, debt técnico | `debug` |
+| Itens incompletos | Features parcialmente implementadas | `warn` |
+
+**Padrões Obrigatórios:**
+
+```typescript
+// ✅ CORRETO: NestJS com Logger estruturado
+@Injectable()
+export class MyService {
+  private readonly logger = new Logger(MyService.name);
+
+  async process(data: any) {
+    this.logger.log(`Processing started: ${JSON.stringify({ id: data.id })}`);
+    try {
+      // ... logic
+      this.logger.log(`Processing completed: ${data.id}`);
+    } catch (error) {
+      this.logger.error(`Processing failed: ${data.id}`, error.stack);
+      throw error;
+    }
+  }
+}
+```
+
+```python
+# ✅ CORRETO: Python com Loguru estruturado
+from loguru import logger
+
+class MyScraper:
+    def scrape(self, ticker: str):
+        logger.info(f"Scraping started: {ticker}")
+        try:
+            # ... logic
+            logger.info(f"Scraping completed: {ticker} in {elapsed}ms")
+        except Exception as e:
+            logger.error(f"Scraping failed: {ticker} - {str(e)}")
+            raise
+```
+
+**Anti-Patterns (NUNCA fazer):**
+
+- ❌ `console.log()` em código NestJS (usar `this.logger.log()`)
+- ❌ `print()` em código Python de produção (usar `logger.info()`)
+- ❌ Suprimir erros com try-catch vazio
+- ❌ Logs sem contexto (ex: `logger.log("error")` sem detalhes)
+- ❌ Desabilitar logs em produção para "performance"
+
+**Verificação Obrigatória:**
+
+```bash
+# Verificar anti-patterns no backend
+grep -r "console.log" backend/src --include="*.ts" | wc -l  # Deve ser 0
+
+# Verificar anti-patterns nos scrapers
+grep -r "^print(" backend/python-scrapers --include="*.py" | wc -l  # Deve ser 0
+```
+
+**Referência:** Análise de Observabilidade (2025-12-06) - Score atual: 49% → Meta: 90%
+
+---
+
 ## Critical Rules (Regras Críticas)
 
 ### Zero Tolerance Policy
@@ -308,6 +389,7 @@ git push --no-verify                      # Pula pre-push
   2. Chrome DevTools (snapshot + console + network)
   3. React DevTools (component tree + state)
 
+- ✅ **Browser Session Management:** Se erro de conflito de browser, usar `/mcp-browser-reset`
 - ✅ **Ultra-Thinking + TodoWrite:** Planejamento antes de execução
 - ✅ **Screenshots de Evidência:** Salvar em `docs/screenshots/`
 - ✅ **Relatório de Validação:** Criar `VALIDACAO_FASE_XX.md`
