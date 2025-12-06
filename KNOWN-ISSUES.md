@@ -34,46 +34,48 @@ Este documento centraliza **todos os problemas conhecidos** encontrados durante 
 
 ## 🔴 ISSUES ATIVOS (NÃO RESOLVIDOS)
 
+*Nenhum issue crítico em aberto no momento.*
+
+---
+
+## ✅ ISSUES RESOLVIDOS
+
 ### Issue #NEXTJS16_BUILD: Next.js 16 Build Fail (SSG useContext null)
 
-**Severidade:** 🟡 **MÉDIA** (não bloqueia desenvolvimento, apenas build de produção)
-**Status:** ⏳ **AGUARDANDO FIX UPSTREAM**
+**Severidade:** 🔴 **ALTA**
+**Status:** ✅ **RESOLVIDO**
 **Data Identificado:** 2025-12-05
-**GitHub Issue:** [vercel/next.js#85668](https://github.com/vercel/next.js/issues/85668)
+**Data Resolução:** 2025-12-05
+**Tempo de Resolução:** ~30 minutos
 
 #### Sintomas
 
 - `npm run build` falha com erro: `Cannot read properties of null (reading 'useContext')`
 - Erro ocorre durante prerendering de páginas estáticas (`/_global-error`, `/analysis`, etc.)
-- Ambiente de desenvolvimento (`npm run dev`) funciona normalmente
-- Afeta Next.js 16.0.1 - 16.0.5
 
-#### Root Cause
+#### Root Cause Identificado
 
-Bug conhecido no Next.js 16 relacionado a Static Site Generation (SSG) com componentes que usam React hooks (`useContext`, `useState`). Ocorre mesmo em componentes marcados com `'use client'`.
+**Causa Real:** Arquivos na pasta `src/pages/` causando conflito com App Router.
 
-**Nota:** React 19.2.0 instalado sem duplicatas (verificado com `npm ls react`).
+O projeto usava App Router (`src/app/`), mas tinha dois arquivos legados na pasta `src/pages/`:
+- `StockAnalysisDashboard.tsx`
+- `ScraperTestDashboard.tsx`
 
-#### Workarounds Disponíveis
+O Next.js 16 tentava processar esses arquivos como Pages Router, causando conflito de contextos React.
 
-1. **Downgrade para Next.js 15.x** - Funciona, mas perde features do 16
-2. **Usar apenas modo desenvolvimento** - Atual (não bloqueia dev)
-3. **Aguardar fix upstream** - Monitorar GitHub Issue #85668
+#### Correção Aplicada
 
-#### Impacto
+1. Movidos arquivos de `src/pages/` para `src/components/legacy/`
+2. Adicionados `global-error.tsx` e `not-found.tsx` para App Router
+3. Removida pasta `src/pages/` vazia
 
-- ❌ Build de produção bloqueado
-- ✅ Desenvolvimento local funciona normalmente
-- ✅ Hot reload funciona
-- ✅ Todas features funcionam em dev mode
+#### Validação
 
-#### Ação Recomendada
-
-Monitorar [GitHub Issue #85668](https://github.com/vercel/next.js/issues/85668) e atualizar Next.js quando fix for lançado.
+- ✅ Build de produção passou
+- ✅ TypeScript 0 erros
+- ✅ Push para origin/main bem-sucedido
 
 ---
-
-## ✅ ISSUES RESOLVIDOS
 
 ### Resumo de Issues Resolvidos
 

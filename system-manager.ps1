@@ -1,7 +1,43 @@
 # B3 AI Analysis Platform - System Manager (PowerShell)
 # This script manages the entire system lifecycle with intelligent checks
+# Version 2.0 - Full 11-service support with profiles
 
+# ============================================
+# Service Configuration
+# ============================================
+
+# Core services (always managed)
+$CoreServices = @("postgres", "redis", "python-service", "backend", "frontend", "scrapers", "api-service", "orchestrator")
+
+# Profile-specific services
+$DevServices = @("pgadmin", "redis-commander")
+$ProdServices = @("nginx")
+
+# Container name mapping
+$ContainerMap = @{
+    "postgres"         = @{ Container = "invest_postgres"; Port = 5532; HealthType = "pg_isready"; Endpoint = $null }
+    "redis"            = @{ Container = "invest_redis"; Port = 6479; HealthType = "redis-cli"; Endpoint = $null }
+    "python-service"   = @{ Container = "invest_python_service"; Port = 8001; HealthType = "http"; Endpoint = "/health" }
+    "backend"          = @{ Container = "invest_backend"; Port = 3101; HealthType = "http"; Endpoint = "/api/v1/health" }
+    "frontend"         = @{ Container = "invest_frontend"; Port = 3100; HealthType = "http"; Endpoint = "/" }
+    "scrapers"         = @{ Container = "invest_scrapers"; Port = 5900; HealthType = "docker"; Endpoint = $null }
+    "api-service"      = @{ Container = "invest_api_service"; Port = 8000; HealthType = "http"; Endpoint = "/health"; NetworkMode = "scrapers" }
+    "orchestrator"     = @{ Container = "invest_orchestrator"; Port = $null; HealthType = "docker"; Endpoint = $null }
+    "nginx"            = @{ Container = "invest_nginx"; Port = 80; HealthType = "http"; Endpoint = "/"; Profile = "production" }
+    "pgadmin"          = @{ Container = "invest_pgadmin"; Port = 5150; HealthType = "http"; Endpoint = "/"; Profile = "dev" }
+    "redis-commander"  = @{ Container = "invest_redis_commander"; Port = 8181; HealthType = "http"; Endpoint = "/"; Profile = "dev" }
+}
+
+# Service dependencies (for smart restart)
+$ServiceDependencies = @{
+    "scrapers" = @("api-service")  # api-service uses network_mode: service:scrapers
+    "postgres" = @("backend", "scrapers", "api-service", "orchestrator")
+    "redis"    = @("backend", "scrapers", "orchestrator")
+}
+
+# ============================================
 # Colors for output
+# ============================================
 $ESC = [char]27
 $RED = "$ESC[31m"
 $GREEN = "$ESC[32m"
@@ -321,7 +357,7 @@ function Build-DockerImages {
 function Wait-ForHealthy {
     param(
         [int]$MaxWaitSeconds = 120,
-        [array]$Services = @("postgres", "redis", "python-service", "backend", "frontend", "scrapers")
+        [array]$Services = $CoreServices
     )
 
     Print-Info "Aguardando serviços ficarem prontos (timeout: ${MaxWaitSeconds}s)..."
@@ -754,14 +790,14 @@ function Get-SystemStatus {
     docker-compose ps
 
     Write-Host ""
+    Print-Header "Core Services"
 
-    # Check service health
-    $services = @("postgres", "redis", "python-service", "backend", "frontend", "scrapers")
-
-    foreach ($service in $services) {
-        $status = docker-compose ps -q $service
+    # Check core service health
+    foreach ($service in $CoreServices) {
+        $containerName = $ContainerMap[$service].Container
+        $status = docker ps -q --filter "name=$containerName" 2>$null
         if ($status) {
-            $health = docker inspect --format='{{.State.Health.Status}}' "invest_$service" 2>$null
+            $health = docker inspect --format='{{.State.Health.Status}}' $containerName 2>$null
             if ($health -eq "healthy") {
                 Print-Success "$service está saudável"
             } elseif ($health) {
@@ -773,65 +809,202 @@ function Get-SystemStatus {
             Print-Error "$service não está rodando"
         }
     }
+
+    # Check dev profile services
+    Write-Host ""
+    Print-Info "Dev Profile Services:"
+    foreach ($service in $DevServices) {
+        $containerName = $ContainerMap[$service].Container
+        $status = docker ps -q --filter "name=$containerName" 2>$null
+        if ($status) {
+            $health = docker inspect --format='{{.State.Health.Status}}' $containerName 2>$null
+            if ($health -eq "healthy") {
+                Print-Success "$service está saudável"
+            } elseif ($health) {
+                Print-Warning "$service está $health"
+            } else {
+                Print-Info "$service está rodando"
+            }
+        } else {
+            Print-Info "$service não ativo (use start-dev para ativar)"
+        }
+    }
+
+    # Check production profile services
+    Write-Host ""
+    Print-Info "Production Profile Services:"
+    foreach ($service in $ProdServices) {
+        $containerName = $ContainerMap[$service].Container
+        $status = docker ps -q --filter "name=$containerName" 2>$null
+        if ($status) {
+            Print-Success "$service está rodando"
+        } else {
+            Print-Info "$service não ativo (use start-prod para ativar)"
+        }
+    }
 }
 
 # Quick health check
 function Get-HealthCheck {
     Write-Host ""
-    Write-Host "[+] Health Check Rapido"
-    Write-Host "======================="
+    Write-Host "[+] Health Check Completo"
+    Write-Host "========================="
     Write-Host ""
 
+    Print-Info "Core Infrastructure:"
+
     # Check PostgreSQL
-    $pgStatus = docker-compose exec -T postgres pg_isready -U invest_user -d invest_db 2>$null
+    docker-compose exec -T postgres pg_isready -U invest_user -d invest_db 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) {
-        Print-Success "PostgreSQL: OK"
+        Print-Success "PostgreSQL (5532): OK"
     } else {
-        Print-Error "PostgreSQL: FALHOU"
+        Print-Error "PostgreSQL (5532): FALHOU"
     }
 
     # Check Redis
     $redisStatus = docker-compose exec -T redis redis-cli ping 2>$null
     if ($redisStatus -match "PONG") {
-        Print-Success "Redis: OK"
+        Print-Success "Redis (6479): OK"
     } else {
-        Print-Error "Redis: FALHOU"
+        Print-Error "Redis (6479): FALHOU"
     }
+
+    Write-Host ""
+    Print-Info "Backend Services:"
 
     # Check Python Service
     try {
         $response = Invoke-WebRequest -Uri "http://localhost:8001/health" -TimeoutSec 5 -UseBasicParsing
         if ($response.StatusCode -eq 200) {
-            Print-Success "Python Service: OK"
+            Print-Success "Python Service (8001): OK"
         } else {
-            Print-Warning "Python Service: Resposta inesperada ($($response.StatusCode))"
+            Print-Warning "Python Service (8001): Resposta inesperada ($($response.StatusCode))"
         }
     } catch {
-        Print-Error "Python Service: FALHOU"
+        Print-Error "Python Service (8001): FALHOU"
     }
 
     # Check Backend
     try {
         $response = Invoke-WebRequest -Uri "http://localhost:3101/api/v1/health" -TimeoutSec 5 -UseBasicParsing
         if ($response.StatusCode -eq 200) {
-            Print-Success "Backend: OK"
+            Print-Success "Backend API (3101): OK"
         } else {
-            Print-Warning "Backend: Resposta inesperada ($($response.StatusCode))"
+            Print-Warning "Backend API (3101): Resposta inesperada ($($response.StatusCode))"
         }
     } catch {
-        Print-Error "Backend: FALHOU"
+        Print-Error "Backend API (3101): FALHOU"
     }
+
+    # Check API Service (via scrapers network)
+    try {
+        $response = Invoke-WebRequest -Uri "http://localhost:8000/health" -TimeoutSec 5 -UseBasicParsing
+        if ($response.StatusCode -eq 200) {
+            Print-Success "API Service (8000): OK"
+        } else {
+            Print-Warning "API Service (8000): Resposta inesperada ($($response.StatusCode))"
+        }
+    } catch {
+        Print-Error "API Service (8000): FALHOU"
+    }
+
+    # Check Orchestrator (no HTTP, check docker health)
+    $orchHealth = docker inspect --format='{{.State.Health.Status}}' invest_orchestrator 2>$null
+    if ($orchHealth -eq "healthy") {
+        Print-Success "Orchestrator: OK (healthy)"
+    } elseif ($orchHealth) {
+        Print-Warning "Orchestrator: $orchHealth"
+    } else {
+        Print-Warning "Orchestrator: Não encontrado"
+    }
+
+    Write-Host ""
+    Print-Info "Frontend Services:"
 
     # Check Frontend
     try {
         $response = Invoke-WebRequest -Uri "http://localhost:3100" -TimeoutSec 5 -UseBasicParsing
         if ($response.StatusCode -eq 200) {
-            Print-Success "Frontend: OK"
+            Print-Success "Frontend (3100): OK"
         } else {
-            Print-Warning "Frontend: Resposta inesperada ($($response.StatusCode))"
+            Print-Warning "Frontend (3100): Resposta inesperada ($($response.StatusCode))"
         }
     } catch {
-        Print-Error "Frontend: FALHOU"
+        Print-Error "Frontend (3100): FALHOU"
+    }
+
+    Write-Host ""
+    Print-Info "Scraper Services:"
+
+    # Check Scrapers container
+    $scrapersHealth = docker inspect --format='{{.State.Health.Status}}' invest_scrapers 2>$null
+    if ($scrapersHealth -eq "healthy") {
+        Print-Success "Scrapers Container: OK (healthy)"
+    } elseif ($scrapersHealth) {
+        Print-Warning "Scrapers Container: $scrapersHealth"
+    } else {
+        Print-Warning "Scrapers Container: Não encontrado"
+    }
+
+    # Check OAuth API
+    try {
+        $response = Invoke-WebRequest -Uri "http://localhost:8080/api/oauth/status" -TimeoutSec 5 -UseBasicParsing
+        Print-Success "OAuth API (8080): OK"
+    } catch {
+        Print-Warning "OAuth API (8080): Não disponível"
+    }
+
+    # Check noVNC
+    try {
+        $response = Invoke-WebRequest -Uri "http://localhost:6080" -TimeoutSec 5 -UseBasicParsing
+        Print-Success "noVNC Web (6080): OK"
+    } catch {
+        Print-Warning "noVNC Web (6080): Não disponível"
+    }
+
+    Write-Host ""
+    Print-Info "Dev Profile Services:"
+
+    # Check PgAdmin (if running)
+    $pgadminRunning = docker ps -q --filter "name=invest_pgadmin" 2>$null
+    if ($pgadminRunning) {
+        try {
+            $response = Invoke-WebRequest -Uri "http://localhost:5150" -TimeoutSec 5 -UseBasicParsing
+            Print-Success "PgAdmin (5150): OK"
+        } catch {
+            Print-Warning "PgAdmin (5150): Container rodando mas não responde"
+        }
+    } else {
+        Print-Info "PgAdmin (5150): Não ativo (use start-dev)"
+    }
+
+    # Check Redis Commander (if running)
+    $redisCommRunning = docker ps -q --filter "name=invest_redis_commander" 2>$null
+    if ($redisCommRunning) {
+        try {
+            $response = Invoke-WebRequest -Uri "http://localhost:8181" -TimeoutSec 5 -UseBasicParsing
+            Print-Success "Redis Commander (8181): OK"
+        } catch {
+            Print-Warning "Redis Commander (8181): Container rodando mas não responde"
+        }
+    } else {
+        Print-Info "Redis Commander (8181): Não ativo (use start-dev)"
+    }
+
+    Write-Host ""
+    Print-Info "Production Profile Services:"
+
+    # Check Nginx (if running)
+    $nginxRunning = docker ps -q --filter "name=invest_nginx" 2>$null
+    if ($nginxRunning) {
+        try {
+            $response = Invoke-WebRequest -Uri "http://localhost:180" -TimeoutSec 5 -UseBasicParsing
+            Print-Success "Nginx (80/443): OK"
+        } catch {
+            Print-Warning "Nginx: Container rodando mas não responde"
+        }
+    } else {
+        Print-Info "Nginx: Não ativo (use start-prod)"
     }
 }
 
@@ -955,6 +1128,214 @@ function Restore-Database {
         }
     } else {
         Print-Info "Operação cancelada."
+    }
+}
+
+# Restart a single service with dependency awareness
+function Restart-SingleService {
+    param([string]$ServiceName)
+
+    if (-not $ServiceName) {
+        Print-Error "Especifique o serviço: .\system-manager.ps1 restart-service <nome>"
+        Write-Host ""
+        Print-Info "Serviços disponíveis:"
+        Write-Host "  Core: $($CoreServices -join ', ')"
+        Write-Host "  Dev:  $($DevServices -join ', ')"
+        Write-Host "  Prod: $($ProdServices -join ', ')"
+        return
+    }
+
+    # Validate service name
+    $allServices = $CoreServices + $DevServices + $ProdServices
+    if ($ServiceName -notin $allServices) {
+        Print-Error "Serviço '$ServiceName' não encontrado"
+        Write-Host ""
+        Print-Info "Serviços disponíveis:"
+        Write-Host "  Core: $($CoreServices -join ', ')"
+        Write-Host "  Dev:  $($DevServices -join ', ')"
+        Write-Host "  Prod: $($ProdServices -join ', ')"
+        return
+    }
+
+    Print-Header "Reiniciando Serviço: $ServiceName"
+
+    # Check for dependent services
+    $dependents = $ServiceDependencies[$ServiceName]
+    if ($dependents) {
+        Print-Warning "Este serviço tem dependentes: $($dependents -join ', ')"
+        Print-Info "Eles também serão reiniciados para manter consistência."
+        Write-Host ""
+
+        # Restart all together
+        $servicesToRestart = @($ServiceName) + $dependents
+        Print-Info "Reiniciando: $($servicesToRestart -join ', ')..."
+        docker-compose restart $servicesToRestart
+
+        if ($LASTEXITCODE -eq 0) {
+            Print-Success "Serviços reiniciados com sucesso!"
+        } else {
+            Print-Error "Erro ao reiniciar serviços"
+        }
+    } else {
+        Print-Info "Reiniciando $ServiceName..."
+        docker-compose restart $ServiceName
+
+        if ($LASTEXITCODE -eq 0) {
+            Print-Success "$ServiceName reiniciado com sucesso!"
+        } else {
+            Print-Error "Erro ao reiniciar $ServiceName"
+        }
+    }
+}
+
+# Start with dev profile (includes pgadmin, redis-commander)
+function Start-Dev {
+    Print-Header "Iniciando Sistema com Profile DEV"
+    Print-Info "Isso inclui: pgadmin, redis-commander"
+    Write-Host ""
+
+    # Check prerequisites
+    if (-not (Test-Prerequisites)) {
+        Print-Error "Pré-requisitos não atendidos. Corrija os problemas antes de continuar."
+        return
+    }
+
+    # Start core + dev services
+    Print-Info "Iniciando core services + dev tools..."
+    docker-compose --profile dev up -d
+
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host ""
+
+        # Wait for core services
+        $isHealthy = Wait-ForHealthy -MaxWaitSeconds 120
+
+        if ($isHealthy) {
+            Write-Host ""
+            Print-Success "Sistema DEV iniciado com sucesso!"
+            Write-Host ""
+            Write-Host "URLs de acesso:"
+            Write-Host "  ${GREEN}Frontend:${RESET}       http://localhost:3100"
+            Write-Host "  ${GREEN}Backend API:${RESET}    http://localhost:3101/api/v1"
+            Write-Host "  ${GREEN}API Docs:${RESET}       http://localhost:3101/api/docs"
+            Write-Host "  ${CYAN}API Service:${RESET}    http://localhost:8000"
+            Write-Host "  ${CYAN}Python Svc:${RESET}     http://localhost:8001"
+            Write-Host "  ${YELLOW}noVNC:${RESET}          http://localhost:6080"
+            Write-Host ""
+            Write-Host "  ${MAGENTA}PgAdmin:${RESET}        http://localhost:5150"
+            Write-Host "  ${MAGENTA}Redis UI:${RESET}       http://localhost:8181"
+            Write-Host ""
+        } else {
+            Print-Warning "Sistema iniciou mas alguns serviços podem não estar prontos"
+            Print-Info "Verifique: .\system-manager.ps1 health"
+        }
+    } else {
+        Print-Error "Erro ao iniciar serviços DEV"
+    }
+}
+
+# Start with production profile (includes nginx)
+function Start-Production {
+    Print-Header "Iniciando Sistema com Profile PRODUCTION"
+    Print-Info "Isso inclui: nginx (reverse proxy)"
+    Write-Host ""
+
+    # Check prerequisites
+    if (-not (Test-Prerequisites)) {
+        Print-Error "Pré-requisitos não atendidos. Corrija os problemas antes de continuar."
+        return
+    }
+
+    # Start core + production services
+    Print-Info "Iniciando core services + nginx..."
+    docker-compose --profile production up -d
+
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host ""
+
+        # Wait for core services
+        $isHealthy = Wait-ForHealthy -MaxWaitSeconds 120
+
+        if ($isHealthy) {
+            Write-Host ""
+            Print-Success "Sistema PRODUCTION iniciado com sucesso!"
+            Write-Host ""
+            Write-Host "URLs de acesso (via Nginx):"
+            Write-Host "  ${GREEN}HTTP:${RESET}   http://localhost:180"
+            Write-Host "  ${GREEN}HTTPS:${RESET}  https://localhost:543"
+            Write-Host ""
+            Write-Host "URLs diretas (bypass nginx):"
+            Write-Host "  ${CYAN}Frontend:${RESET}   http://localhost:3100"
+            Write-Host "  ${CYAN}Backend:${RESET}    http://localhost:3101/api/v1"
+            Write-Host ""
+        } else {
+            Print-Warning "Sistema iniciou mas alguns serviços podem não estar prontos"
+            Print-Info "Verifique: .\system-manager.ps1 health"
+        }
+    } else {
+        Print-Error "Erro ao iniciar serviços PRODUCTION"
+    }
+}
+
+# Get Docker volumes status
+function Get-Volumes {
+    Print-Header "Volumes Docker do Projeto"
+
+    $projectVolumes = @(
+        @{ Name = "invest-claude-web_postgres_data"; Description = "Dados do PostgreSQL" },
+        @{ Name = "invest-claude-web_redis_data"; Description = "Dados do Redis" },
+        @{ Name = "invest-claude-web_backend_node_modules"; Description = "Dependências Backend" },
+        @{ Name = "invest-claude-web_frontend_node_modules"; Description = "Dependências Frontend" },
+        @{ Name = "invest-claude-web_pgadmin_data"; Description = "Configurações PgAdmin" },
+        @{ Name = "invest-claude-web_x11_socket"; Description = "Socket X11 (scrapers)" }
+    )
+
+    $existingVolumes = docker volume ls -q 2>$null
+
+    foreach ($vol in $projectVolumes) {
+        if ($existingVolumes -contains $vol.Name) {
+            # Get volume size using docker system df
+            $volumeInfo = docker volume inspect $vol.Name 2>$null | ConvertFrom-Json
+            $mountpoint = $volumeInfo.Mountpoint
+            Print-Success "$($vol.Name)"
+            Print-Info "  -> $($vol.Description)"
+        } else {
+            Print-Warning "$($vol.Name) - NÃO EXISTE"
+            Print-Info "  -> $($vol.Description)"
+        }
+    }
+
+    Write-Host ""
+    Print-Info "Para ver uso de espaço: docker system df -v"
+}
+
+# Get Docker network status
+function Get-Network {
+    Print-Header "Rede Docker do Projeto"
+
+    $networkName = "invest-claude-web_invest_network"
+
+    $networkExists = docker network ls -q --filter "name=$networkName" 2>$null
+    if ($networkExists) {
+        Print-Success "Rede $networkName existe"
+
+        Write-Host ""
+        Print-Info "Containers conectados:"
+
+        $networkInfo = docker network inspect $networkName 2>$null | ConvertFrom-Json
+        $containers = $networkInfo.Containers
+
+        if ($containers) {
+            $containers.PSObject.Properties | ForEach-Object {
+                $containerInfo = $_.Value
+                Write-Host "  - $($containerInfo.Name): $($containerInfo.IPv4Address)"
+            }
+        } else {
+            Print-Warning "Nenhum container conectado"
+        }
+    } else {
+        Print-Warning "Rede $networkName não existe"
+        Print-Info "Execute 'start' para criar a rede automaticamente"
     }
 }
 

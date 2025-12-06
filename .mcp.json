@@ -10,9 +10,19 @@
       "args": ["/c", "npx", "chrome-devtools-mcp@latest"],
       "env": {}
     },
-    "selenium": {
+    "a11y": {
       "command": "cmd",
-      "args": ["/c", "npx", "-y", "@angiejones/mcp-selenium"],
+      "args": ["/c", "npx", "@anthropic/mcp-server-a11y@latest"],
+      "env": {}
+    },
+    "context7": {
+      "command": "cmd",
+      "args": ["/c", "npx", "@anthropic/context7-mcp@latest"],
+      "env": {}
+    },
+    "sequential-thinking": {
+      "command": "cmd",
+      "args": ["/c", "npx", "@anthropic/mcp-sequential-thinking@latest"],
       "env": {}
     }
   }

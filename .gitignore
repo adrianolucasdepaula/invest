@@ -98,6 +98,7 @@ temp/
 # Credentials and sensitive data
 credentials/
 secrets/
+backend/python-scrapers/data/
 *.key
 *.pem
 *.p12
