@@ -66,6 +66,10 @@ export class UpdateLog {
     dataPoints?: number;
     discrepancies?: any[];
     duration?: number;
+    // Trace fields for advanced logging
+    traceId?: string;
+    batchPosition?: number;
+    batchSize?: number;
   };
 
   @Column({ type: 'enum', enum: UpdateTrigger, name: 'triggered_by' })

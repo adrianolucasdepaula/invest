@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, LessThan } from 'typeorm';
+import { randomBytes } from 'crypto';
 import {
   Asset,
   FundamentalData,
@@ -20,16 +21,21 @@ export interface UpdateResult {
   status: UpdateStatus;
   error?: string;
   duration?: number;
+  traceId?: string;
   metadata?: {
     sources?: string[];
     sourcesCount?: number;
     confidence?: number;
     dataPoints?: number;
     discrepancies?: any[];
+    traceId?: string;
+    batchPosition?: number;
+    batchSize?: number;
   };
 }
 
 export interface BatchUpdateResult {
+  traceId: string;
   totalAssets: number;
   successCount: number;
   failedCount: number;
@@ -47,6 +53,14 @@ export class AssetsUpdateService {
   private readonly MIN_SOURCES = 2; // Reduced from 3 to 2 - more realistic for B3 assets
   private readonly MIN_CONFIDENCE = 0.5; // Reduced from 0.7 to 0.5 - matches minConfidence guarantee in scrapers
   private readonly RATE_LIMIT_DELAY = 2000; // 2 seconds between requests
+
+  /**
+   * Gera um trace ID único de 8 caracteres para rastreamento de operações
+   * Usa crypto.randomBytes que é nativo do Node.js e compatível com Jest
+   */
+  private generateTraceId(): string {
+    return randomBytes(4).toString('hex');
+  }
 
   constructor(
     @InjectRepository(Asset)
@@ -66,13 +80,28 @@ export class AssetsUpdateService {
   /**
    * MÉTODO 1: Atualizar um único ativo
    * Usado para atualizações manuais de ativos individuais
+   *
+   * @param ticker - Ticker do ativo
+   * @param userId - ID do usuário que solicitou (opcional)
+   * @param triggeredBy - Origem da atualização (MANUAL, CRON, BATCH)
+   * @param traceContext - Contexto de rastreamento para batch updates (opcional)
    */
   async updateSingleAsset(
     ticker: string,
     userId?: string,
     triggeredBy: UpdateTrigger = UpdateTrigger.MANUAL,
+    traceContext?: { traceId: string; position: number; batchSize: number },
   ): Promise<UpdateResult> {
-    this.logger.log(`[UPDATE-SINGLE] Starting update for ${ticker} (user: ${userId || 'system'})`);
+    // Generate trace ID if not provided (for standalone calls)
+    const traceId = traceContext?.traceId || this.generateTraceId();
+    const positionInfo = traceContext
+      ? `[${traceContext.position}/${traceContext.batchSize}]`
+      : '';
+    const logPrefix = `[TRACE-${traceId}]${positionInfo}`;
+
+    this.logger.log(
+      `${logPrefix} Starting update for ${ticker} (user: ${userId || 'system'}, trigger: ${triggeredBy})`,
+    );
     const startTime = Date.now();
 
     // 1. Find asset in database
@@ -83,12 +112,13 @@ export class AssetsUpdateService {
 
     // 2. Check if asset has auto-update disabled
     if (!asset.autoUpdateEnabled && triggeredBy === UpdateTrigger.CRON) {
-      this.logger.warn(`[UPDATE-SINGLE] Auto-update disabled for ${ticker}, skipping cron update`);
+      this.logger.warn(`${logPrefix} Auto-update disabled for ${ticker}, skipping cron update`);
       return {
         success: false,
         assetId: asset.id,
         ticker: asset.ticker,
         status: UpdateStatus.CANCELLED,
+        traceId,
         error: 'Auto-update disabled for this asset',
       };
     }
@@ -114,8 +144,11 @@ export class AssetsUpdateService {
 
     try {
       // 5. Execute scrapers
-      this.logger.log(`[UPDATE-SINGLE] Scraping data for ${ticker}...`);
+      this.logger.log(`${logPrefix} Scraping data for ${ticker}...`);
+      const scraperStartTime = Date.now();
       const scrapedResult = await this.scrapersService.scrapeFundamentalData(ticker);
+      const scraperDuration = Date.now() - scraperStartTime;
+      this.logger.debug(`${logPrefix} Scrapers completed for ${ticker} in ${scraperDuration}ms`);
 
       // 6. Validate data quality
       if (!scrapedResult || scrapedResult.sourcesCount < this.MIN_SOURCES) {
@@ -134,7 +167,7 @@ export class AssetsUpdateService {
       // 8. Extract sector from rawSourcesData (BRAPI provides this)
       // Try BRAPI first (most reliable for sector), then other sources
       this.logger.debug(
-        `[UPDATE-SINGLE] rawSourcesData for ${ticker}: ${JSON.stringify(
+        `${logPrefix} rawSourcesData for ${ticker}: ${JSON.stringify(
           scrapedResult.rawSourcesData?.map((s) => ({
             source: s.source,
             hasSector: !!s.data?.sector,
@@ -145,9 +178,9 @@ export class AssetsUpdateService {
       const sectorFromSources = this.extractSectorFromSources(scrapedResult.rawSourcesData);
       if (sectorFromSources && !asset.sector) {
         asset.sector = sectorFromSources;
-        this.logger.debug(`[UPDATE-SINGLE] Extracted sector "${sectorFromSources}" for ${ticker}`);
+        this.logger.debug(`${logPrefix} Extracted sector "${sectorFromSources}" for ${ticker}`);
       } else if (!sectorFromSources) {
-        this.logger.debug(`[UPDATE-SINGLE] No sector found in sources for ${ticker}`);
+        this.logger.debug(`${logPrefix} No sector found in sources for ${ticker}`);
       }
 
       // 9. Update asset tracking fields
@@ -168,6 +201,9 @@ export class AssetsUpdateService {
         dataPoints: Object.keys(scrapedResult.data).length,
         discrepancies: scrapedResult.discrepancies,
         duration,
+        traceId,
+        batchPosition: traceContext?.position,
+        batchSize: traceContext?.batchSize,
       };
       await this.updateLogRepository.save(updateLog);
 
@@ -181,7 +217,7 @@ export class AssetsUpdateService {
         metadata: updateLog.metadata,
       });
 
-      this.logger.log(`[UPDATE-SINGLE] ✅ Successfully updated ${ticker} in ${duration}ms`);
+      this.logger.log(`${logPrefix} ✅ Successfully updated ${ticker} in ${duration}ms`);
 
       return {
         success: true,
@@ -189,6 +225,7 @@ export class AssetsUpdateService {
         ticker: asset.ticker,
         status: UpdateStatus.SUCCESS,
         duration,
+        traceId,
         metadata: updateLog.metadata,
       };
     } catch (error) {
@@ -196,7 +233,7 @@ export class AssetsUpdateService {
       const duration = Date.now() - startTime;
       const errorMessage = error.message || 'Unknown error';
 
-      this.logger.error(`[UPDATE-SINGLE] ❌ Failed to update ${ticker}: ${errorMessage}`);
+      this.logger.error(`${logPrefix} ❌ Failed to update ${ticker}: ${errorMessage}`);
 
       // Update asset tracking fields
       asset.lastUpdateStatus = 'failed';
@@ -206,7 +243,7 @@ export class AssetsUpdateService {
       // If max retries reached, disable auto-update
       if (asset.updateRetryCount >= this.MAX_RETRY_COUNT) {
         this.logger.warn(
-          `[UPDATE-SINGLE] Max retries reached for ${ticker}, disabling auto-update`,
+          `${logPrefix} Max retries reached for ${ticker}, disabling auto-update`,
         );
         asset.autoUpdateEnabled = false;
       }
@@ -217,7 +254,12 @@ export class AssetsUpdateService {
       updateLog.completedAt = new Date();
       updateLog.status = UpdateStatus.FAILED;
       updateLog.error = errorMessage;
-      updateLog.metadata = { duration };
+      updateLog.metadata = {
+        duration,
+        traceId,
+        batchPosition: traceContext?.position,
+        batchSize: traceContext?.batchSize,
+      };
       await this.updateLogRepository.save(updateLog);
 
       // Emit WebSocket event: update failed
@@ -236,6 +278,7 @@ export class AssetsUpdateService {
         status: UpdateStatus.FAILED,
         error: errorMessage,
         duration,
+        traceId,
       };
     }
   }
@@ -243,9 +286,16 @@ export class AssetsUpdateService {
   /**
    * MÉTODO 2: Atualizar todos os ativos de um portfólio
    * Usado quando o usuário quer atualizar todos os ativos do seu portfólio
+   *
+   * @param portfolioId - ID do portfólio
+   * @param userId - ID do usuário dono do portfólio
    */
   async updatePortfolioAssets(portfolioId: string, userId: string): Promise<BatchUpdateResult> {
-    this.logger.log(`[UPDATE-PORTFOLIO] Starting update for portfolio ${portfolioId}`);
+    // Generate unique trace ID for this portfolio update operation
+    const traceId = this.generateTraceId();
+    const logPrefix = `[PORTFOLIO-${traceId}]`;
+
+    this.logger.log(`${logPrefix} Starting update for portfolio ${portfolioId}`);
     const startTime = Date.now();
 
     // 1. Find portfolio and verify ownership
@@ -263,8 +313,9 @@ export class AssetsUpdateService {
     const uniqueTickers = [...new Set(assets.map((a) => a.ticker))];
 
     if (uniqueTickers.length === 0) {
-      this.logger.warn(`[UPDATE-PORTFOLIO] Portfolio ${portfolioId} has no assets`);
+      this.logger.warn(`${logPrefix} Portfolio ${portfolioId} has no assets`);
       return {
+        traceId,
         totalAssets: 0,
         successCount: 0,
         failedCount: 0,
@@ -273,7 +324,7 @@ export class AssetsUpdateService {
       };
     }
 
-    this.logger.log(`[UPDATE-PORTFOLIO] Found ${uniqueTickers.length} unique assets to update`);
+    this.logger.log(`${logPrefix} Found ${uniqueTickers.length} unique assets to update`);
 
     // 3. Emit WebSocket event: batch update started
     this.webSocketGateway.emitBatchUpdateStarted({
@@ -289,17 +340,27 @@ export class AssetsUpdateService {
 
     for (let i = 0; i < uniqueTickers.length; i++) {
       const ticker = uniqueTickers[i];
+      const position = i + 1;
+
+      this.logger.debug(
+        `${logPrefix}[${position}/${uniqueTickers.length}] Processing ${ticker}...`,
+      );
 
       // Emit progress
       this.webSocketGateway.emitBatchUpdateProgress({
         portfolioId,
-        current: i + 1,
+        current: position,
         total: uniqueTickers.length,
         currentTicker: ticker,
       });
 
-      // Update asset
-      const result = await this.updateSingleAsset(ticker, userId, UpdateTrigger.MANUAL);
+      // Update asset with trace context
+      const traceContext = {
+        traceId,
+        position,
+        batchSize: uniqueTickers.length,
+      };
+      const result = await this.updateSingleAsset(ticker, userId, UpdateTrigger.MANUAL, traceContext);
       results.push(result);
 
       if (result.success) {
@@ -315,6 +376,7 @@ export class AssetsUpdateService {
     }
 
     const duration = Date.now() - startTime;
+    const durationMinutes = (duration / 60000).toFixed(2);
 
     // 5. Emit WebSocket event: batch update completed
     this.webSocketGateway.emitBatchUpdateCompleted({
@@ -326,10 +388,11 @@ export class AssetsUpdateService {
     });
 
     this.logger.log(
-      `[UPDATE-PORTFOLIO] ✅ Completed portfolio ${portfolioId}: ${successCount}/${uniqueTickers.length} successful in ${duration}ms`,
+      `${logPrefix} ✅ Portfolio ${portfolioId} completed: ${successCount}/${uniqueTickers.length} successful, ${failedCount} failed (${durationMinutes}min)`,
     );
 
     return {
+      traceId,
       totalAssets: uniqueTickers.length,
       successCount,
       failedCount,
@@ -341,13 +404,23 @@ export class AssetsUpdateService {
   /**
    * MÉTODO 3: Atualizar múltiplos ativos específicos
    * Usado para atualizações em lote de ativos selecionados
+   *
+   * @param tickers - Lista de tickers a atualizar
+   * @param userId - ID do usuário (opcional)
+   * @param triggeredBy - Origem da atualização
    */
   async updateMultipleAssets(
     tickers: string[],
     userId?: string,
     triggeredBy: UpdateTrigger = UpdateTrigger.MANUAL,
   ): Promise<BatchUpdateResult> {
-    this.logger.log(`[UPDATE-MULTIPLE] Starting batch update for ${tickers.length} assets`);
+    // Generate unique trace ID for this batch operation
+    const traceId = this.generateTraceId();
+    const logPrefix = `[BATCH-${traceId}]`;
+
+    this.logger.log(
+      `${logPrefix} Starting batch update for ${tickers.length} assets (trigger: ${triggeredBy})`,
+    );
     const startTime = Date.now();
 
     if (tickers.length === 0) {
@@ -363,8 +436,12 @@ export class AssetsUpdateService {
     const notFoundTickers = tickers.filter((t) => !foundTickers.includes(t));
 
     if (notFoundTickers.length > 0) {
-      this.logger.warn(`[UPDATE-MULTIPLE] Tickers not found: ${notFoundTickers.join(', ')}`);
+      this.logger.warn(`${logPrefix} Tickers not found: ${notFoundTickers.join(', ')}`);
     }
+
+    this.logger.log(
+      `${logPrefix} Validated ${foundTickers.length}/${tickers.length} tickers`,
+    );
 
     // 2. Emit WebSocket event: batch update started
     this.webSocketGateway.emitBatchUpdateStarted({
@@ -379,22 +456,38 @@ export class AssetsUpdateService {
 
     for (let i = 0; i < foundTickers.length; i++) {
       const ticker = foundTickers[i];
+      const position = i + 1;
+
+      this.logger.debug(
+        `${logPrefix}[${position}/${foundTickers.length}] Processing ${ticker}...`,
+      );
 
       // Emit progress
       this.webSocketGateway.emitBatchUpdateProgress({
-        current: i + 1,
+        current: position,
         total: foundTickers.length,
         currentTicker: ticker,
       });
 
-      // Update asset
-      const result = await this.updateSingleAsset(ticker, userId, triggeredBy);
+      // Update asset with trace context
+      const traceContext = {
+        traceId,
+        position,
+        batchSize: foundTickers.length,
+      };
+      const result = await this.updateSingleAsset(ticker, userId, triggeredBy, traceContext);
       results.push(result);
 
       if (result.success) {
         successCount++;
+        this.logger.debug(
+          `${logPrefix}[${position}/${foundTickers.length}] ✅ ${ticker} completed in ${result.duration}ms`,
+        );
       } else {
         failedCount++;
+        this.logger.debug(
+          `${logPrefix}[${position}/${foundTickers.length}] ❌ ${ticker} failed: ${result.error}`,
+        );
       }
 
       // Rate limiting: wait between requests (except last one)
@@ -404,6 +497,7 @@ export class AssetsUpdateService {
     }
 
     const duration = Date.now() - startTime;
+    const durationMinutes = (duration / 60000).toFixed(2);
 
     // 4. Emit WebSocket event: batch update completed
     this.webSocketGateway.emitBatchUpdateCompleted({
@@ -414,10 +508,16 @@ export class AssetsUpdateService {
     });
 
     this.logger.log(
-      `[UPDATE-MULTIPLE] ✅ Completed batch: ${successCount}/${foundTickers.length} successful in ${duration}ms`,
+      `${logPrefix} ✅ Batch completed: ${successCount}/${foundTickers.length} successful, ${failedCount} failed (${durationMinutes}min)`,
+    );
+
+    // Log summary statistics
+    this.logger.log(
+      `${logPrefix} Summary: success_rate=${((successCount / foundTickers.length) * 100).toFixed(1)}%, avg_time=${(duration / foundTickers.length / 1000).toFixed(2)}s/asset`,
     );
 
     return {
+      traceId,
       totalAssets: foundTickers.length,
       successCount,
       failedCount,
@@ -493,7 +593,10 @@ export class AssetsUpdateService {
    * Usado pelo cron job para reprocessar ativos que falharam
    */
   async retryFailedAssets(): Promise<BatchUpdateResult> {
-    this.logger.log(`[RETRY-FAILED] Starting retry for failed assets`);
+    const traceId = this.generateTraceId();
+    const logPrefix = `[RETRY-${traceId}]`;
+
+    this.logger.log(`${logPrefix} Starting retry for failed assets`);
     const startTime = Date.now();
 
     // 1. Find assets with failed status that haven't reached max retry count
@@ -507,8 +610,9 @@ export class AssetsUpdateService {
     });
 
     if (failedAssets.length === 0) {
-      this.logger.log(`[RETRY-FAILED] No failed assets to retry`);
+      this.logger.log(`${logPrefix} No failed assets to retry`);
       return {
+        traceId,
         totalAssets: 0,
         successCount: 0,
         failedCount: 0,
@@ -518,9 +622,9 @@ export class AssetsUpdateService {
     }
 
     const tickers = failedAssets.map((a) => a.ticker);
-    this.logger.log(`[RETRY-FAILED] Found ${tickers.length} failed assets to retry`);
+    this.logger.log(`${logPrefix} Found ${tickers.length} failed assets to retry`);
 
-    // 2. Update all assets using updateMultipleAssets
+    // 2. Update all assets using updateMultipleAssets (returns BatchUpdateResult with its own traceId)
     return this.updateMultipleAssets(tickers, undefined, UpdateTrigger.RETRY);
   }
 
@@ -666,6 +770,50 @@ export class AssetsUpdateService {
       where: { isActive: true },
       order: { ticker: 'ASC' },
     });
+  }
+
+  /**
+   * MÉTODO AUXILIAR: Buscar ativos ordenados por prioridade de atualização
+   *
+   * Ordem de prioridade:
+   * 1. hasOptions = true (ativos com opções primeiro - mais importantes para trading)
+   * 2. lastUpdated IS NULL (nunca atualizados - precisam de dados)
+   * 3. lastUpdated ASC (mais antigos primeiro - dados mais desatualizados)
+   *
+   * @returns Lista de ativos ordenada por prioridade de atualização
+   */
+  async getAssetsWithPriority(): Promise<Asset[]> {
+    this.logger.log('[GET-PRIORITY] Fetching assets with priority ordering');
+
+    const assets = await this.assetRepository
+      .createQueryBuilder('asset')
+      .where('asset.isActive = :isActive', { isActive: true })
+      .andWhere('asset.autoUpdateEnabled = :autoUpdateEnabled', {
+        autoUpdateEnabled: true,
+      })
+      .orderBy('asset.hasOptions', 'DESC') // Opções primeiro
+      .addOrderBy(
+        'CASE WHEN asset.lastUpdated IS NULL THEN 0 ELSE 1 END',
+        'ASC',
+      ) // Nunca atualizados primeiro
+      .addOrderBy('asset.lastUpdated', 'ASC', 'NULLS FIRST') // Mais antigos primeiro
+      .getMany();
+
+    this.logger.log(
+      `[GET-PRIORITY] Returned ${assets.length} assets ordered by priority`,
+    );
+
+    // Log first 5 assets for debugging
+    if (assets.length > 0) {
+      const first5 = assets.slice(0, 5).map((a) => ({
+        ticker: a.ticker,
+        hasOptions: a.hasOptions,
+        lastUpdated: a.lastUpdated ? a.lastUpdated.toISOString() : 'NULL',
+      }));
+      this.logger.debug(`[GET-PRIORITY] First 5 assets: ${JSON.stringify(first5)}`);
+    }
+
+    return assets;
   }
 
   /**
