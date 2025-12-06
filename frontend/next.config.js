@@ -22,11 +22,12 @@ const nextConfig = {
   experimental: {
     optimizeCss: true, // Inline critical CSS automaticamente via critters
   },
-  // Next.js 16+ uses Turbopack by default
-  // root: Set explicit workspace root to avoid lockfile detection warning
+  // Turbopack configuration for monorepo
   turbopack: {
     root: __dirname,
   },
+  // Docker-optimized output mode
+  output: 'standalone',
   // FASE 47: Cache-Control Headers - Otimizar TTFB e cache
   // Ref: https://nextjs.org/docs/pages/api-reference/config/next-config-js/headers
   // Ref: https://focusreactive.com/configure-cdn-caching-for-self-hosted-next-js-websites/
