@@ -78,22 +78,21 @@ export class EconomicIndicatorsController {
   })
   async syncFromBrapi(): Promise<{ message: string; timestamp: Date }> {
     try {
-      console.log('============ CONTROLLER METHOD CALLED ============');
       this.logger.log('POST /economic-indicators/sync - Manual sync triggered');
+      this.logger.debug('Calling indicatorsService.syncFromBrapi()');
 
-      console.log('============ CALLING SERVICE ============');
       await this.indicatorsService.syncFromBrapi();
-      console.log('============ SERVICE RETURNED ============');
+
+      this.logger.debug('Service returned successfully');
 
       const result = {
         message: 'Sync completed',
         timestamp: new Date(),
       };
 
-      console.log('============ RETURNING:', JSON.stringify(result), '============');
+      this.logger.log(`Sync completed at ${result.timestamp.toISOString()}`);
       return result;
     } catch (error) {
-      console.log('============ ERROR CAUGHT:', error.message, '============');
       this.logger.error(`Sync failed: ${error.message}`, error.stack);
       throw error;
     }
