@@ -24,6 +24,11 @@
       "command": "cmd",
       "args": ["/c", "npx", "@anthropic/mcp-sequential-thinking@latest"],
       "env": {}
+    },
+    "react-context": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "react-context-mcp@latest"],
+      "env": {}
     }
   }
 }

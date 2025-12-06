@@ -2,7 +2,7 @@
 
 **Data:** 2025-11-14
 **Projeto:** invest-claude-web
-**MCPs Instalados:** 8
+**MCPs Instalados:** 9
 **Status:** 100% Connected ✅
 
 ---
@@ -17,13 +17,14 @@
 6. [Context7 MCP](#5-context7-mcp)
 7. [Playwright MCP](#6-playwright-mcp)
 8. [Chrome DevTools MCP](#7-chrome-devtools-mcp)
-9. [Selenium MCP](#8-selenium-mcp)
-10. [PostgreSQL MCP](#9-postgresql-mcp)
-11. [GitHub MCP](#10-github-mcp)
-12. [Docker MCP](#11-docker-mcp)
-13. [Memory MCP](#12-memory-mcp)
-14. [Casos de Uso no Projeto](#casos-de-uso-no-projeto)
-15. [Workflows Recomendados](#workflows-recomendados)
+9. [React Context MCP](#8-react-context-mcp)
+10. [Selenium MCP](#9-selenium-mcp)
+11. [PostgreSQL MCP](#10-postgresql-mcp)
+12. [GitHub MCP](#11-github-mcp)
+13. [Docker MCP](#12-docker-mcp)
+14. [Memory MCP](#13-memory-mcp)
+15. [Casos de Uso no Projeto](#casos-de-uso-no-projeto)
+16. [Workflows Recomendados](#workflows-recomendados)
 
 ---
 
@@ -40,6 +41,7 @@
 | Context7 | Documentação | ✅ Connected | Docs atualizadas de frameworks |
 | Playwright | Automação Web | ✅ Connected | Testes E2E e automação browser |
 | Chrome DevTools | Debugging | ✅ Connected | Inspeção e debugging web |
+| React Context | React Debug | ✅ Connected | Component tree, props, state |
 | Selenium | Automação Web | ✅ Connected | Automação web alternativa |
 | PostgreSQL | Database | ✅ Connected | Acesso direto ao banco de dados |
 | GitHub | DevOps | ✅ Connected | Gestão de PRs, Issues e Repositório |
@@ -619,6 +621,63 @@ Solicitar:
 - Simular diferentes resoluções
 - Validar media queries
 ```
+
+---
+
+## 8. REACT CONTEXT MCP
+
+### 📊 Informações Técnicas
+
+- **Pacote:** `react-context-mcp@latest`
+- **Repositório:** [uxfreak/react-context-mcp](https://lobehub.com/mcp/uxfreak-react-context-mcp)
+- **Licença:** MIT
+- **Propósito:** Inspeção de componentes React, props, state e source locations
+- **Integração:** Complementa Chrome DevTools para análise específica de React
+
+### 🛠️ Funcionalidade
+
+React Context MCP fornece acesso direto à árvore de componentes React:
+- **Component Trees:** Visualizar hierarquia de componentes
+- **Props:** Inspecionar props de cada componente
+- **State:** Ver estado interno de componentes
+- **Source Locations:** Identificar onde cada componente está definido
+
+### 💡 Casos de Uso no Projeto
+
+**1. Debug de Props Incorretas**
+```
+- Identificar props que não estão sendo passadas
+- Verificar valores de props em runtime
+- Rastrear origem de valores inesperados
+```
+
+**2. Análise de State Management**
+```
+- Inspecionar estado de Zustand stores
+- Validar React Query cache state
+- Verificar context providers
+```
+
+**3. Validação de Component Tree**
+```
+- Verificar hierarquia de componentes
+- Identificar re-renders desnecessários
+- Validar memoization de componentes
+```
+
+**4. Triple-Check Methodology**
+```
+Integração com outros MCPs:
+1. Playwright → Executar E2E tests
+2. Chrome DevTools → Console, Network, Snapshot
+3. React Context → Component tree, Props, State
+```
+
+### ⚠️ Limitações
+
+- **Requer dev mode:** React DevTools só funciona em modo desenvolvimento
+- **Performance impact:** Pode causar lentidão em árvores muito grandes
+- **Não persiste:** Dados são por sessão de desenvolvimento
 
 ---
 
