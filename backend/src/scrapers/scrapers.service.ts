@@ -27,6 +27,7 @@ import {
   ScraperQualityStatsDto,
   DiscrepanciesResponseDto,
   DiscrepancyDto,
+  DiscrepancyStatsResponseDto,
 } from './scrapers.controller';
 
 /**
@@ -1119,16 +1120,31 @@ export class ScrapersService {
    * Get list of field discrepancies across all assets
    *
    * FASE 5 - Alertas de Discrepância
+   * FASE 70 - Dashboard de Discrepâncias (expanded)
    * Retorna lista de discrepâncias ordenadas por severidade
    */
   async getDiscrepancies(options: {
     limit?: number;
     severity?: 'all' | 'high' | 'medium' | 'low';
     field?: string;
+    ticker?: string;
+    page?: number;
+    pageSize?: number;
+    orderBy?: 'severity' | 'deviation' | 'ticker' | 'field' | 'date';
+    orderDirection?: 'asc' | 'desc';
   }): Promise<DiscrepanciesResponseDto> {
-    const { limit = 50, severity = 'all', field } = options;
+    const {
+      limit,
+      severity = 'all',
+      field,
+      ticker,
+      page,
+      pageSize = 50,
+      orderBy = 'severity',
+      orderDirection = 'desc',
+    } = options;
 
-    this.logger.log(`[DISCREPANCIES] Fetching discrepancies: limit=${limit}, severity=${severity}, field=${field}`);
+    this.logger.log(`[DISCREPANCIES] Fetching discrepancies: limit=${limit}, severity=${severity}, field=${field}, ticker=${ticker}, page=${page}`);
 
     // Field labels for display
     const fieldLabels: Record<string, string> = {
@@ -1173,7 +1189,10 @@ export class ScrapersService {
     for (const data of fundamentalData) {
       if (!data.fieldSources || !data.asset) continue;
 
-      const ticker = data.asset.ticker;
+      const assetTicker = data.asset.ticker;
+
+      // Filter by ticker if specified
+      if (ticker && assetTicker.toUpperCase() !== ticker.toUpperCase()) continue;
 
       // Process each field in field_sources
       for (const [fieldName, fieldInfo] of Object.entries(data.fieldSources)) {
@@ -1199,7 +1218,7 @@ export class ScrapersService {
         if (severity !== 'all' && severityLevel !== severity) continue;
 
         allDiscrepancies.push({
-          ticker,
+          ticker: assetTicker,
           field: fieldName,
           fieldLabel: fieldLabels[fieldName] || fieldName,
           consensusValue: fieldInfo.finalValue ?? 0,
@@ -1215,22 +1234,45 @@ export class ScrapersService {
       }
     }
 
-    // Sort by severity (high > medium > low) and then by max deviation
+    // Sort based on orderBy and orderDirection
     const severityOrder = { high: 0, medium: 1, low: 2 };
-    allDiscrepancies.sort((a, b) => {
-      const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
-      if (severityDiff !== 0) return severityDiff;
+    const direction = orderDirection === 'asc' ? 1 : -1;
 
-      // Within same severity, sort by max deviation descending
-      const maxDeviationA = Math.max(...a.divergentSources.map((s) => s.deviation));
-      const maxDeviationB = Math.max(...b.divergentSources.map((s) => s.deviation));
-      return maxDeviationB - maxDeviationA;
+    allDiscrepancies.sort((a, b) => {
+      let comparison = 0;
+
+      switch (orderBy) {
+        case 'severity':
+          comparison = severityOrder[a.severity] - severityOrder[b.severity];
+          if (comparison === 0) {
+            // Secondary sort by deviation
+            const maxDeviationA = Math.max(...a.divergentSources.map((s) => s.deviation));
+            const maxDeviationB = Math.max(...b.divergentSources.map((s) => s.deviation));
+            comparison = maxDeviationB - maxDeviationA;
+          }
+          break;
+        case 'deviation':
+          const deviationA = Math.max(...a.divergentSources.map((s) => s.deviation));
+          const deviationB = Math.max(...b.divergentSources.map((s) => s.deviation));
+          comparison = deviationB - deviationA;
+          break;
+        case 'ticker':
+          comparison = a.ticker.localeCompare(b.ticker);
+          break;
+        case 'field':
+          comparison = a.fieldLabel.localeCompare(b.fieldLabel);
+          break;
+        case 'date':
+          comparison = new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime();
+          break;
+        default:
+          comparison = severityOrder[a.severity] - severityOrder[b.severity];
+      }
+
+      return comparison * direction;
     });
 
-    // Apply limit
-    const limitedDiscrepancies = allDiscrepancies.slice(0, limit);
-
-    // Calculate summary
+    // Calculate summary (before pagination)
     const summary = {
       total: allDiscrepancies.length,
       high: allDiscrepancies.filter((d) => d.severity === 'high').length,
@@ -1238,13 +1280,204 @@ export class ScrapersService {
       low: allDiscrepancies.filter((d) => d.severity === 'low').length,
     };
 
+    // Apply pagination or limit
+    let resultDiscrepancies: DiscrepancyDto[];
+    let pagination: { page: number; pageSize: number; totalPages: number; totalItems: number } | undefined;
+
+    if (page !== undefined) {
+      // Pagination mode
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      resultDiscrepancies = allDiscrepancies.slice(startIndex, endIndex);
+      pagination = {
+        page,
+        pageSize,
+        totalPages: Math.ceil(allDiscrepancies.length / pageSize),
+        totalItems: allDiscrepancies.length,
+      };
+    } else if (limit !== undefined) {
+      // Legacy limit mode
+      resultDiscrepancies = allDiscrepancies.slice(0, limit);
+    } else {
+      // Default limit
+      resultDiscrepancies = allDiscrepancies.slice(0, 50);
+    }
+
     this.logger.log(
       `[DISCREPANCIES] Found ${summary.total} discrepancies (${summary.high} high, ${summary.medium} medium, ${summary.low} low)`,
     );
 
     return {
-      discrepancies: limitedDiscrepancies,
+      discrepancies: resultDiscrepancies,
       summary,
+      pagination,
+    };
+  }
+
+  /**
+   * Get aggregated statistics for discrepancies
+   *
+   * FASE 70 - Dashboard de Discrepâncias
+   * Returns top assets, top fields, and timeline data
+   */
+  async getDiscrepancyStats(options: {
+    topLimit?: number;
+  }): Promise<DiscrepancyStatsResponseDto> {
+    const { topLimit = 10 } = options;
+
+    this.logger.log(`[DISCREPANCY_STATS] Fetching stats with topLimit=${topLimit}`);
+
+    const fieldLabels: Record<string, string> = {
+      pl: 'P/L',
+      pvp: 'P/VP',
+      psr: 'P/SR',
+      dividendYield: 'Dividend Yield',
+      roe: 'ROE',
+      roa: 'ROA',
+      roic: 'ROIC',
+      margemBruta: 'Margem Bruta',
+      margemEbit: 'Margem EBIT',
+      margemLiquida: 'Margem Líquida',
+      evEbit: 'EV/EBIT',
+      evEbitda: 'EV/EBITDA',
+      lpa: 'LPA',
+      vpa: 'VPA',
+      liquidezCorrente: 'Liquidez Corrente',
+      dividaBrutaPatrimonio: 'Dív. Bruta/Pat.',
+      dividaLiquidaEbitda: 'Dív. Líq./EBITDA',
+      patrimonioLiquido: 'Patrimônio Líquido',
+      receitaLiquida: 'Receita Líquida',
+      lucroLiquido: 'Lucro Líquido',
+      ebit: 'EBIT',
+      ebitda: 'EBITDA',
+    };
+
+    // Query all fundamental data with field_sources and asset info
+    const fundamentalData = await this.fundamentalDataRepository.find({
+      where: {
+        fieldSources: Not(IsNull()),
+      },
+      relations: ['asset'],
+      select: ['id', 'assetId', 'fieldSources', 'updatedAt', 'asset'],
+    });
+
+    // Aggregate data
+    const assetStats = new Map<string, {
+      ticker: string;
+      assetName: string;
+      count: number;
+      totalDeviation: number;
+      highCount: number;
+      mediumCount: number;
+      lowCount: number;
+    }>();
+
+    const fieldStats = new Map<string, {
+      field: string;
+      fieldLabel: string;
+      count: number;
+      totalDeviation: number;
+    }>();
+
+    const timelineMap = new Map<string, {
+      date: string;
+      high: number;
+      medium: number;
+      low: number;
+      total: number;
+    }>();
+
+    for (const data of fundamentalData) {
+      if (!data.fieldSources || !data.asset) continue;
+
+      const ticker = data.asset.ticker;
+      const assetName = data.asset.name;
+      const updateDate = data.updatedAt ? data.updatedAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+
+      for (const [fieldName, fieldInfo] of Object.entries(data.fieldSources)) {
+        if (!fieldInfo || !fieldInfo.hasDiscrepancy || !fieldInfo.divergentSources) continue;
+
+        const maxDeviation = Math.max(...fieldInfo.divergentSources.map((s: any) => s.deviation || 0));
+        let severityLevel: 'high' | 'medium' | 'low';
+        if (maxDeviation > 20) {
+          severityLevel = 'high';
+        } else if (maxDeviation > 10) {
+          severityLevel = 'medium';
+        } else {
+          severityLevel = 'low';
+        }
+
+        // Update asset stats
+        const existingAsset = assetStats.get(ticker) || {
+          ticker,
+          assetName,
+          count: 0,
+          totalDeviation: 0,
+          highCount: 0,
+          mediumCount: 0,
+          lowCount: 0,
+        };
+        existingAsset.count++;
+        existingAsset.totalDeviation += maxDeviation;
+        if (severityLevel === 'high') existingAsset.highCount++;
+        if (severityLevel === 'medium') existingAsset.mediumCount++;
+        if (severityLevel === 'low') existingAsset.lowCount++;
+        assetStats.set(ticker, existingAsset);
+
+        // Update field stats
+        const existingField = fieldStats.get(fieldName) || {
+          field: fieldName,
+          fieldLabel: fieldLabels[fieldName] || fieldName,
+          count: 0,
+          totalDeviation: 0,
+        };
+        existingField.count++;
+        existingField.totalDeviation += maxDeviation;
+        fieldStats.set(fieldName, existingField);
+
+        // Update timeline
+        const existingDate = timelineMap.get(updateDate) || {
+          date: updateDate,
+          high: 0,
+          medium: 0,
+          low: 0,
+          total: 0,
+        };
+        existingDate.total++;
+        if (severityLevel === 'high') existingDate.high++;
+        if (severityLevel === 'medium') existingDate.medium++;
+        if (severityLevel === 'low') existingDate.low++;
+        timelineMap.set(updateDate, existingDate);
+      }
+    }
+
+    // Convert to arrays and sort
+    const topAssets = Array.from(assetStats.values())
+      .map((a) => ({
+        ...a,
+        avgDeviation: a.count > 0 ? Math.round((a.totalDeviation / a.count) * 100) / 100 : 0,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, topLimit);
+
+    const topFields = Array.from(fieldStats.values())
+      .map((f) => ({
+        ...f,
+        avgDeviation: f.count > 0 ? Math.round((f.totalDeviation / f.count) * 100) / 100 : 0,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, topLimit);
+
+    const timeline = Array.from(timelineMap.values())
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-30); // Last 30 days
+
+    this.logger.log(`[DISCREPANCY_STATS] Stats calculated: ${topAssets.length} top assets, ${topFields.length} top fields`);
+
+    return {
+      topAssets,
+      topFields,
+      timeline,
     };
   }
 }

@@ -64,6 +64,42 @@ export interface DiscrepanciesResponse {
     medium: number;
     low: number;
   };
+  pagination?: {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
+
+// FASE 70: Discrepancy Stats interfaces
+export interface TopAssetDiscrepancy {
+  ticker: string;
+  assetName: string;
+  count: number;
+  avgDeviation: number;
+  highCount: number;
+  mediumCount: number;
+  lowCount: number;
+}
+
+export interface TopFieldDiscrepancy {
+  field: string;
+  fieldLabel: string;
+  count: number;
+  avgDeviation: number;
+}
+
+export interface DiscrepancyStatsResponse {
+  topAssets: TopAssetDiscrepancy[];
+  topFields: TopFieldDiscrepancy[];
+  timeline: Array<{
+    date: string;
+    high: number;
+    medium: number;
+    low: number;
+    total: number;
+  }>;
 }
 
 export function useDataSources() {
@@ -94,15 +130,34 @@ export function useScrapersQualityStats() {
 /**
  * Hook para buscar discrepâncias de dados
  * FASE 5 - Alertas de Discrepância
+ * FASE 70 - Dashboard de Discrepâncias (expanded)
  */
 export function useScrapersDiscrepancies(params?: {
   limit?: number;
   severity?: 'all' | 'high' | 'medium' | 'low';
   field?: string;
+  ticker?: string;
+  page?: number;
+  pageSize?: number;
+  orderBy?: 'severity' | 'deviation' | 'ticker' | 'field' | 'date';
+  orderDirection?: 'asc' | 'desc';
 }) {
   return useQuery<DiscrepanciesResponse>({
     queryKey: ['scrapers-discrepancies', params],
     queryFn: () => api.getScrapersDiscrepancies(params),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: true,
+  });
+}
+
+/**
+ * Hook para buscar estatísticas agregadas de discrepâncias
+ * FASE 70 - Dashboard de Discrepâncias
+ */
+export function useDiscrepancyStats(params?: { topLimit?: number }) {
+  return useQuery<DiscrepancyStatsResponse>({
+    queryKey: ['discrepancy-stats', params],
+    queryFn: () => api.getDiscrepancyStats(params),
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: true,
   });

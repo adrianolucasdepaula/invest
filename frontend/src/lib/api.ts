@@ -327,8 +327,22 @@ class ApiClient {
     return response.data;
   }
 
-  async getScrapersDiscrepancies(params?: { limit?: number; severity?: string; field?: string }) {
+  async getScrapersDiscrepancies(params?: {
+    limit?: number;
+    severity?: string;
+    field?: string;
+    ticker?: string;
+    page?: number;
+    pageSize?: number;
+    orderBy?: string;
+    orderDirection?: string;
+  }) {
     const response = await this.client.get('/scrapers/discrepancies', { params });
+    return response.data;
+  }
+
+  async getDiscrepancyStats(params?: { topLimit?: number }) {
+    const response = await this.client.get('/scrapers/discrepancies/stats', { params });
     return response.data;
   }
 

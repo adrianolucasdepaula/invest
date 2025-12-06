@@ -15,6 +15,7 @@ import {
   BarChart3,
   Shield,
   RefreshCw,
+  AlertTriangle,
 } from 'lucide-react';
 
 const navigation = [
@@ -24,6 +25,7 @@ const navigation = [
   { name: 'Portfólio', href: '/portfolio', icon: Briefcase },
   { name: 'Relatórios', href: '/reports', icon: FileText },
   { name: 'Fontes de Dados', href: '/data-sources', icon: Database },
+  { name: 'Discrepancias', href: '/discrepancies', icon: AlertTriangle },
   { name: 'Gerenciamento de Dados', href: '/data-management', icon: RefreshCw },
   { name: 'OAuth Manager', href: '/oauth-manager', icon: Shield },
   { name: 'Configurações', href: '/settings', icon: Settings },

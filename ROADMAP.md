@@ -9717,23 +9717,40 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 
 ---
 
-## FASE 70: Dashboard de Discrepancias 🔵 PLANEJADO
+## FASE 70: Dashboard de Discrepancias ✅ 100% COMPLETO
 
 **Tipo:** Feature
 **Prioridade:** 🟢 ALTA
-**Estimativa:** 8-10h
+**Data Conclusão:** 2025-12-05
 
-**Objetivo:** Visualizar as 2988 discrepancias detectadas pelo backend
+**Objetivo:** Visualizar as discrepancias detectadas pelo backend (8562 total)
 
-### Tarefas
+### Tarefas Concluídas
 
-- [ ] Nova pagina `/discrepancies` no App Router
-- [ ] Filtros por severidade, ativo, campo, data
-- [ ] Tabela com ordenacao por severidade
-- [ ] Drill-down para pagina do ativo
-- [ ] Metricas agregadas (top 10 ativos/campos)
+- [x] Nova pagina `/discrepancies` no App Router
+- [x] Filtros por severidade (alta/media/baixa), ativo (ticker), campo
+- [x] Tabela com ordenacao por severidade, desvio, ticker, campo, data
+- [x] Drill-down para pagina do ativo (`/assets/[ticker]`)
+- [x] Metricas agregadas (top 10 ativos/campos com mais discrepancias)
+- [x] Paginacao server-side (343 paginas de 25 itens)
+- [x] Cards de resumo (total, alta, media, baixa severidade)
 
-**Status:** 🔵 **PLANEJADO**
+### Backend Expandido
+
+- [x] GET `/scrapers/discrepancies` - novos params: ticker, page, pageSize, orderBy, orderDirection
+- [x] GET `/scrapers/discrepancies/stats` - novo endpoint para top assets/fields
+
+### Arquivos Modificados/Criados
+
+- `frontend/src/app/(dashboard)/discrepancies/page.tsx` (novo)
+- `frontend/src/components/ui/table.tsx` (novo - Shadcn/ui Table)
+- `frontend/src/components/layout/sidebar.tsx` (nav item)
+- `frontend/src/lib/api.ts` (novos metodos)
+- `frontend/src/lib/hooks/useDataSources.ts` (novos hooks)
+- `backend/src/scrapers/scrapers.controller.ts` (DTOs, endpoint)
+- `backend/src/scrapers/scrapers.service.ts` (getDiscrepancyStats)
+
+**Status:** ✅ **100% COMPLETO**
 
 ---
 
@@ -9897,7 +9914,7 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (71 fases)
+### Fases Completas (72 fases)
 
 - ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
 - ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
@@ -9912,13 +9929,13 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 - ✅ FASE 67: TimescaleDB + Dados Intraday (2025-12-05)
 - ✅ FASE 68: FundamentalGrid Frontend (2025-12-04)
 - ✅ FASE 69: Intraday Sync Integration (2025-12-05)
+- ✅ FASE 70: Dashboard de Discrepancias (2025-12-05)
 - ✅ FASE 71: Next.js Warnings Fix (2025-12-05)
 - ✅ FASE 72: Scrapers Fallback Integration (2025-12-05)
 
-### Fases Planejadas (4 fases)
+### Fases Planejadas (3 fases)
 
 - 🔵 FASE 66: Scrapers Pendentes - Correção OAuth/Login (Prioridade MEDIA)
-- 🔵 FASE 70: Dashboard de Discrepancias (Prioridade ALTA)
 - 🔵 FASE 74: AI Sentiment (Gemini) (Prioridade MEDIA)
 - 🔵 FASE 73+: Infraestrutura Avancada (Prioridade BAIXA)
 
@@ -9927,24 +9944,22 @@ GET /market-data/:ticker/intraday (leitura dos dados)
 | Fase | Descricao | Estimativa | Dependencias |
 |------|-----------|------------|--------------|
 | 66 | Scrapers OAuth/Login | 8-12h | Nenhuma |
-| 70 | Dashboard Discrepancias | 8-10h | Nenhuma |
 | 74 | AI Sentiment | 12-15h | Scraper noticias (66) |
 | 73+ | Avancado | Variavel | Fases anteriores |
 
-**Total Estimado:** 28-40h para fases planejadas
+**Total Estimado:** 20-30h para fases planejadas
 
 ### Proximos Passos Imediatos
 
-1. **Alta prioridade:** FASE 70 - Dashboard de Discrepâncias
-2. **Média prioridade:** FASE 66 - Scrapers OAuth/Login
-3. **Média prioridade:** FASE 74 - AI Sentiment (Gemini)
+1. **Média prioridade:** FASE 66 - Scrapers OAuth/Login
+2. **Média prioridade:** FASE 74 - AI Sentiment (Gemini)
 
-> **Nota:** FASE 67, 68, 69, 71, 72 concluídas em 2025-12-05
+> **Nota:** FASE 67, 68, 69, 70, 71, 72 concluídas em 2025-12-05
 
 ---
 
 **Ultima Atualizacao:** 2025-12-05
-**Total de Fases:** 71 completas + 4 planejadas = **75 fases**
-**Versao:** 1.7.7
+**Total de Fases:** 72 completas + 3 planejadas = **75 fases**
+**Versao:** 1.7.8
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

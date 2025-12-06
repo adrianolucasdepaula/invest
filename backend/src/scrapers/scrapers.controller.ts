@@ -76,6 +76,42 @@ export interface DiscrepanciesResponseDto {
     medium: number;
     low: number;
   };
+  pagination?: {
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
+
+// FASE 70: Discrepancy Stats DTOs
+export interface TopAssetDiscrepancyDto {
+  ticker: string;
+  assetName: string;
+  count: number;
+  avgDeviation: number;
+  highCount: number;
+  mediumCount: number;
+  lowCount: number;
+}
+
+export interface TopFieldDiscrepancyDto {
+  field: string;
+  fieldLabel: string;
+  count: number;
+  avgDeviation: number;
+}
+
+export interface DiscrepancyStatsResponseDto {
+  topAssets: TopAssetDiscrepancyDto[];
+  topFields: TopFieldDiscrepancyDto[];
+  timeline: Array<{
+    date: string;
+    high: number;
+    medium: number;
+    low: number;
+    total: number;
+  }>;
 }
 
 @ApiTags('Scrapers')
@@ -258,9 +294,14 @@ export class ScrapersController {
 
   @Get('discrepancies')
   @ApiOperation({ summary: 'Get list of field discrepancies across all assets' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max results (default 50)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max results (default 50, ignored if page is set)' })
   @ApiQuery({ name: 'severity', required: false, enum: ['all', 'high', 'medium', 'low'], description: 'Filter by severity' })
   @ApiQuery({ name: 'field', required: false, type: String, description: 'Filter by specific field' })
+  @ApiQuery({ name: 'ticker', required: false, type: String, description: 'Filter by asset ticker' })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (1-indexed)' })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number, description: 'Items per page (default 50)' })
+  @ApiQuery({ name: 'orderBy', required: false, enum: ['severity', 'deviation', 'ticker', 'field', 'date'], description: 'Order by field' })
+  @ApiQuery({ name: 'orderDirection', required: false, enum: ['asc', 'desc'], description: 'Order direction (default desc)' })
   @ApiResponse({
     status: 200,
     description: 'Returns list of discrepancies ordered by severity',
@@ -269,20 +310,56 @@ export class ScrapersController {
     @Query('limit') limit?: string,
     @Query('severity') severity?: string,
     @Query('field') field?: string,
+    @Query('ticker') ticker?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('orderBy') orderBy?: string,
+    @Query('orderDirection') orderDirection?: string,
   ): Promise<DiscrepanciesResponseDto> {
-    this.logger.log(`Fetching discrepancies: limit=${limit}, severity=${severity}, field=${field}`);
+    this.logger.log(`Fetching discrepancies: limit=${limit}, severity=${severity}, field=${field}, ticker=${ticker}, page=${page}`);
 
     try {
       const discrepancies = await this.scrapersService.getDiscrepancies({
-        limit: limit ? parseInt(limit, 10) : 50,
+        limit: limit ? parseInt(limit, 10) : undefined,
         severity: severity as 'all' | 'high' | 'medium' | 'low' | undefined,
         field,
+        ticker: ticker?.toUpperCase(),
+        page: page ? parseInt(page, 10) : undefined,
+        pageSize: pageSize ? parseInt(pageSize, 10) : 50,
+        orderBy: orderBy as 'severity' | 'deviation' | 'ticker' | 'field' | 'date' | undefined,
+        orderDirection: orderDirection as 'asc' | 'desc' | undefined,
       });
       return discrepancies;
     } catch (error) {
       this.logger.error(`Failed to get discrepancies: ${error.message}`);
       throw new HttpException(
         `Failed to get discrepancies: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('discrepancies/stats')
+  @ApiOperation({ summary: 'Get aggregated statistics for discrepancies' })
+  @ApiQuery({ name: 'topLimit', required: false, type: Number, description: 'Limit for top lists (default 10)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns aggregated discrepancy statistics',
+  })
+  async getDiscrepancyStats(
+    @Query('topLimit') topLimit?: string,
+  ): Promise<DiscrepancyStatsResponseDto> {
+    this.logger.log(`Fetching discrepancy stats: topLimit=${topLimit}`);
+
+    try {
+      const stats = await this.scrapersService.getDiscrepancyStats({
+        topLimit: topLimit ? parseInt(topLimit, 10) : 10,
+      });
+      return stats;
+    } catch (error) {
+      this.logger.error(`Failed to get discrepancy stats: ${error.message}`);
+      throw new HttpException(
+        `Failed to get discrepancy stats: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
