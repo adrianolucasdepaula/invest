@@ -841,3 +841,71 @@ RESTRICOES:
 - **CHECKLIST_CODE_REVIEW_COMPLETO.md** - Code review obrigatório
 - **METODOLOGIA_MCPS_INTEGRADA.md** - Integração MCPs + Ultra-Thinking + TodoWrite
 - **MCPS_USAGE_GUIDE.md** - Guia técnico dos 8 MCPs
+
+---
+
+## Context Management (Opus 4.5)
+
+### Configuracao Otimizada
+
+Este projeto utiliza Claude Opus 4.5 com configuracao ultra-robusta para maximizar capacidades:
+
+| Variavel | Valor | Proposito |
+|----------|-------|-----------|
+| `CLAUDE_CODE_MAX_OUTPUT_TOKENS` | 128000 | Output maximo - permite respostas longas |
+| `MAX_THINKING_TOKENS` | 100000 | Extended Thinking maximo para Opus 4.5 |
+| `MAX_MCP_OUTPUT_TOKENS` | 50000 | 2x default - MCPs retornam mais dados |
+| `BASH_DEFAULT_TIMEOUT_MS` | 600000 | 10 minutos - builds longos |
+| `BASH_MAX_TIMEOUT_MS` | 1800000 | 30 minutos - operacoes muito longas |
+| `MCP_TIMEOUT` | 120000 | 2 minutos - conexao inicial com MCPs |
+| `MCP_TOOL_TIMEOUT` | 300000 | 5 minutos - operacoes de MCPs complexas |
+
+### Compact Instructions
+
+Quando for necessario compactar contexto, use `/compact` com estas instrucoes:
+
+```bash
+/compact Keep: recent code changes, error traces, architecture decisions, current task status.
+Discard: verbose explanations, old debug output, completed task details, intermediate steps.
+```
+
+### Extended Thinking Guidelines (Opus 4.5)
+
+**Opus 4.5 preserva thinking blocks automaticamente entre turnos.**
+
+**Use High Effort para:**
+
+- Planejamento arquitetural
+- Bugs complexos multi-arquivo
+- Security reviews
+- Analise de dados financeiros
+
+**Use Medium Effort para:**
+
+- Implementacao de features
+- Debugging padrao
+- Code review
+
+**Use Low Effort para:**
+
+- Refactoring simples
+- Perguntas rapidas
+- Verificacao de sintaxe
+
+### Prevencao de "Prompt is too long"
+
+1. **Compactar proativamente** a cada ~30-40 interacoes
+2. **Usar `/clear`** ao iniciar tarefa completamente nova
+3. **Monitorar com `/cost`** o uso de tokens
+4. **Dividir tarefas complexas** em sessoes separadas
+5. **Evitar carregar arquivos grandes** desnecessariamente
+
+### Comandos Uteis
+
+```bash
+/compact   # Compactar contexto (usar com instrucoes especificas)
+/clear     # Limpar contexto completamente
+/cost      # Ver uso de tokens da sessao
+/config    # Ver configuracoes atuais
+/mcp       # Ver MCPs ativos
+```
