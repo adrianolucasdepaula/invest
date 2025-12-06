@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import { Controller, Post, Body, Get, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { KnowledgeBaseService } from './knowledge-base.service';
 
@@ -10,6 +10,8 @@ class SearchContextDto {
 @ApiTags('AI Context')
 @Controller('api/v1/context')
 export class ContextController {
+  private readonly logger = new Logger(ContextController.name);
+
   constructor(
     private readonly knowledgeBaseService: KnowledgeBaseService,
   ) {}
@@ -42,7 +44,7 @@ export class ContextController {
   async indexCodebase() {
     // Executar em background (não bloquear request)
     this.knowledgeBaseService.indexCodebase().catch((error) => {
-      console.error('Error indexing codebase:', error);
+      this.logger.error('Error indexing codebase:', error.stack);
     });
 
     return {

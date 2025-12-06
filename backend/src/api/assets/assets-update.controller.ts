@@ -8,6 +8,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -34,6 +35,8 @@ import {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class AssetsUpdateController {
+  private readonly logger = new Logger(AssetsUpdateController.name);
+
   constructor(
     private readonly assetsUpdateService: AssetsUpdateService,
     private readonly assetUpdateJobsService: AssetUpdateJobsService,
@@ -263,8 +266,9 @@ export class AssetsUpdateController {
     },
   })
   async updateAllAssetsFundamentals(@Body('userId') userId?: string) {
-    // 1. Get all active assets
-    const assets = await this.assetsUpdateService.getAllActiveAssets();
+    // 1. Get all active assets ordered by priority
+    // Priority: hasOptions=true first, then never updated, then oldest updated
+    const assets = await this.assetsUpdateService.getAssetsWithPriority();
     const tickers = assets.map((asset) => asset.ticker);
 
     // 2. Queue individual jobs via BullMQ (returns immediately)

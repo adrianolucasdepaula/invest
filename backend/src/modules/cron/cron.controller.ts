@@ -1,4 +1,4 @@
-import { Controller, Post } from '@nestjs/common';
+import { Controller, Post, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CronService } from './cron.service';
 
@@ -13,6 +13,8 @@ import { CronService } from './cron.service';
 @ApiTags('cron')
 @Controller('cron')
 export class CronController {
+  private readonly logger = new Logger(CronController.name);
+
   constructor(private readonly cronService: CronService) {}
 
   /**

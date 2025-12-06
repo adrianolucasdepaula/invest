@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req, Res, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
@@ -11,6 +11,8 @@ import { RegisterDto, LoginDto } from './dto';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
@@ -41,22 +43,22 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Google OAuth callback' })
   async googleAuthCallback(@Req() req: any, @Res() res: Response) {
-    console.log('=== Google OAuth Callback ===');
-    console.log('User from Google:', req.user);
+    this.logger.log('Google OAuth Callback initiated');
+    this.logger.debug(`User from Google: ${JSON.stringify({ email: req.user?.email, id: req.user?.id })}`);
 
     try {
       const result = await this.authService.googleLogin(req.user);
-      console.log('Login result:', result);
-      console.log('Token generated:', result.token ? 'YES' : 'NO');
+      this.logger.log(`Login successful for user: ${req.user?.email}`);
+      this.logger.debug(`Token generated: ${result.token ? 'YES' : 'NO'}`);
 
       // Redirecionar para o frontend com o token
       const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3100';
       const redirectUrl = `${frontendUrl}/auth/google/callback?token=${result.token}`;
-      console.log('Redirecting to:', redirectUrl);
+      this.logger.debug(`Redirecting to: ${frontendUrl}/auth/google/callback`);
 
       res.redirect(redirectUrl);
     } catch (error) {
-      console.error('Error in Google callback:', error);
+      this.logger.error(`Error in Google callback: ${error.message}`, error.stack);
       const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3100';
       res.redirect(`${frontendUrl}/login?error=google_auth_failed`);
     }

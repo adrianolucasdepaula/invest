@@ -1,10 +1,12 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { DataSourcesService } from './data-sources.service';
 
 @ApiTags('data-sources')
 @Controller('data-sources')
 export class DataSourcesController {
+  private readonly logger = new Logger(DataSourcesController.name);
+
   constructor(private readonly dataSourcesService: DataSourcesService) {}
 
   @Get()

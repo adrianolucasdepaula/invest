@@ -530,6 +530,35 @@ describe('AssetsUpdateService', () => {
     });
   });
 
+  describe('getAssetsWithPriority', () => {
+    it('should return assets ordered by priority (hasOptions, lastUpdated)', async () => {
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([
+          { ...mockAsset, ticker: 'PETR4', hasOptions: true, lastUpdated: null },
+          { ...mockAsset, id: 'asset-456', ticker: 'VALE3', hasOptions: true, lastUpdated: new Date('2024-01-01') },
+          { ...mockAsset, id: 'asset-789', ticker: 'ITUB4', hasOptions: false, lastUpdated: null },
+        ]),
+      };
+
+      mockAssetRepository.createQueryBuilder = jest.fn().mockReturnValue(mockQueryBuilder);
+
+      const result = await service.getAssetsWithPriority();
+
+      expect(mockAssetRepository.createQueryBuilder).toHaveBeenCalledWith('asset');
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('asset.isActive = :isActive', { isActive: true });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('asset.autoUpdateEnabled = :autoUpdateEnabled', { autoUpdateEnabled: true });
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('asset.hasOptions', 'DESC');
+      expect(result).toHaveLength(3);
+      // First asset should have hasOptions=true and lastUpdated=null
+      expect(result[0].hasOptions).toBe(true);
+      expect(result[0].lastUpdated).toBeNull();
+    });
+  });
+
   describe('saveFundamentalData (private method)', () => {
     let saveFundamentalData: (asset: Asset, scrapedResult: any) => Promise<FundamentalData>;
 

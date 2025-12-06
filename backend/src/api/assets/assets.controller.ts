@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, UseGuards, HttpCode, HttpStatus, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AssetsService } from './assets.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -11,6 +11,8 @@ import { UpdateTrigger } from '@database/entities';
 @ApiTags('assets')
 @Controller('assets')
 export class AssetsController {
+  private readonly logger = new Logger(AssetsController.name);
+
   constructor(
     private readonly assetsService: AssetsService,
     private readonly assetUpdateJobsService: AssetUpdateJobsService,
@@ -64,7 +66,7 @@ export class AssetsController {
       'Queues a background job to sync all assets with smart prioritization: options-enabled assets first, then by last update date (never updated first, oldest to newest). Returns immediately with job ID. Use GET /assets/sync-status/:jobId to check progress.',
   })
   async syncAllAssets(@Query('range') range?: string) {
-    console.log('[sync-all] Queueing bulk sync with smart prioritization, range:', range || '3mo');
+    this.logger.log(`Queueing bulk sync with smart prioritization, range: ${range || '3mo'}`);
 
     // Get all assets with prioritized ordering:
     // 1. Options-enabled assets first (hasOptions = true)
@@ -75,7 +77,7 @@ export class AssetsController {
 
     const optionsCount = assets.filter(a => a.hasOptions).length;
     const neverUpdatedCount = assets.filter(a => !a.lastUpdated).length;
-    console.log(`[sync-all] Prioritization: ${optionsCount} with options, ${neverUpdatedCount} never updated, ${tickers.length} total`);
+    this.logger.log(`Prioritization: ${optionsCount} with options, ${neverUpdatedCount} never updated, ${tickers.length} total`);
 
     // Queue the job (returns immediately)
     const jobId = await this.assetUpdateJobsService.queueMultipleAssets(
@@ -84,7 +86,7 @@ export class AssetsController {
       UpdateTrigger.MANUAL,
     );
 
-    console.log(`[sync-all] Job queued successfully: ${jobId}`);
+    this.logger.log(`Job queued successfully: ${jobId}`);
 
     return {
       jobId,
@@ -153,7 +155,7 @@ export class AssetsController {
       'Queues a background job to update fundamental data for a single asset using the same process as bulk update. Returns immediately with job ID.',
   })
   async updateAssetFundamentals(@Param('ticker') ticker: string) {
-    console.log('[update-fundamentals] Queueing fundamental update for:', ticker);
+    this.logger.log(`Queueing fundamental update for: ${ticker}`);
 
     const jobId = await this.assetUpdateJobsService.queueSingleAsset(
       ticker,
@@ -161,7 +163,7 @@ export class AssetsController {
       UpdateTrigger.MANUAL,
     );
 
-    console.log(`[update-fundamentals] Job queued successfully: ${jobId}`);
+    this.logger.log(`Job queued successfully for ${ticker}: ${jobId}`);
 
     return {
       jobId,
