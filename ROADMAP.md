@@ -10408,6 +10408,76 @@ docker-compose --profile observability up -d
 
 ---
 
+## FASE 75: AI Sentiment Multi-Provider ✅ 100% COMPLETO
+
+**Tipo:** AI Integration + News Analysis
+**Data:** 2025-12-06
+**Documentação:** `PLANO_FASE_75_AI_SENTIMENT_MULTI_PROVIDER.md`
+
+### Descrição
+
+Sistema completo de análise de sentimento de notícias financeiras utilizando 6 provedores de IA em paralelo com cross-validation e algoritmo de consenso.
+
+### Componentes Implementados
+
+#### Backend (NestJS + TypeORM)
+
+**Entidades:**
+
+- `News` - Notícias coletadas de 7 fontes (Google News, InfoMoney, Valor, Estadão, Exame, Bloomberg, Investing)
+- `NewsAnalysis` - Análises individuais por provider AI (ChatGPT, Claude, Gemini, DeepSeek, Grok, Perplexity)
+- `SentimentConsensus` - Resultado consolidado com weighted average e outlier detection
+- `EconomicEvent` - Calendário econômico (COPOM, SELIC, IPCA, etc.)
+
+**Serviços:**
+
+- `NewsService` - CRUD de notícias e market sentiment summary
+- `NewsCollectorsService` - Coleta via RSS de 7 fontes
+- `AIOrchestatorService` - Orquestração de 6 providers AI em paralelo
+- `ConsensusService` - Algoritmo de weighted average com outlier detection
+- `EconomicCalendarService` - Coleta de eventos do Investing.com e BCB
+
+**Controller:** `/news` com endpoints completos
+
+- `GET /news` - Lista notícias com filtros
+- `GET /news/ticker/:ticker` - Notícias por ativo
+- `GET /news/market-sentiment` - Resumo de sentimento do mercado
+- `POST /news/collect` - Coletar notícias
+- `POST /news/analyze` - Analisar com multi-provider AI
+- `GET /news/economic-calendar/week` - Eventos da semana
+- `GET /news/economic-calendar/high-impact` - Próximos eventos importantes
+
+#### Frontend (Next.js 14)
+
+**Componentes:**
+
+- `MarketThermometer` - Widget de termômetro visual de sentimento
+- `EconomicCalendarWidget` - Widget de calendário econômico
+- `TickerNews` - Lista de notícias por ativo com badges de sentimento
+
+### Algoritmo de Consenso
+
+```typescript
+const PROVIDER_WEIGHTS = {
+  CHATGPT: 1.2,  CLAUDE: 1.3,  GEMINI: 1.0,
+  DEEPSEEK: 1.1, GROK: 0.9,    PERPLEXITY: 0.95
+};
+// Outlier detection: deviation > 0.5 from median
+// High confidence: score >= 0.7 && agreementCount >= 3
+```
+
+### Validação
+
+- ✅ TypeScript: 0 erros (backend + frontend)
+- ✅ Build: Sucesso (backend + frontend)
+- ✅ Entities exportadas em index.ts
+- ✅ NewsModule importado em app.module.ts
+- ✅ Migration criada (1765000000000-CreateNewsSentimentTables)
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
 ## FASE 75+: Infraestrutura Avancada (Opcional) 🔵 PLANEJADO
 
 **Tipo:** Infrastructure
@@ -10450,33 +10520,31 @@ docker-compose --profile observability up -d
 - ✅ FASE 74: System Infrastructure & Testing (2025-12-06)
 - ✅ FASE 74.5: Data Sources Page - Unified Scrapers View (2025-12-06)
 - ✅ FASE 76: Observabilidade e Rastreabilidade - 100% COMPLETO (2025-12-06)
+- ✅ FASE 75: AI Sentiment Multi-Provider - 100% COMPLETO (2025-12-06)
 
 ### Fases Planejadas (1 fase)
 
-- 🔵 FASE 75: AI Sentiment (Gemini) (Prioridade MEDIA)
 - 🔵 FASE 75+: Infraestrutura Avancada (Prioridade BAIXA)
 
 ### Cronograma Estimado
 
 | Fase | Descricao | Estimativa | Dependencias |
 |------|-----------|------------|--------------|
-| 75 | AI Sentiment | 12-15h | FASE 66 concluída |
 | 75+ | Avancado | Variavel | Fases anteriores |
 
-**Total Estimado:** 12-20h para fases planejadas
+**Total Estimado:** Variável para fases planejadas
 
 ### Proximos Passos Imediatos
 
-1. **Média prioridade:** FASE 75 - AI Sentiment (Gemini)
+1. **Baixa prioridade:** FASE 75+ - Infraestrutura Avançada (opcional)
 
 > **Nota:** FASE 67, 68, 69, 70, 71, 72 concluídas em 2025-12-05
-> **Nota:** FASE 73 (Claude Code Ecosystem) concluída em 2025-12-06
-> **Nota:** FASE 66 (OAuth/Login Scrapers Fixes) concluída em 2025-12-06
+> **Nota:** FASE 73, 73.5, 74, 74.5, 75, 76 concluídas em 2025-12-06
 
 ---
 
 **Ultima Atualizacao:** 2025-12-06
-**Total de Fases:** 76 completas + 1 planejada = **77 fases**
-**Versao:** 1.8.2
+**Total de Fases:** 77 completas + 1 planejada = **78 fases**
+**Versao:** 1.9.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0
