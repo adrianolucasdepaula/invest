@@ -7,10 +7,6 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
-### Pendente
-
-- FASE 75: AI Sentiment (Gemini) (Prioridade MEDIA)
-
 ### Added
 
 - **FASE 76: Observabilidade e Rastreabilidade - 100% COMPLETA (2025-12-06)**
@@ -43,6 +39,37 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
     - TypeScript: 0 erros (backend + frontend)
     - MCP Triplo: Playwright + Chrome DevTools validados
     - Score de observabilidade: 49% → 100% ✅
+
+- **FASE 75: AI Sentiment Multi-Provider - 100% COMPLETA (2025-12-06)**
+  - **Entidades (TypeORM):**
+    - `News`: Notícias de 7 fontes (Google News, InfoMoney, Valor, Estadão, Exame, Bloomberg, Investing)
+    - `NewsAnalysis`: Análises por provider AI (ChatGPT, Claude, Gemini, DeepSeek, Grok, Perplexity)
+    - `SentimentConsensus`: Resultado consolidado com weighted average e outlier detection
+    - `EconomicEvent`: Calendário econômico (COPOM, SELIC, IPCA)
+  - **Serviços Backend:**
+    - `NewsService`: CRUD de notícias e market sentiment summary
+    - `NewsCollectorsService`: Coleta via RSS de 7 fontes
+    - `AIOrchestatorService`: Orquestração de 6 providers AI em paralelo
+    - `ConsensusService`: Algoritmo de weighted average com outlier detection
+    - `EconomicCalendarService`: Coleta de eventos do Investing.com e BCB
+  - **Endpoints (NewsController):**
+    - `GET /news` - Lista notícias com filtros
+    - `GET /news/market-sentiment` - Resumo de sentimento do mercado
+    - `GET /news/ai-providers` - Lista providers AI habilitados
+    - `GET /news/news-sources` - Lista fontes de notícias habilitadas
+    - `GET /news/stats` - Estatísticas de coleta e análise
+    - `GET /news/economic-calendar/week` - Eventos da semana
+    - `GET /news/economic-calendar/high-impact` - Próximos eventos importantes
+  - **Frontend (Next.js 14):**
+    - `MarketThermometer`: Widget de termômetro visual de sentimento
+    - `EconomicCalendarWidget`: Widget de calendário econômico
+  - **Bug Fixes:**
+    - DTO class declaration order (`SentimentSummaryDto` movido antes de `NewsResponseDto`)
+    - NestJS route ordering (rotas estáticas antes de `:id` parametrizado)
+  - **Validação:**
+    - TypeScript: 0 erros (backend + frontend)
+    - Endpoints testados: market-sentiment, ai-providers, news-sources, stats, economic-calendar
+    - Dashboard com widgets funcionais
 
 - **FASE 66: OAuth/Login Scrapers Fixes - COMPLETA (2025-12-06)**
   - **7 Scrapers Corrigidos:**

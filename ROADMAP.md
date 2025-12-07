@@ -10466,6 +10466,25 @@ const PROVIDER_WEIGHTS = {
 // High confidence: score >= 0.7 && agreementCount >= 3
 ```
 
+### Bug Fixes (2025-12-06)
+
+**1. DTO Class Declaration Order Bug:**
+- **Erro:** `ReferenceError: Cannot access 'SentimentSummaryDto' before initialization`
+- **Causa:** `NewsResponseDto` referenciava `SentimentSummaryDto` antes de ser definida
+- **Arquivo:** `backend/src/api/news/dto/news.dto.ts`
+- **Solução:** Movido `SentimentSummaryDto` para ANTES de `NewsResponseDto`
+
+**2. NestJS Route Ordering Bug:**
+- **Erro:** `DatabaseError: invalid input syntax for type uuid: "ai-providers"`
+- **Causa:** `@Get(':id')` definido ANTES de `@Get('ai-providers')`, `@Get('news-sources')`, `@Get('stats')`
+- **Arquivo:** `backend/src/api/news/news.controller.ts`
+- **Solução:** Reordenado rotas estáticas ANTES da rota parametrizada `:id`
+
+**Endpoints adicionais verificados após fix:**
+- `GET /news/ai-providers` - Lista providers AI habilitados
+- `GET /news/news-sources` - Lista fontes de notícias habilitadas
+- `GET /news/stats` - Estatísticas de coleta e análise
+
 ### Validação
 
 - ✅ TypeScript: 0 erros (backend + frontend)
@@ -10473,6 +10492,9 @@ const PROVIDER_WEIGHTS = {
 - ✅ Entities exportadas em index.ts
 - ✅ NewsModule importado em app.module.ts
 - ✅ Migration criada (1765000000000-CreateNewsSentimentTables)
+- ✅ Endpoints testados: market-sentiment, ai-providers, news-sources, stats, economic-calendar
+- ✅ DTO class order corrigido
+- ✅ Route ordering corrigido
 
 **Status:** ✅ **100% COMPLETO**
 

@@ -76,7 +76,60 @@ export class NewsController {
   }
 
   /**
+   * Obter providers de IA habilitados
+   * IMPORTANTE: Esta rota DEVE vir ANTES de /:id para não ser interceptada
+   */
+  @Get('ai-providers')
+  @ApiOperation({ summary: 'Listar providers de IA habilitados' })
+  @ApiResponse({ status: 200, description: 'Lista de providers' })
+  async getAIProviders(): Promise<{ providers: string[]; count: number }> {
+    const providers = this.aiOrchestrator.getEnabledProviders();
+    return {
+      providers,
+      count: providers.length,
+    };
+  }
+
+  /**
+   * Obter fontes de notícias habilitadas
+   * IMPORTANTE: Esta rota DEVE vir ANTES de /:id para não ser interceptada
+   */
+  @Get('news-sources')
+  @ApiOperation({ summary: 'Listar fontes de notícias habilitadas' })
+  @ApiResponse({ status: 200, description: 'Lista de fontes' })
+  async getNewsSources(): Promise<{ sources: string[]; count: number }> {
+    const sources = this.newsCollectors.getEnabledSources();
+    return {
+      sources,
+      count: sources.length,
+    };
+  }
+
+  /**
+   * Estatísticas de análise
+   * IMPORTANTE: Esta rota DEVE vir ANTES de /:id para não ser interceptada
+   */
+  @Get('stats')
+  @ApiOperation({ summary: 'Obter estatísticas de coleta e análise' })
+  @ApiResponse({ status: 200, description: 'Estatísticas' })
+  async getStats(): Promise<{
+    collection: Awaited<ReturnType<NewsCollectorsService['getCollectionStats']>>;
+    analysis: Awaited<ReturnType<AIOrchestatorService['getAnalysisStats']>>;
+    consensus: Awaited<ReturnType<ConsensusService['getConsensusStats']>>;
+  }> {
+    const [collection, analysis, consensus] = await Promise.all([
+      this.newsCollectors.getCollectionStats(),
+      this.aiOrchestrator.getAnalysisStats(),
+      this.consensusService.getConsensusStats(),
+    ]);
+
+    return { collection, analysis, consensus };
+  }
+
+  /**
    * Detalhes de uma notícia
+   * IMPORTANTE: Esta rota DEVE vir DEPOIS de todas as rotas estáticas (ai-providers, news-sources, stats)
+   * pois :id é um parâmetro genérico que captura qualquer string
    */
   @Get(':id')
   @ApiOperation({ summary: 'Obter detalhes de uma notícia' })
@@ -140,54 +193,6 @@ export class NewsController {
       analysesCompleted: analyses.length,
       hasConsensus: !!consensus,
     };
-  }
-
-  /**
-   * Obter providers de IA habilitados
-   */
-  @Get('ai-providers')
-  @ApiOperation({ summary: 'Listar providers de IA habilitados' })
-  @ApiResponse({ status: 200, description: 'Lista de providers' })
-  async getAIProviders(): Promise<{ providers: string[]; count: number }> {
-    const providers = this.aiOrchestrator.getEnabledProviders();
-    return {
-      providers,
-      count: providers.length,
-    };
-  }
-
-  /**
-   * Obter fontes de notícias habilitadas
-   */
-  @Get('news-sources')
-  @ApiOperation({ summary: 'Listar fontes de notícias habilitadas' })
-  @ApiResponse({ status: 200, description: 'Lista de fontes' })
-  async getNewsSources(): Promise<{ sources: string[]; count: number }> {
-    const sources = this.newsCollectors.getEnabledSources();
-    return {
-      sources,
-      count: sources.length,
-    };
-  }
-
-  /**
-   * Estatísticas de análise
-   */
-  @Get('stats')
-  @ApiOperation({ summary: 'Obter estatísticas de coleta e análise' })
-  @ApiResponse({ status: 200, description: 'Estatísticas' })
-  async getStats(): Promise<{
-    collection: Awaited<ReturnType<NewsCollectorsService['getCollectionStats']>>;
-    analysis: Awaited<ReturnType<AIOrchestatorService['getAnalysisStats']>>;
-    consensus: Awaited<ReturnType<ConsensusService['getConsensusStats']>>;
-  }> {
-    const [collection, analysis, consensus] = await Promise.all([
-      this.newsCollectors.getCollectionStats(),
-      this.aiOrchestrator.getAnalysisStats(),
-      this.consensusService.getConsensusStats(),
-    ]);
-
-    return { collection, analysis, consensus };
   }
 
   // ==================== ECONOMIC CALENDAR ENDPOINTS ====================
