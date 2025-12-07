@@ -4,6 +4,7 @@ import './globals.css'
 import { Providers } from '@/components/providers'
 import { WidgetErrorBoundary } from '@/components/tradingview/ErrorBoundary'
 import { TickerTape } from '@/components/tradingview/widgets/TickerTape'
+import { SkipLink } from '@/components/layout/skip-link'
 
 export const metadata: Metadata = {
   title: 'B3 AI Analysis Platform',
@@ -28,12 +29,19 @@ export default function RootLayout({
         />
 
         <Providers>
-          {/* TickerTape - Header Sticky (sempre visível) */}
-          <div className="sticky top-0 z-50">
+          {/* Skip Link for Keyboard Accessibility (WCAG 2.4.1) */}
+          <SkipLink targetId="main-content" />
+
+          {/* TickerTape - Complementary Region (market data ticker) */}
+          <aside
+            role="complementary"
+            aria-label="Cotações em tempo real"
+            className="sticky top-0 z-50"
+          >
             <WidgetErrorBoundary widgetName="TickerTape">
               <TickerTape />
             </WidgetErrorBoundary>
-          </div>
+          </aside>
 
           {children}
         </Providers>

@@ -33,31 +33,43 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
+    <header
+      role="banner"
+      aria-label="Cabeçalho do aplicativo"
+      className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6"
+    >
       <div className="flex items-center space-x-4 flex-1 max-w-md">
         <Button
           variant="ghost"
           size="icon"
           onClick={toggle}
           className="shrink-0"
-          aria-label="Toggle sidebar"
+          aria-label="Alternar menu lateral"
+          aria-expanded={undefined}
         >
           <Menu className="h-5 w-5" />
         </Button>
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
           <Input
             type="search"
             placeholder="Buscar ativos, análises..."
             className="pl-9 w-full"
+            aria-label="Buscar ativos, análises e relatórios"
           />
         </div>
       </div>
 
       <div className="flex items-center space-x-4">
-        <Button variant="ghost" size="icon" className="relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          aria-label="Notificações"
+        >
           <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
+          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" aria-hidden="true" />
+          <span className="sr-only">Você tem notificações não lidas</span>
         </Button>
 
         {user && (

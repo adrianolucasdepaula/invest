@@ -641,6 +641,61 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # FASE 78: Meilisearch - Intelligent Text Search Engine
+  meilisearch:
+    image: getmeili/meilisearch:v1.11
+    container_name: invest_meilisearch
+    environment:
+      - MEILI_ENV=development
+      - MEILI_MASTER_KEY=${MEILISEARCH_MASTER_KEY:-masterKey123}
+      - MEILI_NO_ANALYTICS=true
+    ports:
+      - "7700:7700"
+    volumes:
+      - meilisearch_data:/meili_data
+    networks:
+      - invest_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:7700/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # FASE 78: MinIO - S3-Compatible Object Storage (Data Lake)
+  minio:
+    image: minio/minio:latest
+    container_name: invest_minio
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin123}
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Console
+    volumes:
+      - minio_data:/data
+    networks:
+      - invest_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 networks:
   invest_network:
     driver: bridge
@@ -675,4 +730,10 @@ volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+
+  # FASE 78: Advanced Infrastructure Volumes
+  meilisearch_data:
+    driver: local
+  minio_data:
     driver: local

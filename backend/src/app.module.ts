@@ -28,6 +28,11 @@ import { CronModule } from './modules/cron/cron.module';
 import { EconomicIndicatorsModule } from './api/economic-indicators/economic-indicators.module'; // FASE 2
 import { NewsModule } from './api/news/news.module'; // FASE 75
 import { TelemetryModule } from './telemetry'; // FASE 76.3
+import { MetricsModule } from './metrics'; // FASE 78 - Prometheus metrics endpoint
+import { SearchModule } from './modules/search'; // FASE 75.1 - Meilisearch
+import { StorageModule } from './modules/storage'; // FASE 75.2 - MinIO
+import { AlertsModule } from './modules/alerts'; // FASE 75.3 - Sistema de Alertas
+import { OptionsModule } from './modules/options'; // FASE 75.4 - Options Chain
 import {
   User,
   Asset,
@@ -49,6 +54,10 @@ import {
   NewsAnalysis,
   SentimentConsensus,
   EconomicEvent,
+  // FASE 75.3 - Sistema de Alertas
+  Alert,
+  // FASE 75.4 - Options Chain
+  OptionPrice,
 } from './database/entities';
 
 @Module({
@@ -90,6 +99,10 @@ import {
           NewsAnalysis,
           SentimentConsensus,
           EconomicEvent,
+          // FASE 75.3 - Sistema de Alertas
+          Alert,
+          // FASE 75.4 - Options Chain
+          OptionPrice,
         ],
         synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
         logging: configService.get('DB_LOGGING', 'false') === 'true',
@@ -137,6 +150,9 @@ import {
     // Observabilidade (FASE 76.3)
     TelemetryModule,
 
+    // Prometheus Metrics (FASE 78)
+    MetricsModule,
+
     // Application Modules
     CommonModule,
     DatabaseModule,
@@ -154,6 +170,10 @@ import {
     WebSocketModule,
     EconomicIndicatorsModule, // FASE 2
     NewsModule, // FASE 75 - AI Sentiment Multi-Provider
+    SearchModule, // FASE 75.1 - Meilisearch
+    StorageModule, // FASE 75.2 - MinIO
+    AlertsModule, // FASE 75.3 - Sistema de Alertas
+    OptionsModule, // FASE 75.4 - Options Chain
   ],
   controllers: [AppController],
   providers: [

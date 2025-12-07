@@ -29,3 +29,17 @@ export {
   EventCategory,
   EventSource,
 } from './economic-event.entity';
+// FASE 75.3 - Sistema de Alertas
+export {
+  Alert,
+  AlertType,
+  AlertStatus,
+  NotificationChannel,
+} from './alert.entity';
+// FASE 75.4 - Options Chain
+export {
+  OptionPrice,
+  OptionType,
+  OptionStyle,
+  OptionStatus,
+} from './option-price.entity';
