@@ -970,39 +970,51 @@ Este projeto utiliza Claude Opus 4.5 com configuracao ultra-robusta para maximiz
 | `MCP_TIMEOUT` | 120000 | 2 minutos - conexao inicial com MCPs |
 | `MCP_TOOL_TIMEOUT` | 300000 | 5 minutos - operacoes de MCPs complexas |
 
-### Leitura de Arquivos Grandes (SOLUCAO DEFINITIVA)
+### Leitura de Arquivos Grandes
 
-**Problema Resolvido:** Claude Code tinha limite de 25000 tokens para leitura de arquivos.
+**IMPORTANTE:** O Read tool do Claude Code tem limite **HARDCODED de 25.000 tokens** que NAO pode ser alterado por variaveis de ambiente.
 
-**Solucao Implementada (2025-12-07):**
+**Limites por Tipo de Ferramenta:**
 
-1. **MAX_MCP_OUTPUT_TOKENS=200000** - Aumentado de 50000 para 200000 (maximo suportado)
-2. **MAX_TOOL_OUTPUT_TOKENS=200000** - Nova variavel para output de ferramentas
+| Ferramenta | Limite | Configuravel? |
+|------------|--------|---------------|
+| Read tool (built-in) | 25.000 tokens | ❌ NAO (hardcoded) |
+| MCP tools (mcp__*) | 200.000 tokens | ✅ SIM (MAX_MCP_OUTPUT_TOKENS) |
 
-**Arquivos Configurados:**
+**Variaveis Configuradas (afetam apenas MCPs):**
+
+- `MAX_MCP_OUTPUT_TOKENS=200000` - Output de ferramentas MCP
+- `MAX_TOOL_OUTPUT_TOKENS=200000` - Redundante para MCPs
+
+**Arquivos de Configuracao:**
 
 - `~/.claude/settings.json` (global)
 - `.claude/settings.json` (projeto)
 - `.claude/settings.local.json` (local)
 
-**Capacidade Atual:**
-
-- Arquivos ate ~800KB podem ser lidos de uma vez
-- ROADMAP.md (10638 linhas, 378KB) - leitura completa OK
-- Nao e mais necessario usar offset/limit para maioria dos arquivos
-
-**Fallback para Arquivos Muito Grandes (>800KB):**
-
-Se ainda encontrar limite, use leitura em chunks:
+**Solucao para Arquivos >25K tokens - Leitura em Chunks:**
 
 ```typescript
-// Exemplo de leitura em chunks
-Read(file_path="arquivo.md", offset=1, limit=2000)      // Chunk 1
-Read(file_path="arquivo.md", offset=2001, limit=2000)   // Chunk 2
+// Arquivo grande (ex: 71K tokens, ~6200 linhas)
+// Dividir em chunks de ~1500 linhas
+
+Read(file_path="arquivo.md", offset=1, limit=1500)      // Chunk 1
+Read(file_path="arquivo.md", offset=1501, limit=1500)   // Chunk 2
+Read(file_path="arquivo.md", offset=3001, limit=1500)   // Chunk 3
+Read(file_path="arquivo.md", offset=4501, limit=1500)   // Chunk 4
 // ... continua ate cobrir todo o arquivo
 ```
 
-**Referencia:** [GitHub Issue #4002](https://github.com/anthropics/claude-code/issues/4002)
+**Calculo de Chunks:**
+
+- ~11.5 tokens por linha (media para markdown/codigo)
+- 25.000 tokens / 11.5 = ~2.170 linhas maximo por chunk
+- Recomendado: **1.500 linhas** por chunk (margem de seguranca)
+
+**Referencias:**
+
+- [GitHub Issue #4002](https://github.com/anthropics/claude-code/issues/4002) - Discussao do limite
+- [GitHub Issue #7679](https://github.com/anthropics/claude-code/issues/7679) - Feature request para aumentar (pendente)
 
 ### Compact Instructions
 
