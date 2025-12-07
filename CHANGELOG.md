@@ -7,6 +7,16 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **A11y: WCAG 2 AA Color Contrast Compliance (2025-12-07)**
+  - Corrigido contraste insuficiente na cor `--muted-foreground`
+  - Valor anterior: `215 10% 50%` (contraste 4.16:1)
+  - Valor novo: `215 10% 43%` (contraste ~5.3:1)
+  - Elementos afetados: textos secundários, labels, placeholders
+  - Violações corrigidas: 4 (restam 6 no widget TradingView externo)
+  - Validação: A11y MCP audit passou com 0 violações em código próprio
+
 ### Added
 
 - **FASE 76: Observabilidade e Rastreabilidade - 100% COMPLETA (2025-12-06)**

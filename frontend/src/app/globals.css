@@ -59,7 +59,7 @@
 
   /* Muted - Subtle backgrounds */
   --muted: 210 12% 97%;
-  --muted-foreground: 215 10% 50%;
+  --muted-foreground: 215 10% 43%; /* WCAG 2 AA compliant: contrast ratio ~5.3:1 with white */
 
   /* Accent - Premium gold/amber */
   --accent: 42 87% 55%;
