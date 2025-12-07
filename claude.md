@@ -963,11 +963,46 @@ Este projeto utiliza Claude Opus 4.5 com configuracao ultra-robusta para maximiz
 |----------|-------|-----------|
 | `CLAUDE_CODE_MAX_OUTPUT_TOKENS` | 128000 | Output maximo - permite respostas longas |
 | `MAX_THINKING_TOKENS` | 100000 | Extended Thinking maximo para Opus 4.5 |
-| `MAX_MCP_OUTPUT_TOKENS` | 50000 | 2x default - MCPs retornam mais dados |
+| `MAX_MCP_OUTPUT_TOKENS` | 200000 | **8x default** - Leitura de arquivos grandes sem truncamento |
+| `MAX_TOOL_OUTPUT_TOKENS` | 200000 | **8x default** - Output de ferramentas sem limite |
 | `BASH_DEFAULT_TIMEOUT_MS` | 600000 | 10 minutos - builds longos |
 | `BASH_MAX_TIMEOUT_MS` | 1800000 | 30 minutos - operacoes muito longas |
 | `MCP_TIMEOUT` | 120000 | 2 minutos - conexao inicial com MCPs |
 | `MCP_TOOL_TIMEOUT` | 300000 | 5 minutos - operacoes de MCPs complexas |
+
+### Leitura de Arquivos Grandes (SOLUCAO DEFINITIVA)
+
+**Problema Resolvido:** Claude Code tinha limite de 25000 tokens para leitura de arquivos.
+
+**Solucao Implementada (2025-12-07):**
+
+1. **MAX_MCP_OUTPUT_TOKENS=200000** - Aumentado de 50000 para 200000 (maximo suportado)
+2. **MAX_TOOL_OUTPUT_TOKENS=200000** - Nova variavel para output de ferramentas
+
+**Arquivos Configurados:**
+
+- `~/.claude/settings.json` (global)
+- `.claude/settings.json` (projeto)
+- `.claude/settings.local.json` (local)
+
+**Capacidade Atual:**
+
+- Arquivos ate ~800KB podem ser lidos de uma vez
+- ROADMAP.md (10638 linhas, 378KB) - leitura completa OK
+- Nao e mais necessario usar offset/limit para maioria dos arquivos
+
+**Fallback para Arquivos Muito Grandes (>800KB):**
+
+Se ainda encontrar limite, use leitura em chunks:
+
+```typescript
+// Exemplo de leitura em chunks
+Read(file_path="arquivo.md", offset=1, limit=2000)      // Chunk 1
+Read(file_path="arquivo.md", offset=2001, limit=2000)   // Chunk 2
+// ... continua ate cobrir todo o arquivo
+```
+
+**Referencia:** [GitHub Issue #4002](https://github.com/anthropics/claude-code/issues/4002)
 
 ### Compact Instructions
 
