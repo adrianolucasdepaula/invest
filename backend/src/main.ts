@@ -45,7 +45,14 @@ async function bootstrap() {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'traceparent', // OpenTelemetry W3C Trace Context
+      'tracestate', // OpenTelemetry W3C Trace Context
+    ],
     exposedHeaders: ['X-Total-Count', 'X-Page-Number'],
     maxAge: 3600, // Cache preflight requests for 1 hour
   });
