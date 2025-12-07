@@ -13,6 +13,8 @@ import {
 } from '@database/entities';
 import { ScrapersService } from '../../scrapers/scrapers.service';
 import { AppWebSocketGateway } from '../../websocket/websocket.gateway';
+import { TelemetryService } from '../../telemetry/telemetry.service';
+import { SpanKind } from '@opentelemetry/api';
 
 export interface UpdateResult {
   success: boolean;
@@ -75,6 +77,7 @@ export class AssetsUpdateService {
     private portfolioPositionRepository: Repository<PortfolioPosition>,
     private scrapersService: ScrapersService,
     private webSocketGateway: AppWebSocketGateway,
+    private telemetryService: TelemetryService,
   ) {}
 
   /**
@@ -98,6 +101,18 @@ export class AssetsUpdateService {
       ? `[${traceContext.position}/${traceContext.batchSize}]`
       : '';
     const logPrefix = `[TRACE-${traceId}]${positionInfo}`;
+
+    // OpenTelemetry span for the entire update operation
+    return this.telemetryService.withSpan(
+      'asset.update.single',
+      async (span) => {
+        span.setAttributes({
+          'asset.ticker': ticker,
+          'asset.trigger': triggeredBy,
+          'asset.user_id': userId || 'system',
+          'asset.batch_position': traceContext?.position || 0,
+          'asset.batch_size': traceContext?.batchSize || 1,
+        });
 
     this.logger.log(
       `${logPrefix} Starting update for ${ticker} (user: ${userId || 'system'}, trigger: ${triggeredBy})`,
@@ -143,11 +158,24 @@ export class AssetsUpdateService {
     });
 
     try {
-      // 5. Execute scrapers
+      // 5. Execute scrapers with nested span
       this.logger.log(`${logPrefix} Scraping data for ${ticker}...`);
       const scraperStartTime = Date.now();
+
+      // Add event for scraper start
+      this.telemetryService.addSpanEvent('scraper.start', { ticker });
+
       const scrapedResult = await this.scrapersService.scrapeFundamentalData(ticker);
       const scraperDuration = Date.now() - scraperStartTime;
+
+      // Record scraper duration metric
+      this.telemetryService.recordScraperDuration('fundamental_data', scraperDuration, 'success');
+      this.telemetryService.addSpanEvent('scraper.complete', {
+        ticker,
+        duration_ms: scraperDuration,
+        sources_count: scrapedResult?.sourcesCount || 0,
+      });
+
       this.logger.debug(`${logPrefix} Scrapers completed for ${ticker} in ${scraperDuration}ms`);
 
       // 6. Validate data quality
@@ -219,6 +247,15 @@ export class AssetsUpdateService {
 
       this.logger.log(`${logPrefix} ✅ Successfully updated ${ticker} in ${duration}ms`);
 
+      // Record telemetry metrics for success
+      this.telemetryService.recordScraperDuration('asset_update', duration, 'success');
+      span.setAttributes({
+        'asset.success': true,
+        'asset.duration_ms': duration,
+        'asset.sources_count': scrapedResult.sourcesCount,
+        'asset.confidence': scrapedResult.confidence,
+      });
+
       return {
         success: true,
         assetId: asset.id,
@@ -271,6 +308,9 @@ export class AssetsUpdateService {
         duration,
       });
 
+      // Record telemetry metric for failure
+      this.telemetryService.recordScraperDuration('asset_update', duration, 'failure');
+
       return {
         success: false,
         assetId: asset.id,
@@ -281,6 +321,9 @@ export class AssetsUpdateService {
         traceId,
       };
     }
+      },
+      { kind: SpanKind.INTERNAL, attributes: { 'operation.type': 'asset_update' } },
+    );
   }
 
   /**

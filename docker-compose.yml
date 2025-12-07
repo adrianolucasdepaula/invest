@@ -525,6 +525,7 @@ services:
   tempo:
     image: grafana/tempo:latest
     container_name: invest_tempo
+    user: root  # Required for volume permissions on Windows
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
       - ./docker/observability/tempo.yaml:/etc/tempo.yaml:ro
@@ -553,7 +554,7 @@ services:
       - ./docker/observability/loki.yaml:/etc/loki/local-config.yaml:ro
       - loki_data:/loki
     ports:
-      - "3100:3100"
+      - "3102:3100"  # Changed from 3100 to avoid conflict with frontend
     networks:
       - invest_network
     restart: unless-stopped

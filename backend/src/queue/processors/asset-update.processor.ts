@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import { AssetsUpdateService } from '../../api/assets/assets-update.service';
 import { UpdateTrigger } from '@database/entities';
+import { TelemetryService } from '../../telemetry/telemetry.service';
 
 export interface SingleAssetUpdateJob {
   type: 'single';
@@ -50,7 +51,10 @@ export type AssetUpdateJobData =
 export class AssetUpdateProcessor {
   private readonly logger = new Logger(AssetUpdateProcessor.name);
 
-  constructor(private readonly assetsUpdateService: AssetsUpdateService) {}
+  constructor(
+    private readonly assetsUpdateService: AssetsUpdateService,
+    private readonly telemetryService: TelemetryService,
+  ) {}
 
   // ✅ FIX: Reduced concurrency from 10 → 1 to prevent Playwright browser overload (FASE 1.1 - CRITICAL)
   // Each job spawns 6 parallel scrapers, so concurrency=1 means max 6 browser operations
@@ -266,6 +270,9 @@ export class AssetUpdateProcessor {
     this.logger.debug(
       `[JOB-${job.id}] Queue event: completed (traceId: ${traceId}, successRate: ${successRate})`,
     );
+
+    // Record queue job completion metric
+    this.telemetryService.recordQueueJob('asset-updates', job.name, 'completed');
   }
 
   @OnQueueFailed()
@@ -275,6 +282,9 @@ export class AssetUpdateProcessor {
       `[JOB-${job.id}] 💥 Queue failed: ${job.name} - ${details}`,
       `Error: ${error.message}`,
     );
+
+    // Record queue job failure metric
+    this.telemetryService.recordQueueJob('asset-updates', job.name, 'failed');
   }
 
   /**

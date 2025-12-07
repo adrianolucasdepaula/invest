@@ -4,6 +4,28 @@ import Cookies from 'js-cookie';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api/v1';
 const OAUTH_BASE_URL = process.env.NEXT_PUBLIC_OAUTH_URL || 'http://localhost:8080';
 
+/**
+ * Generate W3C TraceContext trace ID and span ID
+ * Format: traceparent: {version}-{trace-id}-{span-id}-{flags}
+ * https://www.w3.org/TR/trace-context/
+ */
+function generateTraceContext(): { traceparent: string; traceId: string } {
+  // Generate 32-char hex trace ID (16 bytes)
+  const traceId = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  // Generate 16-char hex span ID (8 bytes)
+  const spanId = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  // Version 00, sampled flag 01
+  const traceparent = `00-${traceId}-${spanId}-01`;
+
+  return { traceparent, traceId };
+}
+
 class ApiClient {
   private client: AxiosInstance;
 
@@ -27,6 +49,11 @@ class ApiClient {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Add W3C TraceContext headers for distributed tracing (FASE 76)
+        const { traceparent } = generateTraceContext();
+        config.headers['traceparent'] = traceparent;
+
         return config;
       },
       error => Promise.reject(error)

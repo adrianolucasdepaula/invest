@@ -25,9 +25,11 @@ import {
 import Link from 'next/link';
 import { useAsset, useMarketDataPrices, useAssetFundamentals, useAssetDataSources } from '@/lib/hooks/use-assets';
 import { DataQualitySummary } from '@/components/assets/DataSourceIndicator';
+import { ChartErrorBoundary } from '@/components/error-boundary';
 import { useAnalysis, useRequestAnalysis } from '@/lib/hooks/use-analysis';
 import { AdvancedChart } from '@/components/tradingview/widgets/AdvancedChart';
 import FundamentalMetrics from '@/components/FundamentalMetrics';
+import { TickerNews } from '@/components/assets/ticker-news';
 
 // Helper function to map dataSources API response to FundamentalMetrics format
 function mapDataSourcesToMetrics(dataSources: any) {
@@ -411,11 +413,13 @@ export default function AssetDetailPage({ params }: { params: Promise<{ ticker: 
         {isLoading || technicalLoading ? (
           <Skeleton className="h-[400px] w-full" />
         ) : technicalData?.prices && technicalData?.indicators ? (
-          <MultiPaneChart
-            data={technicalData.prices}
-            indicators={technicalData.indicators}
-            showIndicators={showIndicators}
-          />
+          <ChartErrorBoundary chartType="MultiPaneChart">
+            <MultiPaneChart
+              data={technicalData.prices}
+              indicators={technicalData.indicators}
+              showIndicators={showIndicators}
+            />
+          </ChartErrorBoundary>
         ) : (
           <div className="flex h-[400px] items-center justify-center text-muted-foreground">
             <p>Dados insuficientes para gráfico avançado. Tente um período maior.</p>
@@ -431,12 +435,14 @@ export default function AssetDetailPage({ params }: { params: Promise<{ ticker: 
             Gráfico interativo TradingView com indicadores técnicos profissionais
           </p>
         </div>
-        <AdvancedChart
-          symbol={`BMFBOVESPA:${ticker.toUpperCase()}`}
-          interval="D"
-          range="12M"
-          height={610}
-        />
+        <ChartErrorBoundary chartType="TradingView AdvancedChart">
+          <AdvancedChart
+            symbol={`BMFBOVESPA:${ticker.toUpperCase()}`}
+            interval="D"
+            range="12M"
+            height={610}
+          />
+        </ChartErrorBoundary>
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -569,6 +575,9 @@ export default function AssetDetailPage({ params }: { params: Promise<{ ticker: 
           )}
         </Card>
       </div>
+
+      {/* News Section - FASE 75 */}
+      <TickerNews ticker={ticker} limit={10} />
     </div>
   );
 }

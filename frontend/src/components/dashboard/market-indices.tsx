@@ -14,6 +14,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { AdvancedChart } from '@/components/tradingview/widgets/AdvancedChart';
+import { ChartErrorBoundary } from '@/components/error-boundary';
 import {
   TrendingUp,
   TrendingDown,
@@ -177,15 +178,17 @@ export function MarketIndices() {
           </p>
         </div>
 
-        <AdvancedChart
-          symbol={selectedSymbol}
-          interval="D" // Daily
-          range="1M" // 1 mês
-          height={400}
-          allowSymbolChange={false} // Usuário troca via botões acima
-          hideTopToolbar={false} // Mostrar toolbar (fullscreen, save, etc)
-          saveImage={true}
-        />
+        <ChartErrorBoundary chartType="TradingView Market Indices">
+          <AdvancedChart
+            symbol={selectedSymbol}
+            interval="D" // Daily
+            range="1M" // 1 mês
+            height={400}
+            allowSymbolChange={false} // Usuário troca via botões acima
+            hideTopToolbar={false} // Mostrar toolbar (fullscreen, save, etc)
+            saveImage={true}
+          />
+        </ChartErrorBoundary>
       </div>
     </Card>
   );

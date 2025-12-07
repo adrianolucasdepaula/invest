@@ -15,6 +15,8 @@ import { StatCard } from '@/components/dashboard/stat-card';
 import { AssetTable } from '@/components/dashboard/asset-table';
 import { MarketIndices } from '@/components/dashboard/market-indices';
 import { EconomicIndicators } from '@/components/dashboard/economic-indicators';
+import { MarketThermometer } from '@/components/dashboard/market-thermometer';
+import { EconomicCalendarWidget } from '@/components/dashboard/economic-calendar-widget';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Activity, DollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -122,8 +124,15 @@ export default function DashboardPage() {
       {/* Indicadores Econômicos (SELIC, IPCA, CDI) - FASE 1 */}
       <EconomicIndicators />
 
-      {/* Painel de Índices em Destaque (col-span-7 = largura completa) */}
-      <div className="grid gap-4 md:grid-cols-1">
+      {/* Termômetro do Mercado + Calendário Econômico + Índices - FASE 75 */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Termômetro do Mercado (Sentimento) - 1 coluna */}
+        <MarketThermometer />
+
+        {/* Calendário Econômico - 1 coluna */}
+        <EconomicCalendarWidget />
+
+        {/* Painel de Índices em Destaque - 1 coluna */}
         <MarketIndices />
       </div>
 
