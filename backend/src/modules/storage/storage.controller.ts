@@ -4,7 +4,7 @@ import { Response } from 'express';
 import { StorageService } from './storage.service';
 
 @ApiTags('Storage')
-@Controller('api/v1/storage')
+@Controller('storage')
 export class StorageController {
   private readonly logger = new Logger(StorageController.name);
 
@@ -42,7 +42,7 @@ export class StorageController {
     };
   }
 
-  @Get('buckets/:bucket/download/:objectName(*)')
+  @Get('buckets/:bucket/download/:objectName')
   @ApiOperation({
     summary: 'Get presigned download URL',
     description: 'Returns a presigned URL for downloading an object',

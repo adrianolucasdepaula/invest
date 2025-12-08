@@ -8,7 +8,7 @@ class SearchContextDto {
 }
 
 @ApiTags('AI Context')
-@Controller('api/v1/context')
+@Controller('context')
 export class ContextController {
   private readonly logger = new Logger(ContextController.name);
 

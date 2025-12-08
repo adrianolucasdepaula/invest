@@ -17,7 +17,7 @@ import { OptionType, OptionStatus } from '../../database/entities';
 @ApiTags('Options')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('api/v1/options')
+@Controller('options')
 export class OptionsController {
   constructor(private readonly optionsService: OptionsService) {}
 

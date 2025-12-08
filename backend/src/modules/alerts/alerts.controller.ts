@@ -18,7 +18,7 @@ import { AlertStatus } from '../../database/entities';
 @ApiTags('Alerts')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('api/v1/alerts')
+@Controller('alerts')
 export class AlertsController {
   constructor(private readonly alertsService: AlertsService) {}
 

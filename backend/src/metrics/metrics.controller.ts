@@ -4,7 +4,7 @@ import { Response } from 'express';
 import { MetricsService } from './metrics.service';
 
 @ApiTags('Metrics')
-@Controller('api/v1/metrics')
+@Controller('metrics')
 export class MetricsController {
   constructor(private readonly metricsService: MetricsService) {}
 

@@ -1,7 +1,7 @@
 # 🗺️ ROADMAP - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-07
+**Última Atualização:** 2025-12-08
 **Versão:** 1.10.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
@@ -10657,9 +10657,53 @@ Validação ultra-completa de toda a plataforma seguindo metodologia Zero Tolera
 
 ---
 
+## FASE 80: Backend API Validation ✅ 100% COMPLETO
+
+**Data:** 2025-12-08
+**Tipo:** Validation / Bug Fix
+
+### Validações Realizadas (10 Controllers, 50+ Endpoints)
+
+- ✅ **Auth Controller**: Login, Register, Me, OAuth endpoints
+- ✅ **Assets Controller**: List, Filter, Detail, History (8+ endpoints)
+- ✅ **News Controller**: List, Sentiment, Ticker news (5 endpoints)
+- ✅ **Economic Indicators Controller**: 3 endpoints
+- ✅ **Portfolio Controller**: CRUD operations
+- ✅ **Market Data Controller**: Prices, Technical, Intraday
+- ✅ **Scrapers Controller**: Status, Quality stats, Discrepancies
+- ✅ **Data Sources Controller**: 2 endpoints
+- ✅ **Analysis Controller**: CRUD, AI generation (8 endpoints)
+- ✅ **Reports Controller**: CRUD, PDF download (5 endpoints)
+
+### Bug Fix Aplicado: Duplicate API Prefix
+
+**Problema Detectado:** 6 controllers tinham `@Controller('api/v1/xxx')` enquanto
+o NestJS já tinha global prefix `setGlobalPrefix('api/v1')`, resultando em
+rotas duplicadas como `/api/v1/api/v1/metrics`.
+
+**Arquivos Corrigidos:**
+
+- `backend/src/modules/storage/storage.controller.ts`
+- `backend/src/metrics/metrics.controller.ts`
+- `backend/src/modules/alerts/alerts.controller.ts`
+- `backend/src/modules/search/search.controller.ts`
+- `backend/src/modules/options/options.controller.ts`
+- `backend/src/ai/knowledge-base/context.controller.ts`
+
+**Correção:** Removido prefixo `api/v1/` redundante de todos os controllers.
+
+### Code Review Gate
+
+- ✅ TypeScript: 0 erros (backend + frontend)
+- ✅ Build: SUCCESS (backend + frontend)
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (80 fases)
+### Fases Completas (81 fases)
 
 - ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
 - ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
@@ -10687,6 +10731,7 @@ Validação ultra-completa de toda a plataforma seguindo metodologia Zero Tolera
 - ✅ FASE 77: Validação Completa Phase 2 - 100% COMPLETO (2025-12-07)
 - ✅ FASE 78: Infraestrutura Avançada - 100% COMPLETO (2025-12-07)
 - ✅ FASE 79: Environment Validation - 100% COMPLETO (2025-12-07)
+- ✅ FASE 80: Backend API Validation + Bug Fix - 100% COMPLETO (2025-12-08)
 
 ### Fases Planejadas
 
