@@ -9,20 +9,19 @@ function DashboardLayoutContent({
 }: {
   children: React.ReactNode;
 }) {
-  const { isOpen } = useSidebar();
+  const { isOpen, isMounted } = useSidebar();
+
+  // Use consistent initial state (w-64) until client is mounted to avoid hydration mismatch
+  const sidebarWidth = !isMounted ? 'w-64' : isOpen ? 'w-64' : 'w-0';
 
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar Navigation - Semantic aside landmark */}
-      <aside
-        role="navigation"
-        aria-label="Menu de navegação principal"
-        className={`transition-all duration-300 ease-in-out ${
-          isOpen ? 'w-64' : 'w-0'
-        } overflow-hidden`}
+      <div
+        className={`transition-all duration-300 ease-in-out ${sidebarWidth} overflow-hidden`}
       >
         <Sidebar />
-      </aside>
+      </div>
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />

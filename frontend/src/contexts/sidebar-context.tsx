@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface SidebarContextType {
   isOpen: boolean;
+  isMounted: boolean;
   toggle: () => void;
   open: () => void;
   close: () => void;
@@ -13,13 +14,15 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Persist sidebar state in localStorage
+  // Persist sidebar state in localStorage - only after mount to avoid hydration mismatch
   useEffect(() => {
     const savedState = localStorage.getItem('sidebar-open');
     if (savedState !== null) {
       setIsOpen(savedState === 'true');
     }
+    setIsMounted(true);
   }, []);
 
   const toggle = () => {
@@ -41,7 +44,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <SidebarContext.Provider value={{ isOpen, toggle, open, close }}>
+    <SidebarContext.Provider value={{ isOpen, isMounted, toggle, open, close }}>
       {children}
     </SidebarContext.Provider>
   );
