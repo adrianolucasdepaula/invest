@@ -11,8 +11,12 @@ import {
   GetNewsQueryDto,
   NewsResponseDto,
   MarketSentimentSummaryDto,
+  TickerSentimentSummaryDto,
   CollectNewsDto,
   AnalyzeNewsDto,
+  SentimentPeriod,
+  TimeframeSentimentDto,
+  MultiTimeframeSentimentDto,
 } from './dto/news.dto';
 
 /**
@@ -76,6 +80,59 @@ export class NewsController {
   }
 
   /**
+   * Resumo de sentimento de um ticker específico
+   */
+  @Get('ticker-sentiment/:ticker')
+  @ApiOperation({ summary: 'Obter resumo de sentimento de um ativo específico' })
+  @ApiParam({ name: 'ticker', description: 'Ticker do ativo (ex: PETR4)' })
+  @ApiResponse({ status: 200, description: 'Resumo de sentimento do ativo', type: TickerSentimentSummaryDto })
+  async getTickerSentiment(
+    @Param('ticker') ticker: string,
+  ): Promise<TickerSentimentSummaryDto> {
+    this.logger.log(`GET /news/ticker-sentiment/${ticker}`);
+    return this.newsService.getTickerSentimentSummary(ticker);
+  }
+
+  // ==================== FASE 76: TIME-WEIGHTED SENTIMENT ENDPOINTS ====================
+
+  /**
+   * Sentimento de um ticker para todos os períodos (multi-timeframe)
+   * Retorna análise completa com temporal decay para cada período
+   * IMPORTANTE: Esta rota DEVE vir ANTES de /:period para não ser interceptada
+   */
+  @Get('ticker-sentiment/:ticker/multi')
+  @ApiOperation({ summary: 'Obter sentimento multi-timeframe de um ticker (todos os períodos)' })
+  @ApiParam({ name: 'ticker', description: 'Ticker do ativo (ex: PETR4)' })
+  @ApiResponse({ status: 200, description: 'Sentimento para todos os períodos', type: MultiTimeframeSentimentDto })
+  async getTickerMultiTimeframeSentiment(
+    @Param('ticker') ticker: string,
+  ): Promise<MultiTimeframeSentimentDto> {
+    this.logger.log(`GET /news/ticker-sentiment/${ticker}/multi`);
+    return this.newsService.getTickerMultiTimeframeSentiment(ticker);
+  }
+
+  /**
+   * Sentimento de um ticker para um período específico
+   * Aplica temporal decay (exponential) e source tier weighting
+   */
+  @Get('ticker-sentiment/:ticker/:period')
+  @ApiOperation({ summary: 'Obter sentimento de um ticker para período específico (temporal decay)' })
+  @ApiParam({ name: 'ticker', description: 'Ticker do ativo (ex: PETR4)' })
+  @ApiParam({
+    name: 'period',
+    enum: SentimentPeriod,
+    description: 'Período de análise (weekly, monthly, quarterly, semiannual, annual)',
+  })
+  @ApiResponse({ status: 200, description: 'Sentimento ponderado para o período', type: TimeframeSentimentDto })
+  async getTickerSentimentByPeriod(
+    @Param('ticker') ticker: string,
+    @Param('period') period: SentimentPeriod,
+  ): Promise<TimeframeSentimentDto> {
+    this.logger.log(`GET /news/ticker-sentiment/${ticker}/${period}`);
+    return this.newsService.getTickerSentimentByPeriod(ticker, period);
+  }
+
+  /**
    * Obter providers de IA habilitados
    * IMPORTANTE: Esta rota DEVE vir ANTES de /:id para não ser interceptada
    */
@@ -83,7 +140,7 @@ export class NewsController {
   @ApiOperation({ summary: 'Listar providers de IA habilitados' })
   @ApiResponse({ status: 200, description: 'Lista de providers' })
   async getAIProviders(): Promise<{ providers: string[]; count: number }> {
-    const providers = this.aiOrchestrator.getEnabledProviders();
+    const providers = this.aiOrchestrator.getAvailableProviders();
     return {
       providers,
       count: providers.length,

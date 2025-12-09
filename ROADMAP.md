@@ -10816,9 +10816,67 @@ rotas duplicadas como `/api/v1/api/v1/metrics`.
 
 ---
 
+## FASE 84: Time-Weighted Multi-Timeframe Sentiment ✅ 100% COMPLETO
+
+**Data:** 2025-12-09
+**Tipo:** Feature Enhancement
+**Documentação:** `PLANO_FASE_76_TIME_WEIGHTED_SENTIMENT.md` (original plan)
+
+### Descrição
+
+Sistema avançado de análise de sentimento com ponderação temporal (exponential decay) e multi-período para análise de notícias financeiras.
+
+### Implementações
+
+| Componente | Descrição | Status |
+|------------|-----------|--------|
+| **Backend DTOs** | SentimentPeriod enum, TimeframeSentimentDto, MultiTimeframeSentimentDto | ✅ |
+| **Backend Service** | calculateTemporalWeight(), getTickerSentimentByPeriod(), getTickerMultiTimeframeSentiment() | ✅ |
+| **Backend Controller** | Endpoints /ticker-sentiment/:ticker/multi e /:period | ✅ |
+| **Frontend Component** | Period selector tabs (7D, 1M, 3M, 6M, 1A) com auto-seleção | ✅ |
+
+### Padrão de Mercado Implementado (Bloomberg/Reuters)
+
+| Período | Range (dias) | Half-Life (dias) | Justificativa |
+|---------|--------------|------------------|---------------|
+| Semanal | 7 | 3.5 | Notícias >3.5d têm peso <50% |
+| Mensal | 30 | 14 | Notícias >14d têm peso <50% |
+| Trimestral | 90 | 30 | Ciclo de earnings |
+| Semestral | 180 | 63 | ~3 meses (1 trimestre) |
+| Anual | 365 | 90 | ~3 meses (1 trimestre) |
+
+### Source Tier Weighting
+
+| Tier | Fontes | Weight |
+|------|--------|--------|
+| **Tier 1** | Bloomberg, Valor Econômico | 1.3x |
+| **Tier 2** | InfoMoney, Estadão, Exame | 1.1x |
+| **Tier 3** | Google News, Investing | 1.0x |
+| **Tier 4** | RSS, Other | 0.8x |
+
+### Fórmula de Temporal Decay
+
+```
+Weight(t) = 2^(-t/halflife)
+WeightedSentiment = Σ(score × confidence × temporal_weight × source_tier) / Σ(confidence × temporal_weight × source_tier)
+```
+
+### Validação Zero Tolerance
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Build Backend: SUCCESS
+- ✅ Build Frontend: SUCCESS
+- ✅ API Endpoints: Funcionais
+- ✅ MCP Triplo: Validado (PETR4 com dados, MGLU3 sem dados)
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (84 fases)
+### Fases Completas (85 fases)
 
 - ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
 - ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
@@ -10850,6 +10908,7 @@ rotas duplicadas como `/api/v1/api/v1/metrics`.
 - ✅ FASE 81: Frontend Phase 3 Validation - 100% COMPLETO (2025-12-08)
 - ✅ FASE 82: Phase 4 Integration Validation - 100% COMPLETO (2025-12-08)
 - ✅ FASE 83: Phase 5 Scrapers Validation - 100% COMPLETO (2025-12-08)
+- ✅ FASE 84: Time-Weighted Multi-Timeframe Sentiment - 100% COMPLETO (2025-12-09)
 
 ### Fases Planejadas
 
@@ -10868,11 +10927,12 @@ Todas as fases planejadas foram implementadas.
 > **Nota:** FASE 73, 73.5, 74, 74.5, 75, 76 concluídas em 2025-12-06
 > **Nota:** FASE 77, 78, 79 concluídas em 2025-12-07
 > **Nota:** FASE 80, 81, 82, 83 concluídas em 2025-12-08
+> **Nota:** FASE 84 concluída em 2025-12-09
 
 ---
 
-**Ultima Atualizacao:** 2025-12-08
-**Total de Fases:** 84 completas
-**Versao:** 1.10.0
+**Ultima Atualizacao:** 2025-12-09
+**Total de Fases:** 85 completas
+**Versao:** 1.11.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

@@ -223,3 +223,111 @@ export class MarketSentimentSummaryDto {
   @ApiProperty({ description: 'Top 5 notícias mais recentes com sentimento' })
   recentNews: NewsResponseDto[];
 }
+
+/**
+ * DTO para resumo de sentimento de um ticker específico
+ */
+export class TickerSentimentSummaryDto {
+  @ApiProperty({ description: 'Ticker do ativo' })
+  ticker: string;
+
+  @ApiProperty({ description: 'Sentimento do ativo (-1 a +1)' })
+  overallSentiment: number;
+
+  @ApiProperty({ enum: SentimentLabel })
+  overallLabel: SentimentLabel;
+
+  @ApiProperty({ description: 'Score de confiança médio (0 a 1)' })
+  avgConfidence: number;
+
+  @ApiProperty({ description: 'Total de notícias do ticker' })
+  totalNews: number;
+
+  @ApiProperty({ description: 'Notícias analisadas' })
+  analyzedNews: number;
+
+  @ApiProperty({ description: 'Notícias nas últimas 24h' })
+  newsLast24h: number;
+
+  @ApiProperty({ description: 'Breakdown por sentimento' })
+  breakdown: {
+    veryBullish: number;
+    bullish: number;
+    slightlyBullish: number;
+    neutral: number;
+    slightlyBearish: number;
+    bearish: number;
+    veryBearish: number;
+  };
+
+  @ApiProperty({ description: 'Últimas notícias do ticker com sentimento' })
+  recentNews: NewsResponseDto[];
+
+  @ApiProperty({ description: 'Data da última atualização' })
+  lastUpdated: Date;
+}
+
+/**
+ * Enum de períodos para análise de sentimento
+ * FASE 76: Time-Weighted Multi-Timeframe Sentiment
+ */
+export enum SentimentPeriod {
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+  QUARTERLY = 'quarterly',
+  SEMIANNUAL = 'semiannual',
+  ANNUAL = 'annual',
+}
+
+/**
+ * DTO para sentimento por período específico
+ * Inclui temporal decay e source tier weighting
+ */
+export class TimeframeSentimentDto {
+  @ApiProperty({ enum: SentimentPeriod, description: 'Período da análise' })
+  period: SentimentPeriod;
+
+  @ApiProperty({ description: 'Score de sentimento ponderado (-1 a +1)' })
+  sentiment: number;
+
+  @ApiProperty({ enum: SentimentLabel, description: 'Label do sentimento' })
+  label: SentimentLabel;
+
+  @ApiProperty({ description: 'Confiança média ponderada (0 a 1)' })
+  confidence: number;
+
+  @ApiProperty({ description: 'Número de notícias no período' })
+  newsCount: number;
+
+  @ApiPropertyOptional({ description: 'Data da notícia mais antiga no período' })
+  oldestNews?: Date;
+
+  @ApiPropertyOptional({ description: 'Data da notícia mais recente no período' })
+  newestNews?: Date;
+}
+
+/**
+ * DTO para sentimento multi-período de um ticker
+ * Retorna todos os timeframes de uma vez
+ */
+export class MultiTimeframeSentimentDto {
+  @ApiProperty({ description: 'Ticker do ativo' })
+  ticker: string;
+
+  @ApiProperty({ type: [TimeframeSentimentDto], description: 'Sentimento por período' })
+  timeframes: TimeframeSentimentDto[];
+
+  @ApiProperty({ description: 'Breakdown por label de sentimento (across all periods)' })
+  breakdown: {
+    veryBullish: number;
+    bullish: number;
+    slightlyBullish: number;
+    neutral: number;
+    slightlyBearish: number;
+    bearish: number;
+    veryBearish: number;
+  };
+
+  @ApiProperty({ description: 'Data da última atualização' })
+  lastUpdated: Date;
+}

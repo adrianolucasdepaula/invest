@@ -19,6 +19,31 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 84: Time-Weighted Multi-Timeframe Sentiment - 100% COMPLETA (2025-12-09)**
+  - **Backend DTOs:**
+    - `SentimentPeriod` enum: weekly, monthly, quarterly, semiannual, annual
+    - `TimeframeSentimentDto`: sentimento por período com temporal decay
+    - `MultiTimeframeSentimentDto`: todos os períodos de uma vez
+  - **Backend Service:**
+    - `calculateTemporalWeight()`: exponential decay `Weight(t) = 2^(-t/halflife)`
+    - `getSourceTierWeight()`: Source tier weighting (Bloomberg 1.3x, RSS 0.8x)
+    - `getTickerSentimentByPeriod()`: sentimento ponderado por período
+    - `getTickerMultiTimeframeSentiment()`: todos os 5 períodos
+  - **Backend Controller:**
+    - `GET /ticker-sentiment/:ticker/multi`: multi-timeframe endpoint
+    - `GET /ticker-sentiment/:ticker/:period`: período específico
+  - **Frontend Component:**
+    - Period selector tabs (7D, 1M, 3M, 6M, 1A)
+    - Auto-seleção do primeiro período com dados
+    - Tratamento de cenário "sem dados"
+  - **Padrão de Mercado (Bloomberg/Reuters):**
+    - Half-life configurável por período (3.5d semanal, 14d mensal, etc.)
+    - Source tier weighting por credibilidade da fonte
+  - **Validação:**
+    - TypeScript: 0 erros (backend + frontend)
+    - MCP Triplo: Playwright + Chrome DevTools validados
+    - Cenários testados: PETR4 (com dados), MGLU3 (sem dados)
+
 - **FASE 76: Observabilidade e Rastreabilidade - 100% COMPLETA (2025-12-06)**
   - **Fase 1 - Backend Infrastructure:**
     - `GlobalExceptionFilter`: Captura todas exceções não tratadas, gera correlation IDs

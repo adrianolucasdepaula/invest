@@ -30,6 +30,7 @@ import { useAnalysis, useRequestAnalysis } from '@/lib/hooks/use-analysis';
 import { AdvancedChart } from '@/components/tradingview/widgets/AdvancedChart';
 import FundamentalMetrics from '@/components/FundamentalMetrics';
 import { TickerNews } from '@/components/assets/ticker-news';
+import { TickerSentimentThermometer } from '@/components/assets/ticker-sentiment-thermometer';
 
 // Helper function to map dataSources API response to FundamentalMetrics format
 function mapDataSourcesToMetrics(dataSources: any) {
@@ -576,8 +577,18 @@ export default function AssetDetailPage({ params }: { params: Promise<{ ticker: 
         </Card>
       </div>
 
-      {/* News Section - FASE 75 */}
-      <TickerNews ticker={ticker} limit={10} />
+      {/* Sentiment & News Section - FASE 75 */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Ticker Sentiment Thermometer */}
+        <div className="md:col-span-1">
+          <TickerSentimentThermometer ticker={ticker} showRecentNews={true} />
+        </div>
+
+        {/* Ticker News */}
+        <div className="md:col-span-2">
+          <TickerNews ticker={ticker} limit={10} />
+        </div>
+      </div>
     </div>
   );
 }
