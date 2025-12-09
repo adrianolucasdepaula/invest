@@ -1,7 +1,7 @@
 # 🏗️ ARCHITECTURE - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-25
+**Última Atualização:** 2025-12-09
 **Versão:** 1.2.0
 **Mantenedor:** Claude Code (Sonnet 4.5)
 
@@ -103,6 +103,16 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 - `macd-chart.tsx` - MACD Line + Signal + Histogram
 - `stochastic-chart.tsx` - Stochastic oscillator (%K + %D, linhas 80/20)
 - `multi-pane-chart.tsx` - Orquestrador de 4 painéis sincronizados
+
+**Componentes de Análise Fundamentalista (FASE 85):**
+
+- `FundamentalIndicatorsTable.tsx` - Tabela com 38 indicadores em 9 categorias colapsáveis
+  - Valuation: P/L, P/VP, PSR, EV/EBIT, EV/EBITDA, etc.
+  - Rentabilidade: ROE, ROIC, ROA, Giro Ativos
+  - Margens: Bruta, EBIT, EBITDA, Líquida
+  - Por Ação: LPA, VPA (formato `currency` R$)
+  - Liquidez: Liquidez Corrente (formato `ratio`)
+  - Formatos: `ratio`, `percent`, `currency` com `Intl.NumberFormat('pt-BR')`
 
 **Estado:**
 
@@ -287,6 +297,7 @@ Acionados automaticamente quando:
 | **Ativos (ticker, nome, setor)** | `Asset`                         | `backend/src/database/entities/asset.entity.ts`              | PETR4, VALE3, ITUB4                       |
 | **Preços históricos (OHLCV)**    | `AssetPrices`                   | `backend/src/database/entities/asset-price.entity.ts`        | Open, High, Low, Close, Volume + variação |
 | **Mudanças de ticker (FASE 55)** | `TickerChange`                  | `backend/src/database/entities/ticker-change.entity.ts`      | ELET3→AXIA3, ELET6→AXIA6 (rebranding)     |
+| **Dados fundamentalistas (FASE 85)** | `FundamentalData`           | `backend/src/database/entities/fundamental-data.entity.ts`   | P/L, P/VP, LPA, VPA, Liquidez Corrente, ROE, etc |
 | **Análises fundamentalistas**    | `Analysis` (type='fundamental') | `backend/src/database/entities/analysis.entity.ts`           | P/L, P/VP, ROE, ROIC, Dividend Yield      |
 | **Análises técnicas**            | `Analysis` (type='technical')   | `backend/src/database/entities/analysis.entity.ts`           | RSI, MACD, Bollinger, SMA                 |
 | **Análises completas**           | `Analysis` (type='complete')    | `backend/src/database/entities/analysis.entity.ts`           | Combinação Fundamentalista + Técnica      |

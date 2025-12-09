@@ -142,11 +142,11 @@ export interface FieldSourceInfo {
 
 ## 5. Issues Identificados
 
-### 5.1 CRITICO - Scraper TypeScript Timeout
+### 5.1 ~~CRITICO - Scraper TypeScript Timeout~~ ✅ RESOLVIDO
 **Problema:** `FundamentusScraper.ts` usa `waitUntil: 'networkidle'` causando timeout de 3min
 **Impacto:** Jobs de update-fundamentals falham
-**Solucao:** Alterar para `waitUntil: 'load'` (padrao do Python scraper)
-**Status:** PENDENTE
+**Solucao:** Alterado para `waitUntil: 'load'` (padrao do Python scraper)
+**Status:** ✅ RESOLVIDO (2025-12-09)
 
 ### 5.2 MEDIO - fieldSources vazio
 **Problema:** Registros antigos tem fieldSources = {}
@@ -154,25 +154,25 @@ export interface FieldSourceInfo {
 **Solucao:** Scrape futuro popula fieldSources corretamente
 **Status:** Monitoramento
 
-## 6. Documentacao Pendente
+## 6. Documentacao ✅ COMPLETA
 
-- [ ] ROADMAP.md - Adicionar esta fase
-- [ ] CHANGELOG.md - Registrar mudancas
-- [ ] ARCHITECTURE.md - Atualizar diagrama de dados
-- [ ] DATABASE_SCHEMA.md - Documentar novas colunas
+- [x] ROADMAP.md - Fase 85 adicionada (commit ec41f19)
+- [x] CHANGELOG.md - Mudancas registradas (commit ec41f19)
+- [x] ARCHITECTURE.md - FundamentalIndicatorsTable documentado
+- [x] DATABASE_SCHEMA.md - Colunas lpa, vpa, liquidez_corrente documentadas
 
-## 7. Proximos Passos
+## 7. Proximos Passos ✅ TODOS CONCLUIDOS
 
-1. Corrigir FundamentusScraper.ts (waitUntil)
-2. Validar frontend com MCP Triplo
-3. Cross-validation dados financeiros
-4. Atualizar documentacao
-5. Commit final
+1. ~~Corrigir FundamentusScraper.ts (waitUntil)~~ ✅
+2. ~~Validar frontend com MCP Triplo~~ ✅
+3. ~~Cross-validation dados financeiros~~ ✅
+4. ~~Atualizar documentacao~~ ✅
+5. ~~Commit final~~ ✅
 
-## 8. Metricas de Sucesso
+## 8. Metricas de Sucesso ✅ TODAS ATINGIDAS
 
-- [ ] TypeScript: 0 erros
-- [ ] Build: Success
-- [ ] API: Campos retornam valores
-- [ ] Frontend: Tabela exibe dados
-- [ ] Dados: Precisao validada em multiplas fontes
+- [x] TypeScript: 0 erros (backend + frontend)
+- [x] Build: Success (backend + frontend)
+- [x] API: Campos retornam valores (lpa, vpa, liquidezCorrente)
+- [x] Frontend: Tabela exibe dados (38 indicadores em 9 categorias)
+- [x] Dados: Precisao validada (PETR4 + LREN3 cross-validation)
