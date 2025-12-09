@@ -919,6 +919,17 @@ export class AssetsService {
       disponibilidades:
         scrapedData.disponibilidades || scrapedData.cash || scrapedData.cashAndEquivalents || null,
 
+      // Per Share Data
+      lpa: scrapedData.lpa || scrapedData.earningsPerShare || null,
+      vpa: scrapedData.vpa || scrapedData.bookValuePerShare || null,
+
+      // Liquidity
+      liquidezCorrente:
+        scrapedData.liquidezCorrente ||
+        scrapedData.liquidez_corrente ||
+        scrapedData.currentRatio ||
+        null,
+
       // Store original data and metadata
       metadata: {
         originalData: scrapedData,
@@ -930,39 +941,81 @@ export class AssetsService {
     };
   }
 
+  /**
+   * Sync options liquidity data for all assets
+   * Uses scrapeLiquidityWithDetails() to get detailed data including:
+   * - Period of analysis
+   * - Total trades
+   * - Financial volume
+   * - Quantity traded
+   */
   async syncOptionsLiquidity() {
-    this.logger.log('Syncing options liquidity for all assets');
+    this.logger.log('Syncing options liquidity for all assets (with detailed data)');
+    const startTime = Date.now();
     try {
-      const tickers = await this.opcoesScraper.scrapeLiquidity();
-      const tickersSet = new Set(tickers.map((t) => t.toUpperCase()));
+      // Use the new method that returns detailed data
+      const liquidityData = await this.opcoesScraper.scrapeLiquidityWithDetails();
 
       const assets = await this.assetRepository.find();
       let updatedCount = 0;
+      let optionsAddedCount = 0;
+      let optionsRemovedCount = 0;
       const assetsWithOptions: string[] = [];
 
       for (const asset of assets) {
-        const hasOptions = tickersSet.has(asset.ticker.toUpperCase());
+        const upperTicker = asset.ticker.toUpperCase();
+        const optionsData = liquidityData.get(upperTicker);
+        const hadOptions = asset.hasOptions;
+        const nowHasOptions = !!optionsData;
 
-        // Update if changed
-        if (asset.hasOptions !== hasOptions) {
-          asset.hasOptions = hasOptions;
+        // Update hasOptions flag
+        if (hadOptions !== nowHasOptions) {
+          asset.hasOptions = nowHasOptions;
           updatedCount++;
+
+          if (nowHasOptions) {
+            optionsAddedCount++;
+          } else {
+            optionsRemovedCount++;
+          }
         }
 
-        if (hasOptions) {
+        // Update optionsLiquidityMetadata with detailed data
+        if (nowHasOptions && optionsData) {
+          asset.optionsLiquidityMetadata = {
+            periodo: optionsData.periodo,
+            totalNegocios: optionsData.totalNegocios,
+            volumeFinanceiro: optionsData.volumeFinanceiro,
+            quantidadeNegociada: optionsData.quantidadeNegociada,
+            mediaNegocios: optionsData.mediaNegocios,
+            mediaVolume: optionsData.mediaVolume,
+            lastUpdated: optionsData.lastUpdated.toISOString(),
+          };
           assetsWithOptions.push(asset.ticker);
+        } else if (!nowHasOptions && asset.optionsLiquidityMetadata) {
+          // Clear metadata if asset no longer has options
+          asset.optionsLiquidityMetadata = null;
         }
       }
 
-      if (updatedCount > 0) {
+      // Save all updated assets
+      if (updatedCount > 0 || assetsWithOptions.length > 0) {
         await this.assetRepository.save(assets);
       }
 
-      this.logger.log(`Updated ${updatedCount} assets with options liquidity info`);
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `Options liquidity sync completed: ${assetsWithOptions.length} assets with options, ` +
+          `${optionsAddedCount} added, ${optionsRemovedCount} removed (${duration}ms)`,
+      );
 
       return {
         totalUpdated: updatedCount,
+        optionsAdded: optionsAddedCount,
+        optionsRemoved: optionsRemovedCount,
         assetsWithOptions,
+        totalWithOptions: assetsWithOptions.length,
+        duration,
       };
     } catch (error) {
       this.logger.error(`Failed to sync options liquidity: ${error.message}`);

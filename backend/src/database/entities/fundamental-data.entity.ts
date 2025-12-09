@@ -156,6 +156,17 @@ export class FundamentalData {
   @Column({ type: 'decimal', precision: 18, scale: 2, name: 'disponibilidades', nullable: true })
   disponibilidades: number;
 
+  // Per Share Indicators
+  @Column({ type: 'decimal', precision: 18, scale: 2, nullable: true })
+  lpa: number; // Lucro por Ação
+
+  @Column({ type: 'decimal', precision: 18, scale: 2, nullable: true })
+  vpa: number; // Valor Patrimonial por Ação
+
+  // Liquidity Indicators
+  @Column({ type: 'decimal', precision: 18, scale: 2, name: 'liquidez_corrente', nullable: true })
+  liquidezCorrente: number; // Liquidez Corrente
+
   // Additional metadata
   @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, any>;

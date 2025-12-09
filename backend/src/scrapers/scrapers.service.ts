@@ -674,6 +674,11 @@ export class ScrapersService {
       pCapitalGiro: ['pCapitalGiro', 'p_capital_giro', 'pcg'],
       pEbit: ['pEbit', 'p_ebit'],
       pegRatio: ['pegRatio', 'peg', 'peg_ratio'],
+      // Per Share - Lucro e Valor Patrimonial por Ação
+      lpa: ['lpa', 'lucro_acao', 'earningsPerShare'],
+      vpa: ['vpa', 'valor_patrimonial_acao', 'bookValuePerShare'],
+      // Liquidez
+      liquidezCorrente: ['liquidezCorrente', 'liquidez_corrente', 'current_ratio'],
     };
 
     const aliases = fieldAliases[field] || [field];

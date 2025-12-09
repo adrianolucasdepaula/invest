@@ -12,9 +12,17 @@ import {
   PortfolioPosition,
 } from '@database/entities';
 import { ScrapersService } from '../../scrapers/scrapers.service';
+import { OpcoesScraper, OptionsLiquidityData } from '../../scrapers/options/opcoes.scraper';
 import { AppWebSocketGateway } from '../../websocket/websocket.gateway';
 import { TelemetryService } from '../../telemetry/telemetry.service';
 import { SpanKind } from '@opentelemetry/api';
+import {
+  NewsCollectorsService,
+  AIOrchestatorService,
+  ConsensusService,
+} from '../news/services';
+import { NewsService } from '../news/news.service';
+import { News } from '@database/entities';
 
 export interface UpdateResult {
   success: boolean;
@@ -64,6 +72,11 @@ export class AssetsUpdateService {
     return randomBytes(4).toString('hex');
   }
 
+  // Cache for options liquidity data to avoid repeated scraping during batch updates
+  private optionsLiquidityCache: Map<string, OptionsLiquidityData> | null = null;
+  private optionsLiquidityCacheTime: Date | null = null;
+  private readonly OPTIONS_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
   constructor(
     @InjectRepository(Asset)
     private assetRepository: Repository<Asset>,
@@ -76,8 +89,13 @@ export class AssetsUpdateService {
     @InjectRepository(PortfolioPosition)
     private portfolioPositionRepository: Repository<PortfolioPosition>,
     private scrapersService: ScrapersService,
+    private opcoesScraper: OpcoesScraper,
     private webSocketGateway: AppWebSocketGateway,
     private telemetryService: TelemetryService,
+    private newsCollectorsService: NewsCollectorsService,
+    private aiOrchestatorService: AIOrchestatorService,
+    private consensusService: ConsensusService,
+    private newsService: NewsService,
   ) {}
 
   /**
@@ -192,6 +210,10 @@ export class AssetsUpdateService {
       // 7. Map and save fundamental data
       const fundamentalData = await this.saveFundamentalData(asset, scrapedResult);
 
+      // 7.1. Collect and analyze news automatically (FASE 75.6)
+      // This updates the sentiment thermometer for the asset
+      await this.collectAndAnalyzeNews(ticker, logPrefix);
+
       // 8. Extract sector from rawSourcesData (BRAPI provides this)
       // Try BRAPI first (most reliable for sector), then other sources
       this.logger.debug(
@@ -209,6 +231,32 @@ export class AssetsUpdateService {
         this.logger.debug(`${logPrefix} Extracted sector "${sectorFromSources}" for ${ticker}`);
       } else if (!sectorFromSources) {
         this.logger.debug(`${logPrefix} No sector found in sources for ${ticker}`);
+      }
+
+      // 8.1. Check options liquidity for this asset
+      try {
+        const optionsData = await this.checkOptionsForAsset(ticker);
+        if (optionsData) {
+          asset.hasOptions = true;
+          asset.optionsLiquidityMetadata = {
+            periodo: optionsData.periodo,
+            totalNegocios: optionsData.totalNegocios,
+            volumeFinanceiro: optionsData.volumeFinanceiro,
+            quantidadeNegociada: optionsData.quantidadeNegociada,
+            mediaNegocios: optionsData.mediaNegocios,
+            mediaVolume: optionsData.mediaVolume,
+            lastUpdated: optionsData.lastUpdated,
+          };
+          this.logger.debug(`${logPrefix} Asset ${ticker} has options available`);
+        } else if (asset.hasOptions) {
+          // Asset no longer has options
+          asset.hasOptions = false;
+          asset.optionsLiquidityMetadata = null;
+          this.logger.debug(`${logPrefix} Asset ${ticker} no longer has options`);
+        }
+      } catch (optionsError) {
+        this.logger.warn(`${logPrefix} Failed to check options for ${ticker}: ${optionsError.message}`);
+        // Continue without failing - options check is not critical
       }
 
       // 9. Update asset tracking fields
@@ -788,6 +836,13 @@ export class AssetsUpdateService {
       ativoTotal: getFieldValue('ativoTotal'),
       disponibilidades: getFieldValue('disponibilidades'),
 
+      // Per Share Data
+      lpa: getFieldValue('lpa'),
+      vpa: getFieldValue('vpa'),
+
+      // Liquidity
+      liquidezCorrente: getFieldValue('liquidezCorrente', 'liquidez_corrente'),
+
       // FASE 1: Rastreamento de origem por campo
       fieldSources: fieldSources,
 
@@ -940,5 +995,219 @@ export class AssetsUpdateService {
     }
 
     return null;
+  }
+
+  /**
+   * MÉTODO AUXILIAR: Coletar e analisar notícias automaticamente
+   *
+   * Chamado após a atualização de dados fundamentais para manter
+   * o termômetro de sentimento atualizado.
+   *
+   * FASE 75.6 FIX: Agora também busca notícias existentes não analisadas
+   * do banco de dados, não apenas as recém-coletadas.
+   *
+   * @param ticker - Ticker do ativo
+   * @param logPrefix - Prefixo para logs (inclui traceId)
+   */
+  private async collectAndAnalyzeNews(ticker: string, logPrefix: string): Promise<void> {
+    try {
+      this.logger.log(`${logPrefix} Iniciando coleta de notícias para ${ticker}...`);
+
+      // 1. Coletar novas notícias de todas as fontes RSS
+      const collectedNews = await this.newsCollectorsService.collectForTicker(ticker);
+
+      this.logger.log(
+        `${logPrefix} ${collectedNews?.length || 0} notícias novas coletadas para ${ticker}`,
+      );
+
+      // 2. Buscar notícias existentes não analisadas do banco (FIX para o bug)
+      const existingUnanalyzed = await this.newsService.findAll({
+        ticker,
+        isAnalyzed: false,
+        limit: 10,
+        offset: 0,
+      });
+
+      this.logger.log(
+        `${logPrefix} ${existingUnanalyzed.total} notícias existentes não analisadas para ${ticker}`,
+      );
+
+      // 3. Combinar: novas + existentes não analisadas
+      const allUnanalyzed: News[] = [];
+
+      // Adicionar novas não analisadas
+      if (collectedNews?.length > 0) {
+        const newUnanalyzed = collectedNews.filter((news) => !news.isAnalyzed);
+        allUnanalyzed.push(...newUnanalyzed);
+      }
+
+      // Adicionar existentes não analisadas (evitar duplicatas por ID)
+      const existingIds = new Set(allUnanalyzed.map((n) => n.id));
+      for (const dto of existingUnanalyzed.data) {
+        if (!existingIds.has(dto.id)) {
+          // Buscar entidade completa para análise
+          const newsEntity = await this.newsService.findOneEntity(dto.id);
+          allUnanalyzed.push(newsEntity);
+        }
+      }
+
+      if (allUnanalyzed.length === 0) {
+        this.logger.log(`${logPrefix} Nenhuma notícia pendente de análise para ${ticker}`);
+        return;
+      }
+
+      this.logger.log(
+        `${logPrefix} Analisando ${allUnanalyzed.length} notícias de ${ticker}...`,
+      );
+
+      // 4. Analisar até 5 notícias por ativo (evitar sobrecarga de API)
+      const newsToAnalyze = allUnanalyzed.slice(0, 5);
+      let analyzedCount = 0;
+
+      for (const news of newsToAnalyze) {
+        try {
+          // Analisar com os 6 providers de IA
+          await this.aiOrchestatorService.analyzeNews(news);
+
+          // Calcular consenso
+          await this.consensusService.calculateConsensus(news.id);
+
+          analyzedCount++;
+          this.logger.debug(`${logPrefix} ✅ Notícia ${news.id} analisada`);
+        } catch (error) {
+          this.logger.warn(
+            `${logPrefix} Erro ao analisar notícia ${news.id}: ${error.message}`,
+          );
+          // Continua com a próxima notícia
+        }
+      }
+
+      this.logger.log(
+        `${logPrefix} ✅ Análise de sentimento concluída: ${analyzedCount}/${newsToAnalyze.length} notícias de ${ticker}`,
+      );
+    } catch (error) {
+      // Log do erro mas não propaga - fundamentais já foram salvos
+      this.logger.error(
+        `${logPrefix} ❌ Erro na coleta/análise de notícias de ${ticker}: ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * MÉTODO AUXILIAR: Verificar se um ativo tem opções disponíveis
+   *
+   * Usa cache para evitar múltiplas requisições ao scraper durante batch updates.
+   * O cache tem TTL de 30 minutos.
+   *
+   * @param ticker - Ticker do ativo
+   * @returns Dados de liquidez de opções ou null se não tem opções
+   */
+  private async checkOptionsForAsset(ticker: string): Promise<OptionsLiquidityData | null> {
+    // Check if cache is valid
+    const now = new Date();
+    const cacheValid =
+      this.optionsLiquidityCache &&
+      this.optionsLiquidityCacheTime &&
+      now.getTime() - this.optionsLiquidityCacheTime.getTime() < this.OPTIONS_CACHE_TTL_MS;
+
+    if (!cacheValid) {
+      // Refresh cache
+      await this.refreshOptionsCache();
+    }
+
+    // Return data for this ticker (or null if not in cache)
+    return this.optionsLiquidityCache?.get(ticker) || null;
+  }
+
+  /**
+   * MÉTODO AUXILIAR: Atualizar cache de liquidez de opções
+   *
+   * Faz scraping de todos os ativos com opções e armazena em cache.
+   */
+  private async refreshOptionsCache(): Promise<void> {
+    this.logger.log('[OPTIONS-CACHE] Refreshing options liquidity cache...');
+    const startTime = Date.now();
+
+    try {
+      this.optionsLiquidityCache = await this.opcoesScraper.scrapeLiquidityWithDetails();
+      this.optionsLiquidityCacheTime = new Date();
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `[OPTIONS-CACHE] Cache refreshed: ${this.optionsLiquidityCache.size} assets with options (${duration}ms)`,
+      );
+    } catch (error) {
+      this.logger.error(`[OPTIONS-CACHE] Failed to refresh cache: ${error.message}`);
+      // Keep old cache if refresh fails
+      if (!this.optionsLiquidityCache) {
+        this.optionsLiquidityCache = new Map();
+      }
+    }
+  }
+
+  /**
+   * MÉTODO PÚBLICO: Sincronizar opções antes de batch update
+   *
+   * Chamado pelo controller antes de iniciar "Atualizar Todos".
+   * Atualiza o cache de opções e sincroniza com o banco de dados.
+   *
+   * @returns Estatísticas da sincronização
+   */
+  async syncOptionsBeforeBatchUpdate(): Promise<{
+    totalWithOptions: number;
+    cacheRefreshed: boolean;
+    duration: number;
+  }> {
+    this.logger.log('[OPTIONS-SYNC] Syncing options liquidity before batch update...');
+    const startTime = Date.now();
+
+    try {
+      // Force refresh the cache
+      await this.refreshOptionsCache();
+
+      // Update all assets in database based on cache
+      const allAssets = await this.assetRepository.find({ where: { isActive: true } });
+      let updatedCount = 0;
+
+      for (const asset of allAssets) {
+        const optionsData = this.optionsLiquidityCache?.get(asset.ticker);
+        const hadOptions = asset.hasOptions;
+        const hasOptions = !!optionsData;
+
+        // Only update if status changed or data needs refresh
+        if (hadOptions !== hasOptions || (hasOptions && optionsData)) {
+          asset.hasOptions = hasOptions;
+          asset.optionsLiquidityMetadata = hasOptions
+            ? {
+                periodo: optionsData.periodo,
+                totalNegocios: optionsData.totalNegocios,
+                volumeFinanceiro: optionsData.volumeFinanceiro,
+                quantidadeNegociada: optionsData.quantidadeNegociada,
+                mediaNegocios: optionsData.mediaNegocios,
+                mediaVolume: optionsData.mediaVolume,
+                lastUpdated: optionsData.lastUpdated,
+              }
+            : null;
+          await this.assetRepository.save(asset);
+          updatedCount++;
+        }
+      }
+
+      const duration = Date.now() - startTime;
+      const totalWithOptions = this.optionsLiquidityCache?.size || 0;
+
+      this.logger.log(
+        `[OPTIONS-SYNC] Sync completed: ${totalWithOptions} assets with options, ${updatedCount} updated (${duration}ms)`,
+      );
+
+      return {
+        totalWithOptions,
+        cacheRefreshed: true,
+        duration,
+      };
+    } catch (error) {
+      this.logger.error(`[OPTIONS-SYNC] Sync failed: ${error.message}`);
+      throw error;
+    }
   }
 }

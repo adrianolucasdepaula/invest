@@ -133,6 +133,13 @@ export const DEFAULT_TOLERANCES: ToleranceConfig = {
     ativoTotal: 0.001,
     dividaBruta: 0.001,
     dividaLiquida: 0.001,
+
+    // Per Share - tolerância padrão
+    lpa: 0.01, // 1%
+    vpa: 0.01,
+
+    // Liquidity - tolerância menor
+    liquidezCorrente: 0.005, // 0.5%
   },
 };
 
@@ -186,6 +193,13 @@ export const TRACKABLE_FIELDS = [
   'dividaBruta',
   'dividaLiquida',
   'disponibilidades',
+
+  // Per Share
+  'lpa', // Lucro por Ação
+  'vpa', // Valor Patrimonial por Ação
+
+  // Liquidity
+  'liquidezCorrente', // Liquidez Corrente
 ] as const;
 
 export type TrackableField = (typeof TRACKABLE_FIELDS)[number];
@@ -240,6 +254,13 @@ export const FIELD_SELECTION_STRATEGY: Record<string, SelectionStrategy> = {
   dividaBruta: SelectionStrategy.CONSENSUS,
   dividaLiquida: SelectionStrategy.CONSENSUS,
   disponibilidades: SelectionStrategy.CONSENSUS,
+
+  // Per Share
+  lpa: SelectionStrategy.CONSENSUS,
+  vpa: SelectionStrategy.CONSENSUS,
+
+  // Liquidity
+  liquidezCorrente: SelectionStrategy.CONSENSUS,
 };
 
 /**

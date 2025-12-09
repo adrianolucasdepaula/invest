@@ -1,8 +1,8 @@
 # 🗺️ ROADMAP - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-08
-**Versão:** 1.10.0
+**Última Atualização:** 2025-12-09
+**Versão:** 1.11.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -10874,9 +10874,60 @@ WeightedSentiment = Σ(score × confidence × temporal_weight × source_tier) / 
 
 ---
 
+## FASE 85: LPA, VPA e Liquidez Corrente ✅ 100% COMPLETO
+
+**Data:** 2025-12-09
+**Tipo:** Feature + Bug Fix
+**Documentação:** `PLANO_FASE_LPA_VPA_LIQUIDEZ.md`
+
+### Descrição
+
+Adição de suporte aos campos `LPA` (Lucro Por Ação), `VPA` (Valor Patrimonial por Ação) e `Liquidez Corrente` que eram coletados pelos scrapers Python mas não estavam sendo salvos no banco de dados nem exibidos no frontend.
+
+### Root Cause Analysis
+
+| Problema | Causa | Solução |
+|----------|-------|---------|
+| API retornava null para LPA/VPA | Campos não estavam em TRACKABLE_FIELDS | Adicionados ao TRACKABLE_FIELDS |
+| Frontend exibia "N/A" | Colunas não existiam na entity | Migration criada para adicionar colunas |
+| Scraper TS não extraía LPA/VPA | FundamentusScraper.ts não tinha extração | Adicionado getValue('LPA') e getValue('VPA') |
+
+### Implementações
+
+| Componente | Arquivo | Mudança | Status |
+|------------|---------|---------|--------|
+| **TRACKABLE_FIELDS** | `field-source.interface.ts` | Adicionado lpa, vpa, liquidezCorrente | ✅ |
+| **Entity** | `fundamental-data.entity.ts` | Colunas lpa, vpa, liquidez_corrente | ✅ |
+| **Migration** | `1765100000000-AddLpaVpaLiquidezCorrente.ts` | ALTER TABLE ADD COLUMN | ✅ |
+| **Scraper TS** | `fundamentus.scraper.ts` | getValue('LPA'), getValue('VPA') | ✅ |
+| **Services** | `assets.service.ts`, `assets-update.service.ts` | Mapping dos campos | ✅ |
+| **Frontend** | `FundamentalIndicatorsTable.tsx` | Seções "Por Ação" e "Liquidez" | ✅ |
+| **Aliases** | `scrapers.service.ts` | Aliases para extractFieldValue | ✅ |
+
+### Dados Validados (PETR4)
+
+| Campo | Valor | Fonte | Consensus |
+|-------|-------|-------|-----------|
+| LPA | R$ 6,01 | Fundamentus | 100% |
+| VPA | R$ 32,81 | Fundamentus | 100% |
+| Liquidez Corrente | 0,82 | Fundamentus | 100% |
+
+### Validação Zero Tolerance
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Build Backend: SUCCESS
+- ✅ Build Frontend: SUCCESS
+- ✅ API Endpoints: lpa, vpa, liquidezCorrente retornados
+- ✅ MCP Triplo: Frontend exibe "Por Ação (2/2 indicadores)"
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (85 fases)
+### Fases Completas (86 fases)
 
 - ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
 - ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
@@ -10909,6 +10960,7 @@ WeightedSentiment = Σ(score × confidence × temporal_weight × source_tier) / 
 - ✅ FASE 82: Phase 4 Integration Validation - 100% COMPLETO (2025-12-08)
 - ✅ FASE 83: Phase 5 Scrapers Validation - 100% COMPLETO (2025-12-08)
 - ✅ FASE 84: Time-Weighted Multi-Timeframe Sentiment - 100% COMPLETO (2025-12-09)
+- ✅ FASE 85: LPA, VPA e Liquidez Corrente - 100% COMPLETO (2025-12-09)
 
 ### Fases Planejadas
 

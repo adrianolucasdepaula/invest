@@ -31,6 +31,9 @@ export interface FundamentusData {
   receitaLiquida: number;
   ebit: number;
   lucroLiquido: number;
+  // Per Share Data - FASE LPA/VPA
+  lpa: number; // Lucro por Ação
+  vpa: number; // Valor Patrimonial por Ação
 }
 
 @Injectable()
@@ -61,7 +64,10 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
     const page = this.isFII(ticker) ? 'fii_detalhes.php' : 'detalhes.php';
     const url = `https://www.fundamentus.com.br/${page}?papel=${ticker.toUpperCase()}`;
 
-    await this.page.goto(url, { waitUntil: 'networkidle', timeout: this.config.timeout });
+    // IMPORTANTE: Usar 'load' em vez de 'networkidle' para evitar timeout
+    // O 'networkidle' aguarda todas as requisições (incluindo analytics lentos)
+    // causando timeout de 3min. O Python scraper usa 'load' e funciona em ~10s.
+    await this.page.goto(url, { waitUntil: 'load', timeout: this.config.timeout });
 
     const content = await this.page.content();
     const $ = cheerio.load(content);
@@ -121,6 +127,9 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
       receitaLiquida: getValue('Receita Líquida'),
       ebit: getValue('EBIT'),
       lucroLiquido: getValue('Lucro Líquido'),
+      // Per Share Data - FASE LPA/VPA
+      lpa: getValue('LPA'),
+      vpa: getValue('VPA'),
     };
 
     return data;

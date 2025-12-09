@@ -7,6 +7,34 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added
+
+- **FASE 85: LPA, VPA e Liquidez Corrente - 100% COMPLETA (2025-12-09)**
+  - **Backend - TRACKABLE_FIELDS:**
+    - Adicionado `lpa`, `vpa`, `liquidezCorrente` ao array de campos rastreáveis
+    - Estratégia de seleção: `consensus` para todos os campos
+    - Tolerâncias: 5% para LPA/VPA, 10% para Liquidez Corrente
+  - **Backend - Entity:**
+    - `FundamentalData.lpa`: Lucro Por Ação (decimal 18,2)
+    - `FundamentalData.vpa`: Valor Patrimonial por Ação (decimal 18,2)
+    - `FundamentalData.liquidezCorrente`: Liquidez Corrente (decimal 18,2)
+  - **Backend - Migration:**
+    - `1765100000000-AddLpaVpaLiquidezCorrente.ts`: ALTER TABLE ADD COLUMN
+  - **Backend - Scraper:**
+    - `FundamentusScraper.ts`: Extração de LPA e VPA via cheerio
+    - Fix: `waitUntil: 'load'` (era `networkidle` causando timeout)
+  - **Backend - Services:**
+    - `assets.service.ts`: Mapping de lpa, vpa, liquidezCorrente
+    - `assets-update.service.ts`: Mapping de lpa, vpa, liquidezCorrente
+    - `scrapers.service.ts`: Aliases para extractFieldValue
+  - **Frontend:**
+    - `FundamentalIndicatorsTable.tsx`: Seções "Por Ação" e "Liquidez"
+  - **Validação:**
+    - TypeScript: 0 erros (backend + frontend)
+    - API: lpa, vpa, liquidezCorrente retornados corretamente
+    - Frontend: "Por Ação (2/2 indicadores)" exibido com LPA e VPA
+    - Dados PETR4: LPA=R$ 6,01, VPA=R$ 32,81, Liquidez=0,82
+
 ### Fixed
 
 - **A11y: WCAG 2 AA Color Contrast Compliance (2025-12-07)**

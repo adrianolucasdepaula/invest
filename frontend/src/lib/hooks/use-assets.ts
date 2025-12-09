@@ -51,23 +51,26 @@ export function useAssetFundamentals(ticker: string) {
 }
 
 export interface FieldSourceValue {
-  value: number | string | null;
-  tolerance: number;
+  source: string;
+  value: number | null;
+  scrapedAt: string;
 }
 
 export interface DivergentSource {
   source: string;
-  value: number | string | null;
+  value: number;
+  deviation: number;
 }
 
 export interface FieldSourceInfo {
-  fieldName: string;
-  consensusValue: number | string | null;
-  sources: Record<string, FieldSourceValue>;
-  hasDiscrepancy: boolean;
-  divergentSources: DivergentSource[];
+  values?: FieldSourceValue[];
+  finalValue: number | null;
+  finalSource: string;
   sourcesCount: number;
-  consensusPercentage: number;
+  agreementCount: number;
+  consensus: number;
+  hasDiscrepancy: boolean;
+  divergentSources?: DivergentSource[];
 }
 
 export interface AssetDataSourcesResponse {
