@@ -421,6 +421,255 @@ async def get_sites():
     }
 
 
+# ==========================================================================
+# SENTIMENT ANALYSIS VIA AI SCRAPERS (FASE 85)
+# ==========================================================================
+
+from scrapers import (
+    ChatGPTScraper,
+    GeminiScraper,
+    ClaudeScraper,
+    DeepSeekScraper,
+    GrokScraper,
+    PerplexityScraper,
+)
+
+# AI Scraper registry
+AI_SCRAPERS = {
+    "chatgpt": ChatGPTScraper,
+    "gemini": GeminiScraper,
+    "claude": ClaudeScraper,
+    "deepseek": DeepSeekScraper,
+    "grok": GrokScraper,
+    "perplexity": PerplexityScraper,
+}
+
+
+class SentimentAnalysisRequest(BaseModel):
+    """Request for sentiment analysis"""
+    ticker: str
+    title: str
+    summary: Optional[str] = None
+    content: Optional[str] = None
+    source: Optional[str] = None
+    published_at: Optional[str] = None
+    providers: Optional[list[str]] = None  # List of AI providers to use
+
+
+class SentimentAnalysisResult(BaseModel):
+    """Result from a single AI provider"""
+    provider: str
+    success: bool
+    sentiment_score: Optional[float] = None  # -1 to +1
+    confidence: Optional[float] = None  # 0 to 1
+    analysis_text: Optional[str] = None
+    key_factors: Optional[dict] = None
+    processing_time: Optional[int] = None
+    error: Optional[str] = None
+
+
+def build_sentiment_prompt(request: SentimentAnalysisRequest) -> str:
+    """Build standardized sentiment analysis prompt"""
+    content_text = ""
+    if request.content:
+        content_text = f"\nConteúdo: {request.content[:2000]}"
+
+    return f"""Você é um analista financeiro especializado em mercado de ações brasileiro (B3).
+Analise a seguinte notícia e determine o sentimento de mercado para o ativo {request.ticker}.
+
+NOTÍCIA:
+Título: {request.title}
+{f'Resumo: {request.summary}' if request.summary else ''}
+{content_text}
+{f'Fonte: {request.source}' if request.source else ''}
+{f'Data: {request.published_at}' if request.published_at else ''}
+
+INSTRUÇÕES:
+1. Analise o impacto potencial no preço da ação
+2. Identifique fatores positivos (bullish), negativos (bearish) e neutros
+3. Atribua um score de sentimento de -1 (muito bearish) a +1 (muito bullish)
+4. Indique sua confiança de 0 a 1
+
+RESPONDA EXATAMENTE no formato JSON:
+{{
+  "sentimentScore": <número de -1 a 1>,
+  "confidence": <número de 0 a 1>,
+  "analysisText": "<análise em 2-3 frases>",
+  "keyFactors": {{
+    "bullish": ["fator1", "fator2"],
+    "bearish": ["fator1", "fator2"],
+    "neutral": ["fator1"]
+  }}
+}}"""
+
+
+def parse_ai_response(response_text: str) -> dict:
+    """Parse AI response to extract sentiment data"""
+    import json
+    import re
+
+    try:
+        # Try to find JSON in response
+        json_match = re.search(r'\{[\s\S]*\}', response_text)
+        if json_match:
+            parsed = json.loads(json_match.group())
+            return {
+                "sentiment_score": max(-1, min(1, float(parsed.get("sentimentScore", 0)))),
+                "confidence": max(0, min(1, float(parsed.get("confidence", 0.5)))),
+                "analysis_text": parsed.get("analysisText", ""),
+                "key_factors": parsed.get("keyFactors", {"bullish": [], "bearish": [], "neutral": []}),
+            }
+    except Exception as e:
+        logger.warning(f"Failed to parse JSON from AI response: {e}")
+
+    # Fallback: Simple sentiment from text
+    text_lower = response_text.lower()
+    if any(word in text_lower for word in ["positivo", "bullish", "alta", "compra", "valorização"]):
+        return {"sentiment_score": 0.3, "confidence": 0.4, "analysis_text": response_text[:500], "key_factors": {}}
+    elif any(word in text_lower for word in ["negativo", "bearish", "baixa", "venda", "queda"]):
+        return {"sentiment_score": -0.3, "confidence": 0.4, "analysis_text": response_text[:500], "key_factors": {}}
+
+    return {"sentiment_score": 0, "confidence": 0.3, "analysis_text": response_text[:500], "key_factors": {}}
+
+
+@app.post("/api/sentiment/analyze")
+async def analyze_sentiment(request: SentimentAnalysisRequest):
+    """
+    Analyze news sentiment using AI scrapers (ChatGPT, Gemini, Claude, etc.)
+
+    Uses browser-based AI scrapers instead of paid API keys.
+    Requires OAuth cookies to be configured for each AI provider.
+    """
+    logger.info(f"[SENTIMENT] Analyzing news for ticker {request.ticker}")
+
+    # Determine which providers to use
+    providers_to_use = request.providers or ["gemini", "chatgpt"]  # Default: Gemini + ChatGPT
+
+    # Validate providers
+    valid_providers = [p for p in providers_to_use if p.lower() in AI_SCRAPERS]
+    if not valid_providers:
+        raise HTTPException(
+            status_code=400,
+            detail=f"No valid AI providers specified. Available: {list(AI_SCRAPERS.keys())}",
+        )
+
+    prompt = build_sentiment_prompt(request)
+    results: list[SentimentAnalysisResult] = []
+
+    for provider_name in valid_providers:
+        scraper_class = AI_SCRAPERS.get(provider_name.lower())
+        if not scraper_class:
+            continue
+
+        try:
+            import time
+            start_time = time.time()
+
+            logger.info(f"[SENTIMENT] Analyzing with {provider_name}...")
+            scraper = scraper_class()
+
+            try:
+                await scraper.initialize()
+                result = await scraper.scrape(prompt)
+                processing_time = int((time.time() - start_time) * 1000)
+
+                if result.success and result.data:
+                    response_text = result.data.get("response", "")
+                    parsed = parse_ai_response(response_text)
+
+                    results.append(SentimentAnalysisResult(
+                        provider=provider_name,
+                        success=True,
+                        sentiment_score=parsed["sentiment_score"],
+                        confidence=parsed["confidence"],
+                        analysis_text=parsed["analysis_text"],
+                        key_factors=parsed["key_factors"],
+                        processing_time=processing_time,
+                    ))
+                    logger.info(f"[SENTIMENT] {provider_name}: score={parsed['sentiment_score']:.2f}")
+                else:
+                    results.append(SentimentAnalysisResult(
+                        provider=provider_name,
+                        success=False,
+                        error=result.error or "No response from AI",
+                        processing_time=processing_time,
+                    ))
+                    logger.warning(f"[SENTIMENT] {provider_name} failed: {result.error}")
+
+            finally:
+                await scraper.cleanup()
+
+        except Exception as e:
+            logger.error(f"[SENTIMENT] Error with {provider_name}: {e}")
+            results.append(SentimentAnalysisResult(
+                provider=provider_name,
+                success=False,
+                error=str(e),
+            ))
+
+    # Calculate consensus if multiple providers succeeded
+    successful_results = [r for r in results if r.success]
+    consensus = None
+
+    if successful_results:
+        avg_score = sum(r.sentiment_score for r in successful_results) / len(successful_results)
+        avg_confidence = sum(r.confidence for r in successful_results) / len(successful_results)
+        consensus = {
+            "sentiment_score": round(avg_score, 3),
+            "confidence": round(avg_confidence, 3),
+            "providers_used": len(successful_results),
+            "providers_total": len(valid_providers),
+        }
+
+    return {
+        "success": len(successful_results) > 0,
+        "ticker": request.ticker,
+        "results": [r.model_dump() for r in results],
+        "consensus": consensus,
+    }
+
+
+@app.get("/api/sentiment/providers")
+async def get_sentiment_providers():
+    """Get list of available AI providers for sentiment analysis"""
+    return {
+        "success": True,
+        "providers": list(AI_SCRAPERS.keys()),
+        "message": "Use OAuth session to configure cookies for each provider",
+    }
+
+
+@app.get("/api/sentiment/health")
+async def check_sentiment_health():
+    """Check health of AI scrapers"""
+    health_results = {}
+
+    for provider_name, scraper_class in AI_SCRAPERS.items():
+        try:
+            scraper = scraper_class()
+            # Check if cookies file exists
+            cookies_exist = scraper.COOKIES_FILE.exists() if hasattr(scraper, 'COOKIES_FILE') else False
+            health_results[provider_name] = {
+                "available": True,
+                "cookies_configured": cookies_exist,
+            }
+        except Exception as e:
+            health_results[provider_name] = {
+                "available": False,
+                "error": str(e),
+            }
+
+    configured_count = sum(1 for h in health_results.values() if h.get("cookies_configured", False))
+
+    return {
+        "success": True,
+        "providers": health_results,
+        "configured_count": configured_count,
+        "total_count": len(AI_SCRAPERS),
+        "ready": configured_count >= 1,
+    }
+
+
 # Run with uvicorn if executed directly
 if __name__ == "__main__":
     import uvicorn

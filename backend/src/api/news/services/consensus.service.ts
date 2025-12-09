@@ -25,8 +25,9 @@ const PROVIDER_WEIGHTS: Record<AIProvider, number> = {
 
 /**
  * Mínimo de providers necessários para consenso válido
+ * NOTA: Reduzido de 3 para 2 temporariamente enquanto mais providers são configurados
  */
-const MIN_PROVIDERS_FOR_CONSENSUS = 3;
+const MIN_PROVIDERS_FOR_CONSENSUS = 2;
 
 /**
  * Threshold de concordância para alta confiança

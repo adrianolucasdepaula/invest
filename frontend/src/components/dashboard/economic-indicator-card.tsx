@@ -69,14 +69,31 @@ export function EconomicIndicatorCard({ indicator, isLoading, icon }: EconomicIn
   }, [indicator.unit, indicator.type]);
 
   const formatValue = React.useCallback(
-    (value: number) => {
+    (value: unknown) => {
+      // Safely convert to number
+      let num: number;
+      if (value === undefined || value === null || value === '') {
+        num = 0;
+      } else if (typeof value === 'string') {
+        num = parseFloat(value);
+      } else if (typeof value === 'number') {
+        num = value;
+      } else {
+        num = Number(value);
+      }
+
+      // Validate conversion
+      if (Number.isNaN(num) || !Number.isFinite(num)) {
+        num = 0;
+      }
+
       // Use isMonetary directly to ensure consistency
       if (isMonetary) {
         // Format as US$ millions with 1 decimal
-        return `US$ ${value.toFixed(1)}M`;
+        return `US$ ${num.toFixed(1)}M`;
       }
       // Format as percentage
-      return formatPercent(value);
+      return formatPercent(num);
     },
     [isMonetary]
   );

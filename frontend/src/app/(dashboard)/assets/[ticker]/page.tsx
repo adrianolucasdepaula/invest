@@ -21,6 +21,10 @@ import {
   Star,
   ArrowLeft,
   AlertCircle,
+  CircleDollarSign,
+  Activity,
+  Clock,
+  Hash,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAsset, useMarketDataPrices, useAssetFundamentals, useAssetDataSources } from '@/lib/hooks/use-assets';
@@ -28,35 +32,9 @@ import { DataQualitySummary } from '@/components/assets/DataSourceIndicator';
 import { ChartErrorBoundary } from '@/components/error-boundary';
 import { useAnalysis, useRequestAnalysis } from '@/lib/hooks/use-analysis';
 import { AdvancedChart } from '@/components/tradingview/widgets/AdvancedChart';
-import FundamentalMetrics from '@/components/FundamentalMetrics';
+import FundamentalIndicatorsTable from '@/components/FundamentalIndicatorsTable';
 import { TickerNews } from '@/components/assets/ticker-news';
 import { TickerSentimentThermometer } from '@/components/assets/ticker-sentiment-thermometer';
-
-// Helper function to map dataSources API response to FundamentalMetrics format
-function mapDataSourcesToMetrics(dataSources: any) {
-  if (!dataSources?.fields) return null;
-
-  const getFieldValue = (fieldName: string): number | null => {
-    const field = dataSources.fields[fieldName];
-    if (!field || field.finalValue === null || field.finalValue === undefined) return null;
-    return typeof field.finalValue === 'number' ? field.finalValue : null;
-  };
-
-  return {
-    pl: getFieldValue('pl'),
-    pvp: getFieldValue('pvp'),
-    roe: getFieldValue('roe'),
-    dividendYield: getFieldValue('dividendYield'),
-    debtEquity: getFieldValue('dividaLiquidaPatrimonio'),
-    ebitda: getFieldValue('evEbitda'),
-    netMargin: getFieldValue('margemLiquida'),
-    currentRatio: getFieldValue('liquidezCorrente'),
-    peg: getFieldValue('pegRatio'),
-    lpa: getFieldValue('lpa'),
-    vpa: getFieldValue('vpa'),
-    liquidezCorrente: getFieldValue('liquidezCorrente'),
-  };
-}
 
 export default function AssetDetailPage({ params }: { params: Promise<{ ticker: string }> }) {
   const { ticker } = use(params);
@@ -66,6 +44,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ ticker: 
 
   // Fetch critical data first (for LCP optimization)
   const { data: asset, isLoading: assetLoading, error: assetError } = useAsset(ticker);
+
 
   // Technical chart state (Advanced mode is now DEFAULT)
   const [technicalData, setTechnicalData] = useState<any>(null);
@@ -446,45 +425,102 @@ export default function AssetDetailPage({ params }: { params: Promise<{ ticker: 
         </ChartErrorBoundary>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Fundamental Analysis - Integrated with dataSources API */}
-        {dataSourcesLoading ? (
-          <Card className="p-6">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold">Análise Fundamentalista</h3>
-              <p className="text-sm text-muted-foreground">Carregando indicadores...</p>
-            </div>
-            <div className="space-y-4">
-              <Skeleton className="h-12 w-full" />
-              <div className="grid grid-cols-2 gap-4">
-                {Array(6).fill(0).map((_, i) => (
-                  <div key={i} className="space-y-2">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-6 w-16" />
-                  </div>
-                ))}
+      {/* Fundamental Analysis - Full Table with all indicators */}
+      {dataSourcesLoading ? (
+        <Card className="p-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold">Indicadores Fundamentalistas</h3>
+            <p className="text-sm text-muted-foreground">Carregando indicadores...</p>
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-48 w-full" />
+          </div>
+        </Card>
+      ) : dataSources?.fields ? (
+        <FundamentalIndicatorsTable
+          ticker={ticker}
+          fields={dataSources.fields}
+          sourcesUsed={dataSources.sourcesUsed || []}
+          overallConfidence={dataSources.overallConfidence || 0}
+          lastUpdate={dataSources.lastUpdate}
+        />
+      ) : (
+        <Card className="p-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold">Indicadores Fundamentalistas</h3>
+            <p className="text-sm text-muted-foreground">Principais indicadores fundamentalistas</p>
+          </div>
+          <div className="flex flex-col items-center justify-center space-y-2 py-8">
+            <p className="text-muted-foreground">Dados fundamentalistas não disponíveis</p>
+            <p className="text-xs text-muted-foreground">Sincronize os dados para visualizar</p>
+          </div>
+        </Card>
+      )}
+
+      {/* Options Liquidity Section */}
+      {asset?.hasOptions && asset?.optionsLiquidityMetadata && (
+        <Card className="p-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold">📊 Opções Disponíveis</h3>
+            <p className="text-sm text-muted-foreground">
+              Dados de liquidez do mercado de opções
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="flex items-start space-x-3 rounded-lg border p-4">
+              <Clock className="mt-0.5 h-5 w-5 text-blue-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Período da Análise</p>
+                <p className="text-lg font-semibold">{asset.optionsLiquidityMetadata.periodo || 'N/A'}</p>
               </div>
             </div>
-          </Card>
-        ) : dataSources?.fields ? (
-          <FundamentalMetrics
-            ticker={ticker}
-            metrics={mapDataSourcesToMetrics(dataSources) || {}}
-            dataSources={dataSources.totalSourcesSuccessful || 1}
-            confidenceScore={Math.round((dataSources.overallConfidence || 0) * 100)}
-          />
-        ) : (
-          <Card className="p-6">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold">Análise Fundamentalista</h3>
-              <p className="text-sm text-muted-foreground">Principais indicadores fundamentalistas</p>
+            <div className="flex items-start space-x-3 rounded-lg border p-4">
+              <Hash className="mt-0.5 h-5 w-5 text-green-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total de Negócios</p>
+                <p className="text-lg font-semibold">
+                  {asset.optionsLiquidityMetadata.totalNegocios?.toLocaleString('pt-BR') || 'N/A'}
+                </p>
+              </div>
             </div>
-            <div className="flex flex-col items-center justify-center space-y-2 py-8">
-              <p className="text-muted-foreground">Dados fundamentalistas não disponíveis</p>
-              <p className="text-xs text-muted-foreground">Sincronize os dados para visualizar</p>
+            <div className="flex items-start space-x-3 rounded-lg border p-4">
+              <CircleDollarSign className="mt-0.5 h-5 w-5 text-yellow-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Volume Financeiro</p>
+                <p className="text-lg font-semibold">
+                  {asset.optionsLiquidityMetadata.volumeFinanceiro
+                    ? `R$ ${(asset.optionsLiquidityMetadata.volumeFinanceiro / 1000000).toFixed(2)}M`
+                    : 'N/A'}
+                </p>
+              </div>
             </div>
-          </Card>
-        )}
+            <div className="flex items-start space-x-3 rounded-lg border p-4">
+              <Activity className="mt-0.5 h-5 w-5 text-purple-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Quantidade Negociada</p>
+                <p className="text-lg font-semibold">
+                  {asset.optionsLiquidityMetadata.quantidadeNegociada?.toLocaleString('pt-BR') || 'N/A'}
+                </p>
+              </div>
+            </div>
+          </div>
+          {asset.optionsLiquidityMetadata.lastUpdated && (
+            <p className="mt-4 text-xs text-muted-foreground">
+              Última atualização: {new Date(asset.optionsLiquidityMetadata.lastUpdated).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </p>
+          )}
+        </Card>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2">
 
         {/* Technical Analysis Summary */}
         <Card className="p-6">

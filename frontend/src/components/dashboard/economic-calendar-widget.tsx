@@ -1,12 +1,14 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Calendar, AlertCircle, TrendingUp, TrendingDown, Clock, Globe } from 'lucide-react';
+import { Calendar, AlertCircle, TrendingUp, TrendingDown, Clock, Globe, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
 interface EconomicEvent {
   id: string;
@@ -80,12 +82,30 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function formatValue(value: number | undefined, unit?: string): string {
-  if (value === undefined || value === null) return '-';
-  return `${value.toFixed(2)}${unit || ''}`;
+function formatEventValue(val: unknown, unit?: string): string {
+  // Handle null/undefined/empty
+  if (val === undefined || val === null || val === '') return '-';
+
+  // Safely convert to number
+  let num: number;
+  if (typeof val === 'string') {
+    num = parseFloat(val);
+  } else if (typeof val === 'number') {
+    num = val;
+  } else {
+    num = Number(val);
+  }
+
+  // Validate conversion
+  if (Number.isNaN(num) || !Number.isFinite(num)) return '-';
+
+  // Format with 2 decimals
+  return `${num.toFixed(2)}${unit ?? ''}`;
 }
 
 export function EconomicCalendarWidget() {
+  const queryClient = useQueryClient();
+
   const { data, isLoading, error } = useQuery<CalendarResponse>({
     queryKey: ['economic-calendar', 'high-impact'],
     queryFn: async () => {
@@ -96,6 +116,21 @@ export function EconomicCalendarWidget() {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 10 * 60 * 1000, // 10 minutes
+  });
+
+  // Mutation para coletar eventos do calendário econômico
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      const response = await api.post('/news/economic-calendar/collect');
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(`${data.total} eventos coletados`);
+      queryClient.invalidateQueries({ queryKey: ['economic-calendar'] });
+    },
+    onError: () => {
+      toast.error('Erro ao sincronizar calendário');
+    },
   });
 
   if (isLoading) {
@@ -148,9 +183,21 @@ export function EconomicCalendarWidget() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          Calendário Econômico
+        <CardTitle className="flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Calendário Econômico
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending}
+            title="Sincronizar calendário"
+            className="h-7 w-7"
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', syncMutation.isPending && 'animate-spin')} />
+          </Button>
         </CardTitle>
         <CardDescription>
           Próximos eventos de alto impacto
@@ -198,18 +245,18 @@ export function EconomicCalendarWidget() {
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     <div>
                       <span className="text-muted-foreground">Anterior: </span>
-                      <span className="font-medium">{formatValue(event.previous, event.unit)}</span>
+                      <span className="font-medium">{formatEventValue(event.previous, event.unit)}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Previsão: </span>
-                      <span className="font-medium">{formatValue(event.forecast, event.unit)}</span>
+                      <span className="font-medium">{formatEventValue(event.forecast, event.unit)}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <span className="text-muted-foreground">Atual: </span>
                       {event.actual !== undefined ? (
                         <>
                           <span className="font-semibold">
-                            {formatValue(event.actual, event.unit)}
+                            {formatEventValue(event.actual, event.unit)}
                           </span>
                           {event.impactDirection === 'positive' && (
                             <TrendingUp className="h-3 w-3 text-success" />

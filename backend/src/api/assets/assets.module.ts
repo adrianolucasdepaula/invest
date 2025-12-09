@@ -16,6 +16,7 @@ import { AssetsUpdateService } from './assets-update.service';
 import { ScrapersModule } from '../../scrapers/scrapers.module';
 import { WebSocketModule } from '../../websocket/websocket.module';
 import { QueueModule } from '../../queue/queue.module';
+import { NewsModule } from '../news/news.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { QueueModule } from '../../queue/queue.module';
     ScrapersModule,
     WebSocketModule,
     forwardRef(() => QueueModule),
+    NewsModule,
   ],
   controllers: [AssetsController, AssetsUpdateController],
   providers: [AssetsService, AssetsUpdateService],

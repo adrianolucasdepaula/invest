@@ -111,11 +111,14 @@ export class EconomicCalendarService {
   }
 
   /**
-   * Busca próximos eventos de alta importância
+   * Busca eventos de alta importância (recentes + próximos)
+   * Inclui eventos dos últimos 7 dias e futuros
    */
   async getUpcomingHighImpact(limit = 10): Promise<EconomicEvent[]> {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     return this.findEvents({
-      startDate: new Date(),
+      startDate: sevenDaysAgo,
       importance: EventImportance.HIGH,
       limit,
     });
@@ -224,10 +227,19 @@ export class EconomicCalendarService {
 
     try {
       // API do BCB - SGS (Sistema Gerenciador de Séries Temporais)
-      const url = 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados?formato=json';
+      // Série 432 = IPCA mensal, requer data range (máximo 10 anos)
+      const now = new Date();
+      const oneYearAgo = new Date(now);
+      oneYearAgo.setFullYear(now.getFullYear() - 1);
+      const formatDate = (d: Date) =>
+        `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+      const url = `https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados?formato=json&dataInicial=${formatDate(oneYearAgo)}&dataFinal=${formatDate(now)}`;
 
       const response = await fetch(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; B3AnalysisBot/1.0)' },
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; B3AnalysisBot/1.0)',
+          'Accept': 'application/json',
+        },
         signal: AbortSignal.timeout(30000),
       });
 

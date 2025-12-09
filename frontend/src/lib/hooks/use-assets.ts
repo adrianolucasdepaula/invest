@@ -14,6 +14,8 @@ export function useAsset(ticker: string) {
     queryKey: ['asset', ticker],
     queryFn: () => api.getAsset(ticker),
     enabled: !!ticker,
+    staleTime: 0, // Always consider data stale to fetch fresh options data
+    refetchOnMount: 'always', // Force refetch on mount to get latest hasOptions field
   });
 }
 

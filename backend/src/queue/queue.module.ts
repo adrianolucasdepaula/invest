@@ -4,11 +4,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScrapersModule } from '../scrapers/scrapers.module';
 import { AssetsModule } from '../api/assets/assets.module';
 import { WebSocketModule } from '../websocket/websocket.module';
+import { NewsModule } from '../api/news/news.module';
 import { ScrapingProcessor } from './processors/scraping.processor';
 import { AssetUpdateProcessor } from './processors/asset-update.processor';
 import { ScheduledJobsService } from './jobs/scheduled-jobs.service';
 import { AssetUpdateJobsService } from './jobs/asset-update-jobs.service';
 import { Asset } from '../database/entities/asset.entity';
+import { News } from '../database/entities/news.entity';
 import { FundamentalData } from '../database/entities/fundamental-data.entity';
 import { AssetPrice } from '../database/entities/asset-price.entity';
 import { DataSource } from '../database/entities/data-source.entity';
@@ -33,10 +35,11 @@ import { ScrapedData } from '../database/entities/scraped-data.entity';
         // See: asset-update.processor.ts
       },
     ),
-    TypeOrmModule.forFeature([Asset, FundamentalData, AssetPrice, DataSource, ScrapedData]),
+    TypeOrmModule.forFeature([Asset, News, FundamentalData, AssetPrice, DataSource, ScrapedData]),
     ScrapersModule,
     WebSocketModule, // ✅ FIX: Import WebSocketModule to make AppWebSocketGateway available for dependency injection
     forwardRef(() => AssetsModule),
+    forwardRef(() => NewsModule), // For news collection and sentiment analysis jobs
   ],
   providers: [
     ScrapingProcessor,

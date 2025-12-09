@@ -2,10 +2,12 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import {
   Thermometer,
   TrendingUp,
@@ -13,6 +15,7 @@ import {
   Minus,
   AlertTriangle,
   Newspaper,
+  RefreshCw,
 } from 'lucide-react';
 
 /**
@@ -49,6 +52,28 @@ interface MarketSentimentSummary {
 /**
  * Mapeia labels de sentimento para cores e ícones
  */
+/**
+ * Safely format a number with toFixed, handling strings and invalid values
+ */
+function safeToFixed(value: unknown, decimals: number = 2): string {
+  let num: number;
+  if (value === undefined || value === null || value === '') {
+    num = 0;
+  } else if (typeof value === 'string') {
+    num = parseFloat(value);
+  } else if (typeof value === 'number') {
+    num = value;
+  } else {
+    num = Number(value);
+  }
+
+  if (Number.isNaN(num) || !Number.isFinite(num)) {
+    num = 0;
+  }
+
+  return num.toFixed(decimals);
+}
+
 const sentimentConfig: Record<string, {
   color: string;
   bgColor: string;
@@ -136,7 +161,7 @@ function ThermometerGauge({ value }: { value: number }) {
       {/* Valor atual */}
       <div className="absolute bottom-0 left-20 right-0 flex items-end">
         <span className={cn('text-2xl font-bold', value >= 0 ? 'text-green-600' : 'text-red-600')}>
-          {value >= 0 ? '+' : ''}{value.toFixed(2)}
+          {value >= 0 ? '+' : ''}{safeToFixed(value, 2)}
         </span>
       </div>
     </div>
@@ -150,6 +175,8 @@ function ThermometerGauge({ value }: { value: number }) {
  * análise multi-provider de notícias financeiras.
  */
 export function MarketThermometer() {
+  const queryClient = useQueryClient();
+
   const { data, isLoading, error } = useQuery<MarketSentimentSummary>({
     queryKey: ['market-sentiment'],
     queryFn: async () => {
@@ -157,6 +184,28 @@ export function MarketThermometer() {
       return response.data;
     },
     refetchInterval: 60000, // Atualizar a cada minuto
+  });
+
+  // Mutation para coletar notícias dos principais tickers
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      const tickers = ['PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3', 'WEGE3', 'BBAS3', 'B3SA3'];
+      let totalCollected = 0;
+
+      for (const ticker of tickers) {
+        const response = await api.post('/news/collect', { ticker });
+        totalCollected += response.data.collected || 0;
+      }
+
+      return { totalCollected, tickerCount: tickers.length };
+    },
+    onSuccess: (data) => {
+      toast.success(`${data.totalCollected} notícias coletadas de ${data.tickerCount} tickers`);
+      queryClient.invalidateQueries({ queryKey: ['market-sentiment'] });
+    },
+    onError: () => {
+      toast.error('Erro ao sincronizar notícias');
+    },
   });
 
   if (isLoading) {
@@ -202,16 +251,27 @@ export function MarketThermometer() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Thermometer className="h-5 w-5" />
-            Termômetro do Mercado
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Thermometer className="h-5 w-5" />
+              Termômetro do Mercado
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => syncMutation.mutate()}
+              disabled={syncMutation.isPending}
+              title="Sincronizar notícias"
+            >
+              <RefreshCw className={cn('h-4 w-4', syncMutation.isPending && 'animate-spin')} />
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
             <Newspaper className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>Nenhuma notícia analisada ainda</p>
-            <p className="text-sm">Configure as chaves de API dos providers de IA</p>
+            <p className="text-sm">Clique no botão de sync para coletar notícias</p>
           </div>
         </CardContent>
       </Card>
@@ -225,13 +285,30 @@ export function MarketThermometer() {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between">
-          <span className="flex items-center gap-2">
-            <Thermometer className="h-5 w-5" />
-            Termômetro do Mercado
-          </span>
-          <Badge variant="secondary" className="text-xs">
-            {data.totalNewsAnalyzed} notícias
-          </Badge>
+          <div className="flex flex-col">
+            <span className="flex items-center gap-2">
+              <Thermometer className="h-5 w-5" />
+              Termômetro do Mercado
+            </span>
+            <span className="text-xs font-normal text-muted-foreground">
+              Consolidado de todos os ativos
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-xs">
+              {data.totalNewsAnalyzed} notícias
+            </Badge>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => syncMutation.mutate()}
+              disabled={syncMutation.isPending}
+              title="Sincronizar notícias"
+              className="h-7 w-7"
+            >
+              <RefreshCw className={cn('h-3.5 w-3.5', syncMutation.isPending && 'animate-spin')} />
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -336,7 +413,7 @@ export function MarketThermometer() {
                       )}
                     >
                       {news.sentiment.finalSentiment >= 0 ? '+' : ''}
-                      {news.sentiment.finalSentiment.toFixed(2)}
+                      {safeToFixed(news.sentiment.finalSentiment, 2)}
                     </Badge>
                   )}
                 </div>

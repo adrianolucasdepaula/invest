@@ -5,584 +5,213 @@ import { Repository } from 'typeorm';
 import { News, NewsAnalysis, AIProvider, NewsAnalysisStatus } from '../../../database/entities';
 
 /**
- * Configuração de cada AI Provider
+ * Resposta do endpoint de scrapers Python
  */
-interface AIProviderConfig {
-  provider: AIProvider;
-  apiUrl: string;
-  apiKey: string;
-  model: string;
-  maxTokens: number;
-  timeout: number;
-  enabled: boolean;
-}
-
-/**
- * Resposta padronizada de análise de sentimento
- */
-interface SentimentAnalysisResult {
-  sentimentScore: number; // -1 a +1
-  confidence: number; // 0 a 1
-  analysisText: string;
-  keyFactors: {
-    bullish: string[];
-    bearish: string[];
-    neutral: string[];
+interface ScraperSentimentResponse {
+  success: boolean;
+  ticker: string;
+  results: Array<{
+    provider: string;
+    success: boolean;
+    sentiment_score?: number;
+    confidence?: number;
+    analysis_text?: string;
+    key_factors?: {
+      bullish?: string[];
+      bearish?: string[];
+      neutral?: string[];
+    };
+    processing_time?: number;
+    error?: string;
+  }>;
+  consensus?: {
+    sentiment_score: number;
+    confidence: number;
+    providers_used: number;
+    providers_total: number;
   };
-  processingTime: number;
-  rawResponse?: Record<string, unknown>;
 }
 
 /**
- * FASE 75.3: Multi-AI Orchestrator Service
+ * FASE 85: AI Orchestrator Service (Scrapers Only)
  *
- * Orquestra análise de sentimento usando 6 AI providers:
- * - ChatGPT (GPT-5)
- * - Claude (Sonnet 4.5)
- * - Gemini (2.5 Pro)
- * - DeepSeek (V3.2)
- * - Grok (4.1)
- * - Perplexity (Sonar Pro)
+ * Orquestra análise de sentimento usando scrapers Python:
+ * - ChatGPT (via browser scraping)
+ * - Gemini (via browser scraping)
+ * - Claude (via browser scraping)
+ * - DeepSeek (via browser scraping)
+ * - Grok (via browser scraping)
+ * - Perplexity (via browser scraping)
  *
- * Cada provider analisa independentemente, depois o ConsensusService
- * faz cross-validation dos resultados.
+ * NÃO usa API keys - todos os providers são acessados via OAuth cookies.
  */
 @Injectable()
 export class AIOrchestatorService {
   private readonly logger = new Logger(AIOrchestatorService.name);
-  private readonly providers: Map<AIProvider, AIProviderConfig> = new Map();
+  private readonly scraperApiUrl: string;
+  private readonly defaultProviders: string[];
 
   constructor(
     private readonly configService: ConfigService,
     @InjectRepository(NewsAnalysis)
     private readonly newsAnalysisRepository: Repository<NewsAnalysis>,
   ) {
-    this.initializeProviders();
+    this.scraperApiUrl = this.configService.get('SCRAPER_API_URL', 'http://scrapers:8080');
+    this.defaultProviders = this.configService.get('AI_SCRAPER_PROVIDERS', 'gemini,chatgpt').split(',');
+    this.logger.log(`AI Orchestrator initialized (Scrapers Only Mode)`);
+    this.logger.log(`Scraper API: ${this.scraperApiUrl}`);
+    this.logger.log(`Default providers: ${this.defaultProviders.join(', ')}`);
   }
 
   /**
-   * Inicializa configurações de todos os providers
+   * Retorna providers disponíveis via scrapers
    */
-  private initializeProviders(): void {
-    // ChatGPT (OpenAI)
-    this.providers.set(AIProvider.CHATGPT, {
-      provider: AIProvider.CHATGPT,
-      apiUrl: 'https://api.openai.com/v1/chat/completions',
-      apiKey: this.configService.get('OPENAI_API_KEY', ''),
-      model: 'gpt-5', // Modelo Dez/2025
-      maxTokens: 2000,
-      timeout: 60000,
-      enabled: !!this.configService.get('OPENAI_API_KEY'),
-    });
-
-    // Claude (Anthropic)
-    this.providers.set(AIProvider.CLAUDE, {
-      provider: AIProvider.CLAUDE,
-      apiUrl: 'https://api.anthropic.com/v1/messages',
-      apiKey: this.configService.get('ANTHROPIC_API_KEY', ''),
-      model: 'claude-sonnet-4-5-20251201', // Modelo Dez/2025
-      maxTokens: 2000,
-      timeout: 60000,
-      enabled: !!this.configService.get('ANTHROPIC_API_KEY'),
-    });
-
-    // Gemini (Google)
-    this.providers.set(AIProvider.GEMINI, {
-      provider: AIProvider.GEMINI,
-      apiUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
-      apiKey: this.configService.get('GOOGLE_AI_API_KEY', ''),
-      model: 'gemini-2.5-pro', // Modelo Dez/2025
-      maxTokens: 2000,
-      timeout: 60000,
-      enabled: !!this.configService.get('GOOGLE_AI_API_KEY'),
-    });
-
-    // DeepSeek
-    this.providers.set(AIProvider.DEEPSEEK, {
-      provider: AIProvider.DEEPSEEK,
-      apiUrl: 'https://api.deepseek.com/v1/chat/completions',
-      apiKey: this.configService.get('DEEPSEEK_API_KEY', ''),
-      model: 'deepseek-v3.2', // Modelo Dez/2025 - 685B params
-      maxTokens: 2000,
-      timeout: 60000,
-      enabled: !!this.configService.get('DEEPSEEK_API_KEY'),
-    });
-
-    // Grok (xAI)
-    this.providers.set(AIProvider.GROK, {
-      provider: AIProvider.GROK,
-      apiUrl: 'https://api.x.ai/v1/chat/completions',
-      apiKey: this.configService.get('XAI_API_KEY', ''),
-      model: 'grok-4.1', // Modelo Dez/2025
-      maxTokens: 2000,
-      timeout: 60000,
-      enabled: !!this.configService.get('XAI_API_KEY'),
-    });
-
-    // Perplexity
-    this.providers.set(AIProvider.PERPLEXITY, {
-      provider: AIProvider.PERPLEXITY,
-      apiUrl: 'https://api.perplexity.ai/chat/completions',
-      apiKey: this.configService.get('PERPLEXITY_API_KEY', ''),
-      model: 'sonar-pro', // Modelo Dez/2025
-      maxTokens: 2000,
-      timeout: 60000,
-      enabled: !!this.configService.get('PERPLEXITY_API_KEY'),
-    });
-
-    const enabledCount = Array.from(this.providers.values()).filter(p => p.enabled).length;
-    this.logger.log(`Initialized ${enabledCount}/6 AI providers`);
+  getAvailableProviders(): AIProvider[] {
+    return [
+      AIProvider.CHATGPT,
+      AIProvider.GEMINI,
+      AIProvider.CLAUDE,
+      AIProvider.DEEPSEEK,
+      AIProvider.GROK,
+      AIProvider.PERPLEXITY,
+    ];
   }
 
   /**
-   * Retorna providers habilitados
+   * Analisa uma notícia usando scrapers Python
    */
-  getEnabledProviders(): AIProvider[] {
-    return Array.from(this.providers.entries())
-      .filter(([, config]) => config.enabled)
-      .map(([provider]) => provider);
+  async analyzeNews(news: News, specificProviders?: string[]): Promise<NewsAnalysis[]> {
+    const providers = specificProviders || this.defaultProviders;
+    return this.analyzeWithScrapers(news, providers);
   }
 
   /**
-   * Analisa uma notícia com todos os providers habilitados
+   * Analisa usando scrapers Python (sem API keys)
+   * Chama endpoint http://scrapers:8080/api/sentiment/analyze
    */
-  async analyzeNews(news: News, specificProviders?: AIProvider[]): Promise<NewsAnalysis[]> {
-    const providersToUse = specificProviders || this.getEnabledProviders();
-
-    if (providersToUse.length === 0) {
-      this.logger.warn('No AI providers configured. Set API keys in environment.');
-      return [];
-    }
-
-    this.logger.log(`Analyzing news ${news.id} with ${providersToUse.length} providers`);
-
-    // Executar análises em paralelo
-    const analysisPromises = providersToUse.map(provider =>
-      this.analyzeWithProvider(news, provider)
-    );
-
-    const results = await Promise.allSettled(analysisPromises);
-
-    // Coletar resultados bem-sucedidos
-    const analyses: NewsAnalysis[] = [];
-    for (const result of results) {
-      if (result.status === 'fulfilled' && result.value) {
-        analyses.push(result.value);
-      }
-    }
-
-    this.logger.log(`Completed ${analyses.length}/${providersToUse.length} analyses for news ${news.id}`);
-    return analyses;
-  }
-
-  /**
-   * Analisa com um provider específico
-   */
-  private async analyzeWithProvider(news: News, provider: AIProvider): Promise<NewsAnalysis | null> {
-    const config = this.providers.get(provider);
-    if (!config || !config.enabled) {
-      return null;
-    }
-
+  private async analyzeWithScrapers(news: News, providers: string[]): Promise<NewsAnalysis[]> {
     const startTime = Date.now();
-
-    // Verificar se já existe análise para este provider
-    const existing = await this.newsAnalysisRepository.findOne({
-      where: { newsId: news.id, provider },
-    });
-
-    if (existing && existing.status === NewsAnalysisStatus.COMPLETED) {
-      this.logger.debug(`Analysis already exists for news ${news.id} with ${provider}`);
-      return existing;
-    }
-
-    // Criar ou atualizar registro de análise
-    let analysis = existing || this.newsAnalysisRepository.create({
-      newsId: news.id,
-      provider,
-      modelVersion: config.model,
-      status: NewsAnalysisStatus.PROCESSING,
-    });
-
-    analysis.status = NewsAnalysisStatus.PROCESSING;
-    analysis = await this.newsAnalysisRepository.save(analysis);
 
     try {
-      const result = await this.callProviderAPI(config, news);
+      this.logger.log(`Analyzing news ${news.id} with scrapers: ${providers.join(', ')}`);
 
-      analysis.sentimentScore = result.sentimentScore;
-      analysis.confidence = result.confidence;
-      analysis.analysisText = result.analysisText;
-      analysis.keyFactors = result.keyFactors;
-      analysis.rawResponse = result.rawResponse;
-      analysis.processingTime = Date.now() - startTime;
-      analysis.status = NewsAnalysisStatus.COMPLETED;
-      analysis.completedAt = new Date();
+      const response = await fetch(`${this.scraperApiUrl}/api/sentiment/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticker: news.ticker,
+          title: news.title,
+          summary: news.summary || null,
+          content: news.content || null,
+          source: news.sourceName || news.source,
+          published_at: news.publishedAt?.toISOString(),
+          providers: providers,
+        }),
+        signal: AbortSignal.timeout(180000), // 3 min timeout (scrapers are slow)
+      });
 
-      return await this.newsAnalysisRepository.save(analysis);
+      if (!response.ok) {
+        throw new Error(`Scraper API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data: ScraperSentimentResponse = await response.json();
+
+      if (!data.success || !data.results) {
+        throw new Error('Scraper analysis returned no results');
+      }
+
+      // Convert scraper results to NewsAnalysis entities
+      const analyses: NewsAnalysis[] = [];
+
+      for (const result of data.results) {
+        if (!result.success) {
+          this.logger.debug(`Scraper ${result.provider} failed: ${result.error}`);
+          continue;
+        }
+
+        // Map scraper provider name to AIProvider enum
+        const providerEnum = this.mapScraperToProvider(result.provider);
+        if (!providerEnum) continue;
+
+        // Check if analysis already exists
+        const existing = await this.newsAnalysisRepository.findOne({
+          where: { newsId: news.id, provider: providerEnum },
+        });
+
+        let analysis = existing || this.newsAnalysisRepository.create({
+          newsId: news.id,
+          provider: providerEnum,
+          modelVersion: `scraper-${result.provider}`,
+          status: NewsAnalysisStatus.PROCESSING,
+        });
+
+        analysis.sentimentScore = result.sentiment_score ?? 0;
+        analysis.confidence = result.confidence ?? 0.5;
+        analysis.analysisText = result.analysis_text || '';
+        analysis.keyFactors = {
+          bullish: result.key_factors?.bullish ?? [],
+          bearish: result.key_factors?.bearish ?? [],
+          neutral: result.key_factors?.neutral ?? [],
+        };
+        analysis.processingTime = result.processing_time || (Date.now() - startTime);
+        analysis.status = NewsAnalysisStatus.COMPLETED;
+        analysis.completedAt = new Date();
+
+        const saved = await this.newsAnalysisRepository.save(analysis);
+        analyses.push(saved);
+
+        this.logger.log(`Scraper ${result.provider}: score=${result.sentiment_score?.toFixed(2)}`);
+      }
+
+      this.logger.log(`Completed ${analyses.length} scraper analyses for news ${news.id}`);
+      return analyses;
+
     } catch (error) {
-      this.logger.error(`Error analyzing with ${provider}: ${error.message}`);
-
-      analysis.status = NewsAnalysisStatus.FAILED;
-      analysis.errorMessage = error.message;
-      analysis.retryCount += 1;
-      analysis.processingTime = Date.now() - startTime;
-
-      await this.newsAnalysisRepository.save(analysis);
-      return null;
+      this.logger.error(`Scraper analysis failed: ${error.message}`);
+      return [];
     }
   }
 
   /**
-   * Chama API do provider específico
+   * Map scraper provider name to AIProvider enum
    */
-  private async callProviderAPI(
-    config: AIProviderConfig,
-    news: News,
-  ): Promise<SentimentAnalysisResult> {
-    const prompt = this.buildSentimentPrompt(news);
-
-    switch (config.provider) {
-      case AIProvider.CHATGPT:
-        return this.callOpenAI(config, prompt);
-      case AIProvider.CLAUDE:
-        return this.callClaude(config, prompt);
-      case AIProvider.GEMINI:
-        return this.callGemini(config, prompt);
-      case AIProvider.DEEPSEEK:
-        return this.callDeepSeek(config, prompt);
-      case AIProvider.GROK:
-        return this.callGrok(config, prompt);
-      case AIProvider.PERPLEXITY:
-        return this.callPerplexity(config, prompt);
-      default:
-        throw new Error(`Unknown provider: ${config.provider}`);
-    }
-  }
-
-  /**
-   * Constrói prompt padronizado para análise de sentimento
-   */
-  private buildSentimentPrompt(news: News): string {
-    return `Você é um analista financeiro especializado em mercado de ações brasileiro (B3).
-Analise a seguinte notícia e determine o sentimento de mercado para o ativo ${news.ticker}.
-
-NOTÍCIA:
-Título: ${news.title}
-${news.summary ? `Resumo: ${news.summary}` : ''}
-${news.content ? `Conteúdo: ${news.content.substring(0, 2000)}` : ''}
-Fonte: ${news.sourceName || news.source}
-Data: ${news.publishedAt.toISOString()}
-
-INSTRUÇÕES:
-1. Analise o impacto potencial no preço da ação
-2. Identifique fatores positivos (bullish), negativos (bearish) e neutros
-3. Atribua um score de sentimento de -1 (muito bearish) a +1 (muito bullish)
-4. Indique sua confiança de 0 a 1
-
-RESPONDA EXATAMENTE no formato JSON:
-{
-  "sentimentScore": <número de -1 a 1>,
-  "confidence": <número de 0 a 1>,
-  "analysisText": "<análise em 2-3 frases>",
-  "keyFactors": {
-    "bullish": ["fator1", "fator2"],
-    "bearish": ["fator1", "fator2"],
-    "neutral": ["fator1"]
-  }
-}`;
-  }
-
-  /**
-   * Chama OpenAI API (ChatGPT)
-   */
-  private async callOpenAI(
-    config: AIProviderConfig,
-    prompt: string,
-  ): Promise<SentimentAnalysisResult> {
-    const startTime = Date.now();
-
-    const response = await fetch(config.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: config.maxTokens,
-        temperature: 0.3,
-        response_format: { type: 'json_object' },
-      }),
-      signal: AbortSignal.timeout(config.timeout),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
-    const parsed = JSON.parse(content);
-
-    return {
-      sentimentScore: this.clamp(parsed.sentimentScore, -1, 1),
-      confidence: this.clamp(parsed.confidence, 0, 1),
-      analysisText: parsed.analysisText || '',
-      keyFactors: parsed.keyFactors || { bullish: [], bearish: [], neutral: [] },
-      processingTime: Date.now() - startTime,
-      rawResponse: data,
+  private mapScraperToProvider(scraperName: string): AIProvider | null {
+    const mapping: Record<string, AIProvider> = {
+      'chatgpt': AIProvider.CHATGPT,
+      'gemini': AIProvider.GEMINI,
+      'claude': AIProvider.CLAUDE,
+      'deepseek': AIProvider.DEEPSEEK,
+      'grok': AIProvider.GROK,
+      'perplexity': AIProvider.PERPLEXITY,
     };
+    return mapping[scraperName.toLowerCase()] || null;
   }
 
   /**
-   * Chama Anthropic API (Claude)
+   * Check health of scraper API
    */
-  private async callClaude(
-    config: AIProviderConfig,
-    prompt: string,
-  ): Promise<SentimentAnalysisResult> {
-    const startTime = Date.now();
+  async checkScraperHealth(): Promise<{
+    healthy: boolean;
+    providers: Record<string, { available: boolean; cookies_configured: boolean }>;
+  }> {
+    try {
+      const response = await fetch(`${this.scraperApiUrl}/api/sentiment/health`, {
+        signal: AbortSignal.timeout(10000),
+      });
 
-    const response = await fetch(config.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': config.apiKey,
-        'anthropic-version': '2024-01-01',
-      },
-      body: JSON.stringify({
-        model: config.model,
-        max_tokens: config.maxTokens,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      signal: AbortSignal.timeout(config.timeout),
-    });
+      if (!response.ok) {
+        return { healthy: false, providers: {} };
+      }
 
-    if (!response.ok) {
-      throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
+      const data = await response.json();
+      return {
+        healthy: data.ready,
+        providers: data.providers,
+      };
+    } catch (error) {
+      this.logger.error(`Scraper health check failed: ${error.message}`);
+      return { healthy: false, providers: {} };
     }
-
-    const data = await response.json();
-    const content = data.content[0]?.text;
-
-    // Extrair JSON da resposta
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Could not parse JSON from Claude response');
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    return {
-      sentimentScore: this.clamp(parsed.sentimentScore, -1, 1),
-      confidence: this.clamp(parsed.confidence, 0, 1),
-      analysisText: parsed.analysisText || '',
-      keyFactors: parsed.keyFactors || { bullish: [], bearish: [], neutral: [] },
-      processingTime: Date.now() - startTime,
-      rawResponse: data,
-    };
-  }
-
-  /**
-   * Chama Google Gemini API
-   */
-  private async callGemini(
-    config: AIProviderConfig,
-    prompt: string,
-  ): Promise<SentimentAnalysisResult> {
-    const startTime = Date.now();
-    const url = `${config.apiUrl}/${config.model}:generateContent?key=${config.apiKey}`;
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          maxOutputTokens: config.maxTokens,
-          temperature: 0.3,
-        },
-      }),
-      signal: AbortSignal.timeout(config.timeout),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const content = data.candidates[0]?.content?.parts[0]?.text;
-
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Could not parse JSON from Gemini response');
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    return {
-      sentimentScore: this.clamp(parsed.sentimentScore, -1, 1),
-      confidence: this.clamp(parsed.confidence, 0, 1),
-      analysisText: parsed.analysisText || '',
-      keyFactors: parsed.keyFactors || { bullish: [], bearish: [], neutral: [] },
-      processingTime: Date.now() - startTime,
-      rawResponse: data,
-    };
-  }
-
-  /**
-   * Chama DeepSeek API
-   */
-  private async callDeepSeek(
-    config: AIProviderConfig,
-    prompt: string,
-  ): Promise<SentimentAnalysisResult> {
-    const startTime = Date.now();
-
-    const response = await fetch(config.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: config.maxTokens,
-        temperature: 0.3,
-      }),
-      signal: AbortSignal.timeout(config.timeout),
-    });
-
-    if (!response.ok) {
-      throw new Error(`DeepSeek API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
-
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Could not parse JSON from DeepSeek response');
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    return {
-      sentimentScore: this.clamp(parsed.sentimentScore, -1, 1),
-      confidence: this.clamp(parsed.confidence, 0, 1),
-      analysisText: parsed.analysisText || '',
-      keyFactors: parsed.keyFactors || { bullish: [], bearish: [], neutral: [] },
-      processingTime: Date.now() - startTime,
-      rawResponse: data,
-    };
-  }
-
-  /**
-   * Chama xAI Grok API
-   */
-  private async callGrok(
-    config: AIProviderConfig,
-    prompt: string,
-  ): Promise<SentimentAnalysisResult> {
-    const startTime = Date.now();
-
-    const response = await fetch(config.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: config.maxTokens,
-        temperature: 0.3,
-      }),
-      signal: AbortSignal.timeout(config.timeout),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Grok API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
-
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Could not parse JSON from Grok response');
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    return {
-      sentimentScore: this.clamp(parsed.sentimentScore, -1, 1),
-      confidence: this.clamp(parsed.confidence, 0, 1),
-      analysisText: parsed.analysisText || '',
-      keyFactors: parsed.keyFactors || { bullish: [], bearish: [], neutral: [] },
-      processingTime: Date.now() - startTime,
-      rawResponse: data,
-    };
-  }
-
-  /**
-   * Chama Perplexity API
-   */
-  private async callPerplexity(
-    config: AIProviderConfig,
-    prompt: string,
-  ): Promise<SentimentAnalysisResult> {
-    const startTime = Date.now();
-
-    const response = await fetch(config.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: config.maxTokens,
-        temperature: 0.3,
-      }),
-      signal: AbortSignal.timeout(config.timeout),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Perplexity API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
-
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Could not parse JSON from Perplexity response');
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    return {
-      sentimentScore: this.clamp(parsed.sentimentScore, -1, 1),
-      confidence: this.clamp(parsed.confidence, 0, 1),
-      analysisText: parsed.analysisText || '',
-      keyFactors: parsed.keyFactors || { bullish: [], bearish: [], neutral: [] },
-      processingTime: Date.now() - startTime,
-      rawResponse: data,
-    };
-  }
-
-  /**
-   * Limita valor entre min e max
-   */
-  private clamp(value: number, min: number, max: number): number {
-    return Math.max(min, Math.min(max, value));
   }
 
   /**
