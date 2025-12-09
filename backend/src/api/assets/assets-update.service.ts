@@ -325,12 +325,12 @@ export class AssetsUpdateService {
       asset.lastUpdateError = errorMessage;
       asset.updateRetryCount += 1;
 
-      // If max retries reached, disable auto-update
+      // If max retries reached, reset counter for next batch (NEVER disable asset)
       if (asset.updateRetryCount >= this.MAX_RETRY_COUNT) {
         this.logger.warn(
-          `${logPrefix} Max retries reached for ${ticker}, disabling auto-update`,
+          `${logPrefix} Max retries reached for ${ticker}, resetting counter for next batch`,
         );
-        asset.autoUpdateEnabled = false;
+        asset.updateRetryCount = 0; // Reset para próxima tentativa
       }
 
       await this.assetRepository.save(asset);
@@ -878,17 +878,29 @@ export class AssetsUpdateService {
    * 2. lastUpdated IS NULL (nunca atualizados - precisam de dados)
    * 3. lastUpdated ASC (mais antigos primeiro - dados mais desatualizados)
    *
+   * @param hasOptionsOnly - Se true, retorna apenas ativos com opções
    * @returns Lista de ativos ordenada por prioridade de atualização
    */
-  async getAssetsWithPriority(): Promise<Asset[]> {
-    this.logger.log('[GET-PRIORITY] Fetching assets with priority ordering');
+  async getAssetsWithPriority(hasOptionsOnly: boolean = false): Promise<Asset[]> {
+    this.logger.log(
+      `[GET-PRIORITY] Fetching assets with priority ordering (hasOptionsOnly=${hasOptionsOnly})`,
+    );
 
-    const assets = await this.assetRepository
+    const queryBuilder = this.assetRepository
       .createQueryBuilder('asset')
       .where('asset.isActive = :isActive', { isActive: true })
       .andWhere('asset.autoUpdateEnabled = :autoUpdateEnabled', {
         autoUpdateEnabled: true,
-      })
+      });
+
+    // Se filtro ativo, apenas ativos com opções
+    if (hasOptionsOnly) {
+      queryBuilder.andWhere('asset.hasOptions = :hasOptions', {
+        hasOptions: true,
+      });
+    }
+
+    const assets = await queryBuilder
       .orderBy('asset.hasOptions', 'DESC') // Opções primeiro
       .addOrderBy(
         'CASE WHEN asset.lastUpdated IS NULL THEN 0 ELSE 1 END',

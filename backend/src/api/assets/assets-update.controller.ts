@@ -265,10 +265,16 @@ export class AssetsUpdateController {
       },
     },
   })
-  async updateAllAssetsFundamentals(@Body('userId') userId?: string) {
+  async updateAllAssetsFundamentals(
+    @Body('userId') userId?: string,
+    @Body('hasOptionsOnly') hasOptionsOnly?: boolean,
+  ) {
     // 1. Get all active assets ordered by priority
     // Priority: hasOptions=true first, then never updated, then oldest updated
-    const assets = await this.assetsUpdateService.getAssetsWithPriority();
+    // If hasOptionsOnly=true, filter to only assets with options
+    const assets = await this.assetsUpdateService.getAssetsWithPriority(
+      hasOptionsOnly ?? false,
+    );
     const tickers = assets.map((asset) => asset.ticker);
 
     // 2. Queue individual jobs via BullMQ (returns immediately)

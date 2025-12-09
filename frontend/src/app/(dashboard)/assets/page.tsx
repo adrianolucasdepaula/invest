@@ -118,7 +118,8 @@ export default function AssetsPage() {
         return;
       }
 
-      await api.bulkUpdateAllAssetsFundamentals();
+      // Pass showOnlyOptions to filter only assets with options when checkbox is checked
+      await api.bulkUpdateAllAssetsFundamentals(undefined, showOnlyOptions);
     } catch (error: any) {
       toast({
         title: 'Erro ao iniciar atualização',

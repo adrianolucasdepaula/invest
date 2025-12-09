@@ -171,8 +171,11 @@ class ApiClient {
   }
 
   // Bulk update all assets with fundamental data (async with WebSocket)
-  async bulkUpdateAllAssetsFundamentals(userId?: string) {
-    const response = await this.client.post('/assets/updates/bulk-all', { userId });
+  async bulkUpdateAllAssetsFundamentals(userId?: string, hasOptionsOnly?: boolean) {
+    const response = await this.client.post('/assets/updates/bulk-all', {
+      userId,
+      hasOptionsOnly: hasOptionsOnly ?? false,
+    });
     return response.data;
   }
 
