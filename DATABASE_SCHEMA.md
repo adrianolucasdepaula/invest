@@ -3,7 +3,7 @@
 **Projeto:** B3 AI Analysis Platform
 **Banco de Dados:** PostgreSQL 16.x
 **ORM:** TypeORM 0.3.x
-**Última Atualização:** 2025-11-14
+**Última Atualização:** 2025-12-09
 
 ---
 
@@ -196,7 +196,59 @@ Armazena histórico de mudanças de códigos de negociação (ex: ELET3 → AXIA
 
 ---
 
-### 3. Analyses (Análises)
+### 4. FundamentalData (Dados Fundamentalistas)
+
+Armazena indicadores fundamentalistas coletados de múltiplas fontes com cross-validation.
+
+**Schema (campos novos FASE 85):**
+
+```typescript
+{
+  id: UUID;                        // Primary Key
+  assetId: UUID;                   // FK para Asset
+  referenceDate: date;             // Data de referência
+
+  // Valuation Indicators
+  pl: decimal(18, 2);              // Preço/Lucro
+  pvp: decimal(18, 2);             // Preço/Valor Patrimonial
+  psr: decimal(18, 2);             // Price/Sales Ratio
+  evEbitda: decimal(18, 2);        // EV/EBITDA
+
+  // Profitability Indicators
+  roe: decimal(10, 4);             // Return on Equity
+  roic: decimal(10, 4);            // Return on Invested Capital
+  roa: decimal(10, 4);             // Return on Assets
+  margemLiquida: decimal(10, 4);   // Margem Líquida
+
+  // Per Share Indicators (FASE 85)
+  lpa: decimal(18, 2);             // Lucro por Ação
+  vpa: decimal(18, 2);             // Valor Patrimonial por Ação
+
+  // Liquidity Indicators (FASE 85)
+  liquidezCorrente: decimal(18, 2); // Liquidez Corrente
+
+  // Metadata
+  fieldSources: JSON;              // Cross-validation de fontes
+  metadata: JSON;                  // Dados extras
+
+  createdAt: timestamp;
+  updatedAt: timestamp;
+}
+```
+
+**Colunas Adicionadas (FASE 85):**
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `lpa` | DECIMAL(18,2) | Lucro por Ação |
+| `vpa` | DECIMAL(18,2) | Valor Patrimonial por Ação |
+| `liquidez_corrente` | DECIMAL(18,2) | Liquidez Corrente |
+
+**Migration:** `1765100000000-AddLpaVpaLiquidezCorrente.ts`
+
+---
+
+### 5. Analyses (Análises)
 
 Armazena análises fundamentalistas/técnicas realizadas por IA com cross-validation de múltiplas fontes.
 

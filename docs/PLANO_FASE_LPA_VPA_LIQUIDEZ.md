@@ -49,9 +49,9 @@ export const FIELD_SELECTION_STRATEGY: Record<string, string> = {
 
 export const DEFAULT_TOLERANCES: Record<string, number> = {
   // ... campos existentes ...
-  lpa: 0.05,      // 5% tolerance
-  vpa: 0.05,      // 5% tolerance
-  liquidezCorrente: 0.10,  // 10% tolerance
+  lpa: 0.01,      // 1% tolerance
+  vpa: 0.01,      // 1% tolerance
+  liquidezCorrente: 0.005,  // 0.5% tolerance
 };
 ```
 

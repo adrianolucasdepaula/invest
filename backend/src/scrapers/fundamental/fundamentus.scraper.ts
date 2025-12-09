@@ -116,7 +116,7 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
       evEbitda: getValue('EV / EBITDA'),
       margemEbit: getValue('Marg. EBIT'),
       margemLiquida: getValue('Marg. Líquida'),
-      liquidezCorrente: getValue('Liq. Corrente'),
+      liquidezCorrente: getValue('Liquidez Corr'),
       roic: getValue('ROIC'),
       roe: getValue('ROE'),
       liquidez2Meses: getValue('Liq. 2 meses'),
