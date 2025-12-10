@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AssetTable } from '@/components/dashboard/asset-table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Filter, RefreshCw, Layers, Loader2, XCircle, Pause, Play } from 'lucide-react';
+import { Search, Filter, RefreshCw, Layers, Loader2, XCircle, Pause, Play, Eye } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -57,6 +57,7 @@ export default function AssetsPage() {
   const [isCancelling, setIsCancelling] = useState(false);
   const [isPausing, setIsPausing] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const { data: assets, isLoading, error, refetch } = useAssets();
 
   // WebSocket hook for bulk updates
@@ -313,6 +314,56 @@ export default function AssetsPage() {
     router.push(`/assets/${ticker}`);
   };
 
+  // Selection handlers
+  const handleSelectAsset = (ticker: string) => {
+    setSelectedAssets((prev) =>
+      prev.includes(ticker)
+        ? prev.filter((t) => t !== ticker)
+        : [...prev, ticker]
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedAssets(sortedAndFilteredAssets.map((a: any) => a.ticker));
+    } else {
+      setSelectedAssets([]);
+    }
+  };
+
+  const handleSyncSelected = async () => {
+    if (selectedAssets.length === 0) return;
+
+    if (selectedAssets.length === 1) {
+      // Single asset - use existing handleSyncAsset
+      await handleSyncAsset(selectedAssets[0]);
+      setSelectedAssets([]);
+    } else {
+      // Multiple assets - use batch update API
+      try {
+        await api.updateMultipleAssets({
+          tickers: selectedAssets,
+        });
+        toast({
+          title: 'Sincronização iniciada',
+          description: `${selectedAssets.length} ativos adicionados à fila de atualização.`,
+        });
+        setSelectedAssets([]);
+      } catch (error: any) {
+        toast({
+          title: 'Erro ao sincronizar',
+          description: error.message || 'Erro ao iniciar sincronização em massa',
+          variant: 'destructive',
+        });
+      }
+    }
+  };
+
+  // Clear selection when view mode or filters change
+  useEffect(() => {
+    setSelectedAssets([]);
+  }, [viewMode, showOnlyOptions, searchTerm]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -515,6 +566,9 @@ export default function AssetsPage() {
                 onAssetClick={handleAssetClick}
                 onSyncAsset={handleSyncAsset}
                 syncingAsset={syncingAsset}
+                selectedAssets={selectedAssets}
+                onSelectAsset={handleSelectAsset}
+                onSelectAll={handleSelectAll}
               />
             </Card>
           ))}
@@ -534,6 +588,9 @@ export default function AssetsPage() {
                 onAssetClick={handleAssetClick}
                 onSyncAsset={handleSyncAsset}
                 syncingAsset={syncingAsset}
+                selectedAssets={selectedAssets}
+                onSelectAsset={handleSelectAsset}
+                onSelectAll={handleSelectAll}
               />
             </Card>
           ))}
@@ -553,6 +610,9 @@ export default function AssetsPage() {
                 onAssetClick={handleAssetClick}
                 onSyncAsset={handleSyncAsset}
                 syncingAsset={syncingAsset}
+                selectedAssets={selectedAssets}
+                onSelectAsset={handleSelectAsset}
+                onSelectAll={handleSelectAll}
               />
             </Card>
           ))}
@@ -564,6 +624,9 @@ export default function AssetsPage() {
             onAssetClick={handleAssetClick}
             onSyncAsset={handleSyncAsset}
             syncingAsset={syncingAsset}
+            selectedAssets={selectedAssets}
+            onSelectAsset={handleSelectAsset}
+            onSelectAll={handleSelectAll}
           />
         </Card>
       )}
@@ -576,6 +639,47 @@ export default function AssetsPage() {
           maxHeight={300}
           autoScroll
         />
+      )}
+
+      {/* Selection Action Bar - Fixed at bottom */}
+      {selectedAssets.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 transform">
+          <Card className="flex items-center gap-4 px-6 py-3 shadow-lg border-2">
+            <span className="text-sm font-medium">
+              {selectedAssets.length} ativo{selectedAssets.length > 1 ? 's' : ''} selecionado{selectedAssets.length > 1 ? 's' : ''}
+            </span>
+            <div className="h-6 w-px bg-border" />
+            <Button
+              size="sm"
+              onClick={handleSyncSelected}
+              disabled={bulkUpdateState.isRunning}
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Sincronizar Dados
+            </Button>
+            {selectedAssets.length === 1 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/assets/${selectedAssets[0]}`)}
+                className="gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                Ver Detalhes
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedAssets([])}
+              className="gap-2"
+            >
+              <XCircle className="h-4 w-4" />
+              Limpar
+            </Button>
+          </Card>
+        </div>
       )}
     </div>
   );

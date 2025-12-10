@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { RefreshCw, Loader2 } from 'lucide-react';
-import { useStartBulkSync } from '@/lib/hooks/useDataSync';
+import { useStartBulkSync, useStartIntradayBulkSync } from '@/lib/hooks/useDataSync';
 import { useSyncWebSocket } from '@/lib/hooks/useSyncWebSocket';
 import { SyncConfigModal } from './SyncConfigModal';
+import { SyncIntradayTimeframe, SyncIntradayRange } from '@/lib/types/data-sync';
 
 /**
  * Props for BulkSyncButton
@@ -44,7 +45,11 @@ export function BulkSyncButton({
 
   const { toast } = useToast();
   const syncMutation = useStartBulkSync();
+  const intradaySyncMutation = useStartIntradayBulkSync();
   const { state: wsState } = useSyncWebSocket();
+
+  // Check if any mutation is pending (needed for UI state)
+  const isPending = syncMutation.isPending || intradaySyncMutation.isPending;
 
   /**
    * BUGFIX DEFINITIVO 2025-11-23: Race Condition Fix
@@ -124,7 +129,7 @@ export function BulkSyncButton({
    * Handle modal close
    */
   const handleCloseModal = () => {
-    if (!syncMutation.isPending && !waitingForSyncStart) {
+    if (!isPending && !waitingForSyncStart) {
       setModalOpen(false);
     }
   };
@@ -171,6 +176,62 @@ export function BulkSyncButton({
     }
   };
 
+  /**
+   * Handle intraday sync confirmation
+   */
+  const handleConfirmIntraday = (config: {
+    tickers: string[];
+    timeframe: SyncIntradayTimeframe;
+    range: SyncIntradayRange;
+  }) => {
+    try {
+      // Set waiting flag BEFORE mutation
+      setWaitingForSyncStart(true);
+
+      console.log('[INTRADAY BULK SYNC] Payload:', config);
+
+      intradaySyncMutation.mutate(
+        {
+          tickers: config.tickers,
+          timeframe: config.timeframe,
+          range: config.range,
+        },
+        {
+          onSuccess: () => {
+            toast({
+              title: 'Sincronização Intraday iniciada',
+              description: `${config.tickers.length} ativo(s) em processamento.`,
+              variant: 'default',
+            });
+            setModalOpen(false);
+            setWaitingForSyncStart(false);
+            router.push('/data-management');
+            if (onSyncStarted) {
+              onSyncStarted();
+            }
+          },
+          onError: (error: any) => {
+            console.error('[INTRADAY BULK SYNC ERROR]:', error);
+            setWaitingForSyncStart(false);
+            toast({
+              title: 'Erro ao iniciar sincronização intraday',
+              description: error.message || 'Ocorreu um erro inesperado.',
+              variant: 'destructive',
+            });
+          },
+        }
+      );
+    } catch (error: any) {
+      console.error('[INTRADAY BULK SYNC ERROR]:', error);
+      setWaitingForSyncStart(false);
+      toast({
+        title: 'Erro ao iniciar sincronização intraday',
+        description: error.message || 'Ocorreu um erro inesperado.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <>
       <Button
@@ -178,9 +239,9 @@ export function BulkSyncButton({
         size={size}
         className={className}
         onClick={handleOpenModal}
-        disabled={syncMutation.isPending}
+        disabled={isPending}
       >
-        {syncMutation.isPending ? (
+        {isPending ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Iniciando...
@@ -197,7 +258,8 @@ export function BulkSyncButton({
         open={modalOpen}
         onClose={handleCloseModal}
         onConfirm={handleConfirm}
-        isSubmitting={syncMutation.isPending}
+        onConfirmIntraday={handleConfirmIntraday}
+        isSubmitting={isPending}
       />
     </>
   );

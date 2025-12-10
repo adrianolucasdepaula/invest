@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { MoreVertical, RefreshCw, AlertTriangle, Eye, CheckCircle2, ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
 
 interface Asset {
@@ -47,6 +48,10 @@ interface AssetTableProps {
   onAssetClick?: (ticker: string) => void;
   onSyncAsset?: (ticker: string) => void;
   syncingAsset?: string | null;
+  // Selection mode props
+  selectedAssets?: string[];
+  onSelectAsset?: (ticker: string) => void;
+  onSelectAll?: (checked: boolean) => void;
 }
 
 type SortColumn = 'ticker' | 'name' | 'sector' | 'price' | 'changePercent' | 'volume' | 'marketCap';
@@ -58,6 +63,9 @@ export function AssetTable({
   onAssetClick,
   onSyncAsset,
   syncingAsset,
+  selectedAssets = [],
+  onSelectAsset,
+  onSelectAll,
 }: AssetTableProps) {
   const [sortColumn, setSortColumn] = React.useState<SortColumn>('ticker');
   const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
@@ -166,6 +174,15 @@ export function AssetTable({
           <table className="w-full">
             <thead>
               <tr className="border-b">
+                {onSelectAsset && (
+                  <th className="w-12 px-4 py-3">
+                    <Checkbox
+                      checked={selectedAssets.length > 0 && selectedAssets.length === sortedAssets.length}
+                      onCheckedChange={(checked) => onSelectAll?.(checked === true)}
+                      aria-label="Selecionar todos"
+                    />
+                  </th>
+                )}
                 <th className="px-4 py-3 text-left font-medium">
                   <button
                     onClick={() => handleSort('ticker')}
@@ -247,6 +264,15 @@ export function AssetTable({
                     key={asset.ticker}
                     className="border-b transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
                   >
+                    {onSelectAsset && (
+                      <td className="w-12 px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedAssets.includes(asset.ticker)}
+                          onCheckedChange={() => onSelectAsset(asset.ticker)}
+                          aria-label={`Selecionar ${asset.ticker}`}
+                        />
+                      </td>
+                    )}
                     <td
                       className="cursor-pointer px-4 py-3 font-semibold"
                       onClick={() => onAssetClick?.(asset.ticker)}

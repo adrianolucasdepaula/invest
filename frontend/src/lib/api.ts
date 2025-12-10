@@ -179,6 +179,15 @@ class ApiClient {
     return response.data;
   }
 
+  // Update multiple specific assets (batch)
+  async updateMultipleAssets(params: { tickers: string[]; userId?: string }) {
+    const response = await this.client.post('/assets/updates/batch', {
+      tickers: params.tickers,
+      userId: params.userId,
+    });
+    return response.data;
+  }
+
   // Get current bulk update status (for page refresh recovery)
   async getBulkUpdateStatus() {
     const response = await this.client.get('/assets/bulk-update-status');

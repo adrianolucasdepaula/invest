@@ -10925,6 +10925,48 @@ Adição de suporte aos campos `LPA` (Lucro Por Ação), `VPA` (Valor Patrimonia
 
 ---
 
+## FASE 87: Data Management Enhancements + Asset Selection Sync ✅ 100% COMPLETO
+
+**Data:** 2025-12-10
+**Tipo:** Feature Enhancement
+**Documentação:** Inline (3 features independentes)
+
+### Descrição
+
+Melhorias de UX para sincronização de dados com três features:
+
+1. Filtro "Com Opções" no modal de sync em massa
+2. Integração de Intraday como opção de período no mesmo modal
+3. Selection mode com checkboxes na tabela de Assets
+
+### Implementações
+
+| Feature | Componente | Mudança | Status |
+|---------|------------|---------|--------|
+| **Filtro hasOptions** | `SyncConfigModal.tsx` | Checkbox + filtro combinado | ✅ |
+| **Intraday Período** | `SyncConfigModal.tsx` | Selects timeframe/range | ✅ |
+| **Intraday Callback** | `BulkSyncButton.tsx` | Handler `onConfirmIntraday` | ✅ |
+| **Selection Mode** | `asset-table.tsx` | Coluna checkbox + props | ✅ |
+| **Action Bar** | `assets/page.tsx` | Floating bar com ações | ✅ |
+| **API Method** | `api.ts` | `updateMultipleAssets()` | ✅ |
+
+### Arquivos Modificados
+
+- `frontend/src/components/data-sync/SyncConfigModal.tsx`
+- `frontend/src/components/data-sync/BulkSyncButton.tsx`
+- `frontend/src/components/dashboard/asset-table.tsx`
+- `frontend/src/app/(dashboard)/assets/page.tsx`
+- `frontend/src/lib/api.ts`
+
+### Validação
+
+- ✅ TypeScript: 0 erros (frontend + backend)
+- ✅ Build: Sucesso (Next.js + NestJS)
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
 ## FASE 86: Bulk Update Fixes + "Última Atualização" em Tempo Real ✅ 100% COMPLETO
 
 **Data:** 2025-12-10
@@ -11031,6 +11073,7 @@ Correção de três problemas críticos no fluxo "Atualizar Todos" da página de
 - ✅ FASE 84: Time-Weighted Multi-Timeframe Sentiment - 100% COMPLETO (2025-12-09)
 - ✅ FASE 85: LPA, VPA e Liquidez Corrente - 100% COMPLETO (2025-12-09)
 - ✅ FASE 86: Bulk Update Fixes + "Última Atualização" em Tempo Real - 100% COMPLETO (2025-12-10)
+- ✅ FASE 87: Data Management Enhancements + Asset Selection Sync - 100% COMPLETO (2025-12-10)
 
 ### Fases Planejadas
 
@@ -11053,8 +11096,8 @@ Todas as fases planejadas foram implementadas.
 
 ---
 
-**Ultima Atualizacao:** 2025-12-09
-**Total de Fases:** 85 completas
-**Versao:** 1.11.0
+**Ultima Atualizacao:** 2025-12-10
+**Total de Fases:** 87 completas
+**Versao:** 1.12.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

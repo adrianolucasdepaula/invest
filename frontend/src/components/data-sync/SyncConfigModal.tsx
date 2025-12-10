@@ -16,15 +16,24 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   AlertCircle,
   CheckCircle2,
   Calendar,
   Database,
   Loader2,
+  Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSyncStatus } from '@/lib/hooks/useDataSync';
 import type { AssetSyncStatusDto } from '@/lib/types/data-sync';
+import { SyncIntradayTimeframe, SyncIntradayRange } from '@/lib/types/data-sync';
 
 /**
  * Props for SyncConfigModal
@@ -37,13 +46,18 @@ export interface SyncConfigModalProps {
     startDate: string;
     endDate: string;
   }) => void;
+  onConfirmIntraday?: (config: {
+    tickers: string[];
+    timeframe: SyncIntradayTimeframe;
+    range: SyncIntradayRange;
+  }) => void;
   isSubmitting?: boolean;
 }
 
 /**
  * Predefined time periods
  */
-type PredefinedPeriod = 'full' | 'recent' | 'ytd' | 'custom';
+type PredefinedPeriod = 'intraday' | 'full' | 'recent' | 'ytd' | 'custom';
 
 // Helper functions for date calculations
 const getCurrentDate = () => new Date().toISOString().split('T')[0];
@@ -57,7 +71,8 @@ const getYearStart = () => `${new Date().getFullYear()}-01-01`;
 const MIN_DATE = '1986-01-02'; // Início COTAHIST
 const currentDate = getCurrentDate();
 
-const PERIODS = {
+const PERIODS: Record<PredefinedPeriod, { label: string; startDate: string; endDate: string }> = {
+  intraday: { label: 'Intraday', startDate: currentDate, endDate: currentDate },
   full: { label: 'Histórico Completo', startDate: MIN_DATE, endDate: currentDate },
   recent: { label: 'Últimos 5 Anos', startDate: getFiveYearsAgo(), endDate: currentDate },
   ytd: { label: 'Ano Atual (YTD)', startDate: getYearStart(), endDate: currentDate },
@@ -79,6 +94,7 @@ export function SyncConfigModal({
   open,
   onClose,
   onConfirm,
+  onConfirmIntraday,
   isSubmitting = false,
 }: SyncConfigModalProps) {
   const { data: syncStatus } = useSyncStatus();
@@ -91,6 +107,10 @@ export function SyncConfigModal({
   const [endDate, setEndDate] = useState(PERIODS.recent.endDate);
   const [searchQuery, setSearchQuery] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
+  const [showOnlyOptions, setShowOnlyOptions] = useState(false);
+  // Intraday states
+  const [intradayTimeframe, setIntradayTimeframe] = useState<SyncIntradayTimeframe>(SyncIntradayTimeframe.H1);
+  const [intradayRange, setIntradayRange] = useState<SyncIntradayRange>(SyncIntradayRange.D5);
 
   // Reset state when modal closes
   useEffect(() => {
@@ -101,17 +121,24 @@ export function SyncConfigModal({
       setEndDate(PERIODS.recent.endDate);
       setSearchQuery('');
       setErrors([]);
+      setShowOnlyOptions(false);
+      setIntradayTimeframe(SyncIntradayTimeframe.H1);
+      setIntradayRange(SyncIntradayRange.D5);
     }
   }, [open]);
 
-  // Filter assets by search query
+  // Filter assets by search query AND hasOptions if checkbox is checked
   const filteredAssets = assets.filter((asset) => {
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSearch =
       asset.ticker.toLowerCase().includes(query) ||
-      asset.name.toLowerCase().includes(query)
-    );
+      asset.name.toLowerCase().includes(query);
+    const matchesOptions = showOnlyOptions ? asset.hasOptions : true;
+    return matchesSearch && matchesOptions;
   });
+
+  // Count assets with options for display
+  const optionsCount = assets.filter((a) => a.hasOptions).length;
 
   // Handle ticker selection toggle
   const handleToggleTicker = (ticker: string) => {
@@ -156,15 +183,17 @@ export function SyncConfigModal({
     }
     // BUGFIX 2025-11-22: Removido limite de 20 ativos (sem restrição de quantidade)
 
-    // Validate date range
-    if (startDate < MIN_DATE || startDate > currentDate) {
-      newErrors.push(`Data inicial deve estar entre ${formatDate(MIN_DATE)} e ${formatDate(currentDate)}`);
-    }
-    if (endDate < MIN_DATE || endDate > currentDate) {
-      newErrors.push(`Data final deve estar entre ${formatDate(MIN_DATE)} e ${formatDate(currentDate)}`);
-    }
-    if (endDate < startDate) {
-      newErrors.push('Data final deve ser maior ou igual à data inicial');
+    // Validate date range (skip for intraday - uses timeframe/range instead)
+    if (period !== 'intraday') {
+      if (startDate < MIN_DATE || startDate > currentDate) {
+        newErrors.push(`Data inicial deve estar entre ${formatDate(MIN_DATE)} e ${formatDate(currentDate)}`);
+      }
+      if (endDate < MIN_DATE || endDate > currentDate) {
+        newErrors.push(`Data final deve estar entre ${formatDate(MIN_DATE)} e ${formatDate(currentDate)}`);
+      }
+      if (endDate < startDate) {
+        newErrors.push('Data final deve ser maior ou igual à data inicial');
+      }
     }
 
     setErrors(newErrors);
@@ -175,15 +204,28 @@ export function SyncConfigModal({
   const handleConfirm = () => {
     if (!validateForm()) return;
 
-    onConfirm({
-      tickers: selectedTickers,
-      startDate,
-      endDate,
-    });
+    if (period === 'intraday') {
+      // Intraday sync uses different API
+      onConfirmIntraday?.({
+        tickers: selectedTickers,
+        timeframe: intradayTimeframe,
+        range: intradayRange,
+      });
+    } else {
+      // Historical sync
+      onConfirm({
+        tickers: selectedTickers,
+        startDate,
+        endDate,
+      });
+    }
   };
 
   // Calculate estimated duration
-  const estimatedMinutes = Math.round(selectedTickers.length * 2.5);
+  // Intraday is faster (~15s/ticker), historical is slower (~2.5min/ticker)
+  const estimatedMinutes = period === 'intraday'
+    ? Math.max(1, Math.round((selectedTickers.length * 15) / 60)) // ~15s per ticker, min 1 min
+    : Math.round(selectedTickers.length * 2.5);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -225,39 +267,88 @@ export function SyncConfigModal({
             </div>
           </div>
 
-          {/* Date Range Inputs */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startDate">Data Inicial</Label>
-              <Input
-                id="startDate"
-                type="date"
-                min={MIN_DATE}
-                max={currentDate}
-                value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
-                  setPeriod('custom');
-                }}
-                disabled={isSubmitting}
-              />
+          {/* Intraday Options (only visible when intraday is selected) */}
+          {period === 'intraday' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="flex items-center">
+                  <Clock className="mr-2 h-4 w-4" />
+                  Timeframe
+                </Label>
+                <Select
+                  value={intradayTimeframe}
+                  onValueChange={(v) => setIntradayTimeframe(v as SyncIntradayTimeframe)}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o timeframe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SyncIntradayTimeframe.M1}>1 minuto</SelectItem>
+                    <SelectItem value={SyncIntradayTimeframe.M5}>5 minutos</SelectItem>
+                    <SelectItem value={SyncIntradayTimeframe.M15}>15 minutos</SelectItem>
+                    <SelectItem value={SyncIntradayTimeframe.M30}>30 minutos</SelectItem>
+                    <SelectItem value={SyncIntradayTimeframe.H1}>1 hora</SelectItem>
+                    <SelectItem value={SyncIntradayTimeframe.H4}>4 horas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Período</Label>
+                <Select
+                  value={intradayRange}
+                  onValueChange={(v) => setIntradayRange(v as SyncIntradayRange)}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SyncIntradayRange.D1}>1 dia</SelectItem>
+                    <SelectItem value={SyncIntradayRange.D5}>5 dias</SelectItem>
+                    <SelectItem value={SyncIntradayRange.MO1}>1 mês</SelectItem>
+                    <SelectItem value={SyncIntradayRange.MO3}>3 meses (máx FREE)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="endDate">Data Final</Label>
-              <Input
-                id="endDate"
-                type="date"
-                min={MIN_DATE}
-                max={currentDate}
-                value={endDate}
-                onChange={(e) => {
-                  setEndDate(e.target.value);
-                  setPeriod('custom');
-                }}
-                disabled={isSubmitting}
-              />
+          )}
+
+          {/* Date Range Inputs - Hidden for intraday */}
+          {period !== 'intraday' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="startDate">Data Inicial</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  min={MIN_DATE}
+                  max={currentDate}
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setPeriod('custom');
+                  }}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endDate">Data Final</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  min={MIN_DATE}
+                  max={currentDate}
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setPeriod('custom');
+                  }}
+                  disabled={isSubmitting}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Ticker Selection */}
           <div className="space-y-2">
@@ -274,6 +365,19 @@ export function SyncConfigModal({
                   ? 'Desmarcar Todos'
                   : 'Selecionar Todos'}
               </Button>
+            </div>
+
+            {/* Filter by hasOptions */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="showOnlyOptions"
+                checked={showOnlyOptions}
+                onCheckedChange={(checked) => setShowOnlyOptions(checked === true)}
+                disabled={isSubmitting}
+              />
+              <Label htmlFor="showOnlyOptions" className="text-sm cursor-pointer">
+                Apenas ativos com opções ({optionsCount} ativos)
+              </Label>
             </div>
 
             {/* Search */}

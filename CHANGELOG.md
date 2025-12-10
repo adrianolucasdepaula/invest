@@ -9,6 +9,35 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 87: Data Management Enhancements + Asset Selection Sync - 100% COMPLETA (2025-12-10)**
+  - **Feature 1 - Filtro "Com Opções" no SyncConfigModal:**
+    - Checkbox para filtrar apenas ativos com opções líquidas
+    - Contador dinâmico de ativos com opções (ex: "42 ativos")
+    - State `showOnlyOptions` com reset automático ao fechar modal
+    - Filtro combinado com busca por ticker/nome
+  - **Feature 2 - Intraday Integrado como Período:**
+    - Novo período "Intraday" nos botões de seleção de período
+    - Select de Timeframe: 1m, 5m, 15m, 30m, 1h, 4h
+    - Select de Range: 1 dia, 5 dias, 1 mês, 3 meses
+    - UI condicional (Date Range escondido quando Intraday selecionado)
+    - Estimativa de tempo ajustada (~15s/ticker para intraday)
+    - Callback `onConfirmIntraday` no SyncConfigModal
+  - **Feature 3 - Selection Mode na Página Assets:**
+    - Coluna de checkbox na tabela de ativos
+    - Checkbox "Selecionar todos" no header
+    - Floating Action Bar com botões: Sincronizar, Ver Detalhes, Limpar
+    - Suporte a sync individual e bulk (via `POST /assets/updates/batch`)
+    - Limpeza automática de seleção ao mudar filtros/view
+  - **Arquivos Modificados:**
+    - `frontend/src/components/data-sync/SyncConfigModal.tsx`
+    - `frontend/src/components/data-sync/BulkSyncButton.tsx`
+    - `frontend/src/components/dashboard/asset-table.tsx`
+    - `frontend/src/app/(dashboard)/assets/page.tsx`
+    - `frontend/src/lib/api.ts` (método `updateMultipleAssets`)
+  - **Validação:**
+    - TypeScript: 0 erros (frontend + backend)
+    - Build: Sucesso (Next.js + NestJS)
+
 - **FASE 86: Bulk Update Fixes + "Última Atualização" em Tempo Real - 100% COMPLETA (2025-12-10)**
   - **Bug Fixes:**
     - Card de progresso agora persiste após refresh da página
