@@ -20,7 +20,34 @@ const SYNC_CONFIG_KEY = 'currentSyncConfig';
 const ACTIVE_SYNC_STATE_KEY = 'activeSyncState';
 const SYNC_STATE_MAX_AGE_HOURS = 2; // Max age before considering state stale
 
+// FASE 88 FIX: Limit logs to prevent memory leak (ISSUE 1.1)
+const MAX_LOG_ENTRIES = 1000;
+
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3101';
+
+/**
+ * FASE 88 FIX: Type guard for SyncConfig validation (ISSUE 2.4)
+ * Validates that parsed JSON matches expected SyncConfig structure
+ */
+const isValidSyncConfig = (obj: unknown): obj is SyncConfig => {
+  if (!obj || typeof obj !== 'object') return false;
+  const config = obj as Record<string, unknown>;
+  return (
+    typeof config.syncType === 'string' &&
+    typeof config.totalAssets === 'number' &&
+    typeof config.period === 'string'
+  );
+};
+
+/**
+ * FASE 88 FIX: Type guard for SyncState validation (ISSUE 2.4)
+ * Validates that parsed localStorage state is valid
+ */
+const isValidSavedState = (obj: unknown): obj is { startedAt: string; config?: SyncConfig; logs?: SyncLogEntry[] } => {
+  if (!obj || typeof obj !== 'object') return false;
+  const state = obj as Record<string, unknown>;
+  return typeof state.startedAt === 'string';
+};
 
 /**
  * Hook para gerenciar conexão WebSocket e eventos de sincronização
@@ -62,13 +89,18 @@ export function useSyncWebSocket(options?: {
   /**
    * FASE 88: Read sync config from sessionStorage
    * Config is stored by BulkSyncButton before starting sync
+   * FASE 88 FIX: Added type guard validation (ISSUE 2.4)
    */
   const getSyncConfigFromStorage = useCallback((): SyncConfig | null => {
     if (typeof window === 'undefined') return null;
     try {
       const stored = sessionStorage.getItem(SYNC_CONFIG_KEY);
       if (stored) {
-        return JSON.parse(stored) as SyncConfig;
+        const parsed = JSON.parse(stored);
+        if (isValidSyncConfig(parsed)) {
+          return parsed;
+        }
+        console.warn('[SYNC WS] Invalid sync config structure in sessionStorage');
       }
     } catch (e) {
       console.warn('[SYNC WS] Failed to read sync config from sessionStorage:', e);
@@ -106,6 +138,7 @@ export function useSyncWebSocket(options?: {
   /**
    * FASE 88: Restore active sync state from localStorage on mount
    * Checks if state is not too old (max 2 hours)
+   * FASE 88 FIX: Added type guard validation (ISSUE 2.4)
    */
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -114,6 +147,14 @@ export function useSyncWebSocket(options?: {
       const savedState = localStorage.getItem(ACTIVE_SYNC_STATE_KEY);
       if (savedState) {
         const parsed = JSON.parse(savedState);
+
+        // FASE 88 FIX: Validate parsed state structure (ISSUE 2.4)
+        if (!isValidSavedState(parsed)) {
+          console.warn('[SYNC WS] Invalid saved state structure, clearing');
+          localStorage.removeItem(ACTIVE_SYNC_STATE_KEY);
+          return;
+        }
+
         const startedAt = new Date(parsed.startedAt);
         const hoursSinceStart = (Date.now() - startedAt.getTime()) / (1000 * 60 * 60);
 
@@ -142,11 +183,31 @@ export function useSyncWebSocket(options?: {
     }
   }, []);
 
+  // FASE 88 FIX: Use ref for callbacks to prevent socket recreation (ISSUE 1.3)
+  const callbacksRef = useRef({
+    onSyncComplete: options?.onSyncComplete,
+    autoRefresh: options?.autoRefresh,
+  });
+
+  // Update callbacks ref when options change (without triggering socket reconnection)
+  useEffect(() => {
+    callbacksRef.current = {
+      onSyncComplete: options?.onSyncComplete,
+      autoRefresh: options?.autoRefresh,
+    };
+  }, [options?.onSyncComplete, options?.autoRefresh]);
+
   // Conectar ao namespace /sync
   useEffect(() => {
+    // FASE 88 FIX: Add reconnection config and fallback transport (ISSUE 2.3)
     const socket = io(`${WS_URL}/sync`, {
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'], // Fallback to polling if websocket fails
       autoConnect: true,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 10,
+      timeout: 20000, // 20s connection timeout
     });
 
     socketRef.current = socket;
@@ -202,10 +263,11 @@ export function useSyncWebSocket(options?: {
     });
 
     // Event: sync:progress
+    // FASE 88 FIX: Added log buffer limit (ISSUE 1.1) and result deduplication (ISSUE 2.2)
     socket.on('sync:progress', (data: SyncProgressEvent) => {
       console.log('[SYNC WS] Sync progress:', data);
       setState((prev) => {
-        const newLogs: SyncLogEntry[] = [...prev.logs];
+        let newLogs: SyncLogEntry[] = [...prev.logs];
 
         if (data.status === 'processing') {
           newLogs.push({
@@ -233,18 +295,24 @@ export function useSyncWebSocket(options?: {
           });
         }
 
+        // FASE 88 FIX: Limit logs to prevent memory leak (ISSUE 1.1)
+        if (newLogs.length > MAX_LOG_ENTRIES) {
+          newLogs = newLogs.slice(-MAX_LOG_ENTRIES);
+        }
+
         return {
           ...prev,
           currentTicker: data.ticker,
           progress: data.percentage,
           logs: newLogs,
+          // FASE 88 FIX: Deduplicate results to prevent counting same ticker twice (ISSUE 2.2)
           results: {
             success:
-              data.status === 'success'
+              data.status === 'success' && !prev.results.success.includes(data.ticker)
                 ? [...prev.results.success, data.ticker]
                 : prev.results.success,
             failed:
-              data.status === 'failed'
+              data.status === 'failed' && !prev.results.failed.includes(data.ticker)
                 ? [...prev.results.failed, data.ticker]
                 : prev.results.failed,
           },
@@ -253,37 +321,47 @@ export function useSyncWebSocket(options?: {
     });
 
     // Event: sync:completed
+    // FASE 88 FIX: Keep logs instead of replacing (ISSUE 1.2), use callbacksRef (ISSUE 1.3)
     socket.on('sync:completed', (data: SyncCompletedEvent) => {
       console.log('[SYNC WS] Sync completed:', data);
-      setState((prev) => ({
-        ...prev,
-        isRunning: false,
-        currentTicker: null,
-        progress: 100,
-        // BUGFIX 2025-11-23: Substituir logs antigos por apenas log de conclusão
-        // Remove entradas "Iniciando sync..." e "Processando..." obsoletas
-        logs: [
+      setState((prev) => {
+        // FASE 88 FIX: Append completion log instead of replacing all logs (ISSUE 1.2)
+        let finalLogs = [
+          ...prev.logs,
           {
             timestamp: new Date(data.timestamp),
             ticker: 'SYSTEM',
-            status: 'success',
+            status: 'success' as const,
             message: `✅ Sync concluído: ${data.successCount}/${data.totalAssets} successful (${Math.round(data.duration / 60)}min)`,
             duration: data.duration,
           },
-        ],
-        config: null, // FASE 88: Clear config on completion
-      }));
+        ];
+
+        // FASE 88 FIX: Still apply log limit after adding completion entry (ISSUE 1.1)
+        if (finalLogs.length > MAX_LOG_ENTRIES) {
+          finalLogs = finalLogs.slice(-MAX_LOG_ENTRIES);
+        }
+
+        return {
+          ...prev,
+          isRunning: false,
+          currentTicker: null,
+          progress: 100,
+          logs: finalLogs,
+          config: null, // FASE 88: Clear config on completion
+        };
+      });
 
       // FASE 88: Clear localStorage on completion
       clearActiveSyncState();
 
-      // Callback onSyncComplete
-      if (options?.onSyncComplete) {
-        options.onSyncComplete();
+      // FASE 88 FIX: Use callbacksRef to avoid stale closure (ISSUE 1.3)
+      if (callbacksRef.current.onSyncComplete) {
+        callbacksRef.current.onSyncComplete();
       }
 
-      // Auto-refresh cache (opcional)
-      if (options?.autoRefresh) {
+      // Auto-refresh cache (opcional) - using callbacksRef
+      if (callbacksRef.current.autoRefresh) {
         // Será implementado com useSyncHelpers().refetchSyncStatus() no componente
       }
     });
@@ -316,8 +394,9 @@ export function useSyncWebSocket(options?: {
       socket.disconnect();
       socketRef.current = null;
     };
+    // FASE 88 FIX: Remove options from dependencies - using callbacksRef instead (ISSUE 1.3)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options?.autoRefresh, options?.onSyncComplete, getSyncConfigFromStorage, saveActiveSyncState, clearActiveSyncState]); // Include FASE 88 storage functions
+  }, [getSyncConfigFromStorage, saveActiveSyncState, clearActiveSyncState]);
 
   /**
    * Limpar logs e resetar estado

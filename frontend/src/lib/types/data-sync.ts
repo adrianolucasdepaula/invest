@@ -23,7 +23,9 @@ export interface AssetSyncStatusDto {
   oldestDate: string | null;
   newestDate: string | null;
   status: AssetSyncStatus;
-  lastSyncAt: Date | null;
+  // FASE 88 FIX: Changed from Date to string (ISSUE 1.5)
+  // API returns ISO string, not Date object - converting to Date should be done in component
+  lastSyncAt: string | null;
   lastSyncDuration: number | null; // segundos
   hasOptions: boolean; // Prioridade de atualização
 }
@@ -96,7 +98,8 @@ export interface SyncStartedEvent {
   totalAssets: number;
   startYear: number;
   endYear: number;
-  timestamp: Date;
+  // FASE 88 FIX: Changed from Date to string (ISSUE 1.5) - WebSocket sends ISO string
+  timestamp: string;
 }
 
 export interface SyncProgressEvent {
@@ -108,7 +111,8 @@ export interface SyncProgressEvent {
   recordsInserted?: number;
   duration?: number;       // Segundos
   error?: string;
-  timestamp: Date;
+  // FASE 88 FIX: Changed from Date to string (ISSUE 1.5)
+  timestamp: string;
 }
 
 export interface SyncCompletedEvent {
@@ -117,13 +121,15 @@ export interface SyncCompletedEvent {
   failedCount: number;
   duration: number;        // Segundos totais
   failedTickers?: string[];
-  timestamp: Date;
+  // FASE 88 FIX: Changed from Date to string (ISSUE 1.5)
+  timestamp: string;
 }
 
 export interface SyncFailedEvent {
   error: string;
   tickers?: string[];
-  timestamp: Date;
+  // FASE 88 FIX: Changed from Date to string (ISSUE 1.5)
+  timestamp: string;
 }
 
 /**

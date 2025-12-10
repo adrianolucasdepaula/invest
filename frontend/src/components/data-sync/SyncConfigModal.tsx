@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -72,15 +72,16 @@ const getFiveYearsAgo = () => {
 const getYearStart = () => `${new Date().getFullYear()}-01-01`;
 
 const MIN_DATE = '1986-01-02'; // Início COTAHIST
-const currentDate = getCurrentDate();
 
-const PERIODS: Record<PredefinedPeriod, { label: string; startDate: string; endDate: string }> = {
+// FASE 88 FIX: getPeriods function to be called inside component (ISSUE 1.4)
+// This ensures currentDate is evaluated when modal opens, not at module load time
+const getPeriods = (currentDate: string): Record<PredefinedPeriod, { label: string; startDate: string; endDate: string }> => ({
   intraday: { label: 'Intraday', startDate: currentDate, endDate: currentDate },
   full: { label: 'Histórico Completo', startDate: MIN_DATE, endDate: currentDate },
   recent: { label: 'Últimos 5 Anos', startDate: getFiveYearsAgo(), endDate: currentDate },
   ytd: { label: 'Ano Atual (YTD)', startDate: getYearStart(), endDate: currentDate },
   custom: { label: 'Período Customizado', startDate: '2020-01-01', endDate: currentDate },
-};
+});
 
 /**
  * Component: SyncConfigModal
@@ -103,6 +104,11 @@ export function SyncConfigModal({
   const { data: syncStatus } = useSyncStatus();
   const assets = (syncStatus?.assets ?? []) as AssetSyncStatusDto[];
 
+  // FASE 88 FIX: Calculate currentDate and PERIODS when modal opens (ISSUE 1.4)
+  // This prevents stale date if user keeps modal open past midnight
+  const currentDate = useMemo(() => getCurrentDate(), [open]);
+  const PERIODS = useMemo(() => getPeriods(currentDate), [currentDate]);
+
   // State
   const [selectedTickers, setSelectedTickers] = useState<string[]>([]);
   const [period, setPeriod] = useState<PredefinedPeriod>('recent');
@@ -115,9 +121,10 @@ export function SyncConfigModal({
   const [intradayTimeframe, setIntradayTimeframe] = useState<SyncIntradayTimeframe>(SyncIntradayTimeframe.H1);
   const [intradayRange, setIntradayRange] = useState<SyncIntradayRange>(SyncIntradayRange.D5);
 
-  // Reset state when modal closes
+  // FASE 88 FIX: Reset state when modal opens (not closes) to use fresh PERIODS (ISSUE 1.4)
+  // This ensures currentDate is always up-to-date when modal opens
   useEffect(() => {
-    if (!open) {
+    if (open) {
       setSelectedTickers([]);
       setPeriod('recent');
       setStartDate(PERIODS.recent.startDate);
@@ -128,7 +135,7 @@ export function SyncConfigModal({
       setIntradayTimeframe(SyncIntradayTimeframe.H1);
       setIntradayRange(SyncIntradayRange.D5);
     }
-  }, [open]);
+  }, [open, PERIODS]);
 
   // Filter assets by search query AND hasOptions if checkbox is checked
   const filteredAssets = assets.filter((asset) => {
@@ -152,12 +159,25 @@ export function SyncConfigModal({
     );
   };
 
-  // Handle select all tickers
+  // FASE 88 FIX: Improved Select All logic (ISSUE 2.1)
+  // Check if ALL filtered assets are selected, not just same length
+  const allFilteredSelected = useMemo(
+    () => filteredAssets.length > 0 && filteredAssets.every((asset) => selectedTickers.includes(asset.ticker)),
+    [filteredAssets, selectedTickers]
+  );
+
+  // Handle select all tickers - now properly handles partial selections
   const handleSelectAll = () => {
-    if (selectedTickers.length === filteredAssets.length) {
-      setSelectedTickers([]);
+    if (allFilteredSelected) {
+      // Remove only filtered assets from selection (keep other selections)
+      setSelectedTickers((prev) =>
+        prev.filter((ticker) => !filteredAssets.some((a) => a.ticker === ticker))
+      );
     } else {
-      setSelectedTickers(filteredAssets.map((a) => a.ticker));
+      // Add all filtered assets to selection (preserve existing selections)
+      setSelectedTickers((prev) => [
+        ...new Set([...prev, ...filteredAssets.map((a) => a.ticker)]),
+      ]);
     }
   };
 
@@ -385,9 +405,7 @@ export function SyncConfigModal({
                 onClick={handleSelectAll}
                 disabled={isSubmitting}
               >
-                {selectedTickers.length === filteredAssets.length
-                  ? 'Desmarcar Todos'
-                  : 'Selecionar Todos'}
+                {allFilteredSelected ? 'Desmarcar Todos' : 'Selecionar Todos'}
               </Button>
             </div>
 

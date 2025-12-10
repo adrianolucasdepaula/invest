@@ -109,8 +109,9 @@ const formatDate = (date: string | null): string => {
 
 /**
  * Helper: Format last sync timestamp
+ * FASE 88 FIX: Changed from Date to string (ISSUE 1.5) - API returns ISO string
  */
-const formatLastSync = (date: Date | null): string => {
+const formatLastSync = (date: string | null): string => {
   if (!date) return 'Nunca sincronizado';
   return new Date(date).toLocaleString('pt-BR', {
     day: '2-digit',

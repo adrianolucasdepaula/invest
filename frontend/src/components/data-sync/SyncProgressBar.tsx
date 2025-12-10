@@ -252,6 +252,7 @@ export function SyncProgressBar({
       )}
 
       {/* Warnings (if any failed) */}
+      {/* FASE 88 FIX: Limit displayed tickers to prevent layout break (ISSUE 2.5) */}
       {state.results.failed.length > 0 && (
         <div className="rounded-lg bg-warning/10 border border-warning/20 p-3">
           <div className="flex items-start space-x-2">
@@ -261,7 +262,8 @@ export function SyncProgressBar({
                 {state.results.failed.length} ativo(s) falharam
               </p>
               <p className="text-xs text-warning/90 mt-1">
-                Tickers: {state.results.failed.join(', ')}
+                Tickers: {state.results.failed.slice(0, 10).join(', ')}
+                {state.results.failed.length > 10 && ` +${state.results.failed.length - 10} mais...`}
               </p>
             </div>
           </div>
