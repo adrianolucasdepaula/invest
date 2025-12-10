@@ -1,8 +1,8 @@
 # 🗺️ ROADMAP - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-09
-**Versão:** 1.11.0
+**Última Atualização:** 2025-12-10
+**Versão:** 1.12.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -10925,9 +10925,78 @@ Adição de suporte aos campos `LPA` (Lucro Por Ação), `VPA` (Valor Patrimonia
 
 ---
 
+## FASE 86: Bulk Update Fixes + "Última Atualização" em Tempo Real ✅ 100% COMPLETO
+
+**Data:** 2025-12-10
+**Tipo:** Bug Fix + UX Enhancement
+**Documentação:** `PLANO_FASE_86_BULK_UPDATE_FIXES.md`
+
+### Descrição
+
+Correção de três problemas críticos no fluxo "Atualizar Todos" da página de Assets:
+1. Card de progresso não aparecia após refresh da página
+2. Botões Cancelar/Pausar ficavam invisíveis
+3. Coluna "Última Atualização" não atualizava em tempo real
+
+### Root Cause Analysis
+
+| Problema | Causa | Solução |
+|----------|-------|---------|
+| Card não restaura após refresh | Hook não restaurava `isRunning` quando havia jobs pendentes | Auto-restaurar estado quando `totalPending > 0` |
+| Botões invisíveis | Consequência do card não aparecer (`bulkUpdateState.isRunning && ...`) | Corrigido ao restaurar `isRunning` |
+| "Última Atualização" estático | Hook não invalidava cache React Query após cada asset | Adicionar `queryClient.invalidateQueries()` |
+| Controller anti-pattern | Múltiplos `@Body()` decorators (não recomendado) | Criar DTO com validators |
+
+### Implementações
+
+| Componente | Arquivo | Mudança | Status |
+|------------|---------|---------|--------|
+| **React Query Integration** | `useAssetBulkUpdate.ts` | Import `useQueryClient` + `invalidateQueries` | ✅ |
+| **Auto-Restore State** | `useAssetBulkUpdate.ts` | Restaurar `isRunning` quando `totalPending > 0` | ✅ |
+| **DTO com Validators** | `update-asset.dto.ts` | `BulkUpdateAllAssetsDto` com `@IsBoolean`, `@IsUUID` | ✅ |
+| **Controller Refactor** | `assets-update.controller.ts` | Usar DTO ao invés de múltiplos `@Body()` | ✅ |
+| **Swagger Documentation** | `update-asset.dto.ts` | `@ApiPropertyOptional` para `hasOptionsOnly` | ✅ |
+
+### Arquivos Modificados
+
+| Arquivo | Mudança |
+|---------|---------|
+| `frontend/src/lib/hooks/useAssetBulkUpdate.ts` | +20 linhas (React Query integration) |
+| `backend/src/api/assets/dto/update-asset.dto.ts` | +22 linhas (BulkUpdateAllAssetsDto) |
+| `backend/src/api/assets/assets-update.controller.ts` | Refactor para usar DTO |
+
+### Validação MCP Triplo
+
+- ✅ **Playwright**: Navegação para `/assets`, checkbox "Com Opções" funcional
+- ✅ **Chrome DevTools**: Snapshot confirmou card de progresso visível com botões
+- ✅ **React DevTools**: Componentes renderizando corretamente
+
+### Evidências de Sucesso
+
+| Item | Resultado |
+|------|-----------|
+| Card de progresso | Visível: "Atualização em andamento - KEPL3" |
+| Progresso | 10/165 (6%), ✓ 19 sucesso, ✗ 2 falhas |
+| Botões | "Pausar" e "Cancelar" VISÍVEIS |
+| "Última Atualização" | BBSE3 mostrou "6m atrás" (tempo real) |
+| Backend logs | `hasOptionsOnly: true` recebido corretamente |
+
+### Validação Zero Tolerance
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Build Backend: SUCCESS
+- ✅ Build Frontend: SUCCESS
+- ✅ WebSocket Events: Funcionando
+- ✅ React Query Cache: Invalidando corretamente
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (86 fases)
+### Fases Completas (87 fases)
 
 - ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
 - ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
@@ -10961,6 +11030,7 @@ Adição de suporte aos campos `LPA` (Lucro Por Ação), `VPA` (Valor Patrimonia
 - ✅ FASE 83: Phase 5 Scrapers Validation - 100% COMPLETO (2025-12-08)
 - ✅ FASE 84: Time-Weighted Multi-Timeframe Sentiment - 100% COMPLETO (2025-12-09)
 - ✅ FASE 85: LPA, VPA e Liquidez Corrente - 100% COMPLETO (2025-12-09)
+- ✅ FASE 86: Bulk Update Fixes + "Última Atualização" em Tempo Real - 100% COMPLETO (2025-12-10)
 
 ### Fases Planejadas
 

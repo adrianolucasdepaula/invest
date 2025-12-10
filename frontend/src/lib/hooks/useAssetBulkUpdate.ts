@@ -9,6 +9,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3101';
@@ -131,6 +132,9 @@ export function useAssetBulkUpdate(options?: {
   const onUpdateCompleteRef = useRef(options?.onUpdateComplete);
   const onUpdateStartedRef = useRef(options?.onUpdateStarted);
 
+  // ✅ FASE 86: React Query integration for real-time table updates
+  const queryClient = useQueryClient();
+
   // ✅ CRITICAL: Set mounted state only on client after hydration
   useEffect(() => {
     console.log('[ASSET BULK WS] Component mounted on CLIENT! Setting isMounted = true');
@@ -183,12 +187,34 @@ export function useAssetBulkUpdate(options?: {
           const currentTicker = queueStats.jobs?.active?.[0]?.data?.ticker || null;
 
           setState((prev) => {
-            // ✅ FIX: Only update progress if user already initiated the update in this session
-            // This prevents auto-starting the UI update mode when page loads with stale jobs
+            // ✅ FIX FASE 86: Auto-restaurar estado quando há jobs pendentes
+            // Isso permite que o card de progresso (com botões Cancelar/Pausar) apareça após refresh
             if (!prev.isRunning) {
-              console.log(`[ASSET BULK WS] ${totalPending} jobs pendentes detectados (não iniciando automaticamente)`);
-              // Don't auto-activate running mode - user must click "Atualizar Todos"
-              return prev;
+              console.log(`[ASSET BULK WS] Restaurando estado: ${totalPending} jobs pendentes na fila`);
+
+              // Estimar total baseado nos jobs pendentes + completados
+              const completedCount = queueStats.completed || 0;
+              const failedCount = queueStats.failed || 0;
+              const estimatedTotal = totalPending + completedCount + failedCount;
+
+              return {
+                ...prev,
+                isRunning: true, // ← CRÍTICO: Ativa o card de progresso com botões Cancelar/Pausar
+                currentTicker,
+                total: estimatedTotal > 0 ? estimatedTotal : totalPending,
+                current: completedCount + failedCount,
+                progress: estimatedTotal > 0 ? Math.round(((completedCount + failedCount) / estimatedTotal) * 100) : 0,
+                successCount: completedCount,
+                failedCount: failedCount,
+                logs: [
+                  {
+                    timestamp: new Date(),
+                    ticker: 'SYSTEM',
+                    status: 'system' as const,
+                    message: `Reconectando... ${totalPending} jobs pendentes na fila`,
+                  },
+                ],
+              };
             }
 
             // Already running (user clicked the button) - update progress
@@ -329,8 +355,13 @@ export function useAssetBulkUpdate(options?: {
 
       // ✅ NEW: Event: asset_update_completed (individual asset)
       // ✅ FIX: Now also updates current and progress to show real-time progress
+      // ✅ FASE 86: Invalidate React Query cache for real-time "Última Atualização" updates
       socket.on('asset_update_completed', (data: AssetUpdateCompletedEvent) => {
         console.log('[ASSET BULK WS] Asset update completed:', data.ticker);
+
+        // ✅ FASE 86: Invalidate assets cache to refresh "Última Atualização" column in real-time
+        queryClient.invalidateQueries({ queryKey: ['assets'] });
+
         setState((prev) => {
           const newSuccessCount = prev.successCount + 1;
           const newCurrent = prev.current + 1;

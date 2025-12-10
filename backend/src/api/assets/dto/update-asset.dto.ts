@@ -1,4 +1,11 @@
-import { IsArray, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UpdateTrigger } from '@database/entities';
 
@@ -99,4 +106,27 @@ export class GetOutdatedAssetsDto {
   @IsOptional()
   @IsUUID()
   portfolioId?: string;
+}
+
+/**
+ * DTO for bulk updating ALL assets fundamentals
+ * FASE 86: Proper DTO with validators for the bulk-all endpoint
+ */
+export class BulkUpdateAllAssetsDto {
+  @ApiPropertyOptional({
+    description: 'User ID who triggered the update',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter to only update assets that have options (hasOptions=true)',
+    example: true,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  hasOptionsOnly?: boolean;
 }

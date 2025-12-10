@@ -28,6 +28,7 @@ import {
   UpdatePortfolioAssetsDto,
   UpdateAssetsBySectorDto,
   GetOutdatedAssetsDto,
+  BulkUpdateAllAssetsDto,
 } from './dto/update-asset.dto';
 
 @ApiTags('Assets - Updates')
@@ -265,22 +266,27 @@ export class AssetsUpdateController {
       },
     },
   })
-  async updateAllAssetsFundamentals(
-    @Body('userId') userId?: string,
-    @Body('hasOptionsOnly') hasOptionsOnly?: boolean,
-  ) {
+  async updateAllAssetsFundamentals(@Body() dto: BulkUpdateAllAssetsDto) {
+    // FASE 86: Proper DTO with validators (removed anti-pattern with multiple @Body decorators)
+    this.logger.log(
+      `[BULK-ALL] Received request - hasOptionsOnly: ${dto.hasOptionsOnly}, userId: ${dto.userId}`,
+    );
+
     // 1. Get all active assets ordered by priority
     // Priority: hasOptions=true first, then never updated, then oldest updated
     // If hasOptionsOnly=true, filter to only assets with options
+    const filterValue = dto.hasOptionsOnly ?? false;
+    this.logger.log(`[BULK-ALL] Using filterValue: ${filterValue}`);
+
     const assets = await this.assetsUpdateService.getAssetsWithPriority(
-      hasOptionsOnly ?? false,
+      filterValue,
     );
     const tickers = assets.map((asset) => asset.ticker);
 
     // 2. Queue individual jobs via BullMQ (returns immediately)
     const jobId = await this.assetUpdateJobsService.queueMultipleAssets(
       tickers,
-      userId,
+      dto.userId,
       UpdateTrigger.MANUAL,
     );
 

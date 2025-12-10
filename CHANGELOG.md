@@ -9,6 +9,28 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 86: Bulk Update Fixes + "Última Atualização" em Tempo Real - 100% COMPLETA (2025-12-10)**
+  - **Bug Fixes:**
+    - Card de progresso agora persiste após refresh da página
+    - Botões Pausar/Cancelar sempre visíveis quando há jobs pendentes
+    - Coluna "Última Atualização" atualiza em tempo real durante bulk update
+  - **Melhorias Arquiteturais:**
+    - `BulkUpdateAllAssetsDto`: Novo DTO com validators (`@IsBoolean`, `@IsUUID`)
+    - Controller refatorado para usar DTO (removido anti-pattern múltiplos `@Body()`)
+    - Swagger documentation para `hasOptionsOnly` parameter
+  - **React Query Integration:**
+    - `useAssetBulkUpdate.ts`: Importa `useQueryClient` de `@tanstack/react-query`
+    - `invalidateQueries({ queryKey: ['assets'] })` no evento `asset_update_completed`
+    - Cache invalidado em tempo real → tabela atualiza automaticamente
+  - **Validação MCP Triplo:**
+    - Playwright: Navegação e checkbox funcionais
+    - Chrome DevTools: Card visível com botões
+    - React DevTools: Componentes corretos
+  - **Arquivos Modificados:**
+    - `frontend/src/lib/hooks/useAssetBulkUpdate.ts`
+    - `backend/src/api/assets/dto/update-asset.dto.ts`
+    - `backend/src/api/assets/assets-update.controller.ts`
+
 - **FASE 85: LPA, VPA e Liquidez Corrente - 100% COMPLETA (2025-12-09)**
   - **Backend - TRACKABLE_FIELDS:**
     - Adicionado `lpa`, `vpa`, `liquidezCorrente` ao array de campos rastreáveis

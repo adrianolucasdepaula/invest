@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAssets } from '@/lib/hooks/use-assets';
 import { Card } from '@/components/ui/card';
@@ -93,7 +93,7 @@ export default function AssetsPage() {
     return () => clearInterval(interval);
   }, [refetch]);
 
-  const handleSyncAll = async () => {
+  const handleSyncAll = useCallback(async () => {
     // ✅ FIX: Check if there's already a bulk update running before starting a new one
     if (bulkUpdateState.isRunning) {
       toast({
@@ -118,7 +118,9 @@ export default function AssetsPage() {
         return;
       }
 
-      // Pass showOnlyOptions to filter only assets with options when checkbox is checked
+      // ✅ FIX FASE 86: Pass showOnlyOptions to filter only assets with options when checkbox is checked
+      // Using useCallback with showOnlyOptions dependency ensures we capture the current state value
+      console.log('[SYNC ALL] showOnlyOptions:', showOnlyOptions);
       await api.bulkUpdateAllAssetsFundamentals(undefined, showOnlyOptions);
     } catch (error: any) {
       toast({
@@ -127,7 +129,7 @@ export default function AssetsPage() {
         variant: 'destructive',
       });
     }
-  };
+  }, [bulkUpdateState.isRunning, showOnlyOptions, toast]);
 
   const handleCancelUpdate = async () => {
     setIsCancelling(true);
@@ -423,7 +425,10 @@ export default function AssetsPage() {
             <Checkbox
               id="options-mode"
               checked={showOnlyOptions}
-              onCheckedChange={checked => setShowOnlyOptions(checked === true)}
+              onCheckedChange={checked => {
+                console.log('[CHECKBOX] Changed to:', checked);
+                setShowOnlyOptions(checked === true);
+              }}
             />
             <Label htmlFor="options-mode">Com Opções</Label>
           </div>
