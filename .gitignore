@@ -40,6 +40,9 @@ pytest_cache/
 .next/
 out/
 
+# Next.js auto-generated files
+next-env.d.ts
+
 # Misc
 .DS_Store
 *.pem

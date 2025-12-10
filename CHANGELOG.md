@@ -9,6 +9,23 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 89: Documentation Synchronization & Security Hardening - 100% COMPLETA (2025-12-10)**
+  - **Documentação Atualizada:**
+    - INSTALL.md: versão 1.0.0 → 1.12.1, data e mantenedor atualizados
+    - ARCHITECTURE.md: referência Selenium → Playwright corrigida
+    - GEMINI.md: header corrigido (era "# CLAUDE.md", agora "# GEMINI.md")
+    - GETTING_STARTED.md: adicionado header de versão + seção FASE 86-88
+  - **Git Cleanup:**
+    - Adicionado `next-env.d.ts` ao .gitignore (arquivo auto-gerado pelo Next.js)
+    - Removido do tracking via `git rm --cached`
+  - **Segurança:**
+    - Identificado GitHub PAT exposto em `.agent/mcp_config.json`
+    - Documentado em KNOWN-ISSUES.md para rotação manual
+  - **Validação:**
+    - TypeScript: 0 erros (backend + frontend)
+    - Build: SUCCESS (backend + frontend)
+    - MCP Triplo: Chrome DevTools + Playwright validados
+
 - **FASE 88: Sync Status Persistence + Configuration Display - 100% COMPLETA (2025-12-10)**
   - **Feature 1 - Exibir Configuração do Sync:**
     - Nova interface `SyncConfig` em `data-sync.ts` com tipo, período, hasOptions, total

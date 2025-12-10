@@ -1,9 +1,9 @@
 # 🏗️ ARCHITECTURE - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-09
-**Versão:** 1.2.0
-**Mantenedor:** Claude Code (Sonnet 4.5)
+**Última Atualização:** 2025-12-10
+**Versão:** 1.12.1
+**Mantenedor:** Claude Code (Opus 4.5)
 
 ---
 
@@ -52,7 +52,7 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
                      ┌─────────────┐
                      │  Python     │
                      │  Scrapers   │
-                     │  (Selenium) │
+                     │ (Playwright) │
                      └─────────────┘
 ```
 
@@ -551,7 +551,7 @@ Sistema completo de 9 servidores MCP para estender capacidades do Claude Code:
 | Context7            | Documentação atualizada de frameworks     | ✓ Connected |
 | Playwright          | Automação de browser para testes E2E      | ✓ Connected |
 | Chrome DevTools     | Inspeção e debugging de aplicações web    | ✓ Connected |
-| Selenium            | Automação web alternativa                 | ✓ Connected |
+| React Context       | Análise de componentes React              | ✓ Connected |
 | **Gemini Advisor**  | Segunda opinião via Gemini CLI (1M tokens)| ✓ Connected |
 
 **Configuração:** `C:\Users\adria\.claude.json`

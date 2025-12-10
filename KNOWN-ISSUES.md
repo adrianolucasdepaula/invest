@@ -1,8 +1,8 @@
 # 🔍 KNOWN ISSUES - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-29
-**Versão:** 1.1.0
+**Última Atualização:** 2025-12-10
+**Versão:** 1.12.1
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -34,7 +34,44 @@ Este documento centraliza **todos os problemas conhecidos** encontrados durante 
 
 ## 🔴 ISSUES ATIVOS (NÃO RESOLVIDOS)
 
-*Nenhum issue crítico em aberto no momento.*
+### Issue #SECURITY_PAT: GitHub Personal Access Token Exposto
+
+**Severidade:** 🔴 **CRÍTICA**
+**Status:** ⚠️ **REQUER AÇÃO MANUAL**
+**Data Identificado:** 2025-12-10
+**Identificado Por:** Claude Code (Opus 4.5) durante FASE 89
+
+#### Descrição
+
+GitHub Personal Access Token (PAT) foi identificado exposto em arquivo de configuração local.
+
+#### Localização
+
+- **Arquivo:** `.agent/mcp_config.json`
+- **Linha:** 44
+- **Conteúdo:** Token iniciando com `ghp_5hdww...`
+
+#### Mitigação Aplicada
+
+- ✅ Arquivo `.agent/` está em `.gitignore` (nunca foi commitado)
+- ✅ Token não foi exposto em repositório público
+- ⚠️ Token deve ser rotacionado como medida preventiva
+
+#### Ação Requerida (MANUAL)
+
+1. Acessar: https://github.com/settings/tokens
+2. Revogar token atual (`ghp_5hdww...`)
+3. Gerar novo token com escopos mínimos necessários:
+   - `repo` (se necessário acesso a repos privados)
+   - `read:org` (se necessário)
+4. Atualizar `.agent/mcp_config.json` com novo token
+5. Testar conectividade do MCP
+
+#### Impacto
+
+- **Risco Real:** Baixo (arquivo não commitado)
+- **Risco Potencial:** Alto se token fosse exposto publicamente
+- **Recomendação:** Rotacionar token como boa prática de segurança
 
 ---
 

@@ -1,9 +1,9 @@
 # 🚀 INSTALLATION GUIDE - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-14
-**Versão:** 1.0.0
-**Mantenedor:** Claude Code (Sonnet 4.5)
+**Última Atualização:** 2025-12-10
+**Versão:** 1.12.1
+**Mantenedor:** Claude Code (Opus 4.5)
 
 ---
 

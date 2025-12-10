@@ -1,5 +1,11 @@
 # Getting Started - B3 AI Analysis Platform
 
+**Versão:** 1.12.1
+**Última Atualização:** 2025-12-10
+**Mantenedor:** Claude Code (Opus 4.5)
+
+---
+
 Este guia irá ajudá-lo a configurar e executar a plataforma localmente.
 
 ## Pré-requisitos
@@ -313,6 +319,44 @@ npm run build
 cd frontend
 npm run build
 ```
+
+## Funcionalidades Recentes (FASE 86-88)
+
+### Data Management (`/data-management`)
+
+Nova página de gerenciamento de dados com:
+
+- **Bulk Sync**: Sincronização em massa de múltiplos ativos
+- **Intraday Sync**: Dados intraday via BRAPI
+- **Asset Selection**: Seleção individual de ativos para sync
+- **Progress Tracking**: WebSocket em tempo real para acompanhar progresso
+- **Status Persistence**: Estado preservado mesmo após refresh da página
+- **Filter "Com Opções"**: Filtrar ativos com opções líquidas
+
+### Como usar
+
+1. Acesse: http://localhost:3100/data-management
+2. Clique em **"Sincronizar Dados"** para sync em massa
+3. Selecione os ativos desejados e o período
+4. Acompanhe o progresso em tempo real
+
+### API Endpoints
+
+```bash
+# Iniciar sync em massa
+POST /api/v1/sync-bulk
+
+# Status de sincronização
+GET /api/v1/sync-status
+
+# Sync individual
+POST /api/v1/sync-cotahist
+
+# Sync intraday
+POST /api/v1/sync-intraday
+```
+
+---
 
 ## Suporte
 
