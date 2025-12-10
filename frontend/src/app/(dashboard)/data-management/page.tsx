@@ -1,10 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { SyncStatusTable } from '@/components/data-sync/SyncStatusTable';
 import { BulkSyncButton } from '@/components/data-sync/BulkSyncButton';
 import { SyncProgressBar } from '@/components/data-sync/SyncProgressBar';
 import { AuditTrailPanel } from '@/components/data-sync/AuditTrailPanel';
 import { useSyncHelpers } from '@/lib/hooks/useDataSync';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 /**
  * Page: Data Management (Sync B3)
@@ -23,6 +26,7 @@ import { useSyncHelpers } from '@/lib/hooks/useDataSync';
  */
 export default function DataManagementPage() {
   const { refetchSyncStatus } = useSyncHelpers();
+  const [showOnlyOptions, setShowOnlyOptions] = useState(false);
 
   /**
    * Handle sync started
@@ -59,11 +63,23 @@ export default function DataManagementPage() {
         <BulkSyncButton onSyncStarted={handleSyncStarted} />
       </div>
 
+      {/* Filter: Show only assets with options */}
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="showOnlyOptions"
+          checked={showOnlyOptions}
+          onCheckedChange={(checked) => setShowOnlyOptions(checked === true)}
+        />
+        <Label htmlFor="showOnlyOptions" className="text-sm cursor-pointer">
+          Mostrar apenas ativos com opções
+        </Label>
+      </div>
+
       {/* Real-Time Progress Bar (only visible when sync is running) */}
       <SyncProgressBar onSyncComplete={handleSyncCompleted} autoRefresh />
 
       {/* Main Content: Sync Status Table */}
-      <SyncStatusTable />
+      <SyncStatusTable showOnlyOptions={showOnlyOptions} />
 
       {/* Audit Trail Panel */}
       <AuditTrailPanel maxHeight={400} autoScroll />

@@ -9,6 +9,30 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 88: Sync Status Persistence + Configuration Display - 100% COMPLETA (2025-12-10)**
+  - **Feature 1 - Exibir Configuração do Sync:**
+    - Nova interface `SyncConfig` em `data-sync.ts` com tipo, período, hasOptions, total
+    - SyncConfigModal armazena config em sessionStorage antes de iniciar sync
+    - SyncProgressBar exibe badges com: tipo (Histórico/Intraday), período, filtro hasOptions, total de ativos
+  - **Feature 2 - Persistir Status após Refresh:**
+    - useSyncWebSocket salva estado em localStorage no sync:started
+    - useSyncWebSocket limpa localStorage no sync:completed/failed
+    - useEffect restaura estado do localStorage no mount (validação de timeout 2h)
+  - **Feature 3 - Filtro "Com Opções" na Página Principal:**
+    - Checkbox na página /data-management para filtrar SyncStatusTable
+    - Prop `showOnlyOptions` passada para SyncStatusTable
+    - Filtro combinado com filtros de status existentes
+  - **Arquivos Modificados:**
+    - `frontend/src/lib/types/data-sync.ts`
+    - `frontend/src/lib/hooks/useSyncWebSocket.ts`
+    - `frontend/src/components/data-sync/SyncConfigModal.tsx`
+    - `frontend/src/components/data-sync/SyncProgressBar.tsx`
+    - `frontend/src/components/data-sync/SyncStatusTable.tsx`
+    - `frontend/src/app/(dashboard)/data-management/page.tsx`
+  - **Validação:**
+    - TypeScript: 0 erros (frontend + backend)
+    - Build: Sucesso (Next.js)
+
 - **FASE 87: Data Management Enhancements + Asset Selection Sync - 100% COMPLETA (2025-12-10)**
   - **Feature 1 - Filtro "Com Opções" no SyncConfigModal:**
     - Checkbox para filtrar apenas ativos com opções líquidas

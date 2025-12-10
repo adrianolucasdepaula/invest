@@ -32,8 +32,11 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSyncStatus } from '@/lib/hooks/useDataSync';
-import type { AssetSyncStatusDto } from '@/lib/types/data-sync';
+import type { AssetSyncStatusDto, SyncConfig } from '@/lib/types/data-sync';
 import { SyncIntradayTimeframe, SyncIntradayRange } from '@/lib/types/data-sync';
+
+// FASE 88: Storage key for sync config (must match useSyncWebSocket.ts)
+const SYNC_CONFIG_KEY = 'currentSyncConfig';
 
 /**
  * Props for SyncConfigModal
@@ -203,6 +206,27 @@ export function SyncConfigModal({
   // Handle confirm
   const handleConfirm = () => {
     if (!validateForm()) return;
+
+    // FASE 88: Store sync config in sessionStorage for SyncProgressBar display
+    const syncConfig: SyncConfig = {
+      syncType: period === 'intraday' ? 'intraday' : 'historical',
+      period: period,
+      periodLabel: PERIODS[period].label,
+      hasOptionsFilter: showOnlyOptions,
+      totalAssets: selectedTickers.length,
+      startYear: period !== 'intraday' ? parseInt(startDate.split('-')[0], 10) : undefined,
+      endYear: period !== 'intraday' ? parseInt(endDate.split('-')[0], 10) : undefined,
+      timeframe: period === 'intraday' ? intradayTimeframe : undefined,
+      range: period === 'intraday' ? intradayRange : undefined,
+      startedAt: new Date().toISOString(),
+    };
+
+    try {
+      sessionStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(syncConfig));
+      console.log('[SYNC CONFIG] Stored sync config:', syncConfig);
+    } catch (e) {
+      console.warn('[SYNC CONFIG] Failed to store config:', e);
+    }
 
     if (period === 'intraday') {
       // Intraday sync uses different API

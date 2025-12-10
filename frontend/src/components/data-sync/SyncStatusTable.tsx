@@ -122,6 +122,14 @@ const formatLastSync = (date: Date | null): string => {
 };
 
 /**
+ * Props for SyncStatusTable
+ */
+interface SyncStatusTableProps {
+  /** Filter to show only assets with options (hasOptions=true) */
+  showOnlyOptions?: boolean;
+}
+
+/**
  * Component: SyncStatusTable
  *
  * Displays sync status for all B3 assets using Card grid layout.
@@ -132,19 +140,24 @@ const formatLastSync = (date: Date | null): string => {
  * - Status badges (colored)
  * - Action buttons (Re-sync)
  * - Loading/Error states
+ * - Optional filter for assets with options
  */
-export function SyncStatusTable() {
+export function SyncStatusTable({ showOnlyOptions = false }: SyncStatusTableProps) {
   const [filter, setFilter] = useState<'all' | AssetSyncStatus>('all');
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: syncStatus, isLoading, error, refetch } = useSyncStatus();
 
-  // Filter assets by status
+  // Filter assets by status and hasOptions
   const assets = (syncStatus?.assets ?? []) as AssetSyncStatusDto[];
-  const filteredAssets = assets.filter(
-    (asset) => filter === 'all' || asset.status === filter
-  );
+  const filteredAssets = assets.filter((asset) => {
+    // Filter by status
+    const matchesStatus = filter === 'all' || asset.status === filter;
+    // Filter by hasOptions (if enabled)
+    const matchesOptions = showOnlyOptions ? asset.hasOptions : true;
+    return matchesStatus && matchesOptions;
+  });
 
   // Summary stats
   const summary = syncStatus?.summary ?? {

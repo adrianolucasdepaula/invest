@@ -10,6 +10,9 @@ import {
   Clock,
   TrendingUp,
   AlertCircle,
+  Calendar,
+  Target,
+  Database,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSyncWebSocket } from '@/lib/hooks/useSyncWebSocket';
@@ -105,6 +108,61 @@ export function SyncProgressBar({
           </span>
         </Badge>
       </div>
+
+      {/* FASE 88: Sync Configuration Display */}
+      {(state.isRunning || isCompleted) && state.config && (
+        <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-border/50">
+          {/* Sync Type Badge */}
+          <Badge
+            variant="outline"
+            className={cn(
+              'flex items-center gap-1',
+              state.config.syncType === 'intraday'
+                ? 'bg-blue-500/10 text-blue-600 border-blue-500/30'
+                : 'bg-primary/10 text-primary border-primary/30'
+            )}
+          >
+            <Calendar className="h-3 w-3" />
+            {state.config.syncType === 'intraday' ? 'Intraday' : 'Histórico'}
+          </Badge>
+
+          {/* Period Label Badge */}
+          <Badge variant="outline" className="bg-muted/50">
+            {state.config.periodLabel}
+          </Badge>
+
+          {/* hasOptions Filter Badge (only if active) */}
+          {state.config.hasOptionsFilter && (
+            <Badge
+              variant="outline"
+              className="flex items-center gap-1 bg-violet-500/10 text-violet-600 border-violet-500/30"
+            >
+              <Target className="h-3 w-3" />
+              Com Opções
+            </Badge>
+          )}
+
+          {/* Total Assets Badge */}
+          <Badge variant="outline" className="flex items-center gap-1 bg-muted/50">
+            <Database className="h-3 w-3" />
+            {state.config.totalAssets} ativos
+          </Badge>
+
+          {/* Year Range (for historical) */}
+          {state.config.syncType === 'historical' && state.config.startYear && state.config.endYear && (
+            <Badge variant="outline" className="bg-muted/50">
+              {state.config.startYear} - {state.config.endYear}
+            </Badge>
+          )}
+
+          {/* Timeframe/Range (for intraday) */}
+          {state.config.syncType === 'intraday' && state.config.timeframe && (
+            <Badge variant="outline" className="bg-muted/50">
+              {state.config.timeframe} / {state.config.range}
+            </Badge>
+          )}
+        </div>
+      )}
 
       {/* Current Ticker or Idle Message */}
       {state.isRunning && state.currentTicker ? (

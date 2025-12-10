@@ -12,7 +12,13 @@ import type {
   SyncFailedEvent,
   SyncState,
   SyncLogEntry,
+  SyncConfig,
 } from '../types/data-sync';
+
+// Storage keys for sync state persistence (FASE 88)
+const SYNC_CONFIG_KEY = 'currentSyncConfig';
+const ACTIVE_SYNC_STATE_KEY = 'activeSyncState';
+const SYNC_STATE_MAX_AGE_HOURS = 2; // Max age before considering state stale
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3101';
 
@@ -48,9 +54,93 @@ export function useSyncWebSocket(options?: {
     progress: 0,
     logs: [],
     results: { success: [], failed: [] },
+    config: null,
   });
 
   const socketRef = useRef<Socket | null>(null);
+
+  /**
+   * FASE 88: Read sync config from sessionStorage
+   * Config is stored by BulkSyncButton before starting sync
+   */
+  const getSyncConfigFromStorage = useCallback((): SyncConfig | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const stored = sessionStorage.getItem(SYNC_CONFIG_KEY);
+      if (stored) {
+        return JSON.parse(stored) as SyncConfig;
+      }
+    } catch (e) {
+      console.warn('[SYNC WS] Failed to read sync config from sessionStorage:', e);
+    }
+    return null;
+  }, []);
+
+  /**
+   * FASE 88: Save active sync state to localStorage for persistence across refresh
+   */
+  const saveActiveSyncState = useCallback((syncState: Partial<SyncState> & { startedAt: string }) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(ACTIVE_SYNC_STATE_KEY, JSON.stringify(syncState));
+      console.log('[SYNC WS] Saved active sync state to localStorage');
+    } catch (e) {
+      console.warn('[SYNC WS] Failed to save sync state to localStorage:', e);
+    }
+  }, []);
+
+  /**
+   * FASE 88: Clear active sync state from localStorage (on completion/failure)
+   */
+  const clearActiveSyncState = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem(ACTIVE_SYNC_STATE_KEY);
+      sessionStorage.removeItem(SYNC_CONFIG_KEY);
+      console.log('[SYNC WS] Cleared sync state from storage');
+    } catch (e) {
+      console.warn('[SYNC WS] Failed to clear sync state from storage:', e);
+    }
+  }, []);
+
+  /**
+   * FASE 88: Restore active sync state from localStorage on mount
+   * Checks if state is not too old (max 2 hours)
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const savedState = localStorage.getItem(ACTIVE_SYNC_STATE_KEY);
+      if (savedState) {
+        const parsed = JSON.parse(savedState);
+        const startedAt = new Date(parsed.startedAt);
+        const hoursSinceStart = (Date.now() - startedAt.getTime()) / (1000 * 60 * 60);
+
+        if (hoursSinceStart < SYNC_STATE_MAX_AGE_HOURS) {
+          console.log('[SYNC WS] Restored sync state from localStorage:', parsed);
+          setState((prev) => ({
+            ...prev,
+            isRunning: true,
+            config: parsed.config || null,
+            logs: parsed.logs || [
+              {
+                timestamp: new Date(),
+                ticker: 'SYSTEM',
+                status: 'processing' as const,
+                message: 'Sincronização em andamento (restaurada)...',
+              },
+            ],
+          }));
+        } else {
+          console.log('[SYNC WS] Saved sync state too old, clearing');
+          localStorage.removeItem(ACTIVE_SYNC_STATE_KEY);
+        }
+      }
+    } catch (e) {
+      console.warn('[SYNC WS] Failed to restore sync state from localStorage:', e);
+    }
+  }, []);
 
   // Conectar ao namespace /sync
   useEffect(() => {
@@ -79,8 +169,11 @@ export function useSyncWebSocket(options?: {
     // Event: sync:started
     socket.on('sync:started', (data: SyncStartedEvent) => {
       console.log('[SYNC WS] Sync started:', data);
-      setState((prev) => ({
-        ...prev,
+
+      // FASE 88: Read config from sessionStorage (stored by BulkSyncButton)
+      const config = getSyncConfigFromStorage();
+
+      const newState = {
         isRunning: true,
         progress: 0,
         currentTicker: null,
@@ -88,12 +181,24 @@ export function useSyncWebSocket(options?: {
           {
             timestamp: new Date(data.timestamp),
             ticker: 'SYSTEM',
-            status: 'processing',
+            status: 'processing' as const,
             message: `Iniciando sync de ${data.totalAssets} ativos (${data.startYear}-${data.endYear})`,
           },
         ],
         results: { success: [], failed: [] },
+        config: config,
+      };
+
+      setState((prev) => ({
+        ...prev,
+        ...newState,
       }));
+
+      // FASE 88: Save state to localStorage for persistence across refresh
+      saveActiveSyncState({
+        ...newState,
+        startedAt: new Date().toISOString(),
+      });
     });
 
     // Event: sync:progress
@@ -166,7 +271,11 @@ export function useSyncWebSocket(options?: {
             duration: data.duration,
           },
         ],
+        config: null, // FASE 88: Clear config on completion
       }));
+
+      // FASE 88: Clear localStorage on completion
+      clearActiveSyncState();
 
       // Callback onSyncComplete
       if (options?.onSyncComplete) {
@@ -195,7 +304,11 @@ export function useSyncWebSocket(options?: {
             message: `❌ Sync falhou: ${data.error}`,
           },
         ],
+        config: null, // FASE 88: Clear config on failure
       }));
+
+      // FASE 88: Clear localStorage on failure
+      clearActiveSyncState();
     });
 
     // Cleanup ao desmontar
@@ -204,7 +317,7 @@ export function useSyncWebSocket(options?: {
       socketRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options?.autoRefresh, options?.onSyncComplete]); // Only reconnect when these specific properties change, not when options object reference changes
+  }, [options?.autoRefresh, options?.onSyncComplete, getSyncConfigFromStorage, saveActiveSyncState, clearActiveSyncState]); // Include FASE 88 storage functions
 
   /**
    * Limpar logs e resetar estado

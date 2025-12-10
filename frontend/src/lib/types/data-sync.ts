@@ -136,6 +136,33 @@ export type SyncWebSocketEvent =
   | { event: 'sync:failed'; data: SyncFailedEvent };
 
 /**
+ * FASE 88: Configuration of the current sync operation
+ * Stored in sessionStorage before sync starts, displayed in SyncProgressBar
+ */
+export interface SyncConfig {
+  /** Type of sync: historical (COTAHIST) or intraday */
+  syncType: 'historical' | 'intraday';
+  /** Period selected in the modal */
+  period: 'full' | 'recent' | 'ytd' | 'custom' | 'intraday';
+  /** Human-readable period label (e.g., "Histórico Completo") */
+  periodLabel: string;
+  /** Whether hasOptions filter was used */
+  hasOptionsFilter: boolean;
+  /** Total number of assets being synced */
+  totalAssets: number;
+  /** Start year (for historical sync) */
+  startYear?: number;
+  /** End year (for historical sync) */
+  endYear?: number;
+  /** Timeframe (for intraday sync) */
+  timeframe?: string;
+  /** Range (for intraday sync) */
+  range?: string;
+  /** Timestamp when sync started */
+  startedAt?: string;
+}
+
+/**
  * Estado local do componente de sync
  */
 export interface SyncState {
@@ -147,6 +174,8 @@ export interface SyncState {
     success: string[];
     failed: string[];
   };
+  /** FASE 88: Configuration of current sync operation */
+  config: SyncConfig | null;
 }
 
 export interface SyncLogEntry {
