@@ -2,7 +2,6 @@
 
 import { SyncStatusTable } from '@/components/data-sync/SyncStatusTable';
 import { BulkSyncButton } from '@/components/data-sync/BulkSyncButton';
-import { IntradaySyncButton } from '@/components/data-sync/IntradaySyncButton';
 import { SyncProgressBar } from '@/components/data-sync/SyncProgressBar';
 import { AuditTrailPanel } from '@/components/data-sync/AuditTrailPanel';
 import { useSyncHelpers } from '@/lib/hooks/useDataSync';
@@ -56,11 +55,8 @@ export default function DataManagementPage() {
           </p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2">
-          <IntradaySyncButton onSyncCompleted={handleSyncCompleted} />
-          <BulkSyncButton onSyncStarted={handleSyncStarted} />
-        </div>
+        {/* Action Button - Intraday now integrated in BulkSyncButton modal */}
+        <BulkSyncButton onSyncStarted={handleSyncStarted} />
       </div>
 
       {/* Real-Time Progress Bar (only visible when sync is running) */}
