@@ -391,6 +391,65 @@ class ApiClient {
     return response.data;
   }
 
+  // ========================================
+  // FASE 90: Discrepancy Resolution API
+  // ========================================
+
+  /**
+   * Get detailed discrepancy info for a specific ticker/field
+   */
+  async getDiscrepancyDetail(ticker: string, field: string) {
+    const response = await this.client.get(`/scrapers/discrepancies/${ticker}/${field}`);
+    return response.data;
+  }
+
+  /**
+   * Manually resolve a discrepancy
+   */
+  async resolveDiscrepancy(
+    ticker: string,
+    field: string,
+    data: {
+      selectedValue: number;
+      selectedSource?: string;
+      notes?: string;
+    }
+  ) {
+    const response = await this.client.post(
+      `/scrapers/discrepancies/${ticker}/${field}/resolve`,
+      data
+    );
+    return response.data;
+  }
+
+  /**
+   * Auto-resolve discrepancies in batch
+   */
+  async autoResolveDiscrepancies(data: {
+    method: 'consensus' | 'priority';
+    severity?: 'all' | 'high' | 'medium' | 'low';
+    tickerFilter?: string;
+    fieldFilter?: string;
+    dryRun?: boolean;
+  }) {
+    const response = await this.client.post('/scrapers/discrepancies/auto-resolve', data);
+    return response.data;
+  }
+
+  /**
+   * Get resolution history
+   */
+  async getResolutionHistory(params?: {
+    ticker?: string;
+    limit?: number;
+    method?: 'manual' | 'auto_consensus' | 'auto_priority';
+  }) {
+    const response = await this.client.get('/scrapers/discrepancies/resolution-history', {
+      params,
+    });
+    return response.data;
+  }
+
   // Economic Indicators endpoints - FASE 1.4 (8 indicator types)
   async getEconomicIndicators(params?: { type?: string; limit?: number }) {
     const response = await this.client.get('/economic-indicators', { params });

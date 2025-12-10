@@ -10,7 +10,10 @@ export interface ScraperMetricsSummary {
   failedRequests: number;
   avgResponseTime: number;
   lastTest: Date | null;
+  lastTestSuccess: boolean | null; // FASE 90: resultado do último teste
   lastSync: Date | null;
+  lastSyncSuccess: boolean | null; // FASE 90: resultado do último sync
+  lastErrorMessage: string | null; // FASE 90: última mensagem de erro
 }
 
 @Injectable()
@@ -81,7 +84,10 @@ export class ScraperMetricsService {
         failedRequests: 0,
         avgResponseTime: 0,
         lastTest: null,
+        lastTestSuccess: null,
         lastSync: null,
+        lastSyncSuccess: null,
+        lastErrorMessage: null,
       };
     }
 
@@ -103,9 +109,13 @@ export class ScraperMetricsService {
         ? Math.round(responseTimes.reduce((sum, t) => sum + t, 0) / responseTimes.length)
         : 0;
 
-    // Get last test and last sync
-    const lastTest = metrics.find((m) => m.operationType === 'test')?.createdAt || null;
-    const lastSync = metrics.find((m) => m.operationType === 'sync')?.createdAt || null;
+    // Get last test and last sync WITH success status
+    const lastTestMetric = metrics.find((m) => m.operationType === 'test');
+    const lastSyncMetric = metrics.find((m) => m.operationType === 'sync');
+
+    // Get last error message (from most recent failed operation)
+    const lastFailedMetric = metrics.find((m) => !m.success && m.errorMessage);
+    const lastErrorMessage = lastFailedMetric?.errorMessage || null;
 
     return {
       scraperId,
@@ -113,26 +123,81 @@ export class ScraperMetricsService {
       totalRequests,
       failedRequests,
       avgResponseTime: Math.round(avgResponseTime),
-      lastTest,
-      lastSync,
+      lastTest: lastTestMetric?.createdAt || null,
+      lastTestSuccess: lastTestMetric?.success ?? null,
+      lastSync: lastSyncMetric?.createdAt || null,
+      lastSyncSuccess: lastSyncMetric?.success ?? null,
+      lastErrorMessage,
     };
   }
 
   /**
-   * Get metrics summaries for all scrapers
+   * FASE 90: Get all distinct scraper IDs from the database
+   *
+   * Descobre DINAMICAMENTE todos os scrapers que já gravaram métricas,
+   * eliminando a necessidade de manter uma lista hardcoded.
+   */
+  async getAllScraperIds(): Promise<string[]> {
+    this.logger.debug('[METRICS] Querying all distinct scraper IDs from database');
+
+    try {
+      const result = await this.scraperMetricsRepository
+        .createQueryBuilder('metric')
+        .select('DISTINCT metric.scraper_id', 'scraperId')
+        .orderBy('metric.scraper_id', 'ASC')
+        .getRawMany();
+
+      const scraperIds = result.map((r) => r.scraperId);
+
+      this.logger.debug(
+        `[METRICS] Found ${scraperIds.length} distinct scrapers: ${scraperIds.join(', ')}`,
+      );
+
+      return scraperIds;
+    } catch (error) {
+      this.logger.error(`[METRICS] Failed to get scraper IDs: ${error.message}`);
+      // Fallback para lista mínima conhecida em caso de erro
+      return [
+        'fundamentus',
+        'brapi',
+        'statusinvest',
+        'investidor10',
+        'fundamentei',
+        'investsite',
+        'opcoes',
+      ];
+    }
+  }
+
+  /**
+   * Get metrics summaries for ALL scrapers (dynamic discovery)
+   *
+   * FASE 90: Descobre scrapers dinamicamente do banco,
+   * incluindo tanto TypeScript quanto Python scrapers.
    */
   async getAllMetricsSummaries(): Promise<Map<string, ScraperMetricsSummary>> {
-    const scraperIds = [
-      'fundamentus',
-      'brapi',
-      'statusinvest',
-      'investidor10',
-      'fundamentei',
-      'investsite',
-    ];
+    this.logger.log('[METRICS] Fetching metrics for all scrapers (dynamic discovery)');
+
+    // Busca DINÂMICA de todos os scrapers com métricas no banco
+    const scraperIds = await this.getAllScraperIds();
+
+    // Se não encontrou nenhum, inclui lista mínima de TypeScript scrapers
+    if (scraperIds.length === 0) {
+      this.logger.warn('[METRICS] No scraper metrics found in database, using TypeScript defaults');
+      scraperIds.push(
+        'fundamentus',
+        'brapi',
+        'statusinvest',
+        'investidor10',
+        'fundamentei',
+        'investsite',
+        'opcoes',
+      );
+    }
 
     const summaries = new Map<string, ScraperMetricsSummary>();
 
+    // Busca métricas em paralelo para performance
     await Promise.all(
       scraperIds.map(async (scraperId) => {
         const summary = await this.getMetricsSummary(scraperId);
@@ -140,6 +205,7 @@ export class ScraperMetricsService {
       }),
     );
 
+    this.logger.log(`[METRICS] Loaded metrics for ${summaries.size} scrapers`);
     return summaries;
   }
 

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
 
 export interface DataSource {
@@ -8,7 +8,9 @@ export interface DataSource {
   type: 'fundamental' | 'technical' | 'options' | 'prices' | 'news' | 'ai' | 'market_data' | 'crypto' | 'macro';
   status: 'active' | 'inactive' | 'error';
   lastTest: string | null;
+  lastTestSuccess: boolean | null; // FASE 90
   lastSync: string | null;
+  lastSyncSuccess: boolean | null; // FASE 90
   successRate: number;
   totalRequests: number;
   failedRequests: number;
@@ -164,5 +166,142 @@ export function useDiscrepancyStats(params?: { topLimit?: number }) {
     queryFn: () => api.getDiscrepancyStats(params),
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: true,
+  });
+}
+
+// ========================================
+// FASE 90: Discrepancy Resolution Interfaces
+// ========================================
+
+export interface DiscrepancyDetail {
+  ticker: string;
+  assetName: string;
+  fieldName: string;
+  fieldLabel: string;
+  currentValue: number | null;
+  currentSource: string;
+  consensus: number;
+  hasDiscrepancy: boolean;
+  severity: 'high' | 'medium' | 'low';
+  maxDeviation: number;
+  sourceValues: Array<{
+    source: string;
+    value: number | null;
+    deviation: number | null;
+    isConsensus: boolean;
+    priority: number;
+    scrapedAt: string;
+  }>;
+  resolutionHistory: any[];
+  recommendedValue: number | null;
+  recommendedSource: string | null;
+  recommendedReason: string;
+}
+
+export interface ResolutionResult {
+  ticker: string;
+  fieldName: string;
+  fieldLabel: string;
+  oldValue: number | null;
+  newValue: number;
+  selectedSource: string;
+  method: 'manual' | 'auto_consensus' | 'auto_priority';
+  severity: 'high' | 'medium' | 'low';
+}
+
+export interface AutoResolveResult {
+  resolved: number;
+  skipped: number;
+  errors: number;
+  results: ResolutionResult[];
+}
+
+// ========================================
+// FASE 90: Discrepancy Resolution Hooks
+// ========================================
+
+/**
+ * Hook para obter detalhes de uma discrepância específica
+ */
+export function useDiscrepancyDetail(ticker: string | null, field: string | null) {
+  return useQuery<DiscrepancyDetail>({
+    queryKey: ['discrepancy-detail', ticker, field],
+    queryFn: () => api.getDiscrepancyDetail(ticker!, field!),
+    enabled: !!ticker && !!field,
+    staleTime: 1000 * 60, // 1 minute
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * Hook para resolução manual de discrepância
+ */
+export function useResolveDiscrepancy() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ResolutionResult,
+    Error,
+    {
+      ticker: string;
+      field: string;
+      data: {
+        selectedValue: number;
+        selectedSource?: string;
+        notes?: string;
+      };
+    }
+  >({
+    mutationFn: ({ ticker, field, data }) => api.resolveDiscrepancy(ticker, field, data),
+    onSuccess: (result) => {
+      // Invalidar queries relacionadas para refresh
+      queryClient.invalidateQueries({ queryKey: ['scrapers-discrepancies'] });
+      queryClient.invalidateQueries({ queryKey: ['discrepancy-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['discrepancy-detail', result.ticker] });
+      queryClient.invalidateQueries({ queryKey: ['data-sources'] });
+    },
+  });
+}
+
+/**
+ * Hook para auto-resolução de discrepâncias em lote
+ */
+export function useAutoResolveDiscrepancies() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    AutoResolveResult,
+    Error,
+    {
+      method: 'consensus' | 'priority';
+      severity?: 'all' | 'high' | 'medium' | 'low';
+      tickerFilter?: string;
+      fieldFilter?: string;
+      dryRun?: boolean;
+    }
+  >({
+    mutationFn: (data) => api.autoResolveDiscrepancies(data),
+    onSuccess: () => {
+      // Invalidar todas as queries relacionadas
+      queryClient.invalidateQueries({ queryKey: ['scrapers-discrepancies'] });
+      queryClient.invalidateQueries({ queryKey: ['discrepancy-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['scrapers-quality-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['data-sources'] });
+    },
+  });
+}
+
+/**
+ * Hook para obter histórico de resoluções
+ */
+export function useResolutionHistory(params?: {
+  ticker?: string;
+  limit?: number;
+  method?: 'manual' | 'auto_consensus' | 'auto_priority';
+}) {
+  return useQuery({
+    queryKey: ['resolution-history', params],
+    queryFn: () => api.getResolutionHistory(params),
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

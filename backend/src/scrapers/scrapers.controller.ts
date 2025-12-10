@@ -12,6 +12,13 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ScrapersService } from './scrapers.service';
 import { ScraperMetricsService } from './scraper-metrics.service';
+import {
+  DiscrepancyResolutionService,
+  ResolveDiscrepancyDto,
+  AutoResolveOptionsDto,
+  ResolutionResult,
+  DiscrepancyDetailDto,
+} from './discrepancy-resolution.service';
 
 export interface DataSourceStatusDto {
   id: string;
@@ -20,7 +27,9 @@ export interface DataSourceStatusDto {
   type: 'fundamental' | 'technical' | 'options' | 'prices' | 'news' | 'ai' | 'market_data' | 'crypto' | 'macro';
   status: 'active' | 'inactive' | 'error';
   lastTest: string | null;
+  lastTestSuccess: boolean | null; // FASE 90: resultado do último teste
   lastSync: string | null;
+  lastSyncSuccess: boolean | null; // FASE 90: resultado do último sync
   successRate: number;
   totalRequests: number;
   failedRequests: number;
@@ -125,6 +134,7 @@ export class ScrapersController {
   constructor(
     private readonly scrapersService: ScrapersService,
     private readonly scraperMetricsService: ScraperMetricsService,
+    private readonly discrepancyResolutionService: DiscrepancyResolutionService, // FASE 90
   ) {}
 
   @Get('status')
@@ -365,5 +375,121 @@ export class ScrapersController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  // ========================================
+  // FASE 90: Discrepancy Resolution Endpoints
+  // ========================================
+
+  @Get('discrepancies/:ticker/:field')
+  @ApiOperation({ summary: 'Get detailed discrepancy info for a ticker/field' })
+  @ApiParam({ name: 'ticker', description: 'Asset ticker (e.g., PETR4)' })
+  @ApiParam({ name: 'field', description: 'Field name (e.g., pl, roe, dividendYield)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns detailed discrepancy info with all source values and history',
+  })
+  @ApiResponse({ status: 404, description: 'Asset or field not found' })
+  async getDiscrepancyDetail(
+    @Param('ticker') ticker: string,
+    @Param('field') field: string,
+  ): Promise<DiscrepancyDetailDto> {
+    this.logger.log(`Getting discrepancy detail: ${ticker} - ${field}`);
+    return this.discrepancyResolutionService.getDiscrepancyDetail(ticker, field);
+  }
+
+  @Post('discrepancies/:ticker/:field/resolve')
+  @ApiOperation({ summary: 'Manually resolve a discrepancy by selecting the correct value' })
+  @ApiParam({ name: 'ticker', description: 'Asset ticker' })
+  @ApiParam({ name: 'field', description: 'Field name' })
+  @ApiResponse({ status: 200, description: 'Discrepancy resolved successfully' })
+  @ApiResponse({ status: 404, description: 'Asset or field not found' })
+  @ApiResponse({ status: 400, description: 'Invalid resolution data' })
+  async resolveDiscrepancy(
+    @Param('ticker') ticker: string,
+    @Param('field') field: string,
+    @Body()
+    body: {
+      selectedValue: number;
+      selectedSource?: string;
+      notes?: string;
+    },
+  ): Promise<ResolutionResult> {
+    this.logger.log(`Resolving discrepancy: ${ticker} - ${field} -> ${body.selectedValue}`);
+
+    if (body.selectedValue === undefined || body.selectedValue === null) {
+      throw new HttpException('selectedValue is required', HttpStatus.BAD_REQUEST);
+    }
+
+    return this.discrepancyResolutionService.resolveManually({
+      ticker,
+      fieldName: field,
+      selectedValue: body.selectedValue,
+      selectedSource: body.selectedSource,
+      notes: body.notes,
+      resolvedBy: 'user', // TODO: Get from auth middleware
+    });
+  }
+
+  @Post('discrepancies/auto-resolve')
+  @ApiOperation({
+    summary: 'Auto-resolve discrepancies using consensus or priority method',
+    description: `
+      Auto-resolve discrepancies in batch:
+      - method: 'consensus' uses value with most sources agreeing
+      - method: 'priority' uses highest priority source (Fundamentus > BRAPI > ...)
+      - severity filter: 'all', 'high', 'medium', 'low'
+      - dryRun: if true, returns what would be resolved without saving
+    `,
+  })
+  @ApiResponse({ status: 200, description: 'Auto-resolution completed' })
+  async autoResolveDiscrepancies(
+    @Body()
+    body: {
+      method: 'consensus' | 'priority';
+      severity?: 'all' | 'high' | 'medium' | 'low';
+      tickerFilter?: string;
+      fieldFilter?: string;
+      dryRun?: boolean;
+    },
+  ): Promise<{
+    resolved: number;
+    skipped: number;
+    errors: number;
+    results: ResolutionResult[];
+  }> {
+    this.logger.log(
+      `Auto-resolving discrepancies: method=${body.method}, severity=${body.severity}, dryRun=${body.dryRun}`,
+    );
+
+    if (!body.method || !['consensus', 'priority'].includes(body.method)) {
+      throw new HttpException('method must be "consensus" or "priority"', HttpStatus.BAD_REQUEST);
+    }
+
+    return this.discrepancyResolutionService.autoResolve({
+      method: body.method,
+      severity: body.severity,
+      tickerFilter: body.tickerFilter,
+      fieldFilter: body.fieldFilter,
+      dryRun: body.dryRun,
+    });
+  }
+
+  @Get('discrepancies/resolution-history')
+  @ApiOperation({ summary: 'Get history of discrepancy resolutions' })
+  @ApiQuery({ name: 'ticker', required: false, description: 'Filter by ticker' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max results (default 50)' })
+  @ApiQuery({ name: 'method', required: false, enum: ['manual', 'auto_consensus', 'auto_priority'] })
+  @ApiResponse({ status: 200, description: 'Returns resolution history' })
+  async getResolutionHistory(
+    @Query('ticker') ticker?: string,
+    @Query('limit') limit?: string,
+    @Query('method') method?: string,
+  ) {
+    return this.discrepancyResolutionService.getResolutionHistory({
+      ticker,
+      limit: limit ? parseInt(limit, 10) : 50,
+      method: method as any,
+    });
   }
 }

@@ -33,6 +33,7 @@ import {
   BarChart3,
   AlertTriangle,
   Activity,
+  MinusCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDataSources, useScrapersQualityStats, useScrapersDiscrepancies } from '@/lib/hooks/useDataSources';
@@ -546,9 +547,36 @@ export default function DataSourcesPage() {
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Último Teste</p>
-                        <p className="text-sm font-medium">
-                          {source.lastTest ? new Date(source.lastTest).toLocaleString('pt-BR') : 'Nunca testado'}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          {/* FASE 90: Test result status icon */}
+                          {source.lastTestSuccess === null ? (
+                            <MinusCircle className="h-4 w-4 text-muted-foreground" />
+                          ) : source.lastTestSuccess ? (
+                            <CheckCircle2 className="h-4 w-4 text-success" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-destructive" />
+                          )}
+                          <p className="text-sm font-medium">
+                            {source.lastTest
+                              ? new Date(source.lastTest).toLocaleString('pt-BR')
+                              : 'Nunca testado'}
+                          </p>
+                        </div>
+                        {/* FASE 90: Show error message if last test failed */}
+                        {source.lastTestSuccess === false && source.errorMessage && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <p className="text-xs text-destructive mt-1 truncate max-w-[200px] cursor-help">
+                                  {source.errorMessage.substring(0, 50)}...
+                                </p>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom" className="max-w-md">
+                                <p className="text-sm">{source.errorMessage}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </div>
                     </div>
                   </div>

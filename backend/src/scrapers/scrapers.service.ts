@@ -70,7 +70,9 @@ export interface UnifiedScraperStatus {
   type: 'fundamental' | 'technical' | 'options' | 'prices' | 'news' | 'ai' | 'market_data' | 'crypto' | 'macro';
   status: 'active' | 'inactive' | 'error';
   lastTest: string | null;
+  lastTestSuccess: boolean | null; // FASE 90
   lastSync: string | null;
+  lastSyncSuccess: boolean | null; // FASE 90
   successRate: number;
   totalRequests: number;
   failedRequests: number;
@@ -1174,14 +1176,27 @@ export class ScrapersService {
     for (const config of typescriptScrapers) {
       const metrics = metricsMap.get(config.id);
 
+      // FASE 90: Determinar status baseado em métricas e último resultado
+      let status: 'active' | 'inactive' | 'error' = 'inactive';
+      if (metrics && metrics.totalRequests > 0) {
+        // Se tem métricas recentes, verificar último resultado
+        if (metrics.lastTestSuccess === false || metrics.successRate < 50) {
+          status = 'error';
+        } else {
+          status = 'active';
+        }
+      }
+
       results.push({
         id: config.id,
         name: config.name,
         url: config.url,
         type: this.mapCategoryToType(config.category),
-        status: metrics && metrics.totalRequests > 0 ? 'active' : 'inactive',
+        status,
         lastTest: metrics?.lastTest?.toISOString() || null,
+        lastTestSuccess: metrics?.lastTestSuccess ?? null, // FASE 90
         lastSync: metrics?.lastSync?.toISOString() || null,
+        lastSyncSuccess: metrics?.lastSyncSuccess ?? null, // FASE 90
         successRate: metrics?.successRate || 0,
         totalRequests: metrics?.totalRequests || 0,
         failedRequests: metrics?.failedRequests || 0,
@@ -1190,11 +1205,45 @@ export class ScrapersService {
         runtime: 'typescript',
         category: config.category,
         description: config.description,
+        errorMessage: metrics?.lastErrorMessage || undefined, // FASE 90
       });
     }
 
     // 2. Fetch Python scrapers and add them
-    const pythonScrapers = await this.getPythonScrapersList();
+    // FASE 90: Handle Python API offline scenario
+    let pythonScrapers: PythonScraperInfo[] = [];
+    let pythonApiOnline = true;
+
+    try {
+      pythonScrapers = await this.getPythonScrapersList();
+    } catch (error) {
+      this.logger.warn(`[UNIFIED] Python API is offline: ${error.message}`);
+      pythonApiOnline = false;
+    }
+
+    // Se Python API está offline, adicionar status de erro
+    if (!pythonApiOnline) {
+      results.push({
+        id: 'python-api',
+        name: 'Python Scrapers API',
+        url: this.pythonApiUrl,
+        type: 'fundamental',
+        status: 'error',
+        lastTest: null,
+        lastTestSuccess: null,
+        lastSync: null,
+        lastSyncSuccess: null,
+        successRate: 0,
+        totalRequests: 0,
+        failedRequests: 0,
+        avgResponseTime: 0,
+        requiresAuth: false,
+        runtime: 'python',
+        category: 'api',
+        description: 'API Python offline - verifique se o container scrapers está rodando',
+        errorMessage: 'Connection refused - Python API not responding',
+      });
+    }
 
     for (const pyScraper of pythonScrapers) {
       // Skip if already added as TypeScript scraper (avoid duplicates)
@@ -1208,27 +1257,46 @@ export class ScrapersService {
         continue;
       }
 
-      // Add Python scraper
+      // FASE 90: Buscar métricas para scrapers Python também!
+      const scraperId = pyScraper.id.toLowerCase();
+      const metrics = metricsMap.get(scraperId);
+
+      // Determinar status baseado em métricas
+      let status: 'active' | 'inactive' | 'error' = 'inactive';
+      if (metrics && metrics.totalRequests > 0) {
+        if (metrics.lastTestSuccess === false || metrics.successRate < 50) {
+          status = 'error';
+        } else {
+          status = 'active';
+        }
+      } else {
+        // Sem métricas = nunca testado, mas está disponível
+        status = 'inactive';
+      }
+
       results.push({
-        id: pyScraper.id.toLowerCase(),
+        id: scraperId,
         name: pyScraper.name,
         url: pyScraper.url,
         type: this.mapCategoryToType(pyScraper.category),
-        status: 'active', // Python scrapers are active if they appear in the list
-        lastTest: null,
-        lastSync: null,
-        successRate: 0,
-        totalRequests: 0,
-        failedRequests: 0,
-        avgResponseTime: 0,
+        status,
+        lastTest: metrics?.lastTest?.toISOString() || null,
+        lastTestSuccess: metrics?.lastTestSuccess ?? null, // FASE 90
+        lastSync: metrics?.lastSync?.toISOString() || null,
+        lastSyncSuccess: metrics?.lastSyncSuccess ?? null, // FASE 90
+        successRate: metrics?.successRate || 0,
+        totalRequests: metrics?.totalRequests || 0,
+        failedRequests: metrics?.failedRequests || 0,
+        avgResponseTime: metrics?.avgResponseTime || 0,
         requiresAuth: pyScraper.requires_login,
         runtime: 'python',
         category: pyScraper.category,
         description: pyScraper.description,
+        errorMessage: metrics?.lastErrorMessage || undefined, // FASE 90
       });
     }
 
-    this.logger.log(`[UNIFIED] Total scrapers: ${results.length} (${typescriptScrapers.length} TS + ${pythonScrapers.length} Python)`);
+    this.logger.log(`[UNIFIED] Total scrapers: ${results.length} (Python API: ${pythonApiOnline ? 'online' : 'offline'})`);
 
     return results;
   }

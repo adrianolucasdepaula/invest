@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
-import { ScraperMetric, FundamentalData } from '@database/entities';
+import { ScraperMetric, FundamentalData, DiscrepancyResolution, Asset } from '@database/entities';
 import { FundamentusScraper } from './fundamental/fundamentus.scraper';
 import { BrapiScraper } from './fundamental/brapi.scraper';
 import { StatusInvestScraper } from './fundamental/statusinvest.scraper';
@@ -11,12 +11,18 @@ import { InvestsiteScraper } from './fundamental/investsite.scraper';
 import { OpcoesScraper } from './options/opcoes.scraper';
 import { ScrapersService } from './scrapers.service';
 import { ScraperMetricsService } from './scraper-metrics.service';
+import { DiscrepancyResolutionService } from './discrepancy-resolution.service'; // FASE 90
 import { ScrapersController } from './scrapers.controller';
 import { RateLimiterService } from './rate-limiter.service'; // ✅ FASE 3
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ScraperMetric, FundamentalData]), // ✅ FASE 4: Added FundamentalData
+    TypeOrmModule.forFeature([
+      ScraperMetric,
+      FundamentalData,
+      DiscrepancyResolution, // FASE 90
+      Asset, // FASE 90 (necessário para resolução)
+    ]),
     HttpModule.register({
       timeout: 120000, // 2 minutos para fallback Python (múltiplos scrapers)
       maxRedirects: 3,
@@ -33,6 +39,7 @@ import { RateLimiterService } from './rate-limiter.service'; // ✅ FASE 3
     OpcoesScraper,
     ScrapersService,
     ScraperMetricsService,
+    DiscrepancyResolutionService, // FASE 90
     RateLimiterService, // ✅ FASE 3
   ],
   exports: [
@@ -45,6 +52,7 @@ import { RateLimiterService } from './rate-limiter.service'; // ✅ FASE 3
     OpcoesScraper,
     ScrapersService,
     ScraperMetricsService,
+    DiscrepancyResolutionService, // FASE 90
     RateLimiterService, // ✅ FASE 3
   ],
 })

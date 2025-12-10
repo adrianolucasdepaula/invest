@@ -43,3 +43,8 @@ export {
   OptionStyle,
   OptionStatus,
 } from './option-price.entity';
+// FASE 90 - Sistema de Resolução de Discrepâncias
+export {
+  DiscrepancyResolution,
+  ResolutionMethod,
+} from './discrepancy-resolution.entity';
