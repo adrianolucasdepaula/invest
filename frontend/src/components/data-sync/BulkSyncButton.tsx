@@ -145,7 +145,7 @@ export function BulkSyncButton({
       // Set waiting flag BEFORE mutation
       setWaitingForSyncStart(true);
 
-      console.error('[BULK SYNC] Payload:', { tickers: config.tickers, startYear, endYear });
+      console.log('[BULK SYNC] Payload:', { tickers: config.tickers, startYear, endYear });
 
       syncMutation.mutate(
         {
