@@ -285,7 +285,7 @@ export class NewsController {
   }
 
   /**
-   * Coletar eventos econômicos
+   * FASE 90: Coletar eventos econômicos com contagem precisa
    */
   @Post('economic-calendar/collect')
   @ApiOperation({ summary: 'Coletar eventos do calendário econômico' })
@@ -293,13 +293,34 @@ export class NewsController {
   async collectEconomicEvents(): Promise<{
     message: string;
     total: number;
+    inserted: number;
+    updated: number;
+    skipped: number;
     bySource: Record<string, number>;
   }> {
     this.logger.log('POST /news/economic-calendar/collect');
     const result = await this.economicCalendar.collectAll();
+
+    // FASE 90: Mensagem contextual baseada no resultado
+    let message: string;
+    if (result.inserted > 0 && result.updated > 0) {
+      message = `Coletados ${result.inserted} novos eventos, ${result.updated} atualizados`;
+    } else if (result.inserted > 0) {
+      message = `Coletados ${result.inserted} novos eventos`;
+    } else if (result.updated > 0) {
+      message = `Atualizados ${result.updated} eventos`;
+    } else if (result.skipped > 0) {
+      message = 'Calendário já está atualizado';
+    } else {
+      message = 'Nenhum evento encontrado nas fontes';
+    }
+
     return {
-      message: `Collected ${result.total} economic events`,
+      message,
       total: result.total,
+      inserted: result.inserted,
+      updated: result.updated,
+      skipped: result.skipped,
       bySource: result.bySource,
     };
   }

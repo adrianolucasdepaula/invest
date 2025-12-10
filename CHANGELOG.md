@@ -9,6 +9,35 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 90: Economic Calendar Bug Fixes - 100% COMPLETA (2025-12-10)**
+  - **Bug Fixes BCB:**
+    - Corrigido série BCB errada: 432 (SELIC) estava rotulada como IPCA
+    - Implementado BCB_SERIES config com 3 séries corretas: 433 (IPCA), 432 (SELIC), 7478 (IPCA-15)
+    - Valores IPCA agora mostram variação mensal correta (-0.11% a 1.31%)
+    - Valores SELIC agora mostram taxa meta correta (11.25% a 15.00%)
+  - **Bug Fixes Contagem:**
+    - Corrigida contagem duplicada em saveEvents() - não infla mais o total
+    - Nova interface SaveEventsResult: {inserted, updated, skipped, events[]}
+    - Segunda execução corretamente mostra "Calendário já está atualizado"
+  - **Bug Fixes Investing.com:**
+    - Headers HTTP atualizados com User-Agent realista
+    - Timezone corrigido: 12 → 55 (GMT-3 Brasília)
+    - Parser com múltiplos patterns para diferentes estruturas HTML
+  - **Frontend Melhorias:**
+    - Toast contextual baseado no resultado (verde/azul/amarelo/vermelho)
+    - Interface CollectResponse com campos inserted/updated/skipped
+    - Timeout aumentado para 60s em coletas longas
+  - **Database Cleanup:**
+    - Removidos 12 registros BCB incorretos (série 432 como IPCA)
+  - **Arquivos Modificados:**
+    - `backend/src/api/news/services/economic-calendar.service.ts`
+    - `backend/src/api/news/news.controller.ts`
+    - `frontend/src/components/dashboard/economic-calendar-widget.tsx`
+  - **Validação:**
+    - TypeScript: 0 erros (backend + frontend)
+    - Build: SUCCESS (backend + frontend)
+    - API testada: 30 eventos coletados corretamente
+
 - **FASE 89: Documentation Synchronization & Security Hardening - 100% COMPLETA (2025-12-10)**
   - **Documentação Atualizada:**
     - INSTALL.md: versão 1.0.0 → 1.12.1, data e mantenedor atualizados

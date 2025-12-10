@@ -11062,6 +11062,74 @@ Fase de manutenção crítica focada em sincronização de documentação, segur
 
 ---
 
+## FASE 90: Economic Calendar Bug Fixes ✅ 100% COMPLETO
+
+**Data:** 2025-12-10
+**Tipo:** Bug Fix + Data Quality
+**Documentação:** Plan file (immutable-launching-mountain.md)
+
+### Descrição
+
+Correção de bugs críticos no Calendário Econômico do Dashboard:
+1. BCB API usava série errada (432=SELIC rotulada como IPCA)
+2. Contagem de eventos duplicada (saveEvents inflava números)
+3. Investing.com parser quebrado (retornava 0 eventos)
+4. Frontend toast genérico sem contexto
+
+### Root Cause Analysis
+
+| Problema | Causa | Solução |
+|----------|-------|---------|
+| Valores IPCA incorretos (15%) | Série 432 = SELIC, não IPCA | Usar série 433 para IPCA |
+| Contagem inflada | `saved.push(existing)` sempre executava | Separar inserted/updated/skipped |
+| Investing.com 0 eventos | Headers HTTP insuficientes + regex quebrado | Headers realistas + múltiplos patterns |
+| Toast sem contexto | Mostrava apenas `${total} eventos` | Toast contextual baseado em resultado |
+
+### Implementações
+
+| Componente | Arquivo | Mudança | Status |
+|------------|---------|---------|--------|
+| BCB Series Config | economic-calendar.service.ts | Interface BCBSeriesConfig + 3 séries (433, 432, 7478) | ✅ |
+| SaveEventsResult | economic-calendar.service.ts | Interface com inserted/updated/skipped | ✅ |
+| collectFromBCB | economic-calendar.service.ts | Loop por múltiplas séries | ✅ |
+| saveEvents | economic-calendar.service.ts | Contagem precisa, não infla duplicados | ✅ |
+| collectFromInvesting | economic-calendar.service.ts | Headers realistas, timezone fix (12→55) | ✅ |
+| parseInvestingEvents | economic-calendar.service.ts | Múltiplos regex patterns | ✅ |
+| Controller | news.controller.ts | Novo formato de resposta com inserted/updated/skipped | ✅ |
+| Frontend Widget | economic-calendar-widget.tsx | CollectResponse interface + toast contextual | ✅ |
+
+### Dados BCB Corretos
+
+| Série | Nome | Valores Típicos | Status |
+|-------|------|-----------------|--------|
+| 433 | IPCA - Variação Mensal | -0.11% a 1.31% | ✅ |
+| 7478 | IPCA-15 - Variação Mensal | -0.14% a 1.23% | ✅ |
+| 432 | SELIC - Taxa Meta | 11.25% a 15.00% | ✅ |
+
+### Validação Zero Tolerance
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Build Backend: SUCCESS
+- ✅ Build Frontend: SUCCESS
+
+### API Response Format
+
+```json
+{
+  "message": "Coletados 30 novos eventos",
+  "total": 30,
+  "inserted": 30,
+  "updated": 0,
+  "skipped": 0,
+  "bySource": {"bcb": 30, "investing": 0}
+}
+```
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
 ## FASE 86: Bulk Update Fixes + "Última Atualização" em Tempo Real ✅ 100% COMPLETO
 
 **Data:** 2025-12-10
@@ -11171,6 +11239,7 @@ Correção de três problemas críticos no fluxo "Atualizar Todos" da página de
 - ✅ FASE 87: Data Management Enhancements + Asset Selection Sync - 100% COMPLETO (2025-12-10)
 - ✅ FASE 88: Sync Status Persistence + Configuration Display - 100% COMPLETO (2025-12-10)
 - ✅ FASE 89: Documentation Synchronization & Security Hardening - 100% COMPLETO (2025-12-10)
+- ✅ FASE 90: Economic Calendar Bug Fixes - 100% COMPLETO (2025-12-10)
 
 ### Fases Planejadas
 

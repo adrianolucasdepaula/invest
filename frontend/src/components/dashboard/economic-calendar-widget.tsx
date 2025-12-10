@@ -31,6 +31,18 @@ interface CalendarResponse {
   count: number;
 }
 
+/**
+ * FASE 90: Resposta do endpoint de coleta com contagem precisa
+ */
+interface CollectResponse {
+  message: string;
+  total: number;
+  inserted: number;
+  updated: number;
+  skipped: number;
+  bySource: Record<string, number>;
+}
+
 const importanceColors = {
   low: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
   medium: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
@@ -118,19 +130,56 @@ export function EconomicCalendarWidget() {
     refetchInterval: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Mutation para coletar eventos do calendário econômico
+  // FASE 90: Mutation com toast contextual baseado no resultado
   const syncMutation = useMutation({
-    mutationFn: async () => {
-      const response = await api.post('/news/economic-calendar/collect');
+    mutationFn: async (): Promise<CollectResponse> => {
+      const response = await api.post('/news/economic-calendar/collect', null, {
+        timeout: 60000, // 60s para coleta (pode demorar)
+      });
       return response.data;
     },
     onSuccess: (data) => {
-      toast.success(`${data.total} eventos coletados`);
+      // FASE 90: Toast contextual baseado no resultado
+      const inserted = data?.inserted ?? 0;
+      const updated = data?.updated ?? 0;
+      const skipped = data?.skipped ?? 0;
+
+      if (inserted > 0 && updated > 0) {
+        toast.success(`Calendário atualizado: ${inserted} novos, ${updated} atualizados`);
+      } else if (inserted > 0) {
+        toast.success(`${inserted} eventos novos adicionados`);
+      } else if (updated > 0) {
+        toast.success(`${updated} eventos atualizados`);
+      } else if (skipped > 0) {
+        toast.info('Calendário já está atualizado', {
+          description: `${skipped} eventos verificados, sem alterações`,
+        });
+      } else {
+        toast.warning('Nenhum evento encontrado nas fontes', {
+          description: 'Verifique a conectividade com BCB e Investing.com',
+        });
+      }
+
+      // Force refetch para atualizar cache
       queryClient.invalidateQueries({ queryKey: ['economic-calendar'] });
+      queryClient.refetchQueries({ queryKey: ['economic-calendar'] });
     },
-    onError: () => {
-      toast.error('Erro ao sincronizar calendário');
+    onError: (error: Error) => {
+      // FASE 90: Error handling com detalhes
+      let description = error.message;
+
+      if (error.message.includes('timeout')) {
+        description = 'A coleta está demorando. Tente novamente em alguns minutos.';
+      } else if (error.message.includes('Network Error')) {
+        description = 'Sem conexão com o servidor. Verifique sua internet.';
+      }
+
+      toast.error('Erro ao sincronizar calendário', {
+        description,
+      });
     },
+    retry: 1,
+    retryDelay: 3000,
   });
 
   if (isLoading) {
