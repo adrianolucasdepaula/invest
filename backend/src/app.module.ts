@@ -58,6 +58,8 @@ import {
   Alert,
   // FASE 75.4 - Options Chain
   OptionPrice,
+  // FASE 90 - Discrepancy Resolution
+  DiscrepancyResolution,
 } from './database/entities';
 
 @Module({
@@ -103,6 +105,8 @@ import {
           Alert,
           // FASE 75.4 - Options Chain
           OptionPrice,
+          // FASE 90 - Discrepancy Resolution
+          DiscrepancyResolution,
         ],
         synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
         logging: configService.get('DB_LOGGING', 'false') === 'true',
