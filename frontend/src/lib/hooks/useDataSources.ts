@@ -279,7 +279,7 @@ export function useResolveDiscrepancy() {
       // Invalidar queries relacionadas para refresh
       queryClient.invalidateQueries({ queryKey: ['scrapers-discrepancies'] });
       queryClient.invalidateQueries({ queryKey: ['discrepancy-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['discrepancy-detail', result.ticker] });
+      queryClient.invalidateQueries({ queryKey: ['discrepancy-detail', result.ticker, result.fieldName] });
       queryClient.invalidateQueries({ queryKey: ['data-sources'] });
     },
   });

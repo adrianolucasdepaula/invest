@@ -56,6 +56,7 @@ export default function DiscrepancyResolutionModal({
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [customValue, setCustomValue] = useState('');
+  const [resolveError, setResolveError] = useState<string | null>(null);
 
   // Fetch discrepancy details
   const { data: detail, isLoading, error } = useDiscrepancyDetail(ticker, field);
@@ -91,6 +92,7 @@ export default function DiscrepancyResolutionModal({
   const handleResolve = async () => {
     if (selectedValue === null) return;
 
+    setResolveError(null); // Clear previous error
     try {
       await resolveMutation.mutateAsync({
         ticker,
@@ -104,6 +106,8 @@ export default function DiscrepancyResolutionModal({
       onResolved?.();
       onClose();
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido ao resolver discrepância';
+      setResolveError(message);
       console.error('Failed to resolve discrepancy:', err);
     }
   };
@@ -228,7 +232,7 @@ export default function DiscrepancyResolutionModal({
                   <div className="space-y-2">
                     {detail.sourceValues.map((sv) => (
                       <div
-                        key={sv.source}
+                        key={`${sv.source}-${sv.priority}`}
                         className={cn(
                           'p-3 rounded-lg border flex items-center justify-between',
                           sv.isConsensus && 'bg-green-50 border-green-200',
@@ -386,6 +390,16 @@ export default function DiscrepancyResolutionModal({
                     <span className="text-lg font-bold">{formatValue(selectedValue)}</span>
                     <Badge variant="secondary">{selectedSource}</Badge>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* FASE 90.2: Error Display */}
+            {resolveError && (
+              <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+                <div className="flex items-center gap-2 text-red-800">
+                  <XCircle className="h-5 w-5" />
+                  <span>Erro ao resolver: {resolveError}</span>
                 </div>
               </div>
             )}

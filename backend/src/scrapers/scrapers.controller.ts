@@ -8,8 +8,12 @@ import {
   Logger,
   HttpException,
   HttpStatus,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { Request } from 'express';
+import { JwtAuthGuard } from '../api/auth/guards/jwt-auth.guard';
 import { ScrapersService } from './scrapers.service';
 import { ScraperMetricsService } from './scraper-metrics.service';
 import {
@@ -382,6 +386,7 @@ export class ScrapersController {
   // ========================================
 
   @Get('discrepancies/:ticker/:field')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get detailed discrepancy info for a ticker/field' })
   @ApiParam({ name: 'ticker', description: 'Asset ticker (e.g., PETR4)' })
   @ApiParam({ name: 'field', description: 'Field name (e.g., pl, roe, dividendYield)' })
@@ -399,6 +404,7 @@ export class ScrapersController {
   }
 
   @Post('discrepancies/:ticker/:field/resolve')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Manually resolve a discrepancy by selecting the correct value' })
   @ApiParam({ name: 'ticker', description: 'Asset ticker' })
   @ApiParam({ name: 'field', description: 'Field name' })
@@ -414,6 +420,7 @@ export class ScrapersController {
       selectedSource?: string;
       notes?: string;
     },
+    @Req() req: Request,
   ): Promise<ResolutionResult> {
     this.logger.log(`Resolving discrepancy: ${ticker} - ${field} -> ${body.selectedValue}`);
 
@@ -426,17 +433,22 @@ export class ScrapersController {
       throw new HttpException('selectedValue must be a valid finite number', HttpStatus.BAD_REQUEST);
     }
 
+    // FASE 90.2: Extrair email do usuário autenticado do JWT
+    const user = req.user as { email?: string; id?: string } | undefined;
+    const resolvedBy = user?.email || user?.id || 'unknown';
+
     return this.discrepancyResolutionService.resolveManually({
       ticker,
       fieldName: field,
       selectedValue: body.selectedValue,
       selectedSource: body.selectedSource,
       notes: body.notes,
-      resolvedBy: 'user', // TODO: Get from auth middleware
+      resolvedBy,
     });
   }
 
   @Post('discrepancies/auto-resolve')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: 'Auto-resolve discrepancies using consensus or priority method',
     description: `
@@ -481,6 +493,7 @@ export class ScrapersController {
   }
 
   @Get('discrepancies/resolution-history')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get history of discrepancy resolutions' })
   @ApiQuery({ name: 'ticker', required: false, description: 'Filter by ticker' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max results (default 50)' })

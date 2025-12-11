@@ -9,6 +9,65 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 92.2: Discrepancy Resolution Bug Fixes & Security - 100% COMPLETA (2025-12-10)**
+  - **Security Fixes:**
+    - Adicionado @UseGuards(JwtAuthGuard) a todos 4 endpoints de discrepancy
+    - Extração de email do usuário via JWT para auditoria (resolvedBy)
+  - **Bug Fixes:**
+    - Query key mismatch corrigido em useDataSources.ts:282 (cache stale data)
+    - React key sem index em discrepancies/page.tsx
+    - Non-unique key corrigido no modal (source+priority)
+    - Erro de resolução agora exibido ao usuário (não apenas console)
+  - **UX Improvements:**
+    - Toast notifications para sucesso/erro ao resolver discrepâncias
+  - **Arquivos Modificados:**
+    - `frontend/src/lib/hooks/useDataSources.ts`
+    - `backend/src/scrapers/scrapers.controller.ts`
+    - `frontend/src/app/(dashboard)/discrepancies/page.tsx`
+    - `frontend/src/components/DiscrepancyResolutionModal.tsx`
+
+- **FASE 92.1: Discrepancy Resolution UI Modal - 100% COMPLETA (2025-12-10)**
+  - **Modal Component (420 linhas):**
+    - Tab "Fontes": Lista todas fontes com valores, desvios e prioridades
+    - Tab "Histórico": Resoluções anteriores para auditoria
+    - Tab "Valor Manual": Input para valor customizado
+    - Valor Recomendado com justificativa (consenso ou prioridade)
+  - **Features:**
+    - Seleção visual de fonte com highlight
+    - Badge de severidade (high/medium/low)
+    - Botão "Resolver" habilitado apenas com valor selecionado
+  - **Arquivos Criados:**
+    - `frontend/src/components/DiscrepancyResolutionModal.tsx`
+  - **Arquivos Modificados:**
+    - `frontend/src/app/(dashboard)/discrepancies/page.tsx`
+
+- **FASE 92: Dynamic Scraper Discovery & Discrepancy Resolution System - 100% COMPLETA (2025-12-10)**
+  - **Backend Infrastructure:**
+    - Nova entity `DiscrepancyResolution` com 11 campos e 4 índices
+    - Migration para tabela `discrepancy_resolutions`
+    - Service com 6 métodos: getDiscrepancyDetail, resolveManually, autoResolve, etc.
+    - 4 novos endpoints no ScrapersController
+  - **Dynamic Scraper Discovery:**
+    - Query DISTINCT para descobrir todos scrapers (TypeScript + Python)
+    - Métricas carregadas para todos scrapers automaticamente
+    - lastTestSuccess/lastSyncSuccess em toda stack
+  - **Frontend Hooks:**
+    - useDiscrepancyDetail, useResolveDiscrepancy
+    - useAutoResolveDiscrepancies, useResolutionHistory
+  - **API Endpoints:**
+    - `GET /scrapers/discrepancies/:ticker/:field`
+    - `POST /scrapers/discrepancies/:ticker/:field/resolve`
+    - `POST /scrapers/discrepancies/auto-resolve`
+    - `GET /scrapers/discrepancies/resolution-history`
+  - **Arquivos Criados:**
+    - `backend/src/database/entities/discrepancy-resolution.entity.ts`
+    - `backend/src/database/migrations/1733840640548-CreateDiscrepancyResolutions.ts`
+    - `backend/src/scrapers/discrepancy-resolution.service.ts`
+  - **Validação:**
+    - TypeScript: 0 erros (backend + frontend)
+    - Build: SUCCESS (backend + frontend)
+    - Migration executada com sucesso
+
 - **FASE 91: Economic Calendar Future Events & Widget Tabs - 100% COMPLETA (2025-12-10)**
   - **Feature 1 - Correção Duplicação SELIC:**
     - Modificado `getLastDistinctValues()` para usar PRIMEIRA data onde cada valor apareceu

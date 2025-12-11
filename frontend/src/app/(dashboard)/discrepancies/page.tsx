@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -468,12 +469,12 @@ export default function DiscrepanciesPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              discrepanciesData?.discrepancies.map((d: Discrepancy, idx: number) => {
+              discrepanciesData?.discrepancies.map((d: Discrepancy) => {
                 const maxDeviation = Math.max(
                   ...d.divergentSources.map((s) => s.deviation)
                 );
                 return (
-                  <TableRow key={`${d.ticker}-${d.field}-${idx}`}>
+                  <TableRow key={`${d.ticker}-${d.field}`}>
                     <TableCell>
                       <Badge variant={getSeverityBadgeVariant(d.severity)}>
                         {getSeverityLabel(d.severity)}
@@ -613,7 +614,7 @@ export default function DiscrepanciesPage() {
           field={resolutionModal.field}
           onClose={() => setResolutionModal(null)}
           onResolved={() => {
-            // Refetch discrepancies after resolution
+            toast.success('Discrepância resolvida com sucesso!');
             setResolutionModal(null);
           }}
         />

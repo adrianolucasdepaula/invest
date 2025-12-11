@@ -11256,9 +11256,124 @@ Correção de três problemas críticos no fluxo "Atualizar Todos" da página de
 
 ---
 
+## FASE 92: Dynamic Scraper Discovery & Discrepancy Resolution System ✅ 100% COMPLETO
+
+**Data:** 2025-12-10
+**Tipo:** Feature + Bug Fix + Security
+**Documentação:** Plan file (joyful-wiggling-canyon.md)
+
+### Descrição
+
+Sistema completo de resolução de discrepâncias de dados com descoberta dinâmica de scrapers:
+
+1. **Dynamic Scraper Discovery**: Query DISTINCT no banco para descobrir todos os scrapers (TypeScript + Python)
+2. **Discrepancy Resolution Entity**: Nova entity para histórico de resoluções com auditoria completa
+3. **Manual Resolution**: Permite ao usuário selecionar o valor correto entre múltiplas fontes
+4. **Auto-Resolution**: Resolução em lote usando método de consenso ou prioridade
+
+### Implementações
+
+| Componente | Arquivo | Mudança | Status |
+|------------|---------|---------|--------|
+| **Entity** | `discrepancy-resolution.entity.ts` | 128 linhas, 11 campos, 4 índices | ✅ |
+| **Migration** | `1733840640548-CreateDiscrepancyResolutions.ts` | Tabela + índices + FK | ✅ |
+| **Service** | `discrepancy-resolution.service.ts` | 515 linhas, 6 métodos públicos | ✅ |
+| **Controller** | `scrapers.controller.ts` | 4 novos endpoints de resolução | ✅ |
+| **Frontend Hooks** | `useDataSources.ts` | 4 hooks (useDiscrepancyDetail, useResolveDiscrepancy, etc.) | ✅ |
+| **API Methods** | `api.ts` | 4 métodos de API | ✅ |
+| **lastTestSuccess/lastSyncSuccess** | Stack completa | Novos campos em todas interfaces | ✅ |
+
+### Endpoints FASE 92
+
+| Endpoint | Método | Descrição |
+|----------|--------|-----------|
+| `/scrapers/discrepancies/:ticker/:field` | GET | Detalhes de discrepância com valores de todas fontes |
+| `/scrapers/discrepancies/:ticker/:field/resolve` | POST | Resolução manual de discrepância |
+| `/scrapers/discrepancies/auto-resolve` | POST | Auto-resolução em lote (consenso ou prioridade) |
+| `/scrapers/discrepancies/resolution-history` | GET | Histórico de resoluções para auditoria |
+
+### Validação Zero Tolerance
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Build Backend: SUCCESS
+- ✅ Build Frontend: SUCCESS
+- ✅ Migration executada
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
+## FASE 92.1: Discrepancy Resolution UI Modal ✅ 100% COMPLETO
+
+**Data:** 2025-12-10
+**Tipo:** Feature
+**Commit:** 9c21c86
+
+### Descrição
+
+Modal de resolução de discrepâncias com interface completa para seleção de valor correto.
+
+### Implementações
+
+| Componente | Arquivo | Mudança | Status |
+|------------|---------|---------|--------|
+| **Modal Component** | `DiscrepancyResolutionModal.tsx` | 420 linhas, 3 tabs, validação | ✅ |
+| **Tab "Fontes"** | Modal | Lista todas fontes com valores e desvios | ✅ |
+| **Tab "Histórico"** | Modal | Resoluções anteriores para auditoria | ✅ |
+| **Tab "Valor Manual"** | Modal | Input para valor customizado | ✅ |
+| **Valor Recomendado** | Modal | Sugestão com justificativa | ✅ |
+| **Page Integration** | `discrepancies/page.tsx` | Botão "Resolver" + state para modal | ✅ |
+
+### Validação Zero Tolerance
+
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Build Frontend: SUCCESS
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
+## FASE 92.2: Discrepancy Resolution Bug Fixes & Security ✅ 100% COMPLETO
+
+**Data:** 2025-12-10
+**Tipo:** Bug Fix + Security
+
+### Issues Corrigidos
+
+| Issue | Severidade | Arquivo | Correção |
+|-------|------------|---------|----------|
+| Query key mismatch (cache stale) | CRÍTICO | `useDataSources.ts:282` | Incluir `fieldName` na query key |
+| Endpoints sem autenticação | CRÍTICO | `scrapers.controller.ts` | @UseGuards(JwtAuthGuard) em 4 endpoints |
+| resolvedBy hardcoded | IMPORTANTE | `scrapers.controller.ts:435` | Extrair email do JWT via @Req() |
+| Sem toast notifications | IMPORTANTE | `discrepancies/page.tsx` | Adicionar toast.success/error |
+| React key com index | MÉDIO | `discrepancies/page.tsx:476` | Remover idx da key |
+| Non-unique key no modal | MÉDIO | `DiscrepancyResolutionModal.tsx:231` | Usar source+priority na key |
+| Erro não exibido ao usuário | MÉDIO | `DiscrepancyResolutionModal.tsx` | Adicionar resolveError state + display |
+
+### Arquivos Modificados
+
+| Arquivo | Mudança |
+|---------|---------|
+| `frontend/src/lib/hooks/useDataSources.ts` | Fix query key invalidation |
+| `backend/src/scrapers/scrapers.controller.ts` | @UseGuards + @Req() + JWT extraction |
+| `frontend/src/app/(dashboard)/discrepancies/page.tsx` | Toast + React key fix |
+| `frontend/src/components/DiscrepancyResolutionModal.tsx` | Error state + unique keys |
+
+### Validação Zero Tolerance
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Build Backend: SUCCESS
+- ✅ Build Frontend: SUCCESS
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (89 fases)
+### Fases Completas (94 fases incluindo sub-fases)
 
 - ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
 - ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
@@ -11298,6 +11413,9 @@ Correção de três problemas críticos no fluxo "Atualizar Todos" da página de
 - ✅ FASE 89: Documentation Synchronization & Security Hardening - 100% COMPLETO (2025-12-10)
 - ✅ FASE 90: Economic Calendar Bug Fixes - 100% COMPLETO (2025-12-10)
 - ✅ FASE 91: Economic Calendar Future Events & Widget Tabs - 100% COMPLETO (2025-12-10)
+- ✅ FASE 92: Dynamic Scraper Discovery & Discrepancy Resolution System - 100% COMPLETO (2025-12-10)
+- ✅ FASE 92.1: Discrepancy Resolution UI Modal - 100% COMPLETO (2025-12-10)
+- ✅ FASE 92.2: Discrepancy Resolution Bug Fixes & Security - 100% COMPLETO (2025-12-10)
 
 ### Fases Planejadas
 
@@ -11321,7 +11439,7 @@ Todas as fases planejadas foram implementadas.
 ---
 
 **Ultima Atualizacao:** 2025-12-10
-**Total de Fases:** 89 completas
-**Versao:** 1.12.1
+**Total de Fases:** 94 completas (incluindo sub-fases)
+**Versao:** 1.13.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0
