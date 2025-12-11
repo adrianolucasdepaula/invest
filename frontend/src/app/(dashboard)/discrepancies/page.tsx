@@ -40,7 +40,9 @@ import {
   TrendingUp,
   ChevronLeft,
   ChevronRight,
+  Wrench,
 } from 'lucide-react';
+import DiscrepancyResolutionModal from '@/components/DiscrepancyResolutionModal';
 import { cn } from '@/lib/utils';
 import {
   useScrapersDiscrepancies,
@@ -114,6 +116,12 @@ export default function DiscrepanciesPage() {
   const [orderBy, setOrderBy] = useState<OrderBy>('severity');
   const [orderDirection, setOrderDirection] = useState<OrderDirection>('desc');
   const pageSize = 25;
+
+  // FASE 90.1: Modal de resolucao
+  const [resolutionModal, setResolutionModal] = useState<{
+    ticker: string;
+    field: string;
+  } | null>(null);
 
   // Data fetching
   const {
@@ -517,20 +525,38 @@ export default function DiscrepanciesPage() {
                       {new Date(d.lastUpdate).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Link href={`/assets/${d.ticker}`}>
-                              <Button variant="ghost" size="icon">
-                                <ExternalLink className="h-4 w-4" />
+                      <div className="flex items-center gap-1">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setResolutionModal({ ticker: d.ticker, field: d.field })}
+                              >
+                                <Wrench className="h-4 w-4" />
                               </Button>
-                            </Link>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Ver detalhes do ativo</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Resolver discrepancia</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Link href={`/assets/${d.ticker}`}>
+                                <Button variant="ghost" size="icon">
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Ver detalhes do ativo</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -579,6 +605,19 @@ export default function DiscrepanciesPage() {
           </div>
         )}
       </Card>
+
+      {/* FASE 90.1: Modal de Resolucao */}
+      {resolutionModal && (
+        <DiscrepancyResolutionModal
+          ticker={resolutionModal.ticker}
+          field={resolutionModal.field}
+          onClose={() => setResolutionModal(null)}
+          onResolved={() => {
+            // Refetch discrepancies after resolution
+            setResolutionModal(null);
+          }}
+        />
+      )}
     </div>
   );
 }

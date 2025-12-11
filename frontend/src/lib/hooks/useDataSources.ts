@@ -192,7 +192,7 @@ export interface DiscrepancyDetail {
     priority: number;
     scrapedAt: string;
   }>;
-  resolutionHistory: any[];
+  resolutionHistory: ResolutionHistoryItem[];
   recommendedValue: number | null;
   recommendedSource: string | null;
   recommendedReason: string;
@@ -214,6 +214,28 @@ export interface AutoResolveResult {
   skipped: number;
   errors: number;
   results: ResolutionResult[];
+}
+
+/**
+ * FASE 90.1: Interface para item do histórico de resolução
+ */
+export interface ResolutionHistoryItem {
+  id: string;
+  assetId: string;
+  ticker: string;
+  fieldName: string;
+  fieldLabel: string | null;
+  oldValue: number | null;
+  newValue: number | null;
+  selectedSource: string | null;
+  resolutionMethod: 'manual' | 'auto_consensus' | 'auto_priority';
+  resolvedBy: string | null;
+  notes: string | null;
+  sourceValuesSnapshot: Record<string, number | null>;
+  severity: 'high' | 'medium' | 'low' | null;
+  maxDeviation: number | null;
+  fundamentalDataId: string | null;
+  createdAt: string;
 }
 
 // ========================================
@@ -299,7 +321,7 @@ export function useResolutionHistory(params?: {
   limit?: number;
   method?: 'manual' | 'auto_consensus' | 'auto_priority';
 }) {
-  return useQuery({
+  return useQuery<ResolutionHistoryItem[]>({
     queryKey: ['resolution-history', params],
     queryFn: () => api.getResolutionHistory(params),
     staleTime: 1000 * 60 * 5, // 5 minutes

@@ -421,6 +421,11 @@ export class ScrapersController {
       throw new HttpException('selectedValue is required', HttpStatus.BAD_REQUEST);
     }
 
+    // FASE 90.1: Validação robusta de selectedValue (NaN/Infinity)
+    if (typeof body.selectedValue !== 'number' || isNaN(body.selectedValue) || !Number.isFinite(body.selectedValue)) {
+      throw new HttpException('selectedValue must be a valid finite number', HttpStatus.BAD_REQUEST);
+    }
+
     return this.discrepancyResolutionService.resolveManually({
       ticker,
       fieldName: field,
