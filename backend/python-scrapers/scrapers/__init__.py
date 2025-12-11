@@ -50,10 +50,14 @@ from .investing_scraper import InvestingScraper  # FASE 95: Works without login
 from .b3_scraper import B3Scraper  # FASE 96: CVM codes file exists
 
 # ==============================
-# AWAITING OAUTH/FIXES
+# OAUTH SCRAPERS (FASE 97)
 # ==============================
-# from .fundamentei_scraper import FundamenteiScraper  # OAuth session expired
-# from .maisretorno_scraper import MaisRetornoScraper  # needs cookies
+from .fundamentei_scraper import FundamenteiScraper  # FASE 97: OAuth required
+from .maisretorno_scraper import MaisRetornoScraper  # FASE 97: OAuth required
+
+# ==============================
+# AWAITING FIXES
+# ==============================
 # from .advfn_scraper import ADVFNScraper  # partial migration needed
 
 __all__ = [
@@ -89,4 +93,7 @@ __all__ = [
     "KinvoScraper",
     "InvestingScraper",  # FASE 95
     "B3Scraper",  # FASE 96
+    # OAuth Scrapers (FASE 97)
+    "FundamenteiScraper",  # FASE 97
+    "MaisRetornoScraper",  # FASE 97
 ]

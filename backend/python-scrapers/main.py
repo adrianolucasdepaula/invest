@@ -48,6 +48,9 @@ from scrapers import (
     KinvoScraper,
     InvestingScraper,  # FASE 95: Works without login for basic market data
     B3Scraper,  # FASE 96: CVM codes file exists
+    # OAuth Scrapers (FASE 97)
+    FundamenteiScraper,  # FASE 97: OAuth required
+    MaisRetornoScraper,  # FASE 97: OAuth required
 )
 
 
@@ -115,17 +118,22 @@ class ScraperService:
         self.scrapers["B3"] = B3Scraper  # FASE 96: CVM codes file exists
 
         # ===========================================
-        # AWAITING FIXES (Need cookies/config)
+        # FASE 97: OAuth Scrapers (require cookie collection)
         # ===========================================
-        # self.scrapers["FUNDAMENTEI"] = FundamenteiScraper  # OAuth session expired
+        self.scrapers["FUNDAMENTEI"] = FundamenteiScraper  # FASE 97: OAuth required
+        self.scrapers["MAISRETORNO"] = MaisRetornoScraper  # FASE 97: OAuth required
+
+        # ===========================================
+        # AWAITING FIXES (Need config/partial migration)
+        # ===========================================
         # self.scrapers["ADVFN"] = ADVFNScraper  # partial migration needed
-        # self.scrapers["MAISRETORNO"] = MaisRetornoScraper  # needs cookies
 
         logger.info(f"✅ PLAYWRIGHT MIGRATION COMPLETE: Registered {len(self.scrapers)} scrapers")
         logger.info(f"📊 Fundamental: FUNDAMENTUS, BCB, STATUSINVEST, INVESTSITE, INVESTIDOR10, TRADINGVIEW, GOOGLEFINANCE, GRIFFIN, COINMARKETCAP")
         logger.info(f"📰 News: BLOOMBERG, GOOGLENEWS, INVESTING_NEWS, VALOR, EXAME, INFOMONEY, ESTADAO")
         logger.info(f"🤖 AI: CHATGPT, GEMINI, DEEPSEEK, CLAUDE, GROK, PERPLEXITY")
         logger.info(f"📈 Market: YAHOO_FINANCE, OPLAB, OPCOES_NET, KINVO, INVESTING, B3")
+        logger.info(f"🔐 OAuth: FUNDAMENTEI, MAISRETORNO (require cookie collection)")
 
     async def initialize(self):
         """Initialize connections and resources"""
