@@ -192,7 +192,8 @@ class MaisRetornoScraper(BaseScraper):
             logout_indicators = ['sair', 'logout', 'signout', 'user-menu', 'profile', 'minha-conta']
             html_lower = html.lower()
             return any(indicator in html_lower for indicator in logout_indicators)
-        except:
+        except Exception as e:
+            logger.warning(f"Error verifying login status: {e}")
             return False
 
     async def scrape(self, query: str = "analise") -> ScraperResult:
@@ -297,7 +298,8 @@ class MaisRetornoScraper(BaseScraper):
                         article_elements = elements
                         logger.debug(f"Found {len(elements)} articles using selector: {selector}")
                         break
-                except:
+                except Exception as e:
+                    logger.debug(f"Selector {selector} failed: {e}")
                     continue
 
             if not article_elements:
@@ -354,7 +356,8 @@ class MaisRetornoScraper(BaseScraper):
 
                         if title:
                             break
-                except:
+                except Exception as e:
+                    logger.debug(f"Title selector {selector} failed: {e}")
                     continue
 
             if not title:
@@ -392,7 +395,8 @@ class MaisRetornoScraper(BaseScraper):
                         if description and len(description) > 20:
                             article["description"] = description
                             break
-                except:
+                except Exception as e:
+                    logger.debug(f"Description selector {selector} failed: {e}")
                     continue
 
             # Extract date
@@ -416,7 +420,8 @@ class MaisRetornoScraper(BaseScraper):
                         if published_date:
                             article["published_at"] = published_date
                             break
-                except:
+                except Exception as e:
+                    logger.debug(f"Date selector {selector} failed: {e}")
                     continue
 
             # Extract category
@@ -424,16 +429,16 @@ class MaisRetornoScraper(BaseScraper):
                 category_elem = element.select_one(".category, .tag, .badge, .label")
                 if category_elem:
                     article["category"] = category_elem.get_text().strip()
-            except:
-                pass
+            except Exception as e:
+                logger.debug(f"Category extraction failed: {e}")
 
             # Extract author
             try:
                 author_elem = element.select_one(".author, .byline, .writer")
                 if author_elem:
                     article["author"] = author_elem.get_text().strip()
-            except:
-                pass
+            except Exception as e:
+                logger.debug(f"Author extraction failed: {e}")
 
             return article
 

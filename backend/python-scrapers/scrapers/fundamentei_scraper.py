@@ -198,7 +198,8 @@ class FundamenteiScraper(BaseScraper):
             logout_indicators = ['sair', 'logout', 'minha-conta', 'profile', 'avatar', 'user-menu']
             html_lower = html.lower()
             return any(indicator in html_lower for indicator in logout_indicators)
-        except:
+        except Exception as e:
+            logger.warning(f"Error verifying login status: {e}")
             return False
 
     async def scrape(self, ticker: str) -> ScraperResult:
@@ -558,7 +559,8 @@ class FundamenteiScraper(BaseScraper):
                                     indicators[indicator_key] = value
                                 break
 
-                except Exception:
+                except (ValueError, TypeError, AttributeError) as e:
+                    logger.debug(f"Failed to parse indicator row: {e}")
                     continue
 
             # Strategy 2: Find divs/spans with data attributes
@@ -578,7 +580,8 @@ class FundamenteiScraper(BaseScraper):
                                     indicators[indicator_key] = value
                                 break
 
-                except Exception:
+                except (ValueError, TypeError, AttributeError) as e:
+                    logger.debug(f"Failed to parse data attribute element: {e}")
                     continue
 
             # Strategy 3: Look for common Fundamentei card patterns
@@ -600,7 +603,8 @@ class FundamenteiScraper(BaseScraper):
                                     indicators[indicator_key] = value
                                 break
 
-                except Exception:
+                except (ValueError, TypeError, AttributeError) as e:
+                    logger.debug(f"Failed to parse card element: {e}")
                     continue
 
         except Exception as e:
@@ -622,7 +626,8 @@ class FundamenteiScraper(BaseScraper):
 
             return float(value_text)
 
-        except Exception:
+        except (ValueError, TypeError) as e:
+            logger.debug(f"Failed to parse indicator value '{value_text}': {e}")
             return None
 
     def _parse_number(self, text: str) -> Optional[float]:
@@ -635,7 +640,8 @@ class FundamenteiScraper(BaseScraper):
             text = text.replace("R$", "").replace("%", "").strip()
             text = text.replace(" ", "").replace(".", "").replace(",", ".")
             return float(text)
-        except Exception:
+        except (ValueError, TypeError) as e:
+            logger.debug(f"Failed to parse number '{text}': {e}")
             return None
 
     async def health_check(self) -> bool:
