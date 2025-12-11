@@ -1,5 +1,5 @@
 'use client';
-
+// FASE 93.8 - Force Turbopack recompile
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -296,8 +296,8 @@ export function CrossValidationConfigModal({
                       min={1}
                       max={50}
                       step={1}
-                      value={localConfig.fieldTolerances?.default ?? 5}
-                      onChange={(e) => updateFieldTolerance('default', parseInt(e.target.value) || 5)}
+                      value={Math.round((localConfig.fieldTolerances?.default ?? 0.05) * 100)}
+                      onChange={(e) => updateFieldTolerance('default', (parseInt(e.target.value) || 5) / 100)}
                     />
                     <p className="text-xs text-muted-foreground">
                       Tolerância padrão aplicada a todos os campos sem configuração específica
@@ -315,8 +315,8 @@ export function CrossValidationConfigModal({
                             min={1}
                             max={50}
                             step={1}
-                            value={value}
-                            onChange={(e) => updateFieldTolerance(field, parseInt(e.target.value) || 5)}
+                            value={Math.round((value ?? 0.01) * 100)}
+                            onChange={(e) => updateFieldTolerance(field, (parseInt(e.target.value) || 1) / 100)}
                             className="w-20 h-8 text-sm"
                           />
                           <span className="text-xs text-muted-foreground">%</span>

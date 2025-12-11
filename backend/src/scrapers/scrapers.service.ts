@@ -1605,6 +1605,9 @@ export class ScrapersService {
       for (const [fieldName, fieldInfo] of Object.entries(data.fieldSources)) {
         if (!fieldInfo || !fieldInfo.hasDiscrepancy || !fieldInfo.divergentSources) continue;
 
+        // FASE 93.8: Validate minSources to match preview calculation
+        if (fieldInfo.sourcesCount < this.minSources) continue;
+
         // Filter by specific field if provided
         if (field && fieldName !== field) continue;
 
