@@ -146,18 +146,19 @@ export default function DiscrepancyResolutionModal({
             Resolver Discrepancia: {ticker} - {detail?.fieldLabel || field}
           </DialogTitle>
           <DialogDescription>
-            {detail && (
-              <div className="flex items-center gap-4 mt-2">
-                <Badge className={getSeverityColor(detail.severity)}>
-                  {detail.severity === 'high' && <AlertTriangle className="h-3 w-3 mr-1" />}
-                  {detail.severity.toUpperCase()}
-                </Badge>
-                <span>Desvio maximo: {formatValue(detail.maxDeviation)}%</span>
-                <span>Consenso: {detail.consensus}%</span>
-              </div>
-            )}
+            Selecione o valor correto para resolver a discrepancia entre as fontes de dados.
           </DialogDescription>
         </DialogHeader>
+        {detail && (
+          <div className="text-sm text-muted-foreground flex items-center gap-4 -mt-2 mb-2">
+            <Badge className={getSeverityColor(detail.severity)}>
+              {detail.severity === 'high' && <AlertTriangle className="h-3 w-3 mr-1" />}
+              {detail.severity.toUpperCase()}
+            </Badge>
+            <span>Desvio maximo: {formatValue(detail.maxDeviation)}%</span>
+            <span>Consenso: {detail.consensus}%</span>
+          </div>
+        )}
 
         {isLoading && (
           <div className="flex items-center justify-center py-12">

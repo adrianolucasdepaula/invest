@@ -1582,11 +1582,27 @@ export class ScrapersService {
       }
     }
 
+    // FASE 92.3: Deduplicate by ticker+field, keeping only the most recent entry
+    // This fixes React key collision errors when multiple FundamentalData records exist per asset
+    const deduplicatedMap = new Map<string, DiscrepancyDto>();
+    for (const disc of allDiscrepancies) {
+      const key = `${disc.ticker}-${disc.field}`;
+      const existing = deduplicatedMap.get(key);
+      if (!existing || new Date(disc.lastUpdate) > new Date(existing.lastUpdate)) {
+        deduplicatedMap.set(key, disc);
+      }
+    }
+    const deduplicatedDiscrepancies = Array.from(deduplicatedMap.values());
+
+    this.logger.log(
+      `[DISCREPANCIES] Deduplicated from ${allDiscrepancies.length} to ${deduplicatedDiscrepancies.length} entries`,
+    );
+
     // Sort based on orderBy and orderDirection
     const severityOrder = { high: 0, medium: 1, low: 2 };
     const direction = orderDirection === 'asc' ? 1 : -1;
 
-    allDiscrepancies.sort((a, b) => {
+    deduplicatedDiscrepancies.sort((a, b) => {
       let comparison = 0;
 
       switch (orderBy) {
@@ -1620,12 +1636,12 @@ export class ScrapersService {
       return comparison * direction;
     });
 
-    // Calculate summary (before pagination)
+    // Calculate summary (before pagination) - use deduplicated data
     const summary = {
-      total: allDiscrepancies.length,
-      high: allDiscrepancies.filter((d) => d.severity === 'high').length,
-      medium: allDiscrepancies.filter((d) => d.severity === 'medium').length,
-      low: allDiscrepancies.filter((d) => d.severity === 'low').length,
+      total: deduplicatedDiscrepancies.length,
+      high: deduplicatedDiscrepancies.filter((d) => d.severity === 'high').length,
+      medium: deduplicatedDiscrepancies.filter((d) => d.severity === 'medium').length,
+      low: deduplicatedDiscrepancies.filter((d) => d.severity === 'low').length,
     };
 
     // Apply pagination or limit
@@ -1636,19 +1652,19 @@ export class ScrapersService {
       // Pagination mode
       const startIndex = (page - 1) * pageSize;
       const endIndex = startIndex + pageSize;
-      resultDiscrepancies = allDiscrepancies.slice(startIndex, endIndex);
+      resultDiscrepancies = deduplicatedDiscrepancies.slice(startIndex, endIndex);
       pagination = {
         page,
         pageSize,
-        totalPages: Math.ceil(allDiscrepancies.length / pageSize),
-        totalItems: allDiscrepancies.length,
+        totalPages: Math.ceil(deduplicatedDiscrepancies.length / pageSize),
+        totalItems: deduplicatedDiscrepancies.length,
       };
     } else if (limit !== undefined) {
       // Legacy limit mode
-      resultDiscrepancies = allDiscrepancies.slice(0, limit);
+      resultDiscrepancies = deduplicatedDiscrepancies.slice(0, limit);
     } else {
       // Default limit
-      resultDiscrepancies = allDiscrepancies.slice(0, 50);
+      resultDiscrepancies = deduplicatedDiscrepancies.slice(0, 50);
     }
 
     this.logger.log(
