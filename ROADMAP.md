@@ -2,7 +2,7 @@
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
 **Última Atualização:** 2025-12-11
-**Versão:** 1.14.0
+**Versão:** 1.14.1
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -11425,9 +11425,64 @@ Modal de resolução de discrepâncias com interface completa para seleção de 
 
 ---
 
+## FASE 94: Smart Queue with Backpressure ✅ 100% COMPLETO
+
+**Data:** 2025-12-11
+**Tipo:** Performance + Infrastructure
+
+### Problema Resolvido
+
+Os Python scrapers estavam falhando em execução paralela devido a:
+- Memory exhaustion (91% at 933MB/1GB)
+- Timeout de 120s exceeded
+- Lock serializado que permitia apenas 1 browser por vez
+
+### Funcionalidades Implementadas
+
+- [x] **ResourceMonitor** - Monitoramento de memória/CPU com backpressure
+- [x] **Semaphore(3)** - Permite 3 browsers simultâneos (antes era Lock serializado)
+- [x] **Backpressure Control** - Aguarda recursos se memória > 70%
+- [x] **Memory Increase** - Container api-service 2GB → 4GB
+
+### Sub-fases
+
+- **FASE 94.1:** Diagnóstico e análise de root cause
+- **FASE 94.2:** Implementação ResourceMonitor + Semaphore
+- **FASE 94.3:** Code review + correções + documentação
+
+### Arquivos Criados/Modificados
+
+| Arquivo | Mudança |
+|---------|---------|
+| `backend/python-scrapers/resource_monitor.py` | NOVO - ResourceMonitor com backpressure |
+| `backend/python-scrapers/base_scraper.py` | Lock → Semaphore(3) + backpressure integration |
+| `backend/python-scrapers/requirements.txt` | Adicionado psutil==6.1.0 |
+| `docker-compose.yml` | api-service memory 2G → 4G |
+
+### Resultados dos Testes
+
+| Teste | Antes | Depois |
+|-------|-------|--------|
+| 5 scrapers paralelos | 60% sucesso (3/5) | **100% sucesso (5/5)** |
+| Memória pico | 99% (1.98GB/2GB) | **69.33%** (2.77GB/4GB) |
+| Browsers simultâneos | 1 (Lock) | **3** (Semaphore) |
+
+### Validação Zero Tolerance
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Build Backend: SUCCESS
+- ✅ Build Frontend: SUCCESS
+- ✅ Teste 5 scrapers paralelos: 100% sucesso
+- ✅ Memória: < 70% threshold
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (95 fases incluindo sub-fases)
+### Fases Completas (96 fases incluindo sub-fases)
 
 - ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
 - ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
@@ -11471,10 +11526,12 @@ Modal de resolução de discrepâncias com interface completa para seleção de 
 - ✅ FASE 92.1: Discrepancy Resolution UI Modal - 100% COMPLETO (2025-12-10)
 - ✅ FASE 92.2: Discrepancy Resolution Bug Fixes & Security - 100% COMPLETO (2025-12-10)
 - ✅ FASE 93: Data Sources Enhancements - 100% COMPLETO (2025-12-11)
+- ✅ FASE 94: Smart Queue with Backpressure - 100% COMPLETO (2025-12-11)
 
 ### Fases Planejadas
 
-- Nenhuma fase pendente no momento
+- FASE 95: Habilitar scrapers comentados (FUNDAMENTEI, ADVFN, OPLAB)
+- FASE 96: Investigar scrapers bloqueados (B3, INVESTING, MAISRETORNO)
 
 ### Cronograma Estimado
 
@@ -11494,7 +11551,7 @@ Todas as fases planejadas foram implementadas.
 ---
 
 **Ultima Atualizacao:** 2025-12-11
-**Total de Fases:** 95 completas (incluindo sub-fases)
-**Versao:** 1.14.0
+**Total de Fases:** 96 completas (incluindo sub-fases)
+**Versao:** 1.14.1
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

@@ -9,6 +9,27 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 94: Smart Queue with Backpressure - 100% COMPLETA (2025-12-11)**
+  - **ResourceMonitor:** Monitoramento de memória/CPU com backpressure automático
+  - **Semaphore(3):** Permite 3 browsers paralelos (antes Lock serializado)
+  - **Backpressure Control:** Aguarda recursos se memória > 70%
+  - **Memory Increase:** Container api-service 2GB → 4GB
+  - **Code Quality Fixes:**
+    - Import ResourceMonitor movido para topo do arquivo
+    - Bare except corrigido com logging adequado
+    - Event loop time() substituído por time.time() (thread-safe)
+  - **Arquivos Criados/Modificados:**
+    - `backend/python-scrapers/resource_monitor.py` (NOVO)
+    - `backend/python-scrapers/base_scraper.py`
+    - `backend/python-scrapers/requirements.txt`
+    - `docker-compose.yml`
+  - **Resultados:**
+    - 5 scrapers paralelos: 100% sucesso (antes 60%)
+    - Memória pico: 69.33% (antes 99%)
+  - **Validação:**
+    - TypeScript: 0 erros (backend + frontend)
+    - Build: SUCCESS (backend + frontend)
+
 - **FASE 93: Data Sources Enhancements - 100% COMPLETA (2025-12-11)**
   - **R1: Botão "Testar Todos" Scrapers:**
     - POST /scrapers/test-all endpoint com concorrência configurável

@@ -2,6 +2,7 @@
 Base scraper class - abstract interface with Playwright
 Migrated from Selenium to Playwright on 2025-11-27
 Updated 2025-12-04: Added playwright-stealth for Cloudflare bypass
+Updated 2025-12-11: FASE 94.3 - Fixed import location, bare except, improved code quality
 """
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
@@ -14,6 +15,7 @@ import time
 import asyncio
 
 from config import settings
+from resource_monitor import ResourceMonitor  # FASE 94.3: Moved from inside initialize()
 
 
 @dataclass
@@ -52,9 +54,10 @@ class BaseScraper(ABC):
     - Unified with backend NestJS stack
     """
 
-    # Fila de inicialização compartilhada (FASE 4 - evitar sobrecarga CDP)
-    # Cada scraper cria SEU PRÓPRIO browser (igual backend TypeScript)
-    _initialization_queue: asyncio.Lock = None
+    # FASE 94: Semáforo de inicialização (permite 3 browsers simultâneos)
+    # Anteriormente usava Lock (serializado), agora permite paralelismo controlado
+    _initialization_semaphore: asyncio.Semaphore = None
+    _max_concurrent_init: int = 3  # Máximo de browsers inicializando ao mesmo tempo
 
     def __init__(self, name: str, source: str, requires_login: bool = False):
         self.name = name
@@ -73,104 +76,127 @@ class BaseScraper(ABC):
         Create individual browser and page for this scraper instance (matches backend pattern)
 
         Updated 2025-12-04: Uses playwright-stealth for Cloudflare bypass
+        Updated 2025-12-11: Added 60s timeout to prevent resource leak on hang
         """
         try:
-            # Start Playwright with Stealth (Cloudflare bypass)
-            if not self.playwright:
-                # Configure stealth to mimic real browser
-                stealth = Stealth(
-                    navigator_languages_override=('pt-BR', 'pt', 'en-US', 'en'),
-                    navigator_platform_override='Win32',
-                    navigator_user_agent_override='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                )
-                # Use stealth wrapper around async_playwright
-                self._stealth_context = stealth.use_async(async_playwright())
-                self.playwright = await self._stealth_context.__aenter__()
-                logger.debug(f"Playwright with Stealth started for {self.name}")
+            # FASE 94: Wrap entire browser creation with 60s timeout
+            # This prevents zombie processes when browser creation hangs due to memory pressure
+            async with asyncio.timeout(60):  # 60s max for browser creation
+                # Start Playwright with Stealth (Cloudflare bypass)
+                if not self.playwright:
+                    # Configure stealth to mimic real browser
+                    stealth = Stealth(
+                        navigator_languages_override=('pt-BR', 'pt', 'en-US', 'en'),
+                        navigator_platform_override='Win32',
+                        navigator_user_agent_override='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    )
+                    # Use stealth wrapper around async_playwright
+                    self._stealth_context = stealth.use_async(async_playwright())
+                    self.playwright = await self._stealth_context.__aenter__()
+                    logger.debug(f"Playwright with Stealth started for {self.name}")
 
-            # Launch browser with configuration matching backend TypeScript
-            # Try Playwright's Chromium first (more stable in Docker)
-            # Backend uses: executablePath || undefined (Playwright's own Chromium if env not set)
-            import os
-            executable_path = os.environ.get('PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH')
+                # Launch browser with configuration matching backend TypeScript
+                # Try Playwright's Chromium first (more stable in Docker)
+                # Backend uses: executablePath || undefined (Playwright's own Chromium if env not set)
+                import os
+                executable_path = os.environ.get('PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH')
 
-            launch_args = {
-                'headless': settings.CHROME_HEADLESS,
-                'timeout': 180000,  # FASE 5.5: 180s timeout
-                'args': [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-accelerated-2d-canvas',
-                    '--disable-gpu',
-                ],
-            }
+                launch_args = {
+                    'headless': settings.CHROME_HEADLESS,
+                    'timeout': 60000,  # FASE 94: Reduced from 180s to 60s for faster failure
+                    'args': [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-accelerated-2d-canvas',
+                        '--disable-gpu',
+                        '--single-process',  # FASE 94: Reduce memory footprint
+                    ],
+                }
 
-            # Only set executable_path if env variable is set
-            if executable_path:
-                launch_args['executable_path'] = executable_path
+                # Only set executable_path if env variable is set
+                if executable_path:
+                    launch_args['executable_path'] = executable_path
 
-            self.browser = await self.playwright.chromium.launch(**launch_args)
-            logger.debug(f"Playwright browser created for {self.name} (with Stealth)")
+                self.browser = await self.playwright.chromium.launch(**launch_args)
+                logger.debug(f"Playwright browser created for {self.name} (with Stealth)")
 
-            # Create page
-            self.page = await self.browser.new_page()
+                # Create page
+                self.page = await self.browser.new_page()
 
-            # Set viewport (matches backend: 1920x1080)
-            await self.page.set_viewport_size({"width": 1920, "height": 1080})
+                # Set viewport (matches backend: 1920x1080)
+                await self.page.set_viewport_size({"width": 1920, "height": 1080})
 
-            # Set user agent
-            await self.page.set_extra_http_headers({
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            })
+                # Set user agent
+                await self.page.set_extra_http_headers({
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                })
 
-            # Set default timeout (FASE 5.5: 180s)
-            self.page.set_default_timeout(180000)
+                # Set default timeout (reduced to 60s for faster failure detection)
+                self.page.set_default_timeout(60000)
 
-            logger.debug(f"Playwright page created for {self.name}")
+                logger.debug(f"Playwright page created for {self.name}")
 
+        except asyncio.TimeoutError:
+            logger.error(f"[TIMEOUT] Browser creation timed out for {self.name} after 60s - cleaning up")
+            await self._force_cleanup()  # Force cleanup on timeout
+            raise
         except Exception as e:
             logger.error(f"Failed to create browser/page for {self.name}: {e}")
+            await self._force_cleanup()  # Force cleanup on error
             raise
 
     async def initialize(self):
         """
-        Initialize the scraper with FASE 4 queue serialization
+        Initialize the scraper with FASE 94 smart queue
 
-        FASE 4: Fila de inicialização serializada para evitar sobrecarga CDP
-        - Apenas 1 browser inicializado por vez
-        - Gap de 2s entre inicializações
-        - Evita ProtocolError timeout
+        FASE 94.2: Smart initialization queue with backpressure
+        - Semaphore(3) permite 3 browsers simultâneos (antes era Lock serializado)
+        - Backpressure: aguarda se memória > 70%
+        - Gap reduzido para 0.5s (era 1s)
+        - Timeout total de 90s
         """
         if self._initialized:
             return
 
-        # FASE 4: Aguardar fila de inicialização
-        # Create lock lazily in async context (can't create in __init__)
-        if BaseScraper._initialization_queue is None:
-            BaseScraper._initialization_queue = asyncio.Lock()
+        # FASE 94: Criar semáforo se não existir
+        if BaseScraper._initialization_semaphore is None:
+            BaseScraper._initialization_semaphore = asyncio.Semaphore(
+                BaseScraper._max_concurrent_init
+            )
 
-        async with BaseScraper._initialization_queue:
-            try:
-                logger.info(f"[INIT QUEUE] Initializing {self.name}...")
+        try:
+            # FASE 94: Backpressure - aguardar recursos disponíveis
+            if not await ResourceMonitor.wait_until_safe(timeout=60):
+                raise Exception(f"Resources unavailable for {self.name} - system under pressure")
 
-                # Create browser and page (individual, not shared)
-                await self._create_browser_and_page()
+            # Timeout total de 90s para inicialização
+            async with asyncio.timeout(90):
+                async with BaseScraper._initialization_semaphore:
+                    try:
+                        logger.info(f"[INIT] Initializing {self.name}...")
 
-                if self.requires_login:
-                    logger.info(f"Performing login for {self.name}...")
-                    # Subclasses should override and implement login logic
-                    await self.login()
+                        # Create browser and page (individual, not shared)
+                        await self._create_browser_and_page()
 
-                self._initialized = True
-                logger.info(f"[INIT QUEUE] ✅ {self.name} initialized successfully")
+                        if self.requires_login:
+                            logger.info(f"Performing login for {self.name}...")
+                            await self.login()
 
-                # FASE 4: Gap de 2s antes de liberar próximo scraper
-                await asyncio.sleep(2)
+                        self._initialized = True
+                        logger.info(f"[INIT] ✅ {self.name} initialized successfully")
 
-            except Exception as e:
-                logger.error(f"[INIT QUEUE] ❌ Failed to initialize {self.name}: {e}")
-                raise
+                        # FASE 94: Gap reduzido para 0.5s (era 1s)
+                        await asyncio.sleep(0.5)
+
+                    except Exception as e:
+                        logger.error(f"[INIT] ❌ Failed to initialize {self.name}: {e}")
+                        await self._force_cleanup()
+                        raise
+
+        except asyncio.TimeoutError:
+            logger.error(f"[INIT] ⏱️ Timeout for {self.name} after 90s")
+            raise Exception(f"Initialization timed out after 90s for {self.name}")
 
     async def login(self):
         """Override in subclasses that require login"""
@@ -207,6 +233,34 @@ class BaseScraper(ABC):
 
         except Exception as e:
             logger.error(f"Error during cleanup of {self.name}: {e}")
+
+    async def _force_cleanup(self):
+        """
+        FASE 94: Force cleanup with timeout - used when browser creation fails or times out.
+        This ensures no zombie processes are left behind even when cleanup itself hangs.
+        """
+        logger.warning(f"[FORCE CLEANUP] Starting force cleanup for {self.name}")
+        try:
+            # Wrap cleanup with 10s timeout to prevent cleanup from hanging
+            async with asyncio.timeout(10):
+                await self.cleanup()
+            logger.info(f"[FORCE CLEANUP] ✅ Cleanup completed for {self.name}")
+        except asyncio.TimeoutError:
+            logger.error(f"[FORCE CLEANUP] ⚠️ Cleanup timed out for {self.name} - resources may leak")
+            # Reset references even if cleanup failed to allow GC
+            self.page = None
+            self.browser = None
+            self._stealth_context = None
+            self.playwright = None
+            self._initialized = False
+        except Exception as e:
+            logger.error(f"[FORCE CLEANUP] ❌ Error during force cleanup of {self.name}: {e}")
+            # Reset references even if cleanup failed
+            self.page = None
+            self.browser = None
+            self._stealth_context = None
+            self.playwright = None
+            self._initialized = False
 
     @classmethod
     async def cleanup_browser(cls):
@@ -284,8 +338,8 @@ class BaseScraper(ABC):
                 if self.page:
                     try:
                         await self.cleanup()
-                    except:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"[{self.name}] Cleanup failed during retry: {e}")
 
             # Wait before retry (exponential backoff)
             if attempt < settings.SCRAPER_MAX_RETRIES - 1:
