@@ -56,9 +56,9 @@ from .fundamentei_scraper import FundamenteiScraper  # FASE 97: OAuth required
 from .maisretorno_scraper import MaisRetornoScraper  # FASE 97: OAuth required
 
 # ==============================
-# AWAITING FIXES
+# CREDENTIALS SCRAPERS (FASE 98)
 # ==============================
-# from .advfn_scraper import ADVFNScraper  # partial migration needed
+from .advfn_scraper import ADVFNScraper  # FASE 98: Credentials optional
 
 __all__ = [
     # Fundamental Data
@@ -96,4 +96,6 @@ __all__ = [
     # OAuth Scrapers (FASE 97)
     "FundamenteiScraper",  # FASE 97
     "MaisRetornoScraper",  # FASE 97
+    # Credentials Scrapers (FASE 98)
+    "ADVFNScraper",  # FASE 98
 ]

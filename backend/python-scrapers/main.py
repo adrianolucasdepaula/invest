@@ -51,6 +51,8 @@ from scrapers import (
     # OAuth Scrapers (FASE 97)
     FundamenteiScraper,  # FASE 97: OAuth required
     MaisRetornoScraper,  # FASE 97: OAuth required
+    # Credentials Scrapers (FASE 98)
+    ADVFNScraper,  # FASE 98: Credentials optional
 )
 
 
@@ -124,15 +126,15 @@ class ScraperService:
         self.scrapers["MAISRETORNO"] = MaisRetornoScraper  # FASE 97: OAuth required
 
         # ===========================================
-        # AWAITING FIXES (Need config/partial migration)
+        # FASE 98: Credentials Scrapers (optional login)
         # ===========================================
-        # self.scrapers["ADVFN"] = ADVFNScraper  # partial migration needed
+        self.scrapers["ADVFN"] = ADVFNScraper  # FASE 98: Credentials optional
 
         logger.info(f"✅ PLAYWRIGHT MIGRATION COMPLETE: Registered {len(self.scrapers)} scrapers")
         logger.info(f"📊 Fundamental: FUNDAMENTUS, BCB, STATUSINVEST, INVESTSITE, INVESTIDOR10, TRADINGVIEW, GOOGLEFINANCE, GRIFFIN, COINMARKETCAP")
         logger.info(f"📰 News: BLOOMBERG, GOOGLENEWS, INVESTING_NEWS, VALOR, EXAME, INFOMONEY, ESTADAO")
         logger.info(f"🤖 AI: CHATGPT, GEMINI, DEEPSEEK, CLAUDE, GROK, PERPLEXITY")
-        logger.info(f"📈 Market: YAHOO_FINANCE, OPLAB, OPCOES_NET, KINVO, INVESTING, B3")
+        logger.info(f"📈 Market: YAHOO_FINANCE, OPLAB, OPCOES_NET, KINVO, INVESTING, B3, ADVFN")
         logger.info(f"🔐 OAuth: FUNDAMENTEI, MAISRETORNO (require cookie collection)")
 
     async def initialize(self):
