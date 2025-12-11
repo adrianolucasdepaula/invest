@@ -395,7 +395,6 @@ export function useSyncWebSocket(options?: {
       socketRef.current = null;
     };
     // FASE 88 FIX: Remove options from dependencies - using callbacksRef instead (ISSUE 1.3)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getSyncConfigFromStorage, saveActiveSyncState, clearActiveSyncState]);
 
   /**

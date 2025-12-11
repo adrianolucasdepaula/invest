@@ -246,50 +246,9 @@ export interface ResolutionHistoryItem {
 
 // ========================================
 // FASE 90: Discrepancy Resolution Hooks
+// NOTE: useDiscrepancyDetail and useResolveDiscrepancy moved to
+// useDiscrepancyHooks.ts (FASE 93.12) to bypass Turbopack HMR bug
 // ========================================
-
-/**
- * Hook para obter detalhes de uma discrepância específica
- */
-export function useDiscrepancyDetail(ticker: string | null, field: string | null) {
-  return useQuery<DiscrepancyDetail>({
-    queryKey: ['discrepancy-detail', ticker, field],
-    queryFn: () => api.getDiscrepancyDetail(ticker!, field!),
-    enabled: !!ticker && !!field,
-    staleTime: 1000 * 60, // 1 minute
-    refetchOnWindowFocus: false,
-  });
-}
-
-/**
- * Hook para resolução manual de discrepância
- */
-export function useResolveDiscrepancy() {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    ResolutionResult,
-    Error,
-    {
-      ticker: string;
-      field: string;
-      data: {
-        selectedValue: number;
-        selectedSource?: string;
-        notes?: string;
-      };
-    }
-  >({
-    mutationFn: ({ ticker, field, data }) => api.resolveDiscrepancy(ticker, field, data),
-    onSuccess: (result) => {
-      // Invalidar queries relacionadas para refresh
-      queryClient.invalidateQueries({ queryKey: ['scrapers-discrepancies'] });
-      queryClient.invalidateQueries({ queryKey: ['discrepancy-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['discrepancy-detail', result.ticker, result.fieldName] });
-      queryClient.invalidateQueries({ queryKey: ['data-sources'] });
-    },
-  });
-}
 
 /**
  * Hook para auto-resolução de discrepâncias em lote
@@ -356,12 +315,18 @@ export interface BatchTestResult {
 /**
  * Hook para testar todos os scrapers em batch
  * FASE 93.4: Uses wrapper function for Turbopack compatibility
+ * FASE 93.9: Added runtime filter (default: typescript only for faster tests)
  */
 export function useTestAllScrapers() {
   const queryClient = useQueryClient();
 
-  return useMutation<BatchTestResult, Error, number>({
-    mutationFn: (concurrency) => testAllScrapersApi(concurrency),
+  return useMutation<
+    BatchTestResult,
+    Error,
+    { concurrency?: number; runtime?: 'all' | 'typescript' | 'python' }
+  >({
+    mutationFn: ({ concurrency = 5, runtime = 'typescript' }) =>
+      testAllScrapersApi(concurrency, runtime),
     onSuccess: () => {
       // Invalidar queries relacionadas para refletir novos status
       queryClient.invalidateQueries({ queryKey: ['data-sources'] });

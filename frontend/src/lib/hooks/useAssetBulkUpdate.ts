@@ -465,7 +465,7 @@ export function useAssetBulkUpdate(options?: {
         socketRef.current = null;
       }
     };
-  }, [isMounted]); // ✅ FIX: Depend on isMounted to trigger connection after client hydration
+  }, [isMounted, queryClient]); // ✅ FIX: Depend on isMounted to trigger connection after client hydration
 
   /**
    * Resetar estado

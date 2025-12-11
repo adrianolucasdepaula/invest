@@ -24,12 +24,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+// FASE 93.12: Use isolated hooks to bypass Turbopack HMR bug
 import {
-  useDiscrepancyDetail,
-  useResolveDiscrepancy,
+  useDiscrepancyDetailIsolated as useDiscrepancyDetail,
+  useResolveDiscrepancyIsolated as useResolveDiscrepancy,
   DiscrepancyDetail,
   ResolutionHistoryItem,
-} from '@/lib/hooks/useDataSources';
+} from '@/lib/hooks/useDiscrepancyHooks';
 import { cn } from '@/lib/utils';
 
 interface DiscrepancyResolutionModalProps {

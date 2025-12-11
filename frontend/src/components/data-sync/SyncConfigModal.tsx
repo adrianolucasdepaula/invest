@@ -104,9 +104,9 @@ export function SyncConfigModal({
   const { data: syncStatus } = useSyncStatus();
   const assets = (syncStatus?.assets ?? []) as AssetSyncStatusDto[];
 
-  // FASE 88 FIX: Calculate currentDate and PERIODS when modal opens (ISSUE 1.4)
-  // This prevents stale date if user keeps modal open past midnight
-  const currentDate = useMemo(() => getCurrentDate(), [open]);
+  // FASE 88 FIX: Calculate currentDate and PERIODS on mount
+  // The useEffect below handles reset when modal opens
+  const currentDate = useMemo(() => getCurrentDate(), []);
   const PERIODS = useMemo(() => getPeriods(currentDate), [currentDate]);
 
   // State

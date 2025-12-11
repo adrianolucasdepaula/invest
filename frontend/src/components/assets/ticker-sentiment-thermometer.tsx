@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -270,8 +270,11 @@ export function TickerSentimentThermometer({
   // Obter dados do período selecionado
   const selectedTimeframe = multiData?.timeframes.find(tf => tf.period === selectedPeriod);
 
-  // Verificar se ALGUM período tem dados
-  const periodsWithData = multiData?.timeframes.filter(tf => tf.newsCount > 0) ?? [];
+  // Verificar se ALGUM período tem dados (memoizado para evitar re-cálculos)
+  const periodsWithData = useMemo(
+    () => multiData?.timeframes.filter(tf => tf.newsCount > 0) ?? [],
+    [multiData?.timeframes]
+  );
   const hasAnyData = periodsWithData.length > 0;
 
   // Auto-selecionar primeiro período com dados quando multiData carrega

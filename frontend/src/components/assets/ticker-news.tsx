@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,6 +16,7 @@ import {
   ExternalLink,
   Clock,
   RefreshCw,
+  ImageOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
@@ -96,6 +99,8 @@ function SentimentIcon({ label }: { label: string }) {
 }
 
 export function TickerNews({ ticker, limit = 10 }: TickerNewsProps) {
+  const [imageError, setImageError] = useState<Record<string, boolean>>({});
+
   const {
     data: news,
     isLoading,
@@ -214,16 +219,24 @@ export function TickerNews({ ticker, limit = 10 }: TickerNewsProps) {
                 className="flex gap-4 rounded-lg border p-3 transition-colors hover:bg-accent/50"
               >
                 {/* Image */}
-                {item.imageUrl && (
+                {item.imageUrl && !imageError[item.id] && (
                   <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-lg bg-muted">
-                    <img
+                    <Image
                       src={item.imageUrl}
                       alt={item.title}
+                      width={112}
+                      height={80}
                       className="h-full w-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
+                      unoptimized={true}
+                      onError={() => setImageError((prev) => ({ ...prev, [item.id]: true }))}
                     />
+                  </div>
+                )}
+
+                {/* Fallback when image fails */}
+                {item.imageUrl && imageError[item.id] && (
+                  <div className="relative flex h-20 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+                    <ImageOff className="h-6 w-6 text-muted-foreground" />
                   </div>
                 )}
 
