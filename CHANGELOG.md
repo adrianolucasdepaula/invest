@@ -9,6 +9,34 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 98: ESLint 9 Flat Config + Next.js Image Migration - 100% COMPLETA (2025-12-11)**
+  - **ESLint Config Migration:**
+    - eslint-config-next atualizado: 16.0.5 → 16.0.10
+    - Migração de .eslintrc.json para eslint.config.mjs (ESLint 9 flat config)
+    - 3 regras react-hooks desabilitadas (padrões SSR intencionais)
+  - **Next.js Image Migration:**
+    - ticker-news.tsx: `<img>` → `<Image>` com `unoptimized={true}`
+    - Fallback visual com ícone ImageOff para imagens que falham
+    - Aceita qualquer domínio externo (CDNs de notícias)
+  - **React Hooks Fixes:**
+    - ticker-sentiment-thermometer.tsx: useMemo para periodsWithData
+    - SyncConfigModal.tsx: Removida dependência [open] desnecessária
+    - useAssetBulkUpdate.ts: Adicionado queryClient às deps
+    - useSyncWebSocket.ts: Removido eslint-disable desnecessário
+  - **Arquivos Modificados:**
+    - `frontend/eslint.config.mjs` (NOVO)
+    - `frontend/.eslintrc.json` (DELETADO)
+    - `frontend/package.json`
+    - `frontend/src/components/assets/ticker-news.tsx`
+    - `frontend/src/components/assets/ticker-sentiment-thermometer.tsx`
+    - `frontend/src/components/data-sync/SyncConfigModal.tsx`
+    - `frontend/src/lib/hooks/useAssetBulkUpdate.ts`
+    - `frontend/src/lib/hooks/useSyncWebSocket.ts`
+  - **Resultados:**
+    - ESLint: 0 erros, 0 warnings (antes 0 erros, 1 warning)
+    - TypeScript: 0 erros (frontend + backend)
+    - Build: SUCCESS
+
 - **FASE 97.1: OAuth Scrapers Code Review Fixes - 100% COMPLETA (2025-12-11)**
   - **FundamenteiScraper Fixes (6 issues):**
     - Linha 201: `except:` → `except Exception as e:` + `logger.warning()`

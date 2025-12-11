@@ -727,12 +727,17 @@ function createStandaloneClient() {
 
 /**
  * Test all scrapers in batch (Turbopack-safe - direct axios call)
+ * @param concurrency Maximum parallel tests (default: 5)
+ * @param runtime Filter by runtime: 'all', 'typescript', or 'python' (default: 'typescript')
  */
-export async function testAllScrapersApi(concurrency: number = 5) {
+export async function testAllScrapersApi(
+  concurrency: number = 5,
+  runtime: 'all' | 'typescript' | 'python' = 'typescript',
+) {
   const client = createStandaloneClient();
   const response = await client.post('/scrapers/test-all', {}, {
-    params: { concurrency },
-    timeout: 300000, // 5 minutes timeout for batch test
+    params: { concurrency, runtime },
+    timeout: 600000, // 10 minutes timeout for batch test
   });
   return response.data;
 }
@@ -779,5 +784,33 @@ export async function previewConfigImpactApi(config: {
 }) {
   const client = createStandaloneClient();
   const response = await client.post('/scrapers/cross-validation-config/preview', config);
+  return response.data;
+}
+
+/**
+ * Get discrepancy detail - Turbopack-safe standalone function
+ * FASE 93.9: Fix HMR class method resolution issue
+ */
+export async function getDiscrepancyDetailApi(ticker: string, field: string) {
+  const client = createStandaloneClient();
+  const response = await client.get(`/scrapers/discrepancies/${ticker}/${field}`);
+  return response.data;
+}
+
+/**
+ * Resolve discrepancy - Turbopack-safe standalone function
+ * FASE 93.9: Fix HMR class method resolution issue
+ */
+export async function resolveDiscrepancyApi(
+  ticker: string,
+  field: string,
+  data: {
+    selectedValue: number;
+    selectedSource?: string;
+    notes?: string;
+  }
+) {
+  const client = createStandaloneClient();
+  const response = await client.post(`/scrapers/discrepancies/${ticker}/${field}/resolve`, data);
   return response.data;
 }

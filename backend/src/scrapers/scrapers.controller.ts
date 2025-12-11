@@ -581,6 +581,12 @@ export class ScrapersController {
     type: Number,
     description: 'Maximum parallel tests (default: 5)',
   })
+  @ApiQuery({
+    name: 'runtime',
+    required: false,
+    enum: ['all', 'typescript', 'python'],
+    description: 'Filter scrapers by runtime (default: all)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Returns batch test results',
@@ -588,10 +594,12 @@ export class ScrapersController {
   })
   async testAllScrapers(
     @Query('concurrency') concurrency?: string,
+    @Query('runtime') runtime?: 'all' | 'typescript' | 'python',
   ): Promise<BatchTestResultDto> {
     const maxConcurrency = concurrency ? parseInt(concurrency, 10) : 5;
-    this.logger.log(`[TEST-ALL] Starting batch test with concurrency=${maxConcurrency}`);
+    const runtimeFilter = runtime || 'all';
+    this.logger.log(`[TEST-ALL] Starting batch test with concurrency=${maxConcurrency}, runtime=${runtimeFilter}`);
 
-    return this.scrapersService.testAllScrapers(maxConcurrency);
+    return this.scrapersService.testAllScrapers(maxConcurrency, runtimeFilter);
   }
 }

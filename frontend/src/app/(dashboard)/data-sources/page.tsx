@@ -296,6 +296,9 @@ export default function DataSourcesPage() {
 
   const sources = (dataSources ?? []) as any[];
 
+  // FASE 93.9: Count TypeScript scrapers (used for "Test All" button)
+  const typescriptScrapersCount = sources.filter((s) => s.runtime === 'typescript').length;
+
   const filteredSources = sources.filter(
     (source: any) => filter === 'all' || source.type === filter,
   );
@@ -362,12 +365,17 @@ export default function DataSourcesPage() {
   };
 
   // FASE 93.4: Test All Scrapers handler
+  // FASE 93.9: Default to TypeScript-only for faster tests (avoids Python scraper timeouts)
   const handleTestAll = async () => {
     setTestAllModalOpen(true);
     setTestAllResults(null);
 
     try {
-      const results = await testAllMutation.mutateAsync(5); // concurrency = 5
+      // Test only TypeScript scrapers by default (Python scrapers timeout at 120s each)
+      const results = await testAllMutation.mutateAsync({
+        concurrency: 5,
+        runtime: 'typescript',
+      });
       setTestAllResults(results);
 
       toast({
@@ -523,13 +531,14 @@ export default function DataSourcesPage() {
             </div>
 
             {/* FASE 93.4: Test All Scrapers Button */}
+            {/* FASE 93.9: Updated to test only TypeScript scrapers for faster results */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="default"
                     onClick={handleTestAll}
-                    disabled={testAllMutation.isPending || !sources.length}
+                    disabled={testAllMutation.isPending || !typescriptScrapersCount}
                     className="gap-2"
                   >
                     {testAllMutation.isPending ? (
@@ -537,11 +546,11 @@ export default function DataSourcesPage() {
                     ) : (
                       <Play className="h-4 w-4" />
                     )}
-                    Testar Todos ({sources.length})
+                    Testar Todos ({typescriptScrapersCount})
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Testa todos os scrapers em paralelo (máx 5 simultâneos)</p>
+                  <p>Testa {typescriptScrapersCount} scrapers TypeScript em paralelo (máx 5 simultâneos)</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -1150,7 +1159,7 @@ export default function DataSourcesPage() {
             <div className="py-6 space-y-4">
               <Progress value={undefined} className="w-full" />
               <p className="text-center text-muted-foreground">
-                Testando {sources.length} scrapers com concorrência de 5...
+                Testando {typescriptScrapersCount} scrapers TypeScript com concorrência de 5...
               </p>
             </div>
           )}

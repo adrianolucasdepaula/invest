@@ -1927,7 +1927,10 @@ export class ScrapersService {
    * - Emits WebSocket events for real-time progress tracking
    * - Returns aggregated results
    */
-  async testAllScrapers(maxConcurrency: number = 5): Promise<{
+  async testAllScrapers(
+    maxConcurrency: number = 5,
+    runtimeFilter: 'all' | 'typescript' | 'python' = 'all',
+  ): Promise<{
     totalScrapers: number;
     successCount: number;
     failedCount: number;
@@ -1942,13 +1945,19 @@ export class ScrapersService {
     }>;
   }> {
     const startTime = Date.now();
-    this.logger.log(`[TEST-ALL] Starting batch test with maxConcurrency=${maxConcurrency}`);
+    this.logger.log(`[TEST-ALL] Starting batch test with maxConcurrency=${maxConcurrency}, runtime=${runtimeFilter}`);
 
     // Get all scrapers (TypeScript + Python)
     const metricsMap = await this.scraperMetricsService.getAllMetricsSummaries();
-    const allScrapers = await this.getAllScrapersStatus(metricsMap);
+    const allScrapersRaw = await this.getAllScrapersStatus(metricsMap);
 
-    this.logger.log(`[TEST-ALL] Found ${allScrapers.length} scrapers to test`);
+    // Filter by runtime if specified
+    const allScrapers =
+      runtimeFilter === 'all'
+        ? allScrapersRaw
+        : allScrapersRaw.filter((s) => s.runtime === runtimeFilter);
+
+    this.logger.log(`[TEST-ALL] Found ${allScrapers.length} scrapers to test (filtered from ${allScrapersRaw.length} total)`);
 
     // Emit start event via WebSocket
     this.wsGateway.emitScraperTestAllStarted({
