@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
+import { Repository, Between, MoreThanOrEqual, LessThanOrEqual, Not, IsNull } from 'typeorm';
 import {
   EconomicEvent,
   EventImportance,
@@ -185,6 +185,37 @@ export class EconomicCalendarService {
   }
 
   /**
+   * FASE 91: Busca eventos FUTUROS (agenda de próximas divulgações)
+   * Eventos com eventDate > now, ordenados por data crescente
+   */
+  async getUpcomingEvents(limit = 10): Promise<EconomicEvent[]> {
+    const now = new Date();
+    return this.eventRepository.find({
+      where: {
+        eventDate: MoreThanOrEqual(now),
+      },
+      order: { eventDate: 'ASC' },
+      take: limit,
+    });
+  }
+
+  /**
+   * FASE 91: Busca eventos PASSADOS com resultados (histórico de divulgações)
+   * Eventos com eventDate < now que já têm valor 'actual'
+   */
+  async getRecentResults(limit = 10): Promise<EconomicEvent[]> {
+    const now = new Date();
+    return this.eventRepository.find({
+      where: {
+        eventDate: LessThanOrEqual(now),
+        actual: Not(IsNull()),
+      },
+      order: { eventDate: 'DESC' },
+      take: limit,
+    });
+  }
+
+  /**
    * FASE 90: Coleta eventos do Investing.com com headers melhorados
    */
   async collectFromInvesting(): Promise<SaveEventsResult> {
@@ -197,14 +228,22 @@ export class EconomicCalendarService {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          // FASE 90: Headers realistas para evitar bloqueio
+          // FASE 91: Headers ultra-realistas para evitar bloqueio
           'Content-Type': 'application/x-www-form-urlencoded',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'X-Requested-With': 'XMLHttpRequest',
-          'Accept': 'application/json, text/javascript, */*; q=0.01',
+          'Accept': '*/*',
           'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+          'Accept-Encoding': 'gzip, deflate, br',
           'Origin': 'https://br.investing.com',
           'Referer': 'https://br.investing.com/economic-calendar/',
+          // FASE 91: Fingerprint headers para bypassar detecção de bot
+          'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+          'sec-ch-ua-mobile': '?0',
+          'sec-ch-ua-platform': '"Windows"',
+          'sec-fetch-dest': 'empty',
+          'sec-fetch-mode': 'cors',
+          'sec-fetch-site': 'same-origin',
         },
         body: new URLSearchParams({
           country: '32,17', // Brasil (32) e EUA (17)
@@ -455,24 +494,31 @@ export class EconomicCalendarService {
   }
 
   /**
-   * FASE 90: Para séries diárias, pega apenas valores distintos (quando muda)
+   * FASE 91: Para séries diárias, pega apenas valores distintos (quando muda)
+   * IMPORTANTE: Usa a PRIMEIRA data onde cada valor apareceu (data da decisão COPOM),
+   * não a data mais recente. Isso evita duplicação de eventos ao sincronizar.
    */
   private getLastDistinctValues(
     data: Array<{ data: string; valor: string }>,
     maxEntries: number,
   ): Array<{ data: string; valor: string }> {
-    const distinct: Array<{ data: string; valor: string }> = [];
-    let lastValue: string | null = null;
+    // FASE 91: Mapa para guardar a PRIMEIRA ocorrência de cada valor
+    // Key = valor, Value = {data, valor} da primeira vez que apareceu
+    const firstOccurrence = new Map<string, { data: string; valor: string }>();
 
-    // Iterar do mais recente para o mais antigo
-    for (let i = data.length - 1; i >= 0 && distinct.length < maxEntries; i--) {
-      if (data[i].valor !== lastValue) {
-        distinct.unshift(data[i]);
-        lastValue = data[i].valor;
+    // Iterar do INÍCIO (mais antigo) para o FIM (mais recente)
+    // Assim capturamos a PRIMEIRA data onde cada valor apareceu
+    for (const item of data) {
+      if (!firstOccurrence.has(item.valor)) {
+        firstOccurrence.set(item.valor, item);
       }
     }
 
-    return distinct;
+    // Converter para array e pegar os N mais recentes (por ordem de aparecimento)
+    const allDistinct = Array.from(firstOccurrence.values());
+
+    // Retornar os últimos N valores distintos (mais recentes em termos de mudança)
+    return allDistinct.slice(-maxEntries);
   }
 
   /**

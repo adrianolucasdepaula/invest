@@ -11130,6 +11130,63 @@ Correção de bugs críticos no Calendário Econômico do Dashboard:
 
 ---
 
+## FASE 91: Economic Calendar Future Events & Widget Tabs ✅ 100% COMPLETO
+
+**Data:** 2025-12-10
+**Tipo:** Feature + Bug Fix
+**Documentação:** Plan file (immutable-launching-mountain.md)
+
+### Descrição
+
+Melhorias no Calendário Econômico para separar eventos futuros (agenda) de resultados passados (histórico), e correção da duplicação de eventos SELIC ao sincronizar.
+
+### Problemas Resolvidos
+
+| Problema | Causa | Solução |
+|----------|-------|---------|
+| SELIC duplica ao sincronizar | `getLastDistinctValues` usava data MAIS RECENTE | Usar PRIMEIRA data onde valor apareceu |
+| Apenas 1-2 eventos visíveis | Query filtrava últimos 7 dias + HIGH | Novos endpoints /upcoming e /recent |
+| Falta separação histórico/agenda | Widget misturava eventos passados e futuros | Tabs "Resultados" e "Agenda" |
+
+### Implementações
+
+| Componente | Arquivo | Mudança | Status |
+|------------|---------|---------|--------|
+| SELIC Dedup Fix | economic-calendar.service.ts | `getLastDistinctValues` usa Map com primeira ocorrência | ✅ |
+| getUpcomingEvents | economic-calendar.service.ts | Eventos com eventDate > now | ✅ |
+| getRecentResults | economic-calendar.service.ts | Eventos com eventDate < now AND actual != null | ✅ |
+| /upcoming endpoint | news.controller.ts | GET /news/economic-calendar/upcoming | ✅ |
+| /recent endpoint | news.controller.ts | GET /news/economic-calendar/recent | ✅ |
+| Frontend Tabs | economic-calendar-widget.tsx | Tabs "Resultados" e "Agenda" | ✅ |
+| EventCard Component | economic-calendar-widget.tsx | Componente reutilizável | ✅ |
+| Investing.com Headers | economic-calendar.service.ts | Fingerprint headers (sec-ch-ua, etc) | ✅ |
+
+### Novos Endpoints API
+
+```bash
+GET /news/economic-calendar/upcoming?limit=5
+# → Eventos futuros (agenda de divulgações)
+
+GET /news/economic-calendar/recent?limit=5
+# → Resultados recentes (eventos com actual divulgado)
+```
+
+### Frontend Widget Tabs
+
+- **Tab "Resultados"**: Eventos passados com valores divulgados (actual visível)
+- **Tab "Agenda"**: Próximos eventos (campo actual oculto, mostra forecast)
+
+### Validação Zero Tolerance
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Build Backend: SUCCESS
+- ✅ Build Frontend: SUCCESS
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
 ## FASE 86: Bulk Update Fixes + "Última Atualização" em Tempo Real ✅ 100% COMPLETO
 
 **Data:** 2025-12-10
@@ -11240,6 +11297,7 @@ Correção de três problemas críticos no fluxo "Atualizar Todos" da página de
 - ✅ FASE 88: Sync Status Persistence + Configuration Display - 100% COMPLETO (2025-12-10)
 - ✅ FASE 89: Documentation Synchronization & Security Hardening - 100% COMPLETO (2025-12-10)
 - ✅ FASE 90: Economic Calendar Bug Fixes - 100% COMPLETO (2025-12-10)
+- ✅ FASE 91: Economic Calendar Future Events & Widget Tabs - 100% COMPLETO (2025-12-10)
 
 ### Fases Planejadas
 

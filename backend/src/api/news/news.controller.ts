@@ -285,6 +285,36 @@ export class NewsController {
   }
 
   /**
+   * FASE 91: Próximos eventos (agenda futura)
+   */
+  @Get('economic-calendar/upcoming')
+  @ApiOperation({ summary: 'Obter eventos futuros (agenda de próximas divulgações)' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Limite de eventos' })
+  @ApiResponse({ status: 200, description: 'Eventos futuros' })
+  async getUpcomingEvents(
+    @Query('limit') limit?: number,
+  ): Promise<{ events: unknown[]; count: number }> {
+    this.logger.log(`GET /news/economic-calendar/upcoming - Limit: ${limit || 10}`);
+    const events = await this.economicCalendar.getUpcomingEvents(limit || 10);
+    return { events, count: events.length };
+  }
+
+  /**
+   * FASE 91: Resultados recentes (histórico de divulgações)
+   */
+  @Get('economic-calendar/recent')
+  @ApiOperation({ summary: 'Obter resultados recentes (eventos com valor divulgado)' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Limite de eventos' })
+  @ApiResponse({ status: 200, description: 'Resultados recentes' })
+  async getRecentResults(
+    @Query('limit') limit?: number,
+  ): Promise<{ events: unknown[]; count: number }> {
+    this.logger.log(`GET /news/economic-calendar/recent - Limit: ${limit || 10}`);
+    const events = await this.economicCalendar.getRecentResults(limit || 10);
+    return { events, count: events.length };
+  }
+
+  /**
    * FASE 90: Coletar eventos econômicos com contagem precisa
    */
   @Post('economic-calendar/collect')

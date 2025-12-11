@@ -9,6 +9,32 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 91: Economic Calendar Future Events & Widget Tabs - 100% COMPLETA (2025-12-10)**
+  - **Feature 1 - Correção Duplicação SELIC:**
+    - Modificado `getLastDistinctValues()` para usar PRIMEIRA data onde cada valor apareceu
+    - Eventos SELIC agora usam data da reunião COPOM, não data da coleta
+    - Evita duplicação ao sincronizar calendário múltiplas vezes
+  - **Feature 2 - Novos Endpoints API:**
+    - `GET /news/economic-calendar/upcoming` - Eventos futuros (agenda)
+    - `GET /news/economic-calendar/recent` - Resultados recentes (histórico com actual)
+    - Ambos com suporte a parâmetro `limit`
+  - **Feature 3 - Frontend Widget com Tabs:**
+    - Tab "Resultados" - Eventos passados com valores divulgados
+    - Tab "Agenda" - Próximos eventos (sem mostrar campo "Atual")
+    - Queries separadas para cada tab com React Query
+    - Componentes reutilizáveis: EventCard, EventsSkeleton, EmptyState
+    - Formatação de data com "Ontem" para eventos recentes
+  - **Feature 4 - Investing.com Headers Melhorados:**
+    - Adicionados headers fingerprint: sec-ch-ua, sec-ch-ua-mobile, sec-ch-ua-platform
+    - Headers sec-fetch-dest, sec-fetch-mode, sec-fetch-site para bypass de bot detection
+  - **Arquivos Modificados:**
+    - `backend/src/api/news/services/economic-calendar.service.ts`
+    - `backend/src/api/news/news.controller.ts`
+    - `frontend/src/components/dashboard/economic-calendar-widget.tsx`
+  - **Validação:**
+    - TypeScript: 0 erros (backend + frontend)
+    - Build: SUCCESS (backend + frontend)
+
 - **FASE 90: Economic Calendar Bug Fixes - 100% COMPLETA (2025-12-10)**
   - **Bug Fixes BCB:**
     - Corrigido série BCB errada: 432 (SELIC) estava rotulada como IPCA
