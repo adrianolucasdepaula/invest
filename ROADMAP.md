@@ -2,7 +2,7 @@
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
 **Última Atualização:** 2025-12-11
-**Versão:** 1.14.1
+**Versão:** 1.14.2
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -11611,10 +11611,11 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 - ✅ FASE 96: Habilitar B3Scraper - 100% COMPLETO (2025-12-11)
 - ✅ FASE 97: Habilitar scrapers OAuth (FUNDAMENTEI, MAISRETORNO) - 100% COMPLETO (2025-12-11)
 - ✅ FASE 98: ESLint 9 Flat Config + Next.js Image Migration - 100% COMPLETO (2025-12-11)
+- ✅ FASE 99: Habilitar ADVFN Scraper - 100% COMPLETO (2025-12-11)
 
 ### Fases Planejadas
 
-- FASE 99: Habilitar scrapers credenciais (ADVFN)
+- FASE 100: Observabilidade (Score 49% → 90%)
 
 ### Cronograma Estimado
 

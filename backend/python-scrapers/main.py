@@ -5,6 +5,7 @@ ALL SCRAPERS MIGRATED TO PLAYWRIGHT - 2025-12-04
 OAuth API added - 2025-12-04
 """
 import asyncio
+import json
 import signal
 import sys
 import threading
@@ -256,8 +257,6 @@ class ScraperService:
                 DO UPDATE SET data = :data, scraped_at = :scraped_at
             """
 
-            import json
-
             db.execute_update(
                 query,
                 {
@@ -336,7 +335,11 @@ def start_oauth_api():
     """Start OAuth API server in a separate thread"""
     try:
         import uvicorn
-        from oauth_api import app
+        try:
+            from oauth_api import app
+        except ImportError as e:
+            logger.warning(f"OAuth API module not found: {e} - OAuth functionality disabled")
+            return
 
         # Use port 8080 to avoid conflict with api-service (port 8000)
         logger.info("Starting OAuth API server on port 8080...")

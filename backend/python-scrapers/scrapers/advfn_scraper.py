@@ -50,6 +50,10 @@ class ADVFNScraper(BaseScraper):
         self.username = os.getenv("ADVFN_USERNAME", "")
         self.password = os.getenv("ADVFN_PASSWORD", "")
 
+        # Log warning if credentials not configured
+        if not self.username or not self.password:
+            logger.info("ADVFN credentials not configured - scraper will work without login")
+
     async def initialize(self):
         """Initialize Playwright browser, load cookies, and optionally login with credentials"""
         if self._initialized:
@@ -414,7 +418,8 @@ class ADVFNScraper(BaseScraper):
                         try:
                             data["price"] = float(price_match.group())
                             break
-                        except:
+                        except (ValueError, TypeError) as e:
+                            logger.debug(f"Failed to parse price: {e}")
                             continue
 
             # Change and change percent
@@ -436,8 +441,8 @@ class ADVFNScraper(BaseScraper):
                         change_val = change_match.group(1).replace(",", ".")
                         try:
                             data["change"] = float(change_val)
-                        except:
-                            pass
+                        except (ValueError, TypeError) as e:
+                            logger.debug(f"Failed to parse change: {e}")
 
                     # Extract percent
                     percent_match = re.search(r'([-+]?[\d.,]+)%', change_text)
@@ -445,8 +450,8 @@ class ADVFNScraper(BaseScraper):
                         percent_val = percent_match.group(1).replace(",", ".")
                         try:
                             data["change_percent"] = float(percent_val)
-                        except:
-                            pass
+                        except (ValueError, TypeError) as e:
+                            logger.debug(f"Failed to parse change_percent: {e}")
 
                     if data["change"] or data["change_percent"]:
                         break
@@ -496,8 +501,8 @@ class ADVFNScraper(BaseScraper):
                                                 data[field] = int(val)
                                     else:
                                         data[field] = float(value_match.group())
-                                except:
-                                    pass
+                                except (ValueError, TypeError, AttributeError) as e:
+                                    logger.debug(f"Failed to parse table field {field}: {e}")
 
             logger.debug(f"Extracted ADVFN data for {ticker}: {data}")
             return data
