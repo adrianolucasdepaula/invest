@@ -9,6 +9,36 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 97.1: OAuth Scrapers Code Review Fixes - 100% COMPLETA (2025-12-11)**
+  - **FundamenteiScraper Fixes (6 issues):**
+    - Linha 201: `except:` → `except Exception as e:` + `logger.warning()`
+    - Linhas 562, 583, 606, 629, 643: Tipos específicos + logging
+  - **MaisRetornoScraper Fixes (7 issues):**
+    - Linha 195: `except:` → `except Exception as e:` + `logger.warning()`
+    - Linhas 301, 359, 398, 423, 432, 440: Logging adicionado
+  - **Padrão Aplicado:**
+    - Bare `except:` → tipos específicos ou `Exception as e:`
+    - Todos handlers com logging (DEBUG/WARNING conforme severidade)
+  - **Validação:**
+    - 35 exception handlers auditados (19 + 16)
+    - TypeScript: 0 erros
+
+- **FASE 97: Enable OAuth Scrapers - 100% COMPLETA (2025-12-11)**
+  - **Scrapers Habilitados:**
+    - FundamenteiScraper (672 linhas) - Análise fundamentalista avançada
+    - MaisRetornoScraper (478 linhas) - Notícias e análises financeiras
+  - **Requisitos:**
+    - OAuth cookie collection via VNC (http://localhost:6080)
+    - Cookies loaded BEFORE navigation pattern
+  - **Arquivos Modificados:**
+    - `backend/python-scrapers/main.py`
+    - `backend/python-scrapers/scrapers/__init__.py`
+    - `ARCHITECTURE.md`
+  - **Resultados:**
+    - Total scrapers: 28 → 30 (+2 OAuth)
+  - **Validação:**
+    - TypeScript: 0 erros (backend + frontend)
+
 - **FASE 96: Habilitar B3Scraper - 100% COMPLETA (2025-12-11)**
   - **B3Scraper habilitado:** CVM codes file já existia (100+ tickers)
   - **Dados:** Company info, CNPJ, setor, governança, free float, tag along
