@@ -133,7 +133,7 @@ export function EconomicCalendarWidget() {
   // FASE 90: Mutation com toast contextual baseado no resultado
   const syncMutation = useMutation({
     mutationFn: async (): Promise<CollectResponse> => {
-      const response = await api.post('/news/economic-calendar/collect', null, {
+      const response = await api.post('/news/economic-calendar/collect', {}, {
         timeout: 60000, // 60s para coleta (pode demorar)
       });
       return response.data;
