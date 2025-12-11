@@ -148,7 +148,8 @@ class B3Scraper(BaseScraper):
                         if name_elem and name_elem.get_text().strip():
                             data["company_name"] = name_elem.get_text().strip()
                             break
-                    except:
+                    except (ValueError, TypeError, AttributeError) as e:
+                        logger.debug(f"Failed to extract company name with selector {selector}: {e}")
                         continue
 
             except Exception as e:

@@ -232,8 +232,8 @@ class InvestingScraper(BaseScraper):
                         await first_result.click()
                         await asyncio.sleep(3)
                         html_content = await self.page.content()
-                except:
-                    pass
+                except (TimeoutError, Exception) as e:
+                    logger.debug(f"Failed to click search result: {e}")
 
             # Extract market data using BeautifulSoup
             data = self._extract_data(ticker, html_content)
@@ -303,7 +303,8 @@ class InvestingScraper(BaseScraper):
                         try:
                             data["price"] = float(price_match.group())
                             break
-                        except:
+                        except (ValueError, TypeError) as e:
+                            logger.debug(f"Failed to parse price: {e}")
                             continue
 
             # Price change
@@ -323,7 +324,8 @@ class InvestingScraper(BaseScraper):
                         try:
                             data["change"] = float(change_match.group())
                             break
-                        except:
+                        except (ValueError, TypeError) as e:
+                            logger.debug(f"Failed to parse change: {e}")
                             continue
 
             # Change percent
@@ -344,7 +346,8 @@ class InvestingScraper(BaseScraper):
                         try:
                             data["change_percent"] = float(percent_match.group())
                             break
-                        except:
+                        except (ValueError, TypeError) as e:
+                            logger.debug(f"Failed to parse change_percent: {e}")
                             continue
 
             # Extract from data table (dt/dd pairs)
@@ -392,8 +395,8 @@ class InvestingScraper(BaseScraper):
                                     value_match = re.search(r'[\d.]+', value_text)
                                     if value_match:
                                         data[field] = float(value_match.group())
-                        except:
-                            pass
+                        except (ValueError, TypeError, AttributeError) as e:
+                            logger.debug(f"Failed to parse table field {field}: {e}")
 
             logger.debug(f"Extracted Investing.com data for {ticker}: {data}")
             return data

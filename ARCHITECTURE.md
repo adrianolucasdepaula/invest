@@ -235,7 +235,7 @@ export class SyncBulkDto {
 - Fundamentei (OAuth Google)
 - Investsite (público, sem auth)
 
-**Scrapers Fallback (Python - FastAPI) - 26 scrapers:**
+**Scrapers Fallback (Python - FastAPI) - 28 scrapers:**
 
 Acionados automaticamente quando:
 1. Menos de 3 fontes TypeScript disponíveis
@@ -248,7 +248,20 @@ Acionados automaticamente quando:
 | Fundamental (10) | FUNDAMENTUS, BCB, STATUSINVEST, INVESTSITE, INVESTIDOR10, TRADINGVIEW, GOOGLEFINANCE, GRIFFIN, COINMARKETCAP, OPCOESNET |
 | News (7) | BLOOMBERG, GOOGLENEWS, INVESTINGNEWS, VALOR, EXAME, INFOMONEY, ESTADAO |
 | AI (6) | CHATGPT, GEMINI, DEEPSEEK, CLAUDE, GROK, PERPLEXITY |
-| Market Data (3) | YAHOOFINANCE, OPLAB, KINVO |
+| Market Data (5) | YAHOOFINANCE, OPLAB, KINVO, INVESTING, B3 |
+
+**Resource Monitor (FASE 94):**
+
+Sistema de backpressure para controle de recursos durante execução paralela de scrapers:
+
+| Parâmetro | Valor | Descrição |
+|-----------|-------|-----------|
+| MEMORY_THRESHOLD | 70% | Pausa novos scrapers se memória > 70% |
+| CPU_THRESHOLD | 85% | Pausa novos scrapers se CPU > 85% |
+| CHECK_INTERVAL | 1.0s | Intervalo entre verificações |
+| Semaphore | 3 | Máximo de browsers simultâneos |
+
+Arquivo: `backend/python-scrapers/resource_monitor.py`
 
 **API Endpoint:** `POST /api/scrapers/fundamental/{ticker}` (porta 8000)
 
