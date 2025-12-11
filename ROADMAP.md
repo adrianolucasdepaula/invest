@@ -11610,12 +11610,14 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 - ✅ FASE 95: Habilitar InvestingScraper - 100% COMPLETO (2025-12-11)
 - ✅ FASE 96: Habilitar B3Scraper - 100% COMPLETO (2025-12-11)
 - ✅ FASE 97: Habilitar scrapers OAuth (FUNDAMENTEI, MAISRETORNO) - 100% COMPLETO (2025-12-11)
-- ✅ FASE 98: ESLint 9 Flat Config + Next.js Image Migration - 100% COMPLETO (2025-12-11)
-- ✅ FASE 99: Habilitar ADVFN Scraper - 100% COMPLETO (2025-12-11)
+- ✅ FASE 97.1: OAuth Scrapers Code Review Fixes - 100% COMPLETO (2025-12-11)
+- ✅ FASE 97.3: Frontend/Backend Uncommitted Changes (ESLint 9 + Next.js Image) - 100% COMPLETO (2025-12-11)
+- ✅ FASE 98: Enable ADVFN Scraper - 100% COMPLETO (2025-12-11)
+- ✅ FASE 98.1: Code Review Fixes for ADVFNScraper - 100% COMPLETO (2025-12-11)
 
 ### Fases Planejadas
 
-- FASE 100: Observabilidade (Score 49% → 90%)
+- FASE 99: Observabilidade (Score 49% → 90%)
 
 ### Cronograma Estimado
 
@@ -11635,7 +11637,7 @@ Todas as fases planejadas foram implementadas.
 ---
 
 **Ultima Atualizacao:** 2025-12-11
-**Total de Fases:** 100 completas (incluindo sub-fases)
-**Versao:** 1.14.4
+**Total de Fases:** 102 completas (incluindo sub-fases)
+**Versao:** 1.14.5
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

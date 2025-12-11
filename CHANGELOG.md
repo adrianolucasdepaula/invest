@@ -9,7 +9,15 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
-- **FASE 99: Habilitar ADVFN Scraper - 100% COMPLETA (2025-12-11)**
+- **FASE 98.1: Code Review Fixes for ADVFNScraper - 100% COMPLETA (2025-12-11)**
+  - **ADVFNScraper Fixes (4 issues):**
+    - Linhas 417, 439, 448, 499: bare `except:` → tipos específicos + logging
+    - Adicionado warning quando credentials não configuradas
+  - **Main Service Fixes:**
+    - Movido `import json` para top do arquivo (PEP 8)
+    - Melhorado error handling do OAuth API
+
+- **FASE 98: Enable ADVFN Scraper - 100% COMPLETA (2025-12-11)**
   - **Scraper Habilitado:**
     - ADVFNScraper descomentado em `__init__.py` e `main.py`
     - Já migrado para Playwright (2025-12-04)
@@ -22,7 +30,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
     - Total scrapers: 31 (6 categorias)
     - Market Data: 5 → 6 scrapers
 
-- **FASE 98: ESLint 9 Flat Config + Next.js Image Migration - 100% COMPLETA (2025-12-11)**
+- **FASE 97.3: Frontend/Backend Uncommitted Changes - 100% COMPLETA (2025-12-11)**
   - **ESLint Config Migration:**
     - eslint-config-next atualizado: 16.0.5 → 16.0.10
     - Migração de .eslintrc.json para eslint.config.mjs (ESLint 9 flat config)
