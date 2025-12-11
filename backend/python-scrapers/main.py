@@ -46,6 +46,7 @@ from scrapers import (
     YahooFinanceScraper,
     OplabScraper,
     KinvoScraper,
+    InvestingScraper,  # FASE 95: Works without login for basic market data
 )
 
 
@@ -107,11 +108,15 @@ class ScraperService:
         self.scrapers["KINVO"] = KinvoScraper  # Portfolio management - credential login
 
         # ===========================================
-        # AWAITING FIXES
+        # FASE 95: INVESTING (works without login)
+        # ===========================================
+        self.scrapers["INVESTING"] = InvestingScraper  # FASE 95: Works without login
+
+        # ===========================================
+        # AWAITING FIXES (Need cookies/config)
         # ===========================================
         # self.scrapers["B3"] = B3Scraper  # URL needs CVM code
         # self.scrapers["FUNDAMENTEI"] = FundamenteiScraper  # OAuth session expired
-        # self.scrapers["INVESTING"] = InvestingScraper  # complex login flow
         # self.scrapers["ADVFN"] = ADVFNScraper  # partial migration needed
         # self.scrapers["MAISRETORNO"] = MaisRetornoScraper  # needs cookies
 
@@ -119,7 +124,7 @@ class ScraperService:
         logger.info(f"📊 Fundamental: FUNDAMENTUS, BCB, STATUSINVEST, INVESTSITE, INVESTIDOR10, TRADINGVIEW, GOOGLEFINANCE, GRIFFIN, COINMARKETCAP")
         logger.info(f"📰 News: BLOOMBERG, GOOGLENEWS, INVESTING_NEWS, VALOR, EXAME, INFOMONEY, ESTADAO")
         logger.info(f"🤖 AI: CHATGPT, GEMINI, DEEPSEEK, CLAUDE, GROK, PERPLEXITY")
-        logger.info(f"📈 Market: YAHOO_FINANCE, OPLAB, OPCOES_NET, KINVO")
+        logger.info(f"📈 Market: YAHOO_FINANCE, OPLAB, OPCOES_NET, KINVO, INVESTING")
 
     async def initialize(self):
         """Initialize connections and resources"""

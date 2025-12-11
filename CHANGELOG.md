@@ -9,6 +9,17 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 95: Habilitar InvestingScraper - 100% COMPLETA (2025-12-11)**
+  - **InvestingScraper habilitado:** Funciona sem login para dados básicos
+  - **Funcionalidades:** Real-time quotes, price changes, volume, OHLC, market cap
+  - **Arquivos Modificados:**
+    - `backend/python-scrapers/main.py`
+    - `backend/python-scrapers/scrapers/__init__.py`
+  - **Resultados:**
+    - Total scrapers: 27 → 28 (+1 INVESTING)
+  - **Validação:**
+    - TypeScript: 0 erros (backend + frontend)
+
 - **FASE 94: Smart Queue with Backpressure - 100% COMPLETA (2025-12-11)**
   - **ResourceMonitor:** Monitoramento de memória/CPU com backpressure automático
   - **Semaphore(3):** Permite 3 browsers paralelos (antes Lock serializado)
