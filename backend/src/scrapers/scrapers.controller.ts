@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Param,
   Body,
   Query,
@@ -11,7 +12,7 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../api/auth/guards/jwt-auth.guard';
 import { ScrapersService } from './scrapers.service';
@@ -23,6 +24,13 @@ import {
   ResolutionResult,
   DiscrepancyDetailDto,
 } from './discrepancy-resolution.service';
+import { CrossValidationConfigService } from './cross-validation-config.service'; // FASE 93
+import {
+  CrossValidationConfigDto,
+  UpdateCrossValidationConfigDto,
+  ImpactPreviewDto,
+  BatchTestResultDto,
+} from './dto/cross-validation-config.dto'; // FASE 93
 
 export interface DataSourceStatusDto {
   id: string;
@@ -53,6 +61,7 @@ export interface ScraperQualityStatsDto {
   fieldsWithDiscrepancy: number;
   assetsAnalyzed: number;
   lastUpdate: string | null;
+  runtime?: 'typescript' | 'python'; // FASE 93.2: Include runtime type
 }
 
 export interface QualityStatsResponseDto {
@@ -139,6 +148,7 @@ export class ScrapersController {
     private readonly scrapersService: ScrapersService,
     private readonly scraperMetricsService: ScraperMetricsService,
     private readonly discrepancyResolutionService: DiscrepancyResolutionService, // FASE 90
+    private readonly crossValidationConfigService: CrossValidationConfigService, // FASE 93
   ) {}
 
   @Get('status')
@@ -509,5 +519,79 @@ export class ScrapersController {
       limit: limit ? parseInt(limit, 10) : 50,
       method: method as any,
     });
+  }
+
+  // ============================================
+  // FASE 93: Cross-Validation Configuration
+  // ============================================
+
+  @Get('cross-validation-config')
+  @ApiOperation({ summary: 'Get current cross-validation configuration' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns current cross-validation configuration',
+    type: CrossValidationConfigDto,
+  })
+  async getCrossValidationConfig(): Promise<CrossValidationConfigDto> {
+    this.logger.log('[CONFIG] Fetching cross-validation configuration');
+    return this.crossValidationConfigService.getConfig();
+  }
+
+  @Put('cross-validation-config')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update cross-validation configuration' })
+  @ApiBody({ type: UpdateCrossValidationConfigDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Configuration updated successfully',
+    type: CrossValidationConfigDto,
+  })
+  async updateCrossValidationConfig(
+    @Body() dto: UpdateCrossValidationConfigDto,
+  ): Promise<CrossValidationConfigDto> {
+    this.logger.log(`[CONFIG] Updating cross-validation configuration: ${JSON.stringify(dto)}`);
+    return this.crossValidationConfigService.updateConfig(dto);
+  }
+
+  @Post('cross-validation-config/preview')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Preview impact of configuration changes before applying' })
+  @ApiBody({ type: UpdateCrossValidationConfigDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns preview of how changes would affect discrepancies',
+    type: ImpactPreviewDto,
+  })
+  async previewConfigImpact(
+    @Body() dto: UpdateCrossValidationConfigDto,
+  ): Promise<ImpactPreviewDto> {
+    this.logger.log('[CONFIG] Previewing configuration impact');
+    return this.crossValidationConfigService.previewImpact(dto);
+  }
+
+  // ============================================
+  // FASE 93.4: Test All Scrapers
+  // ============================================
+
+  @Post('test-all')
+  @ApiOperation({ summary: 'Test ALL scrapers in batch with progress tracking' })
+  @ApiQuery({
+    name: 'concurrency',
+    required: false,
+    type: Number,
+    description: 'Maximum parallel tests (default: 5)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns batch test results',
+    type: BatchTestResultDto,
+  })
+  async testAllScrapers(
+    @Query('concurrency') concurrency?: string,
+  ): Promise<BatchTestResultDto> {
+    const maxConcurrency = concurrency ? parseInt(concurrency, 10) : 5;
+    this.logger.log(`[TEST-ALL] Starting batch test with concurrency=${maxConcurrency}`);
+
+    return this.scrapersService.testAllScrapers(maxConcurrency);
   }
 }

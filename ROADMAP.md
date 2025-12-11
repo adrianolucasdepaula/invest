@@ -1,8 +1,8 @@
 # 🗺️ ROADMAP - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-10
-**Versão:** 1.12.1
+**Última Atualização:** 2025-12-11
+**Versão:** 1.14.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -11371,9 +11371,63 @@ Modal de resolução de discrepâncias com interface completa para seleção de 
 
 ---
 
+## FASE 93: Data Sources Enhancements ✅ 100% COMPLETO
+
+**Data:** 2025-12-11
+**Tipo:** Feature + Enhancement + UI
+
+### Funcionalidades Implementadas
+
+| Funcionalidade | Descrição | Status |
+|----------------|-----------|--------|
+| Test All Scrapers | Botão para testar todos os scrapers em paralelo | ✅ |
+| WebSocket Progress | Eventos de progresso em tempo real | ✅ |
+| Quality Tab Fix | Incluir todos os scrapers (TypeScript + Python) | ✅ |
+| Discrepancy Count Sync | Sincronizar contagem com página /discrepancies | ✅ |
+| Cross-Validation Config UI | Modal para configurar regras de validação | ✅ |
+| Impact Preview | Preview de impacto antes de aplicar mudanças | ✅ |
+
+### Arquivos Criados
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `frontend/src/components/CrossValidationConfigModal.tsx` | Modal de configuração de validação cruzada |
+
+### Arquivos Modificados
+
+| Arquivo | Mudança |
+|---------|---------|
+| `backend/src/scrapers/scrapers.service.ts` | testAllScrapers() + fix getDiscrepancies() summary |
+| `backend/src/scrapers/scrapers.controller.ts` | POST /scrapers/test-all endpoint |
+| `backend/src/websocket/websocket.gateway.ts` | 3 novos eventos WebSocket |
+| `backend/src/scrapers/scrapers.module.ts` | Import WebSocketModule |
+| `frontend/src/lib/api.ts` | 4 novos métodos API |
+| `frontend/src/lib/hooks/useDataSources.ts` | 4 novos hooks + interfaces |
+| `frontend/src/app/(dashboard)/data-sources/page.tsx` | UI para Test All + Config Modal |
+
+### Sub-fases
+
+- **FASE 93.1:** Backend Infrastructure - Entity + Migration + Service
+- **FASE 93.2:** Fix Quality Tab - Scrapers dinâmicos
+- **FASE 93.3:** Sync Discrepancy Count
+- **FASE 93.4:** Test All Scrapers Button + WebSocket
+- **FASE 93.5:** Cross-Validation Config UI + Impact Preview
+- **FASE 93.6:** Testing & Documentation
+
+### Validação Zero Tolerance
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+- ✅ Build Backend: SUCCESS
+- ✅ Build Frontend: SUCCESS
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (94 fases incluindo sub-fases)
+### Fases Completas (95 fases incluindo sub-fases)
 
 - ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
 - ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
@@ -11416,6 +11470,7 @@ Modal de resolução de discrepâncias com interface completa para seleção de 
 - ✅ FASE 92: Dynamic Scraper Discovery & Discrepancy Resolution System - 100% COMPLETO (2025-12-10)
 - ✅ FASE 92.1: Discrepancy Resolution UI Modal - 100% COMPLETO (2025-12-10)
 - ✅ FASE 92.2: Discrepancy Resolution Bug Fixes & Security - 100% COMPLETO (2025-12-10)
+- ✅ FASE 93: Data Sources Enhancements - 100% COMPLETO (2025-12-11)
 
 ### Fases Planejadas
 
@@ -11438,8 +11493,8 @@ Todas as fases planejadas foram implementadas.
 
 ---
 
-**Ultima Atualizacao:** 2025-12-10
-**Total de Fases:** 94 completas (incluindo sub-fases)
-**Versao:** 1.13.0
+**Ultima Atualizacao:** 2025-12-11
+**Total de Fases:** 95 completas (incluindo sub-fases)
+**Versao:** 1.14.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

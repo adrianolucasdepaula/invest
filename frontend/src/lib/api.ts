@@ -450,6 +450,68 @@ class ApiClient {
     return response.data;
   }
 
+  // ========================================
+  // FASE 93.4: Test All Scrapers API
+  // ========================================
+
+  /**
+   * Test all scrapers in batch with controlled concurrency
+   * Returns results for all TypeScript + Python scrapers
+   */
+  async testAllScrapers(concurrency: number = 5) {
+    const response = await this.client.post('/scrapers/test-all', {}, {
+      params: { concurrency },
+      timeout: 300000, // 5 minutes timeout for batch test
+    });
+    return response.data;
+  }
+
+  // ========================================
+  // FASE 93.5: Cross-Validation Config API
+  // ========================================
+
+  /**
+   * Get current cross-validation configuration
+   */
+  async getCrossValidationConfig() {
+    const response = await this.client.get('/scrapers/cross-validation-config');
+    return response.data;
+  }
+
+  /**
+   * Update cross-validation configuration
+   */
+  async updateCrossValidationConfig(config: {
+    minSources?: number;
+    severityThresholdHigh?: number;
+    severityThresholdMedium?: number;
+    sourcePriority?: string[];
+    fieldTolerances?: {
+      default: number;
+      byField: Record<string, number>;
+    };
+  }) {
+    const response = await this.client.put('/scrapers/cross-validation-config', config);
+    return response.data;
+  }
+
+  /**
+   * Preview impact of configuration changes
+   */
+  async previewConfigImpact(config: {
+    minSources?: number;
+    severityThresholdHigh?: number;
+    severityThresholdMedium?: number;
+    sourcePriority?: string[];
+    fieldTolerances?: {
+      default: number;
+      byField: Record<string, number>;
+    };
+  }) {
+    const response = await this.client.post('/scrapers/cross-validation-config/preview', config);
+    return response.data;
+  }
+
   // Economic Indicators endpoints - FASE 1.4 (8 indicator types)
   async getEconomicIndicators(params?: { type?: string; limit?: number }) {
     const response = await this.client.get('/economic-indicators', { params });
@@ -629,3 +691,93 @@ class ApiClient {
 }
 
 export const api = new ApiClient();
+
+// ========================================
+// FASE 93: Standalone Functions for Turbopack Compatibility
+// Turbopack HMR has issues with class method resolution.
+// These functions use direct axios calls to bypass the issue.
+// ========================================
+
+/**
+ * Create a standalone axios instance for Turbopack-safe calls
+ * This avoids class method resolution issues in Turbopack HMR
+ */
+function createStandaloneClient() {
+  const client = axios.create({
+    baseURL: API_BASE_URL,
+    timeout: 30000,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  // Add auth token if available
+  client.interceptors.request.use(config => {
+    const token = Cookies.get('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    const { traceparent } = generateTraceContext();
+    config.headers['traceparent'] = traceparent;
+    return config;
+  });
+
+  return client;
+}
+
+/**
+ * Test all scrapers in batch (Turbopack-safe - direct axios call)
+ */
+export async function testAllScrapersApi(concurrency: number = 5) {
+  const client = createStandaloneClient();
+  const response = await client.post('/scrapers/test-all', {}, {
+    params: { concurrency },
+    timeout: 300000, // 5 minutes timeout for batch test
+  });
+  return response.data;
+}
+
+/**
+ * Get cross-validation config (Turbopack-safe - direct axios call)
+ */
+export async function getCrossValidationConfigApi() {
+  const client = createStandaloneClient();
+  const response = await client.get('/scrapers/cross-validation-config');
+  return response.data;
+}
+
+/**
+ * Update cross-validation config (Turbopack-safe - direct axios call)
+ */
+export async function updateCrossValidationConfigApi(config: {
+  minSources?: number;
+  severityThresholdHigh?: number;
+  severityThresholdMedium?: number;
+  sourcePriority?: string[];
+  fieldTolerances?: {
+    default: number;
+    byField: Record<string, number>;
+  };
+}) {
+  const client = createStandaloneClient();
+  const response = await client.put('/scrapers/cross-validation-config', config);
+  return response.data;
+}
+
+/**
+ * Preview config impact (Turbopack-safe - direct axios call)
+ */
+export async function previewConfigImpactApi(config: {
+  minSources?: number;
+  severityThresholdHigh?: number;
+  severityThresholdMedium?: number;
+  sourcePriority?: string[];
+  fieldTolerances?: {
+    default: number;
+    byField: Record<string, number>;
+  };
+}) {
+  const client = createStandaloneClient();
+  const response = await client.post('/scrapers/cross-validation-config/preview', config);
+  return response.data;
+}

@@ -9,6 +9,33 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 93: Data Sources Enhancements - 100% COMPLETA (2025-12-11)**
+  - **R1: Botão "Testar Todos" Scrapers:**
+    - POST /scrapers/test-all endpoint com concorrência configurável
+    - WebSocket events: scraperTestAllStarted, scraperTestProgress, scraperTestAllCompleted
+    - Modal de progresso em tempo real no frontend
+  - **R2: Quality Tab Fix:**
+    - Scrapers dinâmicos (TypeScript + Python) incluídos nas estatísticas
+    - Normalização de nomes de fontes Python
+  - **R3: Sync Discrepancy Count:**
+    - Contagem sincronizada entre Data Sources e /discrepancies page
+    - Summary calculado antes do limit no backend
+  - **R4: Cross-Validation Config UI:**
+    - Entity CrossValidationConfig com migration e seed
+    - CrossValidationConfigService para CRUD e preview
+    - Modal de configuração com 3 tabs (Geral, Tolerâncias, Prioridade)
+    - Impact Preview antes de aplicar mudanças
+    - Defensive fallback para Turbopack bundling issues
+  - **Arquivos Criados:**
+    - `backend/src/database/entities/cross-validation-config.entity.ts`
+    - `backend/src/database/migrations/1733908800000-CreateCrossValidationConfig.ts`
+    - `backend/src/scrapers/cross-validation-config.service.ts`
+    - `frontend/src/components/CrossValidationConfigModal.tsx`
+  - **Validação:**
+    - TypeScript: 0 erros (backend + frontend)
+    - Build: SUCCESS (backend + frontend)
+    - MCP Triplo: Playwright + Chrome DevTools validado
+
 - **FASE 92.2: Discrepancy Resolution Bug Fixes & Security - 100% COMPLETA (2025-12-10)**
   - **Security Fixes:**
     - Adicionado @UseGuards(JwtAuthGuard) a todos 4 endpoints de discrepancy

@@ -1,5 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../api';
+import {
+  api,
+  testAllScrapersApi,
+  getCrossValidationConfigApi,
+  updateCrossValidationConfigApi,
+  previewConfigImpactApi,
+} from '../api';
 
 export interface DataSource {
   id: string;
@@ -325,5 +331,115 @@ export function useResolutionHistory(params?: {
     queryKey: ['resolution-history', params],
     queryFn: () => api.getResolutionHistory(params),
     staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+// ========================================
+// FASE 93.4: Test All Scrapers Hook
+// ========================================
+
+export interface BatchTestResult {
+  totalScrapers: number;
+  successCount: number;
+  failedCount: number;
+  duration: number;
+  results: Array<{
+    scraperId: string;
+    scraperName: string;
+    success: boolean;
+    responseTime: number;
+    error?: string;
+    runtime: 'typescript' | 'python';
+  }>;
+}
+
+/**
+ * Hook para testar todos os scrapers em batch
+ * FASE 93.4: Uses wrapper function for Turbopack compatibility
+ */
+export function useTestAllScrapers() {
+  const queryClient = useQueryClient();
+
+  return useMutation<BatchTestResult, Error, number>({
+    mutationFn: (concurrency) => testAllScrapersApi(concurrency),
+    onSuccess: () => {
+      // Invalidar queries relacionadas para refletir novos status
+      queryClient.invalidateQueries({ queryKey: ['data-sources'] });
+      queryClient.invalidateQueries({ queryKey: ['scrapers-quality-stats'] });
+    },
+  });
+}
+
+// ========================================
+// FASE 93.5: Cross-Validation Config Hooks
+// ========================================
+
+export interface CrossValidationConfig {
+  minSources: number;
+  severityThresholdHigh: number;
+  severityThresholdMedium: number;
+  sourcePriority: string[];
+  fieldTolerances: {
+    default: number;
+    byField: Record<string, number>;
+  };
+}
+
+export interface ImpactPreview {
+  currentTotal: number;
+  newTotal: number;
+  delta: number;
+  bySeverity: {
+    high: { current: number; new: number; delta: number };
+    medium: { current: number; new: number; delta: number };
+    low: { current: number; new: number; delta: number };
+  };
+  affectedAssets: string[];
+  affectedFields: string[];
+  sampleChanges: Array<{
+    ticker: string;
+    field: string;
+    currentSeverity: string | null;
+    newSeverity: string | null;
+    reason: string;
+  }>;
+}
+
+/**
+ * Hook para obter configuração atual de validação cruzada
+ * FASE 93.5: Uses wrapper function for Turbopack compatibility
+ */
+export function useCrossValidationConfig() {
+  return useQuery<CrossValidationConfig>({
+    queryKey: ['cross-validation-config'],
+    queryFn: () => getCrossValidationConfigApi(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+/**
+ * Hook para atualizar configuração de validação cruzada
+ * FASE 93.5: Uses wrapper function for Turbopack compatibility
+ */
+export function useUpdateCrossValidationConfig() {
+  const queryClient = useQueryClient();
+
+  return useMutation<CrossValidationConfig, Error, Partial<CrossValidationConfig>>({
+    mutationFn: (config) => updateCrossValidationConfigApi(config),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cross-validation-config'] });
+      queryClient.invalidateQueries({ queryKey: ['scrapers-discrepancies'] });
+      queryClient.invalidateQueries({ queryKey: ['discrepancy-stats'] });
+    },
+  });
+}
+
+/**
+ * Hook para preview de impacto de mudanças de configuração
+ * FASE 93.5: Uses wrapper function for Turbopack compatibility
+ */
+export function usePreviewConfigImpact() {
+  return useMutation<ImpactPreview, Error, Partial<CrossValidationConfig>>({
+    mutationFn: (config) => previewConfigImpactApi(config),
   });
 }

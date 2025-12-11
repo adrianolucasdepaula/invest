@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, IsNull } from 'typeorm';
@@ -11,6 +11,8 @@ import { Investidor10Scraper } from './fundamental/investidor10.scraper';
 import { FundamenteiScraper } from './fundamental/fundamentei.scraper';
 import { InvestsiteScraper } from './fundamental/investsite.scraper';
 import { OpcoesScraper } from './options/opcoes.scraper';
+import { ScraperMetricsService } from './scraper-metrics.service'; // FASE 93
+import { AppWebSocketGateway } from '../websocket/websocket.gateway'; // FASE 93.4
 import { ScraperResult } from './base/base-scraper.interface';
 import { FundamentalData } from '../database/entities/fundamental-data.entity';
 import {
@@ -130,6 +132,9 @@ export class ScrapersService {
     private fundamenteiScraper: FundamenteiScraper,
     private investsiteScraper: InvestsiteScraper,
     private opcoesScraper: OpcoesScraper,
+    private scraperMetricsService: ScraperMetricsService, // FASE 93
+    @Inject(forwardRef(() => AppWebSocketGateway))
+    private wsGateway: AppWebSocketGateway, // FASE 93.4
   ) {
     // FASE 2: Aumentado de 2 para 3 - maior confiança com sistema de consenso
     // Com 6 scrapers ativos, 3 fontes é o mínimo razoável para validação por consenso
@@ -1321,15 +1326,20 @@ export class ScrapersService {
   async getQualityStats(): Promise<QualityStatsResponseDto> {
     this.logger.log('[QUALITY] Calculating quality statistics from field_sources');
 
-    // Scraper configurations (same as status endpoint)
-    const scraperConfigs: Record<string, string> = {
-      fundamentus: 'Fundamentus',
-      brapi: 'BRAPI',
-      statusinvest: 'Status Invest',
-      investidor10: 'Investidor10',
-      fundamentei: 'Fundamentei',
-      investsite: 'Investsite',
-    };
+    // FASE 93.2: Dynamically discover ALL scrapers (TypeScript + Python)
+    const metricsMap = await this.scraperMetricsService.getAllMetricsSummaries();
+    const allScrapers = await this.getAllScrapersStatus(metricsMap);
+
+    // Build scraper configs from all discovered scrapers
+    const scraperConfigs: Record<string, { name: string; runtime: 'typescript' | 'python' }> = {};
+    for (const scraper of allScrapers) {
+      scraperConfigs[scraper.id] = {
+        name: scraper.name,
+        runtime: scraper.runtime,
+      };
+    }
+
+    this.logger.log(`[QUALITY] Discovered ${Object.keys(scraperConfigs).length} scrapers dynamically`);
 
     // Query all fundamental data with field_sources
     const fundamentalData = await this.fundamentalDataRepository.find({
@@ -1351,6 +1361,7 @@ export class ScrapersService {
         fieldsWithDiscrepancy: Set<string>;
         assetsAnalyzed: Set<string>;
         lastUpdate: Date | null;
+        runtime: 'typescript' | 'python';
       }
     > = {};
 
@@ -1362,6 +1373,7 @@ export class ScrapersService {
         fieldsWithDiscrepancy: new Set(),
         assetsAnalyzed: new Set(),
         lastUpdate: null,
+        runtime: scraperConfigs[scraperId].runtime,
       };
     }
 
@@ -1369,6 +1381,15 @@ export class ScrapersService {
     let totalDiscrepancies = 0;
     const allAssetsAnalyzed = new Set<string>();
     const allFieldsTracked = new Set<string>();
+
+    // Helper to normalize scraper ID (e.g., 'python-fundamentus' -> 'fundamentus')
+    const normalizeScraperId = (source: string): string => {
+      // Remove 'python-' prefix if present
+      if (source.startsWith('python-')) {
+        return source.substring(7);
+      }
+      return source;
+    };
 
     // Process each fundamental data record
     for (const data of fundamentalData) {
@@ -1384,8 +1405,30 @@ export class ScrapersService {
 
         // Track which scrapers contributed to this field
         for (const valueEntry of fieldInfo.values) {
-          const scraperId = valueEntry.source;
-          if (!scraperStats[scraperId]) continue;
+          // Normalize the scraper ID
+          const normalizedId = normalizeScraperId(valueEntry.source);
+
+          // Create entry for unknown scrapers found in data
+          if (!scraperStats[normalizedId]) {
+            scraperStats[normalizedId] = {
+              consensusSum: 0,
+              consensusCount: 0,
+              fieldsTracked: new Set(),
+              fieldsWithDiscrepancy: new Set(),
+              assetsAnalyzed: new Set(),
+              lastUpdate: null,
+              runtime: valueEntry.source.startsWith('python-') ? 'python' : 'typescript',
+            };
+            // Also add to configs for final response
+            if (!scraperConfigs[normalizedId]) {
+              scraperConfigs[normalizedId] = {
+                name: normalizedId.charAt(0).toUpperCase() + normalizedId.slice(1),
+                runtime: valueEntry.source.startsWith('python-') ? 'python' : 'typescript',
+              };
+            }
+          }
+
+          const scraperId = normalizedId;
 
           const stats = scraperStats[scraperId];
           stats.fieldsTracked.add(fieldName);
@@ -1417,10 +1460,24 @@ export class ScrapersService {
       }
     }
 
-    // Build response
+    // Build response - FASE 93.2: Include runtime in response
     const scrapers: ScraperQualityStatsDto[] = Object.entries(scraperConfigs).map(
-      ([id, name]) => {
+      ([id, config]) => {
         const stats = scraperStats[id];
+        // Handle case where stats might not exist (scraper discovered but no data)
+        if (!stats) {
+          return {
+            id,
+            name: config.name,
+            avgConsensus: 0,
+            totalFieldsTracked: 0,
+            fieldsWithDiscrepancy: 0,
+            assetsAnalyzed: 0,
+            lastUpdate: null,
+            runtime: config.runtime,
+          };
+        }
+
         const avgConsensus =
           stats.consensusCount > 0
             ? Math.round((stats.consensusSum / stats.consensusCount) * 10) / 10
@@ -1428,12 +1485,13 @@ export class ScrapersService {
 
         return {
           id,
-          name,
+          name: config.name,
           avgConsensus,
           totalFieldsTracked: stats.fieldsTracked.size,
           fieldsWithDiscrepancy: stats.fieldsWithDiscrepancy.size,
           assetsAnalyzed: stats.assetsAnalyzed.size,
           lastUpdate: stats.lastUpdate?.toISOString() || null,
+          runtime: config.runtime,
         };
       },
     );
@@ -1531,7 +1589,8 @@ export class ScrapersService {
 
     this.logger.log(`[DISCREPANCIES] Found ${fundamentalData.length} records with field_sources`);
 
-    // Collect all discrepancies
+    // FASE 93.3: Collect ALL discrepancies first (without severity filtering)
+    // Summary should always show total counts regardless of filter
     const allDiscrepancies: DiscrepancyDto[] = [];
 
     for (const data of fundamentalData) {
@@ -1562,8 +1621,8 @@ export class ScrapersService {
           severityLevel = 'low';
         }
 
-        // Filter by severity if specified
-        if (severity !== 'all' && severityLevel !== severity) continue;
+        // NOTE: Severity filtering moved AFTER deduplication and summary calculation
+        // to ensure summary always shows correct total counts
 
         allDiscrepancies.push({
           ticker: assetTicker,
@@ -1598,11 +1657,25 @@ export class ScrapersService {
       `[DISCREPANCIES] Deduplicated from ${allDiscrepancies.length} to ${deduplicatedDiscrepancies.length} entries`,
     );
 
+    // FASE 93.3: Calculate summary from ALL deduplicated data BEFORE severity filtering
+    // This ensures Data Sources and Discrepancies pages show same counts
+    const summary = {
+      total: deduplicatedDiscrepancies.length,
+      high: deduplicatedDiscrepancies.filter((d) => d.severity === 'high').length,
+      medium: deduplicatedDiscrepancies.filter((d) => d.severity === 'medium').length,
+      low: deduplicatedDiscrepancies.filter((d) => d.severity === 'low').length,
+    };
+
+    // FASE 93.3: Apply severity filtering AFTER calculating summary
+    const filteredDiscrepancies = severity !== 'all'
+      ? deduplicatedDiscrepancies.filter((d) => d.severity === severity)
+      : deduplicatedDiscrepancies;
+
     // Sort based on orderBy and orderDirection
     const severityOrder = { high: 0, medium: 1, low: 2 };
     const direction = orderDirection === 'asc' ? 1 : -1;
 
-    deduplicatedDiscrepancies.sort((a, b) => {
+    filteredDiscrepancies.sort((a, b) => {
       let comparison = 0;
 
       switch (orderBy) {
@@ -1636,15 +1709,7 @@ export class ScrapersService {
       return comparison * direction;
     });
 
-    // Calculate summary (before pagination) - use deduplicated data
-    const summary = {
-      total: deduplicatedDiscrepancies.length,
-      high: deduplicatedDiscrepancies.filter((d) => d.severity === 'high').length,
-      medium: deduplicatedDiscrepancies.filter((d) => d.severity === 'medium').length,
-      low: deduplicatedDiscrepancies.filter((d) => d.severity === 'low').length,
-    };
-
-    // Apply pagination or limit
+    // Apply pagination or limit to FILTERED discrepancies
     let resultDiscrepancies: DiscrepancyDto[];
     let pagination: { page: number; pageSize: number; totalPages: number; totalItems: number } | undefined;
 
@@ -1652,19 +1717,19 @@ export class ScrapersService {
       // Pagination mode
       const startIndex = (page - 1) * pageSize;
       const endIndex = startIndex + pageSize;
-      resultDiscrepancies = deduplicatedDiscrepancies.slice(startIndex, endIndex);
+      resultDiscrepancies = filteredDiscrepancies.slice(startIndex, endIndex);
       pagination = {
         page,
         pageSize,
-        totalPages: Math.ceil(deduplicatedDiscrepancies.length / pageSize),
-        totalItems: deduplicatedDiscrepancies.length,
+        totalPages: Math.ceil(filteredDiscrepancies.length / pageSize),
+        totalItems: filteredDiscrepancies.length,
       };
     } else if (limit !== undefined) {
       // Legacy limit mode
-      resultDiscrepancies = deduplicatedDiscrepancies.slice(0, limit);
+      resultDiscrepancies = filteredDiscrepancies.slice(0, limit);
     } else {
       // Default limit
-      resultDiscrepancies = deduplicatedDiscrepancies.slice(0, 50);
+      resultDiscrepancies = filteredDiscrepancies.slice(0, 50);
     }
 
     this.logger.log(
@@ -1842,6 +1907,202 @@ export class ScrapersService {
       topAssets,
       topFields,
       timeline,
+    };
+  }
+
+  // ============================================
+  // FASE 93.4: Test All Scrapers
+  // ============================================
+
+  /**
+   * Test ALL scrapers in batch with controlled concurrency
+   *
+   * FASE 93.4 - Test All Scrapers Button
+   *
+   * - Executes tests in parallel with configurable concurrency
+   * - Uses Promise.allSettled for graceful failure handling
+   * - Emits WebSocket events for real-time progress tracking
+   * - Returns aggregated results
+   */
+  async testAllScrapers(maxConcurrency: number = 5): Promise<{
+    totalScrapers: number;
+    successCount: number;
+    failedCount: number;
+    duration: number;
+    results: Array<{
+      scraperId: string;
+      scraperName: string;
+      success: boolean;
+      responseTime: number;
+      error?: string;
+      runtime: 'typescript' | 'python';
+    }>;
+  }> {
+    const startTime = Date.now();
+    this.logger.log(`[TEST-ALL] Starting batch test with maxConcurrency=${maxConcurrency}`);
+
+    // Get all scrapers (TypeScript + Python)
+    const metricsMap = await this.scraperMetricsService.getAllMetricsSummaries();
+    const allScrapers = await this.getAllScrapersStatus(metricsMap);
+
+    this.logger.log(`[TEST-ALL] Found ${allScrapers.length} scrapers to test`);
+
+    // Emit start event via WebSocket
+    this.wsGateway.emitScraperTestAllStarted({
+      totalScrapers: allScrapers.length,
+      scraperIds: allScrapers.map((s) => s.id),
+    });
+
+    const results: Array<{
+      scraperId: string;
+      scraperName: string;
+      success: boolean;
+      responseTime: number;
+      error?: string;
+      runtime: 'typescript' | 'python';
+    }> = [];
+
+    // Process scrapers in batches for controlled concurrency
+    const testTicker = 'PETR4';
+    let completedCount = 0;
+
+    // Create an async function to test a single scraper
+    const testScraper = async (scraper: { id: string; name: string; runtime: 'typescript' | 'python' }) => {
+      const scraperStartTime = Date.now();
+
+      try {
+        if (scraper.runtime === 'python') {
+          // Test Python scraper via API
+          const result = await this.testPythonScraper(scraper.id, testTicker);
+          const responseTime = result.execution_time * 1000;
+
+          // Save metrics
+          await this.scraperMetricsService.saveMetric(
+            scraper.id,
+            'test',
+            testTicker,
+            result.success,
+            responseTime,
+            result.success ? null : result.error,
+          );
+
+          return {
+            scraperId: scraper.id,
+            scraperName: scraper.name,
+            success: result.success,
+            responseTime,
+            error: result.success ? undefined : result.error,
+            runtime: 'python' as const,
+          };
+        } else {
+          // Test TypeScript scraper
+          const result = await this.testSingleScraper(scraper.id, testTicker);
+          const responseTime = Date.now() - scraperStartTime;
+
+          // Save metrics
+          await this.scraperMetricsService.saveMetric(
+            scraper.id,
+            'test',
+            testTicker,
+            result.success,
+            responseTime,
+            result.success ? null : result.error,
+          );
+
+          return {
+            scraperId: scraper.id,
+            scraperName: scraper.name,
+            success: result.success,
+            responseTime,
+            error: result.success ? undefined : result.error,
+            runtime: 'typescript' as const,
+          };
+        }
+      } catch (error) {
+        const responseTime = Date.now() - scraperStartTime;
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        // Save metrics for failed test
+        await this.scraperMetricsService.saveMetric(
+          scraper.id,
+          'test',
+          testTicker,
+          false,
+          responseTime,
+          errorMessage,
+        );
+
+        return {
+          scraperId: scraper.id,
+          scraperName: scraper.name,
+          success: false,
+          responseTime,
+          error: errorMessage,
+          runtime: scraper.runtime,
+        };
+      }
+    };
+
+    // Process in batches with concurrency control
+    const scraperList = allScrapers.map((s) => ({
+      id: s.id,
+      name: s.name,
+      runtime: s.runtime,
+    }));
+
+    // Simple concurrency control using batches
+    for (let i = 0; i < scraperList.length; i += maxConcurrency) {
+      const batch = scraperList.slice(i, i + maxConcurrency);
+      this.logger.log(
+        `[TEST-ALL] Testing batch ${Math.floor(i / maxConcurrency) + 1}: ${batch.map((s) => s.id).join(', ')}`,
+      );
+
+      const batchResults = await Promise.allSettled(batch.map((scraper) => testScraper(scraper)));
+
+      for (const result of batchResults) {
+        if (result.status === 'fulfilled') {
+          results.push(result.value);
+          completedCount++;
+
+          // Emit progress event via WebSocket
+          this.wsGateway.emitScraperTestProgress({
+            currentScraperId: result.value.scraperId,
+            scraperName: result.value.scraperName,
+            current: completedCount,
+            total: allScrapers.length,
+            success: result.value.success,
+            responseTime: result.value.responseTime,
+            error: result.value.error,
+            runtime: result.value.runtime,
+          });
+        } else {
+          // This shouldn't happen since testScraper handles errors internally
+          this.logger.error(`[TEST-ALL] Unexpected batch error: ${result.reason}`);
+        }
+      }
+    }
+
+    const duration = Date.now() - startTime;
+    const successCount = results.filter((r) => r.success).length;
+    const failedCount = results.filter((r) => !r.success).length;
+
+    this.logger.log(`[TEST-ALL] Batch test completed in ${duration}ms: ${successCount} success, ${failedCount} failed`);
+
+    // Emit completed event via WebSocket
+    this.wsGateway.emitScraperTestAllCompleted({
+      totalScrapers: results.length,
+      successCount,
+      failedCount,
+      duration,
+      results,
+    });
+
+    return {
+      totalScrapers: results.length,
+      successCount,
+      failedCount,
+      duration,
+      results,
     };
   }
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,9 +37,17 @@ import {
   MinusCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useDataSources, useScrapersQualityStats, useScrapersDiscrepancies } from '@/lib/hooks/useDataSources';
-import type { Discrepancy, DataSource } from '@/lib/hooks/useDataSources';
+import { useDataSources, useScrapersQualityStats, useScrapersDiscrepancies, useTestAllScrapers } from '@/lib/hooks/useDataSources';
+import type { Discrepancy, DataSource, BatchTestResult } from '@/lib/hooks/useDataSources';
 import { useToast } from '@/components/ui/use-toast';
+import { Progress } from '@/components/ui/progress';
+
+// FASE 93.5: Dynamic import to avoid Turbopack bundling issues with api methods
+// Component is always mounted to ensure it loads upfront, visibility controlled by Dialog's open prop
+const CrossValidationConfigModal = dynamic(
+  () => import('@/components/CrossValidationConfigModal').then(mod => mod.CrossValidationConfigModal),
+  { ssr: false }
+);
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -246,6 +255,14 @@ export default function DataSourcesPage() {
   const { data: discrepanciesData, isLoading: isLoadingDiscrepancies, error: errorDiscrepancies } = useScrapersDiscrepancies({ limit: 100, severity: severityFilter });
   const { toast } = useToast();
 
+  // FASE 93.4: Test All Scrapers
+  const testAllMutation = useTestAllScrapers();
+  const [testAllModalOpen, setTestAllModalOpen] = useState(false);
+  const [testAllResults, setTestAllResults] = useState<BatchTestResult | null>(null);
+
+  // FASE 93.5: Cross-Validation Config
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+
   // FIX: Move toast() to useEffect to prevent infinite loop
   useEffect(() => {
     if (errorStatus) {
@@ -344,6 +361,30 @@ export default function DataSourcesPage() {
     refetch();
   };
 
+  // FASE 93.4: Test All Scrapers handler
+  const handleTestAll = async () => {
+    setTestAllModalOpen(true);
+    setTestAllResults(null);
+
+    try {
+      const results = await testAllMutation.mutateAsync(5); // concurrency = 5
+      setTestAllResults(results);
+
+      toast({
+        title: 'Teste em lote concluído',
+        description: `${results.successCount}/${results.totalScrapers} scrapers testados com sucesso.`,
+        variant: results.failedCount > 0 ? 'destructive' : 'default',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao testar scrapers',
+        description: error.message || 'Erro desconhecido',
+        variant: 'destructive',
+      });
+      setTestAllModalOpen(false);
+    }
+  };
+
   if (isLoadingStatus && isLoadingQuality) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-200px)]">
@@ -421,63 +462,89 @@ export default function DataSourcesPage() {
             </Card>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant={filter === 'all' ? 'default' : 'outline'}
-              onClick={() => setFilter('all')}
-              size="sm"
-            >
-              Todas
-            </Button>
-            <Button
-              variant={filter === 'fundamental' ? 'default' : 'outline'}
-              onClick={() => setFilter('fundamental')}
-              size="sm"
-            >
-              Fundamentalista
-            </Button>
-            <Button
-              variant={filter === 'news' ? 'default' : 'outline'}
-              onClick={() => setFilter('news')}
-              size="sm"
-            >
-              Notícias
-            </Button>
-            <Button
-              variant={filter === 'ai' ? 'default' : 'outline'}
-              onClick={() => setFilter('ai')}
-              size="sm"
-            >
-              AI Analysis
-            </Button>
-            <Button
-              variant={filter === 'market_data' ? 'default' : 'outline'}
-              onClick={() => setFilter('market_data')}
-              size="sm"
-            >
-              Market Data
-            </Button>
-            <Button
-              variant={filter === 'options' ? 'default' : 'outline'}
-              onClick={() => setFilter('options')}
-              size="sm"
-            >
-              Opções
-            </Button>
-            <Button
-              variant={filter === 'crypto' ? 'default' : 'outline'}
-              onClick={() => setFilter('crypto')}
-              size="sm"
-            >
-              Crypto
-            </Button>
-            <Button
-              variant={filter === 'macro' ? 'default' : 'outline'}
-              onClick={() => setFilter('macro')}
-              size="sm"
-            >
-              Macro
-            </Button>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant={filter === 'all' ? 'default' : 'outline'}
+                onClick={() => setFilter('all')}
+                size="sm"
+              >
+                Todas
+              </Button>
+              <Button
+                variant={filter === 'fundamental' ? 'default' : 'outline'}
+                onClick={() => setFilter('fundamental')}
+                size="sm"
+              >
+                Fundamentalista
+              </Button>
+              <Button
+                variant={filter === 'news' ? 'default' : 'outline'}
+                onClick={() => setFilter('news')}
+                size="sm"
+              >
+                Notícias
+              </Button>
+              <Button
+                variant={filter === 'ai' ? 'default' : 'outline'}
+                onClick={() => setFilter('ai')}
+                size="sm"
+              >
+                AI Analysis
+              </Button>
+              <Button
+                variant={filter === 'market_data' ? 'default' : 'outline'}
+                onClick={() => setFilter('market_data')}
+                size="sm"
+              >
+                Market Data
+              </Button>
+              <Button
+                variant={filter === 'options' ? 'default' : 'outline'}
+                onClick={() => setFilter('options')}
+                size="sm"
+              >
+                Opções
+              </Button>
+              <Button
+                variant={filter === 'crypto' ? 'default' : 'outline'}
+                onClick={() => setFilter('crypto')}
+                size="sm"
+              >
+                Crypto
+              </Button>
+              <Button
+                variant={filter === 'macro' ? 'default' : 'outline'}
+                onClick={() => setFilter('macro')}
+                size="sm"
+              >
+                Macro
+              </Button>
+            </div>
+
+            {/* FASE 93.4: Test All Scrapers Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="default"
+                    onClick={handleTestAll}
+                    disabled={testAllMutation.isPending || !sources.length}
+                    className="gap-2"
+                  >
+                    {testAllMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Play className="h-4 w-4" />
+                    )}
+                    Testar Todos ({sources.length})
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Testa todos os scrapers em paralelo (máx 5 simultâneos)</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
           <div className="grid gap-4">
@@ -820,36 +887,57 @@ export default function DataSourcesPage() {
                 </Card>
               </div>
 
-              {/* Severity Filter */}
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant={severityFilter === 'all' ? 'default' : 'outline'}
-                  onClick={() => setSeverityFilter('all')}
-                  size="sm"
-                >
-                  Todos
-                </Button>
-                <Button
-                  variant={severityFilter === 'high' ? 'destructive' : 'outline'}
-                  onClick={() => setSeverityFilter('high')}
-                  size="sm"
-                >
-                  Alta ({discrepanciesData.summary.high})
-                </Button>
-                <Button
-                  variant={severityFilter === 'medium' ? 'secondary' : 'outline'}
-                  onClick={() => setSeverityFilter('medium')}
-                  size="sm"
-                >
-                  Média ({discrepanciesData.summary.medium})
-                </Button>
-                <Button
-                  variant={severityFilter === 'low' ? 'default' : 'outline'}
-                  onClick={() => setSeverityFilter('low')}
-                  size="sm"
-                >
-                  Baixa ({discrepanciesData.summary.low})
-                </Button>
+              {/* Severity Filter + Config Button */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant={severityFilter === 'all' ? 'default' : 'outline'}
+                    onClick={() => setSeverityFilter('all')}
+                    size="sm"
+                  >
+                    Todos
+                  </Button>
+                  <Button
+                    variant={severityFilter === 'high' ? 'destructive' : 'outline'}
+                    onClick={() => setSeverityFilter('high')}
+                    size="sm"
+                  >
+                    Alta ({discrepanciesData.summary.high})
+                  </Button>
+                  <Button
+                    variant={severityFilter === 'medium' ? 'secondary' : 'outline'}
+                    onClick={() => setSeverityFilter('medium')}
+                    size="sm"
+                  >
+                    Média ({discrepanciesData.summary.medium})
+                  </Button>
+                  <Button
+                    variant={severityFilter === 'low' ? 'default' : 'outline'}
+                    onClick={() => setSeverityFilter('low')}
+                    size="sm"
+                  >
+                    Baixa ({discrepanciesData.summary.low})
+                  </Button>
+                </div>
+
+                {/* FASE 93.5: Configure Rules Button */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        onClick={() => setConfigModalOpen(true)}
+                        className="gap-2"
+                      >
+                        <Settings className="h-4 w-4" />
+                        Configurar Regras
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Configura thresholds de severidade, tolerâncias e prioridade de fontes</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               {/* Discrepancy List */}
@@ -1024,6 +1112,143 @@ export default function DataSourcesPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* FASE 93.4: Test All Scrapers Modal */}
+      <Dialog open={testAllModalOpen} onOpenChange={setTestAllModalOpen}>
+        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {testAllMutation.isPending ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Testando Scrapers...
+                </>
+              ) : testAllResults ? (
+                <>
+                  {testAllResults.failedCount === 0 ? (
+                    <CheckCircle2 className="h-5 w-5 text-success" />
+                  ) : (
+                    <AlertTriangle className="h-5 w-5 text-warning" />
+                  )}
+                  Teste Concluído
+                </>
+              ) : (
+                'Teste em Lote'
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              {testAllMutation.isPending
+                ? 'Aguarde enquanto todos os scrapers são testados...'
+                : testAllResults
+                ? `${testAllResults.successCount} de ${testAllResults.totalScrapers} scrapers testados com sucesso em ${(testAllResults.duration / 1000).toFixed(1)}s`
+                : 'Resultados do teste em lote'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Progress during testing */}
+          {testAllMutation.isPending && (
+            <div className="py-6 space-y-4">
+              <Progress value={undefined} className="w-full" />
+              <p className="text-center text-muted-foreground">
+                Testando {sources.length} scrapers com concorrência de 5...
+              </p>
+            </div>
+          )}
+
+          {/* Results after completion */}
+          {testAllResults && (
+            <div className="space-y-4 py-4">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-3 gap-4">
+                <Card className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="rounded-full bg-muted/10 p-2">
+                      <Database className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Total</p>
+                      <p className="text-xl font-bold">{testAllResults.totalScrapers}</p>
+                    </div>
+                  </div>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="rounded-full bg-success/10 p-2">
+                      <CheckCircle2 className="h-5 w-5 text-success" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Sucesso</p>
+                      <p className="text-xl font-bold text-success">{testAllResults.successCount}</p>
+                    </div>
+                  </div>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="rounded-full bg-destructive/10 p-2">
+                      <XCircle className="h-5 w-5 text-destructive" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Falhas</p>
+                      <p className="text-xl font-bold text-destructive">{testAllResults.failedCount}</p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Results List */}
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                <h4 className="text-sm font-medium">Resultados por Scraper</h4>
+                {testAllResults.results.map((result) => (
+                  <div
+                    key={result.scraperId}
+                    className={cn(
+                      'flex items-center justify-between p-3 rounded-lg border',
+                      result.success ? 'bg-success/5 border-success/20' : 'bg-destructive/5 border-destructive/20'
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      {result.success ? (
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-destructive" />
+                      )}
+                      <div>
+                        <p className="font-medium">{result.scraperName}</p>
+                        {result.error && (
+                          <p className="text-xs text-destructive truncate max-w-[300px]">
+                            {result.error}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className={getRuntimeColor(result.runtime)}>
+                        {getRuntimeLabel(result.runtime)}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {result.responseTime}ms
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Close Button */}
+              <div className="flex justify-end pt-4">
+                <Button onClick={() => setTestAllModalOpen(false)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* FASE 93.5: Cross-Validation Config Modal - Always mounted, visibility controlled by open prop */}
+      <CrossValidationConfigModal
+        open={configModalOpen}
+        onOpenChange={setConfigModalOpen}
+      />
     </div>
   );
 }

@@ -314,4 +314,59 @@ export class AppWebSocketGateway
       `[WS] Batch update completed: ${data.successCount}/${data.totalAssets} successful (${data.duration}ms)`,
     );
   }
+
+  // ============================================================================
+  // FASE 93.4: SCRAPER TEST ALL EVENTS
+  // ============================================================================
+
+  emitScraperTestAllStarted(data: { totalScrapers: number; scraperIds: string[] }) {
+    this.server.emit('scraper_test_all_started', {
+      ...data,
+      timestamp: new Date(),
+    });
+    this.logger.log(`[WS] Scraper test all started: ${data.totalScrapers} scrapers`);
+  }
+
+  emitScraperTestProgress(data: {
+    currentScraperId: string;
+    scraperName: string;
+    current: number;
+    total: number;
+    success: boolean;
+    responseTime: number;
+    error?: string;
+    runtime: 'typescript' | 'python';
+  }) {
+    this.server.emit('scraper_test_progress', {
+      ...data,
+      timestamp: new Date(),
+    });
+    const status = data.success ? '✓' : '✗';
+    this.logger.log(
+      `[WS] Scraper test progress: ${status} ${data.scraperName} (${data.current}/${data.total}) - ${data.responseTime}ms`,
+    );
+  }
+
+  emitScraperTestAllCompleted(data: {
+    totalScrapers: number;
+    successCount: number;
+    failedCount: number;
+    duration: number;
+    results: Array<{
+      scraperId: string;
+      scraperName: string;
+      success: boolean;
+      responseTime: number;
+      error?: string;
+      runtime: 'typescript' | 'python';
+    }>;
+  }) {
+    this.server.emit('scraper_test_all_completed', {
+      ...data,
+      timestamp: new Date(),
+    });
+    this.logger.log(
+      `[WS] Scraper test all completed: ${data.successCount}/${data.totalScrapers} successful (${data.duration}ms)`,
+    );
+  }
 }

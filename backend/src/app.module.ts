@@ -60,6 +60,8 @@ import {
   OptionPrice,
   // FASE 90 - Discrepancy Resolution
   DiscrepancyResolution,
+  // FASE 93 - Cross-Validation Config
+  CrossValidationConfig,
 } from './database/entities';
 
 @Module({
@@ -107,6 +109,8 @@ import {
           OptionPrice,
           // FASE 90 - Discrepancy Resolution
           DiscrepancyResolution,
+          // FASE 93 - Cross-Validation Config
+          CrossValidationConfig,
         ],
         synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
         logging: configService.get('DB_LOGGING', 'false') === 'true',

@@ -48,3 +48,5 @@ export {
   DiscrepancyResolution,
   ResolutionMethod,
 } from './discrepancy-resolution.entity';
+// FASE 93 - Cross-Validation Configuration
+export { CrossValidationConfig } from './cross-validation-config.entity';
