@@ -47,13 +47,13 @@ from .yahoo_finance_scraper import YahooFinanceScraper
 from .oplab_scraper import OplabScraper
 from .kinvo_scraper import KinvoScraper
 from .investing_scraper import InvestingScraper  # FASE 95: Works without login
+from .b3_scraper import B3Scraper  # FASE 96: CVM codes file exists
 
 # ==============================
 # AWAITING OAUTH/FIXES
 # ==============================
 # from .fundamentei_scraper import FundamenteiScraper  # OAuth session expired
 # from .maisretorno_scraper import MaisRetornoScraper  # needs cookies
-# from .b3_scraper import B3Scraper  # URL needs CVM code
 # from .advfn_scraper import ADVFNScraper  # partial migration needed
 
 __all__ = [
@@ -88,4 +88,5 @@ __all__ = [
     "OplabScraper",
     "KinvoScraper",
     "InvestingScraper",  # FASE 95
+    "B3Scraper",  # FASE 96
 ]

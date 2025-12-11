@@ -47,6 +47,7 @@ from scrapers import (
     OplabScraper,
     KinvoScraper,
     InvestingScraper,  # FASE 95: Works without login for basic market data
+    B3Scraper,  # FASE 96: CVM codes file exists
 )
 
 
@@ -108,14 +109,14 @@ class ScraperService:
         self.scrapers["KINVO"] = KinvoScraper  # Portfolio management - credential login
 
         # ===========================================
-        # FASE 95: INVESTING (works without login)
+        # FASE 95-96: INVESTING + B3 (no auth needed)
         # ===========================================
         self.scrapers["INVESTING"] = InvestingScraper  # FASE 95: Works without login
+        self.scrapers["B3"] = B3Scraper  # FASE 96: CVM codes file exists
 
         # ===========================================
         # AWAITING FIXES (Need cookies/config)
         # ===========================================
-        # self.scrapers["B3"] = B3Scraper  # URL needs CVM code
         # self.scrapers["FUNDAMENTEI"] = FundamenteiScraper  # OAuth session expired
         # self.scrapers["ADVFN"] = ADVFNScraper  # partial migration needed
         # self.scrapers["MAISRETORNO"] = MaisRetornoScraper  # needs cookies
@@ -124,7 +125,7 @@ class ScraperService:
         logger.info(f"📊 Fundamental: FUNDAMENTUS, BCB, STATUSINVEST, INVESTSITE, INVESTIDOR10, TRADINGVIEW, GOOGLEFINANCE, GRIFFIN, COINMARKETCAP")
         logger.info(f"📰 News: BLOOMBERG, GOOGLENEWS, INVESTING_NEWS, VALOR, EXAME, INFOMONEY, ESTADAO")
         logger.info(f"🤖 AI: CHATGPT, GEMINI, DEEPSEEK, CLAUDE, GROK, PERPLEXITY")
-        logger.info(f"📈 Market: YAHOO_FINANCE, OPLAB, OPCOES_NET, KINVO, INVESTING")
+        logger.info(f"📈 Market: YAHOO_FINANCE, OPLAB, OPCOES_NET, KINVO, INVESTING, B3")
 
     async def initialize(self):
         """Initialize connections and resources"""

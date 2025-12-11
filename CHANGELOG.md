@@ -9,6 +9,17 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 96: Habilitar B3Scraper - 100% COMPLETA (2025-12-11)**
+  - **B3Scraper habilitado:** CVM codes file já existia (100+ tickers)
+  - **Dados:** Company info, CNPJ, setor, governança, free float, tag along
+  - **Arquivos Modificados:**
+    - `backend/python-scrapers/main.py`
+    - `backend/python-scrapers/scrapers/__init__.py`
+  - **Resultados:**
+    - Total scrapers: 28 → 29 (+1 B3)
+  - **Validação:**
+    - TypeScript: 0 erros (backend + frontend)
+
 - **FASE 95: Habilitar InvestingScraper - 100% COMPLETA (2025-12-11)**
   - **InvestingScraper habilitado:** Funciona sem login para dados básicos
   - **Funcionalidades:** Real-time quotes, price changes, volume, OHLC, market cap

@@ -11521,9 +11521,48 @@ O InvestingScraper estava comentado no main.py com a justificativa "complex logi
 
 ---
 
+## FASE 96: Habilitar B3Scraper ✅ 100% COMPLETO
+
+**Data:** 2025-12-11
+**Tipo:** Scrapers + Data Sources
+
+### Descoberta
+
+O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o arquivo CVM codes já existia com 100+ mapeamentos de tickers para códigos CVM.
+
+### Funcionalidades Habilitadas
+
+- [x] **B3Scraper** - Dados oficiais da B3 habilitado
+- [x] **CVM codes** - 100+ tickers mapeados (PETR4, VALE3, ITUB4, etc)
+- [x] **Company info** - Nome oficial, CNPJ
+- [x] **Setor/Segmento** - Classificação setorial
+- [x] **Governança** - Nível de governança corporativa
+- [x] **Free float/Tag along** - Métricas de liquidez
+
+### Arquivos Modificados
+
+| Arquivo | Mudança |
+|---------|---------|
+| `backend/python-scrapers/main.py` | Adicionado import e registro do B3Scraper |
+| `backend/python-scrapers/scrapers/__init__.py` | Exportação do B3Scraper habilitada |
+
+### Resultados
+
+- **Total scrapers:** 28 → 29 (+1 B3)
+- **Scrapers de mercado:** YAHOO_FINANCE, OPLAB, OPCOES_NET, KINVO, INVESTING, **B3**
+
+### Validação Zero Tolerance
+
+- ✅ TypeScript Backend: 0 erros
+- ✅ TypeScript Frontend: 0 erros
+
+**Status:** ✅ **100% COMPLETO**
+
+---
+
 ## 📊 RESUMO DE STATUS
 
-### Fases Completas (97 fases incluindo sub-fases)
+### Fases Completas (98 fases incluindo sub-fases)
 
 - ✅ FASE 1-57: Implementadas e validadas (ver historico acima)
 - ✅ FASE 58: Playwright Migration & Exit Code 137 Resolution (2025-11-28)
@@ -11569,10 +11608,10 @@ O InvestingScraper estava comentado no main.py com a justificativa "complex logi
 - ✅ FASE 93: Data Sources Enhancements - 100% COMPLETO (2025-12-11)
 - ✅ FASE 94: Smart Queue with Backpressure - 100% COMPLETO (2025-12-11)
 - ✅ FASE 95: Habilitar InvestingScraper - 100% COMPLETO (2025-12-11)
+- ✅ FASE 96: Habilitar B3Scraper - 100% COMPLETO (2025-12-11)
 
 ### Fases Planejadas
 
-- FASE 96: Habilitar B3Scraper (CVM codes JSON)
 - FASE 97: Habilitar scrapers OAuth (FUNDAMENTEI, MAISRETORNO)
 - FASE 98: Habilitar scrapers credenciais (ADVFN)
 
@@ -11594,7 +11633,7 @@ Todas as fases planejadas foram implementadas.
 ---
 
 **Ultima Atualizacao:** 2025-12-11
-**Total de Fases:** 97 completas (incluindo sub-fases)
-**Versao:** 1.14.2
+**Total de Fases:** 98 completas (incluindo sub-fases)
+**Versao:** 1.14.3
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0
