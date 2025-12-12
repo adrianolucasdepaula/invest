@@ -9,6 +9,39 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 100: Enable Economic Data Scrapers - 100% COMPLETA (2025-12-11)**
+  - **Scrapers Habilitados (3):**
+    - ANBIMAScraper - Tesouro Direto / ANBIMA (curva de juros NTN-B)
+    - FREDScraper - Federal Reserve Economic Data (Payroll, Brent, Fed Funds, CPI)
+    - IPEADATAScraper - IPEA Commodities (Petróleo Brent, Minério de Ferro)
+  - **Características:**
+    - API-based (não usam browser/Playwright)
+    - ANBIMA e IPEADATA: APIs públicas sem autenticação
+    - FRED: Requer API key gratuita (FRED_API_KEY)
+  - **Arquivos Modificados:**
+    - `backend/python-scrapers/scrapers/__init__.py`
+    - `backend/python-scrapers/main.py`
+    - `ARCHITECTURE.md` (31 → 34 scrapers)
+  - **Resultados:**
+    - Total scrapers: 34 (7 categorias)
+    - Nova categoria: Economic Data (3 scrapers)
+
+### Changed
+
+- **Observability Analysis (2025-12-11)**
+  - Análise completa do estado de observabilidade do sistema
+  - **Resultado:** ~95% completo (não 49% como estimado anteriormente)
+  - **FASE 99 (Observabilidade) marcada como NÃO NECESSÁRIA** - já implementada em FASE 76.3
+  - Componentes verificados:
+    - ✅ OpenTelemetry SDK (traces, metrics, logs)
+    - ✅ LoggingInterceptor com correlation IDs
+    - ✅ TracingInterceptor para distributed tracing
+    - ✅ Prometheus MetricsModule
+    - ✅ Grafana LGTM stack (Tempo, Loki, Prometheus, Grafana) - Up 27h
+    - ✅ Production code: 0 console.log anti-patterns
+
+### Added
+
 - **FASE 98.1: Code Review Fixes for ADVFNScraper - 100% COMPLETA (2025-12-11)**
   - **ADVFNScraper Fixes (4 issues):**
     - Linhas 417, 439, 448, 499: bare `except:` → tipos específicos + logging

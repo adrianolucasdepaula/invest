@@ -235,7 +235,7 @@ export class SyncBulkDto {
 - Fundamentei (OAuth Google)
 - Investsite (público, sem auth)
 
-**Scrapers Fallback (Python - FastAPI) - 31 scrapers:**
+**Scrapers Fallback (Python - FastAPI) - 34 scrapers:**
 
 Acionados automaticamente quando:
 1. Menos de 3 fontes TypeScript disponíveis
@@ -250,6 +250,7 @@ Acionados automaticamente quando:
 | AI (6) | CHATGPT, GEMINI, DEEPSEEK, CLAUDE, GROK, PERPLEXITY |
 | Market Data (6) | YAHOOFINANCE, OPLAB, KINVO, INVESTING, B3, ADVFN |
 | OAuth (2) | FUNDAMENTEI, MAISRETORNO (require cookie collection via VNC) |
+| Economic Data (3) | ANBIMA, FRED, IPEADATA (API-based, no browser) |
 
 **Resource Monitor (FASE 94):**
 

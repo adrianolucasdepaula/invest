@@ -60,6 +60,13 @@ from .maisretorno_scraper import MaisRetornoScraper  # FASE 97: OAuth required
 # ==============================
 from .advfn_scraper import ADVFNScraper  # FASE 98: Credentials optional
 
+# ==============================
+# ECONOMIC DATA SCRAPERS (FASE 100)
+# ==============================
+from .anbima_scraper import ANBIMAScraper  # FASE 100: Public API (Tesouro Direto)
+from .fred_scraper import FREDScraper  # FASE 100: API Key required (free)
+from .ipeadata_scraper import IPEADATAScraper  # FASE 100: Public API
+
 __all__ = [
     # Fundamental Data
     "FundamentusScraper",
@@ -98,4 +105,8 @@ __all__ = [
     "MaisRetornoScraper",  # FASE 97
     # Credentials Scrapers (FASE 98)
     "ADVFNScraper",  # FASE 98
+    # Economic Data Scrapers (FASE 100)
+    "ANBIMAScraper",  # FASE 100
+    "FREDScraper",  # FASE 100
+    "IPEADATAScraper",  # FASE 100
 ]

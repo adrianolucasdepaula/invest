@@ -54,6 +54,10 @@ from scrapers import (
     MaisRetornoScraper,  # FASE 97: OAuth required
     # Credentials Scrapers (FASE 98)
     ADVFNScraper,  # FASE 98: Credentials optional
+    # Economic Data Scrapers (FASE 100)
+    ANBIMAScraper,  # FASE 100: Public API (Tesouro Direto)
+    FREDScraper,  # FASE 100: API Key required (free)
+    IPEADATAScraper,  # FASE 100: Public API
 )
 
 
@@ -131,12 +135,20 @@ class ScraperService:
         # ===========================================
         self.scrapers["ADVFN"] = ADVFNScraper  # FASE 98: Credentials optional
 
+        # ===========================================
+        # FASE 100: Economic Data Scrapers (API-based)
+        # ===========================================
+        self.scrapers["ANBIMA"] = ANBIMAScraper  # FASE 100: Public API (Tesouro Direto)
+        self.scrapers["FRED"] = FREDScraper  # FASE 100: API Key required (free)
+        self.scrapers["IPEADATA"] = IPEADATAScraper  # FASE 100: Public API
+
         logger.info(f"✅ PLAYWRIGHT MIGRATION COMPLETE: Registered {len(self.scrapers)} scrapers")
         logger.info(f"📊 Fundamental: FUNDAMENTUS, BCB, STATUSINVEST, INVESTSITE, INVESTIDOR10, TRADINGVIEW, GOOGLEFINANCE, GRIFFIN, COINMARKETCAP")
         logger.info(f"📰 News: BLOOMBERG, GOOGLENEWS, INVESTING_NEWS, VALOR, EXAME, INFOMONEY, ESTADAO")
         logger.info(f"🤖 AI: CHATGPT, GEMINI, DEEPSEEK, CLAUDE, GROK, PERPLEXITY")
         logger.info(f"📈 Market: YAHOO_FINANCE, OPLAB, OPCOES_NET, KINVO, INVESTING, B3, ADVFN")
         logger.info(f"🔐 OAuth: FUNDAMENTEI, MAISRETORNO (require cookie collection)")
+        logger.info(f"📉 Economic: ANBIMA, FRED, IPEADATA (API-based, no browser)")
 
     async def initialize(self):
         """Initialize connections and resources"""
