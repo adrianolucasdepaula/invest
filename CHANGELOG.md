@@ -9,6 +9,22 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 100.1: Code Review Fixes for Economic Scrapers - 100% COMPLETA (2025-12-12)**
+  - **FRED Scraper Fixes:**
+    - Linha 192: bare `except:` → `except (ValueError, TypeError, AttributeError)`
+    - Linhas 213-231: Expanded HTTP error handling (403, 429, 500+ status codes)
+  - **IPEADATA Scraper Fixes:**
+    - Linhas 153-176: Added response structure validation
+    - Linhas 160-176: bare `except:` → specific exceptions with proper logging
+    - Removed unsafe 0.0 fallback (could be misinterpreted as real data)
+  - **ANBIMA Scraper:**
+    - Documented API limitation (raw_data for debugging, use Tesouro Direto for parsed data)
+  - **Validação MCP Triplo:**
+    - Homepage, Dashboard, Data Sources: ✅ Loading correctly
+    - Console: 0 errors
+    - Network: APIs returning 200/304
+    - Screenshots saved in docs/screenshots/
+
 - **FASE 100: Enable Economic Data Scrapers - 100% COMPLETA (2025-12-11)**
   - **Scrapers Habilitados (3):**
     - ANBIMAScraper - Tesouro Direto / ANBIMA (curva de juros NTN-B)

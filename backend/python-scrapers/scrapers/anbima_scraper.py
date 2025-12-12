@@ -301,8 +301,11 @@ class ANBIMAScraper(BaseScraper):
                             "raw_data": api_data,  # Store raw for debugging
                         }
 
-                        # TODO: Parse ANBIMA API response based on actual structure
-                        logger.info(f"ANBIMA data fetched successfully")
+                        # NOTE: ANBIMA API returns raw data for debugging/inspection
+                        # Full parsing requires official ANBIMA API documentation
+                        # Primary data source is Tesouro Direto public API (see scrape method)
+                        # This ANBIMA path is optional and provides raw data only
+                        logger.info(f"ANBIMA data fetched successfully (raw data - use Tesouro Direto for parsed data)")
 
                         return data
                     elif response.status == 401:

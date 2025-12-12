@@ -189,8 +189,8 @@ class FREDScraper(BaseScraper):
                                                 # No valid values found
                                                 logger.warning(f"No valid values for {indicator_key}")
                                                 continue
-                                    except:
-                                        logger.warning(f"Could not parse value for {indicator_key}: {last_value_str}")
+                                    except (ValueError, TypeError, AttributeError) as e:
+                                        logger.warning(f"Could not parse value for {indicator_key}: {last_value_str} - {e}")
                                         continue
 
                                     data["indicators"][indicator_key] = {
@@ -217,6 +217,15 @@ class FREDScraper(BaseScraper):
 
                                 if "api_key" in error_msg.lower():
                                     logger.error("Invalid FRED API key. Register at https://fredaccount.stlouisfed.org/apikeys")
+
+                            elif response.status == 403:
+                                logger.error(f"FRED API: Forbidden (403) for {indicator_key} - check API key permissions")
+
+                            elif response.status == 429:
+                                logger.warning(f"FRED API: Rate limit exceeded (429) for {indicator_key} - implement backoff")
+
+                            elif response.status >= 500:
+                                logger.warning(f"FRED API: Server error ({response.status}) for {indicator_key} - transient failure")
 
                             else:
                                 logger.warning(f"FRED API returned status {response.status} for {indicator_key}")

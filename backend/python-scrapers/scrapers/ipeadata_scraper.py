@@ -150,19 +150,32 @@ class IPEADATAScraper(BaseScraper):
                             if response.status == 200:
                                 api_data = await response.json()
 
-                                serie_data = api_data.get("value", [])
+                                serie_data = api_data.get("value")
 
-                                if serie_data:
-                                    # Get last value and historical data
-                                    last_entry = serie_data[0]  # Already ordered by date desc
+                                # Validate response structure
+                                if not isinstance(serie_data, list):
+                                    logger.warning(f"IPEADATA returned unexpected format for {commodity_key}: {type(serie_data)}")
+                                    continue
 
-                                    # Parse value (IPEADATA returns string)
-                                    try:
-                                        last_value = float(last_entry.get("VALVALOR", "0").replace(",", "."))
-                                    except:
-                                        last_value = 0.0
+                                if not serie_data:
+                                    logger.debug(f"No data for {commodity_key}")
+                                    continue
 
-                                    data["commodities"][commodity_key] = {
+                                # Get last value and historical data
+                                last_entry = serie_data[0]  # Already ordered by date desc
+
+                                # Parse value (IPEADATA returns string)
+                                try:
+                                    valvalor = last_entry.get("VALVALOR")
+                                    if valvalor is None:
+                                        logger.warning(f"Missing VALVALOR for {commodity_key}")
+                                        continue
+                                    last_value = float(str(valvalor).replace(",", "."))
+                                except (ValueError, TypeError, AttributeError) as e:
+                                    logger.warning(f"Could not parse VALVALOR for {commodity_key}: {last_entry.get('VALVALOR')} - {e}")
+                                    continue
+
+                                data["commodities"][commodity_key] = {
                                         "current_value": last_value,
                                         "date": last_entry.get("VALDATA"),
                                         "serie_code": serie_code,
