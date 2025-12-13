@@ -959,3 +959,153 @@ export async function resolveDiscrepancyApi(
   const response = await client.post(`/scrapers/discrepancies/${ticker}/${field}/resolve`, data);
   return response.data;
 }
+
+// ========================================
+// FASE 107: WHEEL API Standalone Functions (Turbopack-safe)
+// ========================================
+
+/**
+ * Get WHEEL candidates - Turbopack-safe standalone function
+ */
+export async function getWheelCandidatesApi(params?: {
+  minROE?: number;
+  minDividendYield?: number;
+  maxDividaEbitda?: number;
+  minIVRank?: number;
+  page?: number;
+  limit?: number;
+}) {
+  const client = createStandaloneClient();
+  const response = await client.get('/wheel/candidates', { params });
+  return response.data;
+}
+
+/**
+ * Get WHEEL strategies - Turbopack-safe standalone function
+ */
+export async function getWheelStrategiesApi() {
+  const client = createStandaloneClient();
+  const response = await client.get('/wheel/strategies');
+  return response.data;
+}
+
+/**
+ * Get specific WHEEL strategy - Turbopack-safe standalone function
+ */
+export async function getWheelStrategyApi(id: string) {
+  const client = createStandaloneClient();
+  const response = await client.get(`/wheel/strategies/${id}`);
+  return response.data;
+}
+
+/**
+ * Create WHEEL strategy - Turbopack-safe standalone function
+ */
+export async function createWheelStrategyApi(data: {
+  assetId: string;
+  notional: number;
+  name?: string;
+  description?: string;
+  marketTrend?: 'bullish' | 'bearish' | 'neutral';
+  config?: Record<string, any>;
+}) {
+  const client = createStandaloneClient();
+  const response = await client.post('/wheel/strategies', data);
+  return response.data;
+}
+
+/**
+ * Update WHEEL strategy - Turbopack-safe standalone function
+ */
+export async function updateWheelStrategyApi(id: string, data: {
+  name?: string;
+  description?: string;
+  status?: 'active' | 'paused' | 'closed';
+  phase?: 'selling_puts' | 'holding_shares' | 'selling_calls';
+  marketTrend?: 'bullish' | 'bearish' | 'neutral';
+  allocatedCapital?: number;
+  config?: Record<string, any>;
+}) {
+  const client = createStandaloneClient();
+  const response = await client.put(`/wheel/strategies/${id}`, data);
+  return response.data;
+}
+
+/**
+ * Delete WHEEL strategy - Turbopack-safe standalone function
+ */
+export async function deleteWheelStrategyApi(id: string) {
+  const client = createStandaloneClient();
+  const response = await client.delete(`/wheel/strategies/${id}`);
+  return response.data;
+}
+
+/**
+ * Get PUT recommendations - Turbopack-safe standalone function
+ */
+export async function getWheelPutRecommendationsApi(strategyId: string) {
+  const client = createStandaloneClient();
+  const response = await client.get(`/wheel/strategies/${strategyId}/put-recommendations`);
+  return response.data;
+}
+
+/**
+ * Get CALL recommendations - Turbopack-safe standalone function
+ */
+export async function getWheelCallRecommendationsApi(strategyId: string) {
+  const client = createStandaloneClient();
+  const response = await client.get(`/wheel/strategies/${strategyId}/call-recommendations`);
+  return response.data;
+}
+
+/**
+ * Get WHEEL trades - Turbopack-safe standalone function
+ */
+export async function getWheelTradesApi(strategyId: string) {
+  const client = createStandaloneClient();
+  const response = await client.get(`/wheel/strategies/${strategyId}/trades`);
+  return response.data;
+}
+
+/**
+ * Create WHEEL trade - Turbopack-safe standalone function
+ */
+export async function createWheelTradeApi(data: {
+  strategyId: string;
+  type: 'PUT' | 'CALL';
+  strike: number;
+  premium: number;
+  contracts: number;
+  expirationDate: string;
+  underlyingPriceAtEntry: number;
+  delta?: number;
+  iv?: number;
+}) {
+  const client = createStandaloneClient();
+  const response = await client.post('/wheel/trades', data);
+  return response.data;
+}
+
+/**
+ * Close WHEEL trade - Turbopack-safe standalone function
+ */
+export async function closeWheelTradeApi(tradeId: string, data: {
+  exitPrice: number;
+  underlyingPriceAtExit: number;
+  status: 'CLOSED' | 'EXERCISED' | 'EXPIRED';
+}) {
+  const client = createStandaloneClient();
+  const response = await client.put(`/wheel/trades/${tradeId}/close`, data);
+  return response.data;
+}
+
+/**
+ * Calculate cash yield - Turbopack-safe standalone function
+ */
+export async function calculateCashYieldApi(principal: number, days?: number) {
+  const client = createStandaloneClient();
+  const params: any = { principal };
+  if (days) params.days = days;
+  const response = await client.get('/wheel/cash-yield', { params });
+  return response.data;
+}
