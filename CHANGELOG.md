@@ -9,6 +9,39 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 6 (WHEEL): Code Review Fixes + Documentation - 100% COMPLETA (2025-12-13)**
+  - **Frontend Critical Fixes:**
+    - Dialog CALL/PUT: Movido Dialog para fora das tabelas (funciona para ambos tipos)
+    - Close Trade UI: Adicionado botão "Fechar" e Dialog para trades abertos
+    - Create Strategy: Adicionado Dialog com form completo
+    - Days Validation: Adicionada validação de período na calculadora Selic
+  - **Frontend High Priority Fixes:**
+    - "Nova Estratégia" buttons: Adicionados handlers para criar estratégia
+    - Candidate "WHEEL" button: Permite criar estratégia direto do candidato
+  - **Validação:**
+    - TypeScript: 0 erros (frontend + backend)
+    - Build: Sucesso
+
+- **FASE 1-5 (WHEEL): Implementação Completa da Estratégia WHEEL (2025-12-13)**
+  - **Backend (100% Completo):**
+    - WheelService: 15 métodos públicos + 3 helpers
+    - WheelController: 15 endpoints REST com JWT guards
+    - DTOs: 12 classes com validação class-validator
+    - Entities: wheel_strategies, wheel_trades
+    - Integração: EconomicIndicatorsService para taxa Selic
+    - Cash Yield: Cálculo de rendimento Tesouro Selic (252 dias úteis BR)
+  - **Frontend:**
+    - Dashboard WHEEL: `/wheel` com candidatos, estratégias, calculadora
+    - Detalhes Estratégia: `/wheel/[id]` com tabs, analytics, trades
+    - Hooks: useWheelCandidates, useWheelStrategies, useWheelTrades, etc.
+    - API Client: Endpoints WHEEL integrados em api.ts
+  - **Funcionalidades:**
+    - Seleção de candidatos WHEEL por fundamentos (ROE, DY, Dív/EBITDA)
+    - Recomendações de PUT e CALL cobertas
+    - Cronograma semanal de distribuição de PUTs
+    - Tracking de trades e P&L
+    - Calculadora Tesouro Selic para capital não alocado
+
 - **FASE 100.1: Code Review Fixes for Economic Scrapers - 100% COMPLETA (2025-12-12)**
   - **FRED Scraper Fixes:**
     - Linha 192: bare `except:` → `except (ValueError, TypeError, AttributeError)`

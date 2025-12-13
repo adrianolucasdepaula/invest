@@ -913,6 +913,107 @@ RESTRICOES:
 
 ---
 
+## PM Expert Agent - Validação 100% do Ecossistema
+
+### Visão Geral
+
+O **PM Expert** é um sub-agent ultra-robusto que combina 4 roles em 1:
+
+1. **Product Manager** - Pesquisa de mercado, análise competitiva, 30+ fontes
+2. **QA Lead** - Validação e testes de 100% do ecossistema
+3. **DevOps** - Monitoramento de infraestrutura, logs, troubleshooting
+4. **Tech Lead** - Garantia de qualidade, dependências, arquitetura
+
+### Quando Invocar
+
+**Use o PM Expert para:**
+
+| Tarefa | Descrição |
+|--------|-----------|
+| Validação 100% | Testar frontend (12 páginas), backend (10 controllers), infra (13 containers) |
+| Pesquisa de Mercado | Consultar 30+ fontes de dados financeiros |
+| Testes E2E Massivos | Usar Playwright + Chrome DevTools + A11y MCPs em paralelo |
+| Análise de Concorrentes | Pesquisar Fundamentei, StatusInvest, TradingView, etc. |
+| Troubleshooting | Investigar bugs, gaps, erros com logs e traces |
+| Gestão de Dependências | Verificar npm/pip outdated, vulnerabilidades |
+| Auditorias | Validação completa de arquitetura e código |
+
+### Como Invocar
+
+```bash
+Use the pm-expert to validate 100% of the ecosystem and report all gaps
+```
+
+ou
+
+```bash
+Use the pm-expert to research competitors and create improvement plan
+```
+
+### Ferramentas Disponíveis
+
+O PM Expert tem acesso a:
+
+- **Read, Edit, Write, Glob, Grep, Bash** - Operações de arquivo
+- **WebFetch, WebSearch** - Pesquisa web
+- **Task** - Lançar sub-agentes em paralelo
+- **mcp__playwright__*** - Testes E2E
+- **mcp__chrome-devtools__*** - Debug de browser
+- **mcp__a11y__*** - Testes de acessibilidade
+- **mcp__sequential-thinking__*** - Análise profunda
+- **mcp__react-context__*** - Debug de componentes React
+
+### Workflow do PM Expert
+
+```text
+1. Ler documentação crítica (CLAUDE.md, ARCHITECTURE.md)
+   ↓
+2. Verificar builds (tsc --noEmit, npm run build)
+   ↓
+3. Testar Frontend com MCP Triplo
+   - Playwright: navegação + snapshot
+   - Chrome DevTools: console + network
+   - A11y: WCAG 2.1 AA
+   ↓
+4. Testar Backend
+   - Health check
+   - Endpoints autenticados
+   - Queue jobs
+   ↓
+5. Verificar Infraestrutura
+   - Docker containers
+   - Conectividade
+   - Logs
+   ↓
+6. Documentar Findings
+   - Gaps encontrados
+   - Screenshots de evidência
+   - Atualizar KNOWN-ISSUES.md
+```
+
+### Quality Standards
+
+**Zero Tolerance:**
+
+- 0 erros TypeScript (frontend + backend)
+- 0 falhas de build
+- 0 erros críticos no console
+- 0 requests falhando (não-auth)
+
+**Cross-Validation:**
+
+- Mínimo 3 fontes por data point
+- Threshold de discrepância: 10%
+- Score de confiança calculado
+
+### Documentação
+
+- **Definição:** `.claude/agents/pm-expert.md`
+- **Guia de Uso:** `docs/PM_AGENT_GUIDE.md`
+- **Checklist:** `docs/VALIDATION_CHECKLIST.md`
+
+---
+
 ## Additional Documentation
 
 ### Core Documentation (Raiz do Projeto)

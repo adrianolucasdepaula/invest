@@ -11618,6 +11618,30 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 - ✅ FASE 100: Enable Economic Data Scrapers - 100% COMPLETO (2025-12-11)
 - ✅ FASE 100.1: Code Review Fixes for Economic Scrapers - 100% COMPLETO (2025-12-12)
 
+### WHEEL Strategy Implementation (FASE 101-106)
+
+| Fase | Descrição | Status | Data |
+|------|-----------|--------|------|
+| **FASE 101** | Corrigir opcoes_scraper.py (column-index mapping) | ✅ 100% | 2025-12-13 |
+| **FASE 102** | Criar módulo WHEEL backend (entities, DTOs) | ✅ 100% | 2025-12-13 |
+| **FASE 103** | WheelService - 15 endpoints REST | ✅ 100% | 2025-12-13 |
+| **FASE 104** | Integração Tesouro Selic (cash yield) | ✅ 100% | 2025-12-13 |
+| **FASE 105** | Frontend Dashboard WHEEL | ✅ 100% | 2025-12-13 |
+| **FASE 106** | Code Review Fixes + Documentation | ✅ 100% | 2025-12-13 |
+
+**Funcionalidades Implementadas:**
+- Seleção de candidatos por critérios fundamentalistas (ROE, DY, Dív/EBITDA)
+- Recomendações de PUT e CALL cobertas com scoring
+- Cronograma semanal de distribuição de capital
+- Cálculo de rendimento Tesouro Selic (252 dias úteis BR)
+- Dashboard completo com candidatos, estratégias e calculadora
+- Tracking de trades com P&L realizado e não realizado
+
+**Arquivos Criados:**
+- `backend/src/api/wheel/` (module, service, controller, dto, entities)
+- `frontend/src/app/(dashboard)/wheel/` (page, [id]/page)
+- `frontend/src/lib/hooks/use-wheel.ts`
+
 ### Fases Planejadas
 
 Todas as fases planejadas foram implementadas!
@@ -11639,11 +11663,12 @@ Sistema em estado de manutenção e evolução contínua.
 > **Nota:** FASE 84 concluída em 2025-12-09
 > **Nota:** FASE 100 concluída em 2025-12-11 (Economic Data Scrapers: ANBIMA, FRED, IPEADATA)
 > **Nota:** FASE 100.1 concluída em 2025-12-12 (Code Review: bare except fixes, error handling improvements)
+> **Nota:** FASE 101-106 concluídas em 2025-12-13 (WHEEL Strategy Implementation)
 
 ---
 
-**Ultima Atualizacao:** 2025-12-12
-**Total de Fases:** 105 completas (incluindo sub-fases)
-**Versao:** 1.15.0
+**Ultima Atualizacao:** 2025-12-13
+**Total de Fases:** 111 completas (incluindo sub-fases)
+**Versao:** 1.16.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

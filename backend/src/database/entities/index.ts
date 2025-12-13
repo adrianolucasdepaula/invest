@@ -50,3 +50,16 @@ export {
 } from './discrepancy-resolution.entity';
 // FASE 93 - Cross-Validation Configuration
 export { CrossValidationConfig } from './cross-validation-config.entity';
+// FASE 101 - WHEEL Strategy
+export {
+  WheelStrategy,
+  WheelPhase,
+  MarketTrend,
+  WheelStrategyStatus,
+  WheelConfig,
+} from './wheel-strategy.entity';
+export {
+  WheelTrade,
+  WheelTradeType,
+  WheelTradeStatus,
+} from './wheel-trade.entity';

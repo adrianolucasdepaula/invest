@@ -688,6 +688,151 @@ class ApiClient {
       return response.data;
     },
   };
+
+  // ========================================
+  // FASE 101: WHEEL Strategy API
+  // ========================================
+
+  // Get WHEEL candidates (filtered by fundamental + options criteria)
+  async getWheelCandidates(params?: {
+    minROE?: number;
+    minDividendYield?: number;
+    maxDividaEbitda?: number;
+    minIVRank?: number;
+    page?: number;
+    limit?: number;
+  }) {
+    const response = await this.client.get('/wheel/candidates', { params });
+    return response.data;
+  }
+
+  // Get user's WHEEL strategies
+  async getWheelStrategies() {
+    const response = await this.client.get('/wheel/strategies');
+    return response.data;
+  }
+
+  // Get specific WHEEL strategy
+  async getWheelStrategy(id: string) {
+    const response = await this.client.get(`/wheel/strategies/${id}`);
+    return response.data;
+  }
+
+  // Create new WHEEL strategy
+  async createWheelStrategy(data: {
+    assetId: string;
+    notional: number;
+    name?: string;
+    description?: string;
+    marketTrend?: 'bullish' | 'bearish' | 'neutral';
+    config?: Record<string, any>;
+  }) {
+    const response = await this.client.post('/wheel/strategies', data);
+    return response.data;
+  }
+
+  // Update WHEEL strategy
+  async updateWheelStrategy(id: string, data: {
+    name?: string;
+    description?: string;
+    status?: 'active' | 'paused' | 'closed';
+    phase?: 'selling_puts' | 'holding_shares' | 'selling_calls';
+    marketTrend?: 'bullish' | 'bearish' | 'neutral';
+    allocatedCapital?: number;
+    config?: Record<string, any>;
+  }) {
+    const response = await this.client.put(`/wheel/strategies/${id}`, data);
+    return response.data;
+  }
+
+  // Delete WHEEL strategy
+  async deleteWheelStrategy(id: string) {
+    const response = await this.client.delete(`/wheel/strategies/${id}`);
+    return response.data;
+  }
+
+  // Get PUT recommendations for strategy
+  async getWheelPutRecommendations(strategyId: string) {
+    const response = await this.client.get(`/wheel/strategies/${strategyId}/put-recommendations`);
+    return response.data;
+  }
+
+  // Get CALL recommendations for strategy
+  async getWheelCallRecommendations(strategyId: string) {
+    const response = await this.client.get(`/wheel/strategies/${strategyId}/call-recommendations`);
+    return response.data;
+  }
+
+  // Get weekly PUT distribution schedule
+  async getWheelWeeklySchedule(strategyId: string) {
+    const response = await this.client.get(`/wheel/strategies/${strategyId}/weekly-schedule`);
+    return response.data;
+  }
+
+  // Get strategy trades
+  async getWheelTrades(strategyId: string) {
+    const response = await this.client.get(`/wheel/strategies/${strategyId}/trades`);
+    return response.data;
+  }
+
+  // Create new trade
+  async createWheelTrade(data: {
+    strategyId: string;
+    tradeType: 'sell_put' | 'sell_call' | 'buy_put' | 'buy_call' | 'exercise_put' | 'exercise_call';
+    optionSymbol: string;
+    underlyingTicker: string;
+    optionType: string;
+    strike: number;
+    expiration: string;
+    contracts: number;
+    entryPrice: number;
+    underlyingPriceAtEntry: number;
+    delta?: number;
+    gamma?: number;
+    theta?: number;
+    vega?: number;
+    ivAtEntry?: number;
+    ivRankAtEntry?: number;
+    distributionWeek?: number;
+    notes?: string;
+  }) {
+    const response = await this.client.post('/wheel/trades', data);
+    return response.data;
+  }
+
+  // Close trade
+  async closeWheelTrade(tradeId: string, data: {
+    exitPrice: number;
+    underlyingPriceAtExit: number;
+    status: 'closed' | 'exercised' | 'expired';
+    commission?: number;
+    b3Fees?: number;
+    notes?: string;
+  }) {
+    const response = await this.client.put(`/wheel/trades/${tradeId}/close`, data);
+    return response.data;
+  }
+
+  // Get strategy analytics (P&L)
+  async getWheelAnalytics(strategyId: string) {
+    const response = await this.client.get(`/wheel/strategies/${strategyId}/analytics`);
+    return response.data;
+  }
+
+  // Get strategy cash yield projection (Tesouro Selic)
+  async getWheelCashYield(strategyId: string, days?: number) {
+    const params = days ? { days } : {};
+    const response = await this.client.get(`/wheel/strategies/${strategyId}/cash-yield`, { params });
+    return response.data;
+  }
+
+  // Calculate cash yield for any amount
+  async calculateCashYield(principal: number, days?: number) {
+    const params: any = { principal };
+    if (days) params.days = days;
+    const response = await this.client.get('/wheel/cash-yield', { params });
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();

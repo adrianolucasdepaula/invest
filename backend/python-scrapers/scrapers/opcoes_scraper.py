@@ -1,10 +1,29 @@
 # MIGRATED TO PLAYWRIGHT - 2025-12-04
+# FIXED COLUMN-INDEX MAPPING - 2025-12-13
 """
 Opcoes.net.br Scraper - Análise de opções
 Fonte: https://opcoes.net.br/
 Requer login com credenciais específicas
 
 OPTIMIZED: Uses Playwright for browser automation + BeautifulSoup for parsing
+
+2025-12-13 FIX (WHEEL Strategy Support):
+- FIXED: _parse_options_table() now uses COLUMN-INDEX MAPPING instead of sequential parsing
+- ADDED: Greeks extraction (Delta, Gamma, Theta, Vega) from columns 13-17
+- ADDED: Individual IV extraction from column 12
+- ADDED: Volume extraction from column 10
+- ADDED: Open Interest calculation from columns 19-21 (Coberto + Travado + Descob)
+- ADDED: Expiration date extraction from checkboxes
+- IMPROVED: IV Rank extraction from page header (general, CALLs, PUTs)
+- IMPROVED: Historical Volatility and Percentile extraction
+
+Column Structure (validated via Playwright 2025-12-13):
+  0: Ticker, 1: Tipo, 2: F.M., 3: Mod., 4: Strike, 5: A/I/OTM, 6: Dist.%,
+  7: Último, 8: Var.%, 9: Data/Hora, 10: Núm.Neg., 11: Vol.Fin, 12: Vol.Impl%,
+  13: Delta, 14: Gamma, 15: Theta$, 16: Theta%, 17: Vega, 18: IQ,
+  19: Coberto, 20: Travado, 21: Descob., 22: Tit., 23: Lanç.
+
+This scraper is now aligned with the TypeScript version (opcoes.scraper.ts) for consistency.
 """
 import asyncio
 import json
@@ -24,16 +43,25 @@ class OpcoesNetScraper(BaseScraper):
     Scraper para análise de opções do Opcoes.net.br
 
     MIGRATED TO PLAYWRIGHT - Uses Playwright for browser automation
+    FIXED 2025-12-13 - Column-index mapping for Greeks extraction
 
     REQUER LOGIN com credenciais específicas
 
-    Dados extraídos:
-    - Preços de opções
-    - Volatilidade implícita
-    - IV Rank
-    - Vencimentos
-    - Greeks (Delta, Gamma, Theta, Vega)
-    - Prêmios
+    Dados extraídos (2025-12-13 COMPLETE):
+    - Preços de opções (strike, last, bid, ask)
+    - Volatilidade implícita individual (column 12)
+    - IV Rank (general, CALLs, PUTs) - from page header
+    - IV Percentile - from page header
+    - Historical Volatility - from page header
+    - Vencimentos (expiration dates)
+    - Greeks COMPLETOS:
+      * Delta (column 13) - CRÍTICO para WHEEL (delta 15)
+      * Gamma (column 14)
+      * Theta (column 15) - em R$
+      * Vega (column 17)
+    - Volume (column 10)
+    - Open Interest (calculated from columns 19-21)
+    - Moneyness (ATM/ITM/OTM)
     """
 
     BASE_URL = "https://opcoes.net.br"
@@ -307,6 +335,7 @@ class OpcoesNetScraper(BaseScraper):
         Extract options data from page
 
         OPTIMIZED: Uses BeautifulSoup for local parsing
+        2025-12-13 IMPROVED: Better IV Rank extraction from header, expiration date detection
         """
         try:
             soup = BeautifulSoup(html_content, 'html.parser')
@@ -314,44 +343,55 @@ class OpcoesNetScraper(BaseScraper):
             data = {
                 "ticker": ticker.upper(),
                 "underlying_price": None,
-                "iv_rank": None,  # Implied Volatility Rank
+                "historical_volatility": None,
+                "iv_rank": None,  # Implied Volatility Rank (general)
                 "iv_percentile": None,
+                "iv_rank_calls": None,
+                "iv_percentile_calls": None,
+                "iv_rank_puts": None,
+                "iv_percentile_puts": None,
+                "selected_expiration": None,
                 "options_chain": [],
                 "scraped_at": datetime.now().isoformat(),
             }
 
-            # Underlying price
-            price_selectors = [
-                ".underlying-price",
-                ".stock-price",
-                "[data-field='price']",
-            ]
+            # Extract underlying price
+            data["underlying_price"] = self._extract_underlying_price(soup)
 
-            for selector in price_selectors:
-                price_elem = soup.select_one(selector)
-                if price_elem:
-                    price_text = price_elem.get_text().strip().replace("R$", "").replace(",", ".")
-                    try:
-                        data["underlying_price"] = float(price_text)
-                        break
-                    except:
-                        continue
+            # Extract IV Rank and volatility data from page header
+            # Pattern: "IV Rank: 26,3%" or "Percentil: 59,0%"
+            page_text = soup.get_text()
 
-            # IV Rank
-            iv_selectors = [
-                ".iv-rank",
-                "[data-field='iv-rank']",
-            ]
+            # Historical Volatility
+            hv_match = re.search(r'Volatilidade\s+Hist[óo]rica[:\s]+(\d+[,.]?\d*)', page_text, re.IGNORECASE)
+            if hv_match:
+                data["historical_volatility"] = self._parse_number(hv_match.group(1))
 
-            for selector in iv_selectors:
-                iv_elem = soup.select_one(selector)
-                if iv_elem:
-                    iv_text = iv_elem.get_text().strip().replace("%", "")
-                    try:
-                        data["iv_rank"] = float(iv_text)
-                        break
-                    except:
-                        continue
+            # General IV Rank (from header)
+            iv_rank_match = re.search(r'IV\s*Rank[:\s]+(\d+[,.]?\d*)\s*%?', page_text, re.IGNORECASE)
+            if iv_rank_match:
+                data["iv_rank"] = self._parse_number(iv_rank_match.group(1))
+
+            # General Percentile
+            percentile_match = re.search(r'Percentil[:\s]+(\d+[,.]?\d*)\s*%?', page_text, re.IGNORECASE)
+            if percentile_match:
+                data["iv_percentile"] = self._parse_number(percentile_match.group(1))
+
+            # IV Rank for CALLs
+            iv_calls_match = re.search(r'Vol\.\s*Impl[íi]cita\s+CALLs?[:\s]+[\d,.]+'
+                                       r'.*?IV\s*Rank[:\s]+(\d+[,.]?\d*)', page_text, re.IGNORECASE)
+            if iv_calls_match:
+                data["iv_rank_calls"] = self._parse_number(iv_calls_match.group(1))
+
+            # IV Rank for PUTs
+            iv_puts_match = re.search(r'Vol\.\s*Impl[íi]cita\s+PUTs?[:\s]+[\d,.]+'
+                                      r'.*?IV\s*Rank[:\s]+(\d+[,.]?\d*)', page_text, re.IGNORECASE)
+            if iv_puts_match:
+                data["iv_rank_puts"] = self._parse_number(iv_puts_match.group(1))
+
+            # Extract selected expiration date from checkboxes/radio buttons
+            expiration_date = self._extract_selected_expiration(soup)
+            data["selected_expiration"] = expiration_date
 
             # Options chain (calls and puts)
             tables = soup.select("table")
@@ -360,82 +400,201 @@ class OpcoesNetScraper(BaseScraper):
                 headers = table.select("th")
                 header_text = " ".join([h.get_text().lower() for h in headers])
 
-                if "strike" in header_text or "vencimento" in header_text or "prêmio" in header_text:
-                    options = self._parse_options_table(table)
+                # Look for options tables
+                if any(keyword in header_text for keyword in ["strike", "ticker", "delta", "theta", "vega"]):
+                    options = self._parse_options_table(table, expiration_date)
                     data["options_chain"].extend(options)
 
-            logger.debug(f"Extracted Opcoes.net data for {ticker}: {len(data['options_chain'])} options")
+            # Log extraction summary
+            calls_count = len([o for o in data["options_chain"] if o.get("type") == "CALL"])
+            puts_count = len([o for o in data["options_chain"] if o.get("type") == "PUT"])
+            greeks_count = len([o for o in data["options_chain"] if o.get("delta") is not None])
+
+            logger.info(
+                f"Extracted opcoes.net data for {ticker}: "
+                f"{len(data['options_chain'])} options ({calls_count} CALLs, {puts_count} PUTs), "
+                f"{greeks_count} with Greeks, IV Rank={data['iv_rank']}%"
+            )
+
             return data
 
         except Exception as e:
             logger.error(f"Error in _extract_data: {e}")
             return None
 
-    def _parse_options_table(self, table) -> List[Dict[str, Any]]:
-        """Parse options chain table using BeautifulSoup"""
+    def _extract_underlying_price(self, soup: BeautifulSoup) -> Optional[float]:
+        """Extract underlying asset price from page"""
+        # Try multiple selectors
+        price_selectors = [
+            ".underlying-price",
+            ".stock-price",
+            "[data-field='price']",
+            ".cotacao",
+            ".preco-ativo",
+        ]
+
+        for selector in price_selectors:
+            price_elem = soup.select_one(selector)
+            if price_elem:
+                price_text = price_elem.get_text().strip()
+                price_text = re.sub(r'[R$\s]', '', price_text).replace(",", ".")
+                try:
+                    return float(price_text)
+                except ValueError:
+                    continue
+
+        # Try to find price in text pattern
+        page_text = soup.get_text()
+        price_match = re.search(r'R\$\s*(\d+[,.]?\d*)', page_text)
+        if price_match:
+            return self._parse_number(price_match.group(1))
+
+        return None
+
+    def _extract_selected_expiration(self, soup: BeautifulSoup) -> Optional[str]:
+        """Extract the currently selected expiration date from checkboxes/radios"""
+        # Look for checked checkbox or selected radio
+        checked_selectors = [
+            "input[type='checkbox']:checked",
+            "input[type='radio']:checked",
+            ".expiration-selected",
+            ".vencimento-selecionado",
+        ]
+
+        for selector in checked_selectors:
+            checked = soup.select_one(selector)
+            if checked:
+                # Try to get associated label or value
+                label = checked.find_parent("label")
+                if label:
+                    return label.get_text().strip()
+                if checked.get("value"):
+                    return checked.get("value")
+
+        # Look for expiration in text (common format: DD/MM/YYYY)
+        page_text = soup.get_text()
+        exp_match = re.search(r'Vencimento[:\s]+(\d{2}/\d{2}/\d{4})', page_text, re.IGNORECASE)
+        if exp_match:
+            return exp_match.group(1)
+
+        return None
+
+    def _parse_options_table(self, table, expiration_date: str = None) -> List[Dict[str, Any]]:
+        """
+        Parse options chain table using COLUMN-INDEX MAPPING
+
+        2025-12-13 FIXED: Using explicit column indices (aligned with TypeScript opcoes.scraper.ts)
+
+        Column Structure from opcoes.net.br (validated via Playwright 2025-12-13):
+        - 0: Ticker (e.g., PETRA326)
+        - 1: Tipo (CALL/PUT)
+        - 2: F.M. (Formador de Mercado)
+        - 3: Mod. (Modalidade A/E)
+        - 4: Strike
+        - 5: A/I/OTM (ATM/ITM/OTM)
+        - 6: Dist. (%) - Distance from spot
+        - 7: Último (Last price)
+        - 8: Var. (%) - Daily variation
+        - 9: Data/Hora - Last trade timestamp
+        - 10: Núm. de Neg. (Volume/Trades)
+        - 11: Vol. Financeiro (Financial Volume)
+        - 12: Vol. Impl. (%) - Implied Volatility
+        - 13: Delta
+        - 14: Gamma
+        - 15: Theta ($)
+        - 16: Theta (%)
+        - 17: Vega
+        - 18: IQ
+        - 19: Coberto (Covered OI)
+        - 20: Travado (Locked OI)
+        - 21: Descob. (Uncovered OI)
+        - 22: Tit. (Holders)
+        - 23: Lanç. (Writers)
+        """
         options = []
 
         try:
             rows = table.select("tr")
 
-            for row in rows[1:]:  # Skip header
+            for row in rows[1:]:  # Skip header row
                 cells = row.select("td")
 
-                if len(cells) >= 3:
-                    try:
-                        option = {
-                            "symbol": None,
-                            "type": None,  # CALL or PUT
-                            "strike": None,
-                            "expiration": None,
-                            "bid": None,
-                            "ask": None,
-                            "last": None,
-                            "volume": None,
-                            "open_interest": None,
-                            "iv": None,  # Implied Volatility
-                            "delta": None,
-                            "gamma": None,
-                            "theta": None,
-                            "vega": None,
-                        }
+                # Valid option rows have at least 10 columns
+                if len(cells) < 10:
+                    continue
 
-                        cell_texts = [cell.get_text().strip() for cell in cells]
+                try:
+                    # Get cell texts
+                    cell_texts = [cell.get_text().strip() for cell in cells]
 
-                        # Try to identify and parse each field
-                        for i, text in enumerate(cell_texts):
-                            if not text or text == "-":
-                                continue
+                    # Column 0: Ticker/Symbol
+                    ticker_text = cell_texts[0] if len(cell_texts) > 0 else ""
 
-                            # Symbol
-                            if i == 0 and len(text) >= 4:
-                                option["symbol"] = text
-                                # Determine type from symbol
-                                if re.search(r'[A-Z]\d+$', text):
-                                    option["type"] = "CALL" if text[-3].isalpha() and text[-3] < 'N' else "PUT"
-
-                            # Numeric values
-                            num = self._parse_number(text)
-                            if num is not None:
-                                if option["strike"] is None:
-                                    option["strike"] = num
-                                elif option["last"] is None:
-                                    option["last"] = num
-                                elif option["bid"] is None:
-                                    option["bid"] = num
-                                elif option["ask"] is None:
-                                    option["ask"] = num
-
-                        # Only add if has minimum data
-                        if option["symbol"] and option["strike"]:
-                            options.append(option)
-
-                    except Exception as e:
-                        logger.debug(f"Error parsing option row: {e}")
+                    # Skip header rows or empty rows
+                    if not ticker_text or 'Ticker' in ticker_text or len(ticker_text) < 4:
                         continue
 
+                    # Column 1: Type (CALL/PUT)
+                    tipo_text = cell_texts[1].upper() if len(cell_texts) > 1 else ""
+                    if tipo_text == "CALL":
+                        option_type = "CALL"
+                    elif tipo_text == "PUT":
+                        option_type = "PUT"
+                    else:
+                        # Try to determine from symbol (letters A-L = CALL, M-X = PUT)
+                        if re.search(r'[A-L]\d+$', ticker_text):
+                            option_type = "CALL"
+                        elif re.search(r'[M-X]\d+$', ticker_text):
+                            option_type = "PUT"
+                        else:
+                            continue  # Skip if can't determine type
+
+                    # Build option dictionary using COLUMN-INDEX MAPPING
+                    option = {
+                        "symbol": ticker_text,
+                        "type": option_type,
+                        "strike": self._parse_number(cell_texts[4]) if len(cell_texts) > 4 else None,
+                        "expiration": expiration_date,
+                        "moneyness": cell_texts[5] if len(cell_texts) > 5 else None,  # ATM/ITM/OTM
+                        "distance_pct": self._parse_number(cell_texts[6]) if len(cell_texts) > 6 else None,
+                        "last": self._parse_number(cell_texts[7]) if len(cell_texts) > 7 else None,
+                        "variation_pct": self._parse_number(cell_texts[8]) if len(cell_texts) > 8 else None,
+                        "last_trade_time": cell_texts[9] if len(cell_texts) > 9 else None,
+                        "volume": self._parse_number(cell_texts[10]) if len(cell_texts) > 10 else None,
+                        "financial_volume": self._parse_number(cell_texts[11]) if len(cell_texts) > 11 else None,
+                        "iv": self._parse_number(cell_texts[12]) if len(cell_texts) > 12 else None,
+                        "delta": self._parse_number(cell_texts[13]) if len(cell_texts) > 13 else None,
+                        "gamma": self._parse_number(cell_texts[14]) if len(cell_texts) > 14 else None,
+                        "theta": self._parse_number(cell_texts[15]) if len(cell_texts) > 15 else None,
+                        "theta_pct": self._parse_number(cell_texts[16]) if len(cell_texts) > 16 else None,
+                        "vega": self._parse_number(cell_texts[17]) if len(cell_texts) > 17 else None,
+                        "bid": None,  # Not directly available in this table format
+                        "ask": None,  # Not directly available in this table format
+                        "open_interest": None,  # Will be calculated below
+                    }
+
+                    # Calculate Open Interest from Coberto + Travado + Descob columns (19, 20, 21)
+                    if len(cell_texts) > 21:
+                        coberto = self._parse_number(cell_texts[19]) or 0
+                        travado = self._parse_number(cell_texts[20]) or 0
+                        descob = self._parse_number(cell_texts[21]) or 0
+                        option["open_interest"] = int(coberto + travado + descob)
+
+                    # Only add if has minimum required data (symbol and strike)
+                    if option["symbol"] and option["strike"]:
+                        options.append(option)
+                        logger.debug(
+                            f"Parsed option: {option['symbol']} "
+                            f"Strike={option['strike']} Delta={option['delta']} "
+                            f"IV={option['iv']} Volume={option['volume']}"
+                        )
+
+                except Exception as e:
+                    logger.debug(f"Error parsing option row: {e}")
+                    continue
+
         except Exception as e:
-            logger.debug(f"Error parsing options table: {e}")
+            logger.error(f"Error parsing options table: {e}")
 
         return options
 
@@ -459,17 +618,59 @@ class OpcoesNetScraper(BaseScraper):
 
 # Test function
 async def test_opcoes():
-    """Test Opcoes.net.br scraper"""
+    """Test Opcoes.net.br scraper - IMPROVED 2025-12-13"""
     scraper = OpcoesNetScraper()
 
     try:
         result = await scraper.scrape("PETR")
 
         if result.success:
-            print("✅ Success!")
-            print(f"Underlying price: R$ {result.data.get('underlying_price')}")
-            print(f"IV Rank: {result.data.get('iv_rank')}%")
-            print(f"Options found: {len(result.data['options_chain'])}")
+            print("=" * 60)
+            print("✅ OPCOES.NET.BR SCRAPER TEST - SUCCESS")
+            print("=" * 60)
+
+            # Basic info
+            print(f"\n📊 TICKER: {result.data.get('ticker')}")
+            print(f"💰 Underlying Price: R$ {result.data.get('underlying_price')}")
+            print(f"📅 Selected Expiration: {result.data.get('selected_expiration')}")
+
+            # Volatility data
+            print(f"\n📈 VOLATILITY DATA:")
+            print(f"   Historical Volatility: {result.data.get('historical_volatility')}%")
+            print(f"   IV Rank (General): {result.data.get('iv_rank')}%")
+            print(f"   IV Percentile: {result.data.get('iv_percentile')}%")
+            print(f"   IV Rank (CALLs): {result.data.get('iv_rank_calls')}%")
+            print(f"   IV Rank (PUTs): {result.data.get('iv_rank_puts')}%")
+
+            # Options chain summary
+            options = result.data.get('options_chain', [])
+            calls = [o for o in options if o.get('type') == 'CALL']
+            puts = [o for o in options if o.get('type') == 'PUT']
+            with_greeks = [o for o in options if o.get('delta') is not None]
+
+            print(f"\n🔗 OPTIONS CHAIN:")
+            print(f"   Total Options: {len(options)}")
+            print(f"   CALLs: {len(calls)}")
+            print(f"   PUTs: {len(puts)}")
+            print(f"   With Greeks: {len(with_greeks)}")
+
+            # Sample options with Greeks
+            if with_greeks:
+                print(f"\n📋 SAMPLE OPTIONS WITH GREEKS (first 5):")
+                for opt in with_greeks[:5]:
+                    print(f"   {opt['symbol']} | {opt['type']} | Strike={opt['strike']} | "
+                          f"Delta={opt['delta']} | Gamma={opt['gamma']} | "
+                          f"Theta={opt['theta']} | Vega={opt['vega']} | IV={opt['iv']}%")
+
+            # Delta 15 candidates (for WHEEL strategy)
+            delta_15_puts = [o for o in puts if o.get('delta') and abs(o['delta']) <= 0.20 and abs(o['delta']) >= 0.10]
+            if delta_15_puts:
+                print(f"\n🎯 DELTA ~15 PUT CANDIDATES (for WHEEL):")
+                for opt in delta_15_puts[:5]:
+                    print(f"   {opt['symbol']} | Strike={opt['strike']} | "
+                          f"Delta={opt['delta']} | Premium={opt['last']} | IV={opt['iv']}%")
+
+            print("\n" + "=" * 60)
         else:
             print(f"❌ Error: {result.error}")
 
