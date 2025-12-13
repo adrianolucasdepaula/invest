@@ -78,6 +78,7 @@ export interface AssetUpdateLogEntry {
 
 export interface AssetBulkUpdateState {
   isRunning: boolean;
+  wasCancelled: boolean; // ✅ FIX: Flag para evitar polling restaurar estado após cancel
   currentTicker: string | null;
   progress: number; // 0-100
   current: number;
@@ -86,6 +87,9 @@ export interface AssetBulkUpdateState {
   failedCount: number;
   logs: AssetUpdateLogEntry[]; // ✅ NEW: Array de logs para exibição
 }
+
+// ✅ FIX: Limite de logs para evitar memory leak
+const MAX_LOG_ENTRIES = 1000;
 
 /**
  * Hook para gerenciar conexão WebSocket e eventos de atualização em massa de ativos
@@ -115,13 +119,14 @@ export function useAssetBulkUpdate(options?: {
   const [isConnected, setIsConnected] = useState(false);
   const [state, setState] = useState<AssetBulkUpdateState>({
     isRunning: false,
+    wasCancelled: false, // ✅ FIX: Inicializar flag de cancelamento
     currentTicker: null,
     progress: 0,
     current: 0,
     total: 0,
     successCount: 0,
     failedCount: 0,
-    logs: [], // ✅ NEW: Initialize empty logs array
+    logs: [],
   });
 
   const socketRef = useRef<Socket | null>(null);
@@ -187,6 +192,12 @@ export function useAssetBulkUpdate(options?: {
           const currentTicker = queueStats.jobs?.active?.[0]?.data?.ticker || null;
 
           setState((prev) => {
+            // ✅ FIX: Não restaurar se foi cancelado recentemente
+            if (prev.wasCancelled) {
+              console.log('[ASSET BULK WS] Ignorando jobs pendentes - cancelamento ativo');
+              return prev;
+            }
+
             // ✅ FIX FASE 86: Auto-restaurar estado quando há jobs pendentes
             // Isso permite que o card de progresso (com botões Cancelar/Pausar) apareça após refresh
             if (!prev.isRunning) {
@@ -200,6 +211,7 @@ export function useAssetBulkUpdate(options?: {
               return {
                 ...prev,
                 isRunning: true, // ← CRÍTICO: Ativa o card de progresso com botões Cancelar/Pausar
+                wasCancelled: false, // ✅ FIX: Limpar flag ao restaurar
                 currentTicker,
                 total: estimatedTotal > 0 ? estimatedTotal : totalPending,
                 current: completedCount + failedCount,
@@ -236,14 +248,15 @@ export function useAssetBulkUpdate(options?: {
             };
           });
         } else {
-          // No pending jobs - if we were running, mark as completed
+          // No pending jobs - limpar estados
           setState((prev) => {
-            if (prev.isRunning) {
-              console.log('[ASSET BULK WS] No pending jobs, marking as completed');
+            if (prev.isRunning || prev.wasCancelled) {
+              console.log('[ASSET BULK WS] No pending jobs, marking as completed and clearing cancel flag');
               return {
                 ...prev,
                 isRunning: false,
-                progress: 100,
+                wasCancelled: false, // ✅ FIX: Limpar flag quando fila esvazia
+                progress: prev.isRunning ? 100 : prev.progress,
               };
             }
             return prev;
@@ -313,6 +326,7 @@ export function useAssetBulkUpdate(options?: {
         console.log('[ASSET BULK WS] Batch update started:', data);
         setState({
           isRunning: true,
+          wasCancelled: false, // ✅ FIX: Limpar flag ao iniciar nova atualização
           currentTicker: null,
           progress: 0,
           current: 0,
@@ -473,6 +487,7 @@ export function useAssetBulkUpdate(options?: {
   const resetState = useCallback(() => {
     setState({
       isRunning: false,
+      wasCancelled: false, // ✅ FIX: Incluir flag de cancelamento
       currentTicker: null,
       progress: 0,
       current: 0,
@@ -493,10 +508,32 @@ export function useAssetBulkUpdate(options?: {
     }));
   }, []);
 
+  /**
+   * ✅ FIX: Cancelar atualização em andamento
+   * Define wasCancelled=true para impedir que polling restaure isRunning
+   */
+  const cancelUpdate = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      isRunning: false,
+      wasCancelled: true,
+      logs: [
+        ...prev.logs.slice(-(MAX_LOG_ENTRIES - 1)), // Manter limite de logs
+        {
+          timestamp: new Date(),
+          ticker: 'SYSTEM',
+          status: 'system' as const,
+          message: '⛔ Atualização cancelada pelo usuário',
+        },
+      ],
+    }));
+  }, []);
+
   return {
     isConnected,
     state,
     resetState,
-    clearLogs, // ✅ NEW: Export clearLogs function
+    clearLogs,
+    cancelUpdate, // ✅ FIX: Exportar função de cancelamento
   };
 }

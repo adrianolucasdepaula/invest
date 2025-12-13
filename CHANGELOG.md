@@ -7,6 +7,25 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **FIX: Cancel Button Race Condition - Página Assets (2025-12-13)**
+  - **Problema:** Botão "Cancelar" não funcionava corretamente - card de progresso reaparecia após ~10s
+  - **Root Cause:** Race condition entre cancel e polling (10s) que restaurava `isRunning=true`
+  - **Solução:**
+    - Adicionada flag `wasCancelled` ao estado do hook `useAssetBulkUpdate`
+    - Polling modificado para respeitar flag e não restaurar estado após cancel
+    - Função `cancelUpdate()` exportada do hook para reset imediato
+    - `MAX_LOG_ENTRIES = 1000` para prevenir memory leak
+  - **Arquivos Modificados:**
+    - `frontend/src/lib/hooks/useAssetBulkUpdate.ts`
+    - `frontend/src/app/(dashboard)/assets/page.tsx`
+  - **Validação:**
+    - TypeScript: 0 erros
+    - Build: Sucesso
+    - Code Review: Aprovado (PM Expert Agent)
+  - **Referência:** KNOWN-ISSUES.md #CANCEL_RACE
+
 ### Added
 
 - **FASE 6 (WHEEL): Code Review Fixes + Documentation - 100% COMPLETA (2025-12-13)**

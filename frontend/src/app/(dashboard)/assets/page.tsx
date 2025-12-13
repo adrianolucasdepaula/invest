@@ -61,7 +61,7 @@ export default function AssetsPage() {
   const { data: assets, isLoading, error, refetch } = useAssets();
 
   // WebSocket hook for bulk updates
-  const { state: bulkUpdateState, isConnected, clearLogs } = useAssetBulkUpdate({
+  const { state: bulkUpdateState, isConnected, clearLogs, cancelUpdate } = useAssetBulkUpdate({
     onUpdateComplete: () => {
       const successRate = bulkUpdateState.total > 0
         ? Math.round((bulkUpdateState.successCount / bulkUpdateState.total) * 100)
@@ -136,6 +136,10 @@ export default function AssetsPage() {
     setIsCancelling(true);
     try {
       const result = await api.cancelBulkUpdate();
+
+      // ✅ FIX: Resetar estado do hook imediatamente para evitar que polling restaure
+      cancelUpdate();
+
       toast({
         title: 'Atualização cancelada',
         description: result.message || 'Jobs pendentes foram removidos da fila.',

@@ -1,8 +1,8 @@
 # 🔍 KNOWN ISSUES - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-10
-**Versão:** 1.12.1
+**Última Atualização:** 2025-12-13
+**Versão:** 1.12.2
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -134,8 +134,9 @@ O Next.js 16 tentava processar esses arquivos como Pages Router, causando confli
 | #BUG5 | Broken DTO Validation (Sync Bulk) | 🔴 Crítica | 2025-11-25 | `CHANGELOG.md` v1.2.1 |
 | #EXIT137 | Exit Code 137 (SIGKILL) - Python Scrapers | 🔴 Crítica | 2025-11-28 | `ERROR_137_ANALYSIS.md`, `FASE_ATUAL_SUMMARY.md` |
 | #QUEUE_PAUSED | BullMQ Queue Pausada - Botão "Atualizar Todos" | 🔴 Crítica | 2025-12-05 | `PLANO_DIAGNOSTICO_ATUALIZAR_TODOS.md` |
+| #CANCEL_RACE | Cancel Button Race Condition - Página Assets | 🟡 Média | 2025-12-13 | `useAssetBulkUpdate.ts`, `page.tsx` |
 
-**Total Resolvidos:** 16 issues
+**Total Resolvidos:** 17 issues
 **Comportamento Normal:** 1 (não é bug, é comportamento esperado - Issue #7)
 **Taxa de Resolução:** 100% (15/15 issues reais)
 
@@ -356,6 +357,125 @@ Testado via Chrome DevTools MCP:
 
 - **Diagnóstico Completo:** `PLANO_DIAGNOSTICO_ATUALIZAR_TODOS.md`
 - **Endpoint Status:** `GET /api/v1/assets/bulk-update-status`
+
+---
+
+### Issue #CANCEL_RACE: Cancel Button Race Condition - Página Assets
+
+**Severidade:** 🟡 **MÉDIA**
+**Status:** ✅ **RESOLVIDO**
+**Data Identificado:** 2025-12-13
+**Data Resolução:** 2025-12-13
+**Tempo de Resolução:** ~3 horas (análise + implementação + code review)
+
+#### Sintomas
+
+- Botão "Cancelar" na página `/assets` não funcionava corretamente
+- Card de progresso desaparecia momentaneamente após clicar "Cancelar"
+- Card de progresso **reaparecia** após ~10 segundos
+- Toast "Atualização cancelada" aparecia, mas estado visual era inconsistente
+
+#### Root Cause Identificado
+
+**Causa Real:** Race condition entre cancel e polling.
+
+**Fluxo do Bug:**
+
+```
+1. Usuário clica "Cancelar"
+2. API cancela jobs WAITING na fila
+3. Jobs ACTIVE continuam (BullMQ não suporta abort)
+4. Frontend recebe sucesso, isRunning = false
+5. Polling (cada 10s) verifica fila
+6. Polling detecta jobs ativos pendentes
+7. Polling restaura isRunning = true  ← BUG!
+8. Card de progresso reaparece incorretamente
+```
+
+**Código Problemático (antes):**
+
+```typescript
+// checkQueueStatus - polling a cada 10s
+if (totalPending > 0) {
+  setState((prev) => {
+    if (!prev.isRunning) {
+      // Restaurava isRunning mesmo após cancel
+      return { ...prev, isRunning: true };
+    }
+    return prev;
+  });
+}
+```
+
+#### Correção Aplicada
+
+**1. Adicionada flag `wasCancelled` ao estado:**
+
+```typescript
+export interface AssetBulkUpdateState {
+  isRunning: boolean;
+  wasCancelled: boolean; // ← NOVO: Previne polling restaurar estado
+  // ... outros campos
+}
+```
+
+**2. Função `cancelUpdate()` exportada do hook:**
+
+```typescript
+const cancelUpdate = useCallback(() => {
+  setState((prev) => ({
+    ...prev,
+    isRunning: false,
+    wasCancelled: true,
+    logs: [...prev.logs, { message: '⛔ Atualização cancelada pelo usuário' }],
+  }));
+}, []);
+```
+
+**3. Polling modificado para respeitar flag:**
+
+```typescript
+if (totalPending > 0) {
+  setState((prev) => {
+    if (prev.wasCancelled) {
+      console.log('[ASSET BULK WS] Ignorando jobs pendentes - cancelamento ativo');
+      return prev; // NÃO restaura isRunning
+    }
+    // ... resto do código
+  });
+}
+```
+
+**4. Flag limpa automaticamente:**
+- Quando nova atualização inicia (`batch_update_started`)
+- Quando fila esvazia completamente
+
+#### Arquivos Modificados
+
+| Arquivo | Mudanças |
+|---------|----------|
+| `frontend/src/lib/hooks/useAssetBulkUpdate.ts` | +`wasCancelled`, +`cancelUpdate()`, +`MAX_LOG_ENTRIES`, polling fix |
+| `frontend/src/app/(dashboard)/assets/page.tsx` | Chamar `cancelUpdate()` após API success |
+
+#### Validação
+
+- ✅ TypeScript: 0 erros
+- ✅ Build: Sucesso
+- ✅ Code Review: Aprovado (PM Expert Agent)
+- ⏳ E2E: Pendente (Docker bloqueado)
+
+#### Lições Aprendidas
+
+1. **Polling pode causar race conditions** com operações de cancelamento
+2. **Flags de estado** são úteis para controlar comportamento assíncrono
+3. **Memory leaks** podem ocorrer com arrays ilimitados (adicionado `MAX_LOG_ENTRIES`)
+4. **Cleanup automático** é essencial (limpar flag quando condição muda)
+
+#### Referências
+
+- **Hook:** `frontend/src/lib/hooks/useAssetBulkUpdate.ts`
+- **Page:** `frontend/src/app/(dashboard)/assets/page.tsx`
+- **Plano:** `.claude/plans/generic-drifting-anchor.md`
 
 ---
 
@@ -652,17 +772,17 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 
 | Categoria | Quantidade | Taxa de Resolução |
 |-----------|-----------|------------------|
-| **Total de Issues Documentados** | 17 | - |
-| **Issues Resolvidos** | 16 | 100% |
-| **Issues Ativos (Em Aberto)** | 0 | 0% |
+| **Total de Issues Documentados** | 18 | - |
+| **Issues Resolvidos** | 17 | 100% |
+| **Issues Ativos (Em Aberto)** | 1 | - |
 | **Comportamento Normal (não é bug)** | 1 | N/A |
 
 ### Por Severidade
 
 | Severidade | Total | Resolvidos | Em Aberto |
 |-----------|-------|-----------|-----------|
-| 🔴 **Crítica** | 10 | 10 | 0 |
-| 🟡 **Média** | 5 | 5 | 0 |
+| 🔴 **Crítica** | 11 | 10 | 1 |
+| 🟡 **Média** | 6 | 6 | 0 |
 | 🟢 **Baixa** | 1 | 1 | 0 |
 
 ### Tempo Médio de Resolução
@@ -721,6 +841,6 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 
 ---
 
-**Última Atualização:** 2025-12-05
+**Última Atualização:** 2025-12-13
 **Próxima Revisão:** Conforme necessário
 **Responsável:** Claude Code (Opus 4.5)
