@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -20,7 +20,9 @@ import {
   type WeeklySchedule,
 } from '@/lib/hooks/use-wheel';
 import { useWheelRecommendationUpdates, useOptionExpirationAlerts } from '@/lib/hooks/use-option-prices';
+import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -65,6 +67,9 @@ import {
   PiggyBank,
   BarChart3,
   Percent,
+  Bell,
+  AlertTriangle,
+  X,
 } from 'lucide-react';
 
 export default function WheelStrategyDetailPage() {
@@ -96,6 +101,24 @@ export default function WheelStrategyDetailPage() {
   // FASE 110: Real-time option price updates - auto-invalidates recommendations on WebSocket events
   const { lastUpdate: realtimeUpdate } = useWheelRecommendationUpdates(strategyId);
   const { alerts: expirationAlerts, dismissAlert } = useOptionExpirationAlerts();
+
+  // Toast for notifications
+  const { toast } = useToast();
+
+  // FASE 110.1: Show toast notification when real-time recommendations update
+  useEffect(() => {
+    if (realtimeUpdate && strategy) {
+      toast({
+        title: 'Recomendações Atualizadas',
+        description: `${realtimeUpdate.recommendations.length} novas recomendações de ${realtimeUpdate.type} para ${realtimeUpdate.ticker}`,
+      });
+    }
+  }, [realtimeUpdate, strategy, toast]);
+
+  // Filter expiration alerts for this strategy's ticker
+  const strategyAlerts = strategy?.asset?.ticker
+    ? expirationAlerts.filter((a) => a.ticker === strategy.asset?.ticker)
+    : [];
 
   // Mutations
   const updateStrategy = useUpdateWheelStrategy();
@@ -278,6 +301,48 @@ export default function WheelStrategyDetailPage() {
           </Button>
         </div>
       </div>
+
+      {/* FASE 110.1: Expiration Alerts Banner */}
+      {strategyAlerts.length > 0 && (
+        <div className="space-y-2">
+          {strategyAlerts.map((alert) => (
+            <Alert
+              key={`${alert.optionTicker}-${alert.expiration}`}
+              variant={alert.daysToExpiration <= 3 ? 'destructive' : 'default'}
+              className="flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                {alert.daysToExpiration <= 3 ? (
+                  <AlertTriangle className="h-5 w-5" />
+                ) : (
+                  <Bell className="h-5 w-5" />
+                )}
+                <div>
+                  <AlertTitle className="mb-0">
+                    {alert.optionTicker} expira em {alert.daysToExpiration} dia(s)
+                  </AlertTitle>
+                  <AlertDescription>
+                    Strike R$ {alert.strike.toFixed(2)} - {alert.type} -{' '}
+                    {alert.inTheMoney ? (
+                      <span className="font-semibold text-yellow-600">ITM (In The Money)</span>
+                    ) : (
+                      <span className="text-green-600">OTM (Out of The Money)</span>
+                    )}
+                  </AlertDescription>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => dismissAlert(alert.optionTicker)}
+                className="h-8 w-8"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </Alert>
+          ))}
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-5">

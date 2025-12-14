@@ -111,7 +111,14 @@ class WebSocketService {
   private notifyListeners(event: string, data: any) {
     const callbacks = this.listeners.get(event);
     if (callbacks) {
-      callbacks.forEach((callback) => callback(data));
+      // FASE 110.1: Error isolation - prevent one bad callback from breaking others
+      callbacks.forEach((callback) => {
+        try {
+          callback(data);
+        } catch (error) {
+          console.error(`[WebSocket] Error in listener for "${event}":`, error);
+        }
+      });
     }
   }
 

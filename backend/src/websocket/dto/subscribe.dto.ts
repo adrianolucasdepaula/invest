@@ -18,7 +18,7 @@ export class SubscribeDto {
   @ArrayNotEmpty({ message: 'types array cannot be empty' })
   @IsEnum(SubscriptionType, {
     each: true,
-    message: 'type must be one of: prices, analysis, reports, portfolio',
+    message: 'type must be one of: prices, analysis, reports, portfolio, options',
   })
   types: SubscriptionType[];
 }

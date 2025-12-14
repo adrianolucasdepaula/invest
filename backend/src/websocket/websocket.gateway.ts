@@ -479,6 +479,7 @@ export class AppWebSocketGateway
 
   /**
    * Emit WHEEL recommendation update when option prices change
+   * FASE 110.1: Fixed security bug - now emits to strategy-specific room instead of broadcast
    */
   emitWheelRecommendationUpdate(
     strategyId: string,
@@ -496,14 +497,15 @@ export class AppWebSocketGateway
       }>;
     },
   ) {
-    // Broadcast to all clients (WHEEL updates are user-specific via strategyId)
-    this.server.emit('wheel_recommendation_update', {
+    // FASE 110.1: Use strategy-specific room to prevent data leak to other users
+    const roomName = `strategy:${strategyId}`;
+    this.server.to(roomName).emit('wheel_recommendation_update', {
       strategyId,
       ...data,
       timestamp: new Date(),
     });
     this.logger.log(
-      `[WS] WHEEL recommendation update: ${data.ticker} ${data.type} (${data.recommendations.length} recs)`,
+      `[WS] WHEEL recommendation update: ${data.ticker} ${data.type} (${data.recommendations.length} recs) -> room ${roomName}`,
     );
   }
 

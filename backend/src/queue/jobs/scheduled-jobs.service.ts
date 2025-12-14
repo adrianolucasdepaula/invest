@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThan } from 'typeorm';
 import { Asset, AssetType, News, OptionPrice, OptionStatus, OptionType } from '@database/entities';
 import { NewsCollectorsService } from '../../api/news/services/news-collectors.service';
 import { EconomicCalendarService } from '../../api/news/services/economic-calendar.service';
@@ -384,6 +384,7 @@ export class ScheduledJobsService {
 
   /**
    * Auto-expire past options (daily at midnight)
+   * FASE 110.1: Fixed bug - now expires ALL past options, not just today's
    */
   @Cron('0 0 * * *') // Midnight daily
   async autoExpireOptions() {
@@ -393,10 +394,11 @@ export class ScheduledJobsService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
+      // FASE 110.1: Use LessThan to expire ALL past options, not just today's
       const result = await this.optionPriceRepository.update(
         {
           status: OptionStatus.ACTIVE,
-          expirationDate: today,
+          expirationDate: LessThan(today),
         },
         { status: OptionStatus.EXPIRED },
       );
