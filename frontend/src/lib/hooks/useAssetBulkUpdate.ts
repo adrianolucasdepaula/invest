@@ -141,6 +141,10 @@ export function useAssetBulkUpdate(options?: {
   // ✅ FIX: Use ref for cancel flag to ensure immediate (synchronous) updates
   // setState is asynchronous and can cause race conditions with polling
   const wasCancelledRef = useRef<boolean>(false);
+  // ✅ FIX FASE 114.6: Use ref for individual update flag to prevent React state batching race condition
+  // When asset_update_started arrives, we set this ref SYNCHRONOUSLY before the batch_update_started
+  // handler can check it - this prevents cron job batch events from overwriting individual update state
+  const individualUpdateActiveRef = useRef<boolean>(false);
 
   // ✅ FIX: Use refs for callbacks to prevent reconnection on every render
   const onUpdateCompleteRef = useRef(options?.onUpdateComplete);
@@ -214,10 +218,19 @@ export function useAssetBulkUpdate(options?: {
               return prev;
             }
 
+            // ✅ FIX FASE 114: Detectar atualização individual após batch
+            // Se temos poucos jobs pendentes (1-5) mas o total anterior era maior (batch),
+            // isso indica uma NOVA atualização individual - resetar estado
+            const isNewIndividualUpdate = totalPending <= 5 && prev.total > totalPending && !prev.currentBatchId;
+
             // ✅ FIX FASE 86: Auto-restaurar estado quando há jobs pendentes
             // Isso permite que o card de progresso (com botões Cancelar/Pausar) apareça após refresh
-            if (!prev.isRunning) {
-              console.log(`[ASSET BULK WS] Restaurando estado: ${totalPending} jobs pendentes na fila`);
+            if (!prev.isRunning || isNewIndividualUpdate) {
+              if (isNewIndividualUpdate) {
+                console.log(`[ASSET BULK WS] Nova atualização individual detectada: ${totalPending} jobs (anterior: ${prev.total})`);
+              } else {
+                console.log(`[ASSET BULK WS] Restaurando estado: ${totalPending} jobs pendentes na fila`);
+              }
 
               // ✅ FIX: Usar totalPending como total quando detectamos jobs via polling
               // Isso corrige a discrepância quando usuário atualiza um único ativo
@@ -226,13 +239,21 @@ export function useAssetBulkUpdate(options?: {
                 ...prev,
                 isRunning: true, // ← CRÍTICO: Ativa o card de progresso com botões Cancelar/Pausar
                 wasCancelled: false, // ✅ FIX: Limpar flag ao restaurar
+                currentBatchId: null, // ✅ FIX FASE 114: Limpar batchId para atualização individual
                 currentTicker,
                 total: totalPending, // ✅ FIX: Usar jobs pendentes como total (não preservar total antigo)
                 current: 0, // ✅ FIX: Começar do zero (não sabemos quantos já completaram nesta sessão)
                 progress: 0,
                 successCount: 0,
                 failedCount: 0,
-                logs: [
+                logs: isNewIndividualUpdate ? [
+                  {
+                    timestamp: new Date(),
+                    ticker: 'SYSTEM',
+                    status: 'system' as const,
+                    message: `Iniciando atualização de ${totalPending} ativo(s)...`,
+                  },
+                ] : [
                   {
                     timestamp: new Date(),
                     ticker: 'SYSTEM',
@@ -246,12 +267,53 @@ export function useAssetBulkUpdate(options?: {
             // Already running (user clicked the button) - update progress
             console.log(`[ASSET BULK WS] Updating progress: ${totalPending} pending jobs`);
 
-            // Use existing total if we have one, otherwise estimate from queue
-            const estimatedTotal = prev.total > 0 ? prev.total : Math.max(totalPending, totalAssetsRef.current || totalPending);
+            // ✅ FIX FASE 114.4: Detect individual update when we have few jobs but large prev.total
+            // This happens when:
+            // 1. A batch finished (prev.total was 56, prev.isRunning=true from last poll)
+            // 2. User clicks "Atualizar Dados" for single asset (totalPending=1)
+            // 3. Without this fix, it would show "55/56" instead of "0/1"
+            const isIndividualAfterBatch = totalPending <= 5 && prev.total > 10 && !prev.currentBatchId;
+
+            if (isIndividualAfterBatch) {
+              console.log(`[ASSET BULK WS] Individual update detected after batch: ${totalPending} jobs (prev.total was ${prev.total}) - resetting state`);
+              return {
+                ...prev,
+                currentBatchId: null,
+                currentTicker,
+                total: totalPending,
+                current: 0,
+                progress: 0,
+                successCount: 0,
+                failedCount: 0,
+                logs: [
+                  {
+                    timestamp: new Date(),
+                    ticker: 'SYSTEM',
+                    status: 'system' as const,
+                    message: `Iniciando atualização de ${totalPending} ativo(s)...`,
+                  },
+                ],
+              };
+            }
+
+            // ✅ FIX FASE 114.5: For small updates (1-5 jobs), always use totalPending as total
+            // This prevents stale prev.total from batch updates overwriting individual update state
+            // The issue was: polling runs multiple times, and after first run sets total=1,
+            // subsequent runs would see prev.total=1 and not trigger isIndividualAfterBatch,
+            // falling through to this else branch which could use wrong estimatedTotal
+            const isSmallUpdate = totalPending <= 5;
+
+            // For small updates (likely individual), use totalPending directly
+            // For larger updates, use existing total or estimate
+            const estimatedTotal = isSmallUpdate
+              ? totalPending
+              : (prev.total > 0 ? prev.total : Math.max(totalPending, totalAssetsRef.current || totalPending));
 
             // Calculate current progress based on remaining jobs
             const currentProcessed = estimatedTotal - totalPending;
             const progress = estimatedTotal > 0 ? Math.round((currentProcessed / estimatedTotal) * 100) : 0;
+
+            console.log(`[ASSET BULK WS] Updating progress: totalPending=${totalPending}, isSmallUpdate=${isSmallUpdate}, estimatedTotal=${estimatedTotal}, currentProcessed=${currentProcessed}`);
 
             return {
               ...prev,
@@ -339,28 +401,51 @@ export function useAssetBulkUpdate(options?: {
 
       // Event: batch_update_started
       // ✅ FIX FASE 114: Now stores batchId to filter subsequent events
+      // ✅ FIX FASE 114.3: Ignore stale events when in individual update mode
       socket.on('batch_update_started', (data: BatchUpdateStartedEvent) => {
         console.log('[ASSET BULK WS] Batch update started:', data.batchId, data);
-        // ✅ FIX: Reset ref synchronously when new update starts
-        wasCancelledRef.current = false;
-        setState({
-          isRunning: true,
-          wasCancelled: false, // ✅ FIX: Limpar flag ao iniciar nova atualização
-          currentBatchId: data.batchId, // ✅ FIX FASE 114: Store batchId
-          currentTicker: null,
-          progress: 0,
-          current: 0,
-          total: data.totalAssets,
-          successCount: 0,
-          failedCount: 0,
-          logs: [
-            {
-              timestamp: new Date(data.timestamp),
-              ticker: 'SYSTEM',
-              status: 'system',
-              message: `Iniciando atualização de ${data.totalAssets} ativos... (batch: ${data.batchId.slice(-8)})`,
-            },
-          ],
+
+        // ✅ FIX FASE 114.6: Check ref SYNCHRONOUSLY before entering setState callback
+        // This prevents race condition when asset_update_started arrives just before batch_update_started
+        // The ref is set synchronously in asset_update_started handler, while setState is async
+        if (individualUpdateActiveRef.current) {
+          console.log(`[ASSET BULK WS] Ignoring batch_update_started: ${data.batchId.slice(-8)} - individual update in progress (ref check)`);
+          return;
+        }
+
+        setState((prev) => {
+          // ✅ FIX FASE 114.3: Detect stale batch events when in individual update mode
+          // If polling has already detected an individual update (1-5 jobs) and set currentBatchId to null,
+          // ignore batch_update_started events from old batches
+          const isIndividualUpdateMode = !prev.currentBatchId && prev.isRunning && prev.total <= 5;
+
+          if (isIndividualUpdateMode) {
+            console.log(`[ASSET BULK WS] Ignoring stale batch_update_started: ${data.batchId.slice(-8)} (individual update mode, total: ${prev.total})`);
+            return prev;
+          }
+
+          // ✅ FIX: Reset ref synchronously when new update starts
+          wasCancelledRef.current = false;
+
+          return {
+            isRunning: true,
+            wasCancelled: false, // ✅ FIX: Limpar flag ao iniciar nova atualização
+            currentBatchId: data.batchId, // ✅ FIX FASE 114: Store batchId
+            currentTicker: null,
+            progress: 0,
+            current: 0,
+            total: data.totalAssets,
+            successCount: 0,
+            failedCount: 0,
+            logs: [
+              {
+                timestamp: new Date(data.timestamp),
+                ticker: 'SYSTEM',
+                status: 'system',
+                message: `Iniciando atualização de ${data.totalAssets} ativos... (batch: ${data.batchId.slice(-8)})`,
+              },
+            ],
+          };
         });
 
         // Callback onUpdateStarted (use ref)
@@ -370,26 +455,87 @@ export function useAssetBulkUpdate(options?: {
       });
 
       // ✅ NEW: Event: asset_update_started (individual asset)
+      // ✅ FIX FASE 114: Reset state when individual update starts without batch_update_started
+      // ✅ FIX FASE 114.2: Always ensure currentBatchId=null for individual updates
+      //    even when polling has already set isRunning=true
       socket.on('asset_update_started', (data: AssetUpdateStartedEvent) => {
         console.log('[ASSET BULK WS] Asset update started:', data.ticker);
-        setState((prev) => ({
-          ...prev,
-          currentTicker: data.ticker,
-          logs: [
-            ...prev.logs,
-            {
-              timestamp: new Date(data.timestamp),
-              ticker: data.ticker,
-              status: 'processing',
-              message: `Processando ${data.ticker}...`,
-            },
-          ],
-        }));
+
+        // ✅ FIX FASE 114.6: Set ref SYNCHRONOUSLY before setState to prevent race condition
+        // This ensures that if batch_update_started arrives right after this event,
+        // it will see the ref=true and skip overwriting our state
+        // We check if this looks like an individual update (no batch context)
+        // Note: We set the ref here and clear it when the update completes
+        individualUpdateActiveRef.current = true;
+        console.log('[ASSET BULK WS] individualUpdateActiveRef set to TRUE');
+
+        setState((prev) => {
+          // ✅ FIX FASE 114.2: Detect individual update by checking:
+          // 1. No currentBatchId set (polling restored state without batch info)
+          // 2. Total is small (1-5 assets = individual/small update)
+          // 3. Not currently in a batch (no batch_update_started event received)
+          const isIndividualUpdate = !prev.currentBatchId && prev.total <= 5;
+
+          // ✅ FIX FASE 114.6: If this asset is part of a batch, clear the ref
+          // (batch_update_started would have already set currentBatchId)
+          if (prev.currentBatchId) {
+            individualUpdateActiveRef.current = false;
+            console.log('[ASSET BULK WS] individualUpdateActiveRef set to FALSE (part of batch)');
+          }
+
+          // ✅ FIX: If not running OR if this is an individual update (polling may have set isRunning=true),
+          // reset state to show this is a new 1-asset update
+          // This fixes the bug where status showed "55/56" instead of "0/1" for individual updates
+          if (!prev.isRunning || isIndividualUpdate) {
+            if (isIndividualUpdate && prev.isRunning) {
+              console.log(`[ASSET BULK WS] Individual update detected for ${data.ticker} (polling already running) - forcing reset`);
+            } else {
+              console.log(`[ASSET BULK WS] Individual update detected for ${data.ticker} - resetting state`);
+            }
+            return {
+              ...prev,
+              isRunning: true,
+              wasCancelled: false,
+              currentBatchId: null, // Individual update has no batch - CRITICAL for filtering
+              currentTicker: data.ticker,
+              progress: 0,
+              current: 0,
+              total: 1, // Single asset update
+              successCount: 0,
+              failedCount: 0,
+              logs: [
+                {
+                  timestamp: new Date(data.timestamp),
+                  ticker: data.ticker,
+                  status: 'processing',
+                  message: `Processando ${data.ticker}...`,
+                },
+              ],
+            };
+          }
+
+          // Already running as part of a batch (currentBatchId is set), just update ticker and add log
+          console.log(`[ASSET BULK WS] Asset ${data.ticker} is part of batch ${prev.currentBatchId?.slice(-8)}`);
+          return {
+            ...prev,
+            currentTicker: data.ticker,
+            logs: [
+              ...prev.logs,
+              {
+                timestamp: new Date(data.timestamp),
+                ticker: data.ticker,
+                status: 'processing',
+                message: `Processando ${data.ticker}...`,
+              },
+            ],
+          };
+        });
       });
 
       // ✅ NEW: Event: asset_update_completed (individual asset)
       // ✅ FIX: Now also updates current and progress to show real-time progress
       // ✅ FASE 86: Invalidate React Query cache for real-time "Última Atualização" updates
+      // ✅ FIX FASE 114: Mark isRunning=false when individual update completes
       socket.on('asset_update_completed', (data: AssetUpdateCompletedEvent) => {
         console.log('[ASSET BULK WS] Asset update completed:', data.ticker);
 
@@ -401,8 +547,18 @@ export function useAssetBulkUpdate(options?: {
           const newCurrent = prev.current + 1;
           const newProgress = prev.total > 0 ? Math.round((newCurrent / prev.total) * 100) : 0;
 
+          // ✅ FIX FASE 114: If this was an individual update (no batch), mark as completed
+          const isIndividualUpdateComplete = !prev.currentBatchId && newCurrent >= prev.total;
+
+          // ✅ FIX FASE 114.6: Clear individual update ref when completed
+          if (isIndividualUpdateComplete) {
+            individualUpdateActiveRef.current = false;
+            console.log('[ASSET BULK WS] individualUpdateActiveRef set to FALSE (update completed)');
+          }
+
           return {
             ...prev,
+            isRunning: isIndividualUpdateComplete ? false : prev.isRunning,
             successCount: newSuccessCount,
             current: newCurrent,
             progress: newProgress,
@@ -422,6 +578,7 @@ export function useAssetBulkUpdate(options?: {
 
       // ✅ NEW: Event: asset_update_failed (individual asset)
       // ✅ FIX: Now also updates current and progress to show real-time progress
+      // ✅ FIX FASE 114: Mark isRunning=false when individual update fails
       socket.on('asset_update_failed', (data: AssetUpdateFailedEvent) => {
         console.log('[ASSET BULK WS] Asset update failed:', data.ticker, data.error);
         setState((prev) => {
@@ -429,8 +586,18 @@ export function useAssetBulkUpdate(options?: {
           const newCurrent = prev.current + 1;
           const newProgress = prev.total > 0 ? Math.round((newCurrent / prev.total) * 100) : 0;
 
+          // ✅ FIX FASE 114: If this was an individual update (no batch), mark as completed
+          const isIndividualUpdateComplete = !prev.currentBatchId && newCurrent >= prev.total;
+
+          // ✅ FIX FASE 114.6: Clear individual update ref when completed (even on failure)
+          if (isIndividualUpdateComplete) {
+            individualUpdateActiveRef.current = false;
+            console.log('[ASSET BULK WS] individualUpdateActiveRef set to FALSE (update failed)');
+          }
+
           return {
             ...prev,
+            isRunning: isIndividualUpdateComplete ? false : prev.isRunning,
             failedCount: newFailedCount,
             current: newCurrent,
             progress: newProgress,
@@ -454,9 +621,14 @@ export function useAssetBulkUpdate(options?: {
         console.log('[ASSET BULK WS] Batch update progress:', data.batchId, data);
 
         setState((prev) => {
-          // ✅ FIX FASE 114: Ignore events from different batches
-          if (prev.currentBatchId && data.batchId !== prev.currentBatchId) {
-            console.log(`[ASSET BULK WS] Ignoring stale progress event from batch ${data.batchId.slice(-8)}, current batch is ${prev.currentBatchId.slice(-8)}`);
+          // ✅ FIX FASE 114: Ignore events from different batches OR when we don't have a batch
+          // Critical: When currentBatchId is null (individual update), ignore ALL batch events
+          // This prevents stale events from overwriting individual update state
+          if (!prev.currentBatchId || data.batchId !== prev.currentBatchId) {
+            const reason = !prev.currentBatchId
+              ? 'no current batch (individual update mode)'
+              : `different batch (current: ${prev.currentBatchId.slice(-8)})`;
+            console.log(`[ASSET BULK WS] Ignoring batch progress event: ${reason}`);
             return prev;
           }
 
@@ -477,11 +649,17 @@ export function useAssetBulkUpdate(options?: {
         console.log('[ASSET BULK WS] Batch update completed:', data.batchId, data);
 
         setState((prev) => {
-          // ✅ FIX FASE 114: Ignore completion events from different batches
+          // ✅ FIX FASE 114: Ignore completion events from different batches OR when in individual mode
           // Exception: Allow "cancelled-*" events which reset state
           const isCancellation = data.batchId.startsWith('cancelled-');
-          if (!isCancellation && prev.currentBatchId && data.batchId !== prev.currentBatchId) {
-            console.log(`[ASSET BULK WS] Ignoring stale completion event from batch ${data.batchId.slice(-8)}, current batch is ${prev.currentBatchId.slice(-8)}`);
+
+          // When currentBatchId is null (individual update mode), ignore ALL batch completion events
+          // unless it's a cancellation event (which should always be processed)
+          if (!isCancellation && (!prev.currentBatchId || data.batchId !== prev.currentBatchId)) {
+            const reason = !prev.currentBatchId
+              ? 'no current batch (individual update mode)'
+              : `different batch (current: ${prev.currentBatchId.slice(-8)})`;
+            console.log(`[ASSET BULK WS] Ignoring batch completion event: ${reason}`);
             return prev;
           }
 

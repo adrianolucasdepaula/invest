@@ -9,6 +9,34 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 115: AssetUpdateModal + OpcoesScraper Fix + Memory 4G (2025-12-14)**
+  - **Novo Componente - AssetUpdateModal:**
+    - Modal de configuração para atualização de dados fundamentalistas
+    - Três modos: Todos os ativos, Apenas com opções, Seleção manual
+    - RadioGroup com Radix UI para seleção de modo
+    - Busca e seleção manual de ativos com checkboxes
+    - Tempo estimado dinâmico (~1 min por 60 ativos)
+  - **Fix OpcoesScraper (Page Crashed):**
+    - Root cause: Container backend com 96% memória (1.923GiB / 2GiB)
+    - Aumentado limite de memória: 2G → 4G
+    - Adicionado logging detalhado: `[OPCOES-LOGIN]`, `[OPTIONS-LIQUIDITY]`
+    - Implementado retry com recuperação de crash (MAX_RETRIES=3)
+    - Screenshots de debug em `/app/logs/`
+  - **Integração Modal na Página /assets:**
+    - `handleSyncAll` agora abre modal em vez de API direta
+    - `handleUpdateConfirm` processa configuração do modal
+    - Estados: `isUpdateModalOpen`, `isSubmittingUpdate`
+  - **Arquivos Modificados:**
+    - `docker-compose.yml` (memory 2G → 4G)
+    - `backend/src/scrapers/options/opcoes.scraper.ts` (logging + retry)
+    - `frontend/src/components/dashboard/AssetUpdateModal.tsx` (NOVO)
+    - `frontend/src/components/ui/radio-group.tsx` (NOVO)
+    - `frontend/src/app/(dashboard)/assets/page.tsx` (integração modal)
+  - **Validação:**
+    - TypeScript: 0 erros
+    - Build: Sucesso
+    - Code Review: Aprovado
+
 - **FASE 114: Collapse/Expand UI + A11y Improvements (2025-12-14)**
   - **Nova Funcionalidade - Collapse/Expand:**
     - Lista de Ativos: Seção minimizável com estado persistente

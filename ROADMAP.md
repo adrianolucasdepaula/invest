@@ -11638,6 +11638,7 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 112** | WHEEL Performance Fixes (N+1 Query + SELIC Rate) | ✅ 100% | 2025-12-14 |
 | **FASE 113** | Consolidação + Validação Completa Ecossistema | ✅ 100% | 2025-12-14 |
 | **FASE 114** | Collapse/Expand UI + A11y Improvements | ✅ 100% | 2025-12-14 |
+| **FASE 115** | AssetUpdateModal + OpcoesScraper Fix + Memory 4G | ✅ 100% | 2025-12-14 |
 
 **Funcionalidades Implementadas:**
 - Seleção de candidatos por critérios fundamentalistas (ROE, DY, Dív/EBITDA)
@@ -11679,11 +11680,12 @@ Sistema em estado de manutenção e evolução contínua.
 > **Nota:** FASE 112 concluída em 2025-12-14 (WHEEL N+1 Query Fix: 77s→<1s + SELIC BCB série 4390→432: 0.83%→15%)
 > **Nota:** FASE 113 concluída em 2025-12-14 (Consolidação: Zero Tolerance ✅, MCP Triplo ✅, 18/18 containers healthy)
 > **Nota:** FASE 114 concluída em 2025-12-14 (Collapse/Expand: Lista de Ativos + Logs de Atualização + A11y WCAG 2.1 AA)
+> **Nota:** FASE 115 concluída em 2025-12-14 (AssetUpdateModal: 3 modos + OpcoesScraper: logging/retry + Backend memory: 2G→4G)
 
 ---
 
 **Ultima Atualizacao:** 2025-12-14
-**Total de Fases:** 121 completas (incluindo sub-fases)
+**Total de Fases:** 122 completas (incluindo sub-fases)
 **Versao:** 1.18.4
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

@@ -200,10 +200,10 @@ services:
       resources:
         limits:
           cpus: '2.0'
-          memory: 2G
+          memory: 4G  # FASE 115: Aumentado de 2G para suportar 3 browsers Playwright concorrentes
         reservations:
           cpus: '1.0'
-          memory: 1G
+          memory: 2G  # FASE 115: Aumentado proporcional
     command: npm run start:dev
 
   # Python Scrapers

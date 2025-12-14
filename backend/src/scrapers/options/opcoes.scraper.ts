@@ -68,17 +68,41 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
     this.password = this.configService.get<string>('OPCOES_PASSWORD');
   }
 
+  /**
+   * FASE 115: Login com logging detalhado e retry em caso de crash
+   */
   protected async login(): Promise<void> {
     try {
-      this.logger.log('Logging in to Opções.net.br');
+      this.logger.log('[OPCOES-LOGIN] Starting login process...');
 
+      if (!this.page) {
+        this.logger.error('[OPCOES-LOGIN] Page not initialized!');
+        await this.initialize();
+      }
+
+      this.logger.log(`[OPCOES-LOGIN] Navigating to login page...`);
       await this.page.goto('https://opcoes.net.br/login', {
-        waitUntil: 'load',
-        timeout: 60000,
+        waitUntil: 'domcontentloaded',
+        timeout: 90000,
       });
 
+      // Screenshot de debug
+      try {
+        await this.page.screenshot({
+          path: '/app/logs/opcoes-login-debug.png',
+          fullPage: true,
+        });
+        this.logger.log('[OPCOES-LOGIN] Debug screenshot saved');
+      } catch (e) {
+        this.logger.warn('[OPCOES-LOGIN] Could not save screenshot');
+      }
+
+      const currentUrl = this.page.url();
+      this.logger.log(`[OPCOES-LOGIN] After navigation URL: ${currentUrl}`);
+
       // Check if already logged in
-      if (this.page.url() !== 'https://opcoes.net.br/login') {
+      if (!currentUrl.includes('/login')) {
+        this.logger.log('[OPCOES-LOGIN] Already logged in, skipping');
         return;
       }
 
@@ -86,19 +110,34 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
       const username = process.env.OPCOES_USERNAME || '312.862.178-06';
       const password = process.env.OPCOES_PASSWORD || 'Safra998266@#';
 
-      await this.page.waitForSelector('#CPF', { timeout: 10000 });
+      this.logger.log('[OPCOES-LOGIN] Waiting for CPF field...');
+      await this.page.waitForSelector('#CPF', { timeout: 30000 });
+
       await this.page.type('#CPF', username);
       await this.page.type('#Password', password);
 
+      this.logger.log('[OPCOES-LOGIN] Submitting login form...');
       await Promise.all([
-        this.page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }),
+        this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 60000 }),
         this.page.click('button[type="submit"]'),
       ]);
 
-      this.logger.log('Successfully logged in to Opções.net.br');
+      this.logger.log('[OPCOES-LOGIN] Successfully logged in to Opções.net.br');
     } catch (error) {
-      this.logger.error(`Failed to login to Opções.net.br: ${error.message}`);
-      // Don't throw, try to proceed
+      this.logger.error(`[OPCOES-LOGIN] Failed: ${error.message}`);
+
+      // Screenshot de erro para debug
+      if (this.page) {
+        try {
+          await this.page.screenshot({ path: '/app/logs/opcoes-login-error.png' });
+          this.logger.log('[OPCOES-LOGIN] Error screenshot saved');
+        } catch (e) {
+          // Ignore screenshot errors
+        }
+      }
+
+      // FASE 115: NÃO silenciar erro - propagar para retry
+      throw error;
     }
   }
 
@@ -396,7 +435,9 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
   }
 
   /**
-   * Scrape liquidez de opções com dados detalhados
+   * FASE 115: Scrape liquidez de opções com dados detalhados
+   * COM RETRY E RECUPERAÇÃO DE CRASH
+   *
    * Extrai todas as colunas da tabela de liquidez (não apenas os tickers)
    * Fonte: https://opcoes.net.br/estudos/liquidez/opcoes
    *
@@ -410,28 +451,45 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
    */
   async scrapeLiquidityWithDetails(): Promise<Map<string, OptionsLiquidityData>> {
     const result = new Map<string, OptionsLiquidityData>();
+    const MAX_RETRIES = 3;
 
-    try {
-      if (!this.page) {
-        await this.initialize();
-      }
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        this.logger.log(`[OPTIONS-LIQUIDITY] Attempt ${attempt}/${MAX_RETRIES}`);
 
-      // Ensure login
-      await this.login();
+        if (!this.page) {
+          this.logger.log('[OPTIONS-LIQUIDITY] Page not initialized, initializing...');
+          await this.initialize();
+        }
 
-      this.logger.log('Scraping detailed options liquidity data from opcoes.net.br');
-      const url = 'https://opcoes.net.br/estudos/liquidez/opcoes';
+        // Ensure login
+        await this.login();
 
-      await this.page.goto(url, {
-        waitUntil: 'load',
-        timeout: 60000,
-      });
+        this.logger.log('[OPTIONS-LIQUIDITY] Navigating to liquidity page...');
+        const url = 'https://opcoes.net.br/estudos/liquidez/opcoes';
 
-      // Wait for table to load
-      await this.page.waitForSelector('table', { timeout: 30000 });
+        await this.page.goto(url, {
+          waitUntil: 'domcontentloaded',
+          timeout: 90000,
+        });
 
-      // Small delay to ensure data is fully loaded
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+        // Screenshot para debug
+        try {
+          await this.page.screenshot({
+            path: `/app/logs/opcoes-liquidity-page${attempt}.png`,
+            fullPage: true,
+          });
+          this.logger.log('[OPTIONS-LIQUIDITY] Debug screenshot saved');
+        } catch (e) {
+          this.logger.warn('[OPTIONS-LIQUIDITY] Could not save screenshot');
+        }
+
+        // Wait for table to load
+        this.logger.log('[OPTIONS-LIQUIDITY] Waiting for table...');
+        await this.page.waitForSelector('table tbody tr', { timeout: 45000 });
+
+        // Small delay to ensure data is fully loaded
+        await new Promise((resolve) => setTimeout(resolve, 3000));
 
       // Try to get the analysis period from page header/title
       const periodo = await this.page.evaluate(() => {
@@ -574,13 +632,51 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
       }
 
       this.logger.log(
-        `Finished scraping detailed liquidity. Found ${result.size} unique tickers with options data`,
+        `[OPTIONS-LIQUIDITY] Success! Found ${result.size} unique tickers with options data`,
       );
+
+      // Se chegou aqui, sucesso - retornar resultado
       return result;
-    } catch (error) {
-      this.logger.error(`Error scraping detailed options liquidity: ${error.message}`);
-      return result;
+
+      } catch (error) {
+        this.logger.error(`[OPTIONS-LIQUIDITY] Attempt ${attempt} failed: ${error.message}`);
+
+        // FASE 115: Verificar se é erro de crash e tentar recuperar
+        if (
+          error.message.includes('Page crashed') ||
+          error.message.includes('Target closed') ||
+          error.message.includes('Protocol error') ||
+          error.message.includes('page.goto')
+        ) {
+          this.logger.warn('[OPTIONS-LIQUIDITY] Page crashed, reinitializing browser...');
+          await this.cleanup();
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+
+          // Reinicializar para próxima tentativa
+          this.page = null;
+          this.browser = null;
+
+          if (attempt < MAX_RETRIES) {
+            const waitTime = Math.pow(2, attempt) * 2000;
+            this.logger.log(`[OPTIONS-LIQUIDITY] Waiting ${waitTime}ms before retry...`);
+            await new Promise((resolve) => setTimeout(resolve, waitTime));
+            continue;
+          }
+        }
+
+        if (attempt === MAX_RETRIES) {
+          this.logger.error(`[OPTIONS-LIQUIDITY] All ${MAX_RETRIES} attempts failed`);
+          return result; // Retorna o que conseguiu coletar
+        }
+
+        // Aguardar antes de tentar novamente
+        const waitTime = Math.pow(2, attempt) * 2000;
+        this.logger.log(`[OPTIONS-LIQUIDITY] Waiting ${waitTime}ms before retry...`);
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      }
     }
+
+    return result;
   }
 
   /**

@@ -24,6 +24,7 @@ import { Label } from '@/components/ui/label';
 import { useAssetBulkUpdate } from '@/lib/hooks/useAssetBulkUpdate';
 import { Progress } from '@/components/ui/progress';
 import { AssetUpdateLogsPanel } from '@/components/dashboard/AssetUpdateLogsPanel';
+import { AssetUpdateModal, UpdateMode } from '@/components/dashboard/AssetUpdateModal';
 
 type ViewMode = 'all' | 'sector' | 'type' | 'type-sector';
 
@@ -61,6 +62,9 @@ export default function AssetsPage() {
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [isAssetsCollapsed, setIsAssetsCollapsed] = useState(false);
   const [isLogsCollapsed, setIsLogsCollapsed] = useState(false);
+  // FASE 115: Modal de atualização
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
   const { data: assets, isLoading, error, refetch } = useAssets();
 
   // WebSocket hook for bulk updates
@@ -97,43 +101,64 @@ export default function AssetsPage() {
     return () => clearInterval(interval);
   }, [refetch]);
 
-  const handleSyncAll = useCallback(async () => {
-    // ✅ FIX: Check if there's already a bulk update running before starting a new one
+  // FASE 115: Abrir modal ao invés de chamar API diretamente
+  const handleSyncAll = useCallback(() => {
     if (bulkUpdateState.isRunning) {
       toast({
         title: 'Atualização já em andamento',
-        description: 'Aguarde a conclusão da atualização atual ou cancele-a antes de iniciar uma nova.',
+        description: 'Aguarde a conclusão ou cancele antes de iniciar nova.',
         variant: 'default',
       });
       return;
     }
+    setIsUpdateModalOpen(true);
+  }, [bulkUpdateState.isRunning, toast]);
 
-    // Double-check with API to prevent race conditions
+  // FASE 115: Handler de confirmação do modal
+  const handleUpdateConfirm = useCallback(async (config: {
+    mode: UpdateMode;
+    tickers?: string[];
+  }) => {
+    setIsSubmittingUpdate(true);
     try {
+      // Double-check with API to prevent race conditions
       const queueStatus = await api.getBulkUpdateStatus();
       const pendingJobs = (queueStatus.active || 0) + (queueStatus.waiting || 0);
 
       if (pendingJobs > 0) {
         toast({
           title: 'Atualização já em andamento',
-          description: `Existem ${pendingJobs} jobs pendentes na fila. Aguarde ou cancele antes de iniciar nova atualização.`,
+          description: `Existem ${pendingJobs} jobs pendentes na fila.`,
           variant: 'default',
         });
+        setIsUpdateModalOpen(false);
         return;
       }
 
-      // ✅ FIX FASE 86: Pass showOnlyOptions to filter only assets with options when checkbox is checked
-      // Using useCallback with showOnlyOptions dependency ensures we capture the current state value
-      console.log('[SYNC ALL] showOnlyOptions:', showOnlyOptions);
-      await api.bulkUpdateAllAssetsFundamentals(undefined, showOnlyOptions);
+      if (config.mode === 'selected' && config.tickers?.length) {
+        // Atualizar ativos selecionados manualmente
+        await api.updateMultipleAssets({ tickers: config.tickers });
+        toast({
+          title: 'Atualização iniciada',
+          description: `${config.tickers.length} ativos adicionados à fila.`,
+        });
+      } else {
+        // Atualizar todos ou apenas com opções
+        const hasOptionsOnly = config.mode === 'with_options';
+        console.log('[SYNC ALL] mode:', config.mode, 'hasOptionsOnly:', hasOptionsOnly);
+        await api.bulkUpdateAllAssetsFundamentals(undefined, hasOptionsOnly);
+      }
+      setIsUpdateModalOpen(false);
     } catch (error: any) {
       toast({
         title: 'Erro ao iniciar atualização',
-        description: error.message || 'Erro ao iniciar atualização em massa',
+        description: error.message || 'Tente novamente',
         variant: 'destructive',
       });
+    } finally {
+      setIsSubmittingUpdate(false);
     }
-  }, [bulkUpdateState.isRunning, showOnlyOptions, toast]);
+  }, [toast]);
 
   const handleCancelUpdate = async () => {
     setIsCancelling(true);
@@ -222,6 +247,11 @@ export default function AssetsPage() {
       setTimeout(() => setSyncingAsset(null), remainingTime);
     }
   };
+
+  // FASE 115: Contar ativos com opções para o modal
+  const assetsWithOptionsCount = useMemo(() => {
+    return assets?.filter((a: any) => a.hasOptions).length ?? 0;
+  }, [assets]);
 
   const lastCollectedAt = useMemo(() => {
     if (!assets || assets.length === 0) return null;
@@ -727,6 +757,16 @@ export default function AssetsPage() {
           </Card>
         </div>
       )}
+
+      {/* FASE 115: Modal de configuração de atualização */}
+      <AssetUpdateModal
+        open={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        onConfirm={handleUpdateConfirm}
+        isSubmitting={isSubmittingUpdate}
+        assets={assets ?? []}
+        assetsWithOptionsCount={assetsWithOptionsCount}
+      />
     </div>
   );
 }
