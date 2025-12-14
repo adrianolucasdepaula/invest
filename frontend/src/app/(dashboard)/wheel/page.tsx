@@ -1,8 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import {
+  useWheelCandidates,
+  useWheelStrategies,
+  useCreateWheelStrategy,
+} from '@/lib/hooks/use-wheel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -101,9 +106,6 @@ export default function WheelPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('candidates');
-  const [isLoading, setIsLoading] = useState(true);
-  const [candidates, setCandidates] = useState<WheelCandidate[]>([]);
-  const [strategies, setStrategies] = useState<WheelStrategy[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [cashYield, setCashYield] = useState<CashYield | null>(null);
   const [cashPrincipal, setCashPrincipal] = useState('100000');
@@ -112,7 +114,6 @@ export default function WheelPage() {
 
   // Create Strategy Dialog
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
   const [newStrategyForm, setNewStrategyForm] = useState({
     assetId: '',
     ticker: '',
@@ -125,33 +126,41 @@ export default function WheelPage() {
   const [minDY, setMinDY] = useState('6');
   const [maxDebt, setMaxDebt] = useState('2');
 
-  useEffect(() => {
-    loadData();
-  }, [activeTab]);
+  // FASE 109: useMemo para evitar infinite re-renders
+  const filters = useMemo(() => ({
+    minROE: parseFloat(minROE) || undefined,
+    minDividendYield: parseFloat(minDY) || undefined,
+    maxDividaEbitda: parseFloat(maxDebt) || undefined,
+    limit: 50,
+  }), [minROE, minDY, maxDebt]);
 
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      if (activeTab === 'candidates') {
-        const data = await api.getWheelCandidates({
-          minROE: parseFloat(minROE) || undefined,
-          minDividendYield: parseFloat(minDY) || undefined,
-          maxDividaEbitda: parseFloat(maxDebt) || undefined,
-          limit: 50,
-        });
-        setCandidates(data.candidates || []);
-      } else if (activeTab === 'strategies') {
-        const data = await api.getWheelStrategies();
-        setStrategies(data || []);
-      }
-    } catch (error: any) {
-      toast({
-        title: 'Erro ao carregar dados',
-        description: error.message || 'Erro desconhecido',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+  // FASE 109: React Query hooks (substituem useState + useEffect + loadData)
+  const {
+    data: candidatesData,
+    isLoading: loadingCandidates,
+    refetch: refetchCandidates,
+  } = useWheelCandidates(filters);
+
+  const {
+    data: strategiesData,
+    isLoading: loadingStrategies,
+    refetch: refetchStrategies,
+  } = useWheelStrategies();
+
+  // FASE 109: Mutation para criar estratégia
+  const createMutation = useCreateWheelStrategy();
+
+  // Derived state (with explicit types for TypeScript)
+  const candidates: WheelCandidate[] = candidatesData?.candidates || [];
+  const strategies: WheelStrategy[] = strategiesData || [];
+  const isLoading = activeTab === 'candidates' ? loadingCandidates : loadingStrategies;
+
+  // Refetch based on active tab
+  const handleRefresh = () => {
+    if (activeTab === 'candidates') {
+      refetchCandidates();
+    } else if (activeTab === 'strategies') {
+      refetchStrategies();
     }
   };
 
@@ -192,7 +201,8 @@ export default function WheelPage() {
     }
   };
 
-  const handleCreateStrategy = async () => {
+  // FASE 109: handleCreateStrategy usando mutation
+  const handleCreateStrategy = () => {
     if (!newStrategyForm.assetId) {
       toast({
         title: 'Ativo não selecionado',
@@ -212,32 +222,28 @@ export default function WheelPage() {
       return;
     }
 
-    setIsCreating(true);
-    try {
-      await api.createWheelStrategy({
-        assetId: newStrategyForm.assetId,
-        name: newStrategyForm.name || `WHEEL ${newStrategyForm.ticker}`,
-        notional,
-      });
-
-      toast({
-        title: 'Estratégia criada',
-        description: `Estratégia WHEEL para ${newStrategyForm.ticker} criada com sucesso`,
-      });
-
-      setIsCreateDialogOpen(false);
-      setNewStrategyForm({ assetId: '', ticker: '', name: '', notional: '100000' });
-      setActiveTab('strategies');
-      loadData();
-    } catch (error: any) {
-      toast({
-        title: 'Erro ao criar estratégia',
-        description: error.message || 'Erro desconhecido',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsCreating(false);
-    }
+    createMutation.mutate({
+      assetId: newStrategyForm.assetId,
+      name: newStrategyForm.name || `WHEEL ${newStrategyForm.ticker}`,
+      notional,
+    }, {
+      onSuccess: () => {
+        toast({
+          title: 'Estratégia criada',
+          description: `Estratégia WHEEL para ${newStrategyForm.ticker} criada com sucesso`,
+        });
+        setIsCreateDialogOpen(false);
+        setNewStrategyForm({ assetId: '', ticker: '', name: '', notional: '100000' });
+        setActiveTab('strategies');
+      },
+      onError: (error: Error) => {
+        toast({
+          title: 'Erro ao criar estratégia',
+          description: error.message || 'Erro desconhecido',
+          variant: 'destructive',
+        });
+      },
+    });
   };
 
   const openCreateDialogWithCandidate = (candidate: WheelCandidate) => {
@@ -300,7 +306,7 @@ export default function WheelPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadData}>
+          <Button variant="outline" onClick={handleRefresh}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Atualizar
           </Button>
@@ -425,7 +431,7 @@ export default function WheelPage() {
                   />
                 </div>
                 <div className="flex items-end">
-                  <Button onClick={loadData} className="w-full">
+                  <Button onClick={() => refetchCandidates()} className="w-full">
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Filtrar
                   </Button>
@@ -851,9 +857,9 @@ export default function WheelPage() {
             </Button>
             <Button
               onClick={handleCreateStrategy}
-              disabled={!newStrategyForm.assetId || isCreating}
+              disabled={!newStrategyForm.assetId || createMutation.isPending}
             >
-              {isCreating ? (
+              {createMutation.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Plus className="mr-2 h-4 w-4" />

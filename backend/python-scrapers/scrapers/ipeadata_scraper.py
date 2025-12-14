@@ -176,20 +176,20 @@ class IPEADATAScraper(BaseScraper):
                                     continue
 
                                 data["commodities"][commodity_key] = {
-                                        "current_value": last_value,
-                                        "date": last_entry.get("VALDATA"),
-                                        "serie_code": serie_code,
-                                        "unit": self._get_unit(commodity_key),
-                                        "historical": [
-                                            {
-                                                "date": entry.get("VALDATA"),
-                                                "value": float(entry.get("VALVALOR", "0").replace(",", "."))
-                                            }
-                                            for entry in serie_data[:90]  # Last 90 days
-                                        ],
-                                    }
+                                    "current_value": last_value,
+                                    "date": last_entry.get("VALDATA"),
+                                    "serie_code": serie_code,
+                                    "unit": self._get_unit(commodity_key),
+                                    "historical": [
+                                        {
+                                            "date": entry.get("VALDATA"),
+                                            "value": float(entry.get("VALVALOR", "0").replace(",", "."))
+                                        }
+                                        for entry in serie_data[:90]  # Last 90 days
+                                    ],
+                                }
 
-                                    logger.debug(f"Fetched {commodity_key}: {last_value} ({last_entry.get('VALDATA')})")
+                                logger.debug(f"Fetched {commodity_key}: {last_value} ({last_entry.get('VALDATA')})")
 
                             else:
                                 logger.warning(f"IPEADATA API returned status {response.status} for {commodity_key}")

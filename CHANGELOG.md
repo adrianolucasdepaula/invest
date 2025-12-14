@@ -7,6 +7,27 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Changed
+
+- **FASE 109: React Query Migration + Race Condition Fix + IPEADATA Scraper (2025-12-13)**
+  - **React Query Migration:**
+    - Migrated `/wheel/page.tsx` from useState+useEffect to React Query hooks
+    - Added `useMemo` for filters to prevent infinite re-renders
+    - Replaced manual loadData() with `useWheelCandidates` and `useWheelStrategies` hooks
+    - Updated `handleCreateStrategy` to use `useCreateWheelStrategy` mutation
+    - Added explicit TypeScript annotations for derived state
+  - **Race Condition Fix:**
+    - Validated and committed fix for cancel button race condition
+    - Uses `wasCancelledRef` with useRef for synchronous updates
+    - Added `MAX_LOG_ENTRIES = 1000` to prevent memory leaks
+  - **New Scraper:**
+    - IPEADATA scraper for commodities (Petróleo Brent, Minério de Ferro)
+    - API-based (not Playwright), inherits from BaseScraper
+  - **Validation:**
+    - TypeScript: 0 errors (frontend + backend)
+    - Build: Successful
+    - MCP Triple: API endpoints responding correctly
+
 ### Fixed
 
 - **FIX: Cancel Button Race Condition - Página Assets (2025-12-13)**

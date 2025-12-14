@@ -11618,7 +11618,7 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 - ✅ FASE 100: Enable Economic Data Scrapers - 100% COMPLETO (2025-12-11)
 - ✅ FASE 100.1: Code Review Fixes for Economic Scrapers - 100% COMPLETO (2025-12-12)
 
-### WHEEL Strategy Implementation (FASE 101-106)
+### WHEEL Strategy Implementation (FASE 101-109)
 
 | Fase | Descrição | Status | Data |
 |------|-----------|--------|------|
@@ -11628,6 +11628,9 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 104** | Integração Tesouro Selic (cash yield) | ✅ 100% | 2025-12-13 |
 | **FASE 105** | Frontend Dashboard WHEEL | ✅ 100% | 2025-12-13 |
 | **FASE 106** | Code Review Fixes + Documentation | ✅ 100% | 2025-12-13 |
+| **FASE 107** | Turbopack HMR Fix + Option Prices Migration | ✅ 100% | 2025-12-13 |
+| **FASE 108** | Code Review Fixes + Documentation Sync | ✅ 100% | 2025-12-13 |
+| **FASE 109** | React Query Migration + Race Condition Fix + IPEADATA Scraper | ✅ 100% | 2025-12-13 |
 
 **Funcionalidades Implementadas:**
 - Seleção de candidatos por critérios fundamentalistas (ROE, DY, Dív/EBITDA)
@@ -11663,12 +11666,12 @@ Sistema em estado de manutenção e evolução contínua.
 > **Nota:** FASE 84 concluída em 2025-12-09
 > **Nota:** FASE 100 concluída em 2025-12-11 (Economic Data Scrapers: ANBIMA, FRED, IPEADATA)
 > **Nota:** FASE 100.1 concluída em 2025-12-12 (Code Review: bare except fixes, error handling improvements)
-> **Nota:** FASE 101-106 concluídas em 2025-12-13 (WHEEL Strategy Implementation)
+> **Nota:** FASE 101-109 concluídas em 2025-12-13 (WHEEL Strategy Implementation + Consolidation)
 
 ---
 
 **Ultima Atualizacao:** 2025-12-13
-**Total de Fases:** 111 completas (incluindo sub-fases)
-**Versao:** 1.16.0
+**Total de Fases:** 114 completas (incluindo sub-fases)
+**Versao:** 1.17.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0
