@@ -89,7 +89,8 @@ export default function WheelStrategyDetailPage() {
   const { data: callRecommendations, isLoading: loadingCalls } = useWheelCallRecommendations(strategyId);
   const { data: weeklySchedule, isLoading: loadingSchedule } = useWheelWeeklySchedule(strategyId);
   const { data: analytics, isLoading: loadingAnalytics } = useWheelAnalytics(strategyId);
-  const { data: cashYield } = useWheelCashYield(strategyId, 30);
+  // FASE 109.1: useWheelCashYield agora aceita principal (number), não strategyId
+  const { data: cashYield } = useWheelCashYield(strategy?.availableCapital || 0, 30);
 
   // Mutations
   const updateStrategy = useUpdateWheelStrategy();

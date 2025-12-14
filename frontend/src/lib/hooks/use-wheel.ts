@@ -307,15 +307,16 @@ export function useWheelAnalytics(strategyId: string) {
 
 /**
  * Hook para buscar projeção de cash yield
+ * FASE 109.1: Corrigido para aceitar principal como parâmetro (não hardcoded 0)
  */
-export function useWheelCashYield(strategyId: string, days?: number) {
+export function useWheelCashYield(principal: number, days?: number) {
   return useQuery({
-    queryKey: wheelKeys.cashYield(strategyId, days),
+    queryKey: wheelKeys.cashYield(principal.toString(), days),
     queryFn: async () => {
-      const response = await calculateCashYieldApi(0, days);
+      const response = await calculateCashYieldApi(principal, days);
       return response as CashYield;
     },
-    enabled: !!strategyId,
+    enabled: principal > 0,
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -437,7 +438,8 @@ export function useCreateWheelTrade() {
   return useMutation({
     mutationFn: async (data: {
       strategyId: string;
-      tradeType: 'sell_put' | 'sell_call' | 'buy_put' | 'buy_call' | 'exercise_put' | 'exercise_call' | 'SELL_PUT' | 'SELL_CALL' | 'BUY_TO_CLOSE' | 'EXERCISE' | 'ASSIGNMENT';
+      // FASE 109.1: Padronizado para UPPERCASE (compatível com backend enums)
+      tradeType: 'SELL_PUT' | 'SELL_CALL' | 'BUY_TO_CLOSE' | 'EXERCISE' | 'ASSIGNMENT';
       optionSymbol: string;
       underlyingTicker: string;
       optionType: string;
@@ -494,7 +496,8 @@ export function useCloseWheelTrade() {
       data: {
         exitPrice: number;
         underlyingPriceAtExit: number;
-        status: 'closed' | 'exercised' | 'expired' | 'CLOSED' | 'EXERCISED' | 'EXPIRED';
+        // FASE 109.1: Padronizado para UPPERCASE
+        status: 'CLOSED' | 'EXERCISED' | 'EXPIRED' | 'ASSIGNED';
         commission?: number;
         b3Fees?: number;
         notes?: string;

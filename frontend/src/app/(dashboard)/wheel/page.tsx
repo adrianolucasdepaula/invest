@@ -1,12 +1,16 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import {
   useWheelCandidates,
   useWheelStrategies,
   useCreateWheelStrategy,
+  // FASE 109.1: Importar types do hook (DRY principle)
+  type WheelCandidate,
+  type WheelStrategy,
+  type CashYield,
 } from '@/lib/hooks/use-wheel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,55 +58,19 @@ import {
   Loader2,
 } from 'lucide-react';
 
-interface WheelCandidate {
-  id: string;
-  ticker: string;
-  name: string;
-  currentPrice: number;
-  roe?: number;
-  dividendYield?: number;
-  dividaEbitda?: number;
-  margemLiquida?: number;
-  pl?: number;
-  ivRank?: number;
-  hasOptions: boolean;
-  wheelScore: number;
-  scoreBreakdown: {
-    fundamentalScore: number;
-    liquidityScore: number;
-    volatilityScore: number;
-  };
-}
+// FASE 109.1: Types removidos - agora importados de use-wheel.ts (DRY)
 
-interface CashYield {
-  principal: number;
-  days: number;
-  selicRate: number;
-  expectedYield: number;
-  effectiveRate: number;
-  dailyRate: number;
-  finalAmount: number;
-}
-
-interface WheelStrategy {
-  id: string;
-  assetId: string;
-  name?: string;
-  status: 'active' | 'paused' | 'closed';
-  phase: 'selling_puts' | 'holding_shares' | 'selling_calls';
-  notional: number;
-  availableCapital: number;
-  sharesHeld: number;
-  realizedPnL: number;
-  unrealizedPnL: number;
-  createdAt: string;
-  asset?: {
-    ticker: string;
-    name: string;
-  };
+// FASE 109.1: Hook de hydration para prevenir hydration mismatch
+function useHydrated() {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+  return hydrated;
 }
 
 export default function WheelPage() {
+  const hydrated = useHydrated();
   const router = useRouter();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('candidates');
@@ -201,7 +169,7 @@ export default function WheelPage() {
     }
   };
 
-  // FASE 109: handleCreateStrategy usando mutation
+  // FASE 109.1: handleCreateStrategy - callbacks removidos (hook já tem toast)
   const handleCreateStrategy = () => {
     if (!newStrategyForm.assetId) {
       toast({
@@ -222,29 +190,25 @@ export default function WheelPage() {
       return;
     }
 
+    // FASE 109.1: Removidos onSuccess/onError inline (evita toasts duplicados)
+    // Hook useCreateWheelStrategy já tem toast no onSuccess/onError
     createMutation.mutate({
       assetId: newStrategyForm.assetId,
       name: newStrategyForm.name || `WHEEL ${newStrategyForm.ticker}`,
       notional,
-    }, {
-      onSuccess: () => {
-        toast({
-          title: 'Estratégia criada',
-          description: `Estratégia WHEEL para ${newStrategyForm.ticker} criada com sucesso`,
-        });
-        setIsCreateDialogOpen(false);
-        setNewStrategyForm({ assetId: '', ticker: '', name: '', notional: '100000' });
-        setActiveTab('strategies');
-      },
-      onError: (error: Error) => {
-        toast({
-          title: 'Erro ao criar estratégia',
-          description: error.message || 'Erro desconhecido',
-          variant: 'destructive',
-        });
-      },
     });
   };
+
+  // FASE 109.1: useEffect para UI updates após mutation success
+  useEffect(() => {
+    if (createMutation.isSuccess) {
+      setIsCreateDialogOpen(false);
+      setNewStrategyForm({ assetId: '', ticker: '', name: '', notional: '100000' });
+      setActiveTab('strategies');
+      // Reset mutation state para próximo uso
+      createMutation.reset();
+    }
+  }, [createMutation.isSuccess]);
 
   const openCreateDialogWithCandidate = (candidate: WheelCandidate) => {
     setNewStrategyForm({
@@ -294,6 +258,15 @@ export default function WheelPage() {
     if (score >= 40) return 'text-orange-600';
     return 'text-red-600';
   };
+
+  // FASE 109.1: Hydration check para prevenir SSR mismatch
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center p-8 min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
