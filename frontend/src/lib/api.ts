@@ -1109,3 +1109,25 @@ export async function calculateCashYieldApi(principal: number, days?: number) {
   const response = await client.get('/wheel/cash-yield', { params });
   return response.data;
 }
+
+// ========================================
+// FASE 108: Missing WHEEL API Functions
+// ========================================
+
+/**
+ * Get WHEEL weekly schedule - Turbopack-safe standalone function
+ */
+export async function getWheelWeeklyScheduleApi(strategyId: string) {
+  const client = createStandaloneClient();
+  const response = await client.get(`/wheel/strategies/${strategyId}/weekly-schedule`);
+  return response.data;
+}
+
+/**
+ * Get WHEEL analytics - Turbopack-safe standalone function
+ */
+export async function getWheelAnalyticsApi(strategyId: string) {
+  const client = createStandaloneClient();
+  const response = await client.get(`/wheel/strategies/${strategyId}/analytics`);
+  return response.data;
+}

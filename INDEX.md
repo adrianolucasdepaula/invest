@@ -1,8 +1,8 @@
 # 📚 Índice de Documentação - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-29
-**Versão:** 1.4.0
+**Última Atualização:** 2025-12-13
+**Versão:** 1.5.0
 
 ---
 
@@ -89,6 +89,35 @@
 
 ---
 
+## 🎯 WHEEL STRATEGY (FASES 101-108)
+
+| Arquivo                                                                                                | Descrição                                     | Criticidade   |
+| ------------------------------------------------------------------------------------------------------ | --------------------------------------------- | ------------- |
+| **[docs/WHEEL_ECOSYSTEM_ANALYSIS_2025-12-13.md](docs/WHEEL_ECOSYSTEM_ANALYSIS_2025-12-13.md)**         | **Análise completa do ecossistema WHEEL**     | 🔥 CRÍTICO    |
+| [backend/src/api/wheel/](backend/src/api/wheel/)                                                       | Controller + Service + DTOs                   | ⚠️ IMPORTANTE |
+| [backend/src/database/entities/wheel-strategy.entity.ts](backend/src/database/entities/wheel-strategy.entity.ts) | Entity WheelStrategy                | ⚠️ IMPORTANTE |
+| [backend/src/database/entities/wheel-trade.entity.ts](backend/src/database/entities/wheel-trade.entity.ts) | Entity WheelTrade                        | ⚠️ IMPORTANTE |
+| [frontend/src/lib/hooks/use-wheel.ts](frontend/src/lib/hooks/use-wheel.ts)                             | Hooks React Query para WHEEL                  | ⚠️ IMPORTANTE |
+
+**Endpoints (15):**
+
+- `GET /wheel/candidates` - Lista candidatos para WHEEL
+- `GET /wheel/strategies` - Lista estratégias do usuário
+- `POST /wheel/strategies` - Cria nova estratégia
+- `GET /wheel/strategies/:id` - Detalhes de uma estratégia
+- `PUT /wheel/strategies/:id` - Atualiza estratégia
+- `DELETE /wheel/strategies/:id` - Remove estratégia
+- `GET /wheel/strategies/:id/trades` - Lista trades
+- `POST /wheel/strategies/:id/trades` - Cria trade
+- `PUT /wheel/trades/:id/close` - Fecha trade
+- `GET /wheel/strategies/:id/put-recommendations` - Recomendações de PUT
+- `GET /wheel/strategies/:id/call-recommendations` - Recomendações de CALL
+- `GET /wheel/strategies/:id/weekly-schedule` - Schedule semanal
+- `GET /wheel/strategies/:id/analytics` - Analytics
+- `GET /wheel/cash-yield` - Cálculo de rendimento do caixa
+
+---
+
 ## 📊 VALIDAÇÃO & TESTES
 
 ### Framework de Validação
@@ -163,6 +192,7 @@
 4. Chart Analysis Expert (Recharts, lightweight-charts)
 5. TypeScript Validation Expert
 6. Queue Management Expert (BullMQ, Redis)
+7. PM Expert (Product Manager + QA Lead + DevOps + Tech Lead)
 
 ---
 
@@ -247,15 +277,15 @@ grep -r "MCP Triplo" VALIDACAO_*.md
 
 ---
 
-## 📊 ESTATÍSTICAS (Atualizado 2025-11-29)
+## 📊 ESTATÍSTICAS (Atualizado 2025-12-13)
 
-- **Total de Arquivos .md:** 220+
-- **Fases Concluídas:** 60 (100%)
-- **Fase Atual:** 60 (Validação E2E + Fixes API)
-- **Validações Documentadas:** 55+
-- **Problemas Resolvidos:** 110+
+- **Total de Arquivos .md:** 230+
+- **Fases Concluídas:** 108 (100%)
+- **Fase Atual:** 108 (WHEEL Code Review + Documentation Sync)
+- **Validações Documentadas:** 60+
+- **Problemas Resolvidos:** 120+
 - **MCPs Integrados:** 8
-- **Sub-Agents:** 6
+- **Sub-Agents:** 7 (inclui PM Expert)
 
 ---
 

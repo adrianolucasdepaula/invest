@@ -3,7 +3,7 @@
 **Projeto:** B3 AI Analysis Platform
 **Banco de Dados:** PostgreSQL 16.x
 **ORM:** TypeORM 0.3.x
-**Última Atualização:** 2025-12-09
+**Última Atualização:** 2025-12-13
 
 ---
 
@@ -25,8 +25,8 @@ O banco de dados PostgreSQL armazena dados de ativos financeiros da B3, análise
 
 ### Estatísticas Gerais
 
-- **Total de Tabelas:** 12
-- **Total de Registros (aprox.):** 1.418
+- **Total de Tabelas:** 15
+- **Total de Registros (aprox.):** 1.418+
   - Assets: 55
   - AssetPrices: 1.298
   - Analyses: 11
@@ -35,6 +35,9 @@ O banco de dados PostgreSQL armazena dados de ativos financeiros da B3, análise
   - PortfolioPositions: 6
   - ScraperMetrics: 24
   - UpdateLogs: 22
+  - WheelStrategies: 0+ (FASE 101-108)
+  - WheelTrades: 0+ (FASE 101-108)
+  - OptionPrices: 0+ (FASE 107)
 
 ### Convenções
 
@@ -371,6 +374,139 @@ Armazena posições (ativos) dentro de cada portfólio.
 - `assetId` FOREIGN KEY REFERENCES assets(id) ON DELETE RESTRICT
 - `quantity` > 0
 - UNIQUE (portfolioId, assetId) - Um ativo por portfólio
+
+---
+
+### 6. WheelStrategies (Estratégias WHEEL) - FASE 101-108
+
+Armazena estratégias WHEEL (venda de PUTs e CALLs cobertas) dos usuários.
+
+**Schema:**
+
+```typescript
+{
+  id: UUID; // Primary Key
+  userId: UUID; // Foreign Key -> Users.id
+  assetId: UUID; // Foreign Key -> Assets.id
+  name: string; // Nome da estratégia
+  description: string; // Descrição opcional
+  status: WheelStrategyStatus; // ENUM: active, paused, closed
+  phase: WheelPhase; // ENUM: selling_puts, holding_shares, selling_calls
+  notional: decimal(18, 2); // Capital total alocado
+  allocatedCapital: decimal(18, 2); // Capital em uso
+  availableCapital: decimal(18, 2); // Capital disponível
+  sharesHeld: integer; // Ações em carteira
+  averagePrice: decimal(18, 8); // Preço médio das ações
+  realizedPnL: decimal(18, 2); // P&L realizado
+  unrealizedPnL: decimal(18, 2); // P&L não realizado
+  config: JSONB; // Configurações (targetDelta, minROE, etc.)
+  createdAt: timestamp;
+  updatedAt: timestamp;
+}
+```
+
+**Constraints:**
+
+- `userId` FOREIGN KEY REFERENCES users(id) ON DELETE CASCADE
+- `assetId` FOREIGN KEY REFERENCES assets(id) ON DELETE CASCADE
+- INDEX (userId, status)
+- INDEX (assetId, status)
+
+---
+
+### 7. WheelTrades (Trades WHEEL) - FASE 101-108
+
+Armazena operações de opções realizadas dentro de uma estratégia WHEEL.
+
+**Schema:**
+
+```typescript
+{
+  id: UUID; // Primary Key
+  strategyId: UUID; // Foreign Key -> WheelStrategies.id
+  tradeType: WheelTradeType; // ENUM: sell_put, sell_call, buy_put, buy_call, exercise_put, exercise_call
+  status: WheelTradeStatus; // ENUM: open, closed, exercised, expired
+  optionSymbol: string; // Código da opção (ex: PETRH25)
+  underlyingTicker: string; // Ticker do ativo base
+  optionType: string; // PUT ou CALL
+  strike: decimal(18, 8); // Preço de exercício
+  expiration: date; // Data de vencimento
+  contracts: integer; // Quantidade de contratos
+  entryPrice: decimal(18, 8); // Prêmio de entrada
+  exitPrice: decimal(18, 8); // Prêmio de saída
+  underlyingPriceAtEntry: decimal(18, 8); // Preço do ativo na entrada
+  underlyingPriceAtExit: decimal(18, 8); // Preço do ativo na saída
+  premiumReceived: decimal(18, 2); // Prêmio recebido total
+  realizedPnL: decimal(18, 2); // P&L realizado do trade
+  delta: decimal(10, 8); // Greek: Delta
+  gamma: decimal(10, 8); // Greek: Gamma
+  theta: decimal(10, 8); // Greek: Theta
+  vega: decimal(10, 8); // Greek: Vega
+  ivAtEntry: decimal(10, 6); // IV na entrada
+  ivRankAtEntry: decimal(10, 4); // IV Rank na entrada
+  openedAt: timestamp; // Data de abertura
+  closedAt: timestamp; // Data de fechamento
+  notes: text; // Observações
+  metadata: JSONB; // Dados extras
+}
+```
+
+**Constraints:**
+
+- `strategyId` FOREIGN KEY REFERENCES wheel_strategies(id) ON DELETE CASCADE
+- INDEX (strategyId, status)
+- INDEX (optionSymbol)
+- INDEX (expiration)
+
+---
+
+### 8. OptionPrices (Preços de Opções) - FASE 107
+
+Armazena cotações de opções da B3 para análise e recomendações.
+
+**Schema:**
+
+```typescript
+{
+  id: UUID; // Primary Key
+  ticker: string; // Código da opção (ex: PETRD25)
+  underlyingAssetId: UUID; // Foreign Key -> Assets.id
+  type: OptionType; // ENUM: call, put
+  style: OptionStyle; // ENUM: american, european
+  status: OptionStatus; // ENUM: active, expired, exercised
+  strike: decimal(18, 8); // Preço de exercício
+  expirationDate: date; // Data de vencimento
+  lastPrice: decimal(18, 8); // Último preço negociado
+  bid: decimal(18, 8); // Melhor oferta de compra
+  ask: decimal(18, 8); // Melhor oferta de venda
+  volume: bigint; // Volume negociado
+  openInterest: bigint; // Contratos em aberto
+  impliedVolatility: decimal(10, 6); // Volatilidade implícita
+  delta: decimal(10, 8); // Greek: Delta
+  gamma: decimal(10, 8); // Greek: Gamma
+  theta: decimal(10, 8); // Greek: Theta
+  vega: decimal(10, 8); // Greek: Vega
+  rho: decimal(10, 8); // Greek: Rho
+  underlyingPrice: decimal(18, 8); // Preço do ativo base
+  intrinsicValue: decimal(18, 8); // Valor intrínseco
+  extrinsicValue: decimal(18, 8); // Valor extrínseco
+  daysToExpiration: integer; // Dias até o vencimento
+  inTheMoney: boolean; // Se está ITM
+  source: string; // Fonte do dado (scraper)
+  quoteTime: timestamp; // Hora da cotação
+  metadata: JSONB; // Dados extras
+  createdAt: timestamp;
+  updatedAt: timestamp;
+}
+```
+
+**Constraints:**
+
+- `underlyingAssetId` FOREIGN KEY REFERENCES assets(id) ON DELETE CASCADE
+- INDEX (underlyingAssetId, expirationDate, type)
+- INDEX (ticker)
+- INDEX (expirationDate)
+- INDEX (strike, type)
 
 ---
 

@@ -1,8 +1,8 @@
 # 🏗️ ARCHITECTURE - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-10
-**Versão:** 1.12.1
+**Última Atualização:** 2025-12-13
+**Versão:** 1.13.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -86,6 +86,8 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 - `/analysis` - Solicitação e visualização de análises
 - `/portfolio` - Gestão de portfólio
 - `/reports` - Relatórios e análises detalhadas
+- `/wheel` - Dashboard de estratégia WHEEL (FASE 101-108)
+- `/wheel/[id]` - Detalhes de estratégia WHEEL com trades e analytics
 - `/data-sources` - Status e métricas dos scrapers
 - `/oauth-manager` - Gerenciamento de sessões OAuth
 - `/settings` - Configurações do usuário
@@ -166,6 +168,18 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 5. **WebSocket Module** (`src/websocket/`)
    - Gateway: Gerenciamento de conexões
    - Events: Eventos emitidos para frontend
+
+6. **WHEEL Module** (`src/api/wheel/`) - FASE 101-108
+   - WheelController: 15 endpoints REST para estratégia WHEEL
+   - WheelService: Lógica de negócio (candidatos, recomendações, trades)
+   - Entities: WheelStrategy, WheelTrade, OptionPrice
+   - DTOs: CreateWheelStrategy, WheelCandidate, WheelTrade, OptionRecommendation
+   - Features:
+     - Seleção de candidatos com scoring (40% fundamental, 30% liquidez, 30% volatilidade)
+     - Recomendações de PUT/CALL com Greeks
+     - Schedule semanal de distribuição de capital
+     - Cálculo de cash yield (Tesouro SELIC)
+     - Tracking de trades com P&L
 
 **Padrões:**
 

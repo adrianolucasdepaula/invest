@@ -14,6 +14,8 @@ import {
   createWheelTradeApi,
   closeWheelTradeApi,
   calculateCashYieldApi,
+  getWheelWeeklyScheduleApi,
+  getWheelAnalyticsApi,
 } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -280,9 +282,8 @@ export function useWheelWeeklySchedule(strategyId: string) {
   return useQuery({
     queryKey: wheelKeys.weeklySchedule(strategyId),
     queryFn: async () => {
-      // Note: This endpoint doesn't have a standalone API function yet
-      // Returning empty array as placeholder
-      return [] as WeeklySchedule[];
+      const response = await getWheelWeeklyScheduleApi(strategyId);
+      return response as WeeklySchedule[];
     },
     enabled: !!strategyId,
     staleTime: 5 * 60 * 1000,
@@ -296,9 +297,8 @@ export function useWheelAnalytics(strategyId: string) {
   return useQuery({
     queryKey: wheelKeys.analytics(strategyId),
     queryFn: async () => {
-      // Note: This endpoint doesn't have a standalone API function yet
-      // Returning placeholder as analytics
-      return {} as StrategyAnalytics;
+      const response = await getWheelAnalyticsApi(strategyId);
+      return response as StrategyAnalytics;
     },
     enabled: !!strategyId,
     staleTime: 1 * 60 * 1000,
