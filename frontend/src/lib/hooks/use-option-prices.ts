@@ -149,15 +149,22 @@ export function useOptionGreeksRealtime(ticker: string | null) {
 }
 
 /**
- * Hook for listening to option expiration alerts
+ * Hook for listening to option expiration alerts for a specific ticker
  * Useful for showing notifications when options are about to expire
+ * FASE 110.2: Fixed - now properly subscribes to ticker-specific room
+ * @param ticker - Optional ticker to subscribe to (if null, only listens)
  */
-export function useOptionExpirationAlerts() {
+export function useOptionExpirationAlerts(ticker?: string | null) {
   const [alerts, setAlerts] = useState<OptionExpirationAlert[]>([]);
   const cleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     wsService.connect();
+
+    // FASE 110.2: Subscribe to ticker-specific room to receive alerts
+    if (ticker) {
+      wsService.subscribe([ticker], ['options']);
+    }
 
     const handleAlert = (data: OptionExpirationAlert) => {
       setAlerts((prev) => {
@@ -174,8 +181,12 @@ export function useOptionExpirationAlerts() {
 
     return () => {
       cleanupRef.current?.();
+      // Unsubscribe when component unmounts
+      if (ticker) {
+        wsService.unsubscribe([ticker], ['options']);
+      }
     };
-  }, []);
+  }, [ticker]);
 
   const clearAlerts = useCallback(() => setAlerts([]), []);
   const dismissAlert = useCallback((optionTicker: string) => {

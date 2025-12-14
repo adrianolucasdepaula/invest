@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -100,18 +100,26 @@ export default function WheelStrategyDetailPage() {
 
   // FASE 110: Real-time option price updates - auto-invalidates recommendations on WebSocket events
   const { lastUpdate: realtimeUpdate } = useWheelRecommendationUpdates(strategyId);
-  const { alerts: expirationAlerts, dismissAlert } = useOptionExpirationAlerts();
+  // FASE 110.2: Pass ticker to hook for proper WebSocket subscription
+  const { alerts: expirationAlerts, dismissAlert } = useOptionExpirationAlerts(strategy?.asset?.ticker);
 
   // Toast for notifications
   const { toast } = useToast();
+  // FASE 110.2: Track shown updates to prevent duplicates
+  const lastShownUpdateRef = useRef<string | null>(null);
 
   // FASE 110.1: Show toast notification when real-time recommendations update
+  // FASE 110.2: Fixed - use ref to track shown updates and avoid toast dependency
   useEffect(() => {
     if (realtimeUpdate && strategy) {
-      toast({
-        title: 'Recomendações Atualizadas',
-        description: `${realtimeUpdate.recommendations.length} novas recomendações de ${realtimeUpdate.type} para ${realtimeUpdate.ticker}`,
-      });
+      const updateKey = `${realtimeUpdate.ticker}-${realtimeUpdate.type}-${new Date(realtimeUpdate.timestamp).getTime()}`;
+      if (lastShownUpdateRef.current !== updateKey) {
+        lastShownUpdateRef.current = updateKey;
+        toast({
+          title: 'Recomendações Atualizadas',
+          description: `${realtimeUpdate.recommendations.length} novas recomendações de ${realtimeUpdate.type} para ${realtimeUpdate.ticker}`,
+        });
+      }
     }
   }, [realtimeUpdate, strategy, toast]);
 
@@ -307,7 +315,8 @@ export default function WheelStrategyDetailPage() {
         <div className="space-y-2">
           {strategyAlerts.map((alert) => (
             <Alert
-              key={`${alert.optionTicker}-${alert.expiration}`}
+              // FASE 110.2: Added timestamp for better key uniqueness
+              key={`${alert.optionTicker}-${alert.expiration}-${new Date(alert.timestamp).getTime()}`}
               variant={alert.daysToExpiration <= 3 ? 'destructive' : 'default'}
               className="flex items-center justify-between"
             >

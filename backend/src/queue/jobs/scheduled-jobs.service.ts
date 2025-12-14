@@ -320,7 +320,8 @@ export class ScheduledJobsService {
 
           updatedCount++;
         } catch (error) {
-          this.logger.debug(`Failed to update options for ${asset.ticker}: ${error.message}`);
+          // FASE 110.2: Use error level for failures per observability standards
+          this.logger.error(`Failed to update options for ${asset.ticker}: ${error.message}`);
         }
       }
 
@@ -391,8 +392,10 @@ export class ScheduledJobsService {
     this.logger.log('🔄 Auto-expiring past options');
 
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // FASE 110.2: Use B3 timezone (America/Sao_Paulo) for option expiration
+      // Options in B3 expire at market close (17:00 B3 time), so we use B3 date
+      const b3Now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+      const today = new Date(b3Now.getFullYear(), b3Now.getMonth(), b3Now.getDate());
 
       // FASE 110.1: Use LessThan to expire ALL past options, not just today's
       const result = await this.optionPriceRepository.update(
