@@ -12,6 +12,8 @@ import {
   AlertCircle,
   Trash2,
   FileText,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AssetUpdateLogEntry } from '@/lib/hooks/useAssetBulkUpdate';
@@ -26,6 +28,8 @@ export interface AssetUpdateLogsPanelProps {
   className?: string;
   maxHeight?: number;
   autoScroll?: boolean;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 /**
@@ -94,6 +98,8 @@ export function AssetUpdateLogsPanel({
   className,
   maxHeight = 300,
   autoScroll = true,
+  isCollapsed = false,
+  onToggleCollapse,
 }: AssetUpdateLogsPanelProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -113,7 +119,27 @@ export function AssetUpdateLogsPanel({
     <Card className={cn('p-6 space-y-4', className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div
+          {...(onToggleCollapse && {
+            role: 'button',
+            tabIndex: 0,
+            'aria-expanded': !isCollapsed,
+            'aria-label': isCollapsed ? 'Expandir logs' : 'Recolher logs',
+            onKeyDown: (e: React.KeyboardEvent) => e.key === 'Enter' && onToggleCollapse(),
+          })}
+          className={cn(
+            'flex items-center space-x-2',
+            onToggleCollapse && 'cursor-pointer hover:opacity-80 transition-opacity'
+          )}
+          onClick={onToggleCollapse}
+        >
+          {onToggleCollapse && (
+            isCollapsed ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            )
+          )}
           <FileText className="h-5 w-5 text-primary" />
           <h3 className="text-lg font-semibold">Logs de Atualização</h3>
           <Badge variant="outline" className="text-xs">
@@ -122,7 +148,7 @@ export function AssetUpdateLogsPanel({
         </div>
 
         {/* Clear Logs Button */}
-        {logs.length > 0 && (
+        {logs.length > 0 && !isCollapsed && (
           <Button
             variant="outline"
             size="sm"
@@ -136,11 +162,12 @@ export function AssetUpdateLogsPanel({
       </div>
 
       {/* Logs List */}
-      <ScrollArea
-        ref={scrollAreaRef}
-        className="rounded-md border"
-        style={{ height: maxHeight }}
-      >
+      {!isCollapsed && (
+        <ScrollArea
+          ref={scrollAreaRef}
+          className="rounded-md border"
+          style={{ height: maxHeight }}
+        >
         <div className="p-4 space-y-2">
           {logs.length === 0 ? (
             /* Empty State */
@@ -201,6 +228,7 @@ export function AssetUpdateLogsPanel({
           )}
         </div>
       </ScrollArea>
+      )}
     </Card>
   );
 }

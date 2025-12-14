@@ -4,11 +4,12 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAssets } from '@/lib/hooks/use-assets';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AssetTable } from '@/components/dashboard/asset-table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Filter, RefreshCw, Layers, Loader2, XCircle, Pause, Play, Eye } from 'lucide-react';
+import { Search, Filter, RefreshCw, Layers, Loader2, XCircle, Pause, Play, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -58,6 +59,8 @@ export default function AssetsPage() {
   const [isPausing, setIsPausing] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
+  const [isAssetsCollapsed, setIsAssetsCollapsed] = useState(false);
+  const [isLogsCollapsed, setIsLogsCollapsed] = useState(false);
   const { data: assets, isLoading, error, refetch } = useAssets();
 
   // WebSocket hook for bulk updates
@@ -469,8 +472,11 @@ export default function AssetsPage() {
       <Card className="p-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
           <div className="relative flex-1">
+            <Label htmlFor="assets-search" className="sr-only">Buscar ativos</Label>
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
+              id="assets-search"
+              name="assets-search"
               type="search"
               placeholder="Buscar por ticker, nome ou setor..."
               className="pl-9"
@@ -494,7 +500,7 @@ export default function AssetsPage() {
           <div className="flex items-center gap-2">
             {hydrated ? (
               <Select value={viewMode} onValueChange={(value: ViewMode) => setViewMode(value)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger id="view-mode" className="w-[180px]">
                   <SelectValue placeholder="Visualização" />
                 </SelectTrigger>
                 <SelectContent>
@@ -533,17 +539,46 @@ export default function AssetsPage() {
         </div>
       </Card>
 
-      {isLoading ? (
-        <Card className="p-6">
-          <div className="space-y-4">
-            {Array(10)
-              .fill(0)
-              .map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
+      {/* Assets Section Header */}
+      <Card className="p-4">
+        <div
+          role="button"
+          tabIndex={0}
+          aria-expanded={!isAssetsCollapsed}
+          aria-label={isAssetsCollapsed ? 'Expandir lista de ativos' : 'Recolher lista de ativos'}
+          className="flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => setIsAssetsCollapsed(!isAssetsCollapsed)}
+          onKeyDown={(e) => e.key === 'Enter' && setIsAssetsCollapsed(!isAssetsCollapsed)}
+        >
+          <div className="flex items-center space-x-2">
+            {isAssetsCollapsed ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            )}
+            <Layers className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold">Lista de Ativos</h3>
+            <Badge variant="outline" className="text-xs">
+              {sortedAndFilteredAssets.length} {sortedAndFilteredAssets.length === 1 ? 'ativo' : 'ativos'}
+            </Badge>
           </div>
-        </Card>
-      ) : error ? (
+        </div>
+      </Card>
+
+      {/* Assets Section Content */}
+      {!isAssetsCollapsed && (
+        <>
+          {isLoading ? (
+            <Card className="p-6">
+              <div className="space-y-4">
+                {Array(10)
+                  .fill(0)
+                  .map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+              </div>
+            </Card>
+          ) : error ? (
         <Card className="p-6">
           <div className="py-8 text-center">
             <p className="text-destructive">Erro ao carregar ativos</p>
@@ -636,6 +671,8 @@ export default function AssetsPage() {
             onSelectAll={handleSelectAll}
           />
         </Card>
+          )}
+        </>
       )}
 
       {(bulkUpdateState.logs.length > 0 || bulkUpdateState.isRunning) && (
@@ -645,6 +682,8 @@ export default function AssetsPage() {
           isRunning={bulkUpdateState.isRunning}
           maxHeight={300}
           autoScroll
+          isCollapsed={isLogsCollapsed}
+          onToggleCollapse={() => setIsLogsCollapsed(!isLogsCollapsed)}
         />
       )}
 

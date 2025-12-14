@@ -2,7 +2,7 @@
 
 // Updated with new columns
 import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   formatCurrency,
   formatPercent,
@@ -150,10 +150,7 @@ export function AssetTable({
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Ativos</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map(i => (
               <div key={i} className="h-16 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
@@ -166,10 +163,7 @@ export function AssetTable({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Ativos</CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

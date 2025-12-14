@@ -7,6 +7,30 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added
+
+- **FASE 114: Collapse/Expand UI + A11y Improvements (2025-12-14)**
+  - **Nova Funcionalidade - Collapse/Expand:**
+    - Lista de Ativos: Seção minimizável com estado persistente
+    - Logs de Atualização: Painel colapsável para melhor visualização
+  - **Acessibilidade (WCAG 2.1 AA):**
+    - `role="button"` nos elementos de toggle
+    - `tabIndex={0}` para navegação por teclado
+    - `aria-expanded` indicando estado atual
+    - `aria-label` dinâmico ("Expandir/Recolher...")
+    - `onKeyDown` suporte para Enter key
+  - **Correção de UX:**
+    - Removido CardHeader duplicado ("Ativos") do AssetTable
+    - Header único "Lista de Ativos" no card colapsável
+  - **Arquivos Modificados:**
+    - `frontend/src/app/(dashboard)/assets/page.tsx`
+    - `frontend/src/components/dashboard/AssetUpdateLogsPanel.tsx`
+    - `frontend/src/components/dashboard/asset-table.tsx`
+  - **Validação:**
+    - TypeScript: 0 erros
+    - Build: Sucesso
+    - PM Expert: Aprovado
+
 ### Changed
 
 - **FASE 111: Observability Retention 48h + Rate Limiting (2025-12-14)**
