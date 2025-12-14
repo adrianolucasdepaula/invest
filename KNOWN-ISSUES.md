@@ -75,79 +75,183 @@ GitHub Personal Access Token (PAT) foi identificado exposto em arquivo de config
 
 ---
 
+## ✅ ISSUES RESOLVIDOS
+
 ### Issue #WHEEL_API_PERF: WHEEL Candidates API Timeout
 
 **Severidade:** 🟡 **MÉDIA**
-**Status:** ⚠️ **EM ABERTO**
+**Status:** ✅ **RESOLVIDO**
 **Data Identificado:** 2025-12-14
+**Data Resolução:** 2025-12-14
+**Tempo de Resolução:** ~2 horas
 **Identificado Por:** Claude Code (Opus 4.5) durante FASE 110.2
 
 #### Descrição
 
-Endpoint `/api/v1/wheel/candidates` leva ~77 segundos para responder, causando timeout no frontend (30s).
+Endpoint `/api/v1/wheel/candidates` levava ~77 segundos para responder, causando timeout no frontend (30s).
 
 #### Sintomas
 
 - Erro no console: `Query failed: timeout of 30000ms exceeded`
-- Lista de candidatos não carrega na UI
-- API retorna dados corretos quando aguardado (153 candidatos)
+- Lista de candidatos não carregava na UI
+- API retornava dados corretos quando aguardado (153 candidatos)
 
-#### Root Cause Provável
+#### Root Cause Identificado
 
-Query complexa com múltiplos JOINs e cálculos de wheelScore para 861 ativos.
+**Causa Real:** N+1 Query Problem - 61 queries individuais para 20 ativos.
 
-#### Mitigação Temporária
+O método `findWheelCandidates()` executava um loop com 3 queries por ativo:
+1. `getLatestFundamental(asset.id)` - Query individual
+2. `getLatestPrice(asset.id)` - Query individual
+3. `optionRepository.findOne()` - Query individual
 
-Aumentar timeout do React Query ou implementar paginação/cache.
+**Cálculo:** 20 ativos × 3 queries = 60+ queries por request
 
-#### Correção Recomendada
+#### Correção Aplicada
 
-1. Implementar cache Redis para candidatos (TTL: 5 minutos)
-2. Otimizar query com índices apropriados
-3. Considerar materializar wheelScore em tabela separada
+**1. Batch Loading com Maps:**
+
+```typescript
+// ANTES: Loop com queries individuais (N+1)
+for (const asset of assets) {
+  const fd = await this.getLatestFundamental(asset.id);
+  const price = await this.getLatestPrice(asset.id);
+  const option = await this.optionRepository.findOne({...});
+}
+
+// DEPOIS: 3 queries totais com Maps para O(1) lookup
+const assetIds = assets.map(a => a.id);
+
+// Query 1: Todos os fundamentals de uma vez
+const fundamentals = await this.fundamentalRepository
+  .createQueryBuilder('fd')
+  .where('fd.assetId IN (:...assetIds)', { assetIds })
+  .andWhere(/* subquery para latest */)
+  .getMany();
+
+// Query 2: Todos os preços de uma vez
+const prices = await this.assetPriceRepository
+  .createQueryBuilder('price')
+  .where('price.assetId IN (:...assetIds)', { assetIds })
+  .andWhere(/* subquery para latest */)
+  .getMany();
+
+// Query 3: Todas as opções de uma vez
+const options = await this.optionPriceRepository
+  .createQueryBuilder('opt')
+  .where('opt.underlyingAssetId IN (:...assetIds)', { assetIds })
+  .andWhere(/* subquery para latest */)
+  .getMany();
+
+// Maps para lookup O(1)
+const fdMap = new Map(fundamentals.map(f => [f.assetId, f]));
+const priceMap = new Map(prices.map(p => [p.assetId, p]));
+const optMap = new Map(options.map(o => [o.underlyingAssetId, o]));
+```
+
+**2. Index Criado:**
+
+Migration `AddOptionPriceIndexes1765400000000` adicionou:
+```sql
+CREATE INDEX idx_option_price_underlying_updated
+ON option_prices(underlying_asset_id, updated_at DESC)
+```
+
+#### Métricas de Performance
+
+| Métrica | Antes | Depois | Melhoria |
+|---------|-------|--------|----------|
+| Tempo de resposta | 77s | < 1s | ~77x ⚡ |
+| Queries por request | 61 | 4 | ~15x ⚡ |
+| Frontend carrega | ❌ Timeout | ✅ Sucesso | Funcional |
+
+#### Arquivos Modificados
+
+- `backend/src/api/wheel/wheel.service.ts` - Refatoração N+1 → batch
+- `backend/src/database/migrations/1765400000000-AddOptionPriceIndexes.ts` - Novo index
+
+#### Lições Aprendidas
+
+1. **Sempre usar batch loading** para operações em loop
+2. **Maps são O(1)** para lookup após batch load
+3. **Subqueries** para "latest per group" são eficientes no PostgreSQL
+4. **Indexes compostos** (column1, column2 DESC) otimizam ORDER BY
 
 ---
 
 ### Issue #WHEEL_SELIC_RATE: Taxa Selic Incorreta na Calculadora
 
 **Severidade:** 🟡 **MÉDIA**
-**Status:** ⚠️ **EM ABERTO**
+**Status:** ✅ **RESOLVIDO**
 **Data Identificado:** 2025-12-14
+**Data Resolução:** 2025-12-14
+**Tempo de Resolução:** ~30 minutos
 **Identificado Por:** Claude Code (Opus 4.5) durante FASE 110.2
 
 #### Descrição
 
-Calculadora Selic exibe taxa de **0.83%** ao invés de **~12.25%** (taxa real).
+Calculadora Selic exibia taxa de **0.83%** ao invés de **~15%** (taxa real).
 
 #### Sintomas
 
-- UI mostra: "Taxa Selic Atual: 0.83% ao ano"
+- UI mostrava: "Taxa Selic Atual: 0.83% ao ano"
 - Rendimento calculado muito baixo (R$ 98,45 para R$ 100.000 em 30 dias)
-- Taxa esperada deveria ser ~R$ 980 para mesmos parâmetros
+- Taxa esperada deveria ser ~R$ 1.677 para mesmos parâmetros
 
-#### Root Cause Provável
+#### Root Cause Identificado
 
-1. EconomicIndicatorsService retornando valor incorreto
-2. Valor SELIC no banco de dados desatualizado ou em formato incorreto
-3. Possível confusão entre taxa mensal vs anual
+**Causa Real:** Série BCB errada - 4390 (mensal acumulada) vs 432 (Meta SELIC anual).
 
-#### Investigação Necessária
+| Série BCB | Descrição | Valor Típico |
+|-----------|-----------|--------------|
+| **4390** | SELIC Acumulada no Mês | ~0.83% |
+| **432** | SELIC Meta (% a.a.) | ~15% |
 
-```bash
-# Verificar valor no banco
-docker exec invest_postgres psql -U invest_user invest_db -c \
-  "SELECT * FROM economic_indicators WHERE type = 'SELIC' ORDER BY created_at DESC LIMIT 1;"
+O código usava série 4390 que retorna variação mensal, não taxa anual.
+
+#### Correção Aplicada
+
+**Arquivo:** `backend/src/integrations/brapi/brapi.service.ts`
+
+```typescript
+// ANTES (linha 77)
+.get(`${this.bcbBaseUrl}.4390/dados/ultimos/${count}`)
+
+// DEPOIS
+.get(`${this.bcbBaseUrl}.432/dados/ultimos/${count}`)
 ```
 
-#### Correção Recomendada
+**Documentação atualizada:**
+```typescript
+/**
+ * Get SELIC rate (Taxa básica de juros - Banco Central)
+ * Série 432: SELIC - Taxa Meta (% a.a.) - taxa anualizada
+ */
+```
 
-1. Verificar seed/scraper de indicadores econômicos
-2. Validar formato do valor (% anual vs mensal)
-3. Atualizar valor SELIC para taxa atual (~12.25%)
+#### Validação
+
+Após sync de indicadores (`/api/v1/economic-indicators/sync`):
+
+| Métrica | Antes | Depois |
+|---------|-------|--------|
+| Taxa Selic | 0.83% | 15.00% |
+| Taxa Diária | 0.0033% | 0.0555% |
+| Rendimento R$100k/30d | R$ 98,45 | R$ 1.677,75 |
+| Valor Final | R$ 100.098,45 | R$ 101.677,75 |
+
+#### Arquivos Modificados
+
+- `backend/src/integrations/brapi/brapi.service.ts` - Série BCB 4390 → 432
+
+#### Lições Aprendidas
+
+1. **Sempre validar dados de APIs externas** contra fontes oficiais
+2. **BCB tem múltiplas séries SELIC** - escolher correta para uso
+3. **Cache Redis pode mascarar fixes** - forçar sync após correção
+4. **React Query cache** - recarregar página após sync do backend
 
 ---
-
-## ✅ ISSUES RESOLVIDOS
 
 ### Issue #DOCKER_DIST_CACHE: hasOptionsOnly undefined due to stale dist cache
 
@@ -245,6 +349,8 @@ O Next.js 16 tentava processar esses arquivos como Pages Router, causando confli
 
 | Issue | Descrição | Severidade | Data Resolução | Documentação |
 |-------|-----------|-----------|----------------|--------------|
+| #WHEEL_API_PERF | WHEEL Candidates N+1 Query (77s timeout) | 🟡 Média | 2025-12-14 | `wheel.service.ts`, migration |
+| #WHEEL_SELIC_RATE | Taxa Selic incorreta (BCB série errada) | 🟡 Média | 2025-12-14 | `brapi.service.ts` |
 | #DOCKER_DIST_CACHE | hasOptionsOnly undefined (stale dist) | 🔴 Alta | 2025-12-14 | `BUG_REPORT_HASOPTIONS_ONLY_2025-12-14.md` |
 | #5 | População de Dados Após Database Wipe | 🔴 Crítica | 2025-12-04 | `scripts/backup-db.ps1`, `scripts/restore-db.ps1` |
 | #4 | Frontend Cache - Docker Volume | 🔴 Crítica | 2025-12-04 | `docker-compose.yml` (volume removed) |
@@ -264,9 +370,9 @@ O Next.js 16 tentava processar esses arquivos como Pages Router, causando confli
 | #QUEUE_PAUSED | BullMQ Queue Pausada - Botão "Atualizar Todos" | 🔴 Crítica | 2025-12-05 | `PLANO_DIAGNOSTICO_ATUALIZAR_TODOS.md` |
 | #CANCEL_RACE | Cancel Button Race Condition - Página Assets | 🟡 Média | 2025-12-13 | `useAssetBulkUpdate.ts`, `page.tsx` |
 
-**Total Resolvidos:** 17 issues
+**Total Resolvidos:** 19 issues
 **Comportamento Normal:** 1 (não é bug, é comportamento esperado - Issue #7)
-**Taxa de Resolução:** 100% (15/15 issues reais)
+**Taxa de Resolução:** 100% (17/17 issues reais)
 
 ---
 
@@ -900,8 +1006,8 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 
 | Categoria | Quantidade | Taxa de Resolução |
 |-----------|-----------|------------------|
-| **Total de Issues Documentados** | 18 | - |
-| **Issues Resolvidos** | 17 | 100% |
+| **Total de Issues Documentados** | 20 | - |
+| **Issues Resolvidos** | 19 | 100% |
 | **Issues Ativos (Em Aberto)** | 1 | - |
 | **Comportamento Normal (não é bug)** | 1 | N/A |
 
@@ -910,7 +1016,7 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 | Severidade | Total | Resolvidos | Em Aberto |
 |-----------|-------|-----------|-----------|
 | 🔴 **Crítica** | 11 | 10 | 1 |
-| 🟡 **Média** | 6 | 6 | 0 |
+| 🟡 **Média** | 8 | 8 | 0 |
 | 🟢 **Baixa** | 1 | 1 | 0 |
 
 ### Tempo Médio de Resolução
