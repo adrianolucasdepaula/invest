@@ -9,6 +9,26 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Changed
 
+- **FASE 111: Observability Retention 48h + Rate Limiting (2025-12-14)**
+  - **Retention Configuration:**
+    - Tempo: `block_retention: 48h` - Trace storage for 2 days
+    - Loki: `retention_period: 48h` - Log storage for 2 days
+    - Prometheus: `--storage.tsdb.retention.time=48h`, `--storage.tsdb.retention.size=1GB`
+  - **Loki Rate Limiting Fix:**
+    - Added `ingestion_rate_mb: 16` (was 4MB default)
+    - Added `ingestion_burst_size_mb: 32`
+    - Added `per_stream_rate_limit: 5MB`
+    - Added `per_stream_rate_limit_burst: 15MB`
+  - **Critical Fix Applied:**
+    - Recreated Prometheus container to activate `--web.enable-remote-write-receiver` flag
+    - Tempo can now send metrics to Prometheus correctly
+  - **Validation:**
+    - All observability containers running (tempo, loki, prometheus, grafana, promtail)
+    - Prometheus targets: 4/4 UP (prometheus, tempo, loki, invest-backend)
+    - Compactors running (Tempo every 30s, Loki every 10m)
+  - **Documentation:**
+    - Created `OBSERVABILITY_VALIDATION_REPORT_2025-12-14.md`
+
 - **FASE 109: React Query Migration + Race Condition Fix + IPEADATA Scraper (2025-12-13)**
   - **React Query Migration:**
     - Migrated `/wheel/page.tsx` from useState+useEffect to React Query hooks

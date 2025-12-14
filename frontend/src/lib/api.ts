@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import Cookies from 'js-cookie';
+import { logger } from './logger';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api/v1';
 const OAUTH_BASE_URL = process.env.NEXT_PUBLIC_OAUTH_URL || 'http://localhost:8080';
@@ -63,7 +64,21 @@ class ApiClient {
     this.client.interceptors.response.use(
       response => response,
       (error: AxiosError) => {
-        if (error.response?.status === 401) {
+        // Log API errors (FASE 76.4: Frontend Error Reporting)
+        const url = error.config?.url || 'unknown';
+        const method = error.config?.method?.toUpperCase() || 'UNKNOWN';
+        const status = error.response?.status;
+
+        // Don't log auth redirects as errors
+        if (status !== 401) {
+          logger.apiError(method, url, error, {
+            status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+          });
+        }
+
+        if (status === 401) {
           Cookies.remove('access_token');
           if (typeof window !== 'undefined') {
             window.location.href = '/login';
@@ -172,10 +187,13 @@ class ApiClient {
 
   // Bulk update all assets with fundamental data (async with WebSocket)
   async bulkUpdateAllAssetsFundamentals(userId?: string, hasOptionsOnly?: boolean) {
-    const response = await this.client.post('/assets/updates/bulk-all', {
+    const body = {
       userId,
       hasOptionsOnly: hasOptionsOnly ?? false,
-    });
+    };
+    console.log('[API] bulkUpdateAllAssetsFundamentals called with:', { userId, hasOptionsOnly });
+    console.log('[API] Sending body:', JSON.stringify(body));
+    const response = await this.client.post('/assets/updates/bulk-all', body);
     return response.data;
   }
 

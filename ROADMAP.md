@@ -11634,6 +11634,7 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 110** | Option Prices Real-Time Integration | ✅ 100% | 2025-12-14 |
 | **FASE 110.1** | Code Review Fixes for Option Prices | ✅ 100% | 2025-12-14 |
 | **FASE 110.2** | Code Review Round 2 (Timezone + Observability) | ✅ 100% | 2025-12-14 |
+| **FASE 111** | Observability Retention 48h + Rate Limiting | ✅ 100% | 2025-12-14 |
 
 **Funcionalidades Implementadas:**
 - Seleção de candidatos por critérios fundamentalistas (ROE, DY, Dív/EBITDA)
@@ -11671,11 +11672,12 @@ Sistema em estado de manutenção e evolução contínua.
 > **Nota:** FASE 100.1 concluída em 2025-12-12 (Code Review: bare except fixes, error handling improvements)
 > **Nota:** FASE 101-109 concluídas em 2025-12-13 (WHEEL Strategy Implementation + Consolidation)
 > **Nota:** FASE 110-110.2 concluídas em 2025-12-14 (Option Prices Real-Time + Code Review Fixes + Timezone/Observability)
+> **Nota:** FASE 111 concluída em 2025-12-14 (Observability Retention 48h: Tempo, Loki, Prometheus + Loki Rate Limiting Fix)
 
 ---
 
 **Ultima Atualizacao:** 2025-12-14
-**Total de Fases:** 117 completas (incluindo sub-fases)
-**Versao:** 1.18.1
+**Total de Fases:** 118 completas (incluindo sub-fases)
+**Versao:** 1.18.2
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

@@ -75,7 +75,134 @@ GitHub Personal Access Token (PAT) foi identificado exposto em arquivo de config
 
 ---
 
+### Issue #WHEEL_API_PERF: WHEEL Candidates API Timeout
+
+**Severidade:** 🟡 **MÉDIA**
+**Status:** ⚠️ **EM ABERTO**
+**Data Identificado:** 2025-12-14
+**Identificado Por:** Claude Code (Opus 4.5) durante FASE 110.2
+
+#### Descrição
+
+Endpoint `/api/v1/wheel/candidates` leva ~77 segundos para responder, causando timeout no frontend (30s).
+
+#### Sintomas
+
+- Erro no console: `Query failed: timeout of 30000ms exceeded`
+- Lista de candidatos não carrega na UI
+- API retorna dados corretos quando aguardado (153 candidatos)
+
+#### Root Cause Provável
+
+Query complexa com múltiplos JOINs e cálculos de wheelScore para 861 ativos.
+
+#### Mitigação Temporária
+
+Aumentar timeout do React Query ou implementar paginação/cache.
+
+#### Correção Recomendada
+
+1. Implementar cache Redis para candidatos (TTL: 5 minutos)
+2. Otimizar query com índices apropriados
+3. Considerar materializar wheelScore em tabela separada
+
+---
+
+### Issue #WHEEL_SELIC_RATE: Taxa Selic Incorreta na Calculadora
+
+**Severidade:** 🟡 **MÉDIA**
+**Status:** ⚠️ **EM ABERTO**
+**Data Identificado:** 2025-12-14
+**Identificado Por:** Claude Code (Opus 4.5) durante FASE 110.2
+
+#### Descrição
+
+Calculadora Selic exibe taxa de **0.83%** ao invés de **~12.25%** (taxa real).
+
+#### Sintomas
+
+- UI mostra: "Taxa Selic Atual: 0.83% ao ano"
+- Rendimento calculado muito baixo (R$ 98,45 para R$ 100.000 em 30 dias)
+- Taxa esperada deveria ser ~R$ 980 para mesmos parâmetros
+
+#### Root Cause Provável
+
+1. EconomicIndicatorsService retornando valor incorreto
+2. Valor SELIC no banco de dados desatualizado ou em formato incorreto
+3. Possível confusão entre taxa mensal vs anual
+
+#### Investigação Necessária
+
+```bash
+# Verificar valor no banco
+docker exec invest_postgres psql -U invest_user invest_db -c \
+  "SELECT * FROM economic_indicators WHERE type = 'SELIC' ORDER BY created_at DESC LIMIT 1;"
+```
+
+#### Correção Recomendada
+
+1. Verificar seed/scraper de indicadores econômicos
+2. Validar formato do valor (% anual vs mensal)
+3. Atualizar valor SELIC para taxa atual (~12.25%)
+
+---
+
 ## ✅ ISSUES RESOLVIDOS
+
+### Issue #DOCKER_DIST_CACHE: hasOptionsOnly undefined due to stale dist cache
+
+**Severidade:** 🔴 **ALTA**
+**Status:** ✅ **RESOLVIDO**
+**Data Identificado:** 2025-12-14
+**Data Resolução:** 2025-12-14
+**Tempo de Resolução:** ~2 horas (investigação completa)
+
+#### Sintomas
+
+- Filtro "Com Opções" não funcionava ao clicar "Atualizar Todos"
+- Backend enfileirava 861 ativos ao invés de ~153 (apenas com opções)
+- Log do controller: `hasOptionsOnly: undefined, userId: undefined`
+- Frontend enviava corretamente `{"hasOptionsOnly": true}`
+
+#### Root Cause Identificado
+
+**Causa Real:** Cache de compilação do Docker (`/app/dist`) com código antigo.
+
+O código TypeScript é montado como volume (`./backend:/app`), mas:
+1. O `docker-entrypoint.sh` não reconstrói se `/app/dist` já existir
+2. O `nest start --watch` pode não detectar todas as mudanças
+3. A pasta `dist` persiste entre restarts do container
+
+#### Correção Aplicada
+
+1. **@Transform decorator** adicionado ao DTO para conversão robusta de boolean
+2. **docker-entrypoint.sh** melhorado para detectar arquivos .ts mais novos que dist
+3. **Documentação** adicionada no código e em `BUG_REPORT_HASOPTIONS_ONLY_2025-12-14.md`
+
+#### Manual Fix
+
+```bash
+# Limpar cache e reiniciar
+docker exec invest_backend rm -rf /app/dist
+docker-compose restart backend
+```
+
+#### Arquivos Modificados
+
+- `backend/src/api/assets/dto/update-asset.dto.ts` - @Transform + documentação
+- `backend/docker-entrypoint.sh` - Detecção automática de código desatualizado
+- `BUG_REPORT_HASOPTIONS_ONLY_2025-12-14.md` - Relatório completo
+
+#### Prevenção Futura
+
+O `docker-entrypoint.sh` agora verifica se arquivos `.ts` são mais novos que `dist`:
+```bash
+if [ -n "$(find src -name '*.ts' -newer dist -print -quit 2>/dev/null)" ]; then
+    rm -rf dist && npm run build
+fi
+```
+
+---
 
 ### Issue #NEXTJS16_BUILD: Next.js 16 Build Fail (SSG useContext null)
 
@@ -118,6 +245,7 @@ O Next.js 16 tentava processar esses arquivos como Pages Router, causando confli
 
 | Issue | Descrição | Severidade | Data Resolução | Documentação |
 |-------|-----------|-----------|----------------|--------------|
+| #DOCKER_DIST_CACHE | hasOptionsOnly undefined (stale dist) | 🔴 Alta | 2025-12-14 | `BUG_REPORT_HASOPTIONS_ONLY_2025-12-14.md` |
 | #5 | População de Dados Após Database Wipe | 🔴 Crítica | 2025-12-04 | `scripts/backup-db.ps1`, `scripts/restore-db.ps1` |
 | #4 | Frontend Cache - Docker Volume | 🔴 Crítica | 2025-12-04 | `docker-compose.yml` (volume removed) |
 | #NEW | Validação Visual Final da UI de Opções | 🟡 Média | 2025-12-04 | `VALIDACAO_UI_OPCOES_2025-12-04.md` |
@@ -841,6 +969,6 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 
 ---
 
-**Última Atualização:** 2025-12-13
+**Última Atualização:** 2025-12-14
 **Próxima Revisão:** Conforme necessário
 **Responsável:** Claude Code (Opus 4.5)

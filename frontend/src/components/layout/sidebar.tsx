@@ -16,6 +16,7 @@ import {
   Shield,
   RefreshCw,
   AlertTriangle,
+  Target,
 } from 'lucide-react';
 
 const navigation = [
@@ -23,6 +24,7 @@ const navigation = [
   { name: 'Ativos', href: '/assets', icon: TrendingUp },
   { name: 'Análises', href: '/analysis', icon: BarChart3 },
   { name: 'Portfólio', href: '/portfolio', icon: Briefcase },
+  { name: 'WHEEL Strategy', href: '/wheel', icon: Target },
   { name: 'Relatórios', href: '/reports', icon: FileText },
   { name: 'Fontes de Dados', href: '/data-sources', icon: Database },
   { name: 'Discrepancias', href: '/discrepancies', icon: AlertTriangle },

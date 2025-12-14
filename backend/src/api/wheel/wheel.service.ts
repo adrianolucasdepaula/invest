@@ -236,23 +236,80 @@ export class WheelService {
       .take(limit)
       .getManyAndCount();
 
-    // Process each asset and calculate WHEEL score
+    // FASE 111: Batch load all related data to eliminate N+1 queries
+    // Previously: 61 queries (1 + 20*3) for 20 assets
+    // Now: 4 queries total (1 asset query + 3 batch queries)
+    const assetIds = assets.map((a) => a.id);
+
+    // Batch Query 1: Get latest prices for all assets at once
+    // Using raw query with DISTINCT ON for PostgreSQL efficiency
+    const latestPrices =
+      assetIds.length > 0
+        ? await this.assetPriceRepository
+            .createQueryBuilder('price')
+            .where('price.assetId IN (:...assetIds)', { assetIds })
+            .andWhere(
+              `price.date = (
+                SELECT MAX(p2.date)
+                FROM asset_prices p2
+                WHERE p2.asset_id = price.asset_id
+              )`,
+            )
+            .getMany()
+        : [];
+
+    // Batch Query 2: Get latest fundamental data for all assets at once
+    const latestFundamentals =
+      assetIds.length > 0
+        ? await this.fundamentalRepository
+            .createQueryBuilder('fd')
+            .where('fd.assetId IN (:...assetIds)', { assetIds })
+            .andWhere(
+              `fd.referenceDate = (
+                SELECT MAX(fd2.reference_date)
+                FROM fundamental_data fd2
+                WHERE fd2.asset_id = fd.asset_id
+              )`,
+            )
+            .getMany()
+        : [];
+
+    // Batch Query 3: Get latest options for all assets at once
+    const latestOptions =
+      assetIds.length > 0
+        ? await this.optionRepository
+            .createQueryBuilder('opt')
+            .where('opt.underlyingAssetId IN (:...assetIds)', { assetIds })
+            .andWhere(
+              `opt.updated_at = (
+                SELECT MAX(o2.updated_at)
+                FROM option_prices o2
+                WHERE o2.underlying_asset_id = opt.underlying_asset_id
+              )`,
+            )
+            .getMany()
+        : [];
+
+    // Create Maps for O(1) lookup instead of O(n) search
+    const priceMap = new Map(latestPrices.map((p) => [p.assetId, p]));
+    const fdMap = new Map(latestFundamentals.map((f) => [f.assetId, f]));
+    const optMap = new Map(latestOptions.map((o) => [o.underlyingAssetId, o]));
+
+    this.logger.log(
+      `FASE 111 Batch loaded: ${latestPrices.length} prices, ${latestFundamentals.length} fundamentals, ${latestOptions.length} options`,
+    );
+
+    // Process each asset using Maps (no additional DB queries)
     const candidates: WheelCandidateResponseDto[] = [];
 
     for (const asset of assets) {
-      // Get latest fundamental data (fundamentalData is an array)
-      const fd = await this.getLatestFundamental(asset.id);
+      // O(1) lookups from Maps instead of DB queries
+      const fd = fdMap.get(asset.id) || null;
+      const priceData = priceMap.get(asset.id);
+      const currentPrice = priceData ? Number(priceData.close) : 0;
+      const latestOption = optMap.get(asset.id) || null;
 
-      // Get current price
-      const currentPrice = await this.getLatestPrice(asset.id);
-
-      // Get IV Rank from options (most recent)
-      const latestOption = await this.optionRepository.findOne({
-        where: { underlyingAssetId: asset.id },
-        order: { updatedAt: 'DESC' },
-      });
-
-      // Calculate scores
+      // Calculate scores (local computation, no DB)
       const fundamentalScore = this.calculateFundamentalScore(fd, {
         minROE,
         minDividendYield,
@@ -264,7 +321,7 @@ export class WheelService {
       const volatilityScore = this.calculateVolatilityScore(latestOption, minIVRank);
 
       const wheelScore = Math.round(
-        fundamentalScore * 0.4 + liquidityScore * 0.3 + volatilityScore * 0.3
+        fundamentalScore * 0.4 + liquidityScore * 0.3 + volatilityScore * 0.3,
       );
 
       candidates.push({

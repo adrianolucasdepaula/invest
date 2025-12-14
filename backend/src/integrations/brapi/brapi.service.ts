@@ -55,11 +55,17 @@ export class BrapiService {
 
   /**
    * Get SELIC rate (Taxa básica de juros - Banco Central)
-   * Série 4390: Taxa SELIC acumulada no mês (% a.m.)
-   * CORRIGIDO: Anteriormente usava Série 11 (diária), agora usa 4390 (mensal)
-   * CORRIGIDO 2025-11-25: Adicionado retry logic (3 tentativas, exponential backoff)
+   * Série 432: SELIC - Taxa Meta (% a.a.) - taxa anualizada
+   *
+   * HISTÓRICO DE CORREÇÕES:
+   * - CORRIGIDO 2025-12-14 (FASE 112): Série 4390 (mensal 0.83%) → Série 432 (anual ~12.25%)
+   *   Problema: Calculadora WHEEL mostrava taxa incorreta (0.83% ao invés de ~12.25%)
+   *   Root cause: Série 4390 é "SELIC acumulada no mês" (% a.m.), não anualizada
+   * - CORRIGIDO 2025-11-25: Adicionado retry logic (3 tentativas, exponential backoff)
+   * - Anteriormente usava Série 11 (diária)
+   *
    * @param count Number of records to fetch (default: 1)
-   * @returns Array of { value: number, date: Date }
+   * @returns Array of { value: number, date: Date } - value is % a.a. (annualized)
    */
   async getSelic(count: number = 1): Promise<Array<{ value: number; date: Date }>> {
     let lastError: Error;
@@ -68,13 +74,14 @@ export class BrapiService {
     for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
       try {
         this.logger.log(
-          `Fetching last ${count} SELIC monthly rates from Banco Central API (attempt ${attempt}/${this.MAX_RETRIES})...`,
+          `Fetching last ${count} SELIC target rates from Banco Central API (attempt ${attempt}/${this.MAX_RETRIES})...`,
         );
 
-        // BCB API: últimos N registros da série 4390 (SELIC acumulada no mês)
+        // BCB API: últimos N registros da série 432 (SELIC - Taxa Meta % a.a.)
+        // Série 432 retorna taxa anualizada (ex: 12.25% a.a.)
         const response = await firstValueFrom(
           this.httpService
-            .get(`${this.bcbBaseUrl}.4390/dados/ultimos/${count}`, {
+            .get(`${this.bcbBaseUrl}.432/dados/ultimos/${count}`, {
               params: { formato: 'json' },
             })
             .pipe(

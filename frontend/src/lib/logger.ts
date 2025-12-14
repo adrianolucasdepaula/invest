@@ -158,19 +158,11 @@ class FrontendLogger {
   }
 
   /**
-   * Send critical errors to backend (future implementation)
-   * Currently a no-op, ready for backend integration
+   * Send critical errors to backend
+   * FASE 76.4: Frontend Error Reporting
    */
   private async sendToBackend(entry: LogEntry): Promise<void> {
-    // TODO: Implement when backend logging endpoint is available
-    // Example:
-    // await fetch('/api/v1/logs', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(entry),
-    // });
-
-    // For now, just store in sessionStorage for debugging
+    // Store in sessionStorage for local debugging
     if (typeof sessionStorage !== 'undefined') {
       try {
         const errors = JSON.parse(sessionStorage.getItem('frontend_errors') || '[]');
@@ -183,6 +175,20 @@ class FrontendLogger {
       } catch {
         // Silently fail
       }
+    }
+
+    // Send to backend telemetry endpoint
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101';
+      await fetch(`${apiUrl}/api/v1/telemetry/frontend-error`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry),
+        // Don't wait too long - fire and forget
+        signal: AbortSignal.timeout(5000),
+      });
+    } catch {
+      // Silently fail - don't create infinite loop or block UI
     }
   }
 

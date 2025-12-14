@@ -115,6 +115,7 @@ export class WheelStrategy {
     type: 'enum',
     enum: MarketTrend,
     default: MarketTrend.NEUTRAL,
+    name: 'market_trend',
   })
   marketTrend: MarketTrend;
 

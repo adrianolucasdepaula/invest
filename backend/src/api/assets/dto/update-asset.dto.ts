@@ -6,6 +6,7 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UpdateTrigger } from '@database/entities';
 
@@ -111,6 +112,27 @@ export class GetOutdatedAssetsDto {
 /**
  * DTO for bulk updating ALL assets fundamentals
  * FASE 86: Proper DTO with validators for the bulk-all endpoint
+ *
+ * TROUBLESHOOTING (2025-12-14):
+ * ============================
+ * BUG: hasOptionsOnly chegava como undefined no controller mesmo quando frontend enviava true.
+ *
+ * ROOT CAUSE: Cache de compilação do Docker.
+ * - O código TypeScript é montado como volume (./backend:/app)
+ * - Mas a pasta /app/dist pode conter código compilado antigo
+ * - O docker-entrypoint.sh só reconstrói se dist não existir
+ * - nest start --watch pode não detectar todas as mudanças
+ *
+ * SOLUÇÃO:
+ * 1. @Transform decorator adicionado para garantir conversão robusta de boolean
+ * 2. Limpar dist antes de restart: `docker exec invest_backend rm -rf /app/dist`
+ * 3. Reiniciar container: `docker-compose restart backend`
+ *
+ * EVIDÊNCIA DO BUG (logs do backend):
+ * - GlobalExceptionFilter mostrou body: {"hasOptionsOnly":true} (frontend enviou correto)
+ * - Controller logou: hasOptionsOnly: undefined (backend recebeu errado)
+ *
+ * PREVENÇÃO: Se o filtro não funcionar, verificar se dist está atualizado.
  */
 export class BulkUpdateAllAssetsDto {
   @ApiPropertyOptional({
@@ -121,12 +143,27 @@ export class BulkUpdateAllAssetsDto {
   @IsUUID()
   userId?: string;
 
+  /**
+   * Filter to only update assets that have options (hasOptions=true)
+   *
+   * IMPORTANTE: O @Transform é necessário para garantir conversão robusta.
+   * Sem ele, valores podem chegar como undefined devido a problemas de
+   * serialização/deserialização entre frontend e backend.
+   *
+   * @see BUG_REPORT_HASOPTIONS_ONLY_2025-12-14.md
+   */
   @ApiPropertyOptional({
     description: 'Filter to only update assets that have options (hasOptions=true)',
     example: true,
     default: false,
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    // Conversão robusta de boolean - trata strings, numbers e booleans
+    if (value === 'true' || value === true || value === 1) return true;
+    if (value === 'false' || value === false || value === 0) return false;
+    return value;
+  })
   @IsBoolean()
   hasOptionsOnly?: boolean;
 }

@@ -51,6 +51,7 @@ export class WheelTrade {
   @Column({
     type: 'enum',
     enum: WheelTradeType,
+    name: 'trade_type',
   })
   tradeType: WheelTradeType;
 
