@@ -15,6 +15,7 @@ import { FundamentalData } from '../database/entities/fundamental-data.entity';
 import { AssetPrice } from '../database/entities/asset-price.entity';
 import { DataSource } from '../database/entities/data-source.entity';
 import { ScrapedData } from '../database/entities/scraped-data.entity';
+import { OptionPrice } from '../database/entities/option-price.entity';
 
 @Module({
   imports: [
@@ -35,7 +36,7 @@ import { ScrapedData } from '../database/entities/scraped-data.entity';
         // See: asset-update.processor.ts
       },
     ),
-    TypeOrmModule.forFeature([Asset, News, FundamentalData, AssetPrice, DataSource, ScrapedData]),
+    TypeOrmModule.forFeature([Asset, News, FundamentalData, AssetPrice, DataSource, ScrapedData, OptionPrice]),
     ScrapersModule,
     WebSocketModule, // ✅ FIX: Import WebSocketModule to make AppWebSocketGateway available for dependency injection
     forwardRef(() => AssetsModule),

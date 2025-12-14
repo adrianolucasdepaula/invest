@@ -19,6 +19,7 @@ import {
   type WheelTrade,
   type WeeklySchedule,
 } from '@/lib/hooks/use-wheel';
+import { useWheelRecommendationUpdates, useOptionExpirationAlerts } from '@/lib/hooks/use-option-prices';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -91,6 +92,10 @@ export default function WheelStrategyDetailPage() {
   const { data: analytics, isLoading: loadingAnalytics } = useWheelAnalytics(strategyId);
   // FASE 109.1: useWheelCashYield agora aceita principal (number), não strategyId
   const { data: cashYield } = useWheelCashYield(strategy?.availableCapital || 0, 30);
+
+  // FASE 110: Real-time option price updates - auto-invalidates recommendations on WebSocket events
+  const { lastUpdate: realtimeUpdate } = useWheelRecommendationUpdates(strategyId);
+  const { alerts: expirationAlerts, dismissAlert } = useOptionExpirationAlerts();
 
   // Mutations
   const updateStrategy = useUpdateWheelStrategy();

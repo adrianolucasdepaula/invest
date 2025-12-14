@@ -5,6 +5,7 @@ export enum SubscriptionType {
   ANALYSIS = 'analysis',
   REPORTS = 'reports',
   PORTFOLIO = 'portfolio',
+  OPTIONS = 'options',
 }
 
 export class SubscribeDto {

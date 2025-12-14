@@ -369,4 +369,163 @@ export class AppWebSocketGateway
       `[WS] Scraper test all completed: ${data.successCount}/${data.totalScrapers} successful (${data.duration}ms)`,
     );
   }
+
+  // ============================================================================
+  // FASE 110: OPTION PRICES REAL-TIME EVENTS
+  // ============================================================================
+
+  /**
+   * Emit option price update for a specific underlying ticker
+   * Room format: ${ticker}:options
+   */
+  emitOptionPriceUpdate(
+    ticker: string,
+    data: {
+      optionTicker: string;
+      strike: number;
+      expiration: string;
+      type: 'CALL' | 'PUT';
+      lastPrice: number;
+      bid: number;
+      ask: number;
+      volume: number;
+      openInterest: number;
+      delta?: number;
+      gamma?: number;
+      theta?: number;
+      vega?: number;
+      impliedVolatility?: number;
+    },
+  ) {
+    const roomName = `${ticker}:options`;
+    this.server.to(roomName).emit('option_price_update', {
+      underlyingTicker: ticker,
+      ...data,
+      timestamp: new Date(),
+    });
+  }
+
+  /**
+   * Emit full option chain update for an underlying ticker
+   */
+  emitOptionChainUpdate(
+    ticker: string,
+    data: {
+      expirationDate: string;
+      calls: Array<{
+        optionTicker: string;
+        strike: number;
+        lastPrice: number;
+        bid: number;
+        ask: number;
+        volume: number;
+        openInterest: number;
+        delta?: number;
+        impliedVolatility?: number;
+      }>;
+      puts: Array<{
+        optionTicker: string;
+        strike: number;
+        lastPrice: number;
+        bid: number;
+        ask: number;
+        volume: number;
+        openInterest: number;
+        delta?: number;
+        impliedVolatility?: number;
+      }>;
+    },
+  ) {
+    const roomName = `${ticker}:options`;
+    this.server.to(roomName).emit('option_chain_update', {
+      underlyingTicker: ticker,
+      ...data,
+      timestamp: new Date(),
+    });
+    this.logger.log(
+      `[WS] Option chain update: ${ticker} exp ${data.expirationDate} (${data.calls.length} calls, ${data.puts.length} puts)`,
+    );
+  }
+
+  /**
+   * Emit Greeks recalculation for options (after underlying price change)
+   */
+  emitOptionGreeksUpdate(
+    ticker: string,
+    data: {
+      underlyingPrice: number;
+      options: Array<{
+        optionTicker: string;
+        delta: number;
+        gamma: number;
+        theta: number;
+        vega: number;
+        impliedVolatility: number;
+        intrinsicValue: number;
+        extrinsicValue: number;
+      }>;
+    },
+  ) {
+    const roomName = `${ticker}:options`;
+    this.server.to(roomName).emit('option_greeks_update', {
+      underlyingTicker: ticker,
+      ...data,
+      timestamp: new Date(),
+    });
+    this.logger.log(
+      `[WS] Option Greeks update: ${ticker} @ ${data.underlyingPrice} (${data.options.length} options)`,
+    );
+  }
+
+  /**
+   * Emit WHEEL recommendation update when option prices change
+   */
+  emitWheelRecommendationUpdate(
+    strategyId: string,
+    data: {
+      ticker: string;
+      type: 'PUT' | 'CALL';
+      recommendations: Array<{
+        optionTicker: string;
+        strike: number;
+        expiration: string;
+        premium: number;
+        delta: number;
+        annualizedReturn: number;
+        score: number;
+      }>;
+    },
+  ) {
+    // Broadcast to all clients (WHEEL updates are user-specific via strategyId)
+    this.server.emit('wheel_recommendation_update', {
+      strategyId,
+      ...data,
+      timestamp: new Date(),
+    });
+    this.logger.log(
+      `[WS] WHEEL recommendation update: ${data.ticker} ${data.type} (${data.recommendations.length} recs)`,
+    );
+  }
+
+  /**
+   * Emit option expiration alert
+   */
+  emitOptionExpirationAlert(data: {
+    ticker: string;
+    optionTicker: string;
+    strike: number;
+    type: 'CALL' | 'PUT';
+    expiration: string;
+    daysToExpiration: number;
+    inTheMoney: boolean;
+  }) {
+    const roomName = `${data.ticker}:options`;
+    this.server.to(roomName).emit('option_expiration_alert', {
+      ...data,
+      timestamp: new Date(),
+    });
+    this.logger.log(
+      `[WS] Option expiration alert: ${data.optionTicker} expires in ${data.daysToExpiration} days`,
+    );
+  }
 }

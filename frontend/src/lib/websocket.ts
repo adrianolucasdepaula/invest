@@ -61,9 +61,30 @@ class WebSocketService {
     this.socket.on('market_status', (data) => {
       this.notifyListeners('market_status', data);
     });
+
+    // FASE 110: Option price events
+    this.socket.on('option_price_update', (data) => {
+      this.notifyListeners('option_price_update', data);
+    });
+
+    this.socket.on('option_chain_update', (data) => {
+      this.notifyListeners('option_chain_update', data);
+    });
+
+    this.socket.on('option_greeks_update', (data) => {
+      this.notifyListeners('option_greeks_update', data);
+    });
+
+    this.socket.on('option_expiration_alert', (data) => {
+      this.notifyListeners('option_expiration_alert', data);
+    });
+
+    this.socket.on('wheel_recommendation_update', (data) => {
+      this.notifyListeners('wheel_recommendation_update', data);
+    });
   }
 
-  subscribe(tickers: string[], types: ('prices' | 'analysis' | 'reports' | 'portfolio')[]) {
+  subscribe(tickers: string[], types: ('prices' | 'analysis' | 'reports' | 'portfolio' | 'options')[]) {
     if (!this.socket) {
       this.connect();
     }
