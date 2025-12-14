@@ -25,6 +25,7 @@ import { useAssetBulkUpdate } from '@/lib/hooks/useAssetBulkUpdate';
 import { Progress } from '@/components/ui/progress';
 import { AssetUpdateLogsPanel } from '@/components/dashboard/AssetUpdateLogsPanel';
 import { AssetUpdateModal, UpdateMode } from '@/components/dashboard/AssetUpdateModal';
+import { AssetUpdateDropdown } from '@/components/dashboard/AssetUpdateDropdown';
 
 type ViewMode = 'all' | 'sector' | 'type' | 'type-sector';
 
@@ -159,6 +160,92 @@ export default function AssetsPage() {
       setIsSubmittingUpdate(false);
     }
   }, [toast]);
+
+  // FASE 116: Handler para atualizar TODOS (API direta via dropdown)
+  const handleUpdateAll = useCallback(async () => {
+    if (bulkUpdateState.isRunning) {
+      toast({
+        title: 'Atualização já em andamento',
+        variant: 'default',
+      });
+      return;
+    }
+
+    try {
+      const queueStatus = await api.getBulkUpdateStatus();
+      const pendingJobs = (queueStatus.active || 0) + (queueStatus.waiting || 0);
+      if (pendingJobs > 0) {
+        toast({
+          title: 'Atualização já em andamento',
+          description: `${pendingJobs} jobs pendentes na fila.`,
+          variant: 'default',
+        });
+        return;
+      }
+
+      await api.bulkUpdateAllAssetsFundamentals(undefined, false);
+      toast({
+        title: 'Atualização iniciada',
+        description: `${assets?.length || 0} ativos adicionados à fila.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao iniciar',
+        description: error.message || 'Tente novamente',
+        variant: 'destructive',
+      });
+    }
+  }, [bulkUpdateState.isRunning, assets?.length, toast]);
+
+  // FASE 116: Handler para atualizar COM OPÇÕES (API direta via dropdown)
+  const handleUpdateWithOptions = useCallback(async () => {
+    if (bulkUpdateState.isRunning) {
+      toast({
+        title: 'Atualização já em andamento',
+        variant: 'default',
+      });
+      return;
+    }
+
+    try {
+      const queueStatus = await api.getBulkUpdateStatus();
+      const pendingJobs = (queueStatus.active || 0) + (queueStatus.waiting || 0);
+      if (pendingJobs > 0) {
+        toast({
+          title: 'Atualização já em andamento',
+          description: `${pendingJobs} jobs pendentes na fila.`,
+          variant: 'default',
+        });
+        return;
+      }
+
+      await api.bulkUpdateAllAssetsFundamentals(undefined, true);
+      // Calcular count inline para evitar dependência circular
+      const optionsCount = assets?.filter((a: any) => a.hasOptions).length ?? 0;
+      toast({
+        title: 'Atualização iniciada',
+        description: `${optionsCount} ativos com opções adicionados à fila.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao iniciar',
+        description: error.message || 'Tente novamente',
+        variant: 'destructive',
+      });
+    }
+  }, [bulkUpdateState.isRunning, assets, toast]);
+
+  // FASE 116: Handler para abrir modal de seleção manual
+  const handleOpenManualSelect = useCallback(() => {
+    if (bulkUpdateState.isRunning) {
+      toast({
+        title: 'Atualização já em andamento',
+        variant: 'default',
+      });
+      return;
+    }
+    setIsUpdateModalOpen(true);
+  }, [bulkUpdateState.isRunning, toast]);
 
   const handleCancelUpdate = async () => {
     setIsCancelling(true);
@@ -420,16 +507,15 @@ export default function AssetsPage() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={handleSyncAll} disabled={bulkUpdateState.isRunning} className="gap-2">
-            {bulkUpdateState.isRunning ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            {bulkUpdateState.isRunning ? 'Atualizando...' : 'Atualizar Todos'}
-          </Button>
-        </div>
+        {/* FASE 116: Dropdown para atualização */}
+        <AssetUpdateDropdown
+          totalAssets={assets?.length ?? 0}
+          assetsWithOptionsCount={assetsWithOptionsCount}
+          isUpdating={bulkUpdateState.isRunning}
+          onUpdateAll={handleUpdateAll}
+          onUpdateWithOptions={handleUpdateWithOptions}
+          onOpenManualSelect={handleOpenManualSelect}
+        />
       </div>
 
       {bulkUpdateState.isRunning && (
