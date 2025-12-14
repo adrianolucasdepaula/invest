@@ -135,10 +135,11 @@ export default function AssetsPage() {
   const handleCancelUpdate = async () => {
     setIsCancelling(true);
     try {
-      const result = await api.cancelBulkUpdate();
-
-      // ✅ FIX: Resetar estado do hook imediatamente para evitar que polling restaure
+      // ✅ FIX: Setar wasCancelled ANTES da API para evitar race condition com WebSocket/polling
+      // O polling pode executar durante o await e tentar restaurar o estado
       cancelUpdate();
+
+      const result = await api.cancelBulkUpdate();
 
       toast({
         title: 'Atualização cancelada',
@@ -146,6 +147,8 @@ export default function AssetsPage() {
       });
       refetch();
     } catch (error: any) {
+      // Se a API falhar, reverter o estado de cancelamento
+      // O polling vai detectar jobs pendentes e restaurar automaticamente
       toast({
         title: 'Erro ao cancelar',
         description: error.message || 'Erro ao cancelar atualização',

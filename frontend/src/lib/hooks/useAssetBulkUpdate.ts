@@ -132,6 +132,9 @@ export function useAssetBulkUpdate(options?: {
   const socketRef = useRef<Socket | null>(null);
   // ✅ FIX: Store total assets count dynamically (fetched from API)
   const totalAssetsRef = useRef<number>(0);
+  // ✅ FIX: Use ref for cancel flag to ensure immediate (synchronous) updates
+  // setState is asynchronous and can cause race conditions with polling
+  const wasCancelledRef = useRef<boolean>(false);
 
   // ✅ FIX: Use refs for callbacks to prevent reconnection on every render
   const onUpdateCompleteRef = useRef(options?.onUpdateComplete);
@@ -191,9 +194,16 @@ export function useAssetBulkUpdate(options?: {
           // Get current ticker from active jobs if available
           const currentTicker = queueStats.jobs?.active?.[0]?.data?.ticker || null;
 
+          // ✅ FIX: Check ref BEFORE entering setState callback to avoid race conditions
+          // The ref is updated synchronously, while setState is asynchronous
+          if (wasCancelledRef.current) {
+            console.log('[ASSET BULK WS] Ignorando jobs pendentes - cancelamento ativo (ref check)');
+            return;
+          }
+
           setState((prev) => {
-            // ✅ FIX: Não restaurar se foi cancelado recentemente
-            if (prev.wasCancelled) {
+            // ✅ FIX: Double-check both ref and state for extra safety
+            if (prev.wasCancelled || wasCancelledRef.current) {
               console.log('[ASSET BULK WS] Ignorando jobs pendentes - cancelamento ativo');
               return prev;
             }
@@ -249,6 +259,8 @@ export function useAssetBulkUpdate(options?: {
           });
         } else {
           // No pending jobs - limpar estados
+          // ✅ FIX: Reset ref synchronously when queue is empty
+          wasCancelledRef.current = false;
           setState((prev) => {
             if (prev.isRunning || prev.wasCancelled) {
               console.log('[ASSET BULK WS] No pending jobs, marking as completed and clearing cancel flag');
@@ -324,6 +336,8 @@ export function useAssetBulkUpdate(options?: {
       // Event: batch_update_started
       socket.on('batch_update_started', (data: BatchUpdateStartedEvent) => {
         console.log('[ASSET BULK WS] Batch update started:', data);
+        // ✅ FIX: Reset ref synchronously when new update starts
+        wasCancelledRef.current = false;
         setState({
           isRunning: true,
           wasCancelled: false, // ✅ FIX: Limpar flag ao iniciar nova atualização
@@ -485,6 +499,8 @@ export function useAssetBulkUpdate(options?: {
    * Resetar estado
    */
   const resetState = useCallback(() => {
+    // ✅ FIX: Reset ref synchronously
+    wasCancelledRef.current = false;
     setState({
       isRunning: false,
       wasCancelled: false, // ✅ FIX: Incluir flag de cancelamento
@@ -511,8 +527,14 @@ export function useAssetBulkUpdate(options?: {
   /**
    * ✅ FIX: Cancelar atualização em andamento
    * Define wasCancelled=true para impedir que polling restaure isRunning
+   * Uses ref for immediate (synchronous) update to avoid race conditions with polling
    */
   const cancelUpdate = useCallback(() => {
+    // ✅ FIX: Set ref FIRST (synchronous) before setState (asynchronous)
+    // This ensures polling immediately sees the cancellation
+    wasCancelledRef.current = true;
+    console.log('[ASSET BULK WS] Cancel requested - wasCancelledRef set to true');
+
     setState((prev) => ({
       ...prev,
       isRunning: false,
