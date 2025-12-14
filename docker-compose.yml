@@ -631,6 +631,8 @@ services:
       - ./docker/observability/promtail.yaml:/etc/promtail/config.yml:ro
       - ./logs:/var/log/invest:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # FASE 113: Docker Desktop Host Logs Integration
+      - C:/Users/adria/AppData/Local/Docker/log/host:/var/log/docker-desktop:ro
     depends_on:
       - loki
     networks:

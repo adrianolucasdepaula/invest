@@ -418,7 +418,9 @@ export class AssetsUpdateService {
     this.logger.log(`${logPrefix} Found ${uniqueTickers.length} unique assets to update`);
 
     // 3. Emit WebSocket event: batch update started
+    // ✅ FIX FASE 114: Added batchId (using traceId) to prevent race condition
     this.webSocketGateway.emitBatchUpdateStarted({
+      batchId: traceId,
       portfolioId,
       totalAssets: uniqueTickers.length,
       tickers: uniqueTickers,
@@ -438,7 +440,9 @@ export class AssetsUpdateService {
       );
 
       // Emit progress
+      // ✅ FIX FASE 114: Added batchId to prevent race condition
       this.webSocketGateway.emitBatchUpdateProgress({
+        batchId: traceId,
         portfolioId,
         current: position,
         total: uniqueTickers.length,
@@ -470,7 +474,9 @@ export class AssetsUpdateService {
     const durationMinutes = (duration / 60000).toFixed(2);
 
     // 5. Emit WebSocket event: batch update completed
+    // ✅ FIX FASE 114: Added batchId to prevent race condition
     this.webSocketGateway.emitBatchUpdateCompleted({
+      batchId: traceId,
       portfolioId,
       totalAssets: uniqueTickers.length,
       successCount,
@@ -535,7 +541,9 @@ export class AssetsUpdateService {
     );
 
     // 2. Emit WebSocket event: batch update started
+    // ✅ FIX FASE 114: Added batchId (using traceId) to prevent race condition
     this.webSocketGateway.emitBatchUpdateStarted({
+      batchId: traceId,
       totalAssets: foundTickers.length,
       tickers: foundTickers,
     });
@@ -554,7 +562,9 @@ export class AssetsUpdateService {
       );
 
       // Emit progress
+      // ✅ FIX FASE 114: Added batchId to prevent race condition
       this.webSocketGateway.emitBatchUpdateProgress({
+        batchId: traceId,
         current: position,
         total: foundTickers.length,
         currentTicker: ticker,
@@ -591,7 +601,9 @@ export class AssetsUpdateService {
     const durationMinutes = (duration / 60000).toFixed(2);
 
     // 4. Emit WebSocket event: batch update completed
+    // ✅ FIX FASE 114: Added batchId to prevent race condition
     this.webSocketGateway.emitBatchUpdateCompleted({
+      batchId: traceId,
       totalAssets: foundTickers.length,
       successCount,
       failedCount,

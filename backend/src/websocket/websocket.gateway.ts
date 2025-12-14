@@ -279,15 +279,21 @@ export class AppWebSocketGateway
     this.logger.error(`[WS] Asset update failed: ${data.ticker} - ${data.error}`);
   }
 
-  emitBatchUpdateStarted(data: { portfolioId?: string; totalAssets: number; tickers: string[] }) {
+  emitBatchUpdateStarted(data: {
+    batchId: string;
+    portfolioId?: string;
+    totalAssets: number;
+    tickers: string[];
+  }) {
     this.server.emit('batch_update_started', {
       ...data,
       timestamp: new Date(),
     });
-    this.logger.log(`[WS] Batch update started: ${data.totalAssets} assets`);
+    this.logger.log(`[WS] Batch update started: ${data.totalAssets} assets (batchId: ${data.batchId})`);
   }
 
   emitBatchUpdateProgress(data: {
+    batchId: string;
     portfolioId?: string;
     current: number;
     total: number;
@@ -300,6 +306,7 @@ export class AppWebSocketGateway
   }
 
   emitBatchUpdateCompleted(data: {
+    batchId: string;
     portfolioId?: string;
     totalAssets: number;
     successCount: number;
@@ -311,7 +318,7 @@ export class AppWebSocketGateway
       timestamp: new Date(),
     });
     this.logger.log(
-      `[WS] Batch update completed: ${data.successCount}/${data.totalAssets} successful (${data.duration}ms)`,
+      `[WS] Batch update completed: ${data.successCount}/${data.totalAssets} successful (${data.duration}ms, batchId: ${data.batchId})`,
     );
   }
 

@@ -93,3 +93,42 @@ scrape_configs:
           job: scrapers
           service: invest-scrapers
           __path__: /var/log/invest/scrapers*.log
+
+  # FASE 113: Docker Desktop Host Logs
+  # Critical for monitoring VM memory, network issues, and API errors
+  - job_name: docker-desktop
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker-desktop
+          component: host
+          __path__: /var/log/docker-desktop/*.log
+
+    pipeline_stages:
+      # Parse JSON logs (most Docker Desktop logs are JSON)
+      - match:
+          selector: '{job="docker-desktop"}'
+          stages:
+            - json:
+                expressions:
+                  level: level
+                  msg: msg
+                  time: time
+                  component: component
+                  error: error
+            - labels:
+                level:
+                component:
+            - timestamp:
+                source: time
+                format: RFC3339Nano
+            - output:
+                source: msg
+
+      # Extract error patterns for alerting
+      - match:
+          selector: '{job="docker-desktop"} |~ "error|no route|timeout|failed"'
+          stages:
+            - labels:
+                severity: error

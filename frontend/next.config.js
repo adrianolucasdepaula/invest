@@ -22,7 +22,8 @@ const nextConfig = {
   experimental: {
     optimizeCss: true, // Inline critical CSS automaticamente via critters
   },
-  // Turbopack configuration for monorepo
+  // FASE 114: Turbopack config (HMR issues resolved with --webpack flag in dev script)
+  // See: https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack
   turbopack: {
     root: __dirname,
   },

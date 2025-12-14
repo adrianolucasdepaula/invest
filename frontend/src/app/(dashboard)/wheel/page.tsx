@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { api, calculateCashYieldApi } from '@/lib/api';
 import {
   useWheelCandidates,
   useWheelStrategies,
@@ -156,7 +156,7 @@ export default function WheelPage() {
         return;
       }
 
-      const data = await api.calculateCashYield(principal, days);
+      const data = await calculateCashYieldApi(principal, days);
       setCashYield(data);
     } catch (error: any) {
       toast({
@@ -365,10 +365,12 @@ export default function WheelPage() {
             <CardContent>
               <div className="grid gap-4 md:grid-cols-5">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Buscar</label>
+                  <Label htmlFor="wheel-search">Buscar</Label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
+                      id="wheel-search"
+                      name="wheel-search"
                       placeholder="Ticker ou nome..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -377,8 +379,10 @@ export default function WheelPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">ROE Mínimo (%)</label>
+                  <Label htmlFor="min-roe">ROE Mínimo (%)</Label>
                   <Input
+                    id="min-roe"
+                    name="min-roe"
                     type="number"
                     value={minROE}
                     onChange={(e) => setMinROE(e.target.value)}
@@ -386,8 +390,10 @@ export default function WheelPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">DY Mínimo (%)</label>
+                  <Label htmlFor="min-dy">DY Mínimo (%)</Label>
                   <Input
+                    id="min-dy"
+                    name="min-dy"
                     type="number"
                     value={minDY}
                     onChange={(e) => setMinDY(e.target.value)}
@@ -395,8 +401,10 @@ export default function WheelPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Dív/EBITDA Máx</label>
+                  <Label htmlFor="max-debt">Dív/EBITDA Máx</Label>
                   <Input
+                    id="max-debt"
+                    name="max-debt"
                     type="number"
                     value={maxDebt}
                     onChange={(e) => setMaxDebt(e.target.value)}
@@ -612,8 +620,10 @@ export default function WheelPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Valor Principal (R$)</label>
+                  <Label htmlFor="cash-principal">Valor Principal (R$)</Label>
                   <Input
+                    id="cash-principal"
+                    name="cash-principal"
                     type="number"
                     value={cashPrincipal}
                     onChange={(e) => setCashPrincipal(e.target.value)}
@@ -621,9 +631,9 @@ export default function WheelPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Período (dias)</label>
+                  <Label htmlFor="cash-days">Período (dias)</Label>
                   <Select value={cashDays} onValueChange={setCashDays}>
-                    <SelectTrigger>
+                    <SelectTrigger id="cash-days">
                       <SelectValue placeholder="Selecione o período" />
                     </SelectTrigger>
                     <SelectContent>

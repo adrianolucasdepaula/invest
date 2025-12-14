@@ -15,7 +15,9 @@ import { api } from '@/lib/api';
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3101';
 
 // Types
+// ✅ FIX FASE 114: Added batchId to all batch events to prevent race condition
 export interface BatchUpdateStartedEvent {
+  batchId: string;
   portfolioId?: string;
   totalAssets: number;
   tickers: string[];
@@ -23,6 +25,7 @@ export interface BatchUpdateStartedEvent {
 }
 
 export interface BatchUpdateProgressEvent {
+  batchId: string;
   portfolioId?: string;
   current: number;
   total: number;
@@ -31,6 +34,7 @@ export interface BatchUpdateProgressEvent {
 }
 
 export interface BatchUpdateCompletedEvent {
+  batchId: string;
   portfolioId?: string;
   totalAssets: number;
   successCount: number;
@@ -79,6 +83,7 @@ export interface AssetUpdateLogEntry {
 export interface AssetBulkUpdateState {
   isRunning: boolean;
   wasCancelled: boolean; // ✅ FIX: Flag para evitar polling restaurar estado após cancel
+  currentBatchId: string | null; // ✅ FIX FASE 114: Track current batch to filter stale events
   currentTicker: string | null;
   progress: number; // 0-100
   current: number;
@@ -120,6 +125,7 @@ export function useAssetBulkUpdate(options?: {
   const [state, setState] = useState<AssetBulkUpdateState>({
     isRunning: false,
     wasCancelled: false, // ✅ FIX: Inicializar flag de cancelamento
+    currentBatchId: null, // ✅ FIX FASE 114: Track current batch
     currentTicker: null,
     progress: 0,
     current: 0,
@@ -213,21 +219,19 @@ export function useAssetBulkUpdate(options?: {
             if (!prev.isRunning) {
               console.log(`[ASSET BULK WS] Restaurando estado: ${totalPending} jobs pendentes na fila`);
 
-              // Estimar total baseado nos jobs pendentes + completados
-              const completedCount = queueStats.completed || 0;
-              const failedCount = queueStats.failed || 0;
-              const estimatedTotal = totalPending + completedCount + failedCount;
-
+              // ✅ FIX: Usar totalPending como total quando detectamos jobs via polling
+              // Isso corrige a discrepância quando usuário atualiza um único ativo
+              // (antes mostrava "1/22" do batch anterior, agora mostra "0/1" corretamente)
               return {
                 ...prev,
                 isRunning: true, // ← CRÍTICO: Ativa o card de progresso com botões Cancelar/Pausar
                 wasCancelled: false, // ✅ FIX: Limpar flag ao restaurar
                 currentTicker,
-                total: estimatedTotal > 0 ? estimatedTotal : totalPending,
-                current: completedCount + failedCount,
-                progress: estimatedTotal > 0 ? Math.round(((completedCount + failedCount) / estimatedTotal) * 100) : 0,
-                successCount: completedCount,
-                failedCount: failedCount,
+                total: totalPending, // ✅ FIX: Usar jobs pendentes como total (não preservar total antigo)
+                current: 0, // ✅ FIX: Começar do zero (não sabemos quantos já completaram nesta sessão)
+                progress: 0,
+                successCount: 0,
+                failedCount: 0,
                 logs: [
                   {
                     timestamp: new Date(),
@@ -334,13 +338,15 @@ export function useAssetBulkUpdate(options?: {
       });
 
       // Event: batch_update_started
+      // ✅ FIX FASE 114: Now stores batchId to filter subsequent events
       socket.on('batch_update_started', (data: BatchUpdateStartedEvent) => {
-        console.log('[ASSET BULK WS] Batch update started:', data);
+        console.log('[ASSET BULK WS] Batch update started:', data.batchId, data);
         // ✅ FIX: Reset ref synchronously when new update starts
         wasCancelledRef.current = false;
         setState({
           isRunning: true,
           wasCancelled: false, // ✅ FIX: Limpar flag ao iniciar nova atualização
+          currentBatchId: data.batchId, // ✅ FIX FASE 114: Store batchId
           currentTicker: null,
           progress: 0,
           current: 0,
@@ -352,7 +358,7 @@ export function useAssetBulkUpdate(options?: {
               timestamp: new Date(data.timestamp),
               ticker: 'SYSTEM',
               status: 'system',
-              message: `Iniciando atualização de ${data.totalAssets} ativos...`,
+              message: `Iniciando atualização de ${data.totalAssets} ativos... (batch: ${data.batchId.slice(-8)})`,
             },
           ],
         });
@@ -443,41 +449,65 @@ export function useAssetBulkUpdate(options?: {
       });
 
       // Event: batch_update_progress
+      // ✅ FIX FASE 114: Now filters events by batchId to prevent race condition
       socket.on('batch_update_progress', (data: BatchUpdateProgressEvent) => {
-        console.log('[ASSET BULK WS] Batch update progress:', data);
-        const progressPercentage = Math.round((data.current / data.total) * 100);
+        console.log('[ASSET BULK WS] Batch update progress:', data.batchId, data);
 
-        setState((prev) => ({
-          ...prev,
-          currentTicker: data.currentTicker,
-          progress: progressPercentage,
-          current: data.current,
-          total: data.total,
-        }));
+        setState((prev) => {
+          // ✅ FIX FASE 114: Ignore events from different batches
+          if (prev.currentBatchId && data.batchId !== prev.currentBatchId) {
+            console.log(`[ASSET BULK WS] Ignoring stale progress event from batch ${data.batchId.slice(-8)}, current batch is ${prev.currentBatchId.slice(-8)}`);
+            return prev;
+          }
+
+          const progressPercentage = Math.round((data.current / data.total) * 100);
+          return {
+            ...prev,
+            currentTicker: data.currentTicker,
+            progress: progressPercentage,
+            current: data.current,
+            total: data.total,
+          };
+        });
       });
 
       // Event: batch_update_completed
+      // ✅ FIX FASE 114: Now filters events by batchId to prevent race condition
       socket.on('batch_update_completed', (data: BatchUpdateCompletedEvent) => {
-        console.log('[ASSET BULK WS] Batch update completed:', data);
-        const durationMinutes = Math.round(data.duration / 60000);
-        setState((prev) => ({
-          ...prev,
-          isRunning: false,
-          currentTicker: null,
-          progress: 100,
-          successCount: data.successCount,
-          failedCount: data.failedCount,
-          logs: [
-            ...prev.logs,
-            {
-              timestamp: new Date(data.timestamp),
-              ticker: 'SYSTEM',
-              status: 'system',
-              message: `✅ Atualização concluída: ${data.successCount}/${data.totalAssets} sucesso, ${data.failedCount} falhas (${durationMinutes}min)`,
-              duration: data.duration / 1000,
-            },
-          ],
-        }));
+        console.log('[ASSET BULK WS] Batch update completed:', data.batchId, data);
+
+        setState((prev) => {
+          // ✅ FIX FASE 114: Ignore completion events from different batches
+          // Exception: Allow "cancelled-*" events which reset state
+          const isCancellation = data.batchId.startsWith('cancelled-');
+          if (!isCancellation && prev.currentBatchId && data.batchId !== prev.currentBatchId) {
+            console.log(`[ASSET BULK WS] Ignoring stale completion event from batch ${data.batchId.slice(-8)}, current batch is ${prev.currentBatchId.slice(-8)}`);
+            return prev;
+          }
+
+          const durationMinutes = Math.round(data.duration / 60000);
+          return {
+            ...prev,
+            isRunning: false,
+            currentBatchId: null, // ✅ FIX FASE 114: Clear batchId on completion
+            currentTicker: null,
+            progress: 100,
+            successCount: data.successCount,
+            failedCount: data.failedCount,
+            logs: [
+              ...prev.logs,
+              {
+                timestamp: new Date(data.timestamp),
+                ticker: 'SYSTEM',
+                status: 'system' as const,
+                message: isCancellation
+                  ? `⛔ Atualização cancelada`
+                  : `✅ Atualização concluída: ${data.successCount}/${data.totalAssets} sucesso, ${data.failedCount} falhas (${durationMinutes}min)`,
+                duration: data.duration / 1000,
+              },
+            ],
+          };
+        });
 
         // Callback onUpdateComplete (use ref)
         if (onUpdateCompleteRef.current) {
@@ -504,6 +534,7 @@ export function useAssetBulkUpdate(options?: {
     setState({
       isRunning: false,
       wasCancelled: false, // ✅ FIX: Incluir flag de cancelamento
+      currentBatchId: null, // ✅ FIX FASE 114: Reset batchId
       currentTicker: null,
       progress: 0,
       current: 0,

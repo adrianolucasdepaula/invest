@@ -161,26 +161,36 @@ export class AssetUpdateJobsService implements OnModuleInit {
   }
 
   /**
+   * Generate unique batch ID for tracking batch operations
+   */
+  private generateBatchId(): string {
+    return `batch-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+  }
+
+  /**
    * Queue multiple assets update
    * ✅ FIX: Create individual jobs for each asset to enable parallelization
    * and prevent job stalling on large batches (e.g., 861 assets)
    *
    * ✅ ENHANCEMENT: Emit batch WebSocket events for frontend progress tracking
+   * ✅ FIX FASE 114: Added batchId to prevent race condition between multiple batches
    */
   async queueMultipleAssets(
     tickers: string[],
     userId?: string,
     triggeredBy: UpdateTrigger = UpdateTrigger.MANUAL,
   ) {
-    this.logger.log(`Queueing ${tickers.length} individual asset update jobs (parallelizable)`);
+    const batchId = this.generateBatchId();
+    this.logger.log(`Queueing ${tickers.length} individual asset update jobs (batchId: ${batchId})`);
 
     // DEBUG: Check if WebSocketGateway is injected
     this.logger.debug(`[DEBUG] WebSocketGateway instance: ${this.webSocketGateway ? 'INJECTED' : 'UNDEFINED'}`);
 
     // Emit batch started event
     try {
-      this.logger.debug(`[DEBUG] Calling emitBatchUpdateStarted with ${tickers.length} assets...`);
+      this.logger.debug(`[DEBUG] Calling emitBatchUpdateStarted with ${tickers.length} assets (batchId: ${batchId})...`);
       this.webSocketGateway.emitBatchUpdateStarted({
+        batchId,
         totalAssets: tickers.length,
         tickers,
       });
@@ -217,8 +227,8 @@ export class AssetUpdateJobsService implements OnModuleInit {
     this.logger.log(`✅ Queued ${jobs.length} individual jobs: ${jobIds[0]} to ${jobIds[jobIds.length - 1]}`);
 
     // Monitor job completion in background and emit batch completed event
-    this.logger.debug(`[DEBUG] Starting monitorBatchCompletion for ${jobIds.length} jobs...`);
-    this.monitorBatchCompletion(jobIds, tickers.length).catch((error) => {
+    this.logger.debug(`[DEBUG] Starting monitorBatchCompletion for ${jobIds.length} jobs (batchId: ${batchId})...`);
+    this.monitorBatchCompletion(jobIds, tickers.length, batchId).catch((error) => {
       this.logger.error(`[ERROR] Error monitoring batch completion: ${error.message}`, error.stack);
     });
 
@@ -229,9 +239,10 @@ export class AssetUpdateJobsService implements OnModuleInit {
   /**
    * Monitor batch job completion and emit WebSocket events
    * Runs in background, checks periodically for job completion
+   * ✅ FIX FASE 114: Added batchId parameter to track specific batch
    */
-  private async monitorBatchCompletion(jobIds: any[], totalAssets: number) {
-    this.logger.log(`[MONITOR] Starting batch monitoring for ${totalAssets} assets (${jobIds.length} jobs)`);
+  private async monitorBatchCompletion(jobIds: any[], totalAssets: number, batchId: string) {
+    this.logger.log(`[MONITOR] Starting batch monitoring for ${totalAssets} assets (batchId: ${batchId})`);
     const startTime = Date.now();
     const checkInterval = 5000; // Check every 5 seconds
     let completed = 0;
@@ -269,9 +280,10 @@ export class AssetUpdateJobsService implements OnModuleInit {
         const activeJob = jobs.find(async (j) => j && (await j.getState()) === 'active');
         const currentTicker = activeJob ? (activeJob.data as any).ticker : '';
 
-        this.logger.debug(`[MONITOR] Emitting progress: ${currentProgress}/${totalAssets} (${progressPercent}%)`);
+        this.logger.debug(`[MONITOR] Emitting progress: ${currentProgress}/${totalAssets} (${progressPercent}%, batchId: ${batchId})`);
         try {
           this.webSocketGateway.emitBatchUpdateProgress({
+            batchId,
             current: currentProgress,
             total: totalAssets,
             currentTicker,
@@ -287,9 +299,10 @@ export class AssetUpdateJobsService implements OnModuleInit {
       if (currentProgress >= totalAssets) {
         const duration = Date.now() - startTime;
 
-        this.logger.log(`[MONITOR] All jobs complete! Emitting completion event...`);
+        this.logger.log(`[MONITOR] All jobs complete! Emitting completion event (batchId: ${batchId})...`);
         try {
           this.webSocketGateway.emitBatchUpdateCompleted({
+            batchId,
             totalAssets,
             successCount: completed,
             failedCount: failed,
@@ -461,8 +474,9 @@ export class AssetUpdateJobsService implements OnModuleInit {
 
     this.logger.log(`✅ Removed ${removedCount} waiting jobs. ${active.length} active jobs will complete.`);
 
-    // Emit WebSocket event to notify frontend
+    // Emit WebSocket event to notify frontend (cancelled batch)
     this.webSocketGateway.emitBatchUpdateCompleted({
+      batchId: `cancelled-${Date.now()}`,
       totalAssets: removedCount + active.length,
       successCount: 0,
       failedCount: 0,
