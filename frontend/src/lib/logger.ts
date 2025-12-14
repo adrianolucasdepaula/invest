@@ -179,8 +179,8 @@ class FrontendLogger {
 
     // Send to backend telemetry endpoint
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101';
-      await fetch(`${apiUrl}/api/v1/telemetry/frontend-error`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api/v1';
+      await fetch(`${apiUrl}/telemetry/frontend-error`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(entry),
