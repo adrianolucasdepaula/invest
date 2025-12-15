@@ -1,8 +1,8 @@
 # 🗺️ ROADMAP - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-14
-**Versão:** 1.18.0
+**Última Atualização:** 2025-12-15
+**Versão:** 1.19.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -11640,6 +11640,7 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 114** | Collapse/Expand UI + A11y Improvements | ✅ 100% | 2025-12-14 |
 | **FASE 115** | AssetUpdateModal + OpcoesScraper Fix + Memory 4G | ✅ 100% | 2025-12-14 |
 | **FASE 116** | Dropdown Menu para Atualização de Ativos | ✅ 100% | 2025-12-14 |
+| **FASE 117** | Resiliência + Observabilidade + Database Optimization | ✅ 100% | 2025-12-15 |
 
 **Funcionalidades Implementadas:**
 - Seleção de candidatos por critérios fundamentalistas (ROE, DY, Dív/EBITDA)
@@ -11683,11 +11684,12 @@ Sistema em estado de manutenção e evolução contínua.
 > **Nota:** FASE 114 concluída em 2025-12-14 (Collapse/Expand: Lista de Ativos + Logs de Atualização + A11y WCAG 2.1 AA)
 > **Nota:** FASE 115 concluída em 2025-12-14 (AssetUpdateModal: 3 modos + OpcoesScraper: logging/retry + Backend memory: 2G→4G)
 > **Nota:** FASE 116 concluída em 2025-12-14 (Dropdown Menu: 3 opções com ação direta, UX melhorado de 4→1 clique)
+> **Nota:** FASE 117 concluída em 2025-12-15 (Resiliência: Retry Logic + Circuit Breaker + DLQ | Observabilidade: Health Endpoints + Métricas Prometheus + Dashboard Grafana | Database: Índices BRIN/Partial/Covering otimizados)
 
 ---
 
-**Ultima Atualizacao:** 2025-12-14
-**Total de Fases:** 123 completas (incluindo sub-fases)
-**Versao:** 1.18.5
+**Ultima Atualizacao:** 2025-12-15
+**Total de Fases:** 124 completas (incluindo sub-fases)
+**Versao:** 1.19.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0
