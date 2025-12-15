@@ -23,6 +23,21 @@ export enum PriceSource {
   BRAPI = 'brapi',
 }
 
+/**
+ * AssetPrice Entity - Daily OHLCV data for B3 assets
+ *
+ * Base Indexes (TypeORM):
+ * - UQ_asset_prices_asset_id_date: Unique constraint (asset_id, date)
+ * - idx_asset_prices_asset_date: Composite B-tree (asset, date)
+ * - idx_asset_prices_date: B-tree (date)
+ * - idx_asset_prices_source: B-tree (source)
+ *
+ * FASE 117 Optimized indexes (migration):
+ * - idx_asset_prices_date_brin: BRIN index for date range scans (~100x smaller)
+ * - idx_asset_prices_recent: Partial index for last 2 years (most accessed)
+ * - idx_asset_prices_ohlcv_covering: Covering index for index-only scans
+ * - idx_asset_prices_monthly: Expression index for DATE_TRUNC aggregations
+ */
 @Entity('asset_prices')
 @Unique('UQ_asset_prices_asset_id_date', ['assetId', 'date'])
 @Index(['asset', 'date'])
