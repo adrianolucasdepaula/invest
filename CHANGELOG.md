@@ -9,6 +9,55 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 125: Health Check Dashboard - Frontend (2025-12-15)**
+  - **Nova Página /health:**
+    - Dashboard de monitoramento de saúde do sistema
+    - 4 serviços monitorados: Backend API, Redis Cache, PostgreSQL, Python Services
+    - Auto-refresh a cada 30 segundos
+    - Status indicators com cores (verde/vermelho)
+    - Latência de resposta por serviço
+  - **Sidebar Navigation:**
+    - Adicionado link "System Health" com ícone Activity
+    - Integrado ao layout dashboard
+  - **Validação:**
+    - TypeScript: 0 erros
+    - Build: Sucesso
+
+- **FASE 124: Chart Crosshair Synchronization (2025-12-15)**
+  - **ChartSyncProvider:**
+    - Context React para sincronização de múltiplos gráficos
+    - Crosshair sync entre 4 charts
+    - Time scale sync (zoom/pan)
+  - **Charts Sincronizados:**
+    - CandlestickChart (principal)
+    - RSI Chart (indicador)
+    - MACD Chart (indicador)
+    - Stochastic Chart (indicador)
+  - **API lightweight-charts v5:**
+    - Handler reference pattern para unsubscribe
+    - subscribeCrosshairMove / unsubscribeCrosshairMove
+    - subscribeVisibleTimeRangeChange / unsubscribeVisibleTimeRangeChange
+  - **Validação:**
+    - TypeScript: 0 erros
+    - Build: Sucesso
+
+- **FASE 123: API Caching Layer - Redis (2025-12-15)**
+  - **Decorators de Cache:**
+    - @CacheKey() - Define chave de cache customizada
+    - @CacheTTL() - Define TTL em segundos
+    - CacheInterceptor - Interceptor NestJS para caching automático
+  - **Endpoints com Cache (12 endpoints GET):**
+    - Assets: 5 minutos TTL
+    - Market Data: 30s-2min TTL
+    - Economic Indicators: 5 minutos TTL
+    - Data Sources: 5 minutos TTL
+  - **Configuração Redis:**
+    - Conexão via ConfigService
+    - Prefix 'b3ai:' para namespace
+  - **Validação:**
+    - TypeScript: 0 erros
+    - Build: Sucesso
+
 - **FASE 115: AssetUpdateModal + OpcoesScraper Fix + Memory 4G (2025-12-14)**
   - **Novo Componente - AssetUpdateModal:**
     - Modal de configuração para atualização de dados fundamentalistas

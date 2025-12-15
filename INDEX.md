@@ -50,6 +50,7 @@
 | **[.gemini/context/financial-rules.md](.gemini/context/financial-rules.md)** | **Regras dados financeiros**          | 🔥 CRÍTICO    |
 | [CONTRIBUTING.md](CONTRIBUTING.md)                                           | Git workflow, decisões técnicas       | ⚠️ IMPORTANTE |
 | [CHECKLIST_TODO_MASTER.md](CHECKLIST_TODO_MASTER.md)                         | Checklist ultra-robusto e TODO master | ⚠️ IMPORTANTE |
+| [CHECKLIST_ECOSSISTEMA_COMPLETO.md](CHECKLIST_ECOSSISTEMA_COMPLETO.md)       | **Validacao 100% ecossistema (21 secoes)** | 🔥 CRÍTICO |
 | [CHECKLIST_CODE_REVIEW_COMPLETO.md](CHECKLIST_CODE_REVIEW_COMPLETO.md)       | Code review antes de cada fase        | ⚠️ IMPORTANTE |
 
 ---

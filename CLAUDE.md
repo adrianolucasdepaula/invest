@@ -128,6 +128,80 @@ export class IsEndYearGreaterThanStartYear implements ValidatorConstraintInterfa
 - Build: Must succeed
 - ESLint: 0 critical warnings
 
+---
+
+## Checklist Automatico do Ecossistema (ATIVADO - v2.0)
+
+### Sistema de Auto-Trigger Bilingue (PT + EN)
+
+O projeto possui **deteccao automatica de keywords bilingues** que injeta instrucoes relevantes do checklist.
+
+**Como Funciona:**
+
+1. **SessionStart Hook** - Exibe resumo de 27 categorias de keywords ao iniciar sessao
+2. **UserPromptSubmit Hook** - Detecta keywords (PT + EN) no seu prompt
+3. **Skill Injection** - Injeta instrucoes para usar skills/secoes relevantes (ate 4 triggers)
+
+**Script:** `.claude/hooks-scripts/checklist-auto-trigger.js` (v2.0)
+
+### 27 Categorias de Keywords (PT + EN)
+
+| Categoria | Keywords PT | Keywords EN | Secoes |
+|-----------|-------------|-------------|--------|
+| **planning** | planejamento, plano, robusto, ultra | planning, plan, pm, robust | 1-2, IMPL |
+| **development** | implementar, criar, desenvolver, novo | implement, create, develop, add | 1-3 |
+| **codeReview** | revisar, melhores praticas, refatorar | code review, best practices, refactor | 3-4 |
+| **commit** | commit, push, mergear, branch | commit, push, merge, git | 4-5 |
+| **phase** | fase, etapa, validar, ecossistema | phase, step, validate, ecosystem | 6-21 |
+| **scraper** | raspagem, coletar, fontes, dados reais | scraper, playwright, collect, sources | 18 |
+| **frontend** | componente, pagina, tela, interface | frontend, react, page, component | 3.2, 8.1 |
+| **ux** | usabilidade, acessibilidade, ergonomia | ux, usability, accessibility, wcag | 6, a11y |
+| **forms** | formulario, campo, botao, dropdown | form, input, button, field | 3.2, 8.1 |
+| **visual** | layout, estilo, imagem, scroll | style, image, font, loading | 3.2, DevT |
+| **charts** | grafico, tabela, ordenacao, lista | chart, table, sorting, list | 8.1, 3.2 |
+| **backend** | controlador, servico, rota, funcao | backend, controller, service, dto | 3.1, 8.2 |
+| **database** | banco de dados, migracao, entidade | database, migration, entity, sql | 17, DB |
+| **financial** | financeiro, preco, ativo, precisao | financial, decimal, price, market | 3.1, fin |
+| **troubleshoot** | erro, bug, corrigir, causa raiz | error, fix, debug, root cause | 7, KNOWN |
+| **quality** | gap, warning, falha, workaround | gap, alarm, failure, improvement | 7, 12 |
+| **security** | seguranca, autenticacao, senha | security, auth, jwt, password | 16 |
+| **docker** | container, porta, reiniciar, ambiente | docker, container, port, restart | 19, 8.3 |
+| **api** | integracao, dependencia, requisicao | api, integration, dependency | 20, 11.3 |
+| **testing** | teste, cenario, cobertura, massivo | test, scenario, coverage, massive | 13, 6 |
+| **performance** | desempenho, cache, paralelo, memoria | performance, cache, parallel, n+1 | 15, 3 |
+| **observability** | log, trace, monitoracao, auditoria | log, trace, monitoring, audit | 10, 5 |
+| **jobs** | fila, agendamento, sincronia, tarefa | job, queue, scheduling, sync | 11.2, 15 |
+| **websocket** | tempo real, evento, broadcast | websocket, realtime, event | 11.1, 15 |
+| **documentation** | documentacao, arquitetura, readme | documentation, architecture | 1, INDEX |
+| **mcp** | triplo, ferramenta, skill, hook | mcp, devtools, tool, subagent | 21, METOD |
+| **environment** | timezone, configuracao, versao | timezone, config, version, env | 1, 19 |
+
+**Total:** ~250+ keywords bilingues cobrindo 100% do ecossistema
+
+### Referencia Completa
+
+**Arquivo:** `CHECKLIST_ECOSSISTEMA_COMPLETO.md` (1144 linhas, 21 secoes)
+
+**Cobertura:**
+
+- 18 paginas frontend
+- 11 controllers backend
+- 21 containers Docker
+- 34+ APIs externas
+- 35 Python scrapers
+- 6 vulnerabilidades criticas documentadas
+
+### Slash Commands Relacionados
+
+```bash
+/check-ecosystem   # Validacao 100% do ecossistema
+/check-context     # Verificacao pre-tarefa
+/validate-phase    # Validacao de fase completa
+/mcp-triplo        # Playwright + DevTools + a11y
+```
+
+---
+
 ## Service Ports
 
 | Service | Port | URL |

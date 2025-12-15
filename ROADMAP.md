@@ -2,7 +2,7 @@
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
 **Última Atualização:** 2025-12-15
-**Versão:** 1.24.0
+**Versão:** 1.26.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -11646,6 +11646,10 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 120** | Database Archive Strategy (AssetPrice) | ✅ 100% | 2025-12-15 |
 | **FASE 121** | Unit Tests para Resiliência Services | ✅ 100% | 2025-12-15 |
 | **FASE 122** | Frontend Charts Optimization (Memoization) | ✅ 100% | 2025-12-15 |
+| **FASE 123** | API Caching Layer (Redis) | ✅ 100% | 2025-12-15 |
+| **FASE 124** | Chart Crosshair Synchronization | ✅ 100% | 2025-12-15 |
+| **FASE 125** | Health Check Dashboard (Frontend) | ✅ 100% | 2025-12-15 |
+| **FASE 126** | Documentation Consolidation | ✅ 100% | 2025-12-15 |
 
 **Funcionalidades Implementadas:**
 - Seleção de candidatos por critérios fundamentalistas (ROE, DY, Dív/EBITDA)
@@ -11695,11 +11699,15 @@ Sistema em estado de manutenção e evolução contínua.
 > **Nota:** FASE 120 concluída em 2025-12-15 (Database Archive: asset_prices_archive table | 101K records pre-2020 archived | asset_prices_all view | BRIN indexes | Main table 299K→198K rows)
 > **Nota:** FASE 121 concluída em 2025-12-15 (Unit Tests: CircuitBreakerService + DeadLetterService + DeadLetterProcessor | 81 testes passando | Cobertura completa de resiliência)
 > **Nota:** FASE 122 concluída em 2025-12-15 (Charts Optimization: React.memo + useMemo + useCallback | CandlestickChart + PriceChart + MultiPaneChart otimizados | Re-renders desnecessários eliminados)
+> **Nota:** FASE 123 concluída em 2025-12-15 (API Caching Layer: Redis cache em 12 endpoints GET | Assets: 5min | Market Data: 30s-2min | Economic Indicators: 5min | CacheKey + CacheInterceptor decorators)
+> **Nota:** FASE 124 concluída em 2025-12-15 (Chart Crosshair Sync: ChartSyncProvider context | 4 charts sincronizados (Candlestick, RSI, MACD, Stochastic) | Time scale sync + Crosshair broadcast | lightweight-charts v5 API)
+> **Nota:** FASE 125 concluída em 2025-12-15 (Health Check Dashboard: /health page | 4 services monitored (Backend API, Redis, PostgreSQL, Python Services) | Auto-refresh 30s | Sidebar navigation added)
+> **Nota:** FASE 126 concluída em 2025-12-15 (Documentation Consolidation: CHANGELOG.md atualizado com FASE 123-125 | ROADMAP.md atualizado | CLAUDE.md/GEMINI.md sincronizados)
 
 ---
 
 **Ultima Atualizacao:** 2025-12-15
-**Total de Fases:** 129 completas (incluindo sub-fases)
-**Versao:** 1.24.0
+**Total de Fases:** 131 completas (incluindo sub-fases)
+**Versao:** 1.26.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0
