@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { MetricsService } from '../metrics/metrics.service';
 
 /**
  * Circuit Breaker State
@@ -32,6 +33,8 @@ interface CircuitInfo {
  * - failureThreshold: Number of failures before opening circuit (default: 3)
  * - successThreshold: Successes needed in HALF_OPEN to close (default: 2)
  * - timeout: Time in ms before OPEN → HALF_OPEN (default: 30000ms)
+ *
+ * FASE 118: Integrated with MetricsService for Prometheus/Grafana observability
  */
 @Injectable()
 export class CircuitBreakerService {
@@ -39,6 +42,8 @@ export class CircuitBreakerService {
 
   // Map: scraper/domain → circuit info
   private circuits: Map<string, CircuitInfo> = new Map();
+
+  constructor(@Optional() private readonly metricsService?: MetricsService) {}
 
   // Configuration
   private readonly FAILURE_THRESHOLD = 3; // Open after 3 consecutive failures
@@ -111,6 +116,9 @@ export class CircuitBreakerService {
     circuit.lastAttempt = Date.now();
 
     this.logger.warn(`[CIRCUIT] ${key}: Failure recorded (${circuit.failures}/${this.FAILURE_THRESHOLD}) ${error ? `- ${error}` : ''}`);
+
+    // FASE 118: Update Prometheus metrics
+    this.metricsService?.incrementCircuitBreakerFailure(key);
 
     if (circuit.state === CircuitState.CLOSED && circuit.failures >= this.FAILURE_THRESHOLD) {
       this.transitionTo(key, CircuitState.OPEN);
@@ -207,6 +215,9 @@ export class CircuitBreakerService {
       circuit.failures = 0;
       circuit.successes = 0;
     }
+
+    // FASE 118: Update Prometheus metrics with new state
+    this.metricsService?.setCircuitBreakerState(key, newState);
   }
 }
 

@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue, Job } from 'bull';
 import { DeadLetterJob } from '../processors/dead-letter.processor';
+import { MetricsService } from '../../metrics/metrics.service';
 
 /**
  * FASE 117: Dead Letter Service
@@ -11,6 +12,8 @@ import { DeadLetterJob } from '../processors/dead-letter.processor';
  * - Query dead letter jobs
  * - Retry failed jobs from dead letter queue
  * - Get statistics about failures
+ *
+ * FASE 118: Integrated with MetricsService for Prometheus/Grafana observability
  */
 @Injectable()
 export class DeadLetterService {
@@ -22,6 +25,7 @@ export class DeadLetterService {
     @InjectQueue('analysis') private analysisQueue: Queue,
     @InjectQueue('reports') private reportsQueue: Queue,
     @InjectQueue('asset-updates') private assetUpdatesQueue: Queue,
+    @Optional() private readonly metricsService?: MetricsService,
   ) {}
 
   /**
@@ -94,6 +98,19 @@ export class DeadLetterService {
       byOriginalQueue[queue] = (byOriginalQueue[queue] || 0) + 1;
     }
 
+    // FASE 118: Update Prometheus metrics with current DLQ state
+    if (this.metricsService) {
+      // Set overall counts
+      this.metricsService.setDeadLetterJobsCount('waiting', 'all', waiting);
+      this.metricsService.setDeadLetterJobsCount('completed', 'all', completed);
+      this.metricsService.setDeadLetterJobsCount('failed', 'all', failed);
+
+      // Set per-queue breakdown
+      for (const [queue, count] of Object.entries(byOriginalQueue)) {
+        this.metricsService.setDeadLetterJobsCount('waiting', queue, count);
+      }
+    }
+
     return {
       waiting,
       completed,
@@ -144,6 +161,9 @@ export class DeadLetterService {
       `[DLQ] Retried job ${jobId} to ${originalQueue}/${originalJobName} (retry #${retryCount + 1})`,
     );
 
+    // FASE 118: Update Prometheus metrics
+    this.metricsService?.incrementDeadLetterProcessed('retried');
+
     return true;
   }
 
@@ -179,6 +199,12 @@ export class DeadLetterService {
   async clearCompleted(): Promise<number> {
     const cleaned = await this.deadLetterQueue.clean(0, 'completed');
     this.logger.log(`[DLQ] Cleared ${cleaned.length} completed jobs`);
+
+    // FASE 118: Update Prometheus metrics
+    for (let i = 0; i < cleaned.length; i++) {
+      this.metricsService?.incrementDeadLetterProcessed('cleared');
+    }
+
     return cleaned.length;
   }
 
