@@ -2,7 +2,7 @@
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
 **Última Atualização:** 2025-12-15
-**Versão:** 1.21.0
+**Versão:** 1.22.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -11643,6 +11643,7 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 117** | Resiliência + Observabilidade + Database Optimization | ✅ 100% | 2025-12-15 |
 | **FASE 118** | Integração Métricas Prometheus + Grafana | ✅ 100% | 2025-12-15 |
 | **FASE 119** | Prometheus Alerting Rules | ✅ 100% | 2025-12-15 |
+| **FASE 120** | Database Archive Strategy (AssetPrice) | ✅ 100% | 2025-12-15 |
 
 **Funcionalidades Implementadas:**
 - Seleção de candidatos por critérios fundamentalistas (ROE, DY, Dív/EBITDA)
@@ -11689,11 +11690,12 @@ Sistema em estado de manutenção e evolução contínua.
 > **Nota:** FASE 117 concluída em 2025-12-15 (Resiliência: Retry Logic + Circuit Breaker + DLQ | Observabilidade: Health Endpoints + Métricas Prometheus + Dashboard Grafana | Database: Índices BRIN/Partial/Covering otimizados)
 > **Nota:** FASE 118 concluída em 2025-12-15 (Integração Métricas: CircuitBreakerService + DeadLetterService → MetricsService | Prometheus exportando 8 métricas customizadas | Dashboards Grafana funcionais)
 > **Nota:** FASE 119 concluída em 2025-12-15 (Alerting Rules: 6 grupos de alertas | Circuit Breaker: Open/HalfOpen/HighFailure | DLQ: NotEmpty/Critical/Failures | Queue/Scraper/System alerts)
+> **Nota:** FASE 120 concluída em 2025-12-15 (Database Archive: asset_prices_archive table | 101K records pre-2020 archived | asset_prices_all view | BRIN indexes | Main table 299K→198K rows)
 
 ---
 
 **Ultima Atualizacao:** 2025-12-15
-**Total de Fases:** 126 completas (incluindo sub-fases)
-**Versao:** 1.21.0
+**Total de Fases:** 127 completas (incluindo sub-fases)
+**Versao:** 1.22.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0
