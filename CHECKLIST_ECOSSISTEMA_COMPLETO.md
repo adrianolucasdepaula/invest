@@ -1124,6 +1124,62 @@ cd frontend && npx tsc --noEmit && npm run build && npm run lint
 
 ---
 
+## 22. PESQUISA WEB PARALELA (WebSearch Strategy)
+
+### 22.1 Quando Pesquisar
+
+- [ ] Decisoes arquiteturais (qual biblioteca usar?)
+- [ ] Problemas sem solucao clara (erro desconhecido)
+- [ ] Best practices (como implementar corretamente?)
+- [ ] Comparacao de alternativas (A vs B vs C)
+- [ ] Documentacao atualizada (versao 2025)
+- [ ] Troubleshooting complexo (root cause desconhecido)
+- [ ] Evolucao/melhoria de funcionalidade existente
+
+### 22.2 Template de Pesquisa Paralela (4 queries)
+
+Execute em paralelo para maxima eficiencia:
+
+| Query # | Template | Exemplo |
+|---------|----------|---------|
+| 1 | "[tecnologia] best practices 2025" | "NestJS Redis cache best practices 2025" |
+| 2 | "[tecnologia] official documentation" | "NestJS caching official documentation" |
+| 3 | "[problema] solution site:stackoverflow.com" | "Redis connection timeout solution site:stackoverflow.com" |
+| 4 | "[alternativas] comparison review 2025" | "ioredis vs redis comparison review 2025" |
+
+### 22.3 Fontes Prioritarias por Tecnologia
+
+| Tecnologia | Fontes Oficiais | Blogs/Comunidade |
+|------------|-----------------|------------------|
+| NestJS | docs.nestjs.com | trilon.io, dev.to |
+| Next.js | nextjs.org | leerob.io, vercel.com/blog |
+| React | react.dev | kentcdodds.com, epicreact.dev |
+| TypeORM | typeorm.io | github.com/typeorm/typeorm |
+| PostgreSQL | postgresql.org | wiki.postgresql.org |
+| Docker | docs.docker.com | docker.com/blog |
+| Playwright | playwright.dev | github.com/microsoft/playwright |
+| Redis | redis.io | redis.com/blog |
+| BullMQ | docs.bullmq.io | github.com/taskforcesh/bullmq |
+
+### 22.4 Cross-Validation Obrigatorio
+
+| Regra | Descricao |
+|-------|-----------|
+| Minimo 3 fontes | Nunca confiar em fonte unica |
+| Prioridade | Docs oficiais > Blogs 2024-2025 > StackOverflow |
+| Data | Preferir conteudo de 2024-2025 |
+| Descartar | Informacao anterior a 2023 (exceto conceitos fundamentais) |
+
+### 22.5 Anti-Patterns de Pesquisa
+
+- [ ] Usar informacao de 2022 ou anterior sem validar atualidade
+- [ ] Confiar em unica fonte para decisao arquitetural
+- [ ] Ignorar documentacao oficial em favor de blogs
+- [ ] Nao citar fontes usadas na decisao
+- [ ] Copiar codigo sem entender contexto
+
+---
+
 ## ARQUIVOS CRITICOS PARA LEITURA
 
 | Arquivo | Prioridade | Conteudo |
@@ -1139,5 +1195,5 @@ cd frontend && npx tsc --noEmit && npm run build && npm run lint
 ---
 
 **Criado:** 2025-12-15
-**Versao:** 1.0.0
+**Versao:** 2.0.0 (22 secoes)
 **Refs:** CHECKLIST_TODO_MASTER.md, CLAUDE.md, ARCHITECTURE.md

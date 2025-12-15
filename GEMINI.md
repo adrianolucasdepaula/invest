@@ -1088,6 +1088,56 @@ O PM Expert tem acesso a:
 
 ---
 
+## Pesquisa Web Proativa (WebSearch Strategy)
+
+### Quando Claude DEVE Pesquisar Automaticamente
+
+| Situação | Trigger | Queries Paralelas |
+|----------|---------|-------------------|
+| Decisão arquitetural | "qual usar", "melhor opção" | 4 queries |
+| Erro desconhecido | "não sei", "nunca vi" | 2-3 queries |
+| Best practices | "como fazer corretamente" | 3 queries |
+| Comparar alternativas | "A vs B", "qual escolher" | 4 queries |
+| Troubleshooting complexo | "não funciona", "root cause" | 3 queries |
+| Melhoria/evolução | "otimizar", "modernizar" | 3 queries |
+
+### Template de Queries (4 paralelas)
+
+```text
+1. WebSearch: "[tecnologia] best practices 2025"
+2. WebSearch: "[tecnologia] official documentation"
+3. WebSearch: "[problema] solution site:stackoverflow.com"
+4. WebSearch: "[alternativas] comparison 2025"
+```
+
+### Fontes Confiáveis (Whitelist)
+
+| Tipo | Domínios |
+|------|----------|
+| Docs oficiais | *.dev, docs.*, *.io/docs, github.com/*/docs |
+| Q&A | stackoverflow.com, github.com/issues |
+| Blogs | dev.to, medium.com (tech), hashnode.dev |
+| Benchmarks | benchmarksgame, techempower |
+
+### Cross-Validation Obrigatório
+
+- **Mínimo 3 fontes** concordando antes de decisão
+- **Prioridade:** Docs oficiais > Blogs 2024-2025 > StackOverflow
+- **Data:** Preferir conteúdo de 2024-2025
+- **Descartar:** Informação anterior a 2023 (exceto conceitos fundamentais)
+
+### Anti-Patterns (NUNCA fazer)
+
+- ❌ Usar informação de 2022 ou anterior sem validar
+- ❌ Confiar em única fonte para decisões
+- ❌ Ignorar documentação oficial
+- ❌ Não citar fontes usadas
+- ❌ Copiar código sem entender contexto
+
+**Referência:** CHECKLIST_ECOSSISTEMA_COMPLETO.md - Seção 22
+
+---
+
 ## Additional Documentation
 
 ### Core Documentation (Raiz do Projeto)
