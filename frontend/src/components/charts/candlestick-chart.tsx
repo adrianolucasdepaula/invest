@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import {
   createChart,
   ColorType,
@@ -24,14 +24,60 @@ interface CandlestickChartProps {
   }>;
 }
 
-export function CandlestickChart({ data }: CandlestickChartProps) {
+/**
+ * FASE 122: Memoized CandlestickChart component
+ * - React.memo prevents unnecessary re-renders when props don't change
+ * - useMemo for expensive data transformations (sorting, mapping)
+ * - useCallback for stable event handler reference
+ */
+function CandlestickChartComponent({ data }: CandlestickChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
 
+  // FASE 122: Memoize sorted data transformation
+  const sortedData = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    return [...data].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  }, [data]);
+
+  // FASE 122: Memoize candlestick data transformation
+  const candlestickData = useMemo<CandlestickData[]>(() => {
+    return sortedData.map((d) => ({
+      time: d.date as Time,
+      open: Number(d.open),
+      high: Number(d.high),
+      low: Number(d.low),
+      close: Number(d.close),
+    }));
+  }, [sortedData]);
+
+  // FASE 122: Memoize volume data transformation
+  const volumeData = useMemo<HistogramData[]>(() => {
+    return sortedData.map((d) => ({
+      time: d.date as Time,
+      value: Number(d.volume),
+      color:
+        Number(d.close) >= Number(d.open)
+          ? 'rgba(34, 197, 94, 0.3)' // green with transparency
+          : 'rgba(239, 68, 68, 0.3)', // red with transparency
+    }));
+  }, [sortedData]);
+
+  // FASE 122: Memoize resize handler
+  const handleResize = useCallback(() => {
+    if (chartContainerRef.current && chartRef.current) {
+      chartRef.current.applyOptions({
+        width: chartContainerRef.current.clientWidth,
+      });
+    }
+  }, []);
+
   useEffect(() => {
-    if (!chartContainerRef.current || data.length === 0) return;
+    if (!chartContainerRef.current || sortedData.length === 0) return;
 
     // Create chart with dark mode colors
     const chart = createChart(chartContainerRef.current, {
@@ -91,28 +137,7 @@ export function CandlestickChart({ data }: CandlestickChartProps) {
       },
     });
 
-    // Transform and set data - MUST be sorted ascending by time
-    const sortedData = [...data].sort((a, b) =>
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-
-    const candlestickData: CandlestickData[] = sortedData.map((d) => ({
-      time: d.date as Time,
-      open: Number(d.open),
-      high: Number(d.high),
-      low: Number(d.low),
-      close: Number(d.close),
-    }));
-
-    const volumeData: HistogramData[] = sortedData.map((d) => ({
-      time: d.date as Time,
-      value: Number(d.volume),
-      color:
-        Number(d.close) >= Number(d.open)
-          ? 'rgba(34, 197, 94, 0.3)' // green with transparency
-          : 'rgba(239, 68, 68, 0.3)', // red with transparency
-    }));
-
+    // Set data
     candlestickSeries.setData(candlestickData);
     volumeSeries.setData(volumeData);
 
@@ -120,14 +145,6 @@ export function CandlestickChart({ data }: CandlestickChartProps) {
     chart.timeScale().fitContent();
 
     // Handle resize
-    const handleResize = () => {
-      if (chartContainerRef.current && chartRef.current) {
-        chartRef.current.applyOptions({
-          width: chartContainerRef.current.clientWidth,
-        });
-      }
-    };
-
     window.addEventListener('resize', handleResize);
 
     // Cleanup
@@ -138,7 +155,7 @@ export function CandlestickChart({ data }: CandlestickChartProps) {
         chartRef.current = null;
       }
     };
-  }, [data]);
+  }, [sortedData, candlestickData, volumeData, handleResize]);
 
   return (
     <div
@@ -148,3 +165,6 @@ export function CandlestickChart({ data }: CandlestickChartProps) {
     />
   );
 }
+
+// FASE 122: Export memoized component to prevent re-renders
+export const CandlestickChart = memo(CandlestickChartComponent);

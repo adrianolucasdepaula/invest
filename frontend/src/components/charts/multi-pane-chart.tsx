@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, memo, useMemo } from 'react';
 import { CandlestickChartWithOverlays } from './candlestick-chart-with-overlays';
 import { RsiChart } from './rsi-chart';
 import { MacdChart } from './macd-chart';
@@ -62,7 +62,12 @@ interface MultiPaneChartProps {
   };
 }
 
-export function MultiPaneChart({
+/**
+ * FASE 122: Memoized MultiPaneChart component
+ * - React.memo prevents unnecessary re-renders
+ * - useMemo for visibility flags
+ */
+function MultiPaneChartComponent({
   data,
   indicators,
   showIndicators,
@@ -72,6 +77,22 @@ export function MultiPaneChart({
   const rsiChartRef = useRef<any>(null);
   const macdChartRef = useRef<any>(null);
   const stochasticChartRef = useRef<any>(null);
+
+  // FASE 122: Memoize visibility checks
+  const showRsi = useMemo(
+    () => Boolean(showIndicators?.rsi && indicators?.rsi),
+    [showIndicators?.rsi, indicators?.rsi]
+  );
+
+  const showMacd = useMemo(
+    () => Boolean(showIndicators?.macd && indicators?.macd),
+    [showIndicators?.macd, indicators?.macd]
+  );
+
+  const showStochastic = useMemo(
+    () => Boolean(showIndicators?.stochastic && indicators?.stochastic),
+    [showIndicators?.stochastic, indicators?.stochastic]
+  );
 
   // Sincronizar crosshair entre charts
   useEffect(() => {
@@ -97,37 +118,40 @@ export function MultiPaneChart({
       </div>
 
       {/* PANE 2: RSI */}
-      {showIndicators?.rsi && indicators?.rsi && (
+      {showRsi && (
         <div className="h-[150px] border-b">
           <RsiChart
             ref={rsiChartRef}
             data={data}
-            rsiValues={indicators.rsi}
+            rsiValues={indicators.rsi!}
           />
         </div>
       )}
 
       {/* PANE 3: MACD */}
-      {showIndicators?.macd && indicators?.macd && (
+      {showMacd && (
         <div className="h-[200px] border-b">
           <MacdChart
             ref={macdChartRef}
             data={data}
-            macdValues={indicators.macd}
+            macdValues={indicators.macd!}
           />
         </div>
       )}
 
       {/* PANE 4: Stochastic */}
-      {showIndicators?.stochastic && indicators?.stochastic && (
+      {showStochastic && (
         <div className="h-[150px]">
           <StochasticChart
             ref={stochasticChartRef}
             data={data}
-            stochasticValues={indicators.stochastic}
+            stochasticValues={indicators.stochastic!}
           />
         </div>
       )}
     </div>
   );
 }
+
+// FASE 122: Export memoized component
+export const MultiPaneChart = memo(MultiPaneChartComponent);

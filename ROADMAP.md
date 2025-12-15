@@ -2,7 +2,7 @@
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
 **Última Atualização:** 2025-12-15
-**Versão:** 1.23.0
+**Versão:** 1.24.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -11645,6 +11645,7 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 119** | Prometheus Alerting Rules | ✅ 100% | 2025-12-15 |
 | **FASE 120** | Database Archive Strategy (AssetPrice) | ✅ 100% | 2025-12-15 |
 | **FASE 121** | Unit Tests para Resiliência Services | ✅ 100% | 2025-12-15 |
+| **FASE 122** | Frontend Charts Optimization (Memoization) | ✅ 100% | 2025-12-15 |
 
 **Funcionalidades Implementadas:**
 - Seleção de candidatos por critérios fundamentalistas (ROE, DY, Dív/EBITDA)
@@ -11693,11 +11694,12 @@ Sistema em estado de manutenção e evolução contínua.
 > **Nota:** FASE 119 concluída em 2025-12-15 (Alerting Rules: 6 grupos de alertas | Circuit Breaker: Open/HalfOpen/HighFailure | DLQ: NotEmpty/Critical/Failures | Queue/Scraper/System alerts)
 > **Nota:** FASE 120 concluída em 2025-12-15 (Database Archive: asset_prices_archive table | 101K records pre-2020 archived | asset_prices_all view | BRIN indexes | Main table 299K→198K rows)
 > **Nota:** FASE 121 concluída em 2025-12-15 (Unit Tests: CircuitBreakerService + DeadLetterService + DeadLetterProcessor | 81 testes passando | Cobertura completa de resiliência)
+> **Nota:** FASE 122 concluída em 2025-12-15 (Charts Optimization: React.memo + useMemo + useCallback | CandlestickChart + PriceChart + MultiPaneChart otimizados | Re-renders desnecessários eliminados)
 
 ---
 
 **Ultima Atualizacao:** 2025-12-15
-**Total de Fases:** 128 completas (incluindo sub-fases)
-**Versao:** 1.23.0
+**Total de Fases:** 129 completas (incluindo sub-fases)
+**Versao:** 1.24.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0
