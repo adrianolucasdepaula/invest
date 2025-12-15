@@ -17,6 +17,7 @@ import {
   RefreshCw,
   AlertTriangle,
   Target,
+  Activity,
 } from 'lucide-react';
 
 const navigation = [
@@ -30,6 +31,7 @@ const navigation = [
   { name: 'Discrepancias', href: '/discrepancies', icon: AlertTriangle },
   { name: 'Gerenciamento de Dados', href: '/data-management', icon: RefreshCw },
   { name: 'OAuth Manager', href: '/oauth-manager', icon: Shield },
+  { name: 'System Health', href: '/health', icon: Activity },
   { name: 'Configurações', href: '/settings', icon: Settings },
 ];
 
