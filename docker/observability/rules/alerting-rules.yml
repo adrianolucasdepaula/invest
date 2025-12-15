@@ -1,0 +1,183 @@
+# Prometheus Alerting Rules
+# FASE 119: Circuit Breaker and Dead Letter Queue Alerts
+
+groups:
+  # ============================================================
+  # CIRCUIT BREAKER ALERTS
+  # ============================================================
+  - name: circuit_breaker_alerts
+    rules:
+      # Alert when any circuit breaker is OPEN
+      - alert: CircuitBreakerOpen
+        expr: invest_circuit_breaker_state == 1
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Circuit breaker OPEN for {{ $labels.scraper }}"
+          description: "Circuit breaker for scraper '{{ $labels.scraper }}' has been OPEN for more than 1 minute. Requests are being rejected."
+          runbook_url: "http://localhost:3100/data-sources"
+
+      # Alert when circuit breaker is in HALF_OPEN state (recovering)
+      - alert: CircuitBreakerHalfOpen
+        expr: invest_circuit_breaker_state == 2
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Circuit breaker HALF_OPEN for {{ $labels.scraper }}"
+          description: "Circuit breaker for scraper '{{ $labels.scraper }}' is in HALF_OPEN state for more than 5 minutes. Recovery may be slow."
+
+      # Alert on high failure rate (more than 5 failures in 5 minutes)
+      - alert: CircuitBreakerHighFailureRate
+        expr: increase(invest_circuit_breaker_failures_total[5m]) > 5
+        for: 1m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High failure rate for {{ $labels.scraper }}"
+          description: "Scraper '{{ $labels.scraper }}' has recorded {{ $value }} failures in the last 5 minutes."
+
+  # ============================================================
+  # DEAD LETTER QUEUE ALERTS
+  # ============================================================
+  - name: dead_letter_queue_alerts
+    rules:
+      # Alert when DLQ has waiting jobs (potential processing issues)
+      - alert: DeadLetterQueueNotEmpty
+        expr: invest_dead_letter_jobs_total{status="waiting"} > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Dead letter queue has {{ $value }} waiting jobs"
+          description: "Dead letter queue for '{{ $labels.original_queue }}' has {{ $value }} jobs waiting. Manual intervention may be required."
+          runbook_url: "http://localhost:3101/api/v1/data-sources/health/dead-letter"
+
+      # Critical alert when DLQ has many waiting jobs
+      - alert: DeadLetterQueueCritical
+        expr: invest_dead_letter_jobs_total{status="waiting"} > 10
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Dead letter queue CRITICAL: {{ $value }} waiting jobs"
+          description: "Dead letter queue has {{ $value }} jobs waiting, which exceeds the critical threshold of 10. Immediate attention required."
+
+      # Alert when DLQ has failed jobs (jobs that failed even in DLQ processing)
+      - alert: DeadLetterQueueFailures
+        expr: invest_dead_letter_jobs_total{status="failed"} > 0
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Dead letter queue has {{ $value }} failed jobs"
+          description: "{{ $value }} jobs have failed in the dead letter queue itself. These require manual investigation."
+
+  # ============================================================
+  # QUEUE PERFORMANCE ALERTS
+  # ============================================================
+  - name: queue_performance_alerts
+    rules:
+      # Alert when queue has high active job count (potential bottleneck)
+      - alert: QueueHighActiveJobs
+        expr: invest_queue_jobs_active > 20
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Queue '{{ $labels.queue }}' has {{ $value }} active jobs"
+          description: "Queue '{{ $labels.queue }}' has {{ $value }} active jobs running for more than 5 minutes. Consider scaling or investigating slow jobs."
+
+      # Alert on high job failure rate
+      - alert: QueueHighFailureRate
+        expr: |
+          (
+            increase(invest_queue_jobs_total{status="failed"}[10m])
+            /
+            (increase(invest_queue_jobs_total{status="completed"}[10m]) + increase(invest_queue_jobs_total{status="failed"}[10m]) + 0.001)
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Queue '{{ $labels.queue }}' has high failure rate"
+          description: "Queue '{{ $labels.queue }}' has more than 10% job failure rate in the last 10 minutes."
+
+  # ============================================================
+  # SCRAPER PERFORMANCE ALERTS
+  # ============================================================
+  - name: scraper_performance_alerts
+    rules:
+      # Alert on slow scraper execution
+      - alert: ScraperSlowExecution
+        expr: histogram_quantile(0.95, rate(invest_scraper_duration_seconds_bucket[5m])) > 60
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Scraper '{{ $labels.scraper }}' is slow (p95 > 60s)"
+          description: "Scraper '{{ $labels.scraper }}' 95th percentile execution time is {{ $value }}s, which exceeds 60 seconds."
+
+      # Alert on scraper high failure rate
+      - alert: ScraperHighFailureRate
+        expr: |
+          (
+            increase(invest_scraper_executions_total{status="failure"}[15m])
+            /
+            (increase(invest_scraper_executions_total{status="success"}[15m]) + increase(invest_scraper_executions_total{status="failure"}[15m]) + 0.001)
+          ) > 0.3
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Scraper '{{ $labels.scraper }}' has high failure rate (>30%)"
+          description: "Scraper '{{ $labels.scraper }}' has more than 30% failure rate in the last 15 minutes."
+
+  # ============================================================
+  # SYSTEM HEALTH ALERTS
+  # ============================================================
+  - name: system_health_alerts
+    rules:
+      # Alert when backend is down (no metrics for 2 minutes)
+      - alert: BackendDown
+        expr: up{job="invest-backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Backend service is DOWN"
+          description: "The invest-backend service has been unreachable for more than 2 minutes."
+
+      # Alert on high memory usage
+      - alert: HighMemoryUsage
+        expr: invest_process_resident_memory_bytes > 3221225472
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High memory usage: {{ $value | humanize1024 }}B"
+          description: "Backend process is using more than 3GB of memory. Consider investigating memory leaks or increasing limits."
+
+      # Alert on high event loop lag (Node.js performance issue)
+      - alert: HighEventLoopLag
+        expr: invest_nodejs_eventloop_lag_p99_seconds > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High event loop lag: {{ $value }}s"
+          description: "Node.js event loop p99 lag is {{ $value }}s, which may indicate performance issues."
