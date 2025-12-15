@@ -1,7 +1,17 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Req, Logger } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { Request } from 'express';
 import { PortfolioService } from './portfolio.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import {
+  CreatePortfolioDto,
+  UpdatePortfolioDto,
+  CreatePositionDto,
+  UpdatePositionDto,
+  ImportPortfolioDto,
+  PortfolioResponseDto,
+  PositionResponseDto,
+} from './dto';
 
 @ApiTags('portfolio')
 @Controller('portfolio')
@@ -14,70 +24,111 @@ export class PortfolioController {
 
   @Get()
   @ApiOperation({ summary: 'Get user portfolios' })
-  async getPortfolios(@Req() req: any) {
+  @ApiResponse({ status: 200, description: 'List of user portfolios', type: [PortfolioResponseDto] })
+  async getPortfolios(@Req() req: Request & { user: { id: string } }): Promise<PortfolioResponseDto[]> {
     return this.portfolioService.findUserPortfolios(req.user.id);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get specific portfolio' })
-  async getPortfolio(@Req() req: any, @Param('id') id: string) {
+  @ApiResponse({ status: 200, description: 'Portfolio details', type: PortfolioResponseDto })
+  @ApiResponse({ status: 404, description: 'Portfolio not found' })
+  async getPortfolio(
+    @Req() req: Request & { user: { id: string } },
+    @Param('id') id: string,
+  ): Promise<PortfolioResponseDto> {
     return this.portfolioService.findOne(id, req.user.id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create portfolio' })
-  async createPortfolio(@Req() req: any, @Body() data: any) {
+  @ApiResponse({ status: 201, description: 'Portfolio created', type: PortfolioResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  async createPortfolio(
+    @Req() req: Request & { user: { id: string } },
+    @Body() data: CreatePortfolioDto,
+  ): Promise<PortfolioResponseDto> {
     return this.portfolioService.create(req.user.id, data);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update portfolio' })
-  async updatePortfolio(@Req() req: any, @Param('id') id: string, @Body() data: any) {
+  @ApiResponse({ status: 200, description: 'Portfolio updated', type: PortfolioResponseDto })
+  @ApiResponse({ status: 404, description: 'Portfolio not found' })
+  async updatePortfolio(
+    @Req() req: Request & { user: { id: string } },
+    @Param('id') id: string,
+    @Body() data: UpdatePortfolioDto,
+  ): Promise<PortfolioResponseDto> {
     return this.portfolioService.update(id, req.user.id, data);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete portfolio' })
-  async deletePortfolio(@Req() req: any, @Param('id') id: string) {
+  @ApiResponse({ status: 200, description: 'Portfolio deleted' })
+  @ApiResponse({ status: 404, description: 'Portfolio not found' })
+  async deletePortfolio(
+    @Req() req: Request & { user: { id: string } },
+    @Param('id') id: string,
+  ): Promise<{ success: boolean }> {
     await this.portfolioService.remove(id, req.user.id);
     return { success: true };
   }
 
   @Post(':portfolioId/positions')
   @ApiOperation({ summary: 'Add position to portfolio' })
-  async addPosition(@Req() req: any, @Param('portfolioId') portfolioId: string, @Body() data: any) {
+  @ApiResponse({ status: 201, description: 'Position added', type: PositionResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 404, description: 'Portfolio or asset not found' })
+  async addPosition(
+    @Req() req: Request & { user: { id: string } },
+    @Param('portfolioId') portfolioId: string,
+    @Body() data: CreatePositionDto,
+  ): Promise<PositionResponseDto> {
     return this.portfolioService.addPosition(portfolioId, req.user.id, data);
   }
 
   @Patch(':portfolioId/positions/:positionId')
   @ApiOperation({ summary: 'Update position' })
+  @ApiResponse({ status: 200, description: 'Position updated', type: PositionResponseDto })
+  @ApiResponse({ status: 404, description: 'Position not found' })
   async updatePosition(
-    @Req() req: any,
+    @Req() req: Request & { user: { id: string } },
     @Param('portfolioId') portfolioId: string,
     @Param('positionId') positionId: string,
-    @Body() data: any,
-  ) {
+    @Body() data: UpdatePositionDto,
+  ): Promise<PositionResponseDto> {
     return this.portfolioService.updatePosition(portfolioId, positionId, req.user.id, data);
   }
 
   @Delete(':portfolioId/positions/:positionId')
   @ApiOperation({ summary: 'Delete position' })
+  @ApiResponse({ status: 200, description: 'Position deleted' })
+  @ApiResponse({ status: 404, description: 'Position not found' })
   async deletePosition(
-    @Req() req: any,
+    @Req() req: Request & { user: { id: string } },
     @Param('portfolioId') portfolioId: string,
     @Param('positionId') positionId: string,
-  ) {
+  ): Promise<{ success: boolean }> {
     await this.portfolioService.removePosition(portfolioId, positionId, req.user.id);
     return { success: true };
   }
 
   @Post('import')
-  @ApiOperation({ summary: 'Import portfolio from file' })
-  async importPortfolio(@Req() req: any, @Body() data: any) {
-    // TODO: Implement file upload handling with multer
-    // For now, pass empty buffer and filename
-    const buffer = Buffer.from(JSON.stringify(data));
-    const filename = 'import.json';
+  @ApiOperation({ summary: 'Import portfolio from file or data' })
+  @ApiResponse({ status: 201, description: 'Portfolio imported', type: PortfolioResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid import data' })
+  async importPortfolio(
+    @Req() req: Request & { user: { id: string } },
+    @Body() data: ImportPortfolioDto,
+  ): Promise<PortfolioResponseDto> {
+    // Handle direct positions import or file data
+    if (data.positions && data.positions.length > 0) {
+      return this.portfolioService.importPositions(req.user.id, data);
+    }
+    // File data import
+    const buffer = data.fileData ? Buffer.from(data.fileData, 'base64') : Buffer.from('{}');
+    const filename = data.filename || 'import.json';
     return this.portfolioService.importFromFile(req.user.id, buffer, filename);
   }
 }

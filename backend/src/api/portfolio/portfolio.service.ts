@@ -5,6 +5,15 @@ import { Portfolio, PortfolioPosition, Asset, AssetType } from '@database/entiti
 import { B3Parser } from './parsers/b3-parser';
 import { KinvoParser } from './parsers/kinvo-parser';
 import { PortfolioParser } from './parsers/portfolio-parser.interface';
+import {
+  CreatePortfolioDto,
+  UpdatePortfolioDto,
+  CreatePositionDto,
+  UpdatePositionDto,
+  ImportPortfolioDto,
+  PortfolioResponseDto,
+  PositionResponseDto,
+} from './dto';
 
 @Injectable()
 export class PortfolioService {
@@ -25,43 +34,57 @@ export class PortfolioService {
     this.parsers = [this.b3Parser, this.kinvoParser];
   }
 
-  async findUserPortfolios(userId: string) {
-    return this.portfolioRepository.find({
+  async findUserPortfolios(userId: string): Promise<PortfolioResponseDto[]> {
+    const portfolios = await this.portfolioRepository.find({
       where: { userId },
       relations: ['positions', 'positions.asset'],
       order: { createdAt: 'DESC' },
     });
+    return portfolios.map((p) => this.toPortfolioResponseDto(p));
   }
 
-  async findOne(id: string, userId: string): Promise<Portfolio | null> {
-    return this.portfolioRepository.findOne({
+  async findOne(id: string, userId: string): Promise<PortfolioResponseDto> {
+    const portfolio = await this.portfolioRepository.findOne({
       where: { id, userId },
       relations: ['positions', 'positions.asset'],
     });
+    if (!portfolio) {
+      throw new Error('Portfolio not found');
+    }
+    return this.toPortfolioResponseDto(portfolio);
   }
 
-  async create(userId: string, data: any): Promise<Portfolio> {
+  async create(userId: string, data: CreatePortfolioDto): Promise<PortfolioResponseDto> {
     const portfolio = this.portfolioRepository.create({
       userId,
-      ...data,
+      name: data.name,
+      description: data.description,
+      settings: data.settings,
+      totalInvested: 0,
+      currentValue: 0,
     });
     const saved = await this.portfolioRepository.save(portfolio);
-    // TypeORM save can return either single entity or array depending on input
-    // We know it's a single entity, so cast appropriately
-    return (Array.isArray(saved) ? saved[0] : saved) as Portfolio;
+    const savedPortfolio = Array.isArray(saved) ? saved[0] : saved;
+    return this.toPortfolioResponseDto(savedPortfolio);
   }
 
-  async update(id: string, userId: string, data: any): Promise<Portfolio> {
+  async update(id: string, userId: string, data: UpdatePortfolioDto): Promise<PortfolioResponseDto> {
     const portfolio = await this.portfolioRepository.findOne({
       where: { id, userId },
+      relations: ['positions', 'positions.asset'],
     });
 
     if (!portfolio) {
       throw new Error('Portfolio not found');
     }
 
-    Object.assign(portfolio, data);
-    return this.portfolioRepository.save(portfolio);
+    if (data.name !== undefined) portfolio.name = data.name;
+    if (data.description !== undefined) portfolio.description = data.description;
+    if (data.isActive !== undefined) portfolio.isActive = data.isActive;
+    if (data.settings !== undefined) portfolio.settings = data.settings;
+
+    const saved = await this.portfolioRepository.save(portfolio);
+    return this.toPortfolioResponseDto(saved);
   }
 
   async remove(id: string, userId: string): Promise<void> {
@@ -76,7 +99,7 @@ export class PortfolioService {
     await this.portfolioRepository.remove(portfolio);
   }
 
-  async addPosition(portfolioId: string, userId: string, data: any): Promise<PortfolioPosition> {
+  async addPosition(portfolioId: string, userId: string, data: CreatePositionDto): Promise<PositionResponseDto> {
     const portfolio = await this.portfolioRepository.findOne({
       where: { id: portfolioId, userId },
     });
@@ -100,24 +123,35 @@ export class PortfolioService {
       asset = await this.assetRepository.save(asset);
     }
 
-    const position = this.positionRepository.create({
-      portfolioId,
-      assetId: asset.id,
-      quantity: data.quantity,
-      averagePrice: data.averagePrice,
-      totalInvested: data.quantity * data.averagePrice,
-      firstBuyDate: data.purchaseDate ? new Date(data.purchaseDate) : new Date(),
+    const position = new PortfolioPosition();
+    position.portfolioId = portfolioId;
+    position.assetId = asset.id;
+    position.quantity = data.quantity;
+    position.averagePrice = data.averagePrice;
+    position.totalInvested = data.quantity * data.averagePrice;
+    position.firstBuyDate = data.purchaseDate ? new Date(data.purchaseDate) : new Date();
+    if (data.notes) {
+      position.notes = data.notes;
+    }
+
+    const savedPosition = await this.positionRepository.save(position);
+    const savedId = Array.isArray(savedPosition) ? savedPosition[0].id : savedPosition.id;
+
+    // Reload with asset relation for response
+    const positionWithAsset = await this.positionRepository.findOne({
+      where: { id: savedId },
+      relations: ['asset'],
     });
 
-    return this.positionRepository.save(position);
+    return this.toPositionResponseDto(positionWithAsset!);
   }
 
   async updatePosition(
     portfolioId: string,
     positionId: string,
     userId: string,
-    data: any,
-  ): Promise<PortfolioPosition> {
+    data: UpdatePositionDto,
+  ): Promise<PositionResponseDto> {
     const portfolio = await this.portfolioRepository.findOne({
       where: { id: portfolioId, userId },
     });
@@ -128,18 +162,25 @@ export class PortfolioService {
 
     const position = await this.positionRepository.findOne({
       where: { id: positionId, portfolioId },
+      relations: ['asset'],
     });
 
     if (!position) {
       throw new Error('Position not found');
     }
 
-    Object.assign(position, data);
-    if (data.quantity && data.averagePrice) {
-      position.totalInvested = data.quantity * data.averagePrice;
+    if (data.quantity !== undefined) position.quantity = data.quantity;
+    if (data.averagePrice !== undefined) position.averagePrice = data.averagePrice;
+    if (data.currentPrice !== undefined) position.currentPrice = data.currentPrice;
+    if (data.notes !== undefined) position.notes = data.notes;
+
+    // Recalculate totalInvested if quantity or averagePrice changed
+    if (data.quantity !== undefined || data.averagePrice !== undefined) {
+      position.totalInvested = position.quantity * position.averagePrice;
     }
 
-    return this.positionRepository.save(position);
+    const saved = await this.positionRepository.save(position);
+    return this.toPositionResponseDto(saved);
   }
 
   async removePosition(portfolioId: string, positionId: string, userId: string): Promise<void> {
@@ -162,7 +203,7 @@ export class PortfolioService {
     await this.positionRepository.remove(position);
   }
 
-  async importFromFile(userId: string, fileBuffer: Buffer, filename: string) {
+  async importFromFile(userId: string, fileBuffer: Buffer, filename: string): Promise<PortfolioResponseDto> {
     this.logger.log(`Importing portfolio for user ${userId} from ${filename}`);
 
     try {
@@ -233,20 +274,48 @@ export class PortfolioService {
 
         await manager.save(PortfolioPosition, positions);
 
-        return {
-          success: true,
-          portfolio,
-          positionsCount: parsedPortfolio.positions.length,
-          source: parsedPortfolio.source,
-          metadata: parsedPortfolio.metadata,
-        };
+        return portfolio;
       });
 
-      return result;
+      // Reload portfolio with positions for response
+      const portfolioWithPositions = await this.portfolioRepository.findOne({
+        where: { id: result.id },
+        relations: ['positions', 'positions.asset'],
+      });
+
+      return this.toPortfolioResponseDto(portfolioWithPositions!);
     } catch (error) {
       this.logger.error(`Failed to import portfolio: ${error.message}`);
       throw error;
     }
+  }
+
+  async importPositions(userId: string, data: ImportPortfolioDto): Promise<PortfolioResponseDto> {
+    this.logger.log(`Importing ${data.positions?.length || 0} positions for user ${userId}`);
+
+    // Create portfolio
+    const portfolioName = data.name || `Importação ${data.source || 'Manual'} - ${new Date().toLocaleDateString('pt-BR')}`;
+    const portfolio = await this.create(userId, {
+      name: portfolioName,
+      description: `Portfolio importado de ${data.source || 'importação manual'}`,
+    });
+
+    // Add positions
+    if (data.positions && data.positions.length > 0) {
+      for (const pos of data.positions) {
+        await this.addPosition(portfolio.id, userId, {
+          ticker: pos.ticker,
+          quantity: pos.quantity,
+          averagePrice: pos.averagePrice,
+          notes: pos.notes ? { imported: pos.notes } : undefined,
+        });
+      }
+
+      // Reload portfolio with updated totals
+      return this.findOne(portfolio.id, userId);
+    }
+
+    return portfolio;
   }
 
   private getAssetType(ticker: string): AssetType {
@@ -254,5 +323,64 @@ export class PortfolioService {
     if (ticker.match(/^[A-Z]{4}[0-9]{2}$/)) return AssetType.BDR;
     if (ticker.match(/^[A-Z]{4}[A-Z][0-9]{2}$/)) return AssetType.OPTION;
     return AssetType.STOCK;
+  }
+
+  private toPortfolioResponseDto(portfolio: Portfolio): PortfolioResponseDto {
+    const positions = portfolio.positions || [];
+    const totalInvested = positions.reduce((sum, p) => sum + (p.totalInvested || 0), 0);
+    const currentValue = positions.reduce((sum, p) => {
+      const value = p.currentPrice ? p.currentPrice * p.quantity : p.totalInvested;
+      return sum + value;
+    }, 0);
+    const profit = currentValue - totalInvested;
+    const profitPercentage = totalInvested > 0 ? (profit / totalInvested) * 100 : 0;
+
+    return {
+      id: portfolio.id,
+      name: portfolio.name,
+      description: portfolio.description,
+      isActive: portfolio.isActive,
+      totalInvested: portfolio.totalInvested || totalInvested,
+      currentValue: portfolio.currentValue || currentValue,
+      profit: profit,
+      profitPercentage: profitPercentage,
+      settings: portfolio.settings,
+      positions: positions.map((p) => this.toPositionResponseDto(p)),
+      createdAt: portfolio.createdAt,
+      updatedAt: portfolio.updatedAt,
+    };
+  }
+
+  private toPositionResponseDto(position: PortfolioPosition): PositionResponseDto {
+    const totalInvested = position.totalInvested || position.quantity * position.averagePrice;
+    const currentValue = position.currentPrice ? position.currentPrice * position.quantity : totalInvested;
+    const profit = currentValue - totalInvested;
+    const profitPercentage = totalInvested > 0 ? (profit / totalInvested) * 100 : 0;
+
+    return {
+      id: position.id,
+      portfolioId: position.portfolioId,
+      assetId: position.assetId,
+      asset: position.asset
+        ? {
+            id: position.asset.id,
+            ticker: position.asset.ticker,
+            name: position.asset.name,
+            type: position.asset.type,
+          }
+        : undefined,
+      quantity: position.quantity,
+      averagePrice: position.averagePrice,
+      currentPrice: position.currentPrice,
+      totalInvested: totalInvested,
+      currentValue: currentValue,
+      profit: profit,
+      profitPercentage: profitPercentage,
+      firstBuyDate: position.firstBuyDate,
+      lastUpdateDate: position.updatedAt,
+      notes: position.notes,
+      createdAt: position.createdAt,
+      updatedAt: position.updatedAt,
+    };
   }
 }

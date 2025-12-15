@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 
 /**
@@ -18,6 +19,8 @@ import {
  * - Tolerâncias por campo
  */
 @Entity('cross_validation_config')
+@Index('IDX_cross_validation_config_is_active', ['isActive'])
+@Index('IDX_cross_validation_config_key_active', ['configKey', 'isActive'])
 export class CrossValidationConfig {
   @PrimaryGeneratedColumn('uuid')
   id: string;

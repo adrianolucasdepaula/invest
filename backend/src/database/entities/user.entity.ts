@@ -5,11 +5,16 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  Index,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { Portfolio } from './portfolio.entity';
 
 @Entity('users')
+@Index('IDX_users_email', ['email'])
+@Index('IDX_users_is_active', ['isActive'])
+@Index('IDX_users_is_email_verified', ['isEmailVerified'])
+@Index('IDX_users_created_at', ['createdAt'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;

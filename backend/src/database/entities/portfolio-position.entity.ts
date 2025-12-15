@@ -14,6 +14,7 @@ import { Asset } from './asset.entity';
 @Entity('portfolio_positions')
 @Index(['portfolio'])
 @Index(['asset'])
+@Index('IDX_portfolio_positions_portfolio_first_buy', ['portfolioId', 'firstBuyDate'])
 export class PortfolioPosition {
   @PrimaryGeneratedColumn('uuid')
   id: string;
