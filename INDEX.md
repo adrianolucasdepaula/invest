@@ -28,7 +28,8 @@
 
 | Arquivo                                                        | Descrição                                         | Status                   |
 | -------------------------------------------------------------- | ------------------------------------------------- | ------------------------ |
-| [ROADMAP.md](ROADMAP.md)                                       | **Histórico completo** (60+ fases, 100% completo) | ✅ Atualizado 2025-11-29 |
+| [ROADMAP.md](ROADMAP.md)                                       | **Histórico completo** (114 fases, 100% completo) | ✅ Atualizado 2025-12-15 |
+| [CHANGELOG.md](CHANGELOG.md)                                   | **Histórico de versões** (23 versões)             | ✅ Atualizado            |
 | [NEXT_STEPS.md](NEXT_STEPS.md)                                 | Próximos passos planejados                        | ⚠️ Consultar ROADMAP     |
 | [PROXIMO_PASSO_APOS_FASE_30.md](PROXIMO_PASSO_APOS_FASE_30.md) | Decisões pós-FASE 30                              | 📜 Histórico             |
 

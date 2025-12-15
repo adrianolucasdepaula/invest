@@ -1,8 +1,8 @@
 # Regras de Dados Financeiros - B3 AI Analysis Platform
 
-**Projeto:** B3 AI Analysis Platform (invest-claude-web)  
-**Última Atualização:** 2025-11-24  
-**Versão:** 1.0.0  
+**Projeto:** B3 AI Analysis Platform (invest-claude-web)
+**Última Atualização:** 2025-12-15
+**Versão:** 1.12.3
 **Criticidade:** 🔥 **CRÍTICO** - Não-negociável
 
 ---
@@ -517,6 +517,6 @@ Antes de commitar código que lida com dados financeiros:
 
 ---
 
-**Última Atualização:** 2025-11-24  
-**Criticidade:** 🔥 CRÍTICO  
-**Mantenedor:** Claude Code (Sonnet 4.5) + Google Gemini AI
+**Última Atualização:** 2025-12-15
+**Criticidade:** 🔥 CRÍTICO
+**Mantenedor:** Claude Code (Opus 4.5) + Google Gemini 3 Pro

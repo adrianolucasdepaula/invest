@@ -1,7 +1,7 @@
 # Known Issues and Solutions - B3 AI Analysis Platform
 
-**Versão:** 1.0  
-**Última Atualização:** 2025-11-24  
+**Versão:** 1.12.3
+**Última Atualização:** 2025-12-15
 **Projeto:** invest-claude-web
 
 ---
@@ -841,5 +841,5 @@ Ver `PLAYWRIGHT_SCRAPER_PATTERN.md` para template completo.
 
 ---
 
-**Última Revisão:** 2025-11-24  
-**Próxima Revisão:** Após resolução dos issues pendentes
+**Última Revisão:** 2025-12-15
+**Próxima Revisão:** Após resolução dos 8 gaps pendentes (FASE 129-133)

@@ -1,9 +1,10 @@
 # B3 AI Analysis Platform
 
 [![Playwright Tests](https://github.com/adrianolucasdepaula/invest/actions/workflows/playwright.yml/badge.svg)](https://github.com/adrianolucasdepaula/invest/actions/workflows/playwright.yml)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
-[![NestJS](https://img.shields.io/badge/NestJS-10-red.svg)](https://nestjs.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-11-red.svg)](https://nestjs.com/)
+[![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
 
 Plataforma completa de análise de investimentos B3 com Inteligência Artificial para análise fundamentalista, técnica, macroeconômica e gestão de portfólio.
 
@@ -76,7 +77,7 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
                      ┌─────────────┐
                      │  Python     │
                      │  Scrapers   │
-                     │  (Selenium) │
+                     │ (Playwright)│
                      └─────────────┘
 ```
 
@@ -104,21 +105,23 @@ Para informações detalhadas sobre o projeto, consulte:
 ## 🛠️ Tecnologias
 
 ### Backend
-- **NestJS 10.x** - Framework Node.js
-- **TypeScript 5.x** - Tipagem estática
-- **PostgreSQL 16** - Banco de dados relacional
-- **TypeORM 0.3.x** - ORM
+- **NestJS 11.x** - Framework Node.js
+- **TypeScript 5.9** - Tipagem estática
+- **PostgreSQL 16** - Banco de dados relacional (TimescaleDB)
+- **TypeORM 0.3.27** - ORM
 - **BullMQ** - Sistema de filas
-- **Redis 7.x** - Cache e filas
-- **Python 3.11** - Scrapers com Playwright
+- **Redis 7.x** - Cache (API Caching Layer FASE 123)
+- **Python 3.11** - Scrapers com Playwright (35 scrapers)
+- **OpenTelemetry** - Observabilidade (Prometheus, Grafana, Loki, Tempo)
 
 ### Frontend
-- **Next.js 14** - Framework React (App Router)
-- **TypeScript 5.x** - Tipagem estática
-- **TailwindCSS 3.x** - Framework CSS
-- **Shadcn/UI** - Componentes UI
+- **Next.js 16** - Framework React (App Router)
+- **React 19** - Biblioteca UI
+- **TypeScript 5.9** - Tipagem estática
+- **TailwindCSS 4.x** - Framework CSS
+- **Shadcn/UI** - 25 componentes UI
 - **React Query** - Gerenciamento de estado
-- **Recharts** - Gráficos e visualizações
+- **Recharts + Lightweight Charts** - Gráficos (OHLC, candlestick)
 - **Socket.io** - Real-time updates
 
 ### DevOps
@@ -306,21 +309,21 @@ Para dúvidas, problemas ou sugestões:
 
 ## ✅ Status do Projeto
 
-**Versão:** 1.2.1
-**Última Atualização:** 2025-11-25
-**Status:** ✅ Produção (100% completo - 5 bugs críticos corrigidos)
+**Versão:** 1.12.3
+**Última Atualização:** 2025-12-15
+**Status:** ✅ Produção (FASE 128 - Ecosystem Validation Complete)
 
 ### Estatísticas
 
 | Métrica | Valor |
 |---------|-------|
-| **Fases Concluídas** | 53/54 (98.1%) |
-| **Backend** | 100% (NestJS + Python) |
-| **Frontend** | 100% (Next.js 14) |
-| **Validações** | 100% (21 fases frontend) |
-| **Scrapers** | 19.35% (6/31 fontes) |
-| **Testes** | Em andamento |
-| **Documentação** | 100% (40+ arquivos .md) |
+| **Fases Concluídas** | 128 (100% Zero Tolerance) |
+| **Backend** | 11 controllers, 98 endpoints |
+| **Frontend** | 19 páginas, 86 componentes |
+| **Database** | 25 entities, 26 migrations |
+| **Scrapers** | 35 ativos (31 Playwright, 3 HTTP API) |
+| **Containers Docker** | 22 (todos healthy) |
+| **Documentação** | 230+ arquivos .md |
 
 ### Páginas Implementadas
 
@@ -335,18 +338,18 @@ Para dúvidas, problemas ou sugestões:
 | `/oauth-manager` | ✅ 100% | Renovação OAuth, VNC viewer |
 | `/settings` | ✅ 100% | Perfil, notificações, API, segurança |
 
-### Próximas Implementações
+### Próximas Implementações (FASE 129+)
 
-- [ ] FASE 25: Refatoração Botão "Solicitar Análises" (aguardando aprovação)
-- [ ] Scrapers restantes (25 fontes)
-- [ ] Análise técnica detalhada (indicadores, padrões)
-- [ ] Análise de opções (greeks, volatilidade)
-- [ ] Integração com IAs (ChatGPT, Claude, Gemini)
-- [ ] Mobile app (React Native)
-- [ ] Testes automatizados (>80% coverage)
-- [ ] CI/CD completo (GitHub Actions)
+- [ ] FASE 129: Loading/Error states (Next.js best practices)
+- [ ] FASE 130: Portfolio DTOs (type-safety)
+- [ ] FASE 131: Page Metadata (SEO)
+- [ ] FASE 132: DATABASE_SCHEMA.md (documentar 15 entities)
+- [ ] FASE 133: Database Indexes optimization
+- [ ] Mobile app (React Native) - Planejado
+- [ ] Testes E2E Massivos (Playwright) - Em progresso
+- [ ] CI/CD completo (GitHub Actions) - Planejado
 
-📚 **Roadmap completo:** Ver `ROADMAP.md` para histórico detalhado de todas as 54 fases.
+📚 **Roadmap completo:** Ver `ROADMAP.md` para histórico detalhado de todas as 128+ fases.
 
 ---
 
@@ -361,8 +364,10 @@ Para dúvidas, problemas ou sugestões:
 ## 🙏 Agradecimentos
 
 Projeto desenvolvido com suporte de:
-- **Claude Code (Sonnet 4.5)** - Desenvolvimento assistido por IA
+
+- **Claude Code (Opus 4.5)** - Desenvolvimento assistido por IA
 - **Anthropic** - Claude Code CLI
+- **Gemini 3 Pro** - Advisor (segunda opinião)
 - **Comunidade Open Source** - Bibliotecas e frameworks utilizados
 
 ---

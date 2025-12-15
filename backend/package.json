@@ -1,6 +1,6 @@
 {
   "name": "b3-invest-backend",
-  "version": "1.0.0",
+  "version": "1.12.3",
   "description": "Backend para plataforma de análise de investimentos B3 com IA",
   "author": "Invest Team",
   "private": true,

@@ -1,8 +1,8 @@
 # Convenções de Código - B3 AI Analysis Platform
 
-**Projeto:** B3 AI Analysis Platform (invest-claude-web)  
-**Última Atualização:** 2025-11-24  
-**Versão:** 1.0.0
+**Projeto:** B3 AI Analysis Platform (invest-claude-web)
+**Última Atualização:** 2025-12-15
+**Versão:** 1.12.3
 
 ---
 
@@ -654,5 +654,5 @@ throw new Error("Not found"); // ❌
 
 ---
 
-**Última Atualização:** 2025-11-24  
-**Mantenedor:** Claude Code (Sonnet 4.5) + Google Gemini AI
+**Última Atualização:** 2025-12-15
+**Mantenedor:** Claude Code (Opus 4.5) + Google Gemini 3 Pro
