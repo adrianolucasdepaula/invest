@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -27,6 +26,10 @@ import {
  * - Todos os Ativos: API direta (1 clique)
  * - Com Opções: API direta (1 clique)
  * - Selecionar Manualmente: Abre modal (2 cliques)
+ *
+ * NOTA: Usa DropdownMenu uncontrolled (sem open/onOpenChange)
+ * para evitar hydration mismatch com SSR do Next.js.
+ * Radix UI fecha automaticamente ao clicar em DropdownMenuItem.
  */
 
 interface AssetUpdateDropdownProps {
@@ -46,25 +49,21 @@ export function AssetUpdateDropdown({
   onUpdateWithOptions,
   onOpenManualSelect,
 }: AssetUpdateDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleUpdateAll = async () => {
-    setIsOpen(false);
-    await onUpdateAll();
+  // Handlers simplificados - Radix UI fecha o dropdown automaticamente
+  const handleUpdateAll = () => {
+    onUpdateAll();
   };
 
-  const handleUpdateWithOptions = async () => {
-    setIsOpen(false);
-    await onUpdateWithOptions();
+  const handleUpdateWithOptions = () => {
+    onUpdateWithOptions();
   };
 
   const handleManualSelect = () => {
-    setIsOpen(false);
     onOpenManualSelect();
   };
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button disabled={isUpdating} className="gap-2" aria-busy={isUpdating}>
           {isUpdating ? (

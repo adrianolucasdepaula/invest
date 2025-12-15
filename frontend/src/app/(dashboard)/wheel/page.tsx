@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, calculateCashYieldApi } from '@/lib/api';
+import { useHydrated } from '@/hooks/useHydrated';
 import {
   useWheelCandidates,
   useWheelStrategies,
@@ -59,15 +60,6 @@ import {
 } from 'lucide-react';
 
 // FASE 109.1: Types removidos - agora importados de use-wheel.ts (DRY)
-
-// FASE 109.1: Hook de hydration para prevenir hydration mismatch
-function useHydrated() {
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
-  return hydrated;
-}
 
 export default function WheelPage() {
   const hydrated = useHydrated();

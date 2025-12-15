@@ -278,13 +278,22 @@ export class AssetUpdateProcessor {
   @OnQueueFailed()
   onFailed(job: Job<AssetUpdateJobData>, error: Error) {
     const details = this.getJobDetails(job.data);
-    this.logger.error(
-      `[JOB-${job.id}] 💥 Queue failed: ${job.name} - ${details}`,
-      `Error: ${error.message}`,
-    );
+    const maxAttempts = job.opts?.attempts || 3;
+    const willRetry = job.attemptsMade < maxAttempts;
 
-    // Record queue job failure metric
-    this.telemetryService.recordQueueJob('asset-updates', job.name, 'failed');
+    if (willRetry) {
+      this.logger.warn(
+        `[JOB-${job.id}] ⚠️ Attempt ${job.attemptsMade}/${maxAttempts} failed: ${job.name} - ${details}. Will retry with exponential backoff.`,
+        `Error: ${error.message}`,
+      );
+    } else {
+      this.logger.error(
+        `[JOB-${job.id}] 💥 All ${maxAttempts} attempts exhausted: ${job.name} - ${details}`,
+        `Error: ${error.message}`,
+      );
+      // Record queue job failure metric only on final failure
+      this.telemetryService.recordQueueJob('asset-updates', job.name, 'failed');
+    }
   }
 
   /**

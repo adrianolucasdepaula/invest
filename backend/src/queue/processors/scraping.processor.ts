@@ -38,7 +38,18 @@ export class ScrapingProcessor {
 
   @OnQueueFailed()
   onFailed(job: Job<ScrapingJob>, error: Error) {
-    this.logger.error(`Job ${job.id} failed for ${job.data.ticker}: ${error.message}`);
+    const maxAttempts = job.opts?.attempts || 3;
+    const willRetry = job.attemptsMade < maxAttempts;
+
+    if (willRetry) {
+      this.logger.warn(
+        `[JOB-${job.id}] ⚠️ Attempt ${job.attemptsMade}/${maxAttempts} failed for ${job.data.ticker}: ${error.message}. Will retry.`,
+      );
+    } else {
+      this.logger.error(
+        `[JOB-${job.id}] 💥 All ${maxAttempts} attempts exhausted for ${job.data.ticker}: ${error.message}`,
+      );
+    }
   }
 
   @Process('fundamental')

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { logger } from '@/lib/logger';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -30,24 +31,24 @@ export function SocketProvider({ children }: SocketProviderProps) {
 
     // Connection event handlers
     newSocket.on('connect', () => {
-      console.log('[Socket] Connected:', newSocket.id);
+      logger.info('[Socket] Connected', { socketId: newSocket.id });
       setIsConnected(true);
     });
 
     newSocket.on('disconnect', (reason) => {
-      console.log('[Socket] Disconnected:', reason);
+      logger.info('[Socket] Disconnected', { reason });
       setIsConnected(false);
     });
 
     newSocket.on('connect_error', (error) => {
-      console.error('[Socket] Connection error:', error);
+      logger.error('[Socket] Connection error', { error });
     });
 
     setSocket(newSocket);
 
     // Cleanup on unmount
     return () => {
-      console.log('[Socket] Cleaning up connection');
+      logger.debug('[Socket] Cleaning up connection');
       newSocket.close();
     };
   }, []);

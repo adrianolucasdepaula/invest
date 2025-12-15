@@ -191,8 +191,7 @@ class ApiClient {
       userId,
       hasOptionsOnly: hasOptionsOnly ?? false,
     };
-    console.log('[API] bulkUpdateAllAssetsFundamentals called with:', { userId, hasOptionsOnly });
-    console.log('[API] Sending body:', JSON.stringify(body));
+    logger.debug('[API] bulkUpdateAllAssetsFundamentals called', { userId, hasOptionsOnly, body });
     const response = await this.client.post('/assets/updates/bulk-all', body);
     return response.data;
   }

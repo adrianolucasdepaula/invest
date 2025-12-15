@@ -11,17 +11,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAllLatestIndicators } from '@/lib/hooks/use-economic-indicators';
-
-// Hook para evitar hydration mismatch com renderização condicional
-function useHydrated() {
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
-  return hydrated;
-}
+import { useHydrated } from '@/hooks/useHydrated';
 import { EconomicIndicatorCard } from './economic-indicator-card';
 import {
   TrendingUp,

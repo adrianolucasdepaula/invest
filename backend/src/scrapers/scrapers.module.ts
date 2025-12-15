@@ -21,6 +21,7 @@ import { DiscrepancyResolutionService } from './discrepancy-resolution.service';
 import { CrossValidationConfigService } from './cross-validation-config.service'; // FASE 93
 import { ScrapersController } from './scrapers.controller';
 import { RateLimiterService } from './rate-limiter.service'; // ✅ FASE 3
+import { CircuitBreakerService } from './circuit-breaker.service'; // ✅ FASE 117
 import { WebSocketModule } from '../websocket/websocket.module'; // FASE 93.4
 
 @Module({
@@ -52,6 +53,7 @@ import { WebSocketModule } from '../websocket/websocket.module'; // FASE 93.4
     DiscrepancyResolutionService, // FASE 90
     CrossValidationConfigService, // FASE 93
     RateLimiterService, // ✅ FASE 3
+    CircuitBreakerService, // ✅ FASE 117
   ],
   exports: [
     FundamentusScraper,
@@ -66,6 +68,7 @@ import { WebSocketModule } from '../websocket/websocket.module'; // FASE 93.4
     DiscrepancyResolutionService, // FASE 90
     CrossValidationConfigService, // FASE 93
     RateLimiterService, // ✅ FASE 3
+    CircuitBreakerService, // ✅ FASE 117
   ],
 })
 export class ScrapersModule {}

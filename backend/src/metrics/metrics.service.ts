@@ -18,6 +18,14 @@ export class MetricsService implements OnModuleInit {
   private readonly assetsTotal: promClient.Gauge<string>;
   private readonly pricesTotal: promClient.Gauge<string>;
 
+  // FASE 117: Circuit Breaker metrics
+  private readonly circuitBreakerState: promClient.Gauge<string>;
+  private readonly circuitBreakerFailures: promClient.Counter<string>;
+
+  // FASE 117: Dead Letter Queue metrics
+  private readonly deadLetterJobsTotal: promClient.Gauge<string>;
+  private readonly deadLetterJobsProcessed: promClient.Counter<string>;
+
   constructor() {
     // Create a new registry
     this.registry = new promClient.Registry();
@@ -109,6 +117,36 @@ export class MetricsService implements OnModuleInit {
     this.pricesTotal = new promClient.Gauge({
       name: 'invest_prices_total',
       help: 'Total number of price records in the system',
+      registers: [this.registry],
+    });
+
+    // FASE 117: Circuit Breaker metrics
+    this.circuitBreakerState = new promClient.Gauge({
+      name: 'invest_circuit_breaker_state',
+      help: 'Circuit breaker state (0=CLOSED, 1=OPEN, 2=HALF_OPEN)',
+      labelNames: ['scraper'],
+      registers: [this.registry],
+    });
+
+    this.circuitBreakerFailures = new promClient.Counter({
+      name: 'invest_circuit_breaker_failures_total',
+      help: 'Total number of circuit breaker failures',
+      labelNames: ['scraper'],
+      registers: [this.registry],
+    });
+
+    // FASE 117: Dead Letter Queue metrics
+    this.deadLetterJobsTotal = new promClient.Gauge({
+      name: 'invest_dead_letter_jobs_total',
+      help: 'Total number of jobs in dead letter queue',
+      labelNames: ['status', 'original_queue'],
+      registers: [this.registry],
+    });
+
+    this.deadLetterJobsProcessed = new promClient.Counter({
+      name: 'invest_dead_letter_jobs_processed_total',
+      help: 'Total number of dead letter jobs processed (retried or cleared)',
+      labelNames: ['action'],
       registers: [this.registry],
     });
   }
@@ -216,6 +254,25 @@ export class MetricsService implements OnModuleInit {
 
   setPricesCount(count: number): void {
     this.pricesTotal.set(count);
+  }
+
+  // FASE 117: Circuit Breaker Metrics methods
+  setCircuitBreakerState(scraper: string, state: 'CLOSED' | 'OPEN' | 'HALF_OPEN'): void {
+    const stateValue = state === 'CLOSED' ? 0 : state === 'OPEN' ? 1 : 2;
+    this.circuitBreakerState.set({ scraper }, stateValue);
+  }
+
+  incrementCircuitBreakerFailure(scraper: string): void {
+    this.circuitBreakerFailures.inc({ scraper });
+  }
+
+  // FASE 117: Dead Letter Queue Metrics methods
+  setDeadLetterJobsCount(status: 'waiting' | 'completed' | 'failed', originalQueue: string, count: number): void {
+    this.deadLetterJobsTotal.set({ status, original_queue: originalQueue }, count);
+  }
+
+  incrementDeadLetterProcessed(action: 'retried' | 'cleared'): void {
+    this.deadLetterJobsProcessed.inc({ action });
   }
 
   /**

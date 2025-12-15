@@ -1,16 +1,8 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useAssets } from '@/lib/hooks/use-assets';
-
-// Hook para evitar hydration mismatch com renderização condicional
-function useHydrated() {
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
-  return hydrated;
-}
+import { useHydrated } from '@/hooks/useHydrated';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { AssetTable } from '@/components/dashboard/asset-table';
 import { MarketIndices } from '@/components/dashboard/market-indices';

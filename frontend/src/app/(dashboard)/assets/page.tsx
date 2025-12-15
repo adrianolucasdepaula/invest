@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAssets } from '@/lib/hooks/use-assets';
+import { useHydrated } from '@/hooks/useHydrated';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -28,15 +29,6 @@ import { AssetUpdateModal, UpdateMode } from '@/components/dashboard/AssetUpdate
 import { AssetUpdateDropdown } from '@/components/dashboard/AssetUpdateDropdown';
 
 type ViewMode = 'all' | 'sector' | 'type' | 'type-sector';
-
-// Hook para evitar hydration mismatch com componentes Radix UI
-function useHydrated() {
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
-  return hydrated;
-}
 
 // Helper function to detect asset type based on ticker
 function getAssetType(ticker: string, assetType?: string): string {
@@ -508,14 +500,23 @@ export default function AssetsPage() {
           )}
         </div>
         {/* FASE 116: Dropdown para atualização */}
-        <AssetUpdateDropdown
-          totalAssets={assets?.length ?? 0}
-          assetsWithOptionsCount={assetsWithOptionsCount}
-          isUpdating={bulkUpdateState.isRunning}
-          onUpdateAll={handleUpdateAll}
-          onUpdateWithOptions={handleUpdateWithOptions}
-          onOpenManualSelect={handleOpenManualSelect}
-        />
+        {/* Hydration check para evitar SSR mismatch com Radix UI */}
+        {hydrated ? (
+          <AssetUpdateDropdown
+            totalAssets={assets?.length ?? 0}
+            assetsWithOptionsCount={assetsWithOptionsCount}
+            isUpdating={bulkUpdateState.isRunning}
+            onUpdateAll={handleUpdateAll}
+            onUpdateWithOptions={handleUpdateWithOptions}
+            onOpenManualSelect={handleOpenManualSelect}
+          />
+        ) : (
+          <Button disabled className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Atualizar
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {bulkUpdateState.isRunning && (

@@ -2,6 +2,16 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 
+/**
+ * Extended cache interface with store access
+ * cache-manager v6+ changed API - store access varies by implementation
+ */
+interface CacheWithStore extends Cache {
+  store?: {
+    reset?: () => Promise<void>;
+  };
+}
+
 @Injectable()
 export class CacheService {
   private readonly logger = new Logger(CacheService.name);
@@ -57,16 +67,16 @@ export class CacheService {
    */
   async reset(): Promise<void> {
     try {
-      // @ts-ignore - reset may not be available in all store implementations
-      const store = (this.cacheManager as any).store;
-      if (store && typeof store.reset === 'function') {
-        await store.reset();
+      const cacheWithStore = this.cacheManager as CacheWithStore;
+      if (cacheWithStore.store?.reset) {
+        await cacheWithStore.store.reset();
         this.logger.log('Cache cleared');
       } else {
         this.logger.warn('Cache reset not supported by current store');
       }
-    } catch (error: any) {
-      this.logger.error(`Cache reset error: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Cache reset error: ${errorMessage}`);
     }
   }
 

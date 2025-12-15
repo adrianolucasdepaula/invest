@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client';
+import { logger } from './logger';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3101';
 
@@ -17,15 +18,15 @@ class WebSocketService {
     });
 
     this.socket.on('connect', () => {
-      console.log('WebSocket conectado');
+      logger.info('[WebSocket] Connected');
     });
 
     this.socket.on('disconnect', () => {
-      console.log('WebSocket desconectado');
+      logger.info('[WebSocket] Disconnected');
     });
 
     this.socket.on('error', (error) => {
-      console.error('Erro WebSocket:', error);
+      logger.error('[WebSocket] Error', { error });
     });
 
     // Configurar listeners gerais
@@ -116,7 +117,7 @@ class WebSocketService {
         try {
           callback(data);
         } catch (error) {
-          console.error(`[WebSocket] Error in listener for "${event}":`, error);
+          logger.error(`[WebSocket] Error in listener for "${event}"`, { error });
         }
       });
     }
