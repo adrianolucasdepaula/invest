@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Query, UseGuards, HttpCode, HttpStatus, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, UseGuards, UseInterceptors, HttpCode, HttpStatus, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AssetsService } from './assets.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -7,6 +7,8 @@ import { SyncOptionsLiquidityResponseDto } from './dto/sync-options-liquidity.dt
 import { AssetDataSourcesResponseDto } from './dto/asset-data-sources.dto';
 import { AssetUpdateJobsService } from '../../queue/jobs/asset-update-jobs.service';
 import { UpdateTrigger } from '@database/entities';
+import { CacheInterceptor } from '@common/interceptors/cache.interceptor';
+import { CacheKey } from '@common/decorators/cache.decorator';
 
 @ApiTags('assets')
 @Controller('assets')
@@ -19,6 +21,8 @@ export class AssetsController {
   ) {}
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('assets:list', 300) // 5 minutes cache
   @ApiOperation({ summary: 'Get all assets' })
   async getAllAssets(@Query('type') type?: string) {
     return this.assetsService.findAll(type);
@@ -178,12 +182,16 @@ export class AssetsController {
   // ============================================================================
 
   @Get(':ticker')
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('assets:ticker', 300) // 5 minutes cache
   @ApiOperation({ summary: 'Get asset by ticker' })
   async getAsset(@Param('ticker') ticker: string) {
     return this.assetsService.findByTicker(ticker);
   }
 
   @Get(':ticker/data-sources')
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('assets:data-sources', 300) // 5 minutes cache
   @ApiOperation({
     summary: 'Get data sources information for an asset',
     description:
@@ -199,6 +207,8 @@ export class AssetsController {
   }
 
   @Get(':ticker/price-history')
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('assets:price-history', 60) // 1 minute cache (price data changes more frequently)
   @ApiOperation({
     summary: 'Get asset price history with configurable range',
     description:

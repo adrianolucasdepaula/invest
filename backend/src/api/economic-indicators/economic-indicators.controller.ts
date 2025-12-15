@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, Param, Logger, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Query, Param, Logger, HttpCode, HttpStatus, UseInterceptors } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { EconomicIndicatorsService } from './economic-indicators.service';
 import { GetIndicatorsDto } from './dto/get-indicators.dto';
@@ -7,6 +7,8 @@ import {
   LatestIndicatorResponseDto,
   LatestWithAccumulatedResponseDto,
 } from './dto/indicator-response.dto';
+import { CacheInterceptor } from '@common/interceptors/cache.interceptor';
+import { CacheKey } from '@common/decorators/cache.decorator';
 
 /**
  * EconomicIndicatorsController - Controller de Indicadores Macroeconômicos
@@ -27,6 +29,8 @@ export class EconomicIndicatorsController {
    * Lista todos os indicadores com filtros opcionais
    */
   @Get()
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('economic-indicators:list', 300) // 5 minutes cache (monthly data)
   @ApiOperation({
     summary: 'List all economic indicators',
     description: 'Get all indicators with optional filters (type, date range, limit)',
@@ -105,6 +109,8 @@ export class EconomicIndicatorsController {
    * IMPORTANT: This route must come AFTER the POST /sync route to avoid conflicts
    */
   @Get(':type')
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('economic-indicators:type', 300) // 5 minutes cache
   @ApiOperation({
     summary: 'Get latest indicator by type',
     description: 'Retrieve the most recent value for a specific indicator (SELIC, IPCA, CDI, etc)',
@@ -134,6 +140,8 @@ export class EconomicIndicatorsController {
    * Retorna o último valor + acumulado 12 meses
    */
   @Get(':type/accumulated')
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('economic-indicators:accumulated', 300) // 5 minutes cache
   @ApiOperation({
     summary: 'Get latest indicator with 12-month accumulated',
     description: 'Retrieve current monthly value + 12-month accumulated sum',

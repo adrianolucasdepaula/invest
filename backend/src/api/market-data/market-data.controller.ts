@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { MarketDataService } from './market-data.service';
@@ -21,6 +22,8 @@ import {
   SyncIntradayResponseDto,
   SyncIntradayBulkResponseDto,
 } from './dto'; // FASE 69
+import { CacheInterceptor } from '@common/interceptors/cache.interceptor';
+import { CacheKey } from '@common/decorators/cache.decorator';
 
 import { TickerMergeService } from './ticker-merge.service';
 
@@ -35,6 +38,8 @@ export class MarketDataController {
   ) {}
 
   @Get(':ticker/prices')
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('market-data:prices', 60) // 1 minute cache
   @ApiOperation({
     summary: 'Get historical price data for a ticker with candle aggregation',
     description:
@@ -165,6 +170,8 @@ export class MarketDataController {
    * FASE 34.6: Sync History Audit Trail
    */
   @Get('/sync-history')
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('market-data:sync-history', 120) // 2 minutes cache
   @ApiOperation({
     summary: 'Get sync history (audit trail)',
     description:
@@ -198,6 +205,8 @@ export class MarketDataController {
    * FASE 35: Sistema de Gerenciamento de Sync B3
    */
   @Get('sync-status')
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('market-data:sync-status', 30) // 30 seconds cache (status changes frequently)
   @ApiOperation({
     summary: 'Obter status de sincronização de todos os ativos B3',
     description:
@@ -268,6 +277,8 @@ export class MarketDataController {
    * FASE 67: Get intraday price data from TimescaleDB hypertable
    */
   @Get(':ticker/intraday')
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('market-data:intraday', 30) // 30 seconds cache (intraday data)
   @ApiOperation({
     summary: 'Get intraday price data (1m, 5m, 15m, 30m, 1h, 4h)',
     description:
