@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef, memo, useMemo } from 'react';
+import { useRef, memo, useMemo } from 'react';
 import { CandlestickChartWithOverlays } from './candlestick-chart-with-overlays';
 import { RsiChart } from './rsi-chart';
 import { MacdChart } from './macd-chart';
 import { StochasticChart } from './stochastic-chart';
+import { ChartSyncProvider } from './chart-sync-context';
 
 interface MultiPaneChartProps {
   data: Array<{
@@ -66,6 +67,10 @@ interface MultiPaneChartProps {
  * FASE 122: Memoized MultiPaneChart component
  * - React.memo prevents unnecessary re-renders
  * - useMemo for visibility flags
+ *
+ * FASE 124: Chart Synchronization
+ * - ChartSyncProvider enables crosshair sync between panes
+ * - Time scale sync for coordinated zoom/scroll
  */
 function MultiPaneChartComponent({
   data,
@@ -73,10 +78,9 @@ function MultiPaneChartComponent({
   showIndicators,
 }: MultiPaneChartProps) {
   // Refs para cada chart
-  const candlestickChartRef = useRef<any>(null);
-  const rsiChartRef = useRef<any>(null);
-  const macdChartRef = useRef<any>(null);
-  const stochasticChartRef = useRef<any>(null);
+  const rsiChartRef = useRef<{ getChart: () => unknown } | null>(null);
+  const macdChartRef = useRef<{ getChart: () => unknown } | null>(null);
+  const stochasticChartRef = useRef<{ getChart: () => unknown } | null>(null);
 
   // FASE 122: Memoize visibility checks
   const showRsi = useMemo(
@@ -94,62 +98,53 @@ function MultiPaneChartComponent({
     [showIndicators?.stochastic, indicators?.stochastic]
   );
 
-  // Sincronizar crosshair entre charts
-  useEffect(() => {
-    // TODO: Implementar sincronização de crosshair
-    // Usar subscribeCrosshairMove de cada chart
-  }, []);
-
-  // Sincronizar zoom/scroll entre charts
-  useEffect(() => {
-    // TODO: Implementar sincronização de timeRange
-    // Usar subscribeVisibleTimeRangeChange de cada chart
-  }, []);
-
+  // FASE 124: Wrap all charts with ChartSyncProvider for crosshair/timescale sync
   return (
-    <div className="space-y-0 border rounded-lg overflow-hidden">
-      {/* PANE 1: Candlestick + Overlays + Volume */}
-      <div className="h-[500px] border-b">
-        <CandlestickChartWithOverlays
-          data={data}
-          indicators={indicators}
-          showIndicators={showIndicators}
-        />
+    <ChartSyncProvider>
+      <div className="space-y-0 border rounded-lg overflow-hidden">
+        {/* PANE 1: Candlestick + Overlays + Volume */}
+        <div className="h-[500px] border-b">
+          <CandlestickChartWithOverlays
+            data={data}
+            indicators={indicators}
+            showIndicators={showIndicators}
+          />
+        </div>
+
+        {/* PANE 2: RSI */}
+        {showRsi && (
+          <div className="h-[150px] border-b">
+            <RsiChart
+              ref={rsiChartRef}
+              data={data}
+              rsiValues={indicators.rsi!}
+            />
+          </div>
+        )}
+
+        {/* PANE 3: MACD */}
+        {showMacd && (
+          <div className="h-[200px] border-b">
+            <MacdChart
+              ref={macdChartRef}
+              data={data}
+              macdValues={indicators.macd!}
+            />
+          </div>
+        )}
+
+        {/* PANE 4: Stochastic */}
+        {showStochastic && (
+          <div className="h-[150px]">
+            <StochasticChart
+              ref={stochasticChartRef}
+              data={data}
+              stochasticValues={indicators.stochastic!}
+            />
+          </div>
+        )}
       </div>
-
-      {/* PANE 2: RSI */}
-      {showRsi && (
-        <div className="h-[150px] border-b">
-          <RsiChart
-            ref={rsiChartRef}
-            data={data}
-            rsiValues={indicators.rsi!}
-          />
-        </div>
-      )}
-
-      {/* PANE 3: MACD */}
-      {showMacd && (
-        <div className="h-[200px] border-b">
-          <MacdChart
-            ref={macdChartRef}
-            data={data}
-            macdValues={indicators.macd!}
-          />
-        </div>
-      )}
-
-      {/* PANE 4: Stochastic */}
-      {showStochastic && (
-        <div className="h-[150px]">
-          <StochasticChart
-            ref={stochasticChartRef}
-            data={data}
-            stochasticValues={indicators.stochastic!}
-          />
-        </div>
-      )}
-    </div>
+    </ChartSyncProvider>
   );
 }
 

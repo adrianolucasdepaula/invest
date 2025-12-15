@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import {
   createChart,
   ColorType,
@@ -14,6 +14,9 @@ import {
   HistogramSeries,
   LineSeries,
 } from 'lightweight-charts';
+import { useChartSyncOptional } from './chart-sync-context';
+
+const CHART_ID = 'candlestick-main';
 
 interface CandlestickChartWithOverlaysProps {
   data: Array<{
@@ -63,6 +66,9 @@ export function CandlestickChartWithOverlays({
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
+
+  // FASE 124: Chart sync context (optional - works standalone too)
+  const chartSync = useChartSyncOptional();
 
   // Refs para overlays
   const sma20SeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
@@ -414,15 +420,54 @@ export function CandlestickChartWithOverlays({
 
     window.addEventListener('resize', handleResize);
 
+    // FASE 124: Setup crosshair and time scale sync
+    let crosshairHandler: ((param: { time?: unknown; point?: unknown }) => void) | undefined;
+    let timeScaleHandler: ((range: { from?: unknown; to?: unknown } | null) => void) | undefined;
+
+    if (chartSync) {
+      // Register this chart
+      chartSync.registerChart(CHART_ID, chart);
+
+      // Handler references for unsubscribe
+      crosshairHandler = (param) => {
+        if (param.time && param.point) {
+          chartSync.updateCrosshair(param.time as Time, CHART_ID);
+        } else {
+          chartSync.updateCrosshair(null, CHART_ID);
+        }
+      };
+
+      timeScaleHandler = (range) => {
+        if (range && range.from && range.to) {
+          chartSync.syncTimeScale(CHART_ID, range.from as Time, range.to as Time);
+        }
+      };
+
+      // Subscribe to crosshair moves and broadcast to other charts
+      chart.subscribeCrosshairMove(crosshairHandler);
+
+      // Subscribe to time scale changes for coordinated zoom/scroll
+      chart.timeScale().subscribeVisibleTimeRangeChange(timeScaleHandler);
+    }
+
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
+      if (crosshairHandler) {
+        chart.unsubscribeCrosshairMove(crosshairHandler);
+      }
+      if (timeScaleHandler) {
+        chart.timeScale().unsubscribeVisibleTimeRangeChange(timeScaleHandler);
+      }
+      if (chartSync) {
+        chartSync.unregisterChart(CHART_ID);
+      }
       if (chartRef.current) {
         chartRef.current.remove();
         chartRef.current = null;
       }
     };
-  }, [data, indicators, showIndicators]);
+  }, [data, indicators, showIndicators, chartSync]);
 
   return (
     <div

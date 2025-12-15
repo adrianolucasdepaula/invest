@@ -10,6 +10,9 @@ import {
   Time,
   LineSeries,
 } from 'lightweight-charts';
+import { useChartSyncOptional } from './chart-sync-context';
+
+const CHART_ID = 'stochastic-indicator';
 
 interface StochasticChartProps {
   data: Array<{ date: string }>;
@@ -23,6 +26,9 @@ export const StochasticChart = forwardRef<any, StochasticChartProps>(
   ({ data, stochasticValues }, ref) => {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
+
+    // FASE 124: Chart sync context
+    const chartSync = useChartSyncOptional();
 
     useImperativeHandle(ref, () => ({
       getChart: () => chartRef.current,
@@ -130,14 +136,48 @@ export const StochasticChart = forwardRef<any, StochasticChartProps>(
 
       window.addEventListener('resize', handleResize);
 
+      // FASE 124: Setup crosshair and time scale sync
+      let crosshairHandler: ((param: { time?: unknown; point?: unknown }) => void) | undefined;
+      let timeScaleHandler: ((range: { from?: unknown; to?: unknown } | null) => void) | undefined;
+
+      if (chartSync) {
+        chartSync.registerChart(CHART_ID, chart);
+
+        crosshairHandler = (param) => {
+          if (param.time && param.point) {
+            chartSync.updateCrosshair(param.time as Time, CHART_ID);
+          } else {
+            chartSync.updateCrosshair(null, CHART_ID);
+          }
+        };
+
+        timeScaleHandler = (range) => {
+          if (range && range.from && range.to) {
+            chartSync.syncTimeScale(CHART_ID, range.from as Time, range.to as Time);
+          }
+        };
+
+        chart.subscribeCrosshairMove(crosshairHandler);
+        chart.timeScale().subscribeVisibleTimeRangeChange(timeScaleHandler);
+      }
+
       return () => {
         window.removeEventListener('resize', handleResize);
+        if (crosshairHandler) {
+          chart.unsubscribeCrosshairMove(crosshairHandler);
+        }
+        if (timeScaleHandler) {
+          chart.timeScale().unsubscribeVisibleTimeRangeChange(timeScaleHandler);
+        }
+        if (chartSync) {
+          chartSync.unregisterChart(CHART_ID);
+        }
         if (chartRef.current) {
           chartRef.current.remove();
           chartRef.current = null;
         }
       };
-    }, [data, stochasticValues]);
+    }, [data, stochasticValues, chartSync]);
 
     return (
       <div
