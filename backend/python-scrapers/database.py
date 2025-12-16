@@ -24,9 +24,10 @@ class Database:
             self.engine = create_engine(
                 settings.database_url,
                 poolclass=QueuePool,
-                pool_size=5,
-                max_overflow=10,
+                pool_size=15,       # Increased from 5 for better concurrency
+                max_overflow=20,    # Increased from 10 to handle parallel scrapers
                 pool_pre_ping=True,
+                pool_recycle=3600,  # Recycle connections after 1 hour
                 echo=False,
             )
 

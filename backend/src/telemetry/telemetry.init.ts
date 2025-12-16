@@ -28,6 +28,11 @@ import {
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { BatchLogRecordProcessor } from '@opentelemetry/sdk-logs';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+import {
+  TraceIdRatioBasedSampler,
+  AlwaysOnSampler,
+  ParentBasedSampler,
+} from '@opentelemetry/sdk-trace-base';
 
 // Configuração de debug (apenas em desenvolvimento)
 if (process.env.OTEL_DEBUG === 'true') {
@@ -43,6 +48,19 @@ const resource = resourceFromAttributes({
 
 // Endpoint OTLP (Jaeger, Tempo, ou collector)
 const otlpEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318';
+
+// PERFORMANCE OPTIMIZATION: Configure trace sampling
+// Development: 10% sampling to reduce CPU overhead
+// Production: 100% sampling for complete observability
+const samplingRatio = process.env.NODE_ENV === 'production'
+  ? 1.0  // 100% in production
+  : parseFloat(process.env.OTEL_SAMPLING_RATIO || '0.1');  // 10% default in dev
+
+const sampler = new ParentBasedSampler({
+  root: samplingRatio >= 1.0
+    ? new AlwaysOnSampler()
+    : new TraceIdRatioBasedSampler(samplingRatio),
+});
 
 // Trace Exporter
 const traceExporter = new OTLPTraceExporter({
@@ -71,6 +89,7 @@ const logExporter = new OTLPLogExporter({
 // SDK Node com configuração completa
 const sdk = new NodeSDK({
   resource,
+  sampler, // PERFORMANCE: Use sampling to reduce CPU overhead
   traceExporter,
   metricReader: new PeriodicExportingMetricReader({
     exporter: metricExporter,
@@ -122,6 +141,7 @@ export function initTelemetry(): void {
     console.log('[Telemetry] OpenTelemetry SDK started successfully');
     console.log(`[Telemetry] Service: ${process.env.OTEL_SERVICE_NAME || 'invest-backend'}`);
     console.log(`[Telemetry] Exporting to: ${otlpEndpoint}`);
+    console.log(`[Telemetry] Sampling ratio: ${(samplingRatio * 100).toFixed(0)}%`);
 
     // Graceful shutdown
     process.on('SIGTERM', () => {

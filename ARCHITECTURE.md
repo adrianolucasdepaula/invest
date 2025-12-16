@@ -82,7 +82,7 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 
 - `/dashboard` - Overview de portfólio e mercado
 - `/assets` - Listagem e gerenciamento de ativos
-- `/assets/[ticker]/technical` - Análise técnica avançada com gráficos multi-pane (FASE 29)
+- `/assets/[ticker]` - Detalhes do ativo com análise técnica integrada (candlestick, RSI, MACD)
 - `/analysis` - Solicitação e visualização de análises
 - `/portfolio` - Gestão de portfólio
 - `/reports` - Relatórios e análises detalhadas

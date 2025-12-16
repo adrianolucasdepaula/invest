@@ -310,51 +310,52 @@ class BaseScraper(ABC):
         start_time = time.time()
         last_error = None
 
-        for attempt in range(settings.SCRAPER_MAX_RETRIES):
+        try:
+            for attempt in range(settings.SCRAPER_MAX_RETRIES):
+                try:
+                    logger.info(f"[{self.name}] Scraping {ticker} (attempt {attempt + 1}/{settings.SCRAPER_MAX_RETRIES})")
+
+                    # Ensure initialized
+                    await self.initialize()
+
+                    # Perform scrape
+                    result = await self.scrape(ticker)
+
+                    # Calculate response time
+                    result.response_time = time.time() - start_time
+
+                    if result.success:
+                        logger.success(f"[{self.name}] Successfully scraped {ticker} in {result.response_time:.2f}s")
+                        return result
+                    else:
+                        logger.warning(f"[{self.name}] Scrape failed for {ticker}: {result.error}")
+                        last_error = result.error
+
+                except Exception as e:
+                    last_error = str(e)
+                    logger.error(f"[{self.name}] Error scraping {ticker}: {e}")
+
+                # Wait before retry (exponential backoff)
+                if attempt < settings.SCRAPER_MAX_RETRIES - 1:
+                    wait_time = 2 ** attempt  # 1s, 2s, 4s
+                    logger.info(f"Waiting {wait_time}s before retry...")
+                    await asyncio.sleep(wait_time)
+
+            # All attempts failed
+            response_time = time.time() - start_time
+            return ScraperResult(
+                success=False,
+                error=f"Failed after {settings.SCRAPER_MAX_RETRIES} attempts: {last_error}",
+                source=self.source,
+                response_time=response_time,
+            )
+        finally:
+            # CRITICAL: Always cleanup browser resources to prevent memory leaks
             try:
-                logger.info(f"[{self.name}] Scraping {ticker} (attempt {attempt + 1}/{settings.SCRAPER_MAX_RETRIES})")
-
-                # Ensure initialized
-                await self.initialize()
-
-                # Perform scrape
-                result = await self.scrape(ticker)
-
-                # Calculate response time
-                result.response_time = time.time() - start_time
-
-                if result.success:
-                    logger.success(f"[{self.name}] Successfully scraped {ticker} in {result.response_time:.2f}s")
-                    return result
-                else:
-                    logger.warning(f"[{self.name}] Scrape failed for {ticker}: {result.error}")
-                    last_error = result.error
-
-            except Exception as e:
-                last_error = str(e)
-                logger.error(f"[{self.name}] Error scraping {ticker}: {e}")
-
-                # Cleanup page if crashed
-                if self.page:
-                    try:
-                        await self.cleanup()
-                    except Exception as e:
-                        logger.warning(f"[{self.name}] Cleanup failed during retry: {e}")
-
-            # Wait before retry (exponential backoff)
-            if attempt < settings.SCRAPER_MAX_RETRIES - 1:
-                wait_time = 2 ** attempt  # 1s, 2s, 4s
-                logger.info(f"Waiting {wait_time}s before retry...")
-                await asyncio.sleep(wait_time)
-
-        # All attempts failed
-        response_time = time.time() - start_time
-        return ScraperResult(
-            success=False,
-            error=f"Failed after {settings.SCRAPER_MAX_RETRIES} attempts: {last_error}",
-            source=self.source,
-            response_time=response_time,
-        )
+                await self.cleanup()
+                logger.debug(f"[{self.name}] Cleanup completed for {ticker}")
+            except Exception as cleanup_error:
+                logger.warning(f"[{self.name}] Cleanup failed: {cleanup_error}")
 
     async def __aenter__(self):
         """Async context manager entry"""

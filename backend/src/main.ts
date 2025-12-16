@@ -13,14 +13,15 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+    // Reduced logging levels to decrease CPU overhead (removed debug, verbose)
+    logger: ['error', 'warn', 'log'],
   });
 
   const configService = app.get(ConfigService);
 
   // Security middleware
   app.use(helmet());
-  app.use(compression());
+  app.use(compression({ threshold: 1024 }));  // Only compress responses > 1KB
   app.use(cookieParser());
 
   // CORS configuration - secure multi-origin support

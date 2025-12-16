@@ -192,15 +192,17 @@ export function WheelPageClient() {
   };
 
   // FASE 109.1: useEffect para UI updates após mutation success
+  // Using destructured isSuccess to avoid dependency on entire mutation object
+  const { isSuccess: mutationSuccess, reset: resetMutation } = createMutation;
   useEffect(() => {
-    if (createMutation.isSuccess) {
+    if (mutationSuccess) {
       setIsCreateDialogOpen(false);
       setNewStrategyForm({ assetId: '', ticker: '', name: '', notional: '100000' });
       setActiveTab('strategies');
       // Reset mutation state para próximo uso
-      createMutation.reset();
+      resetMutation();
     }
-  }, [createMutation.isSuccess]);
+  }, [mutationSuccess, resetMutation]);
 
   const openCreateDialogWithCandidate = (candidate: WheelCandidate) => {
     setNewStrategyForm({

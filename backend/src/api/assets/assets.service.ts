@@ -92,6 +92,110 @@ export class AssetsService {
   ) {}
 
   async findAll(type?: string) {
+    // OPTIMIZED: Use raw SQL with LATERAL JOIN instead of correlated subqueries
+    // This reduces query complexity from O(n*m) to O(n) where n=assets, m=prices
+    // Uses idx_asset_prices_asset_date_desc index for optimal performance
+
+    let whereClause = '';
+    const params: any[] = [];
+
+    if (type) {
+      const normalizedType = type.toLowerCase();
+      const validTypes = ['stock', 'fii', 'etf', 'bdr', 'option', 'future', 'crypto', 'fixed_income'];
+      if (!validTypes.includes(normalizedType)) {
+        this.logger.warn(`Invalid asset type requested: ${type}. Valid types: ${validTypes.join(', ')}`);
+        return [];
+      }
+      whereClause = 'WHERE asset.type = $1';
+      params.push(normalizedType);
+    }
+
+    // Use LATERAL JOIN for efficient latest price lookup (PostgreSQL optimization)
+    const query = `
+      SELECT
+        asset.*,
+        price1.close as price1_close,
+        price1.change as price1_change,
+        price1.change_percent as price1_change_percent,
+        price1.volume as price1_volume,
+        price1.market_cap as price1_market_cap,
+        price1.date as price1_date,
+        price1.collected_at as price1_collected_at
+      FROM assets asset
+      LEFT JOIN LATERAL (
+        SELECT close, change, change_percent, volume, market_cap, date, collected_at
+        FROM asset_prices
+        WHERE asset_id = asset.id
+        ORDER BY date DESC
+        LIMIT 1
+      ) price1 ON true
+      ${whereClause}
+      ORDER BY asset.ticker ASC
+    `;
+
+    const rawResults = await this.assetRepository.query(query, params);
+
+    // Map raw results to enriched assets
+    const enrichedAssets = rawResults.map((row: any) => {
+      const asset = {
+        id: row.id,
+        ticker: row.ticker,
+        name: row.name,
+        type: row.type,
+        sector: row.sector,
+        subsector: row.subsector,
+        segment: row.segment,
+        cnpj: row.cnpj,
+        website: row.website,
+        description: row.description,
+        logoUrl: row.logo_url,
+        isActive: row.is_active,
+        listingDate: row.listing_date,
+        metadata: row.metadata,
+        lastUpdated: row.last_updated,
+        lastUpdateStatus: row.last_update_status,
+        lastUpdateError: row.last_update_error,
+        updateRetryCount: row.update_retry_count,
+        autoUpdateEnabled: row.auto_update_enabled,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        hasOptions: row.has_options,
+        optionsLiquidityMetadata: row.options_liquidity_metadata,
+      };
+
+      const latestClose = row.price1_close;
+
+      if (!latestClose) {
+        return {
+          ...asset,
+          price: null,
+          change: null,
+          changePercent: null,
+          volume: null,
+          marketCap: null,
+        };
+      }
+
+      return {
+        ...asset,
+        price: Number(latestClose),
+        change: row.price1_change ? Number(row.price1_change) : null,
+        changePercent: row.price1_change_percent ? Number(row.price1_change_percent) : null,
+        volume: row.price1_volume ? Number(row.price1_volume) : null,
+        marketCap: row.price1_market_cap ? Number(row.price1_market_cap) : null,
+        currentPrice: {
+          date: row.price1_date,
+          close: Number(latestClose),
+          collectedAt: row.price1_collected_at,
+        },
+      };
+    });
+
+    return enrichedAssets;
+  }
+
+  // Keep original method for backward compatibility if needed
+  async findAllLegacy(type?: string) {
     // Build optimized query with LEFT JOIN to get latest 2 prices per asset
     const qb = this.assetRepository
       .createQueryBuilder('asset')

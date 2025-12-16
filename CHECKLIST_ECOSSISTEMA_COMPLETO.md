@@ -454,28 +454,27 @@ mcp__chrome-devtools__list_network_requests
 
 ## SECAO 8: COBERTURA 100% DO ECOSSISTEMA
 
-### 8.1 Frontend - Todas as 18 Paginas
+### 8.1 Frontend - Todas as 17 Paginas
 
 | # | Pagina | Rota | Teste |
 |---|--------|------|-------|
 | 1 | Dashboard | `/` | Cards, graficos, indicadores |
 | 2 | Assets List | `/assets` | Tabela, busca, paginacao |
-| 3 | Asset Details | `/assets/[ticker]` | Header, precos, fundamentals |
-| 4 | Technical | `/assets/[ticker]/technical` | Candlestick, MACD, RSI |
-| 5 | Portfolio | `/portfolio` | CRUD posicoes |
-| 6 | Analysis | `/analysis` | Solicitar, listar |
-| 7 | Reports | `/reports` | PDF export |
-| 8 | Data Management | `/data-management` | Sync bulk |
-| 9 | Data Sources | `/data-sources` | Cross-validation |
-| 10 | Discrepancies | `/discrepancies` | Resolucao |
-| 11 | Settings | `/settings` | Configuracoes |
-| 12 | OAuth Manager | `/oauth-manager` | 21 sites |
-| 13 | Wheel | `/wheel` | Estrategia |
-| 14 | Login | `/auth/login` | Autenticacao |
-| 15 | Register | `/auth/register` | Cadastro |
-| 16 | Callback | `/auth/callback/google` | OAuth |
-| 17 | Not Found | `/404` | Erro 404 |
-| 18 | Error | `/error` | Error boundary |
+| 3 | Asset Details | `/assets/[ticker]` | Header, precos, fundamentals, candlestick, MACD, RSI |
+| 4 | Portfolio | `/portfolio` | CRUD posicoes |
+| 5 | Analysis | `/analysis` | Solicitar, listar |
+| 6 | Reports | `/reports` | PDF export |
+| 7 | Data Management | `/data-management` | Sync bulk |
+| 8 | Data Sources | `/data-sources` | Cross-validation |
+| 9 | Discrepancies | `/discrepancies` | Resolucao |
+| 10 | Settings | `/settings` | Configuracoes |
+| 11 | OAuth Manager | `/oauth-manager` | 21 sites |
+| 12 | Wheel | `/wheel` | Estrategia |
+| 13 | Login | `/auth/login` | Autenticacao |
+| 14 | Register | `/auth/register` | Cadastro |
+| 15 | Callback | `/auth/callback/google` | OAuth |
+| 16 | Not Found | `/404` | Erro 404 |
+| 17 | Error | `/error` | Error boundary |
 
 ### 8.2 Backend - Todos os 11 Controllers
 

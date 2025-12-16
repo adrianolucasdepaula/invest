@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, useRef, ReactNode } from 'react';
 import { IChartApi, Time } from 'lightweight-charts';
 
 /**
@@ -40,23 +40,23 @@ export function ChartSyncProvider({ children }: ChartSyncProviderProps) {
     sourceChartId: '',
   });
 
-  // Store chart references for time scale sync
-  const chartsRef = useMemo(() => new Map<string, IChartApi>(), []);
+  // Store chart references for time scale sync - using useRef to allow mutations
+  const chartsMapRef = useRef(new Map<string, IChartApi>());
 
   const updateCrosshair = useCallback((time: Time | null, sourceChartId: string) => {
     setCrosshairPosition({ time, sourceChartId });
   }, []);
 
   const registerChart = useCallback((chartId: string, chart: IChartApi) => {
-    chartsRef.set(chartId, chart);
-  }, [chartsRef]);
+    chartsMapRef.current.set(chartId, chart);
+  }, []);
 
   const unregisterChart = useCallback((chartId: string) => {
-    chartsRef.delete(chartId);
-  }, [chartsRef]);
+    chartsMapRef.current.delete(chartId);
+  }, []);
 
   const syncTimeScale = useCallback((sourceChartId: string, from: Time, to: Time) => {
-    chartsRef.forEach((chart, chartId) => {
+    chartsMapRef.current.forEach((chart, chartId) => {
       if (chartId !== sourceChartId) {
         try {
           chart.timeScale().setVisibleRange({ from, to });
@@ -65,7 +65,7 @@ export function ChartSyncProvider({ children }: ChartSyncProviderProps) {
         }
       }
     });
-  }, [chartsRef]);
+  }, []);
 
   const value = useMemo<ChartSyncContextValue>(() => ({
     crosshairPosition,

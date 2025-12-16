@@ -75,6 +75,58 @@ GitHub Personal Access Token (PAT) foi identificado exposto em arquivo de config
 
 ---
 
+### Issue #HYDRATION_SIDEBAR: Next.js Hydration Mismatch na Sidebar
+
+**Severidade:** 🟢 **BAIXA** (não afeta funcionalidade)
+**Status:** ⚠️ **CONHECIDO - NÃO BLOQUEANTE**
+**Data Identificado:** 2025-12-15
+**Identificado Por:** Claude Code (Opus 4.5) durante validação de ecossistema
+
+#### Descrição
+
+Erro de hydration mismatch no console de desenvolvimento do Next.js 16 na Sidebar navigation.
+
+#### Sintomas
+
+- Erro no console: `Hydration failed because the server rendered HTML didn't match the client`
+- Ocorre apenas no ambiente de desenvolvimento
+- A aplicação funciona normalmente após React recovery
+- Navegação da Sidebar renderiza corretamente
+
+#### Root Cause Identificado
+
+**Causa Provável:** Race condition ou caching interno do Next.js 16 com App Router.
+
+O servidor renderiza o item na posição 10 como `/health` (System Health), mas o cliente espera `/settings` (Configurações) nessa posição. Isso ocorre apesar do navigation array ser estático e idêntico em ambos ambientes.
+
+#### Tentativas de Correção (Não Resolveram)
+
+1. ✅ `suppressHydrationWarning` em nav, Link e span
+2. ✅ Dynamic import com `ssr: false`
+3. ✅ useState + useEffect para renderização client-only
+4. ✅ Rebuild completo do container (`--no-cache`)
+5. ✅ Limpeza de `.next` cache (local e container)
+6. ✅ Restart do container
+
+#### Impacto
+
+- **Funcionalidade:** ✅ Nenhum impacto - aplicação funciona 100%
+- **UX:** ✅ Nenhum impacto - usuário não percebe
+- **Desenvolvimento:** ⚠️ Warning no console (pode ser ignorado)
+- **Produção:** ⚠️ Potencial warning no console
+
+#### Mitigação Aceita
+
+Documentar como known issue e monitorar. O erro é cosmético e não afeta a funcionalidade. React automaticamente se recupera e renderiza a UI corretamente.
+
+#### Próximos Passos (Opcional)
+
+- Investigar se é bug do Next.js 16 App Router
+- Verificar se update do Next.js resolve
+- Considerar reportar no GitHub do Next.js
+
+---
+
 ## ✅ ISSUES RESOLVIDOS
 
 ### Issue #WHEEL_API_PERF: WHEEL Candidates API Timeout

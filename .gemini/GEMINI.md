@@ -470,6 +470,30 @@ git push --no-verify                      # Pula pre-push
 
 **Referência:** `METODOLOGIA_MCPS_INTEGRADA.md`
 
+### Uso de MCPs de Browser
+
+**Limitação Conhecida:**
+Playwright MCP e Chrome DevTools MCP usam instâncias de browser SEPARADAS.
+
+**Best Practice:**
+
+- Para testes E2E: Use **apenas Playwright MCP** (100% funcional)
+- Para debug de console/network: Use **Playwright** (`browser_console_messages`, `browser_network_requests`)
+- Para performance traces: Use **Chrome DevTools** em sessão dedicada
+
+**Workflow Recomendado:**
+
+1. Navegue com Playwright: `mcp__playwright__browser_navigate`
+2. Capture snapshot: `mcp__playwright__browser_snapshot`
+3. Verifique console: `mcp__playwright__browser_console_messages`
+4. Verifique network: `mcp__playwright__browser_network_requests`
+5. Para a11y: Use após snapshot do Playwright
+
+**Não Tente:**
+
+- ❌ Usar Chrome DevTools para inspecionar página do Playwright
+- ❌ Misturar browsers entre MCPs na mesma validação
+
 ---
 
 ### Dados Financeiros - Precisão Absoluta
@@ -1088,6 +1112,112 @@ O PM Expert tem acesso a:
 
 ---
 
+## Sub-Agents Especializados - Guia de Uso
+
+### Visão Geral
+
+O projeto possui **7 sub-agents especializados** que DEVEM ser invocados para tarefas específicas.
+
+### Matriz de Invocação por Contexto
+
+| Tarefa | Agent Recomendado | Keywords Trigger |
+|--------|-------------------|------------------|
+| Criar/modificar endpoint NestJS | `backend-api-expert` | controller, service, dto, endpoint |
+| Criar/modificar componente React | `frontend-components-expert` | component, page, hook, shadcn |
+| Validar 100% do ecossistema | `pm-expert` | validar, ecossistema, 100%, audit |
+| Criar/debugar scraper Python | `scraper-development-expert` | scraper, playwright, beautifulsoup |
+| Criar/debugar gráficos | `chart-analysis-expert` | chart, candlestick, recharts, lightweight |
+| Corrigir erros TypeScript | `typescript-validation-expert` | tsc, type error, strict, any |
+| Criar/debugar jobs BullMQ | `queue-management-expert` | job, queue, bullmq, processor |
+
+### Quando Usar Cada Agent
+
+#### 1. backend-api-expert
+
+**Use quando:** Criar endpoints, services, DTOs, migrations
+**Ferramentas:** Read, Edit, Write, Glob, Grep, Bash
+**Exemplo de prompt:**
+
+```text
+Use o backend-api-expert para criar um novo endpoint GET /api/v1/dividends
+que retorna os dividendos de um ativo específico.
+```
+
+#### 2. frontend-components-expert
+
+**Use quando:** Criar páginas, componentes, hooks React
+**Ferramentas:** Read, Edit, Write, Glob, Grep, Bash
+**Exemplo de prompt:**
+
+```text
+Use o frontend-components-expert para criar um componente de card
+de dividendos com shadcn/ui e tailwind.
+```
+
+#### 3. pm-expert
+
+**Use quando:** Validação completa, pesquisa de mercado, troubleshooting profundo
+**Ferramentas:** Todas + WebSearch + Playwright + Chrome DevTools + a11y
+**Exemplo de prompt:**
+
+```text
+Use o pm-expert para validar 100% do ecossistema e reportar todos os gaps.
+```
+
+#### 4. scraper-development-expert
+
+**Use quando:** Criar scrapers, implementar OAuth, debugar coleta de dados
+**Ferramentas:** Read, Edit, Write, Glob, Grep, Bash
+**Exemplo de prompt:**
+
+```text
+Use o scraper-development-expert para criar um scraper de dividendos
+do site Fundamentus usando Playwright + BeautifulSoup.
+```
+
+#### 5. chart-analysis-expert
+
+**Use quando:** Criar gráficos, candlesticks, indicadores técnicos
+**Ferramentas:** Read, Edit, Write, Chrome DevTools, Playwright
+**Exemplo de prompt:**
+
+```text
+Use o chart-analysis-expert para debugar por que o gráfico de candlestick
+não está renderizando corretamente.
+```
+
+#### 6. typescript-validation-expert
+
+**Use quando:** Corrigir erros TypeScript, adicionar tipos, refatorar para strict mode
+**Ferramentas:** Read, Edit, Glob, Grep, Bash
+**Exemplo de prompt:**
+
+```text
+Use o typescript-validation-expert para corrigir todos os erros
+de tipo no projeto frontend.
+```
+
+#### 7. queue-management-expert
+
+**Use quando:** Criar jobs BullMQ, configurar retry, debugar filas
+**Ferramentas:** Read, Edit, Write, Glob, Grep, Bash
+**Exemplo de prompt:**
+
+```text
+Use o queue-management-expert para criar um job de sincronização
+de dados com retry exponencial.
+```
+
+### Anti-Patterns de Agents
+
+| Anti-Pattern | Problema | Correto |
+|--------------|----------|---------|
+| ❌ Fazer tudo sozinho | Uso ineficiente de contexto | ✅ Delegar para specialist |
+| ❌ Usar agent errado | Resultado subótimo | ✅ Consultar matriz acima |
+| ❌ Não fornecer contexto | Agent precisa re-explorar | ✅ Passar contexto relevante |
+
+---
+
 ## Pesquisa Web Proativa (WebSearch Strategy)
 
 ### Quando Claude DEVE Pesquisar Automaticamente
@@ -1135,6 +1265,111 @@ O PM Expert tem acesso a:
 - ❌ Copiar código sem entender contexto
 
 **Referência:** CHECKLIST_ECOSSISTEMA_COMPLETO.md - Seção 22
+
+### WebSearch Automático (OBRIGATÓRIO)
+
+**Situações que DEVEM triggerar WebSearch ANTES de responder:**
+
+| Trigger | Exemplo | Queries |
+|---------|---------|---------|
+| Decisão arquitetural | "qual framework usar?" | 4 paralelas |
+| Incerteza explícita | "não sei", "talvez" | 3 paralelas |
+| Best practices | "como fazer corretamente?" | 3 paralelas |
+| Erro desconhecido | Stack trace novo | 2 paralelas |
+| Comparação | "Redis vs Memcached" | 4 paralelas |
+
+**Template de Queries Paralelas:**
+1. `"[tecnologia] best practices 2025"`
+2. `"[tecnologia] official documentation"`
+3. `"[problema] solution site:stackoverflow.com OR github.com"`
+4. `"[alternativa1] vs [alternativa2] comparison 2025"`
+
+**Anti-Pattern (NUNCA FAZER):**
+- ❌ Responder com incerteza sem pesquisar
+- ❌ Usar conhecimento desatualizado (< 2024)
+- ❌ Ignorar documentação oficial
+- ❌ Não citar fontes usadas
+
+---
+
+## Skills & Slash Commands - Invocação Automática
+
+### Visão Geral
+
+O projeto possui **12 slash commands** e **8 skills** que DEVEM ser invocados em contextos específicos.
+
+### Matriz de Invocação Obrigatória
+
+| Contexto | Comando/Skill | Quando Invocar |
+|----------|---------------|----------------|
+| **Início de tarefa complexa** | `/check-context` | ANTES de começar |
+| **Antes de QUALQUER commit** | `/validate-all` | Obrigatório |
+| **Após mudanças frontend** | `/mcp-triplo` | Após editar .tsx/.css |
+| **Nova fase do projeto** | `/new-phase` | Antes de implementar |
+| **Validar fase completa** | `/validate-phase` | Após implementar |
+| **Sincronizar documentação** | `/sync-docs` | Após mudar CLAUDE.md |
+| **Verificar containers** | `/docker-status` | Antes de testar |
+| **Corrigir erros TypeScript** | `/fix-ts-errors` | Quando tsc falhar |
+| **Executar scraper** | `/run-scraper` | Para coleta de dados |
+| **Commit de fase** | `/commit-phase` | Ao finalizar fase |
+| **Validar ecossistema** | `/check-ecosystem` | Validação 100% |
+
+### Workflow de Skills
+
+```text
+Início Tarefa
+     │
+     ▼
+┌─────────────────┐
+│ /check-context  │ ◄── Sempre primeiro
+└────────┬────────┘
+         │
+         ▼
+    [Implementação]
+         │
+         ▼
+┌─────────────────┐
+│ /validate-all   │ ◄── Antes de commit
+└────────┬────────┘
+         │
+    Mudou frontend?
+    ┌────┴────┐
+    │ SIM    │ NÃO
+    ▼         │
+┌─────────────┐ │
+│ /mcp-triplo │ │
+└─────┬───────┘ │
+      └────┬────┘
+           ▼
+┌─────────────────┐
+│ /commit-phase   │ ◄── Commit padronizado
+└─────────────────┘
+```
+
+### Anti-Patterns (NUNCA FAZER)
+
+| Anti-Pattern | Consequência | Correto |
+|--------------|--------------|---------|
+| ❌ Commit sem `/validate-all` | Código quebrado no repo | ✅ Sempre validar |
+| ❌ Editar frontend sem `/mcp-triplo` | Bugs visuais não detectados | ✅ Validar visualmente |
+| ❌ Iniciar tarefa sem contexto | Retrabalho, inconsistências | ✅ `/check-context` primeiro |
+| ❌ Ignorar erros TypeScript | Build falha em produção | ✅ `/fix-ts-errors` |
+
+### Referência de Comandos
+
+| Comando | Descrição | Arquivo |
+|---------|-----------|---------|
+| `/check-context` | Verifica contexto completo | `.claude/commands/check-context.md` |
+| `/check-ecosystem` | Validação 100% ecossistema | `.claude/commands/check-ecosystem.md` |
+| `/commit-phase` | Commit padronizado de fase | `.claude/commands/commit-phase.md` |
+| `/docker-status` | Status dos containers | `.claude/commands/docker-status.md` |
+| `/fix-ts-errors` | Corrige erros TypeScript | `.claude/commands/fix-ts-errors.md` |
+| `/mcp-triplo` | Playwright + DevTools + a11y | `.claude/commands/mcp-triplo.md` |
+| `/new-phase` | Cria PLANO_FASE_XX.md | `.claude/commands/new-phase.md` |
+| `/run-scraper` | Executa scraper Python | `.claude/commands/run-scraper.md` |
+| `/sync-docs` | Sincroniza CLAUDE.md ↔ GEMINI.md | `.claude/commands/sync-docs.md` |
+| `/validate-all` | TypeScript + Build + Lint | `.claude/commands/validate-all.md` |
+| `/validate-phase` | Validação completa de fase | `.claude/commands/validate-phase.md` |
 
 ---
 

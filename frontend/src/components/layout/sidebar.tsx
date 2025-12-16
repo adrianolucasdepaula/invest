@@ -47,7 +47,7 @@ export function Sidebar() {
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 space-y-1 px-3 py-4" suppressHydrationWarning>
         {navigation.map((item) => {
           const isActive = pathname === item.href || (pathname && pathname.startsWith(item.href + '/'));
           const Icon = item.icon;
@@ -56,6 +56,7 @@ export function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
+              suppressHydrationWarning
               className={cn(
                 'flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 isActive
@@ -64,7 +65,7 @@ export function Sidebar() {
               )}
             >
               <Icon className="h-5 w-5" />
-              <span>{item.name}</span>
+              <span suppressHydrationWarning>{item.name}</span>
             </Link>
           );
         })}

@@ -117,7 +117,7 @@ services:
     environment:
       # Server
       - NODE_ENV=${NODE_ENV:-development}
-      - NODE_OPTIONS=--max-old-space-size=1536
+      - NODE_OPTIONS=--max-old-space-size=2560  # Increased from 1536 to reduce GC pressure
       - APP_PORT=3101
       - PORT=3101
 
