@@ -1,0 +1,67 @@
+{
+  "env": {
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "128000",
+    "MAX_THINKING_TOKENS": "100000",
+    "MAX_MCP_OUTPUT_TOKENS": "200000",
+    "MAX_TOOL_OUTPUT_TOKENS": "200000",
+    "BASH_DEFAULT_TIMEOUT_MS": "600000",
+    "BASH_MAX_TIMEOUT_MS": "1800000",
+    "MCP_TIMEOUT": "120000",
+    "MCP_TOOL_TIMEOUT": "300000"
+  },
+  "model": "claude-opus-4-5-20251101",
+
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Edit(**)",
+      "Write(**)",
+      "Glob(**)",
+      "Grep(**)",
+      "Bash",
+      "Task(*)",
+      "mcp__*"
+    ],
+    "additionalDirectories": [
+      "../docs/"
+    ],
+    "defaultMode": "acceptEdits"
+  },
+
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks-scripts/response-validator.js",
+            "timeout": 5,
+            "statusMessage": "Validando resposta..."
+          },
+          {
+            "type": "command",
+            "command": "node .claude/hooks-scripts/session-tracker.js stop",
+            "timeout": 10,
+            "statusMessage": "Salvando metricas da sessao..."
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks-scripts/session-tracker.js pre-compact",
+            "timeout": 10,
+            "statusMessage": "Salvando estado antes de compact..."
+          }
+        ]
+      }
+    ]
+  },
+
+  "enableAllProjectMcpServers": true
+}
