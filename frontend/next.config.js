@@ -1,6 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // FASE 130+: Turbopack is now the default for development (--turbopack flag in package.json)
+  // The webpack "Cannot read properties of undefined (reading 'call')" error was fixed by using Turbopack
+  // Related issues: https://github.com/vercel/next.js/issues/70703, https://github.com/vercel/next.js/issues/61995
+  // Note: Production builds still use webpack (stable), this config only affects production
+  webpack: (config, { dev, isServer }) => {
+    // Keep optimizations for production builds (webpack is only used in production now)
+    return config;
+  },
   images: {
     remotePatterns: [
       {
@@ -22,7 +30,8 @@ const nextConfig = {
   experimental: {
     optimizeCss: true, // Inline critical CSS automaticamente via critters
   },
-  // FASE 114: Turbopack config (HMR issues resolved with --webpack flag in dev script)
+  // FASE 130+: Turbopack config - Now the default bundler for development
+  // Switched from webpack to turbopack to fix RSC module resolution errors
   // See: https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack
   turbopack: {
     root: __dirname,

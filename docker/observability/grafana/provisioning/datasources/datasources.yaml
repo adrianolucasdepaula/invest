@@ -1,5 +1,6 @@
 # Grafana Datasources Provisioning
 # FASE 76.3: Observability Stack
+# FASE 130.1: Simplified configuration without cross-references
 
 apiVersion: 1
 
@@ -7,6 +8,7 @@ datasources:
   # Prometheus - Metrics
   - name: Prometheus
     type: prometheus
+    uid: prometheus
     access: proxy
     url: http://prometheus:9090
     isDefault: true
@@ -18,46 +20,21 @@ datasources:
   # Loki - Logs
   - name: Loki
     type: loki
+    uid: loki
     access: proxy
     url: http://loki:3100
     editable: false
     jsonData:
       maxLines: 1000
-      derivedFields:
-        - datasourceUid: tempo
-          matcherRegex: "traceId=(\\w+)"
-          name: TraceID
-          url: "$${__value.raw}"
 
   # Tempo - Traces
   - name: Tempo
     type: tempo
+    uid: tempo
     access: proxy
     url: http://tempo:3200
-    uid: tempo
     editable: false
     jsonData:
       httpMethod: GET
-      tracesToLogs:
-        datasourceUid: loki
-        tags: ['job', 'instance', 'service']
-        mappedTags: [{ key: 'service.name', value: 'service' }]
-        mapTagNamesEnabled: true
-        spanStartTimeShift: '-1h'
-        spanEndTimeShift: '1h'
-        filterByTraceID: true
-        filterBySpanID: false
-      tracesToMetrics:
-        datasourceUid: prometheus
-        tags: [{ key: 'service.name', value: 'service' }]
-        queries:
-          - name: 'Request Rate'
-            query: 'sum(rate(http_requests_total{$$__tags}[5m]))'
-          - name: 'Request Duration (p95)'
-            query: 'histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket{$$__tags}[5m])) by (le))'
-      serviceMap:
-        datasourceUid: prometheus
       nodeGraph:
         enabled: true
-      lokiSearch:
-        datasourceUid: loki

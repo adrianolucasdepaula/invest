@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useMemo } from 'react';
 import { AlertCircle, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -31,10 +32,20 @@ export function OutdatedBadge({
   showIcon = true,
   showTime = true,
 }: OutdatedBadgeProps) {
-  // Calculate if outdated (> 7 days)
-  const isOutdated = lastUpdated
-    ? new Date().getTime() - new Date(lastUpdated).getTime() > 7 * 24 * 60 * 60 * 1000
-    : true;
+  // Estado para armazenar a data atual após hydration
+  // Isso evita mismatch entre server (sem Date) e client (com Date)
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setNow(new Date());
+  }, []);
+
+  // Calculate if outdated (> 7 days) - apenas após hydration
+  const isOutdated = useMemo(() => {
+    if (!now) return true; // Default durante SSR/hydration
+    if (!lastUpdated) return true;
+    return now.getTime() - new Date(lastUpdated).getTime() > 7 * 24 * 60 * 60 * 1000;
+  }, [now, lastUpdated]);
 
   // Determine badge variant and icon
   let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'secondary';

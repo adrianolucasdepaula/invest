@@ -30,6 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         defaultOptions: {
           queries: {
             staleTime: 60 * 1000,
+            gcTime: 5 * 60 * 1000, // 5 minutes cache retention
             refetchOnWindowFocus: false,
             retry: (failureCount, error) => {
               // Don't retry on 4xx errors (client errors)

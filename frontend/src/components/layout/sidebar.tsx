@@ -54,7 +54,6 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
           ? 'bg-primary text-primary-foreground'
           : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
       )}
-      suppressHydrationWarning
     >
       <Icon className="h-5 w-5" />
       <span>{item.name}</span>
@@ -74,7 +73,7 @@ export function Sidebar() {
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4" suppressHydrationWarning>
+      <nav className="flex-1 space-y-1 px-3 py-4">
         {navigation.map((item) => {
           const isActive = pathname === item.href || Boolean(pathname?.startsWith(item.href + '/'));
           return (

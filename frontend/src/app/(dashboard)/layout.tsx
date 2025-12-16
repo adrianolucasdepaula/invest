@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
+import { Sidebar } from '@/components/layout/sidebar';
 import { SidebarProvider, useSidebar } from '@/contexts/sidebar-context';
 
-// Skeleton component for loading state
+// Skeleton para loading state - garante mesmo layout durante carregamento
 function SidebarSkeleton() {
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-card">
@@ -13,23 +13,17 @@ function SidebarSkeleton() {
         <div className="h-8 w-8 rounded bg-muted animate-pulse" />
         <div className="ml-2 h-6 w-32 rounded bg-muted animate-pulse" />
       </div>
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex items-center space-x-3 rounded-lg px-3 py-2"
-          >
-            <div className="h-5 w-5 rounded bg-muted animate-pulse" />
-            <div className="h-4 w-24 rounded bg-muted animate-pulse" />
-          </div>
+      <div className="flex-1 space-y-2 px-3 py-4">
+        {Array(12).fill(0).map((_, i) => (
+          <div key={i} className="h-10 rounded bg-muted animate-pulse" />
         ))}
-      </nav>
+      </div>
       <div className="border-t p-4">
         <div className="flex items-center space-x-3">
           <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
           <div className="flex-1">
-            <div className="h-4 w-20 rounded bg-muted animate-pulse mb-1" />
-            <div className="h-3 w-32 rounded bg-muted animate-pulse" />
+            <div className="h-4 w-20 bg-muted rounded animate-pulse mb-1" />
+            <div className="h-3 w-32 bg-muted rounded animate-pulse" />
           </div>
         </div>
       </div>
@@ -37,17 +31,15 @@ function SidebarSkeleton() {
   );
 }
 
-// Client-only Sidebar wrapper to avoid hydration mismatch
+// Client-only Sidebar wrapper - evita problemas de hydration e webpack
 function ClientOnlySidebar() {
-  const [mounted, setMounted] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    setIsClient(true);
   }, []);
 
-  // During SSR and initial client render, show skeleton
-  // After hydration completes, show actual Sidebar
-  if (!mounted) {
+  if (!isClient) {
     return <SidebarSkeleton />;
   }
 
@@ -66,9 +58,10 @@ function DashboardLayoutContent({
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Sidebar Navigation */}
+      {/* Sidebar Navigation - Client-only rendering */}
       <div
         className={`transition-all duration-300 ease-in-out ${sidebarWidth} overflow-hidden`}
+        suppressHydrationWarning
       >
         <ClientOnlySidebar />
       </div>

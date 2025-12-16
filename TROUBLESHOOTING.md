@@ -341,9 +341,107 @@ docker-compose restart frontend
 
 ---
 
+### Problema 7: Webpack TypeError "Cannot read properties of undefined (reading 'call')"
+
+**Sintomas:**
+
+```
+TypeError: Cannot read properties of undefined (reading 'call')
+    at options.factory (webpack.js)
+    at __webpack_require__
+```
+
+- Página mostra "Erro - B3 AI Analysis" no título
+- ErrorBoundary captura o erro
+- Fast Refresh faz reload completo repetidamente
+- `SyntaxError: Unexpected end of JSON input` nos logs do container
+
+**Causa Raiz:**
+
+- Bug conhecido do webpack com React Server Components (RSC) no Next.js 16
+- Módulos lazy-loaded falham ao inicializar durante HMR (Hot Module Replacement)
+- Relacionado a issues: [#70703](https://github.com/vercel/next.js/issues/70703), [#61995](https://github.com/vercel/next.js/issues/61995)
+
+**Solução:**
+
+**1. Usar Turbopack em vez de webpack para desenvolvimento:**
+
+```bash
+# frontend/package.json - script "dev"
+"dev": "next dev -p 3000 --turbopack"  # ✅ Correto
+"dev": "next dev -p 3000 --webpack"    # ❌ Causa o erro
+```
+
+**2. Reconstruir o container (não basta restart):**
+
+```bash
+# IMPORTANTE: Para mudanças em package.json, rebuild é obrigatório
+docker-compose up --build frontend
+# OU
+docker restart invest_frontend  # Só funciona se package.json não mudou
+```
+
+**3. Limpar cache do Next.js:**
+
+```bash
+docker exec invest_frontend sh -c "rm -rf /app/.next /app/node_modules/.cache"
+```
+
+**Prevenção:**
+
+- Next.js 16 tem Turbopack estável - usar `--turbopack` para dev
+- Turbopack evita os bugs de module resolution do webpack
+- Para produção, `npm run build` continua usando webpack (estável)
+
+---
+
+### Problema 8: Container precisa rebuild vs restart
+
+**Sintomas:**
+
+- Mudanças em `package.json` não são aplicadas após `docker restart`
+- Novas dependências não são instaladas
+- Script alterado não é executado
+
+**Causa Raiz:**
+
+- `docker restart` apenas reinicia o processo, não rebuilda a imagem
+- Volume de `node_modules` pode estar desatualizado
+- `docker-entrypoint.sh` verifica `package.json` mas volumes podem interferir
+
+**Solução:**
+
+**1. Para mudanças em package.json (dependências ou scripts):**
+
+```bash
+# Rebuild obrigatório
+docker-compose up --build <service_name>
+# OU com cache limpo
+docker-compose build --no-cache <service_name> && docker-compose up -d
+```
+
+**2. Para mudanças em código fonte:**
+
+```bash
+# Restart é suficiente (HMR cuidará do resto em dev)
+docker restart <container_name>
+```
+
+**Regra Geral:**
+
+| Tipo de Mudança | Comando Necessário |
+|-----------------|-------------------|
+| Código fonte (.ts, .tsx) | Restart ou nada (HMR) |
+| package.json (deps/scripts) | Rebuild obrigatório |
+| docker-compose.yml | Rebuild obrigatório |
+| Dockerfile | Rebuild obrigatório |
+| .env files | Restart |
+
+---
+
 ## 🟢 PROBLEMAS DE SCRAPERS
 
-### Problema 7: Scraper retorna dados vazios
+### Problema 9: Scraper retorna dados vazios
 
 **Sintomas:**
 
