@@ -900,6 +900,64 @@ const KEYWORD_MAPPINGS = {
   Cross-validation: Minimo 3 fontes
   Entidade: Discrepancy (log de divergencias)
   Pagina: /discrepancies (visualizacao)`
+  },
+
+  // =============================================================
+  // v5.1 - UNCERTAINTY DETECTION (PT + EN) - Added 2025-12-15
+  // =============================================================
+  uncertainty: {
+    patterns: /\b(incerteza|incerto|uncertain|uncertainty|duvida|duvidas|doubt|doubtful|nao[\s\-]?sei|don['']?t[\s\-]?know|unsure|indefinido|indefinida|undefined|ambiguo|ambigua|ambiguous|clareza|clarity|nao[\s\-]?claro|unclear|confuso|confused|talvez|maybe|perhaps|provavelmente|probably|acho[\s\-]?que|i[\s\-]?think|nao[\s\-]?tenho[\s\-]?certeza|not[\s\-]?sure|qual[\s\-]?(?:a[\s\-]?)?melhor|which[\s\-]?(?:is[\s\-]?)?best|devo[\s\-]?usar|should[\s\-]?(?:i[\s\-]?)?use)\b/i,
+    skills: [],
+    sections: ['22 (WebSearch)', 'CLAUDE.md WebSearch Strategy'],
+    message: `INCERTEZA DETECTADA - PESQUISA OBRIGATORIA:
+  1. Use WebSearch ANTES de responder
+  2. Execute 3-4 queries paralelas
+  3. Cross-validate minimo 3 fontes
+  4. Cite fontes usadas na resposta
+  5. Documente pressupostos assumidos`
+  },
+
+  // =============================================================
+  // v5.1 - DECISION MAKING (PT + EN) - Added 2025-12-15
+  // =============================================================
+  decisionMaking: {
+    patterns: /\b(decidir|decide|decision|escolher|choose|choice|selecionar|select|optar|opt|alternativa|alternative|opcao|option|comparar|compare|versus|vs|tradeoff|trade[\s\-]?off|pros[\s\-]?(?:e[\s\-]?)?cons|vantagens[\s\-]?(?:e[\s\-]?)?desvantagens|advantages[\s\-]?(?:and[\s\-]?)?disadvantages)\b/i,
+    skills: [],
+    sections: ['22 (WebSearch)', '1-2 (Planning)'],
+    message: `DECISAO ARQUITETURAL DETECTADA:
+  1. WebSearch: 4 queries paralelas
+  2. Compare alternativas objetivamente
+  3. Liste pros/cons de cada opcao
+  4. Recomende com justificativa
+  5. Documente trade-offs assumidos`
+  },
+
+  // =============================================================
+  // v5.1 - CLARIFICATION (PT + EN) - Added 2025-12-15
+  // =============================================================
+  clarification: {
+    patterns: /\b(esclarecer|clarify|clarification|confirmar|confirm|confirmation|verificar|verify|verification|validar[\s\-]?(?:com[\s\-]?)?(?:usuario|user)|check[\s\-]?with[\s\-]?user)\b/i,
+    skills: [],
+    sections: ['1-2 (Planning)', '7 (Troubleshooting)'],
+    message: `CLARIFICACAO NECESSARIA:
+  1. Identifique pontos ambiguos
+  2. Formule perguntas especificas
+  3. NAO assuma sem confirmar
+  4. Documente respostas obtidas`
+  },
+
+  // =============================================================
+  // v5.1 - ASSUMPTION DETECTION (PT + EN) - Added 2025-12-15
+  // =============================================================
+  assumption: {
+    patterns: /\b(assumir|assume|assumption|pressuposto|presupposition|hipotese|hypothesis|suposicao|supposition|presumir|presume|presumption|inferir|infer|inference)\b/i,
+    skills: [],
+    sections: ['1-2 (Planning)', '7 (Troubleshooting)'],
+    message: `PRESSUPOSTOS DETECTADOS:
+  1. Liste todos os pressupostos
+  2. Valide com evidencias ou pesquisa
+  3. Documente pressupostos assumidos
+  4. Marque como risco se nao validado`
   }
 };
 
