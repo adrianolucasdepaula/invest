@@ -11654,6 +11654,7 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 128** | Gap Resolution + Ecosystem Validation | ✅ 100% | 2025-12-15 |
 | **FASE 130** | Complete Observability Stack (Exporters + Alertmanager) | ✅ 100% | 2025-12-16 |
 | **FASE 131** | Bundler Prevention System (7-Layer Protection) | ✅ 100% | 2025-12-16 |
+| **FASE 132** | Token Limits Alignment (Anthropic Official) | ✅ 100% | 2025-12-16 |
 
 **Funcionalidades Implementadas:**
 - Seleção de candidatos por critérios fundamentalistas (ROE, DY, Dív/EBITDA)
@@ -11711,11 +11712,12 @@ Sistema em estado de manutenção e evolução contínua.
 > **Nota:** FASE 128 concluída em 2025-12-15 (Gap Resolution: Migration alerts table | PostgreSQL timezone America/Sao_Paulo | CLAUDE.md/GEMINI.md sync | Hydration mismatch documented | 50 failed jobs cleaned | Observability stack validated)
 > **Nota:** FASE 130 concluída em 2025-12-16 (Complete Observability Stack: PostgreSQL Exporter (9387) + Redis Exporter (9321) + Alertmanager (9093) + Prometheus integration | OpenTelemetry traces verified (45+ in Tempo) | All 6 Prometheus targets UP | Frontend hydration improved with Next.js dynamic imports)
 > **Nota:** FASE 131 concluída em 2025-12-16 (Bundler Prevention System: 7-layer protection | docker-entrypoint.sh validates --turbopack | Script hash detection | TROUBLESHOOTING.md REGRA #1 REBUILD vs RESTART | /validate-dev-config + /rebuild-guide slash commands | E2E bundler tests | Result: 30s diagnosis instead of 3 days debugging)
+> **Nota:** FASE 132 concluída em 2025-12-16 (Token Limits Alignment: CLAUDE_CODE_MAX_OUTPUT_TOKENS 128K→64K | MAX_THINKING_TOKENS 100K→32K | MAX_MCP_OUTPUT_TOKENS 150K→25K | MAX_TOOL_OUTPUT_TOKENS removed | Aligned with Anthropic official recommendations | Sources: Models Overview, Extended Thinking AWS, Claude Code Settings)
 
 ---
 
 **Ultima Atualizacao:** 2025-12-16
-**Total de Fases:** 136 completas (incluindo sub-fases)
-**Versao:** 1.31.0
+**Total de Fases:** 137 completas (incluindo sub-fases)
+**Versao:** 1.32.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0
