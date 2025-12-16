@@ -2,7 +2,7 @@
 name: chart-analysis-expert
 description: Expert in financial charting libraries (Recharts, lightweight-charts), candlestick charts, technical indicators, and market data visualization. Invoke when creating/fixing charts, implementing OHLC data visualization, or debugging chart rendering issues.
 tools: Read, Edit, Write, Glob, Grep, Bash, mcp__chrome-devtools__take_snapshot, mcp__chrome-devtools__take_screenshot
-model: sonnet
+model: opus
 ---
 
 # Chart Analysis Expert

@@ -286,7 +286,7 @@ Você deve ver: `anthropic.claude-code`
    ```json
    {
      "claude.apiKey": "sk-ant-...",
-     "claude.model": "claude-sonnet-4.5",
+     "claude.model": "claude-opus-4-5-20251101",
      "claude.maxTokens": 200000
    }
    ```

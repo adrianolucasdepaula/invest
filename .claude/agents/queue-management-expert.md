@@ -2,7 +2,7 @@
 name: queue-management-expert
 description: Expert in BullMQ queue management, job creation, processors, retry logic, rate limiting, and async task orchestration. Invoke when creating/debugging jobs, implementing scheduled tasks, or managing queue-based workflows.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: opus
 ---
 
 # Queue Management Expert

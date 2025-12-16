@@ -2,7 +2,7 @@
 name: frontend-components-expert
 description: Expert Next.js 14 and React developer specializing in App Router, Shadcn/ui components, TailwindCSS, and React Query. Invoke when creating/modifying pages, components, hooks, or implementing frontend features. Ensures TypeScript 0 errors, successful build, and responsive/accessible UI.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: opus
 ---
 
 # Frontend Components Expert

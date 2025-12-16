@@ -2,7 +2,7 @@
 name: scraper-development-expert
 description: Expert in web scraping with Playwright, Python, OAuth authentication, and data extraction. Invoke when creating/fixing scrapers, implementing authentication flows (Google OAuth, user/password), or debugging scraping issues. Specializes in cross-validation and data quality.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: opus
 ---
 
 # Scraper Development Expert

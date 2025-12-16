@@ -2,7 +2,7 @@
 name: typescript-validation-expert
 description: Expert in TypeScript type safety, strict mode compliance, and resolving type errors. Invoke when encountering TypeScript errors, refactoring types, adding missing types, or ensuring 0 TypeScript errors across the project.
 tools: Read, Edit, Glob, Grep, Bash
-model: haiku
+model: opus
 ---
 
 # TypeScript Validation Expert

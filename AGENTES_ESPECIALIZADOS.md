@@ -3,7 +3,7 @@
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
 **Data de Criação:** 2025-11-15
 **Versão:** 1.0.0
-**Mantenedor:** Claude Code (Sonnet 4.5)
+**Mantenedor:** Claude Code (Opus 4.5)
 
 ---
 
@@ -1064,7 +1064,7 @@ Task({
     - [DELIVERABLE 2]
     - [VALIDAÇÕES EXECUTADAS]
   `,
-  model: "sonnet"  // ou "haiku" para tarefas simples
+  model: "opus"  // sempre usar opus para máxima capacidade
 })
 ```
 
@@ -1102,7 +1102,7 @@ Task({
     - Exemplo de response (JSON)
     - Teste com curl (exemplo de comando)
   `,
-  model: "sonnet"
+  model: "opus"
 })
 ```
 
@@ -1158,4 +1158,4 @@ Antes de invocar um agente, validar:
 ---
 
 **Última atualização:** 2025-11-15
-**Mantido por:** Claude Code (Sonnet 4.5)
+**Mantido por:** Claude Code (Opus 4.5)

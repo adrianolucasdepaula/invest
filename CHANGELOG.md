@@ -7,6 +7,21 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Padronização Claude Opus 4.5 (2025-12-15)**
+  - **Configuração Global:**
+    - Modelo padrão: `claude-opus-4-5-20251101`
+    - Token limits otimizados (128K output, 100K thinking, 200K MCP)
+  - **Agents (10/10):**
+    - Todos os sub-agents agora usam `model: opus`
+    - backend-api-expert, frontend-components-expert, e2e-testing-expert
+    - typescript-validation-expert, chart-analysis-expert, scraper-development-expert
+    - database-migration-expert, queue-management-expert, documentation-expert, pm-expert
+  - **Documentação:**
+    - AGENTES_ESPECIALIZADOS.md - templates atualizados
+    - VSCODE_CLAUDE_CODE_GUIDE.md - model ID corrigido
+
 ### Added
 
 - **FASE 125: Health Check Dashboard - Frontend (2025-12-15)**

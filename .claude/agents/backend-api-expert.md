@@ -2,7 +2,7 @@
 name: backend-api-expert
 description: Expert NestJS developer for creating/modifying controllers, services, DTOs, and TypeORM entities. Invoke when implementing backend endpoints, business logic, database operations, or refactoring backend code. Ensures TypeScript 0 errors, successful build, and follows NestJS best practices.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: opus
 ---
 
 # Backend API Expert
