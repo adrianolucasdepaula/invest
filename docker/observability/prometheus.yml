@@ -53,6 +53,8 @@ scrape_configs:
     static_configs:
       - targets: ['loki:3100']
 
-# Remote write to Tempo for exemplars (optional)
-remote_write:
-  - url: http://tempo:3200/api/v1/push
+# Remote write to Tempo for exemplars (disabled - Tempo uses different protocol)
+# Tempo receives traces via OTLP (gRPC:4317, HTTP:4318), not Prometheus remote_write
+# Uncomment only if Tempo is configured with remote_write receiver enabled
+# remote_write:
+#   - url: http://tempo:3200/api/v1/push
