@@ -1,0 +1,74 @@
+# Alertmanager Configuration
+# FASE 130: Alerting Notifications
+
+global:
+  # Global resolve timeout
+  resolve_timeout: 5m
+
+# Routing tree
+route:
+  # Default receiver
+  receiver: 'default-receiver'
+  # Group alerts by alertname
+  group_by: ['alertname', 'severity']
+  # Wait time before sending first notification
+  group_wait: 30s
+  # Wait time before sending repeat notification
+  group_interval: 5m
+  # Wait time before resending
+  repeat_interval: 4h
+
+  # Child routes for different severities
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-receiver'
+      group_wait: 10s
+      repeat_interval: 1h
+
+    # Warning alerts - standard notification
+    - match:
+        severity: warning
+      receiver: 'warning-receiver'
+      repeat_interval: 4h
+
+    # Info alerts - log only
+    - match:
+        severity: info
+      receiver: 'default-receiver'
+      repeat_interval: 24h
+
+# Inhibition rules - prevent duplicate alerts
+inhibit_rules:
+  # If critical is firing, suppress warning for same alertname
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname']
+
+# Receivers configuration
+receivers:
+  # Default receiver - webhook for logging (local development)
+  - name: 'default-receiver'
+    webhook_configs:
+      - url: 'http://backend:3101/api/v1/webhooks/alerts'
+        send_resolved: true
+
+  # Critical receiver - can be extended with email/slack/pagerduty
+  - name: 'critical-receiver'
+    webhook_configs:
+      - url: 'http://backend:3101/api/v1/webhooks/alerts'
+        send_resolved: true
+    # Uncomment for Slack integration:
+    # slack_configs:
+    #   - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+    #     channel: '#alerts-critical'
+    #     send_resolved: true
+
+  # Warning receiver
+  - name: 'warning-receiver'
+    webhook_configs:
+      - url: 'http://backend:3101/api/v1/webhooks/alerts'
+        send_resolved: true

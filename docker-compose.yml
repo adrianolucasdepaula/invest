@@ -647,6 +647,74 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # FASE 130: PostgreSQL Exporter - Database Metrics for Prometheus
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: invest_postgres_exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://invest_user:invest_password@postgres:5432/invest_db?sslmode=disable"
+    ports:
+      - "9387:9187"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - invest_network
+    restart: unless-stopped
+    profiles:
+      - observability
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # FASE 130: Redis Exporter - Cache Metrics for Prometheus
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: invest_redis_exporter
+    environment:
+      REDIS_ADDR: "redis://redis:6379"
+    ports:
+      - "9321:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - invest_network
+    restart: unless-stopped
+    profiles:
+      - observability
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # FASE 130: Alertmanager - Alert Notifications
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: invest_alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    volumes:
+      - ./docker/observability/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    ports:
+      - "9093:9093"
+    networks:
+      - invest_network
+    restart: unless-stopped
+    profiles:
+      - observability
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   # FASE 78: Meilisearch - Intelligent Text Search Engine
   meilisearch:
     image: getmeili/meilisearch:v1.11
@@ -736,6 +804,8 @@ volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+  alertmanager_data:
     driver: local
 
   # FASE 78: Advanced Infrastructure Volumes
