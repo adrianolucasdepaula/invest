@@ -130,53 +130,68 @@ export class IsEndYearGreaterThanStartYear implements ValidatorConstraintInterfa
 
 ---
 
-## Checklist Automatico do Ecossistema (ATIVADO - v2.0)
+## Checklist Automatico do Ecossistema (ATIVADO - v5.2)
 
 ### Sistema de Auto-Trigger Bilingue (PT + EN)
 
-O projeto possui **deteccao automatica de keywords bilingues** que injeta instrucoes relevantes do checklist.
+O projeto possui **sistema de automacao 100%** com deteccao de keywords, correlacao de bugs, e analytics integrados.
 
 **Como Funciona:**
 
-1. **SessionStart Hook** - Exibe resumo de 27 categorias de keywords ao iniciar sessao
-2. **UserPromptSubmit Hook** - Detecta keywords (PT + EN) no seu prompt
-3. **Skill Injection** - Injeta instrucoes para usar skills/secoes relevantes (ate 4 triggers)
+1. **SessionStart Hook** - Exibe resumo de 65 categorias de keywords ao iniciar sessao
+2. **UserPromptSubmit Hook** - Detecta keywords (PT + EN) e injeta contexto relevante
+3. **PreToolUse Hook** - Valida tags em arquivos antes de editar
+4. **PostToolUse Hook** - Correlaciona erros com KNOWN-ISSUES automaticamente
+5. **Stop Hook** - Coleta analytics da sessao
 
-**Script:** `.claude/hooks-scripts/checklist-auto-trigger.js` (v2.0)
+**Script Principal:** `.claude/hooks-scripts/checklist-auto-trigger.js` (v5.2)
 
-### 27 Categorias de Keywords (PT + EN)
+### Sistema de Prioridades (v5.2)
 
-| Categoria | Keywords PT | Keywords EN | Secoes |
-|-----------|-------------|-------------|--------|
-| **planning** | planejamento, plano, robusto, ultra | planning, plan, pm, robust | 1-2, IMPL |
-| **development** | implementar, criar, desenvolver, novo | implement, create, develop, add | 1-3 |
-| **codeReview** | revisar, melhores praticas, refatorar | code review, best practices, refactor | 3-4 |
-| **commit** | commit, push, mergear, branch | commit, push, merge, git | 4-5 |
-| **phase** | fase, etapa, validar, ecossistema | phase, step, validate, ecosystem | 6-21 |
-| **scraper** | raspagem, coletar, fontes, dados reais | scraper, playwright, collect, sources | 18 |
-| **frontend** | componente, pagina, tela, interface | frontend, react, page, component | 3.2, 8.1 |
-| **ux** | usabilidade, acessibilidade, ergonomia | ux, usability, accessibility, wcag | 6, a11y |
-| **forms** | formulario, campo, botao, dropdown | form, input, button, field | 3.2, 8.1 |
-| **visual** | layout, estilo, imagem, scroll | style, image, font, loading | 3.2, DevT |
-| **charts** | grafico, tabela, ordenacao, lista | chart, table, sorting, list | 8.1, 3.2 |
-| **backend** | controlador, servico, rota, funcao | backend, controller, service, dto | 3.1, 8.2 |
-| **database** | banco de dados, migracao, entidade | database, migration, entity, sql | 17, DB |
-| **financial** | financeiro, preco, ativo, precisao | financial, decimal, price, market | 3.1, fin |
-| **troubleshoot** | erro, bug, corrigir, causa raiz | error, fix, debug, root cause | 7, KNOWN |
-| **quality** | gap, warning, falha, workaround | gap, alarm, failure, improvement | 7, 12 |
-| **security** | seguranca, autenticacao, senha | security, auth, jwt, password | 16 |
-| **docker** | container, porta, reiniciar, ambiente | docker, container, port, restart | 19, 8.3 |
-| **api** | integracao, dependencia, requisicao | api, integration, dependency | 20, 11.3 |
-| **testing** | teste, cenario, cobertura, massivo | test, scenario, coverage, massive | 13, 6 |
-| **performance** | desempenho, cache, paralelo, memoria | performance, cache, parallel, n+1 | 15, 3 |
-| **observability** | log, trace, monitoracao, auditoria | log, trace, monitoring, audit | 10, 5 |
-| **jobs** | fila, agendamento, sincronia, tarefa | job, queue, scheduling, sync | 11.2, 15 |
-| **websocket** | tempo real, evento, broadcast | websocket, realtime, event | 11.1, 15 |
-| **documentation** | documentacao, arquitetura, readme | documentation, architecture | 1, INDEX |
-| **mcp** | triplo, ferramenta, skill, hook | mcp, devtools, tool, subagent | 21, METOD |
-| **environment** | timezone, configuracao, versao | timezone, config, version, env | 1, 19 |
+| Prioridade | Icone | Limite Max | Peso | Exemplos |
+|------------|-------|------------|------|----------|
+| **critical** | 🔴 | 10 | 9-10 | regression, uncertainty, dataQuality |
+| **high** | 🟠 | 4 | 7-8 | planning, financial, backup, riskManagement |
+| **medium** | 🟡 | 2 | 5-6 | frontend, backend, testing, cache |
+| **low** | 🟢 | 1 | 3-4 | documentation, network, sentiment |
 
-**Total:** ~250+ keywords bilingues cobrindo 100% do ecossistema
+### 65 Categorias de Keywords (PT + EN)
+
+**Core (27 categorias):** planning, development, codeReview, commit, phase, scraper, frontend, ux, forms, visual, charts, backend, database, financial, troubleshoot, quality, security, docker, api, testing, performance, observability, jobs, websocket, documentation, mcp, environment
+
+**v3.0 (10 categorias):** webResearch, postImplementation, regression, docSync, testCoverage, deployment, ecosystem, agentHelp, improvement, urgency
+
+**v4.0 (17 categorias):** migration, validation, routing, hook, middleware, transaction, index, cache, crossvalidation, dividend, options, health, network, backup, retry, ratelimit, circuit
+
+**v5.0 Domain-Specific (11 categorias):** technicalIndicators, fundamentalMetrics, macro, corporateActions, wheelStrategy, sentiment, riskManagement, marketIndices, dataSources, cicd, dataQuality
+
+**v5.1 (4 categorias):** uncertainty, decisionMaking, clarification, assumption
+
+**Total:** ~1,100+ keywords bilingues cobrindo 100% do ecossistema
+
+### Scripts de Automacao
+
+| Script | Funcao | Hook |
+|--------|--------|------|
+| `checklist-auto-trigger.js` | Deteccao de keywords com prioridades | UserPromptSubmit |
+| `tag-injector.js` | Injecao de contexto no prompt | UserPromptSubmit |
+| `tag-validator.js` | Validacao de tags em arquivos | PreToolUse (Edit/Write) |
+| `bug-correlator.js` | Correlacao com KNOWN-ISSUES | PostToolUse (Bash) |
+| `solution-finder.js` | Busca fuzzy de solucoes | Sob demanda |
+| `tag-generator.js` | Geracao de tags com fallback | Sob demanda |
+| `auto-sync-docs.js` | Sincronizacao CLAUDE.md ↔ GEMINI.md | PreCompact |
+| `tag-analytics.js` | Coleta de metricas | Stop |
+| `circuit-breaker.js` | Resiliencia para scripts | Utilidade |
+| `test-suite.js` | Suite de testes (33 tests) | Validacao |
+
+### Diretorio de Dados
+
+```text
+.claude/data/
+├── analytics/       # Metricas coletadas
+├── cache/           # Cache de keywords e solucoes
+└── locks/           # File locks para sincronizacao
+```
 
 ### Referencia Completa
 
@@ -198,6 +213,12 @@ O projeto possui **deteccao automatica de keywords bilingues** que injeta instru
 /check-context     # Verificacao pre-tarefa
 /validate-phase    # Validacao de fase completa
 /mcp-triplo        # Playwright + DevTools + a11y
+```
+
+### Executar Testes de Automacao
+
+```bash
+node .claude/hooks-scripts/test-suite.js --verbose
 ```
 
 ---
@@ -1413,22 +1434,33 @@ Início Tarefa
 
 ---
 
-## Context Management (Opus 4.5)
+## Context Management (Opus 4.5 - Plano Pro)
 
-### Configuracao Otimizada
+### Limites Oficiais do Claude Opus 4.5
 
-Este projeto utiliza Claude Opus 4.5 com configuracao ultra-robusta para maximizar capacidades:
+**Fonte: [Models Overview - Anthropic Platform Docs](https://platform.claude.com/docs/en/about-claude/models/overview)**
 
-| Variavel | Valor | Proposito |
-|----------|-------|-----------|
-| `CLAUDE_CODE_MAX_OUTPUT_TOKENS` | 128000 | Output maximo - permite respostas longas |
-| `MAX_THINKING_TOKENS` | 100000 | Extended Thinking maximo para Opus 4.5 |
-| `MAX_MCP_OUTPUT_TOKENS` | 200000 | **8x default** - Leitura de arquivos grandes sem truncamento |
-| `MAX_TOOL_OUTPUT_TOKENS` | 200000 | **8x default** - Output de ferramentas sem limite |
-| `BASH_DEFAULT_TIMEOUT_MS` | 600000 | 10 minutos - builds longos |
-| `BASH_MAX_TIMEOUT_MS` | 1800000 | 30 minutos - operacoes muito longas |
-| `MCP_TIMEOUT` | 120000 | 2 minutos - conexao inicial com MCPs |
-| `MCP_TOOL_TIMEOUT` | 300000 | 5 minutos - operacoes de MCPs complexas |
+| Modelo | Context Window | Max Output | Preco Input | Preco Output |
+|--------|----------------|------------|-------------|--------------|
+| **Claude Opus 4.5** | 200K tokens | **64K tokens** | $5/MTok | $25/MTok |
+| Claude Sonnet 4.5 | 200K / 1M (beta) | 64K tokens | $3/MTok | $15/MTok |
+| Claude Haiku 4.5 | 200K tokens | 64K tokens | $1/MTok | $5/MTok |
+
+### Configuracao Otimizada (Alinhada com Limites Oficiais)
+
+| Variavel | Valor | Limite Oficial | Fonte |
+|----------|-------|----------------|-------|
+| `CLAUDE_CODE_MAX_OUTPUT_TOKENS` | 64000 | 64000 (maximo) | [Models Overview](https://platform.claude.com/docs/en/about-claude/models/overview) |
+| `MAX_THINKING_TOKENS` | 32000 | 32000 (recomendado) | [Extended Thinking](https://docs.aws.amazon.com/bedrock/latest/userguide/claude-messages-extended-thinking.html) |
+| `MAX_MCP_OUTPUT_TOKENS` | 25000 | 25000 (padrao) | [Claude Code Settings](https://code.claude.com/docs/en/settings) |
+| `BASH_DEFAULT_TIMEOUT_MS` | 600000 | - | 10 minutos - builds longos |
+| `BASH_MAX_TIMEOUT_MS` | 1800000 | - | 30 minutos - operacoes muito longas |
+| `MCP_TIMEOUT` | 120000 | - | 2 minutos - conexao inicial com MCPs |
+| `MCP_TOOL_TIMEOUT` | 300000 | - | 5 minutos - operacoes de MCPs complexas |
+
+**Notas:**
+- Valores alinhados com limites oficiais da Anthropic (Dezembro 2025)
+- `MAX_TOOL_OUTPUT_TOKENS` removido (nao documentado oficialmente)
 
 ### Leitura de Arquivos Grandes
 
@@ -1438,13 +1470,12 @@ Este projeto utiliza Claude Opus 4.5 com configuracao ultra-robusta para maximiz
 
 | Ferramenta | Limite | Configuravel? |
 |------------|--------|---------------|
-| Read tool (built-in) | 25.000 tokens | ❌ NAO (hardcoded) |
-| MCP tools (mcp__*) | 200.000 tokens | ✅ SIM (MAX_MCP_OUTPUT_TOKENS) |
+| Read tool (built-in) | 25.000 tokens | NAO (hardcoded) |
+| MCP tools (mcp__*) | 25.000 tokens | SIM (MAX_MCP_OUTPUT_TOKENS) |
 
 **Variaveis Configuradas (afetam apenas MCPs):**
 
-- `MAX_MCP_OUTPUT_TOKENS=200000` - Output de ferramentas MCP
-- `MAX_TOOL_OUTPUT_TOKENS=200000` - Redundante para MCPs
+- `MAX_MCP_OUTPUT_TOKENS=25000` - Output de ferramentas MCP (padrao oficial)
 
 **Arquivos de Configuracao:**
 
