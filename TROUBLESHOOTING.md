@@ -1,15 +1,16 @@
 # 🔧 TROUBLESHOOTING - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-11-15
-**Versão:** 1.0.0
-**Mantenedor:** Claude Code (Sonnet 4.5)
+**Ultima Atualizacao:** 2025-12-16
+**Versao:** 2.0.0
+**Mantenedor:** Claude Code (Opus 4.5)
 
 ---
 
-## 📑 ÍNDICE
+## 📑 INDICE
 
-1. [Visão Geral](#visão-geral)
+0. [REGRA #1: REBUILD vs RESTART](#-regra-1-rebuild-vs-restart-leia-primeiro) **LEIA PRIMEIRO!**
+1. [Visao Geral](#-visao-geral)
 2. [Problemas de Backend](#problemas-de-backend)
 3. [Problemas de Frontend](#problemas-de-frontend)
 4. [Problemas de Scrapers](#problemas-de-scrapers)
@@ -20,7 +21,98 @@
 
 ---
 
-## 🎯 VISÃO GERAL
+## 🚨 REGRA #1: REBUILD vs RESTART (Leia Primeiro!)
+
+**IMPORTANTE:** 90% dos problemas "misteriosos" sao resolvidos com REBUILD ao inves de RESTART.
+
+### Principio Fundamental
+
+| O que voce mudou? | Comando Correto |
+|-------------------|-----------------|
+| package.json (qualquer servico) | `docker-compose up -d --build <service>` |
+| requirements.txt (Python) | `docker-compose up -d --build <service>` |
+| Dockerfile | `docker-compose up -d --build <service>` |
+| next.config.js | `docker-compose up -d --build frontend` |
+| nest-cli.json | `docker-compose up -d --build backend` |
+| Codigo .ts/.tsx/.py | `docker restart <container>` ou hot reload |
+
+### Diagnostico em 10 segundos
+
+```bash
+# 1. O container tem a versao correta do arquivo?
+docker exec <container> cat <arquivo> | head -10
+
+# 2. Comparar com local
+diff <(docker exec <container> cat <arquivo>) <caminho-local>
+
+# 3. Se diferente -> REBUILD e obrigatorio
+docker-compose up -d --build <service>
+```
+
+### Containers com Dockerfile Customizado
+
+| Service | Container | Context | Arquivos que EXIGEM REBUILD |
+|---------|-----------|---------|----------------------------|
+| frontend | invest_frontend | ./frontend | package.json, next.config.js, Dockerfile, tsconfig.json |
+| backend | invest_backend | ./backend | package.json, nest-cli.json, Dockerfile, tsconfig.json |
+| scrapers | invest_scrapers | ./backend/python-scrapers | requirements.txt, Dockerfile, pyproject.toml |
+| python-service | invest_python_service | ./backend/python-service | requirements.txt, Dockerfile, pyproject.toml |
+
+**NOTA:** postgres e redis sao imagens base - raramente precisam rebuild.
+
+### Erro de Bundler/Webpack/Turbopack (Frontend)
+
+**Sintomas:**
+
+- `TypeError: Cannot read properties of undefined (reading 'call')`
+- `options.factory` error
+- RSC module resolution errors
+- Fast Refresh doing full reloads
+
+**Diagnostico Imediato (30 segundos):**
+
+```bash
+# 1. Verificar flag no package.json local
+grep '"dev":' frontend/package.json
+# DEVE mostrar: "dev": "next dev -p 3000 --turbopack"
+
+# 2. Verificar se container tem a mesma versao
+docker exec invest_frontend grep '"dev":' package.json
+# DEVE ser IDENTICO ao passo 1
+
+# 3. Se diferentes, a solucao e REBUILD:
+docker-compose up -d --build frontend
+
+# 4. Se iguais mas erro persiste, limpar cache:
+docker exec invest_frontend rm -rf .next node_modules/.cache
+docker restart invest_frontend
+```
+
+### Comando Universal de Rebuild
+
+```bash
+# Rebuild de um servico especifico
+docker-compose up -d --build <service>
+
+# Rebuild de todos os servicos com Dockerfile customizado
+docker-compose up -d --build frontend backend scrapers python-service
+
+# Rebuild completo (todos os servicos)
+docker-compose up -d --build
+```
+
+### Quando NAO precisa rebuild (apenas restart)
+
+- Mudancas em codigo fonte (.ts, .tsx, .py) - hot reload aplica
+- Mudancas em arquivos de dados (.json, .md, .sql)
+- Mudancas em variaveis de ambiente (.env) - restart suficiente
+- Mudancas em arquivos estaticos (imagens, CSS)
+
+**EXCECAO:** Se o hot reload nao aplicar a mudanca, fazer restart.
+
+---
+
+## 🎯 VISAO GERAL
 
 Este documento contém soluções para os problemas mais comuns encontrados durante o desenvolvimento e operação da plataforma B3 AI Analysis.
 
