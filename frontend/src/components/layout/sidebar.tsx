@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -63,53 +63,14 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Render placeholder during SSR to avoid hydration mismatch
-  if (!mounted) {
-    return (
-      <div className="flex h-screen w-64 flex-col border-r bg-card">
-        <div className="flex h-16 items-center border-b px-6">
-          <div className="flex items-center space-x-2">
-            <TrendingUp className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold">B3 AI Analysis</span>
-          </div>
-        </div>
-        <nav className="flex-1 space-y-1 px-3 py-4">
-          {navigation.map((item) => (
-            <div
-              key={item.href}
-              className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground"
-            >
-              <div className="h-5 w-5 bg-muted rounded animate-pulse" />
-              <span>{item.name}</span>
-            </div>
-          ))}
-        </nav>
-        <div className="border-t p-4">
-          <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
-            <div className="flex-1">
-              <div className="h-4 w-20 bg-muted rounded animate-pulse mb-1" />
-              <div className="h-3 w-32 bg-muted rounded animate-pulse" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-card">
       <div className="flex h-16 items-center border-b px-6">
-        <Link href="/dashboard" className="flex items-center space-x-2">
+        <a href="/dashboard" className="flex items-center space-x-2">
           <TrendingUp className="h-8 w-8 text-primary" />
           <span className="text-xl font-bold">B3 AI Analysis</span>
-        </Link>
+        </a>
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
