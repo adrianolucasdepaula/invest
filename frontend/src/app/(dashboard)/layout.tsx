@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Sidebar } from '@/components/layout/sidebar';
+import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { Header } from '@/components/layout/header';
 import { SidebarProvider, useSidebar } from '@/contexts/sidebar-context';
 import { TrendingUp } from 'lucide-react';
 
-// Skeleton sidebar for SSR/loading state
+// Skeleton sidebar for loading state - used consistently on server and client
 function SidebarSkeleton() {
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-card">
@@ -40,19 +40,21 @@ function SidebarSkeleton() {
   );
 }
 
-// Client-only sidebar wrapper to prevent hydration mismatch
-function ClientSidebar() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <SidebarSkeleton />;
+// Lazy load sidebar - renders skeleton during loading
+const LazySidebar = dynamic(
+  () => import('@/components/layout/sidebar').then((mod) => mod.Sidebar),
+  {
+    ssr: false,
   }
+);
 
-  return <Sidebar />;
+// Wrapper that handles the suspense boundary consistently
+function SidebarWrapper() {
+  return (
+    <Suspense fallback={<SidebarSkeleton />}>
+      <LazySidebar />
+    </Suspense>
+  );
 }
 
 function DashboardLayoutContent({
@@ -66,13 +68,13 @@ function DashboardLayoutContent({
   const sidebarWidth = !isMounted ? 'w-64' : isOpen ? 'w-64' : 'w-0';
 
   return (
-    <div className="flex h-screen overflow-hidden" suppressHydrationWarning>
-      {/* Sidebar Navigation - Semantic aside landmark */}
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar Navigation */}
       <div
         className={`transition-all duration-300 ease-in-out ${sidebarWidth} overflow-hidden`}
         suppressHydrationWarning
       >
-        <ClientSidebar />
+        <SidebarWrapper />
       </div>
 
       <div className="flex flex-1 flex-col overflow-hidden">
