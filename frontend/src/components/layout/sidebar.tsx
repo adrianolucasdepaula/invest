@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -54,6 +54,7 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
           ? 'bg-primary text-primary-foreground'
           : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
       )}
+      suppressHydrationWarning
     >
       <Icon className="h-5 w-5" />
       <span>{item.name}</span>
@@ -61,34 +62,8 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
   );
 }
 
-// Skeleton nav items that match the structure of real nav items
-function NavSkeleton() {
-  return (
-    <>
-      {navigation.map((item) => {
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground"
-          >
-            <Icon className="h-5 w-5" />
-            <span>{item.name}</span>
-          </Link>
-        );
-      })}
-    </>
-  );
-}
-
 export function Sidebar() {
-  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-card">
@@ -99,17 +74,13 @@ export function Sidebar() {
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {!mounted ? (
-          <NavSkeleton />
-        ) : (
-          navigation.map((item) => {
-            const isActive = pathname === item.href || Boolean(pathname?.startsWith(item.href + '/'));
-            return (
-              <NavLink key={item.href} item={item} isActive={isActive} />
-            );
-          })
-        )}
+      <nav className="flex-1 space-y-1 px-3 py-4" suppressHydrationWarning>
+        {navigation.map((item) => {
+          const isActive = pathname === item.href || Boolean(pathname?.startsWith(item.href + '/'));
+          return (
+            <NavLink key={item.href} item={item} isActive={isActive} />
+          );
+        })}
       </nav>
 
       <div className="border-t p-4">
