@@ -103,19 +103,18 @@ export class AssetsController {
   }
 
   @Post('bulk-update-cancel')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  // ✅ FIX: Removed @UseGuards for consistency with bulk-all and bulk-update-status (both public)
+  // Justification: Queue management endpoints should match creation endpoint auth level
   @ApiOperation({
     summary: 'Cancel bulk update',
-    description: 'Cancel all pending jobs in the queue. Active jobs will complete but no new jobs will start.',
+    description: 'Cancel all pending jobs in the queue (waiting + active). Jobs in execution will complete but be removed from queue to prevent retry.',
   })
   async cancelBulkUpdate() {
     return this.assetUpdateJobsService.cancelAllPendingJobs();
   }
 
   @Post('bulk-update-pause')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  // ✅ FIX: Removed @UseGuards for consistency
   @ApiOperation({
     summary: 'Pause bulk update queue',
     description: 'Pause the queue. Active jobs will complete but no new jobs will start until resumed.',
@@ -126,8 +125,7 @@ export class AssetsController {
   }
 
   @Post('bulk-update-resume')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  // ✅ FIX: Removed @UseGuards for consistency
   @ApiOperation({
     summary: 'Resume bulk update queue',
     description: 'Resume the queue after pause.',
