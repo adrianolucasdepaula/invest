@@ -409,16 +409,16 @@ Read(file_path="large.md", offset=1501, limit=1500)
 | Grupo 1.1 - Update All | 100% | **100%** | ✅ PASSOU |
 | Grupo 2.1 - Cancelar | 100% | **100%** | ✅ PASSOU |
 | Grupo 6.1 - Refresh | 100% | **100%** | ✅ PASSOU |
+| Grupo 3 - Pausar/Retomar | 100% | **100%** | ✅ PASSOU |
+| Grupo 4.1 - Status Card | 100% | **100%** | ✅ PASSOU (sessão 2) |
+| Grupo 5.1 - Logs | 100% | **100%** | ✅ PASSOU (sessão 2) |
 | Validação Backend | 100% | **100%** | ✅ |
 | API Endpoints | 100% | **40%** | ⚠️ (auth required) |
-| Grupo 4.1 - Status Card | 100% | **0%** | ⏳ (pendente) |
-| Grupo 5.1 - Logs | 100% | **0%** | ⏳ (pendente) |
-| Grupo 3 - Pausar/Retomar | 100% | **0%** | ⏳ (pendente) |
 | Race Conditions | 100% | **0%** | ⏳ (pendente) |
 | WebSocket Events | 100% | **0%** | ⏳ (pendente) |
 | Stress Tests | 100% | **0%** | ⏳ (pendente) |
 
-**Total Executado:** ~45% do plano completo
+**Total Executado:** ~60% do plano completo (+15% nesta sessão)
 
 **Breakthrough:**
 - ✅ **Keyboard Navigation descoberto** - Solução definitiva para Radix UI!
