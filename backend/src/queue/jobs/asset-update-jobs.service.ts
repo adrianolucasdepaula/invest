@@ -457,36 +457,49 @@ export class AssetUpdateJobsService implements OnModuleInit {
   async cancelAllPendingJobs() {
     this.logger.warn('🛑 Cancelling all pending jobs...');
 
-    // Get all waiting jobs and remove them
+    // Get all waiting and active jobs
     const waiting = await this.assetUpdatesQueue.getWaiting();
     const active = await this.assetUpdatesQueue.getActive();
 
-    let removedCount = 0;
+    let removedWaitingCount = 0;
+    let removedActiveCount = 0;
 
     // Remove waiting jobs
     for (const job of waiting) {
       await job.remove();
-      removedCount++;
+      removedWaitingCount++;
     }
 
-    // Note: Active jobs cannot be removed, they will complete naturally
-    // But we can pause the queue to prevent new jobs from starting
+    // ✅ FIX: Also remove active jobs to truly "cancel all"
+    // Note: Jobs in execution will still complete (Playwright can't be aborted),
+    // but removing them from queue prevents retry and clears UI immediately
+    for (const job of active) {
+      try {
+        await job.remove();
+        removedActiveCount++;
+      } catch (error) {
+        this.logger.warn(`Failed to remove active job ${job.id}: ${error.message}`);
+      }
+    }
 
-    this.logger.log(`✅ Removed ${removedCount} waiting jobs. ${active.length} active jobs will complete.`);
+    const totalRemoved = removedWaitingCount + removedActiveCount;
+
+    this.logger.log(`✅ Removed ${removedWaitingCount} waiting jobs + ${removedActiveCount} active jobs. Total: ${totalRemoved}`);
 
     // Emit WebSocket event to notify frontend (cancelled batch)
     this.webSocketGateway.emitBatchUpdateCompleted({
       batchId: `cancelled-${Date.now()}`,
-      totalAssets: removedCount + active.length,
+      totalAssets: totalRemoved,
       successCount: 0,
       failedCount: 0,
       duration: 0,
     });
 
     return {
-      removedWaitingJobs: removedCount,
-      activeJobsInProgress: active.length,
-      message: `Removidos ${removedCount} jobs pendentes. ${active.length} jobs ativos irão completar.`,
+      removedWaitingJobs: removedWaitingCount,
+      removedActiveJobs: removedActiveCount,
+      totalRemoved,
+      message: `✅ Cancelados ${totalRemoved} jobs (${removedWaitingCount} waiting + ${removedActiveCount} active)`,
     };
   }
 
