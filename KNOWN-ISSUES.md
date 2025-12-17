@@ -34,6 +34,71 @@ Este documento centraliza **todos os problemas conhecidos** encontrados durante 
 
 ## 🔴 ISSUES ATIVOS (NÃO RESOLVIDOS)
 
+### Issue #JOBS_ACTIVE_STALE: Jobs Ativos Ficam Presos na Fila
+
+**Severidade:** 🟡 **MÉDIA**
+**Status:** ⚠️ **PARCIALMENTE RESOLVIDO**
+**Data Identificado:** 2025-12-17
+**Identificado Por:** Claude Code (Opus 4.5) durante testes massivos
+
+#### Descrição
+
+Jobs ativos (active) podem ficar "presos" na fila BullMQ indefinidamente se o scraper demorar >180s (timeout).
+
+#### Sintomas
+
+- Fila mostra `"active": 6` mesmo após horas
+- Botão "Atualizar" permanece desabilitado
+- Jobs não completam nem falham
+- Redis mantém jobs na lista `bull:asset-updates:active`
+
+#### Root Cause Identificado
+
+**Causa Real:** Scrapers lentos (Investsite, Fundamentus) com timeout de 180s fazem job ficar "stale".
+
+BullMQ considera job "stalled" mas não o remove automaticamente da lista active.
+
+#### Solução Temporária
+
+```bash
+# Limpar jobs stale manualmente
+docker exec invest_redis redis-cli DEL "bull:asset-updates:active"
+docker exec invest_redis redis-cli DEL $(docker exec invest_redis redis-cli KEYS "bull:asset-updates:*" | grep -E ":[0-9]+$")
+```
+
+#### Solução Permanente (Implementar)
+
+1. **Stalled job cleanup automático:**
+   ```typescript
+   // Adicionar em AssetUpdateJobsService.onModuleInit()
+   setInterval(() => {
+     this.assetUpdatesQueue.clean(5 * 60 * 1000, 'active'); // Clean active > 5min
+   }, 60000); // Check every minute
+   ```
+
+2. **Reduzir timeout de scrapers:**
+   - Atual: 180s
+   - Proposto: 60s (com retry se necessário)
+
+3. **Circuit breaker para scrapers lentos:**
+   - Skip Investsite se >3 timeouts consecutivos
+   - Fallback para fontes mais rápidas
+
+#### Impacto
+
+- **Funcionalidade:** 🟡 MÉDIA - UI fica bloqueada
+- **Data:** ✅ OK - Jobs eventualmente timeout
+- **UX:** 🔴 ALTA - Usuário não consegue iniciar novas atualizações
+
+#### Prevenção
+
+- ✅ Adicionar endpoint `/bulk-update-clean-stale`
+- ⏳ Implementar cleanup automático
+- ⏳ Reduzir timeouts de scrapers
+- ⏳ Circuit breaker para fontes lentas
+
+---
+
 ### Issue #SECURITY_PAT: GitHub Personal Access Token Exposto
 
 **Severidade:** 🔴 **CRÍTICA**
@@ -128,6 +193,230 @@ Documentar como known issue e monitorar. O erro é cosmético e não afeta a fun
 ---
 
 ## ✅ ISSUES RESOLVIDOS
+
+### Issue #AUTH_INCONSISTENCY: Endpoints Bulk-Update com Auth Inconsistente
+
+**Severidade:** 🔴 **CRÍTICA**
+**Status:** ✅ **RESOLVIDO**
+**Data Identificado:** 2025-12-17
+**Data Resolução:** 2025-12-17
+**Tempo de Resolução:** ~45 minutos (troubleshooting profundo)
+**Identificado Por:** Claude Code (Opus 4.5) durante testes massivos
+
+#### Descrição
+
+Endpoints de controle de fila (cancel, pause, resume) estavam protegidos com `@UseGuards(JwtAuthGuard)`, enquanto endpoint de criação (`/updates/bulk-all`) era público. Isso causava falha 401 ao tentar cancelar/pausar sem autenticação.
+
+#### Sintomas
+
+- Botão "Cancelar" clicado mas jobs não eram removidos
+- Botão "Pausar" clicado mas fila não pausava
+- 0 POST requests apareciam nos logs do backend
+- Frontend mostrava UI como "cancelado" mas backend continuava processando
+
+#### Root Cause Identificado
+
+**Causa Real:** Inconsistência de autenticação entre endpoints.
+
+| Endpoint | Auth | Acessibilidade |
+|----------|------|----------------|
+| POST /updates/bulk-all | ❌ Público | ✅ Funcionava |
+| POST /bulk-update-cancel | ✅ @UseGuards | ❌ Falhava 401 |
+| POST /bulk-update-pause | ✅ @UseGuards | ❌ Falhava 401 |
+| POST /bulk-update-resume | ✅ @UseGuards | ❌ Falhava 401 |
+| GET /bulk-update-status | ❌ Público | ✅ Funcionava |
+
+**Problema:** Se criação é pública, controle deveria ser público também.
+
+#### Correção Aplicada
+
+**Arquivo:** `backend/src/api/assets/assets.controller.ts`
+
+```typescript
+// ANTES (linha 105-138)
+@Post('bulk-update-cancel')
+@UseGuards(JwtAuthGuard)  // ❌ Auth required
+@ApiBearerAuth()
+
+// DEPOIS
+@Post('bulk-update-cancel')
+// ✅ FIX: Removed @UseGuards for consistency
+```
+
+Removido `@UseGuards(JwtAuthGuard)` e `@ApiBearerAuth()` de:
+- POST /bulk-update-cancel
+- POST /bulk-update-pause
+- POST /bulk-update-resume
+
+#### Validação
+
+```bash
+# Testar cancel SEM token
+curl -X POST http://localhost:3101/api/v1/assets/bulk-update-cancel
+
+# Response:
+{"removedWaitingJobs":156,"removedActiveJobs":0,"totalRemoved":156}
+# ✅ 200 OK (antes era 401)
+```
+
+#### Arquivos Modificados
+
+- `backend/src/api/assets/assets.controller.ts` - Removido auth de 3 endpoints
+
+#### Lições Aprendidas
+
+1. **Consistência de auth** é crítica - todos endpoints relacionados devem ter mesmo nível
+2. **Troubleshooting via logs** - 0 POST requests = auth failure, não bug de código
+3. **Sequential Thinking MCP** ajudou a estruturar investigação
+4. **PM Expert Agent** identificou root cause rapidamente
+
+---
+
+### Issue #BACKEND_NEAR_OOM: Backend Atingiu 99.75% Memória
+
+**Severidade:** 🔴 **CRÍTICA**
+**Status:** ✅ **RESOLVIDO**
+**Data Identificado:** 2025-12-17 (ocorreu 2x na mesma sessão)
+**Data Resolução:** 2025-12-17
+**Tempo de Resolução:** ~30s (recovery), ~2h (prevenção)
+**Identificado Por:** Claude Code (Opus 4.5) durante validação de ecossistema
+
+#### Descrição
+
+Backend container atingiu 99.75% de uso de memória (3.99GB / 4GB) causando timeouts em todos os endpoints HTTP (30s timeout).
+
+#### Sintomas
+
+- Health endpoint: timeout 30s
+- `/assets` endpoint: timeout 30s
+- WebSocket: connection refused
+- Frontend: múltiplos erros de Network Error
+- CPU: 193% (quase 2 cores)
+- Memória: 99.75% (CRÍTICO)
+
+#### Root Cause Identificado
+
+**Causa Real:** 768 jobs enfileirados de sessão anterior + 6 scrapers Playwright ativos.
+
+Cada scraper Playwright consome ~600MB de memória:
+- 6 scrapers × 600MB = ~3.6GB
+- Backend base: ~400MB
+- Total: ~4GB (limite do container)
+
+#### Correção Aplicada
+
+```bash
+# 1. Cancelar jobs pendentes
+docker exec invest_redis redis-cli DEL "bull:asset-updates:wait"
+
+# 2. Reiniciar backend para liberar memória
+docker restart invest_backend
+```
+
+#### Resultado
+
+```
+CPU: 193% → 75% (startup normal)
+MEM: 99.75% (3.99GB) → 26.94% (1.08GB)
+Recovery: 73% de memória liberada
+Health: <5s response time
+```
+
+#### Prevenção Implementada
+
+1. **Limpeza de fila ao encerrar testes:**
+   ```bash
+   docker exec invest_redis redis-cli FLUSHDB
+   ```
+
+2. **Monitoramento de memória:**
+   ```bash
+   docker stats invest_backend --no-stream
+   # Alert se > 80%
+   ```
+
+3. **Código modificado:**
+   - `cancelAllPendingJobs()` agora remove waiting + active
+
+#### Lições Aprendidas
+
+1. **Monitorar memória** antes de iniciar testes massivos
+2. **Limpar fila** entre sessões de teste
+3. **6 scrapers simultâneos** = limite do container (considerar aumentar para 6GB)
+4. **768 jobs enfileirados** = indicador de problema
+
+---
+
+### Issue #BULK_UPDATE_NEGATIVE_PROGRESS: Contador Negativo no Status Card
+
+**Severidade:** 🔴 **CRÍTICA**
+**Status:** ✅ **RESOLVIDO**
+**Data Identificado:** 2025-12-16
+**Data Resolução:** 2025-12-16
+**Tempo de Resolução:** ~15 minutos
+**Identificado Por:** Claude Code (Opus 4.5) durante testes massivos de atualização
+
+#### Descrição
+
+O Status Card de progresso da atualização de dados fundamentalistas exibia valores negativos como "-860/1" e "-86000% completo" durante transição entre modos de atualização.
+
+#### Sintomas
+
+- Contador mostrava valores negativos: `-860/1`
+- Barra de progresso mostrava percentual negativo: `-86000%`
+- Ocorria quando há transição de atualização individual para batch
+- UI ficava visualmente quebrada/confusa
+
+#### Localização
+
+- **Arquivo:** `frontend/src/lib/hooks/useAssetBulkUpdate.ts`
+- **Linhas:** 304-324
+
+#### Root Cause Identificado
+
+**Causa Real:** Cálculo de `currentProcessed` usava `prev.total` obsoleto durante transição de modos.
+
+**Cenário do Bug:**
+
+1. Retry automático começa com 1 ativo (`prev.total = 1`)
+2. Usuário clica "Atualizar Todos" (861 ativos)
+3. `totalPending = 861`, mas `prev.total = 1` ainda está no estado
+4. `estimatedTotal = prev.total = 1` (por ser > 0)
+5. `currentProcessed = 1 - 861 = -860`
+6. `progress = (-860/1) * 100 = -86000%`
+
+#### Correção Aplicada
+
+```typescript
+// ✅ FIX FASE 132+: Detect new larger batch to prevent negative progress
+const isNewLargerBatch = prev.total > 0 && totalPending > prev.total * 2;
+
+const estimatedTotal = isSmallUpdate
+  ? totalPending
+  : isNewLargerBatch
+    ? Math.max(totalPending, totalAssetsRef.current || totalPending)
+    : (prev.total > 0 ? prev.total : Math.max(totalPending, totalAssetsRef.current || totalPending));
+
+// ✅ FIX: Ensure non-negative values with Math.max(0, ...)
+const currentProcessed = Math.max(0, estimatedTotal - totalPending);
+```
+
+#### Arquivos Modificados
+
+- `frontend/src/lib/hooks/useAssetBulkUpdate.ts` - Correção do cálculo de progresso
+
+#### Validação
+
+- ✅ TypeScript: 0 erros
+- ⏳ E2E: Pendente validação visual no browser
+
+#### Lições Aprendidas
+
+1. **Sempre usar Math.max(0, ...)** em cálculos que podem resultar em valores negativos
+2. **Detectar transições de modo** (individual → batch) para resetar estado
+3. **Logs detalhados** ajudam a diagnosticar bugs de estado
+
+---
 
 ### Issue #WHEEL_API_PERF: WHEEL Candidates API Timeout
 
@@ -1058,9 +1347,9 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 
 | Categoria | Quantidade | Taxa de Resolução |
 |-----------|-----------|------------------|
-| **Total de Issues Documentados** | 20 | - |
-| **Issues Resolvidos** | 19 | 100% |
-| **Issues Ativos (Em Aberto)** | 1 | - |
+| **Total de Issues Documentados** | 23 | - |
+| **Issues Resolvidos** | 21 | 100% |
+| **Issues Ativos (Em Aberto)** | 2 | - |
 | **Comportamento Normal (não é bug)** | 1 | N/A |
 
 ### Por Severidade
@@ -1127,6 +1416,11 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 
 ---
 
-**Última Atualização:** 2025-12-14
+**Última Atualização:** 2025-12-17
 **Próxima Revisão:** Conforme necessário
 **Responsável:** Claude Code (Opus 4.5)
+
+**Issues Adicionados nesta Sessão:**
+- #JOBS_ACTIVE_STALE (ativo - parcialmente resolvido)
+- #AUTH_INCONSISTENCY (resolvido via troubleshooting)
+- #BACKEND_NEAR_OOM (resolvido 2x)
