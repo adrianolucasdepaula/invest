@@ -199,12 +199,13 @@ O projeto possui **sistema de automacao 100%** com deteccao de keywords, correla
 
 **Cobertura:**
 
-- 18 paginas frontend
+- 19 páginas frontend (15 dashboard + 3 auth + 1 root)
+- 16 custom hooks (frontend/src/lib/hooks/)
 - 11 controllers backend
 - 21 containers Docker
 - 34+ APIs externas
 - 35 Python scrapers
-- 6 vulnerabilidades criticas documentadas
+- 6 vulnerabilidades críticas documentadas
 
 ### Slash Commands Relacionados
 
@@ -1137,7 +1138,7 @@ O PM Expert tem acesso a:
 
 ### Visão Geral
 
-O projeto possui **7 sub-agents especializados** que DEVEM ser invocados para tarefas específicas.
+O projeto possui **10 sub-agents especializados** que DEVEM ser invocados para tarefas específicas.
 
 ### Matriz de Invocação por Contexto
 
@@ -1150,6 +1151,9 @@ O projeto possui **7 sub-agents especializados** que DEVEM ser invocados para ta
 | Criar/debugar gráficos | `chart-analysis-expert` | chart, candlestick, recharts, lightweight |
 | Corrigir erros TypeScript | `typescript-validation-expert` | tsc, type error, strict, any |
 | Criar/debugar jobs BullMQ | `queue-management-expert` | job, queue, bullmq, processor |
+| Criar migrations TypeORM | `database-migration-expert` | migration, schema, entity, index, sql |
+| Atualizar documentação técnica | `documentation-expert` | docs, readme, changelog, roadmap, index |
+| Testes E2E e validação MCP Triplo | `e2e-testing-expert` | e2e, playwright, validation, a11y, triplo |
 
 ### Quando Usar Cada Agent
 
@@ -1227,6 +1231,39 @@ de tipo no projeto frontend.
 ```text
 Use o queue-management-expert para criar um job de sincronização
 de dados com retry exponencial.
+```
+
+#### 8. database-migration-expert
+
+**Use quando:** Criar migrations TypeORM, schema changes, indexes, data migrations
+**Ferramentas:** Read, Edit, Write, Glob, Grep, Bash
+**Exemplo de prompt:**
+
+```text
+Use o database-migration-expert para criar uma migration que adiciona
+a tabela watchlists com relacionamento para users e indexes otimizados.
+```
+
+#### 9. documentation-expert
+
+**Use quando:** Atualizar documentação de fases, sync CLAUDE.md ↔ GEMINI.md, ROADMAP.md
+**Ferramentas:** Read, Edit, Write, Glob, Grep
+**Exemplo de prompt:**
+
+```text
+Use o documentation-expert para criar VALIDACAO_FASE_133.md e atualizar
+ROADMAP.md com a fase completa.
+```
+
+#### 10. e2e-testing-expert
+
+**Use quando:** Testes E2E, validação MCP Triplo, accessibility audits
+**Ferramentas:** Read, Edit, Write, Glob, Grep, Bash, mcp__playwright__*, mcp__chrome-devtools__*, mcp__a11y__*
+**Exemplo de prompt:**
+
+```text
+Use o e2e-testing-expert para executar MCP Triplo na página /assets e
+validar que não há erros de console, network ou acessibilidade.
 ```
 
 ### Anti-Patterns de Agents
@@ -1317,7 +1354,7 @@ de dados com retry exponencial.
 
 ### Visão Geral
 
-O projeto possui **12 slash commands** e **8 skills** que DEVEM ser invocados em contextos específicos.
+O projeto possui **14 slash commands** que DEVEM ser invocados em contextos específicos.
 
 ### Matriz de Invocação Obrigatória
 
@@ -1391,6 +1428,9 @@ Início Tarefa
 | `/sync-docs` | Sincroniza CLAUDE.md ↔ GEMINI.md | `.claude/commands/sync-docs.md` |
 | `/validate-all` | TypeScript + Build + Lint | `.claude/commands/validate-all.md` |
 | `/validate-phase` | Validação completa de fase | `.claude/commands/validate-phase.md` |
+| `/mcp-browser-reset` | Reset de sessões de browser dos MCPs | `.claude/commands/mcp-browser-reset.md` |
+| `/validate-dev-config` | Valida configurações de desenvolvimento | `.claude/commands/validate-dev-config.md` |
+| `/rebuild-guide` | Guia de rebuild vs restart de containers | `.claude/commands/rebuild-guide.md` |
 
 ---
 
@@ -1434,33 +1474,63 @@ Início Tarefa
 
 ---
 
-## Context Management (Opus 4.5 - Plano Pro)
+## Context Management (Sonnet 4.5 - 1M Context Beta)
 
-### Limites Oficiais do Claude Opus 4.5
+### Limites Oficiais do Claude Sonnet 4.5
 
-**Fonte: [Models Overview - Anthropic Platform Docs](https://platform.claude.com/docs/en/about-claude/models/overview)**
+**Fontes Oficiais:**
+- [Models Overview](https://platform.claude.com/docs/en/about-claude/models/all-models)
+- [Context Windows](https://platform.claude.com/docs/en/build-with-claude/context-windows)
+- [1M Context Announcement](https://claude.com/blog/1m-context)
 
 | Modelo | Context Window | Max Output | Preco Input | Preco Output |
 |--------|----------------|------------|-------------|--------------|
-| **Claude Opus 4.5** | 200K tokens | **64K tokens** | $5/MTok | $25/MTok |
-| Claude Sonnet 4.5 | 200K / 1M (beta) | 64K tokens | $3/MTok | $15/MTok |
+| **Claude Sonnet 4.5** | **1M tokens (beta)** | **64K tokens** | $3/MTok ($6 >200K) | $15/MTok ($22.50 >200K) |
+| Claude Opus 4.5 | 200K tokens | 64K tokens | $5/MTok | $25/MTok |
 | Claude Haiku 4.5 | 200K tokens | 64K tokens | $1/MTok | $5/MTok |
 
-### Configuracao Otimizada (Alinhada com Limites Oficiais)
+### Especificacoes Sonnet 4.5 (Dezembro 2025)
 
-| Variavel | Valor | Limite Oficial | Fonte |
-|----------|-------|----------------|-------|
-| `CLAUDE_CODE_MAX_OUTPUT_TOKENS` | 64000 | 64000 (maximo) | [Models Overview](https://platform.claude.com/docs/en/about-claude/models/overview) |
-| `MAX_THINKING_TOKENS` | 32000 | 32000 (recomendado) | [Extended Thinking](https://docs.aws.amazon.com/bedrock/latest/userguide/claude-messages-extended-thinking.html) |
-| `MAX_MCP_OUTPUT_TOKENS` | 25000 | 25000 (padrao) | [Claude Code Settings](https://code.claude.com/docs/en/settings) |
-| `BASH_DEFAULT_TIMEOUT_MS` | 600000 | - | 10 minutos - builds longos |
-| `BASH_MAX_TIMEOUT_MS` | 1800000 | - | 30 minutos - operacoes muito longas |
-| `MCP_TIMEOUT` | 120000 | - | 2 minutos - conexao inicial com MCPs |
-| `MCP_TOOL_TIMEOUT` | 300000 | - | 5 minutos - operacoes de MCPs complexas |
+| Parametro | Valor | Observacao |
+|-----------|-------|------------|
+| **Context Window (padrao)** | 200K tokens | ~150K palavras |
+| **Context Window (beta)** | **1M tokens** | ~750K palavras, requer beta header |
+| **Max Output Tokens** | 64K tokens | Igual ao Opus 4.5 |
+| **Extended Thinking** | Sim | Tokens removidos automaticamente |
+| **Context Awareness** | Sim | Rastreia tokens restantes nativamente |
+| **API ID** | `claude-sonnet-4-5-20250929` | Versao mais recente |
+| **Conhecimento confiavel** | Jan 2025 | Dados de treinamento ate Jul 2025 |
+
+### Como Habilitar 1M Context Window
+
+**Requisitos:**
+- Organizacao em **Tier 4** ou com rate limits customizados
+- Header beta obrigatorio: `context-1m-2025-08-07`
+
+**Python SDK:**
+```python
+response = client.beta.messages.create(
+    model="claude-sonnet-4-5",
+    betas=["context-1m-2025-08-07"]  # Header obrigatorio para 1M
+)
+```
+
+### Configuracao Otimizada (Sonnet 4.5 - 1M Contexto)
+
+| Variavel | Valor | Observacao |
+|----------|-------|------------|
+| `CLAUDE_CODE_MAX_OUTPUT_TOKENS` | 64000 | Maximo oficial |
+| `MAX_THINKING_TOKENS` | 100000 | Extended thinking |
+| `MAX_MCP_OUTPUT_TOKENS` | 200000 | Output de MCPs |
+| `MAX_TOOL_OUTPUT_TOKENS` | 200000 | Output de ferramentas |
+| `BASH_DEFAULT_TIMEOUT_MS` | 600000 | 10 minutos - builds longos |
+| `BASH_MAX_TIMEOUT_MS` | 1800000 | 30 minutos - operacoes muito longas |
+| `MCP_TIMEOUT` | 120000 | 2 minutos - conexao inicial com MCPs |
+| `MCP_TOOL_TIMEOUT` | 300000 | 5 minutos - operacoes de MCPs complexas |
 
 **Notas:**
 - Valores alinhados com limites oficiais da Anthropic (Dezembro 2025)
-- `MAX_TOOL_OUTPUT_TOKENS` removido (nao documentado oficialmente)
+- Context window de 1M permite sessoes muito mais longas sem `/compact`
 
 ### Leitura de Arquivos Grandes
 
@@ -1516,9 +1586,10 @@ Quando for necessario compactar contexto, use `/compact` com estas instrucoes:
 Discard: verbose explanations, old debug output, completed task details, intermediate steps.
 ```
 
-### Extended Thinking Guidelines (Opus 4.5)
+### Extended Thinking Guidelines (Sonnet 4.5)
 
-**Opus 4.5 preserva thinking blocks automaticamente entre turnos.**
+**Sonnet 4.5 preserva thinking blocks automaticamente entre turnos.**
+**Context Awareness nativo rastreia tokens restantes durante a conversacao.**
 
 **Use High Effort para:**
 
@@ -1546,6 +1617,72 @@ Discard: verbose explanations, old debug output, completed task details, interme
 3. **Monitorar com `/cost`** o uso de tokens
 4. **Dividir tarefas complexas** em sessoes separadas
 5. **Evitar carregar arquivos grandes** desnecessariamente
+
+### Protecao para MCPs Playwright/Chrome DevTools
+
+**Hooks de Protecao Ativos:**
+
+| Hook | Script | Funcao |
+|------|--------|--------|
+| `context-monitor.js` | UserPromptSubmit | Monitora contexto, bloqueia em 85% |
+| `pre-playwright-guard.js` | PreToolUse (MCPs) | Bloqueia snapshots quando contexto > 70% |
+
+**Thresholds de Bloqueio:**
+
+| Contexto | Acao |
+|----------|------|
+| < 50% | Permitir tudo |
+| 50-70% | Warning, mas permite |
+| 70-85% | BLOQUEIA snapshots (permite clicks, navegacao) |
+| > 85% | BLOQUEIA TUDO, forcar /compact |
+
+**Consumo de Tokens por Operacao MCP (1M Context):**
+
+| Operacao | Tokens | % Contexto (200K) | % Contexto (1M) |
+|----------|--------|-------------------|-----------------|
+| `browser_snapshot` (pagina complexa) | 25-50k | 12-25% | **2.5-5%** |
+| `take_snapshot` (Chrome DevTools) | 18-30k | 9-15% | **1.8-3%** |
+| `browser_take_screenshot` (PNG) | ~1k | <1% | **<0.1%** |
+| `browser_click/navigate` | ~100 | <0.1% | **<0.01%** |
+
+**Thresholds Absolutos (1M Context):**
+
+| Threshold | % | Tokens Absolutos |
+|-----------|---|------------------|
+| Warning | 50% | **500K tokens** |
+| Compact | 70% | **700K tokens** |
+| Block | 85% | **850K tokens** |
+
+**Best Practice (Sonnet 4.5 - 1M):**
+
+1. **Snapshots mais livres** - Com 1M, snapshots consomem apenas ~3% cada
+2. **Menos `/compact`** - Thresholds absolutos muito maiores
+3. **Sessoes longas** - Ate 75K linhas de codigo em uma sessao
+4. **Context Awareness** - Modelo rastreia tokens automaticamente
+
+### Pacotes MCP Oficiais (Nomes Corretos)
+
+**IMPORTANTE:** Use os nomes corretos dos pacotes MCP. Os pacotes abaixo foram validados em 2025-12-17.
+
+| MCP Server | Pacote npm Correto | Status |
+|------------|-------------------|--------|
+| **Playwright** | `@playwright/mcp@latest` | ✅ Oficial |
+| **Chrome DevTools** | `chrome-devtools-mcp@latest` | ✅ Oficial |
+| **React Context** | `react-context-mcp@latest` | ✅ Comunidade |
+| **A11y (Accessibility)** | `a11y-mcp-server` | ✅ Comunidade |
+| **Sequential Thinking** | `@modelcontextprotocol/server-sequential-thinking` | ✅ Oficial |
+| **Context7 (Docs)** | `@upstash/context7-mcp` | ✅ Comunidade (Upstash) |
+
+**Pacotes INCORRETOS (NÃO EXISTEM no npm):**
+- ❌ `@anthropic/mcp-server-a11y` → Use `a11y-mcp-server`
+- ❌ `@anthropic/mcp-sequential-thinking` → Use `@modelcontextprotocol/server-sequential-thinking`
+- ❌ `@anthropic/context7-mcp` → Use `@upstash/context7-mcp`
+
+**Fontes:**
+- [A11y MCP Server - LobeHub](https://lobehub.com/mcp/temanuel1-a11y-mcp-server)
+- [Sequential Thinking MCP - PulseMCP](https://www.pulsemcp.com/servers/anthropic-sequential-thinking)
+- [Context7 MCP - npm](https://www.npmjs.com/package/@upstash/context7-mcp)
+- [Model Context Protocol Servers - GitHub](https://github.com/modelcontextprotocol/servers)
 
 ### Comandos Uteis
 
