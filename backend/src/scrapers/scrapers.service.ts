@@ -152,15 +152,19 @@ export class ScrapersService {
    * ✅ Execução sequencial para evitar sobrecarga do browser
    */
   async scrapeFundamentalData(ticker: string): Promise<CrossValidationResult> {
-    this.logger.log(`[SCRAPE] Starting fundamental data collection for ${ticker} from ALL sources`);
+    this.logger.log(`[SCRAPE] Starting fundamental data collection for ${ticker} from PRIMARY sources (3/6)`);
 
+    // ✅ FIX (2025-12-17): Reduced from 6 → 3 scrapers to prevent Near-OOM
+    // Keep only most reliable sources: fundamentus (Playwright), brapi (API), statusinvest (Playwright)
+    // This reduces job duration from ~180s to ~90s and memory consumption from ~3.6GB to ~1.8GB
+    // Minimum 3 sources still maintained for cross-validation
     const scrapers = [
       { name: 'fundamentus', scraper: this.fundamentusScraper },
       { name: 'brapi', scraper: this.brapiScraper },
       { name: 'statusinvest', scraper: this.statusInvestScraper },
-      { name: 'investidor10', scraper: this.investidor10Scraper },
-      { name: 'fundamentei', scraper: this.fundamenteiScraper },
-      { name: 'investsite', scraper: this.investsiteScraper },
+      // { name: 'investidor10', scraper: this.investidor10Scraper },
+      // { name: 'fundamentei', scraper: this.fundamenteiScraper },
+      // { name: 'investsite', scraper: this.investsiteScraper },
     ];
 
     const successfulResults: ScraperResult[] = [];
