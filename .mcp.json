@@ -1,38 +1,38 @@
 {
   "mcpServers": {
     "playwright": {
-      "command": "cmd",
-      "args": ["/c", "npx", "@playwright/mcp@latest"],
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
       "env": {},
       "alwaysAllow": ["*"]
     },
     "chrome-devtools": {
       "command": "cmd",
-      "args": ["/c", "npx", "chrome-devtools-mcp@latest"],
+      "args": ["/c", "npx", "-y", "chrome-devtools-mcp@latest"],
       "env": {},
       "alwaysAllow": ["*"]
     },
     "a11y": {
       "command": "cmd",
-      "args": ["/c", "npx", "@anthropic/mcp-server-a11y@latest"],
+      "args": ["/c", "npx", "-y", "a11y-mcp-server"],
       "env": {},
       "alwaysAllow": ["*"]
     },
     "context7": {
       "command": "cmd",
-      "args": ["/c", "npx", "@anthropic/context7-mcp@latest"],
+      "args": ["/c", "npx", "-y", "@upstash/context7-mcp"],
       "env": {},
       "alwaysAllow": ["*"]
     },
     "sequential-thinking": {
       "command": "cmd",
-      "args": ["/c", "npx", "@anthropic/mcp-sequential-thinking@latest"],
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
       "env": {},
       "alwaysAllow": ["*"]
     },
     "react-context": {
       "command": "cmd",
-      "args": ["/c", "npx", "-y", "react-context-mcp@latest"],
+      "args": ["/c", "npx", "-y", "react-context-mcp@latest", "--headless", "--isolated"],
       "env": {},
       "alwaysAllow": ["*"]
     }

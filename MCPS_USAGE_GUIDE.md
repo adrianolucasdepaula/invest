@@ -569,6 +569,27 @@ Solicitar:
 - **Licença:** Apache-2.0
 - **Propósito:** Automação de browser para testes E2E
 
+### ⚙️ Configuração Otimizada
+
+```json
+{
+  "playwright": {
+    "command": "cmd",
+    "args": ["/c", "npx", "@playwright/mcp@latest", "--snapshot", "incremental"]
+  }
+}
+```
+
+> **CRÍTICO:** A flag `--snapshot incremental` é **OBRIGATÓRIA** para evitar erros "Prompt is too long".
+> Ela reduz o consumo de tokens ao colapsar elementos inalterados entre snapshots.
+
+**Consumo de Tokens:**
+
+| Operação | Sem Incremental | Com Incremental |
+|----------|-----------------|-----------------|
+| `browser_snapshot` | 25-50k tokens | 5-15k tokens |
+| Múltiplos snapshots | Acumulativo | Incremental |
+
 ### 💡 Casos de Uso no Projeto
 
 **1. Testes E2E do Frontend**

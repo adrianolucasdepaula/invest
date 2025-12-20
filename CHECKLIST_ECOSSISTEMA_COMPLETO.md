@@ -1039,6 +1039,9 @@ for table in tables:
 | **react-context** | react-context-mcp | Debug React | component tree, state |
 | **context7** | @anthropic/context7-mcp | Contexto | context management |
 
+> **CRITICO:** Playwright MCP DEVE usar `--snapshot incremental` para evitar "Prompt is too long".
+> Configuracao: `"args": ["/c", "npx", "@playwright/mcp@latest", "--snapshot", "incremental"]`
+
 ### 21.2 11 Slash Commands
 
 | Comando | Proposito | Quando Usar |

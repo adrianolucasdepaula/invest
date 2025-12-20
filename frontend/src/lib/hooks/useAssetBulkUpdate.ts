@@ -303,17 +303,27 @@ export function useAssetBulkUpdate(options?: {
             // falling through to this else branch which could use wrong estimatedTotal
             const isSmallUpdate = totalPending <= 5;
 
+            // ✅ FIX FASE 132+: Detect new larger batch to prevent negative progress
+            // Bug: If prev.total=1 (from retry) and totalPending=861 (new batch),
+            // currentProcessed = 1 - 861 = -860 (NEGATIVE!)
+            // Solution: Reset estimatedTotal when totalPending >> prev.total
+            const isNewLargerBatch = prev.total > 0 && totalPending > prev.total * 2;
+
             // For small updates (likely individual), use totalPending directly
+            // For new larger batches, use totalPending (reset prev.total)
             // For larger updates, use existing total or estimate
             const estimatedTotal = isSmallUpdate
               ? totalPending
-              : (prev.total > 0 ? prev.total : Math.max(totalPending, totalAssetsRef.current || totalPending));
+              : isNewLargerBatch
+                ? Math.max(totalPending, totalAssetsRef.current || totalPending)
+                : (prev.total > 0 ? prev.total : Math.max(totalPending, totalAssetsRef.current || totalPending));
 
             // Calculate current progress based on remaining jobs
-            const currentProcessed = estimatedTotal - totalPending;
+            // ✅ FIX: Ensure non-negative values with Math.max(0, ...)
+            const currentProcessed = Math.max(0, estimatedTotal - totalPending);
             const progress = estimatedTotal > 0 ? Math.round((currentProcessed / estimatedTotal) * 100) : 0;
 
-            console.log(`[ASSET BULK WS] Updating progress: totalPending=${totalPending}, isSmallUpdate=${isSmallUpdate}, estimatedTotal=${estimatedTotal}, currentProcessed=${currentProcessed}`);
+            console.log(`[ASSET BULK WS] Updating progress: totalPending=${totalPending}, isSmallUpdate=${isSmallUpdate}, isNewLargerBatch=${isNewLargerBatch}, estimatedTotal=${estimatedTotal}, currentProcessed=${currentProcessed}`);
 
             return {
               ...prev,

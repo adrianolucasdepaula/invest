@@ -153,7 +153,7 @@
 ```json
 {
   "mcpServers": {
-    "playwright": { "command": "cmd", "args": ["/c", "npx", "@playwright/mcp@latest"] },
+    "playwright": { "command": "cmd", "args": ["/c", "npx", "@playwright/mcp@latest", "--snapshot", "incremental"] },
     "chrome-devtools": { "command": "cmd", "args": ["/c", "npx", "chrome-devtools-mcp@latest"] },
     "a11y": { "command": "cmd", "args": ["/c", "npx", "@anthropic/mcp-server-a11y@latest"] },
     "context7": { "command": "cmd", "args": ["/c", "npx", "@anthropic/context7-mcp@latest"] },
@@ -161,6 +161,8 @@
   }
 }
 ```
+
+> **IMPORTANTE:** A flag `--snapshot incremental` reduz significativamente o consumo de tokens ao colapsar elementos inalterados entre snapshots.
 
 ### 2.2 MCPs Globais + Projeto
 

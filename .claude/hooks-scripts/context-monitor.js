@@ -1,37 +1,41 @@
 #!/usr/bin/env node
 /**
- * Context Monitor v1.0
+ * Context Monitor v2.0 - CAMADA 4
  *
- * Monitors context usage by analyzing transcript file size.
+ * Monitors context usage by reading REAL tokens from transcript.
  * Triggers warnings or blocks when threshold is reached.
  *
  * Usage: Called by hooks (UserPromptSubmit, PostToolUse)
  *
- * Estimation: ~4 characters = 1 token (conservative)
- * Opus 4.5 context: 200K tokens = ~800K characters
+ * MUDANCA v2.0:
+ * - Usa token-reader.js para ler tokens REAIS do transcript
+ * - NAO usa mais tamanho em bytes (estava ERRADO - transcript e append-only)
+ *
+ * FONTES:
+ * - https://codelynx.dev/posts/calculate-claude-code-context
+ * - https://github.com/anthropics/claude-code/issues/6577
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Configuration
-const CONFIG = {
-  // Opus 4.5 context window
-  maxTokens: 200000,
-  charsPerToken: 4,
+// Importar token-reader (calculo CORRETO de tokens)
+const { getContextUsage } = require('./token-reader');
 
-  // Thresholds (percentage)
-  warningThreshold: 40,    // Yellow warning
-  compactThreshold: 50,    // Strong suggestion to compact
-  blockThreshold: 70,      // Block until compact (optional)
+// Configuration - Thresholds baseados em TOKENS REAIS
+const CONFIG = {
+  // Sonnet 4.5 context window (1M beta)
+  maxTokens: 1000000,
+
+  // Thresholds (percentage) - Baseados em tokens REAIS, nao mais em bytes
+  warningThreshold: 50,    // Warning em 50%
+  compactThreshold: 70,    // Sugerir compact em 70%
+  blockThreshold: 85,      // Bloquear em 85%
 
   // Paths
   stateFile: path.join(process.cwd(), '.claude', 'context-state.json'),
   logFile: path.join(process.cwd(), '.claude', 'activity.log'),
 };
-
-// Calculate max characters
-const maxChars = CONFIG.maxTokens * CONFIG.charsPerToken; // 800K chars
 
 // Get timestamp
 function getTimestamp() {
@@ -67,22 +71,8 @@ function log(message) {
   fs.appendFileSync(CONFIG.logFile, `[${timestamp}] ${message}\n`);
 }
 
-// Get transcript size
-function getTranscriptSize(transcriptPath) {
-  try {
-    if (transcriptPath && fs.existsSync(transcriptPath)) {
-      const stats = fs.statSync(transcriptPath);
-      return stats.size;
-    }
-  } catch (e) {}
-  return 0;
-}
-
-// Calculate usage percentage
-function calculateUsage(transcriptSize) {
-  const usagePercent = (transcriptSize / maxChars) * 100;
-  return Math.min(usagePercent, 100);
-}
+// REMOVIDO: getTranscriptSize() e calculateUsage()
+// Agora usamos getContextUsage() do token-reader.js que le tokens REAIS
 
 // Create progress bar
 function createProgressBar(percent) {
@@ -104,38 +94,48 @@ function checkContext(inputData) {
     return;
   }
 
-  const transcriptSize = getTranscriptSize(transcriptPath);
-  const usagePercent = calculateUsage(transcriptSize);
-  const estimatedTokens = Math.round(transcriptSize / CONFIG.charsPerToken);
+  // Usar tokens REAIS do transcript
+  const usage = getContextUsage(transcriptPath);
+  const usagePercent = usage.percent;
+  const tokens = usage.tokens;
+  const remainingTokens = CONFIG.maxTokens - tokens;
 
   state.lastUsagePercent = usagePercent;
 
   // Log every 10 checks
   if (state.checksCount % 10 === 0) {
-    log(`[CONTEXT] Usage: ${usagePercent.toFixed(1)}% (~${estimatedTokens.toLocaleString()} tokens)`);
+    log(`[CONTEXT] Usage: ${usagePercent.toFixed(1)}% (${tokens.toLocaleString()} tokens REAIS)`);
   }
 
-  // Check thresholds (silent mode - only logs to file)
+  // Check thresholds - mensagens via stderr para Claude
   if (usagePercent >= CONFIG.blockThreshold && !state.compactSuggested) {
-    // CRITICAL - Block level
-    log(`[CRITICAL] Context at ${usagePercent.toFixed(1)}% (~${estimatedTokens.toLocaleString()} tokens) - COMPACT URGENTE`);
+    // CRITICAL - Block level (85%+)
+    log(`[CRITICAL] Context at ${usagePercent.toFixed(1)}% (${tokens.toLocaleString()} tokens) - COMPACT URGENTE`);
     state.compactSuggested = true;
     state.warningShown = true;
     saveState(state);
-    // Exit 2 to BLOCK operation until compact
+
+    // Exit 2 = BLOQUEIA e envia mensagem ao Claude via stderr
+    console.error(`CONTEXTO CRITICO: ${usagePercent.toFixed(1)}% (${tokens.toLocaleString()} tokens)
+
+ACAO OBRIGATORIA: Execute /compact AGORA para continuar.
+
+Motivo: Contexto acima de 85% - risco iminente de "Prompt is too long".
+        Tokens restantes: ${remainingTokens.toLocaleString()}`);
+
     process.exit(2);
 
   } else if (usagePercent >= CONFIG.compactThreshold && !state.compactSuggested) {
-    // COMPACT THRESHOLD - Strong suggestion (silent)
-    log(`[COMPACT-NEEDED] Context at ${usagePercent.toFixed(1)}% (~${estimatedTokens.toLocaleString()} tokens) - execute /compact`);
+    // COMPACT THRESHOLD (70%+) - Strong suggestion (silent)
+    log(`[COMPACT-NEEDED] Context at ${usagePercent.toFixed(1)}% (${tokens.toLocaleString()} tokens) - execute /compact`);
     state.compactSuggested = true;
     state.warningShown = true;
     saveState(state);
     process.exit(0);
 
   } else if (usagePercent >= CONFIG.warningThreshold && !state.warningShown) {
-    // WARNING THRESHOLD (silent)
-    log(`[WARNING] Context at ${usagePercent.toFixed(1)}% (~${estimatedTokens.toLocaleString()} tokens)`);
+    // WARNING THRESHOLD (50%+) (silent)
+    log(`[WARNING] Context at ${usagePercent.toFixed(1)}% (${tokens.toLocaleString()} tokens)`);
     state.warningShown = true;
     saveState(state);
     process.exit(0);
@@ -143,7 +143,7 @@ function checkContext(inputData) {
   } else if (usagePercent < CONFIG.warningThreshold) {
     // Reset flags if usage dropped (after compact)
     if (state.warningShown || state.compactSuggested) {
-      log(`[RESET] Context dropped to ${usagePercent.toFixed(1)}% after compact`);
+      log(`[RESET] Context dropped to ${usagePercent.toFixed(1)}% (${tokens.toLocaleString()} tokens) after compact`);
       state.warningShown = false;
       state.compactSuggested = false;
     }
