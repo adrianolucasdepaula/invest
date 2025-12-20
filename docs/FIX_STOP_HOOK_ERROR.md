@@ -192,9 +192,14 @@ node .claude/hooks-scripts/session-tracker.js stop
 **Arquivos .claude/ estão no .gitignore**
 
 Isso significa:
-- ❌ Fix não é commitado no repositório
-- ✅ Fix aplicado localmente funciona
-- ⚠️ Outros desenvolvedores podem ter o mesmo erro
+- ❌ Fixes NÃO são commitados no repositório (configuração local)
+- ✅ Fixes aplicados LOCALMENTE e funcionam perfeitamente
+- ✅ Documentação DO fix está commitada (este arquivo)
+- ⚠️ Outros desenvolvedores devem aplicar o mesmo fix manualmente
+
+**Arquivos modificados (local only):**
+- `.claude/hooks-scripts/response-validator.js` (schema Stop hook)
+- `.claude/hooks-scripts/tag-analytics.js` (JSON output)
 
 ### Solução Permanente (Opcional)
 
