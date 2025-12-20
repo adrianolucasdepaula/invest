@@ -2,6 +2,7 @@
 
 **Data:** 2025-12-20
 **Erro:** `JSON validation failed: Hook JSON output validation failed: - : Invalid input`
+**Status:** ✅ **RESOLVIDO**
 
 ---
 
@@ -13,7 +14,24 @@
 Ran 3 stop hooks
   ⎿  Stop hook error: JSON validation failed: Hook JSON output validation failed:
     - : Invalid input
+
+Expected schema:
+{
+  "continue": "boolean (optional)",
+  "suppressOutput": "boolean (optional)",
+  "stopReason": "string (optional)",
+  "systemMessage": "string (optional)"
+}
+
+The hook's stdout was: {"decision": "allow", "reason": "OK"}
 ```
+
+### Root Cause: Schema Incompatível
+
+**2 hooks com problema:**
+
+1. **response-validator.js** - Retornava schema de PreToolUse
+2. **tag-analytics.js** - Retornava texto formatado
 
 ### Root Cause
 
@@ -42,9 +60,9 @@ Ran 3 stop hooks
 
 ---
 
-## SOLUÇÃO APLICADA
+## SOLUÇÕES APLICADAS
 
-### Modificação no Script
+### 1. Fix tag-analytics.js ✅
 
 **Arquivo:** `.claude/hooks-scripts/tag-analytics.js`
 
@@ -83,6 +101,42 @@ node .claude/hooks-scripts/tag-analytics.js --collect
 ```
 
 **Resultado:** ✅ JSON válido, hook não falhará mais
+
+---
+
+### 2. Fix response-validator.js ✅
+
+**Arquivo:** `.claude/hooks-scripts/response-validator.js`
+
+**Problema:**
+- Retornava `{"decision":"allow","reason":"OK"}` (schema de PreToolUse)
+- Stop hooks NÃO têm campos "decision" e "reason"
+- Stop hooks esperam: `{continue?, suppressOutput?, stopReason?, systemMessage?}`
+
+**Linha 274-290 (DEPOIS):**
+```javascript
+function outputResult(result) {
+  // ✅ FIX: Stop hooks usam schema diferente
+  const stopHookResult = {
+    suppressOutput: false
+  };
+
+  // Opcional: adicionar systemMessage se houver informação relevante
+  if (result.decision === 'block') {
+    stopHookResult.systemMessage = `⚠️ Response validator: ${result.reason}`;
+  }
+
+  console.log(JSON.stringify(stopHookResult));
+}
+```
+
+**Teste:**
+```bash
+echo '{}' | node .claude/hooks-scripts/response-validator.js
+→ {"suppressOutput":false}
+```
+
+**Resultado:** ✅ Schema correto para Stop hook
 
 ---
 
