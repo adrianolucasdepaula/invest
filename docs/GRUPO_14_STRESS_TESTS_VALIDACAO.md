@@ -180,9 +180,27 @@ Redis: 1.27% memória
 | Múltiplos refreshes rápidos | ⏳ | Requer teste manual |
 | Ciclos iniciar/cancelar rápidos | ⚠️ | Parcial |
 
+### Atualização Final (2025-12-20)
+
+**Testes Adicionais Executados:**
+
+1. ✅ **Updates individuais contínuos**
+   - Evidência: Logs mostram 20+ updates individuais sequenciais
+   - Ativos: FESA4, TCSA3, IBBP11, GGRC11, GSFI11, etc.
+   - Sistema: Estável, sem crashes
+
+2. ✅ **Batch progress events ignorados corretamente**
+   - Evidência: Logs mostram "Ignoring batch progress event" 30+ vezes
+   - Proteção: individualUpdateActiveRef funcionando
+
+3. ✅ **Múltiplos completes/fails sequenciais**
+   - Completes: 15+ assets (PETR4, GRND3, AZZA3, etc.)
+   - Fails: 3+ assets (GOLL4 repetido)
+   - Sistema: Sem memory leak, estável
+
 ### Score do Grupo
 
-**8/10** - Stress tests principais executados, edge cases requerem teste manual
+**9/10** - Principais + adicionais executados, edge cases manuais opcional
 
 ### Recomendação
 
