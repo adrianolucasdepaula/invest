@@ -130,53 +130,68 @@ export class IsEndYearGreaterThanStartYear implements ValidatorConstraintInterfa
 
 ---
 
-## Checklist Automatico do Ecossistema (ATIVADO - v2.0)
+## Checklist Automatico do Ecossistema (ATIVADO - v5.2)
 
 ### Sistema de Auto-Trigger Bilingue (PT + EN)
 
-O projeto possui **deteccao automatica de keywords bilingues** que injeta instrucoes relevantes do checklist.
+O projeto possui **sistema de automacao 100%** com deteccao de keywords, correlacao de bugs, e analytics integrados.
 
 **Como Funciona:**
 
-1. **SessionStart Hook** - Exibe resumo de 27 categorias de keywords ao iniciar sessao
-2. **UserPromptSubmit Hook** - Detecta keywords (PT + EN) no seu prompt
-3. **Skill Injection** - Injeta instrucoes para usar skills/secoes relevantes (ate 4 triggers)
+1. **SessionStart Hook** - Exibe resumo de 65 categorias de keywords ao iniciar sessao
+2. **UserPromptSubmit Hook** - Detecta keywords (PT + EN) e injeta contexto relevante
+3. **PreToolUse Hook** - Valida tags em arquivos antes de editar
+4. **PostToolUse Hook** - Correlaciona erros com KNOWN-ISSUES automaticamente
+5. **Stop Hook** - Coleta analytics da sessao
 
-**Script:** `.claude/hooks-scripts/checklist-auto-trigger.js` (v2.0)
+**Script Principal:** `.claude/hooks-scripts/checklist-auto-trigger.js` (v5.2)
 
-### 27 Categorias de Keywords (PT + EN)
+### Sistema de Prioridades (v5.2)
 
-| Categoria | Keywords PT | Keywords EN | Secoes |
-|-----------|-------------|-------------|--------|
-| **planning** | planejamento, plano, robusto, ultra | planning, plan, pm, robust | 1-2, IMPL |
-| **development** | implementar, criar, desenvolver, novo | implement, create, develop, add | 1-3 |
-| **codeReview** | revisar, melhores praticas, refatorar | code review, best practices, refactor | 3-4 |
-| **commit** | commit, push, mergear, branch | commit, push, merge, git | 4-5 |
-| **phase** | fase, etapa, validar, ecossistema | phase, step, validate, ecosystem | 6-21 |
-| **scraper** | raspagem, coletar, fontes, dados reais | scraper, playwright, collect, sources | 18 |
-| **frontend** | componente, pagina, tela, interface | frontend, react, page, component | 3.2, 8.1 |
-| **ux** | usabilidade, acessibilidade, ergonomia | ux, usability, accessibility, wcag | 6, a11y |
-| **forms** | formulario, campo, botao, dropdown | form, input, button, field | 3.2, 8.1 |
-| **visual** | layout, estilo, imagem, scroll | style, image, font, loading | 3.2, DevT |
-| **charts** | grafico, tabela, ordenacao, lista | chart, table, sorting, list | 8.1, 3.2 |
-| **backend** | controlador, servico, rota, funcao | backend, controller, service, dto | 3.1, 8.2 |
-| **database** | banco de dados, migracao, entidade | database, migration, entity, sql | 17, DB |
-| **financial** | financeiro, preco, ativo, precisao | financial, decimal, price, market | 3.1, fin |
-| **troubleshoot** | erro, bug, corrigir, causa raiz | error, fix, debug, root cause | 7, KNOWN |
-| **quality** | gap, warning, falha, workaround | gap, alarm, failure, improvement | 7, 12 |
-| **security** | seguranca, autenticacao, senha | security, auth, jwt, password | 16 |
-| **docker** | container, porta, reiniciar, ambiente | docker, container, port, restart | 19, 8.3 |
-| **api** | integracao, dependencia, requisicao | api, integration, dependency | 20, 11.3 |
-| **testing** | teste, cenario, cobertura, massivo | test, scenario, coverage, massive | 13, 6 |
-| **performance** | desempenho, cache, paralelo, memoria | performance, cache, parallel, n+1 | 15, 3 |
-| **observability** | log, trace, monitoracao, auditoria | log, trace, monitoring, audit | 10, 5 |
-| **jobs** | fila, agendamento, sincronia, tarefa | job, queue, scheduling, sync | 11.2, 15 |
-| **websocket** | tempo real, evento, broadcast | websocket, realtime, event | 11.1, 15 |
-| **documentation** | documentacao, arquitetura, readme | documentation, architecture | 1, INDEX |
-| **mcp** | triplo, ferramenta, skill, hook | mcp, devtools, tool, subagent | 21, METOD |
-| **environment** | timezone, configuracao, versao | timezone, config, version, env | 1, 19 |
+| Prioridade | Icone | Limite Max | Peso | Exemplos |
+|------------|-------|------------|------|----------|
+| **critical** | 🔴 | 10 | 9-10 | regression, uncertainty, dataQuality |
+| **high** | 🟠 | 4 | 7-8 | planning, financial, backup, riskManagement |
+| **medium** | 🟡 | 2 | 5-6 | frontend, backend, testing, cache |
+| **low** | 🟢 | 1 | 3-4 | documentation, network, sentiment |
 
-**Total:** ~250+ keywords bilingues cobrindo 100% do ecossistema
+### 65 Categorias de Keywords (PT + EN)
+
+**Core (27 categorias):** planning, development, codeReview, commit, phase, scraper, frontend, ux, forms, visual, charts, backend, database, financial, troubleshoot, quality, security, docker, api, testing, performance, observability, jobs, websocket, documentation, mcp, environment
+
+**v3.0 (10 categorias):** webResearch, postImplementation, regression, docSync, testCoverage, deployment, ecosystem, agentHelp, improvement, urgency
+
+**v4.0 (17 categorias):** migration, validation, routing, hook, middleware, transaction, index, cache, crossvalidation, dividend, options, health, network, backup, retry, ratelimit, circuit
+
+**v5.0 Domain-Specific (11 categorias):** technicalIndicators, fundamentalMetrics, macro, corporateActions, wheelStrategy, sentiment, riskManagement, marketIndices, dataSources, cicd, dataQuality
+
+**v5.1 (4 categorias):** uncertainty, decisionMaking, clarification, assumption
+
+**Total:** ~1,100+ keywords bilingues cobrindo 100% do ecossistema
+
+### Scripts de Automacao
+
+| Script | Funcao | Hook |
+|--------|--------|------|
+| `checklist-auto-trigger.js` | Deteccao de keywords com prioridades | UserPromptSubmit |
+| `tag-injector.js` | Injecao de contexto no prompt | UserPromptSubmit |
+| `tag-validator.js` | Validacao de tags em arquivos | PreToolUse (Edit/Write) |
+| `bug-correlator.js` | Correlacao com KNOWN-ISSUES | PostToolUse (Bash) |
+| `solution-finder.js` | Busca fuzzy de solucoes | Sob demanda |
+| `tag-generator.js` | Geracao de tags com fallback | Sob demanda |
+| `auto-sync-docs.js` | Sincronizacao CLAUDE.md ↔ GEMINI.md | PreCompact |
+| `tag-analytics.js` | Coleta de metricas | Stop |
+| `circuit-breaker.js` | Resiliencia para scripts | Utilidade |
+| `test-suite.js` | Suite de testes (33 tests) | Validacao |
+
+### Diretorio de Dados
+
+```text
+.claude/data/
+├── analytics/       # Metricas coletadas
+├── cache/           # Cache de keywords e solucoes
+└── locks/           # File locks para sincronizacao
+```
 
 ### Referencia Completa
 
@@ -184,12 +199,13 @@ O projeto possui **deteccao automatica de keywords bilingues** que injeta instru
 
 **Cobertura:**
 
-- 18 paginas frontend
+- 19 páginas frontend (15 dashboard + 3 auth + 1 root)
+- 16 custom hooks (frontend/src/lib/hooks/)
 - 11 controllers backend
 - 21 containers Docker
 - 34+ APIs externas
 - 35 Python scrapers
-- 6 vulnerabilidades criticas documentadas
+- 6 vulnerabilidades críticas documentadas
 
 ### Slash Commands Relacionados
 
@@ -198,6 +214,12 @@ O projeto possui **deteccao automatica de keywords bilingues** que injeta instru
 /check-context     # Verificacao pre-tarefa
 /validate-phase    # Validacao de fase completa
 /mcp-triplo        # Playwright + DevTools + a11y
+```
+
+### Executar Testes de Automacao
+
+```bash
+node .claude/hooks-scripts/test-suite.js --verbose
 ```
 
 ---
@@ -1116,7 +1138,7 @@ O PM Expert tem acesso a:
 
 ### Visão Geral
 
-O projeto possui **7 sub-agents especializados** que DEVEM ser invocados para tarefas específicas.
+O projeto possui **10 sub-agents especializados** que DEVEM ser invocados para tarefas específicas.
 
 ### Matriz de Invocação por Contexto
 
@@ -1129,6 +1151,9 @@ O projeto possui **7 sub-agents especializados** que DEVEM ser invocados para ta
 | Criar/debugar gráficos | `chart-analysis-expert` | chart, candlestick, recharts, lightweight |
 | Corrigir erros TypeScript | `typescript-validation-expert` | tsc, type error, strict, any |
 | Criar/debugar jobs BullMQ | `queue-management-expert` | job, queue, bullmq, processor |
+| Criar migrations TypeORM | `database-migration-expert` | migration, schema, entity, index, sql |
+| Atualizar documentação técnica | `documentation-expert` | docs, readme, changelog, roadmap, index |
+| Testes E2E e validação MCP Triplo | `e2e-testing-expert` | e2e, playwright, validation, a11y, triplo |
 
 ### Quando Usar Cada Agent
 
@@ -1206,6 +1231,39 @@ de tipo no projeto frontend.
 ```text
 Use o queue-management-expert para criar um job de sincronização
 de dados com retry exponencial.
+```
+
+#### 8. database-migration-expert
+
+**Use quando:** Criar migrations TypeORM, schema changes, indexes, data migrations
+**Ferramentas:** Read, Edit, Write, Glob, Grep, Bash
+**Exemplo de prompt:**
+
+```text
+Use o database-migration-expert para criar uma migration que adiciona
+a tabela watchlists com relacionamento para users e indexes otimizados.
+```
+
+#### 9. documentation-expert
+
+**Use quando:** Atualizar documentação de fases, sync CLAUDE.md ↔ GEMINI.md, ROADMAP.md
+**Ferramentas:** Read, Edit, Write, Glob, Grep
+**Exemplo de prompt:**
+
+```text
+Use o documentation-expert para criar VALIDACAO_FASE_133.md e atualizar
+ROADMAP.md com a fase completa.
+```
+
+#### 10. e2e-testing-expert
+
+**Use quando:** Testes E2E, validação MCP Triplo, accessibility audits
+**Ferramentas:** Read, Edit, Write, Glob, Grep, Bash, mcp__playwright__*, mcp__chrome-devtools__*, mcp__a11y__*
+**Exemplo de prompt:**
+
+```text
+Use o e2e-testing-expert para executar MCP Triplo na página /assets e
+validar que não há erros de console, network ou acessibilidade.
 ```
 
 ### Anti-Patterns de Agents
@@ -1296,7 +1354,7 @@ de dados com retry exponencial.
 
 ### Visão Geral
 
-O projeto possui **12 slash commands** e **8 skills** que DEVEM ser invocados em contextos específicos.
+O projeto possui **15 slash commands** que DEVEM ser invocados em contextos específicos.
 
 ### Matriz de Invocação Obrigatória
 
@@ -1305,6 +1363,7 @@ O projeto possui **12 slash commands** e **8 skills** que DEVEM ser invocados em
 | **Início de tarefa complexa** | `/check-context` | ANTES de começar |
 | **Antes de QUALQUER commit** | `/validate-all` | Obrigatório |
 | **Após mudanças frontend** | `/mcp-triplo` | Após editar .tsx/.css |
+| **Feature complexa ou bug desconhecido** | `/mcp-quadruplo` | Quando precisa documentation research |
 | **Nova fase do projeto** | `/new-phase` | Antes de implementar |
 | **Validar fase completa** | `/validate-phase` | Após implementar |
 | **Sincronizar documentação** | `/sync-docs` | Após mudar CLAUDE.md |
@@ -1337,14 +1396,27 @@ Início Tarefa
     │ SIM    │ NÃO
     ▼         │
 ┌─────────────┐ │
-│ /mcp-triplo │ │
+│ /mcp-triplo │ │  ◄── UI simples
 └─────┬───────┘ │
+      │         │
+      │ Feature complexa?
+      │ Bug >2h debug?
+      ▼
+┌──────────────────┐
+│ /mcp-quadruplo   │  ◄── Com documentation research
+└─────┬────────────┘
       └────┬────┘
            ▼
 ┌─────────────────┐
 │ /commit-phase   │ ◄── Commit padronizado
 └─────────────────┘
 ```
+
+**Nota:** Use `/mcp-quadruplo` quando:
+- ✅ Feature complexa (nova biblioteca, integração)
+- ✅ Bug desconhecido (>2 horas sem solução)
+- ✅ Precisa validar se problema é conhecido
+- ✅ Quer economizar tempo com research preventivo
 
 ### Anti-Patterns (NUNCA FAZER)
 
@@ -1365,11 +1437,15 @@ Início Tarefa
 | `/docker-status` | Status dos containers | `.claude/commands/docker-status.md` |
 | `/fix-ts-errors` | Corrige erros TypeScript | `.claude/commands/fix-ts-errors.md` |
 | `/mcp-triplo` | Playwright + DevTools + a11y | `.claude/commands/mcp-triplo.md` |
+| `/mcp-quadruplo` | MCP Triplo + Documentation Research | `.claude/commands/mcp-quadruplo.md` |
 | `/new-phase` | Cria PLANO_FASE_XX.md | `.claude/commands/new-phase.md` |
 | `/run-scraper` | Executa scraper Python | `.claude/commands/run-scraper.md` |
 | `/sync-docs` | Sincroniza CLAUDE.md ↔ GEMINI.md | `.claude/commands/sync-docs.md` |
 | `/validate-all` | TypeScript + Build + Lint | `.claude/commands/validate-all.md` |
 | `/validate-phase` | Validação completa de fase | `.claude/commands/validate-phase.md` |
+| `/mcp-browser-reset` | Reset de sessões de browser dos MCPs | `.claude/commands/mcp-browser-reset.md` |
+| `/validate-dev-config` | Valida configurações de desenvolvimento | `.claude/commands/validate-dev-config.md` |
+| `/rebuild-guide` | Guia de rebuild vs restart de containers | `.claude/commands/rebuild-guide.md` |
 
 ---
 
@@ -1413,22 +1489,63 @@ Início Tarefa
 
 ---
 
-## Context Management (Opus 4.5)
+## Context Management (Sonnet 4.5 - 1M Context Beta)
 
-### Configuracao Otimizada
+### Limites Oficiais do Claude Sonnet 4.5
 
-Este projeto utiliza Claude Opus 4.5 com configuracao ultra-robusta para maximizar capacidades:
+**Fontes Oficiais:**
+- [Models Overview](https://platform.claude.com/docs/en/about-claude/models/all-models)
+- [Context Windows](https://platform.claude.com/docs/en/build-with-claude/context-windows)
+- [1M Context Announcement](https://claude.com/blog/1m-context)
 
-| Variavel | Valor | Proposito |
-|----------|-------|-----------|
-| `CLAUDE_CODE_MAX_OUTPUT_TOKENS` | 128000 | Output maximo - permite respostas longas |
-| `MAX_THINKING_TOKENS` | 100000 | Extended Thinking maximo para Opus 4.5 |
-| `MAX_MCP_OUTPUT_TOKENS` | 200000 | **8x default** - Leitura de arquivos grandes sem truncamento |
-| `MAX_TOOL_OUTPUT_TOKENS` | 200000 | **8x default** - Output de ferramentas sem limite |
+| Modelo | Context Window | Max Output | Preco Input | Preco Output |
+|--------|----------------|------------|-------------|--------------|
+| **Claude Sonnet 4.5** | **1M tokens (beta)** | **64K tokens** | $3/MTok ($6 >200K) | $15/MTok ($22.50 >200K) |
+| Claude Opus 4.5 | 200K tokens | 64K tokens | $5/MTok | $25/MTok |
+| Claude Haiku 4.5 | 200K tokens | 64K tokens | $1/MTok | $5/MTok |
+
+### Especificacoes Sonnet 4.5 (Dezembro 2025)
+
+| Parametro | Valor | Observacao |
+|-----------|-------|------------|
+| **Context Window (padrao)** | 200K tokens | ~150K palavras |
+| **Context Window (beta)** | **1M tokens** | ~750K palavras, requer beta header |
+| **Max Output Tokens** | 64K tokens | Igual ao Opus 4.5 |
+| **Extended Thinking** | Sim | Tokens removidos automaticamente |
+| **Context Awareness** | Sim | Rastreia tokens restantes nativamente |
+| **API ID** | `claude-sonnet-4-5-20250929` | Versao mais recente |
+| **Conhecimento confiavel** | Jan 2025 | Dados de treinamento ate Jul 2025 |
+
+### Como Habilitar 1M Context Window
+
+**Requisitos:**
+- Organizacao em **Tier 4** ou com rate limits customizados
+- Header beta obrigatorio: `context-1m-2025-08-07`
+
+**Python SDK:**
+```python
+response = client.beta.messages.create(
+    model="claude-sonnet-4-5",
+    betas=["context-1m-2025-08-07"]  # Header obrigatorio para 1M
+)
+```
+
+### Configuracao Otimizada (Sonnet 4.5 - 1M Contexto)
+
+| Variavel | Valor | Observacao |
+|----------|-------|------------|
+| `CLAUDE_CODE_MAX_OUTPUT_TOKENS` | 64000 | Maximo oficial |
+| `MAX_THINKING_TOKENS` | 100000 | Extended thinking |
+| `MAX_MCP_OUTPUT_TOKENS` | 200000 | Output de MCPs |
+| `MAX_TOOL_OUTPUT_TOKENS` | 200000 | Output de ferramentas |
 | `BASH_DEFAULT_TIMEOUT_MS` | 600000 | 10 minutos - builds longos |
 | `BASH_MAX_TIMEOUT_MS` | 1800000 | 30 minutos - operacoes muito longas |
 | `MCP_TIMEOUT` | 120000 | 2 minutos - conexao inicial com MCPs |
 | `MCP_TOOL_TIMEOUT` | 300000 | 5 minutos - operacoes de MCPs complexas |
+
+**Notas:**
+- Valores alinhados com limites oficiais da Anthropic (Dezembro 2025)
+- Context window de 1M permite sessoes muito mais longas sem `/compact`
 
 ### Leitura de Arquivos Grandes
 
@@ -1438,13 +1555,12 @@ Este projeto utiliza Claude Opus 4.5 com configuracao ultra-robusta para maximiz
 
 | Ferramenta | Limite | Configuravel? |
 |------------|--------|---------------|
-| Read tool (built-in) | 25.000 tokens | ❌ NAO (hardcoded) |
-| MCP tools (mcp__*) | 200.000 tokens | ✅ SIM (MAX_MCP_OUTPUT_TOKENS) |
+| Read tool (built-in) | 25.000 tokens | NAO (hardcoded) |
+| MCP tools (mcp__*) | 25.000 tokens | SIM (MAX_MCP_OUTPUT_TOKENS) |
 
 **Variaveis Configuradas (afetam apenas MCPs):**
 
-- `MAX_MCP_OUTPUT_TOKENS=200000` - Output de ferramentas MCP
-- `MAX_TOOL_OUTPUT_TOKENS=200000` - Redundante para MCPs
+- `MAX_MCP_OUTPUT_TOKENS=25000` - Output de ferramentas MCP (padrao oficial)
 
 **Arquivos de Configuracao:**
 
@@ -1485,9 +1601,10 @@ Quando for necessario compactar contexto, use `/compact` com estas instrucoes:
 Discard: verbose explanations, old debug output, completed task details, intermediate steps.
 ```
 
-### Extended Thinking Guidelines (Opus 4.5)
+### Extended Thinking Guidelines (Sonnet 4.5)
 
-**Opus 4.5 preserva thinking blocks automaticamente entre turnos.**
+**Sonnet 4.5 preserva thinking blocks automaticamente entre turnos.**
+**Context Awareness nativo rastreia tokens restantes durante a conversacao.**
 
 **Use High Effort para:**
 
@@ -1515,6 +1632,72 @@ Discard: verbose explanations, old debug output, completed task details, interme
 3. **Monitorar com `/cost`** o uso de tokens
 4. **Dividir tarefas complexas** em sessoes separadas
 5. **Evitar carregar arquivos grandes** desnecessariamente
+
+### Protecao para MCPs Playwright/Chrome DevTools
+
+**Hooks de Protecao Ativos:**
+
+| Hook | Script | Funcao |
+|------|--------|--------|
+| `context-monitor.js` | UserPromptSubmit | Monitora contexto, bloqueia em 85% |
+| `pre-playwright-guard.js` | PreToolUse (MCPs) | Bloqueia snapshots quando contexto > 70% |
+
+**Thresholds de Bloqueio:**
+
+| Contexto | Acao |
+|----------|------|
+| < 50% | Permitir tudo |
+| 50-70% | Warning, mas permite |
+| 70-85% | BLOQUEIA snapshots (permite clicks, navegacao) |
+| > 85% | BLOQUEIA TUDO, forcar /compact |
+
+**Consumo de Tokens por Operacao MCP (1M Context):**
+
+| Operacao | Tokens | % Contexto (200K) | % Contexto (1M) |
+|----------|--------|-------------------|-----------------|
+| `browser_snapshot` (pagina complexa) | 25-50k | 12-25% | **2.5-5%** |
+| `take_snapshot` (Chrome DevTools) | 18-30k | 9-15% | **1.8-3%** |
+| `browser_take_screenshot` (PNG) | ~1k | <1% | **<0.1%** |
+| `browser_click/navigate` | ~100 | <0.1% | **<0.01%** |
+
+**Thresholds Absolutos (1M Context):**
+
+| Threshold | % | Tokens Absolutos |
+|-----------|---|------------------|
+| Warning | 50% | **500K tokens** |
+| Compact | 70% | **700K tokens** |
+| Block | 85% | **850K tokens** |
+
+**Best Practice (Sonnet 4.5 - 1M):**
+
+1. **Snapshots mais livres** - Com 1M, snapshots consomem apenas ~3% cada
+2. **Menos `/compact`** - Thresholds absolutos muito maiores
+3. **Sessoes longas** - Ate 75K linhas de codigo em uma sessao
+4. **Context Awareness** - Modelo rastreia tokens automaticamente
+
+### Pacotes MCP Oficiais (Nomes Corretos)
+
+**IMPORTANTE:** Use os nomes corretos dos pacotes MCP. Os pacotes abaixo foram validados em 2025-12-17.
+
+| MCP Server | Pacote npm Correto | Status |
+|------------|-------------------|--------|
+| **Playwright** | `@playwright/mcp@latest` | ✅ Oficial |
+| **Chrome DevTools** | `chrome-devtools-mcp@latest` | ✅ Oficial |
+| **React Context** | `react-context-mcp@latest` | ✅ Comunidade |
+| **A11y (Accessibility)** | `a11y-mcp-server` | ✅ Comunidade |
+| **Sequential Thinking** | `@modelcontextprotocol/server-sequential-thinking` | ✅ Oficial |
+| **Context7 (Docs)** | `@upstash/context7-mcp` | ✅ Comunidade (Upstash) |
+
+**Pacotes INCORRETOS (NÃO EXISTEM no npm):**
+- ❌ `@anthropic/mcp-server-a11y` → Use `a11y-mcp-server`
+- ❌ `@anthropic/mcp-sequential-thinking` → Use `@modelcontextprotocol/server-sequential-thinking`
+- ❌ `@anthropic/context7-mcp` → Use `@upstash/context7-mcp`
+
+**Fontes:**
+- [A11y MCP Server - LobeHub](https://lobehub.com/mcp/temanuel1-a11y-mcp-server)
+- [Sequential Thinking MCP - PulseMCP](https://www.pulsemcp.com/servers/anthropic-sequential-thinking)
+- [Context7 MCP - npm](https://www.npmjs.com/package/@upstash/context7-mcp)
+- [Model Context Protocol Servers - GitHub](https://github.com/modelcontextprotocol/servers)
 
 ### Comandos Uteis
 
