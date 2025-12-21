@@ -24,6 +24,53 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 135: Orchestrator Consolidation (2025-12-21)** ✅ **CONCLUÍDA**
+  - **Componentes Removidos:**
+    - `backend/orchestrator.py` (501 linhas) - Service orchestrator com erros de import desde criação
+    - `backend/python-scrapers/scheduler.py` (864+ linhas) - Job scheduler órfão (só usado por orchestrator)
+    - `backend/python-scrapers/example_scheduler_usage.py` (346 linhas) - Exemplo de uso
+    - `backend/python-scrapers/SCHEDULER_README.md` - Documentação órfã
+    - Container Docker `invest_orchestrator`
+  - **Root Cause Analysis:**
+    - **Componente Órfão:** Zero dependências de produção em 60+ commits analisados
+    - **Import Errors Persistentes:** Desde Nov 7, 2025, nunca resolvidos
+    - **Duplicação Funcional:** 80% sobreposição com BullMQ (já em produção desde FASE 60)
+    - **Dependências Cascateadas:** scheduler.py só importado por orchestrator.py (que nunca funcionou)
+    - **False Positive Health Check:** Testava apenas Redis ping, não services internos
+  - **Funcionalidades Consolidadas em Produção:**
+    - APScheduler → NestJS @Cron decorators
+    - Redis job queue → BullMQ
+    - AsyncIO workers → BullMQ processors
+    - Service lifecycle → Docker Compose + system-manager.ps1
+  - **Benefícios:**
+    - ✅ Simplificação arquitetural (KISS principle)
+    - ✅ Economia de recursos: 256MB RAM + 0.25 CPU
+    - ✅ Eliminação de 80% duplicação funcional
+    - ✅ Redução de containers: 21 → 20
+  - **Arquivos Modificados:**
+    - `docker-compose.yml` - Removida seção orchestrator (55 linhas)
+    - `system-manager.ps1` - 5 edits para refletir 7 core services (antes 8)
+    - `CLAUDE.md` / `GEMINI.md` - Core services 8 → 7
+    - `CHECKLIST_ECOSSISTEMA_COMPLETO.md` - 21 → 20 containers, tabelas atualizadas
+    - `ARCHITECTURE.md` - Nova seção "Componentes Removidos"
+  - **Backups Criados:**
+    - Git branch: `backup/orchestrator-removal-2025-12-21`
+    - Docker image: `invest_orchestrator:backup-2025-12-21`
+  - **Validação:**
+    - TypeScript: ✅ 0 erros (backend + frontend)
+    - Build: ✅ Sucesso (backend + frontend)
+    - Docker containers: ✅ 20 ativos (antes 21)
+    - Backend health: ✅ OK
+  - **Lições Aprendidas:**
+    - Health checks devem testar funcionalidade real (não apenas deps)
+    - Volume mounts podem sobrescrever build artifacts
+    - Detectar componentes órfãos via análise de imports
+    - Investigar dependências cascateadas ao remover componentes
+  - **Documentação:**
+    - `ORCHESTRATOR_REMOVAL_REPORT.md` - Relatório técnico completo
+    - `.claude/guides/service-orchestration-patterns.md` - Patterns aprendidos
+    - `ROADMAP.md` - Atualizado com FASE 134
+
 - **FASE 136: DY% Dividend Yield Column (2025-12-21)** ✅ **CONCLUÍDA - Bug Resolvido**
   - **Nova Coluna na Tabela /assets:**
     - Coluna "DY%" (Dividend Yield) exibindo yield anual de cada ativo

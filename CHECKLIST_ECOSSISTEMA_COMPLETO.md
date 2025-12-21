@@ -417,7 +417,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - [ ] invest_python_service (8001)
 - [ ] invest_scrapers (5900, 6080, 8000)
 - [ ] invest_api_service (8000)
-- [ ] invest_orchestrator
 - [ ] invest_pgadmin (5150) - dev
 - [ ] invest_redis_commander (8181) - dev
 
@@ -526,17 +525,16 @@ mcp__chrome-devtools__list_network_requests
 | 5 | invest_python_service | 8001 | /health | core |
 | 6 | invest_scrapers | 8000 | /health | core |
 | 7 | invest_api_service | 8000 | /api/oauth/health | core |
-| 8 | invest_orchestrator | - | logs | core |
-| 9 | invest_pgadmin | 5150 | HTTP 200 | dev |
-| 10 | invest_redis_commander | 8181 | HTTP 200 | dev |
-| 11 | invest_tempo | 3200 | - | obs |
-| 12 | invest_loki | 3102 | - | obs |
-| 13 | invest_prometheus | 9090 | - | obs |
-| 14 | invest_grafana | 3000 | - | obs |
-| 15 | invest_promtail | - | - | obs |
-| 16 | invest_meilisearch | 7700 | /health | extra |
-| 17 | invest_minio | 9000 | mc ready | extra |
-| 18 | invest_nginx | 80,443 | / | prod |
+| 8 | invest_pgadmin | 5150 | HTTP 200 | dev |
+| 9 | invest_redis_commander | 8181 | HTTP 200 | dev |
+| 10 | invest_tempo | 3200 | - | obs |
+| 11 | invest_loki | 3102 | - | obs |
+| 12 | invest_prometheus | 9090 | - | obs |
+| 13 | invest_grafana | 3000 | - | obs |
+| 14 | invest_promtail | - | - | obs |
+| 15 | invest_meilisearch | 7700 | /health | extra |
+| 16 | invest_minio | 9000 | mc ready | extra |
+| 17 | invest_nginx | 80,443 | / | prod |
 
 ---
 
@@ -558,7 +556,7 @@ AGENTE 2: Backend (backend-api-expert)
 - Checar queue jobs
 
 AGENTE 3: Infraestrutura (Explore)
-- Verificar 21 containers
+- Verificar 20 containers
 - Testar conectividade entre servicos
 - Validar logs e metricas
 ```
@@ -579,7 +577,7 @@ AGENTE 3: Infraestrutura (Explore)
 // Exemplo de lancamento paralelo de agentes
 Task(subagent_type="pm-expert", prompt="Validate all 18 frontend pages...")
 Task(subagent_type="backend-api-expert", prompt="Test all 11 controllers...")
-Task(subagent_type="Explore", prompt="Check all 21 containers...")
+Task(subagent_type="Explore", prompt="Check all 20 containers...")
 ```
 
 ---
@@ -997,20 +995,19 @@ for table in tables:
 | 4 | backend | invest_backend | 3101 | 2.0 | 4G |
 | 5 | scrapers | invest_scrapers | 5900,6080,8000 | 2.0 | 2G |
 | 6 | api-service | invest_api_service | 8000 | 2.0 | 4G |
-| 7 | orchestrator | invest_orchestrator | - | 1.0 | 1G |
-| 8 | frontend | invest_frontend | 3100 | 2.0 | 2G |
-| 9 | pgadmin | invest_pgadmin | 5150 | - | - |
-| 10 | redis-commander | invest_redis_commander | 8181 | - | - |
-| 11 | tempo | invest_tempo | 3200,4317,4318 | - | - |
-| 12 | loki | invest_loki | 3102 | - | - |
-| 13 | prometheus | invest_prometheus | 9090 | - | - |
-| 14 | grafana | invest_grafana | 3000 | - | - |
-| 15 | promtail | invest_promtail | - | - | - |
-| 16 | meilisearch | invest_meilisearch | 7700 | - | - |
-| 17 | minio | invest_minio | 9000,9001 | - | - |
-| 18 | nginx | invest_nginx | 80,443 | - | - |
+| 7 | frontend | invest_frontend | 3100 | 2.0 | 2G |
+| 8 | pgadmin | invest_pgadmin | 5150 | - | - |
+| 9 | redis-commander | invest_redis_commander | 8181 | - | - |
+| 10 | tempo | invest_tempo | 3200,4317,4318 | - | - |
+| 11 | loki | invest_loki | 3102 | - | - |
+| 12 | prometheus | invest_prometheus | 9090 | - | - |
+| 13 | grafana | invest_grafana | 3000 | - | - |
+| 14 | promtail | invest_promtail | - | - | - |
+| 15 | meilisearch | invest_meilisearch | 7700 | - | - |
+| 16 | minio | invest_minio | 9000,9001 | - | - |
+| 17 | nginx | invest_nginx | 80,443 | - | - |
 
-**Total Recursos:** 17 CPU cores max, 24GB RAM max (8GB peak real)
+**Total Recursos:** 16 CPU cores max, 23GB RAM max (7GB peak real)
 
 ### 19.2 Profiles Docker
 

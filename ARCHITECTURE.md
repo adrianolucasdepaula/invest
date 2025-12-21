@@ -1,8 +1,8 @@
 # 🏗️ ARCHITECTURE - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-13
-**Versão:** 1.13.0
+**Última Atualização:** 2025-12-21
+**Versão:** 1.14.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -854,6 +854,52 @@ invest-claude-web/
 
 ---
 
+## 🗑️ COMPONENTES REMOVIDOS
+
+### Service Orchestrator (Removido em 2025-12-21)
+
+**FASE 135: Orchestrator Consolidation**
+
+**Componentes Removidos:**
+- `backend/orchestrator.py` (501 linhas)
+- `backend/python-scrapers/scheduler.py` (864+ linhas)
+- `backend/python-scrapers/example_scheduler_usage.py` (346 linhas)
+- `backend/python-scrapers/SCHEDULER_README.md`
+- Container Docker `invest_orchestrator`
+
+**Motivo da Remoção:**
+
+1. **Componente Órfão**: Zero dependências de produção encontradas em 60+ commits de análise
+2. **Import Errors Persistentes**: Erros de importação desde criação (Nov 7, 2025), nunca resolvidos
+3. **Duplicação Funcional**: 80% de sobreposição com BullMQ (já em produção desde FASE 60)
+4. **Dependências Cascateadas**: scheduler.py só era usado por orchestrator.py (que nunca funcionou)
+
+**Funcionalidades Substituídas:**
+
+| Funcionalidade Removida | Substituto em Produção |
+|-------------------------|------------------------|
+| APScheduler job scheduling | NestJS @Cron decorators |
+| Redis-based job queue | BullMQ (Redis) |
+| AsyncIO worker pool | BullMQ processors |
+| Service lifecycle management | Docker Compose + system-manager.ps1 |
+
+**Benefícios:**
+- ✅ Simplificação arquitetural (KISS principle)
+- ✅ Economia de 256MB RAM + 0.25 CPU
+- ✅ Eliminação de 80% de duplicação funcional
+- ✅ Remoção de componente com falso positivo em health check
+- ✅ Redução de containers: 21 → 20
+
+**Padrões Aprendidos:**
+- Health checks devem testar funcionalidade real, não apenas dependências (Redis ping)
+- Volume mounts (`./backend:/app`) podem sobrescrever build artifacts
+- Detectar componentes órfãos mais cedo via análise de imports
+- Investigar dependências cascateadas ao remover componentes
+
+**Documentação Completa:** `ORCHESTRATOR_REMOVAL_REPORT.md`
+
+---
+
 ## 🔗 DOCUMENTAÇÃO COMPLEMENTAR
 
 - **`DATABASE_SCHEMA.md`** - Schema completo do banco de dados, relacionamentos, indexes e queries comuns
@@ -865,5 +911,5 @@ invest-claude-web/
 
 ---
 
-**Última atualização:** 2025-11-25
+**Última atualização:** 2025-12-21
 **Mantido por:** Claude Code (Sonnet 4.5)

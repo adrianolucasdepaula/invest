@@ -341,62 +341,6 @@ services:
           memory: 1G
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
-  # Service Orchestrator
-  orchestrator:
-    build:
-      context: ./backend/python-scrapers
-      dockerfile: Dockerfile
-    container_name: invest_orchestrator
-    environment:
-      # Database
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USERNAME=invest_user
-      - DB_PASSWORD=invest_password
-      - DB_DATABASE=invest_db
-
-      # Redis
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-
-      # Orchestrator Configuration
-      - SCRAPER_CONCURRENT_JOBS=${SCRAPER_CONCURRENT_JOBS:-3}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    volumes:
-      - ./backend:/app
-      - ./logs:/app/logs
-      - ./config:/app/config
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      scrapers:
-        condition: service_started
-    networks:
-      - invest_network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import redis; r=redis.Redis(host='redis', port=6379); r.ping()"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-    command: python orchestrator.py
-
   # Frontend Next.js
   frontend:
     build:
@@ -432,8 +376,9 @@ services:
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
-      # NOTE: .next cache NOT persisted - rebuilt on container start
-      # This fixes Issue #4 (Frontend Cache inconsistency)
+      - /app/.next  # ✅ Exclude .next from volume mount (anonymous volume)
+      # This prevents stale .next cache from host filesystem
+      # Fix for BUG_CRITICO_DOCKER_NEXT_CACHE.md
     depends_on:
       backend:
         condition: service_healthy
@@ -459,7 +404,7 @@ services:
         reservations:
           cpus: '0.5'
           memory: 1G
-    command: npm run dev
+    # command: npm run dev  # Default dev mode (defined in package.json)
 
   # Nginx reverse proxy (optional, for production)
   nginx:

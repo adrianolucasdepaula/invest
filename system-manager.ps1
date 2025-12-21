@@ -7,7 +7,7 @@
 # ============================================
 
 # Core services (always managed)
-$CoreServices = @("postgres", "redis", "python-service", "backend", "frontend", "scrapers", "api-service", "orchestrator")
+$CoreServices = @("postgres", "redis", "python-service", "backend", "frontend", "scrapers", "api-service")
 
 # Profile-specific services
 $DevServices = @("pgadmin", "redis-commander")
@@ -22,7 +22,6 @@ $ContainerMap = @{
     "frontend"         = @{ Container = "invest_frontend"; Port = 3100; HealthType = "http"; Endpoint = "/" }
     "scrapers"         = @{ Container = "invest_scrapers"; Port = 5900; HealthType = "docker"; Endpoint = $null }
     "api-service"      = @{ Container = "invest_api_service"; Port = 8000; HealthType = "http"; Endpoint = "/health"; NetworkMode = "scrapers" }
-    "orchestrator"     = @{ Container = "invest_orchestrator"; Port = $null; HealthType = "docker"; Endpoint = $null }
     "nginx"            = @{ Container = "invest_nginx"; Port = 80; HealthType = "http"; Endpoint = "/"; Profile = "production" }
     "pgadmin"          = @{ Container = "invest_pgadmin"; Port = 5150; HealthType = "http"; Endpoint = "/"; Profile = "dev" }
     "redis-commander"  = @{ Container = "invest_redis_commander"; Port = 8181; HealthType = "http"; Endpoint = "/"; Profile = "dev" }
@@ -31,8 +30,8 @@ $ContainerMap = @{
 # Service dependencies (for smart restart)
 $ServiceDependencies = @{
     "scrapers" = @("api-service")  # api-service uses network_mode: service:scrapers
-    "postgres" = @("backend", "scrapers", "api-service", "orchestrator")
-    "redis"    = @("backend", "scrapers", "orchestrator")
+    "postgres" = @("backend", "scrapers", "api-service")
+    "redis"    = @("backend", "scrapers")
 }
 
 # ============================================
@@ -918,16 +917,6 @@ function Get-HealthCheck {
         Print-Error "API Service (8000): FALHOU"
     }
 
-    # Check Orchestrator (no HTTP, check docker health)
-    $orchHealth = docker inspect --format='{{.State.Health.Status}}' invest_orchestrator 2>$null
-    if ($orchHealth -eq "healthy") {
-        Print-Success "Orchestrator: OK (healthy)"
-    } elseif ($orchHealth) {
-        Print-Warning "Orchestrator: $orchHealth"
-    } else {
-        Print-Warning "Orchestrator: Não encontrado"
-    }
-
     Write-Host ""
     Print-Info "Frontend Services:"
 
@@ -1513,9 +1502,9 @@ function Show-Help {
     Write-Host "  .\system-manager.ps1 logs scrapers"
     Write-Host "  .\system-manager.ps1 health"
     Write-Host ""
-    Write-Host "${GREEN}Core Services (8):${RESET}"
+    Write-Host "${GREEN}Core Services (7):${RESET}"
     Write-Host "  postgres, redis, python-service, backend, frontend,"
-    Write-Host "  scrapers, api-service, orchestrator"
+    Write-Host "  scrapers, api-service"
     Write-Host ""
     Write-Host "${CYAN}Dev Profile Services (2):${RESET}"
     Write-Host "  pgadmin (5150), redis-commander (8181)"
