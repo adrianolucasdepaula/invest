@@ -122,7 +122,8 @@ export class AssetsService {
         price1.volume as price1_volume,
         price1.market_cap as price1_market_cap,
         price1.date as price1_date,
-        price1.collected_at as price1_collected_at
+        price1.collected_at as price1_collected_at,
+        fd.dividend_yield as fd_dividend_yield
       FROM assets asset
       LEFT JOIN LATERAL (
         SELECT close, change, change_percent, volume, market_cap, date, collected_at
@@ -131,6 +132,13 @@ export class AssetsService {
         ORDER BY date DESC
         LIMIT 1
       ) price1 ON true
+      LEFT JOIN LATERAL (
+        SELECT dividend_yield
+        FROM fundamental_data
+        WHERE asset_id = asset.id
+        ORDER BY updated_at DESC
+        LIMIT 1
+      ) fd ON true
       ${whereClause}
       ORDER BY asset.ticker ASC
     `;
@@ -216,6 +224,7 @@ export class AssetsService {
           marketCap: null,
           currentIndexes,
           idivParticipation,
+          dividendYield: row.fd_dividend_yield ? Number(row.fd_dividend_yield) : null,
         };
       }
 
@@ -233,6 +242,7 @@ export class AssetsService {
         },
         currentIndexes,
         idivParticipation,
+        dividendYield: row.fd_dividend_yield ? Number(row.fd_dividend_yield) : null,
       };
     });
 

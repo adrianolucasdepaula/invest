@@ -43,6 +43,7 @@ interface Asset {
   hasOptions?: boolean;
   currentIndexes?: string[]; // FASE Marcação IDIV: Índices vigentes
   idivParticipation?: number | null; // FASE Marcação IDIV: Participação % no IDIV
+  dividendYield?: number | null; // FASE 136: Dividend Yield %
 }
 
 interface AssetTableProps {
@@ -57,7 +58,7 @@ interface AssetTableProps {
   onSelectAll?: (checked: boolean) => void;
 }
 
-type SortColumn = 'ticker' | 'name' | 'sector' | 'price' | 'changePercent' | 'volume' | 'marketCap';
+type SortColumn = 'ticker' | 'name' | 'sector' | 'price' | 'changePercent' | 'dividendYield' | 'volume' | 'marketCap';
 type SortDirection = 'asc' | 'desc' | null;
 
 export function AssetTable({
@@ -114,6 +115,10 @@ export function AssetTable({
         case 'changePercent':
           aValue = a.changePercent || 0;
           bValue = b.changePercent || 0;
+          break;
+        case 'dividendYield':
+          aValue = a.dividendYield || 0;
+          bValue = b.dividendYield || 0;
           break;
         case 'volume':
           aValue = a.volume || 0;
@@ -224,6 +229,15 @@ export function AssetTable({
                   >
                     Variação
                     <SortIcon column="changePercent" />
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-right font-medium">
+                  <button
+                    onClick={() => handleSort('dividendYield')}
+                    className="ml-auto flex items-center hover:text-primary transition-colors"
+                  >
+                    DY%
+                    <SortIcon column="dividendYield" />
                   </button>
                 </th>
                 <th className="px-4 py-3 text-right font-medium">
@@ -340,6 +354,26 @@ export function AssetTable({
                         <span>{formatPercent(asset.changePercent)}</span>
                         <span className="text-xs">({formatCurrency(asset.change)})</span>
                       </div>
+                    </td>
+                    <td
+                      className="cursor-pointer px-4 py-3 text-right font-medium"
+                      onClick={() => onAssetClick?.(asset.ticker)}
+                    >
+                      {asset.dividendYield !== null && asset.dividendYield !== undefined ? (
+                        <span
+                          className={cn(
+                            asset.dividendYield >= 6
+                              ? 'text-green-600 dark:text-green-400'
+                              : asset.dividendYield >= 4
+                              ? 'text-muted-foreground'
+                              : 'text-gray-400 dark:text-gray-500'
+                          )}
+                        >
+                          {asset.dividendYield.toFixed(2)}%
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </td>
                     <td
                       className="cursor-pointer px-4 py-3 text-right text-sm"
