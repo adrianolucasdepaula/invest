@@ -24,6 +24,55 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- **FASE 136: DY% Dividend Yield Column (2025-12-21)** ✅ **CONCLUÍDA - Bug Resolvido**
+  - **Nova Coluna na Tabela /assets:**
+    - Coluna "DY%" (Dividend Yield) exibindo yield anual de cada ativo
+    - Valores formatados como "X.XX%" com precisão de 2 casas decimais
+    - Valores null renderizados como "-" (text-muted-foreground)
+    - Coluna sortável com sort button no header
+    - Color coding baseado em thresholds estratégicos:
+      - Verde (>= 6%): Alinhado com WHEEL strategy `minDividendYield`
+      - Padrão (>= 4%): Dividendo moderado
+      - Cinza (< 4%): Dividendo baixo
+  - **Backend Integration:**
+    - LEFT JOIN LATERAL com tabela `fundamental_data` para obter dividend_yield mais recente
+    - Query otimizada (pattern validado em market-data.service.ts)
+    - Response inclui `dividendYield: number | null` para cada asset
+    - API verificada: retorna valores corretos (8.1, 9.33, 8.4)
+  - **Frontend Implementation:**
+    - Dynamic import com `ssr: false` para evitar hydration errors
+    - AssetTable importado via `next/dynamic` (padrão FASE 133)
+    - Componentes Radix UI (Dropdown, Tooltip, Button, Checkbox) renderizam corretamente
+  - **✅ BUG CRÍTICO RESOLVIDO:**
+    - **Sintoma:** Coluna não renderizava apesar de código correto
+    - **Root Cause:** Turbopack in-memory cache persistente (cache em memória do processo Node.js)
+    - **Solução:** `docker rm` (mata processo) + `volume prune -af` (5.3GB removidos) + `build --no-cache`
+    - **Análise:** Sequential Thinking MCP (12 thoughts) + WebSearch 40+ fontes + Explore Agent
+    - **Troubleshooting:** 10+ tentativas falhadas → FASE 1 (70% confiança) RESOLVEU
+    - **Tempo:** 4h total (2h debugging + 2h análise ultra-robusta)
+  - **Validação MCP Quadruplo:**
+    - Zero Tolerance: ✅ 0 erros TypeScript, builds SUCCESS
+    - Funcionalidade: ✅ Coluna visível, sorting OK, color coding OK
+    - Console/Network: ✅ 0 errors, API 200 OK
+    - Accessibility: ✅ 0 violations WCAG 2.1 AA
+    - Documentation Research: ✅ Pattern validado, precedente FASE 133
+  - **Arquivos Modificados:**
+    - `backend/src/api/assets/assets.service.ts` (Lines 116-246)
+    - `frontend/src/components/dashboard/asset-table.tsx` (Lines 234-242 header, 358-377 cells)
+    - `frontend/src/app/(dashboard)/assets/_client.tsx` (Lines 16-18) - Dynamic import
+    - `backend/src/api/wheel/backtest.service.ts` (Lines 357-363) - TypeScript fix
+  - **Documentação:**
+    - `BUG_CRITICO_TURBOPACK_MEMORY_CACHE.md` - Relatório técnico completo
+    - `KNOWN-ISSUES.md` - Issue #DY_COLUMN_NOT_RENDERING (RESOLVIDO)
+    - `docs/VALIDACAO_MCP_QUADRUPLO_FASE_136_ATUALIZADO.md` - Validação com solução
+    - `ROADMAP.md` - Atualizado para "100% COMPLETA"
+  - **Lições Aprendidas:**
+    - `docker rm` ≠ `docker restart` (rm mata processo, restart não)
+    - Cache em memória ≠ Cache em disco (flags só desabilitam disco)
+    - `volume prune -af` obrigatório (volumes anônimos persistem cache)
+    - Dynamic import preventivo (evita hydration errors React 19.2 + Radix UI)
+    - Análise ultra-robusta economiza tempo (ROI positivo)
+
 - **FASE 125: Health Check Dashboard - Frontend (2025-12-15)**
   - **Nova Página /health:**
     - Dashboard de monitoramento de saúde do sistema

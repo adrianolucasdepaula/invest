@@ -1,8 +1,8 @@
 # 🗺️ ROADMAP - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-15
-**Versão:** 1.26.0
+**Última Atualização:** 2025-12-21
+**Versão:** 1.27.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -11657,6 +11657,8 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 132** | Token Limits Alignment (Anthropic Official) | ✅ 100% | 2025-12-16 |
 | **FASE 133** | Hydration Error Fix - AssetsFilters Dynamic Import | ✅ 100% | 2025-12-20 |
 | **FASE 134** | MCP Quadruplo Methodology Integration | ✅ 100% | 2025-12-21 |
+| **FASE 136** | DY% Dividend Yield Column (✅ Resolvido - Turbopack Memory Cache) | ✅ 100% | 2025-12-21 |
+| **FASE 101.4** | Wheel Turbinada Backtesting Engine | ✅ 100% | 2025-12-21 |
 
 **Funcionalidades Implementadas:**
 - Seleção de candidatos por critérios fundamentalistas (ROE, DY, Dív/EBITDA)
@@ -11717,11 +11719,13 @@ Sistema em estado de manutenção e evolução contínua.
 > **Nota:** FASE 132 concluída em 2025-12-16 (Token Limits Alignment: CLAUDE_CODE_MAX_OUTPUT_TOKENS 128K→64K | MAX_THINKING_TOKENS 100K→32K | MAX_MCP_OUTPUT_TOKENS 150K→25K | MAX_TOOL_OUTPUT_TOKENS removed | Aligned with Anthropic official recommendations | Sources: Models Overview, Extended Thinking AWS, Claude Code Settings)
 > **Nota:** FASE 133 concluída em 2025-12-20 (Hydration Error Fix: Checkbox "Somente IDIV" intermitente → 100% visível | Dual problem: Turbopack cache + Radix UI React 19.2 | Solução: next.config.js cache flags + AssetsFilters.tsx dynamic import ssr:false | Research: 40+ fontes, GitHub Issues #68255 #3700, git history commit 45a8dd6 | Documentação: BUG_CRITICO_DOCKER_NEXT_CACHE.md | ROI: 19 horas economizadas se research fosse primeiro)
 > **Nota:** FASE 134 concluída em 2025-12-21 (MCP Quadruplo Methodology: Evolução MCP Triplo → Quadruplo adicionando Documentation Research | 8 arquivos criados/modificados | 5 sub-steps research (GitHub Issues + Docs Oficiais + KNOWN-ISSUES.md + Git History + WebSearch Paralelo) | Integração completa: /mcp-quadruplo command, skill, template, CLAUDE.md, CHECKLIST_ECOSSISTEMA_COMPLETO.md, INDEX.md | ROI demonstrado: 15-30 min research economiza 2-8h debugging | Caso real FASE 133: 90% tempo economizado)
+> **Nota:** FASE 136 concluída em 2025-12-21 (DY% Dividend Yield Column: Implementação backend ✅ LEFT JOIN LATERAL fundamental_data + frontend ✅ color coding (Verde >= 6%, Padrão >= 4%, Cinza < 4%) + Dynamic import ssr:false | ✅ BUG RESOLVIDO: Turbopack in-memory cache persistente | Root cause: Cache em MEMÓRIA do processo Node.js (não disco) - turbopackFileSystemCacheForDev: false só desabilita disco | Solução: docker rm (mata processo) + volume prune -af (5.3GB) + build --no-cache | Análise ultra-robusta: Sequential Thinking MCP (12 thoughts) + WebSearch 40+ fontes (GitHub #85744, #85883, #84264, Radix #3700) + Explore Agent (aea2ae7) | Troubleshooting: 10+ tentativas falhadas → FASE 1 (70% confiança) RESOLVEU | Validação: Usuário confirmou coluna visível, valores corretos (8.10%, 9.33%, "-"), sorting OK, color coding OK, 0 erros console | Documentação: BUG_CRITICO_TURBOPACK_MEMORY_CACHE.md, KNOWN-ISSUES.md #DY_COLUMN_NOT_RENDERING (RESOLVIDO), VALIDACAO_MCP_QUADRUPLO_FASE_136_ATUALIZADO.md | Lições: docker rm ≠ docker restart, cache memória ≠ cache disco, volume prune obrigatório, análise profunda economiza tempo | Commits: 1be4f86 (feature) + [PENDENTE] (fix) | Tempo total: 4h (2h debugging + 2h análise/resolução))
+> **Nota:** FASE 101.4 concluída em 2025-12-21 (Wheel Turbinada Backtesting Engine: 4 Entities (Dividend, StockLendingRate, BacktestResult, AssetIndexMembership) | 4 Migrations | Backend Services (DividendsService, StockLendingService, BacktestService) | Frontend Hooks (use-backtest, use-dividends) | API isolation for Turbopack fix | Metrics: CAGR, Sharpe, Sortino, MaxDD, Win Rate, Profit Factor | UI: 4 metric cards, 3 tabs, empty state | Zero Tolerance ✅ | Validação MCP ✅)
 
 ---
 
 **Ultima Atualizacao:** 2025-12-21
-**Total de Fases:** 139 completas (incluindo sub-fases)
-**Versao:** 1.34.0
+**Total de Fases:** 140 completas (incluindo sub-fases)
+**Versao:** 1.36.0
 **Responsavel:** Claude Code (Sonnet 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

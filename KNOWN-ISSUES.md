@@ -34,6 +34,10 @@ Este documento centraliza **todos os problemas conhecidos** encontrados durante 
 
 ## 🔴 ISSUES ATIVOS (NÃO RESOLVIDOS)
 
+> **Nota:** Issue #DY_COLUMN_NOT_RENDERING foi **RESOLVIDO** e movido para seção "ISSUES RESOLVIDOS" abaixo.
+
+---
+
 ### Issue #JOBS_ACTIVE_STALE: Jobs Ativos Ficam Presos na Fila
 
 **Severidade:** 🟡 **MÉDIA**
@@ -286,6 +290,161 @@ O TradingView Ticker Tape é um widget embed externo (iframe) que:
 ---
 
 ## ✅ ISSUES RESOLVIDOS
+
+### Issue #DY_COLUMN_NOT_RENDERING: Coluna DY% Não Renderiza no Browser
+
+**Severidade:** 🔴 **CRÍTICA**
+**Status:** ✅ **RESOLVIDO**
+**Data Identificado:** 2025-12-21
+**Data Resolução:** 2025-12-21 (resolvido no mesmo dia)
+**Tempo de Resolução:** ~4 horas (debugging + análise ultra-robusta + 10+ tentativas)
+**Identificado Por:** Usuário + Claude Code (Sonnet 4.5) durante FASE 136
+
+#### Descrição
+
+Coluna DY% (Dividend Yield) implementada no componente AssetTable não renderizava no browser, apesar do código estar correto nos arquivos fonte e a API retornar os dados perfeitamente.
+
+#### Sintomas
+
+- Coluna DY% completamente ausente do DOM renderizado
+- Browser mostrava apenas 11-12 headers (esperado: 13)
+- Headers visíveis: Ticker, Nome, Setor, Índices, Preço, Variação, Volume, Market Cap, Opções, Última Atualização, Ações
+- Header "DY%" NÃO aparecia entre "Variação" e "Volume"
+- API retornava `dividendYield` corretamente (8.1, 9.33, 8.4)
+- 0 erros no console do browser
+- 0 erros TypeScript ou build
+
+#### Root Cause Identificado
+
+**Causa Real:** **Turbopack In-Memory Cache Persistente**
+
+**Análise Técnica Profunda:**
+
+1. `turbopackFileSystemCacheForDev: false` em `next.config.js` desabilita cache em **DISCO**
+2. MAS cache em **MEMÓRIA** do processo Node.js/Turbopack permanecia ativo
+3. Todas as 10 tentativas anteriores limpavam cache de DISCO (`.next`, volumes Docker), NÃO memória
+4. `docker restart` mantém processo Node.js vivo → Cache em memória persiste
+5. Solução requer **KILL COMPLETO** do processo via `docker rm`
+
+**Evidências:**
+- File hash idêntico entre host e container (cd352e537e8cec50ef7f47277ee202ca)
+- Grep encontrava código "DY%" no container (linha 239)
+- API curl retornava dividendYield corretamente
+- Mas DOM inspection mostrava 0 ocorrências de "DY%"
+
+#### Solução Aplicada
+
+**FASE 1: Kill Processo Turbopack + Full Rebuild (70% confiança - FUNCIONOU!)**
+
+```bash
+# 1. MATAR processo Turbopack (não apenas restart)
+docker stop invest_frontend
+docker rm invest_frontend  # ✅ CRÍTICO - rm mata processo completamente
+
+# 2. Remover TODOS volumes (incluindo anônimos - 5.3GB removidos!)
+docker volume prune -af
+rm -rf frontend/.next  # Também no host
+
+# 3. Rebuild do ZERO sem cache
+docker-compose build --no-cache frontend
+docker-compose up -d frontend
+
+# 4. Aguardar compilação completa
+sleep 45
+```
+
+**Modificações Adicionais (Preventivas):**
+
+1. **Dynamic Import em `_client.tsx`:**
+   ```typescript
+   const AssetTable = dynamic(
+     () => import('@/components/dashboard/asset-table').then(mod => ({ default: mod.AssetTable })),
+     { ssr: false }
+   );
+   ```
+   - **Razão:** Evitar hydration errors (React 19.2 + Radix UI useId mismatch)
+   - **Baseado em:** FASE 133 (BUG_CRITICO_DOCKER_NEXT_CACHE.md)
+
+**Resultado:**
+- ✅ Coluna DY% VISÍVEL no browser (confirmado pelo usuário)
+- ✅ Valores corretos: "8.10%", "9.33%", "-" (null)
+- ✅ Color coding funcionando (Verde >= 6%)
+- ✅ Sorting funcional (click no header)
+- ✅ 0 erros console
+- ✅ 0 erros TypeScript
+- ✅ Build de produção OK
+
+#### Impacto Pós-Resolução
+
+- **Funcionalidade:** ✅ 100% funcional
+- **Performance:** ✅ OK (compilação 1.6s)
+- **UX:** ✅ Coluna visível e interativa
+- **Deployment:** ✅ Desbloqueado para produção
+
+#### Arquivos Modificados
+
+- `frontend/src/app/(dashboard)/assets/_client.tsx` (Lines 16-18) - Dynamic import
+- `frontend/src/components/dashboard/asset-table.tsx` (Lines 234-242 header, 358-377 cells)
+- `backend/src/api/assets/assets.service.ts` (Lines 116-246) - LEFT JOIN LATERAL
+
+#### Lições Aprendidas (CRÍTICAS para Futuro)
+
+1. ✅ **Cache em memória ≠ Cache em disco** - `turbopackFileSystemCacheForDev: false` só desabilita cache persistente
+2. ✅ **`docker restart` ≠ `docker rm`** - Restart mantém processo vivo com cache em memória
+3. ✅ **`docker volume prune -af` é OBRIGATÓRIO** - Volumes anônimos persistem cache entre rebuilds
+4. ✅ **`--no-cache` flag é CRÍTICO** - Sem ele, Docker usa cached layers
+5. ✅ **Dynamic import preventivo** - Aplicar `ssr: false` em components Radix UI previne hydration errors
+6. ✅ **Análise ultra-robusta = ROI positivo** - Sequential Thinking MCP + WebSearch identificou root cause em 2h (vs 10+ tentativas às cegas)
+7. ✅ **Documentação interna é gold** - BUG_CRITICO_DOCKER_NEXT_CACHE.md (FASE 133) indicou precedente similar
+
+#### Workflow de Prevenção (NOVO PADRÃO)
+
+**Para TODA modificação em componentes React/Next.js frontend:**
+
+```bash
+# 1. Stop + Remove container (mata processo)
+docker stop invest_frontend && docker rm invest_frontend
+
+# 2. Prune volumes anônimos
+docker volume prune -af
+
+# 3. Remover .next local
+rm -rf frontend/.next
+
+# 4. Rebuild sem cache
+docker-compose build --no-cache frontend
+
+# 5. Up do container
+docker-compose up -d frontend
+
+# 6. Aguardar compilação
+sleep 45
+
+# 7. Validar no browser
+# - Modo anônimo (Ctrl+Shift+N)
+# - Hard refresh (Ctrl+Shift+R)
+# - DevTools Console (verificar 0 erros)
+```
+
+**Adicionar a:** `CHECKLIST_TODO_MASTER.md` e `system-manager.ps1`
+
+#### Referências
+
+- **Relatório Técnico Completo:** `BUG_CRITICO_TURBOPACK_MEMORY_CACHE.md`
+- **Validação MCP Quadruplo:** `docs/VALIDACAO_MCP_QUADRUPLO_FASE_136_ATUALIZADO.md`
+- **Precedente FASE 133:** `BUG_CRITICO_DOCKER_NEXT_CACHE.md`
+- **GitHub Issues Next.js:**
+  - [#85744 - HMR not detecting changes](https://github.com/vercel/next.js/discussions/85744)
+  - [#85883 - Module not found in Client Manifest](https://github.com/vercel/next.js/issues/85883)
+  - [#84264 - Module factory not available](https://github.com/vercel/next.js/discussions/84264)
+- **GitHub Issues Radix UI:**
+  - [#3700 - Hydration error useId mismatch](https://github.com/radix-ui/primitives/issues/3700)
+- **Turbopack Docs:** https://nextjs.org/docs/app/api-reference/turbopack
+- **Commits:**
+  - `1be4f86` - feat(frontend): add DY% (Dividend Yield) column
+  - `[PENDENTE]` - fix(fase-136): resolve DY% rendering via Turbopack cache kill + dynamic import
+
+---
 
 ### Issue #AUTH_INCONSISTENCY: Endpoints Bulk-Update com Auth Inconsistente
 

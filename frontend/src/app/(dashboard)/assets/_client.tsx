@@ -9,7 +9,14 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { AssetTable } from '@/components/dashboard/asset-table';
+// FASE 136: Dynamic import sem SSR para evitar hydration errors (React 19.2 + Radix UI)
+// AssetTable usa múltiplos componentes Radix UI (DropdownMenu, Tooltip, Button, Checkbox)
+// React 19.2 mudou prefix do useId() causando mismatch server/client
+// Ref: BUG_CRITICO_DOCKER_NEXT_CACHE.md FASE 133, GitHub Radix UI #3700
+const AssetTable = dynamic(
+  () => import('@/components/dashboard/asset-table').then(mod => ({ default: mod.AssetTable })),
+  { ssr: false }
+);
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Filter, RefreshCw, Layers, Loader2, XCircle, Pause, Play, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '@/lib/api';
