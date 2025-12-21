@@ -45,42 +45,42 @@ export function formatCompactNumber(value: number): string {
 }
 
 export function getChangeColor(value: number): string {
-  if (value > 0) return 'text-green-600 dark:text-green-400'
-  if (value < 0) return 'text-red-600 dark:text-red-400'
-  return 'text-gray-600 dark:text-gray-400'
+  if (value > 0) return 'text-green-600 dark:text-green-300'
+  if (value < 0) return 'text-red-600 dark:text-red-300'
+  return 'text-muted-foreground'
 }
 
 export function getChangeBackgroundColor(value: number): string {
-  if (value > 0) return 'bg-green-50 dark:bg-green-900/20'
-  if (value < 0) return 'bg-red-50 dark:bg-red-900/20'
-  return 'bg-gray-50 dark:bg-gray-900/20'
+  if (value > 0) return 'bg-green-50 dark:bg-green-900/30'
+  if (value < 0) return 'bg-red-50 dark:bg-red-900/30'
+  return 'bg-muted'
 }
 
 export function getSignalColor(signal: 'BUY' | 'SELL' | 'NEUTRAL' | 'HOLD'): string {
   switch (signal) {
     case 'BUY':
-      return 'text-green-600 dark:text-green-400'
+      return 'text-green-600 dark:text-green-300'
     case 'SELL':
-      return 'text-red-600 dark:text-red-400'
+      return 'text-red-600 dark:text-red-300'
     case 'NEUTRAL':
     case 'HOLD':
-      return 'text-yellow-600 dark:text-yellow-400'
+      return 'text-yellow-600 dark:text-yellow-300'
     default:
-      return 'text-gray-600 dark:text-gray-400'
+      return 'text-muted-foreground'
   }
 }
 
 export function getSignalBadgeColor(signal: 'BUY' | 'SELL' | 'NEUTRAL' | 'HOLD'): string {
   switch (signal) {
     case 'BUY':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
     case 'SELL':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
     case 'NEUTRAL':
     case 'HOLD':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+      return 'bg-muted text-muted-foreground'
   }
 }
 

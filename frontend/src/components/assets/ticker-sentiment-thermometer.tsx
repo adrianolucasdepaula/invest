@@ -198,7 +198,7 @@ function ThermometerGaugeCompact({ value }: { value: number }) {
   return (
     <div className="relative h-24 w-full flex items-end justify-center">
       {/* Termômetro container */}
-      <div className="relative w-12 h-full bg-gray-200 dark:bg-gray-700 rounded-t-full rounded-b-3xl overflow-hidden">
+      <div className="relative w-12 h-full bg-muted rounded-t-full rounded-b-3xl overflow-hidden">
         {/* Preenchimento */}
         <div
           className={cn('absolute bottom-0 left-0 right-0 transition-all duration-1000', getColor())}
@@ -207,9 +207,9 @@ function ThermometerGaugeCompact({ value }: { value: number }) {
 
         {/* Marcações */}
         <div className="absolute inset-0 flex flex-col justify-between py-1">
-          <span className="text-[7px] text-center text-gray-500 dark:text-gray-400">+1</span>
-          <span className="text-[7px] text-center text-gray-500 dark:text-gray-400">0</span>
-          <span className="text-[7px] text-center text-gray-500 dark:text-gray-400">-1</span>
+          <span className="text-[7px] text-center text-muted-foreground">+1</span>
+          <span className="text-[7px] text-center text-muted-foreground">0</span>
+          <span className="text-[7px] text-center text-muted-foreground">-1</span>
         </div>
       </div>
 
@@ -374,7 +374,7 @@ export function TickerSentimentThermometer({
         </CardHeader>
         <CardContent>
           <div className="text-center py-4 text-muted-foreground">
-            <Newspaper className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <Newspaper className="h-8 w-8 mx-auto mb-2" />
             <p className="text-sm">Sem análise de sentimento</p>
             <p className="text-xs">Clique para coletar notícias</p>
           </div>

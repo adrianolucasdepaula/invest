@@ -139,7 +139,7 @@ export function AuditTrailPanel({
           {state.logs.length === 0 ? (
             /* Empty State */
             <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-              <FileText className="h-12 w-12 opacity-50 mb-4" />
+              <FileText className="h-12 w-12 mb-4" />
               <p className="text-lg font-medium">Nenhum log disponível</p>
               <p className="text-sm mt-1">
                 Os logs de sincronização aparecerão aqui em tempo real.

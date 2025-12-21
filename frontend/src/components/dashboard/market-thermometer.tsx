@@ -143,7 +143,7 @@ function ThermometerGauge({ value }: { value: number }) {
   return (
     <div className="relative h-32 w-full flex items-end justify-center">
       {/* Termômetro container */}
-      <div className="relative w-16 h-full bg-gray-200 dark:bg-gray-700 rounded-t-full rounded-b-3xl overflow-hidden">
+      <div className="relative w-16 h-full bg-muted rounded-t-full rounded-b-3xl overflow-hidden">
         {/* Preenchimento */}
         <div
           className={cn('absolute bottom-0 left-0 right-0 transition-all duration-1000', getColor())}
@@ -152,9 +152,9 @@ function ThermometerGauge({ value }: { value: number }) {
 
         {/* Marcações */}
         <div className="absolute inset-0 flex flex-col justify-between py-2">
-          <span className="text-[8px] text-center text-gray-500 dark:text-gray-400">+1</span>
-          <span className="text-[8px] text-center text-gray-500 dark:text-gray-400">0</span>
-          <span className="text-[8px] text-center text-gray-500 dark:text-gray-400">-1</span>
+          <span className="text-[8px] text-center text-muted-foreground">+1</span>
+          <span className="text-[8px] text-center text-muted-foreground">0</span>
+          <span className="text-[8px] text-center text-muted-foreground">-1</span>
         </div>
       </div>
 
@@ -269,7 +269,7 @@ export function MarketThermometer() {
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
-            <Newspaper className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <Newspaper className="h-12 w-12 mx-auto mb-4" />
             <p>Nenhuma notícia analisada ainda</p>
             <p className="text-sm">Clique no botão de sync para coletar notícias</p>
           </div>

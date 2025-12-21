@@ -159,7 +159,7 @@ export default function InsiderActivity({
         <div className="space-y-3 max-h-[500px] overflow-y-auto">
           {transactions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <User className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <User className="h-12 w-12 mx-auto mb-2" />
               <p>Nenhuma transação de insider registrada recentemente</p>
             </div>
           ) : (

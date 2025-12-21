@@ -331,7 +331,7 @@ export function SyncStatusTable({ showOnlyOptions = false }: SyncStatusTableProp
         {filteredAssets.length === 0 ? (
           <Card className="p-12">
             <div className="text-center text-muted-foreground">
-              <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <Database className="h-12 w-12 mx-auto mb-4" />
               <p className="text-lg font-medium">Nenhum ativo encontrado</p>
               <p className="text-sm mt-1">
                 Tente ajustar os filtros ou recarregar a página.

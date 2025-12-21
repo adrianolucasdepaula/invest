@@ -710,7 +710,7 @@ export function WheelPageClient() {
                   </div>
                 ) : (
                   <div className="py-8 text-center text-muted-foreground">
-                    <PiggyBank className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                    <PiggyBank className="mx-auto h-12 w-12 mb-4" />
                     <p>Preencha os campos e clique em calcular</p>
                     <p className="text-sm mt-2">
                       O dinheiro não alocado em opções deve render em Tesouro Selic

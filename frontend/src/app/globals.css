@@ -91,6 +91,14 @@
   --chart-3: 42 87% 55%;
   --chart-4: 0 84% 52%;
   --chart-5: 271 81% 56%;
+
+  /* Semantic colors for financial data */
+  --positive: 145 75% 38%;
+  --positive-foreground: 0 0% 100%;
+  --negative: 0 84% 52%;
+  --negative-foreground: 0 0% 100%;
+  --attention: 42 87% 55%;
+  --attention-foreground: 215 25% 15%;
 }
 
 /* CSS Variables - Dark Mode */
@@ -134,6 +142,14 @@
   --chart-3: 42 87% 55%;
   --chart-4: 0 75% 55%;
   --chart-5: 271 81% 65%;
+
+  /* Semantic colors for financial data */
+  --positive: 145 70% 50%;
+  --positive-foreground: 0 0% 100%;
+  --negative: 0 75% 55%;
+  --negative-foreground: 0 0% 100%;
+  --attention: 42 87% 55%;
+  --attention-foreground: 215 28% 10%;
 }
 
 /* Base layer styles */

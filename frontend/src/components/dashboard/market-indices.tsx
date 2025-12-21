@@ -134,7 +134,7 @@ export function MarketIndices() {
                 className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 ${
                   selectedCategory === cat.id
                     ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'
+                    : 'bg-secondary hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -153,7 +153,7 @@ export function MarketIndices() {
               className={`p-3 rounded-lg border transition-all ${
                 selectedSymbol === index.symbol
                   ? 'border-primary bg-primary/10 shadow-md'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-primary/50 bg-white dark:bg-gray-900'
+                  : 'border-border hover:border-primary/50 bg-card'
               }`}
             >
               <p className="text-xs font-medium text-muted-foreground mb-1">

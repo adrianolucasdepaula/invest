@@ -48,13 +48,13 @@ interface TickerNewsProps {
 }
 
 const sentimentColors: Record<string, string> = {
-  very_bullish: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-  bullish: 'bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400',
-  slightly_bullish: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400',
-  neutral: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-  slightly_bearish: 'bg-orange-50 text-orange-600 dark:bg-orange-950 dark:text-orange-400',
-  bearish: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400',
-  very_bearish: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
+  very_bullish: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  bullish: 'bg-green-50 text-green-600 dark:bg-green-950/30 dark:text-green-300',
+  slightly_bullish: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-300',
+  neutral: 'bg-muted text-muted-foreground',
+  slightly_bearish: 'bg-orange-50 text-orange-600 dark:bg-orange-950/30 dark:text-orange-300',
+  bearish: 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-300',
+  very_bearish: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
 };
 
 const sentimentLabels: Record<string, string> = {

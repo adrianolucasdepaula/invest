@@ -152,7 +152,7 @@ export default function NewsCard({
         <div className="space-y-3 max-h-[600px] overflow-y-auto">
           {filteredArticles.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <Newspaper className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <Newspaper className="h-12 w-12 mx-auto mb-2" />
               <p>Nenhuma notícia encontrada com os filtros aplicados</p>
             </div>
           ) : (

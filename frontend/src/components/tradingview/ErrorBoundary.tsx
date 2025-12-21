@@ -143,7 +143,7 @@ export class WidgetErrorBoundary extends Component<
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-3 px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+              className="mt-3 px-4 py-2 text-sm text-destructive-foreground bg-destructive hover:bg-destructive/90 rounded-md transition-colors"
             >
               Recarregar página
             </button>

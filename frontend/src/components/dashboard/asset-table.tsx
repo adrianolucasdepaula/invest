@@ -161,7 +161,7 @@ export function AssetTable({
         <CardContent className="pt-6">
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} className="h-16 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+              <div key={i} className="h-16 animate-pulse rounded bg-muted" />
             ))}
           </div>
         </CardContent>
@@ -274,7 +274,7 @@ export function AssetTable({
                 return (
                   <tr
                     key={asset.ticker}
-                    className="border-b transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                    className="border-b transition-colors hover:bg-muted/50"
                   >
                     {onSelectAsset && (
                       <td className="w-12 px-4 py-3" onClick={(e) => e.stopPropagation()}>

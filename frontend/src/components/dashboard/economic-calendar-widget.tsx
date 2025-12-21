@@ -216,7 +216,7 @@ function EventsSkeleton() {
 function EmptyState({ message, icon: Icon }: { message: string; icon: React.ElementType }) {
   return (
     <div className="text-center py-6 text-muted-foreground">
-      <Icon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+      <Icon className="h-8 w-8 mx-auto mb-2" />
       <p className="text-sm">{message}</p>
     </div>
   );
