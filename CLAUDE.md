@@ -1354,7 +1354,7 @@ validar que não há erros de console, network ou acessibilidade.
 
 ### Visão Geral
 
-O projeto possui **14 slash commands** que DEVEM ser invocados em contextos específicos.
+O projeto possui **15 slash commands** que DEVEM ser invocados em contextos específicos.
 
 ### Matriz de Invocação Obrigatória
 
@@ -1363,6 +1363,7 @@ O projeto possui **14 slash commands** que DEVEM ser invocados em contextos espe
 | **Início de tarefa complexa** | `/check-context` | ANTES de começar |
 | **Antes de QUALQUER commit** | `/validate-all` | Obrigatório |
 | **Após mudanças frontend** | `/mcp-triplo` | Após editar .tsx/.css |
+| **Feature complexa ou bug desconhecido** | `/mcp-quadruplo` | Quando precisa documentation research |
 | **Nova fase do projeto** | `/new-phase` | Antes de implementar |
 | **Validar fase completa** | `/validate-phase` | Após implementar |
 | **Sincronizar documentação** | `/sync-docs` | Após mudar CLAUDE.md |
@@ -1395,14 +1396,27 @@ Início Tarefa
     │ SIM    │ NÃO
     ▼         │
 ┌─────────────┐ │
-│ /mcp-triplo │ │
+│ /mcp-triplo │ │  ◄── UI simples
 └─────┬───────┘ │
+      │         │
+      │ Feature complexa?
+      │ Bug >2h debug?
+      ▼
+┌──────────────────┐
+│ /mcp-quadruplo   │  ◄── Com documentation research
+└─────┬────────────┘
       └────┬────┘
            ▼
 ┌─────────────────┐
 │ /commit-phase   │ ◄── Commit padronizado
 └─────────────────┘
 ```
+
+**Nota:** Use `/mcp-quadruplo` quando:
+- ✅ Feature complexa (nova biblioteca, integração)
+- ✅ Bug desconhecido (>2 horas sem solução)
+- ✅ Precisa validar se problema é conhecido
+- ✅ Quer economizar tempo com research preventivo
 
 ### Anti-Patterns (NUNCA FAZER)
 
@@ -1423,6 +1437,7 @@ Início Tarefa
 | `/docker-status` | Status dos containers | `.claude/commands/docker-status.md` |
 | `/fix-ts-errors` | Corrige erros TypeScript | `.claude/commands/fix-ts-errors.md` |
 | `/mcp-triplo` | Playwright + DevTools + a11y | `.claude/commands/mcp-triplo.md` |
+| `/mcp-quadruplo` | MCP Triplo + Documentation Research | `.claude/commands/mcp-quadruplo.md` |
 | `/new-phase` | Cria PLANO_FASE_XX.md | `.claude/commands/new-phase.md` |
 | `/run-scraper` | Executa scraper Python | `.claude/commands/run-scraper.md` |
 | `/sync-docs` | Sincroniza CLAUDE.md ↔ GEMINI.md | `.claude/commands/sync-docs.md` |

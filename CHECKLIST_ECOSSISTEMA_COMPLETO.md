@@ -285,6 +285,29 @@ npm run lint           # 0 critical warnings
 - [ ] **Chrome DevTools:** Console (0 errors) + Network (0 4xx/5xx)
 - [ ] **A11y:** 0 violacoes criticas WCAG
 
+> **⚠️ UPGRADE:** Para features complexas ou bugs >2h debug, use `/mcp-quadruplo` que adiciona **Documentation Research** (GitHub Issues + Docs Oficiais + KNOWN-ISSUES.md + Git History + WebSearch). Ver `docs/MCP_QUADRUPLO_METODOLOGIA.md`
+
+### 4.3.1 MCP Quadruplo - Com Documentation Research (NOVO)
+
+**Quando usar:** Feature complexa, bug desconhecido, nova biblioteca, integração
+
+```
+1. mcp__playwright__browser_navigate + browser_snapshot
+2. mcp__chrome-devtools__list_console_messages + list_network_requests
+3. mcp__a11y__get_summary
+4. Documentation Research (5 sub-steps)
+```
+
+**Checklist:**
+- [ ] **Etapas 1-3:** MCP Triplo completo
+- [ ] **4.1 GitHub Issues:** Minimo 2 issues relevantes encontrados
+- [ ] **4.2 Docs Oficiais:** Feature documentada e nao deprecated
+- [ ] **4.3 KNOWN-ISSUES.md:** Issue similar checado (grep)
+- [ ] **4.4 Git History:** Commits relacionados analisados
+- [ ] **4.5 WebSearch Paralelo:** Minimo 3 fontes validando solucao
+
+**ROI:** 15-30 min research economiza 2-8h debugging
+
 ### 4.4 Verificacao de Containers
 
 ```bash
@@ -1042,11 +1065,12 @@ for table in tables:
 > **CRITICO:** Playwright MCP DEVE usar `--snapshot incremental` para evitar "Prompt is too long".
 > Configuracao: `"args": ["/c", "npx", "@playwright/mcp@latest", "--snapshot", "incremental"]`
 
-### 21.2 11 Slash Commands
+### 21.2 12 Slash Commands
 
 | Comando | Proposito | Quando Usar |
 |---------|-----------|-------------|
 | `/mcp-triplo` | Playwright + DevTools + a11y | Validacao frontend |
+| `/mcp-quadruplo` | MCP Triplo + Documentation Research | Feature complexa, bug >2h debug |
 | `/validate-phase` | Zero Tolerance + docs | Fim de fase |
 | `/commit-phase` | Commit padronizado | Apos validacao |
 | `/new-phase` | Criar PLANO_FASE_XX.md | Inicio de fase |
@@ -1107,10 +1131,11 @@ cd frontend && npx tsc --noEmit && npm run build && npm run lint
 
 ```
 /check-context     # Verificacao pre-tarefa
-/check-ecosystem   # Validacao 100% ecossistema (NOVO)
+/check-ecosystem   # Validacao 100% ecossistema
 /validate-all      # Zero Tolerance completo
 /validate-phase    # Validacao de fase
 /mcp-triplo        # Playwright + DevTools + a11y
+/mcp-quadruplo     # MCP Triplo + Documentation Research (NOVO)
 /docker-status     # Status containers
 /fix-ts-errors     # Corrigir erros TS
 /sync-docs         # Sincronizar CLAUDE.md/GEMINI.md
@@ -1123,6 +1148,24 @@ cd frontend && npx tsc --noEmit && npm run build && npm run lint
 2. mcp__chrome-devtools__list_console_messages + list_network_requests
 3. mcp__a11y__get_summary
 ```
+
+### MCP Quadruplo (NOVO)
+
+```
+1. mcp__playwright__browser_navigate + browser_snapshot
+2. mcp__chrome-devtools__list_console_messages + list_network_requests
+3. mcp__a11y__get_summary
+4. Documentation Research:
+   - GitHub Issues (minimo 2)
+   - Docs Oficiais
+   - KNOWN-ISSUES.md (grep)
+   - Git History (git log --grep)
+   - WebSearch Paralelo (minimo 3 fontes)
+```
+
+**Use quando:** Feature complexa, bug >2h debug, nova biblioteca
+
+**ROI:** 15-30 min research economiza 2-8h debugging
 
 ---
 

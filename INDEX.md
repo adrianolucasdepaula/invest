@@ -124,10 +124,11 @@
 
 ### Framework de Validação
 
-| Arquivo                                                                                | Descrição                                 |
-| -------------------------------------------------------------------------------------- | ----------------------------------------- |
-| [FRAMEWORK_VALIDACAO_FRONTEND_UNIVERSAL.md](FRAMEWORK_VALIDACAO_FRONTEND_UNIVERSAL.md) | Framework universal de validação frontend |
-| [GUIA_DEFINITIVO_VALIDACAO_FRONTEND.md](GUIA_DEFINITIVO_VALIDACAO_FRONTEND.md)         | Guia definitivo de validação              |
+| Arquivo                                                                                              | Descrição                                            |
+| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| [FRAMEWORK_VALIDACAO_FRONTEND_UNIVERSAL.md](FRAMEWORK_VALIDACAO_FRONTEND_UNIVERSAL.md)               | Framework universal de validação frontend            |
+| [GUIA_DEFINITIVO_VALIDACAO_FRONTEND.md](GUIA_DEFINITIVO_VALIDACAO_FRONTEND.md)                       | Guia definitivo de validação                         |
+| [docs/VALIDACAO_MCP_QUADRUPLO_TEMPLATE.md](docs/VALIDACAO_MCP_QUADRUPLO_TEMPLATE.md) ⭐               | **Template MCP Quadruplo: Validation + Documentation Research** |
 
 ### Validações de Fases
 
@@ -161,10 +162,11 @@
 
 ## 🧪 MCPs (Model Context Protocols)
 
-| Arquivo                                                        | Descrição                                      |
-| -------------------------------------------------------------- | ---------------------------------------------- |
-| [MCPS_USAGE_GUIDE.md](MCPS_USAGE_GUIDE.md)                     | Guia técnico completo dos 8 MCPs               |
-| [METODOLOGIA_MCPS_INTEGRADA.md](METODOLOGIA_MCPS_INTEGRADA.md) | Integração MCPs com Ultra-Thinking + TodoWrite |
+| Arquivo                                                                      | Descrição                                             |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------- |
+| [MCPS_USAGE_GUIDE.md](MCPS_USAGE_GUIDE.md)                                   | Guia técnico completo dos 8 MCPs                      |
+| [METODOLOGIA_MCPS_INTEGRADA.md](METODOLOGIA_MCPS_INTEGRADA.md)               | Integração MCPs com Ultra-Thinking + TodoWrite        |
+| [docs/MCP_QUADRUPLO_METODOLOGIA.md](docs/MCP_QUADRUPLO_METODOLOGIA.md) ⭐     | **MCP Quadruplo: MCP Triplo + Documentation Research** |
 
 **MCPs Disponíveis:**
 
