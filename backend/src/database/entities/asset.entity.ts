@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { AssetPrice } from './asset-price.entity';
 import { FundamentalData } from './fundamental-data.entity';
+import { AssetIndexMembership } from './asset-index-membership.entity';
 
 export enum AssetType {
   STOCK = 'stock',
@@ -98,6 +99,9 @@ export class Asset {
 
   @OneToMany(() => FundamentalData, (fundamental) => fundamental.asset)
   fundamentalData: FundamentalData[];
+
+  @OneToMany(() => AssetIndexMembership, (membership) => membership.asset)
+  indexMemberships: AssetIndexMembership[];
 
   @Column({ name: 'has_options', default: false })
   hasOptions: boolean;

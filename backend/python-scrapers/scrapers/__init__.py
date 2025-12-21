@@ -48,6 +48,7 @@ from .oplab_scraper import OplabScraper
 from .kinvo_scraper import KinvoScraper
 from .investing_scraper import InvestingScraper  # FASE 95: Works without login
 from .b3_scraper import B3Scraper  # FASE 96: CVM codes file exists
+from .idiv_scraper import IdivScraper  # FASE Marcação IDIV: Index composition
 
 # ==============================
 # OAUTH SCRAPERS (FASE 97)
@@ -100,6 +101,7 @@ __all__ = [
     "KinvoScraper",
     "InvestingScraper",  # FASE 95
     "B3Scraper",  # FASE 96
+    "IdivScraper",  # FASE Marcação IDIV
     # OAuth Scrapers (FASE 97)
     "FundamenteiScraper",  # FASE 97
     "MaisRetornoScraper",  # FASE 97

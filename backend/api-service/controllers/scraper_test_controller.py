@@ -31,6 +31,10 @@ from scrapers import (
     CoinMarketCapScraper,
     OpcoesNetScraper,
     # ==============================
+    # INDEX SCRAPERS (1)
+    # ==============================
+    IdivScraper,
+    # ==============================
     # NEWS SCRAPERS (7)
     # ==============================
     BloombergScraper,
@@ -170,6 +174,19 @@ class ScraperTestController:
             "category": "options",
             "description": "Dados de opções (calls/puts)",
             "url": "https://opcoes.net.br/",
+            "status": "active",
+        },
+        # ==============================
+        # INDEX SCRAPERS (1)
+        # ==============================
+        "IDIV": {
+            "class": IdivScraper,
+            "name": "Índice de Dividendos (IDIV)",
+            "source": "B3_IDIV",
+            "requires_login": False,
+            "category": "market_indices",
+            "description": "Composição do índice IDIV (B3) com participação %",
+            "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-de-segmentos-e-setoriais/indice-dividendos-idiv-composicao-da-carteira.htm",
             "status": "active",
         },
         # ==============================

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { useAssets } from '@/lib/hooks/use-assets';
 import { useHydrated } from '@/hooks/useHydrated';
 import { Card } from '@/components/ui/card';
@@ -13,20 +14,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Filter, RefreshCw, Layers, Loader2, XCircle, Pause, Play, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useAssetBulkUpdate } from '@/lib/hooks/useAssetBulkUpdate';
 import { Progress } from '@/components/ui/progress';
 import { AssetUpdateLogsPanel } from '@/components/dashboard/AssetUpdateLogsPanel';
 import { AssetUpdateModal, UpdateMode } from '@/components/dashboard/AssetUpdateModal';
 import { AssetUpdateDropdown } from '@/components/dashboard/AssetUpdateDropdown';
+
+// FASE 133: Import dinâmico sem SSR para evitar hydration errors do Radix UI
+// Ref: https://github.com/radix-ui/primitives/issues/3700
+// React 19.2 mudou prefix do useId() causando mismatch server/client
+const AssetsFilters = dynamic(
+  () => import('@/components/assets/AssetsFilters').then(mod => ({ default: mod.AssetsFilters })),
+  { ssr: false }
+);
 
 type ViewMode = 'all' | 'sector' | 'type' | 'type-sector';
 
@@ -48,6 +49,7 @@ export function AssetsPageClient() {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [showOnlyOptions, setShowOnlyOptions] = useState(false);
+  const [showOnlyIdiv, setShowOnlyIdiv] = useState(false);
   const [syncingAsset, setSyncingAsset] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isPausing, setIsPausing] = useState(false);
@@ -360,11 +362,15 @@ export function AssetsPageClient() {
       filtered = filtered.filter((asset: any) => asset.hasOptions);
     }
 
+    if (showOnlyIdiv) {
+      filtered = filtered.filter((asset: any) => asset.currentIndexes?.includes('IDIV'));
+    }
+
     // Sort by ticker (A-Z)
     filtered.sort((a: any, b: any) => a.ticker.localeCompare(b.ticker));
 
     return filtered;
-  }, [assets, searchTerm, showOnlyOptions]);
+  }, [assets, searchTerm, showOnlyOptions, showOnlyIdiv]);
 
   const groupedBySector = useMemo(() => {
     if (viewMode !== 'sector' || !sortedAndFilteredAssets.length) return {};
@@ -481,7 +487,7 @@ export function AssetsPageClient() {
   // Clear selection when view mode or filters change
   useEffect(() => {
     setSelectedAssets([]);
-  }, [viewMode, showOnlyOptions, searchTerm]);
+  }, [viewMode, showOnlyOptions, showOnlyIdiv, searchTerm]);
 
   return (
     <div className="space-y-6">
@@ -602,57 +608,15 @@ export function AssetsPageClient() {
             />
           </div>
 
-          <div className="mr-4 flex items-center space-x-2">
-            <Checkbox
-              id="options-mode"
-              checked={showOnlyOptions}
-              onCheckedChange={checked => {
-                console.log('[CHECKBOX] Changed to:', checked);
-                setShowOnlyOptions(checked === true);
-              }}
-            />
-            <Label htmlFor="options-mode">Com Opções</Label>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {hydrated ? (
-              <Select value={viewMode} onValueChange={(value: ViewMode) => setViewMode(value)}>
-                <SelectTrigger id="view-mode" className="w-[180px]">
-                  <SelectValue placeholder="Visualização" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    <div className="flex items-center gap-2">
-                      <Filter className="h-4 w-4" />
-                      Todos
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="type">
-                    <div className="flex items-center gap-2">
-                      <Layers className="h-4 w-4" />
-                      Por Tipo
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="sector">
-                    <div className="flex items-center gap-2">
-                      <Layers className="h-4 w-4" />
-                      Por Setor
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="type-sector">
-                    <div className="flex items-center gap-2">
-                      <Layers className="h-4 w-4" />
-                      Por Tipo e Setor
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="flex h-10 w-[180px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm">
-                <span className="text-muted-foreground">Visualização</span>
-              </div>
-            )}
-          </div>
+          {/* FASE 133: Filtros Radix UI com dynamic import (ssr: false) para evitar hydration errors */}
+          <AssetsFilters
+            showOnlyOptions={showOnlyOptions}
+            setShowOnlyOptions={setShowOnlyOptions}
+            showOnlyIdiv={showOnlyIdiv}
+            setShowOnlyIdiv={setShowOnlyIdiv}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+          />
         </div>
       </Card>
 

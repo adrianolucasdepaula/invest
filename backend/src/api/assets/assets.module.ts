@@ -8,6 +8,7 @@ import {
   Portfolio,
   PortfolioPosition,
   TickerChange,
+  AssetIndexMembership,
 } from '@database/entities';
 import { AssetsController } from './assets.controller';
 import { AssetsUpdateController } from './assets-update.controller';
@@ -28,6 +29,7 @@ import { NewsModule } from '../news/news.module';
       Portfolio,
       PortfolioPosition,
       TickerChange,
+      AssetIndexMembership,
     ]),
     ScrapersModule,
     WebSocketModule,

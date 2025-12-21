@@ -34,6 +34,7 @@ import { StorageModule } from './modules/storage'; // FASE 75.2 - MinIO
 import { AlertsModule } from './modules/alerts'; // FASE 75.3 - Sistema de Alertas
 import { OptionsModule } from './modules/options'; // FASE 75.4 - Options Chain
 import { WheelModule } from './api/wheel/wheel.module'; // FASE 101 - WHEEL Strategy
+import { IndexMembershipsModule } from './api/index-memberships/index-memberships.module'; // FASE Marcação IDIV
 import {
   User,
   Asset,
@@ -66,6 +67,8 @@ import {
   // FASE 101 - WHEEL Strategy
   WheelStrategy,
   WheelTrade,
+  // FASE Marcação IDIV
+  AssetIndexMembership,
 } from './database/entities';
 
 @Module({
@@ -118,6 +121,8 @@ import {
           // FASE 101 - WHEEL Strategy
           WheelStrategy,
           WheelTrade,
+          // FASE Marcação IDIV
+          AssetIndexMembership,
         ],
         synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
         logging: configService.get('DB_LOGGING', 'false') === 'true',
@@ -190,6 +195,7 @@ import {
     AlertsModule, // FASE 75.3 - Sistema de Alertas
     OptionsModule, // FASE 75.4 - Options Chain
     WheelModule, // FASE 101 - WHEEL Strategy
+    IndexMembershipsModule, // FASE Marcação IDIV
   ],
   controllers: [AppController],
   providers: [

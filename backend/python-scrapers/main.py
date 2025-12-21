@@ -49,6 +49,7 @@ from scrapers import (
     KinvoScraper,
     InvestingScraper,  # FASE 95: Works without login for basic market data
     B3Scraper,  # FASE 96: CVM codes file exists
+    IdivScraper,  # FASE Marcação IDIV: Index composition
     # OAuth Scrapers (FASE 97)
     FundamenteiScraper,  # FASE 97: OAuth required
     MaisRetornoScraper,  # FASE 97: OAuth required
@@ -123,6 +124,7 @@ class ScraperService:
         # ===========================================
         self.scrapers["INVESTING"] = InvestingScraper  # FASE 95: Works without login
         self.scrapers["B3"] = B3Scraper  # FASE 96: CVM codes file exists
+        self.scrapers["IDIV"] = IdivScraper  # FASE Marcação IDIV: Index composition
 
         # ===========================================
         # FASE 97: OAuth Scrapers (require cookie collection)

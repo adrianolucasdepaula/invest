@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Asset, AssetPrice, FundamentalData, PriceSource, TickerChange } from '@database/entities';
+import { Repository, LessThanOrEqual, MoreThanOrEqual, IsNull, In } from 'typeorm';
+import { Asset, AssetPrice, FundamentalData, PriceSource, TickerChange, AssetIndexMembership } from '@database/entities';
 import { ScrapersService } from '../../scrapers/scrapers.service';
 import { BrapiScraper } from '../../scrapers/fundamental/brapi.scraper';
 import { OpcoesScraper } from '../../scrapers/options/opcoes.scraper';
@@ -86,6 +86,8 @@ export class AssetsService {
     private fundamentalDataRepository: Repository<FundamentalData>,
     @InjectRepository(TickerChange)
     private tickerChangeRepository: Repository<TickerChange>,
+    @InjectRepository(AssetIndexMembership)
+    private indexMembershipRepository: Repository<AssetIndexMembership>,
     private scrapersService: ScrapersService,
     private brapiScraper: BrapiScraper,
     private opcoesScraper: OpcoesScraper,
@@ -135,6 +137,37 @@ export class AssetsService {
 
     const rawResults = await this.assetRepository.query(query, params);
 
+    // Get current index memberships for all assets
+    const today = new Date();
+    const assetIds = rawResults.map((row: any) => row.id);
+
+    let currentMemberships: AssetIndexMembership[] = [];
+    if (assetIds.length > 0) {
+      currentMemberships = await this.indexMembershipRepository.find({
+        where: [
+          {
+            assetId: In(assetIds),
+            validFrom: LessThanOrEqual(today),
+            validTo: IsNull(),
+          },
+          {
+            assetId: In(assetIds),
+            validFrom: LessThanOrEqual(today),
+            validTo: MoreThanOrEqual(today),
+          },
+        ],
+      });
+    }
+
+    // Build map of assetId -> memberships for quick lookup
+    const membershipsByAsset = new Map<string, AssetIndexMembership[]>();
+    for (const membership of currentMemberships) {
+      if (!membershipsByAsset.has(membership.assetId)) {
+        membershipsByAsset.set(membership.assetId, []);
+      }
+      membershipsByAsset.get(membership.assetId)!.push(membership);
+    }
+
     // Map raw results to enriched assets
     const enrichedAssets = rawResults.map((row: any) => {
       const asset = {
@@ -165,6 +198,14 @@ export class AssetsService {
 
       const latestClose = row.price1_close;
 
+      // Get index memberships for this asset
+      const memberships = membershipsByAsset.get(row.id) || [];
+      const currentIndexes = memberships.map((m) => m.indexName);
+      const idivMembership = memberships.find((m) => m.indexName === 'IDIV');
+      const idivParticipation = idivMembership
+        ? Number(idivMembership.participationPercent)
+        : null;
+
       if (!latestClose) {
         return {
           ...asset,
@@ -173,6 +214,8 @@ export class AssetsService {
           changePercent: null,
           volume: null,
           marketCap: null,
+          currentIndexes,
+          idivParticipation,
         };
       }
 
@@ -188,6 +231,8 @@ export class AssetsService {
           close: Number(latestClose),
           collectedAt: row.price1_collected_at,
         },
+        currentIndexes,
+        idivParticipation,
       };
     });
 

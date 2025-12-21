@@ -21,6 +21,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { MoreVertical, RefreshCw, AlertTriangle, Eye, CheckCircle2, ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
 
 interface Asset {
@@ -40,6 +41,8 @@ interface Asset {
   };
   lastUpdated?: string | null; // Data da última atualização completa (scrapers)
   hasOptions?: boolean;
+  currentIndexes?: string[]; // FASE Marcação IDIV: Índices vigentes
+  idivParticipation?: number | null; // FASE Marcação IDIV: Participação % no IDIV
 }
 
 interface AssetTableProps {
@@ -204,6 +207,7 @@ export function AssetTable({
                     <SortIcon column="sector" />
                   </button>
                 </th>
+                <th className="px-4 py-3 text-center font-medium">Índices</th>
                 <th className="px-4 py-3 text-right font-medium">
                   <button
                     onClick={() => handleSort('price')}
@@ -285,6 +289,38 @@ export function AssetTable({
                     >
                       {asset.sector || (
                         <span className="text-muted-foreground italic">Sem Setor</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {asset.currentIndexes && asset.currentIndexes.length > 0 ? (
+                        <div className="flex gap-1 justify-center">
+                          {asset.currentIndexes.map((index) => (
+                            <TooltipProvider key={index}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge
+                                    variant={index === 'IDIV' ? 'default' : 'secondary'}
+                                    className="text-xs"
+                                  >
+                                    {index}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="font-medium">
+                                    {index === 'IDIV' ? 'Índice de Dividendos' : index}
+                                  </p>
+                                  {index === 'IDIV' && asset.idivParticipation && (
+                                    <p className="text-xs">
+                                      Participação: {asset.idivParticipation.toFixed(4)}%
+                                    </p>
+                                  )}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </td>
                     <td
