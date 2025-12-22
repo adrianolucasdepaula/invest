@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException, BadRequestException } from '@nes
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, LessThan } from 'typeorm';
 import { randomBytes } from 'crypto';
+import Decimal from 'decimal.js';
 import {
   Asset,
   FundamentalData,
@@ -61,7 +62,7 @@ export class AssetsUpdateService {
   private readonly MAX_RETRY_COUNT = 3;
   private readonly OUTDATED_THRESHOLD_DAYS = 7;
   private readonly MIN_SOURCES = 2; // Reduced from 3 to 2 - more realistic for B3 assets
-  private readonly MIN_CONFIDENCE = 0.5; // Reduced from 0.7 to 0.5 - matches minConfidence guarantee in scrapers
+  private readonly MIN_CONFIDENCE = 0.33; // FASE DISCREPANCY-FIX: Aceita 2 fontes (era 0.5) devido a instabilidade do StatusInvest
   private readonly RATE_LIMIT_DELAY = 2000; // 2 seconds between requests
 
   /**
@@ -735,12 +736,11 @@ export class AssetsUpdateService {
    * MÉTODO AUXILIAR: Sanitizar valor numérico para evitar overflow no PostgreSQL
    * numeric(18,2) permite valores até 9999999999999999.99
    *
-   * IMPORTANTE: JavaScript não consegue representar 9999999999999999.99 precisamente
-   * (Number.MAX_SAFE_INTEGER = 9007199254740991), então usamos um valor menor seguro.
+   * IMPORTANTE: Retorna Decimal.js para precisão perfeita (CLAUDE.md Financial Data Rules)
    * Para dados financeiros, 999_999_999_999_999 (999 trilhões) é mais que suficiente
    * para qualquer market cap ou valor de empresa.
    */
-  private sanitizeNumericValue(value: any): number | null {
+  private sanitizeNumericValue(value: any): Decimal | null {
     if (value === null || value === undefined) return null;
 
     const num = Number(value);
@@ -749,23 +749,21 @@ export class AssetsUpdateService {
     if (isNaN(num) || !isFinite(num)) return null;
 
     // Max safe value that JS can represent precisely and fits in numeric(18,2)
-    // Using 999_999_999_999_999.99 (15 nines) - well within JS safe integer range
-    // and leaves room for 3 more digits in numeric(18,2)
     const MAX_VALUE = 999999999999999.99;
     const MIN_VALUE = -999999999999999.99;
 
     // Clamp to valid range
     if (num > MAX_VALUE) {
       this.logger.warn(`[SANITIZE] Value ${num} exceeds max (${MAX_VALUE}), clamping`);
-      return MAX_VALUE;
+      return new Decimal(MAX_VALUE);
     }
     if (num < MIN_VALUE) {
       this.logger.warn(`[SANITIZE] Value ${num} below min (${MIN_VALUE}), clamping`);
-      return MIN_VALUE;
+      return new Decimal(MIN_VALUE);
     }
 
-    // Round to 2 decimal places
-    return Math.round(num * 100) / 100;
+    // Return Decimal for precise financial calculations
+    return new Decimal(num);
   }
 
   /**
@@ -783,7 +781,7 @@ export class AssetsUpdateService {
     const sanitize = (v: any) => this.sanitizeNumericValue(v);
 
     // FASE 1: Função auxiliar para obter valor do fieldSources ou fallback
-    const getFieldValue = (field: string, ...fallbacks: string[]): number | null => {
+    const getFieldValue = (field: string, ...fallbacks: string[]): Decimal | null => {
       // Primeiro: tentar do fieldSources (valor já mergeado)
       if (fieldSources[field]?.finalValue !== undefined) {
         return sanitize(fieldSources[field].finalValue);

@@ -398,10 +398,11 @@ export class StockLendingService {
         const taxaAluguelDia =
           item.taxa_aluguel_dia ?? item.taxa_aluguel_ano / this.TRADING_DAYS_PER_YEAR;
 
+        // Convert raw numbers to Decimal instances (DecimalTransformer requires Decimal)
         const rate = this.lendingRepository.create({
           assetId: asset.id,
-          taxaAluguelAno: item.taxa_aluguel_ano,
-          taxaAluguelDia,
+          taxaAluguelAno: new Decimal(item.taxa_aluguel_ano),
+          taxaAluguelDia: new Decimal(taxaAluguelDia),
           quantidadeDisponivel: item.quantidade_disponivel,
           quantidadeAlugada: item.quantidade_alugada,
           dataReferencia: new Date(item.data_referencia),

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual, MoreThanOrEqual, IsNull, In } from 'typeorm';
+import Decimal from 'decimal.js';
 import { Asset, AssetPrice, FundamentalData, PriceSource, TickerChange, AssetIndexMembership } from '@database/entities';
 import { ScrapersService } from '../../scrapers/scrapers.service';
 import { BrapiScraper } from '../../scrapers/fundamental/brapi.scraper';
@@ -52,6 +53,14 @@ export class AssetsService {
   }
 
   /**
+   * Convert sanitized number to Decimal for AssetPrice entity
+   * AssetPrice uses DecimalTransformer which requires Decimal instances
+   */
+  private toDecimalOrNull(value: number | null): Decimal | null {
+    return value === null ? null : new Decimal(value);
+  }
+
+  /**
    * Sanitize price data before saving to database
    * Handles different field precisions with JS-safe max values:
    * - open/high/low/close/adjustedClose: numeric(18,4) - using 9999999999999.9999 (13 digits + 4 decimal = 17 total)
@@ -59,21 +68,30 @@ export class AssetsService {
    * - changePercent: numeric(10,4) - using 999999.9999 (6 digits + 4 decimal = 10 total)
    *
    * All max values are safely representable in JavaScript (< Number.MAX_SAFE_INTEGER)
+   * Returns Decimal instances for AssetPrice entity compatibility (DecimalTransformer)
    */
-  private sanitizePriceData(data: any): any {
+  private sanitizePriceData(data: any): {
+    open: Decimal | null;
+    high: Decimal | null;
+    low: Decimal | null;
+    close: Decimal | null;
+    adjustedClose: Decimal | null;
+    marketCap: Decimal | null;
+    change: Decimal | null;
+    changePercent: Decimal | null;
+  } {
     return {
-      ...data,
       // numeric(18,4): max 13 digits before decimal + 4 after = 17 total (JS-safe)
-      open: this.sanitizeNumericValue(data.open, 9999999999999.9999, 4),
-      high: this.sanitizeNumericValue(data.high, 9999999999999.9999, 4),
-      low: this.sanitizeNumericValue(data.low, 9999999999999.9999, 4),
-      close: this.sanitizeNumericValue(data.close, 9999999999999.9999, 4),
-      adjustedClose: this.sanitizeNumericValue(data.adjustedClose, 9999999999999.9999, 4),
+      open: this.toDecimalOrNull(this.sanitizeNumericValue(data.open, 9999999999999.9999, 4)),
+      high: this.toDecimalOrNull(this.sanitizeNumericValue(data.high, 9999999999999.9999, 4)),
+      low: this.toDecimalOrNull(this.sanitizeNumericValue(data.low, 9999999999999.9999, 4)),
+      close: this.toDecimalOrNull(this.sanitizeNumericValue(data.close, 9999999999999.9999, 4)),
+      adjustedClose: this.toDecimalOrNull(this.sanitizeNumericValue(data.adjustedClose, 9999999999999.9999, 4)),
       // numeric(18,2): max 15 digits before decimal + 2 after = 17 total (JS-safe)
-      marketCap: this.sanitizeNumericValue(data.marketCap, 999999999999999.99, 2),
-      change: this.sanitizeNumericValue(data.change, 999999999999999.99, 2),
+      marketCap: this.toDecimalOrNull(this.sanitizeNumericValue(data.marketCap, 999999999999999.99, 2)),
+      change: this.toDecimalOrNull(this.sanitizeNumericValue(data.change, 999999999999999.99, 2)),
       // numeric(10,4): max 6 digits before decimal + 4 after = 10 total (JS-safe)
-      changePercent: this.sanitizeNumericValue(data.changePercent, 999999.9999, 4),
+      changePercent: this.toDecimalOrNull(this.sanitizeNumericValue(data.changePercent, 999999.9999, 4)),
     };
   }
 
@@ -489,30 +507,35 @@ export class AssetsService {
   }
 
   /**
-   * FASE 48: Normalize price types to ensure all numeric fields are numbers
-   * Fixes issue where PostgreSQL/BRAPI returns numeric values as strings
+   * FASE 48: Normalize price types to ensure all numeric fields are Decimal
+   * DecimalTransformer handles DB-to-Decimal conversion automatically.
+   * This function ensures any legacy string values are properly converted.
    * @private
    */
   private normalizePriceTypes(prices: AssetPrice[]): AssetPrice[] {
-    return prices.map((price) => ({
-      ...price,
-      open: typeof price.open === 'string' ? parseFloat(price.open) : price.open,
-      high: typeof price.high === 'string' ? parseFloat(price.high) : price.high,
-      low: typeof price.low === 'string' ? parseFloat(price.low) : price.low,
-      close: typeof price.close === 'string' ? parseFloat(price.close) : price.close,
-      volume: typeof price.volume === 'string' ? parseInt(price.volume, 10) : price.volume,
-      adjustedClose:
-        typeof price.adjustedClose === 'string'
-          ? parseFloat(price.adjustedClose)
-          : price.adjustedClose,
-      change: typeof price.change === 'string' ? parseFloat(price.change) : price.change,
-      changePercent:
-        typeof price.changePercent === 'string'
-          ? parseFloat(price.changePercent)
-          : price.changePercent,
-      marketCap:
-        typeof price.marketCap === 'string' ? parseFloat(price.marketCap) : price.marketCap,
-    }));
+    return prices.map((price) => {
+      // Helper to ensure value is Decimal
+      const toDecimal = (value: Decimal | string | number | null | undefined): Decimal =>
+        value instanceof Decimal ? value : new Decimal(value ?? 0);
+
+      const toDecimalOrNull = (value: Decimal | string | number | null | undefined): Decimal | null =>
+        value === null || value === undefined ? null : toDecimal(value);
+
+      price.open = toDecimal(price.open);
+      price.high = toDecimal(price.high);
+      price.low = toDecimal(price.low);
+      price.close = toDecimal(price.close);
+      price.adjustedClose = toDecimalOrNull(price.adjustedClose);
+      price.change = toDecimalOrNull(price.change);
+      price.changePercent = toDecimalOrNull(price.changePercent);
+      price.marketCap = toDecimalOrNull(price.marketCap);
+
+      if (typeof price.volume === 'string') {
+        price.volume = parseInt(price.volume, 10);
+      }
+
+      return price;
+    });
   }
 
   /**

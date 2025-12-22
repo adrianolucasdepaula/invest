@@ -1,6 +1,7 @@
 import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
+import Decimal from 'decimal.js';
 import { CacheService } from '../../common/services/cache.service';
 import { AssetsService } from '../assets/assets.service';
 import { PriceRange } from '../assets/dto/historical-prices-query.dto';
@@ -702,6 +703,24 @@ export class MarketDataService {
    * Batch UPSERT no PostgreSQL usando ON CONFLICT (Native UPSERT)
    * Requer constraint UNIQUE ("asset_id", "date")
    */
+  /**
+   * Helper to convert value to Decimal (for AssetPrice entity compatibility)
+   * AssetPrice uses DecimalTransformer which requires Decimal instances
+   */
+  private toDecimal(value: number | string | null | undefined): Decimal {
+    if (value === null || value === undefined) {
+      return new Decimal(0);
+    }
+    return new Decimal(value);
+  }
+
+  private toDecimalOrNull(value: number | string | null | undefined): Decimal | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+    return new Decimal(value);
+  }
+
   private async batchUpsertPrices(assetId: string, data: any[]): Promise<void> {
     if (data.length === 0) {
       this.logger.warn('No data to upsert');
@@ -709,17 +728,17 @@ export class MarketDataService {
     }
 
     try {
-      // Preparar entidades
+      // Preparar entidades with Decimal conversion for DecimalTransformer compatibility
       const entities = data.map((d) =>
         this.assetPriceRepository.create({
           assetId,
           date: new Date(d.date),
-          open: d.open,
-          high: d.high,
-          low: d.low,
-          close: d.close,
+          open: this.toDecimal(d.open),
+          high: this.toDecimal(d.high),
+          low: this.toDecimal(d.low),
+          close: this.toDecimal(d.close),
           volume: d.volume,
-          adjustedClose: d.adjustedClose,
+          adjustedClose: this.toDecimalOrNull(d.adjustedClose),
           source: d.source,
         }),
       );

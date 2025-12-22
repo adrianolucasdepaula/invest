@@ -296,13 +296,14 @@ export class DividendsService {
           valorLiquido = item.valor_bruto;
         }
 
+        // Convert raw numbers to Decimal instances (DecimalTransformer requires Decimal)
         const dividend = this.dividendRepository.create({
           assetId: asset.id,
           tipo,
           status: this.mapDividendStatus(item.status),
-          valorBruto: item.valor_bruto,
-          valorLiquido,
-          impostoRetido,
+          valorBruto: new Decimal(item.valor_bruto),
+          valorLiquido: valorLiquido != null ? new Decimal(valorLiquido) : null,
+          impostoRetido: impostoRetido != null ? new Decimal(impostoRetido) : null,
           dataEx: new Date(item.data_ex),
           dataCom: item.data_com ? new Date(item.data_com) : null,
           dataPagamento: item.data_pagamento ? new Date(item.data_pagamento) : null,
