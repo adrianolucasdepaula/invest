@@ -107,6 +107,32 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+- **FASE 139: IDIV Historical Backfill (2019-2025)** ✅ **CONCLUÍDA** (2025-12-22)
+  - **Reconnaissance (Discovery Crítica):**
+    - Testou 40 URL patterns para dados históricos B3
+    - Descoberta: B3 suporta `?date=YYYY-MM-DD` parameter
+    - Pattern: `/day/IDIV?date={date}&language=pt-br`
+    - Economia: ~60 horas (eliminou necessidade de StatusInvest + Wayback Machine)
+  - **Scraper Enhancement:**
+    - `idiv_scraper.py`: Adicionado `date_param` opcional
+    - Suporta ANY year (2019-2025+) para backfill histórico
+    - Backwards compatible (sem date = comportamento atual)
+  - **Backend API:**
+    - Novo endpoint: `POST /api/v1/index-memberships/sync/:indexName/bulk`
+    - DTOs: BulkSyncDto, PeriodCompositionDto, CompositionAssetDto
+    - Service: syncBulkCompositions() - processa 21 períodos em batch
+    - Body size limit: 10MB (suporta bulk de 1,050+ assets)
+  - **Backfill Execution:**
+    - Script: `backfill_idiv_historical.py` (304 linhas, automatizado)
+    - Dados importados: 1,050 assets históricos (21 períodos × 50 assets)
+    - Períodos: 2019 Q1 → 2025 Q3 (cobertura completa 7 anos)
+    - Success rate: 100% (21/21 períodos)
+  - **Benefícios Wheel Turbinada:**
+    - Backtest pode usar IDIV histórico
+    - Análise tendências: Asset sempre foi IDIV?
+
+---
+
 ### Changed
 
 - **Padronização Claude Opus 4.5 (2025-12-15)**
