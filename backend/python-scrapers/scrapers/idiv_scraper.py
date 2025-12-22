@@ -42,30 +42,54 @@ class IdivScraper(BaseScraper):
             requires_login=False,  # PÚBLICO!
         )
 
-    async def scrape(self, ticker: Optional[str] = None) -> ScraperResult:
+    async def scrape(self, ticker: Optional[str] = None, date_param: Optional[str] = None) -> ScraperResult:
         """
         Scrape IDIV composition from B3
 
         Args:
             ticker: NOT USED (IDIV is index-level, not ticker-level)
+            date_param: Optional date string (YYYY-MM-DD format) for historical data.
+                       If provided, fetches the IDIV composition valid on that date.
+                       If None, fetches current composition.
 
         Returns:
             ScraperResult with:
                 - composition: List[{ticker, participation, quantity, ...}]
                 - valid_from: str (ISO date)
                 - valid_to: str (ISO date) or None
-                - metadata: {source, scraped_at, confidence}
+                - metadata: {source, scraped_at, confidence, requested_date, period_type}
         """
         try:
             # Ensure page is initialized (Playwright)
             if not self.page:
                 await self.initialize()
 
-            logger.info(f"Navigating to B3 IDIV iframe page: {self.B3_IFRAME_URL}")
+            # Parse date_param to date object if provided (for validity calculation)
+            target_date: Optional[date] = None
+            if date_param:
+                try:
+                    target_date = datetime.strptime(date_param, "%Y-%m-%d").date()
+                    logger.info(f"Historical mode: fetching IDIV composition for {date_param}")
+                except ValueError as e:
+                    logger.error(f"Invalid date format: {date_param}. Expected YYYY-MM-DD")
+                    return ScraperResult(
+                        success=False,
+                        error=f"Invalid date format: {date_param}. Expected YYYY-MM-DD",
+                        source=self.source,
+                    )
+
+            # Construct URL with optional date parameter
+            # B3 API supports: ?date=YYYY-MM-DD&language=pt-br
+            if date_param:
+                url = f"https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?date={date_param}&language=pt-br"
+            else:
+                url = self.B3_IFRAME_URL  # Default: ?language=pt-br (current composition)
+
+            logger.info(f"Navigating to B3 IDIV iframe page: {url}")
 
             # Navigate directly to iframe URL (discovered via HTML debug)
             # This URL contains the actual composition table (Angular app)
-            await self.page.goto(self.B3_IFRAME_URL, wait_until="load", timeout=60000)
+            await self.page.goto(url, wait_until="load", timeout=60000)
 
             # Wait for Angular to render the table
             # The page uses Angular 9 with ngx-pagination
@@ -86,7 +110,11 @@ class IdivScraper(BaseScraper):
 
             if composition and len(composition) > 0:
                 # Calculate validity period (quadrimestral)
-                valid_from, valid_to = self._calculate_validity_period()
+                # Pass target_date for historical queries, None for current
+                valid_from, valid_to = self._calculate_validity_period(target_date=target_date)
+
+                # Determine period type for metadata
+                period_type = "historical" if date_param else "current"
 
                 return ScraperResult(
                     success=True,
@@ -98,12 +126,14 @@ class IdivScraper(BaseScraper):
                     },
                     source=self.source,
                     metadata={
-                        "url": self.B3_IFRAME_URL,
+                        "url": url,
                         "requires_login": False,
                         "source": "B3",
                         "scraped_at": datetime.now().isoformat(),
                         "total_assets": len(composition),
                         "confidence": 100,  # Single source (B3 official)
+                        "requested_date": date_param,  # None if current, YYYY-MM-DD if historical
+                        "period_type": period_type,  # "current" or "historical"
                     },
                 )
             else:
@@ -232,7 +262,7 @@ class IdivScraper(BaseScraper):
             logger.error(f"Error extracting B3 composition: {e}")
             return composition if composition else []
 
-    def _calculate_validity_period(self) -> tuple[date, Optional[date]]:
+    def _calculate_validity_period(self, target_date: Optional[date] = None) -> tuple[date, Optional[date]]:
         """
         Calculate validity period for IDIV rebalancing
 
@@ -241,35 +271,42 @@ class IdivScraper(BaseScraper):
         - 01/Mai - 31/Ago (May-Aug)
         - 01/Set - 31/Dez (Sep-Dec)
 
+        Args:
+            target_date: Optional date to determine the quadrimester.
+                        If provided, calculates period for that date (historical).
+                        If None, uses today's date (current composition).
+                        Supports ANY year (2019-2025+).
+
         Returns:
             (valid_from, valid_to) - tuple of dates
-            valid_to is None if it's the current/future period
+            valid_to is always populated for historical queries
         """
-        today = date.today()
-        year = today.year
+        # Use target_date if provided, otherwise use today
+        reference_date = target_date if target_date else date.today()
+        year = reference_date.year
 
-        # Define quadrimestral periods
+        # Define quadrimestral periods for the reference year
         periods = [
             (date(year, 1, 1), date(year, 4, 30)),    # Jan-Apr
             (date(year, 5, 1), date(year, 8, 31)),    # May-Aug
             (date(year, 9, 1), date(year, 12, 31)),   # Sep-Dec
         ]
 
-        # Find current period
+        # Find the period containing the reference date
         for valid_from, valid_to in periods:
-            if valid_from <= today <= valid_to:
-                # Current period - valid_to should be end of period
-                logger.info(f"Current IDIV period: {valid_from} to {valid_to}")
+            if valid_from <= reference_date <= valid_to:
+                period_type = "historical" if target_date else "current"
+                logger.info(f"{period_type.capitalize()} IDIV period: {valid_from} to {valid_to}")
                 return valid_from, valid_to
 
         # If not in any period (edge case), return next period
         # This happens if we're scraping on transition days
-        if today > periods[2][1]:
+        if reference_date > periods[2][1]:
             # After Dec 31, return next year Jan-Apr
             return date(year + 1, 1, 1), date(year + 1, 4, 30)
 
         # Fallback (should not happen)
-        logger.warning(f"Could not determine IDIV period for {today}, using current year Jan-Apr")
+        logger.warning(f"Could not determine IDIV period for {reference_date}, using year {year} Jan-Apr")
         return periods[0]
 
     async def login(self):
@@ -303,20 +340,44 @@ class IdivScraper(BaseScraper):
 
 # Example usage (for testing)
 async def test_idiv_scraper():
-    """Test IDIV scraper"""
+    """Test IDIV scraper - current and historical modes"""
     scraper = IdivScraper()
     try:
+        # Test 1: Current composition (default behavior)
+        print("=" * 60)
+        print("TEST 1: Current IDIV composition")
+        print("=" * 60)
         result = await scraper.scrape()
         print(f"Success: {result.success}")
         if result.success:
             print(f"Total assets: {len(result.data['composition'])}")
             print(f"Valid from: {result.data['valid_from']}")
             print(f"Valid to: {result.data['valid_to']}")
+            print(f"Period type: {result.metadata.get('period_type')}")
             print("\nFirst 5 assets:")
             for asset in result.data['composition'][:5]:
                 print(f"  {asset['ticker']}: {asset['participation']}%")
         else:
             print(f"Error: {result.error}")
+
+        # Test 2: Historical composition (2024-05-15 = May-Aug 2024 period)
+        print("\n" + "=" * 60)
+        print("TEST 2: Historical IDIV composition (2024-05-15)")
+        print("=" * 60)
+        result_historical = await scraper.scrape(date_param='2024-05-15')
+        print(f"Success: {result_historical.success}")
+        if result_historical.success:
+            print(f"Requested date: {result_historical.metadata.get('requested_date')}")
+            print(f"Period type: {result_historical.metadata.get('period_type')}")
+            print(f"Total assets: {len(result_historical.data['composition'])}")
+            print(f"Valid from: {result_historical.data['valid_from']}")
+            print(f"Valid to: {result_historical.data['valid_to']}")
+            print("\nFirst 5 assets:")
+            for asset in result_historical.data['composition'][:5]:
+                print(f"  {asset['ticker']}: {asset['participation']}%")
+        else:
+            print(f"Error: {result_historical.error}")
+
     finally:
         await scraper.cleanup()
 

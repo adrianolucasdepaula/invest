@@ -19,6 +19,10 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
+  // FASE 139: Increase body size limit for bulk IDIV import (21 periods × 50 assets)
+  app.use(require('express').json({ limit: '10mb' }));
+  app.use(require('express').urlencoded({ limit: '10mb', extended: true }));
+
   // Security middleware
   app.use(helmet());
   app.use(compression({ threshold: 1024 }));  // Only compress responses > 1KB

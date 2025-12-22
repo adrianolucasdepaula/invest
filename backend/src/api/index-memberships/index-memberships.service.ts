@@ -2,6 +2,12 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual, MoreThanOrEqual, IsNull } from 'typeorm';
 import { Asset, AssetIndexMembership } from '@database/entities';
+import {
+  BulkSyncDto,
+  BulkSyncResultDto,
+  PeriodCompositionDto,
+  PeriodErrorDto,
+} from './dto';
 
 @Injectable()
 export class IndexMembershipsService {
@@ -120,6 +126,125 @@ export class IndexMembershipsService {
       this.logger.error(`Error syncing ${indexName} composition: ${error.message}`);
       throw error;
     }
+  }
+
+  /**
+   * Bulk sync multiple historical period compositions
+   *
+   * @param indexName - Index name (e.g., 'IDIV', 'IBOV')
+   * @param bulkSyncDto - DTO containing array of period compositions
+   * @returns Object with statistics about the bulk import
+   */
+  async syncBulkCompositions(
+    indexName: string,
+    bulkSyncDto: BulkSyncDto,
+  ): Promise<BulkSyncResultDto> {
+    const normalizedIndexName = indexName.toUpperCase();
+    const { compositions } = bulkSyncDto;
+
+    this.logger.log(
+      `Starting bulk sync for ${normalizedIndexName}: ${compositions.length} periods`,
+    );
+
+    const errors: PeriodErrorDto[] = [];
+    let successful = 0;
+    let totalAssets = 0;
+
+    // Process each period independently
+    for (const periodData of compositions) {
+      try {
+        const assetCount = await this.savePeriodComposition(
+          normalizedIndexName,
+          periodData,
+        );
+        successful++;
+        totalAssets += assetCount;
+        this.logger.log(
+          `Period ${periodData.validFrom}: saved ${assetCount} assets`,
+        );
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.warn(
+          `Period ${periodData.validFrom} failed: ${errorMessage}`,
+        );
+        errors.push({
+          validFrom: periodData.validFrom,
+          error: errorMessage,
+        });
+      }
+    }
+
+    const failed = compositions.length - successful;
+    const message = `Bulk sync completed: ${successful}/${compositions.length} periods successful, ${totalAssets} assets imported`;
+
+    this.logger.log(message);
+
+    return {
+      success: successful > 0,
+      totalPeriods: compositions.length,
+      successful,
+      failed,
+      totalAssets,
+      errors,
+      message,
+    };
+  }
+
+  /**
+   * Save a single period composition to the database
+   * Reuses logic from syncComposition but without calling the scraper
+   *
+   * @param indexName - Normalized index name
+   * @param periodData - Single period composition data
+   * @returns Number of assets saved
+   * @private
+   */
+  private async savePeriodComposition(
+    indexName: string,
+    periodData: PeriodCompositionDto,
+  ): Promise<number> {
+    const { composition, validFrom, validTo, metadata } = periodData;
+    const validFromDate = new Date(validFrom);
+    const validToDate = validTo ? new Date(validTo) : null;
+
+    // Step 1: Delete existing memberships of the same period (same valid_from)
+    await this.deleteExistingPeriodMemberships(indexName, validFromDate);
+
+    // Step 2: For historical bulk import, we do NOT invalidate previous memberships
+    // because we're importing multiple periods at once with explicit validTo dates
+
+    // Step 3: Save new memberships
+    let count = 0;
+    for (const item of composition) {
+      // Find asset by ticker
+      const asset = await this.assetRepo.findOne({
+        where: { ticker: item.ticker.toUpperCase() },
+      });
+
+      if (!asset) {
+        this.logger.warn(`Asset ${item.ticker} not found in database, skipping`);
+        continue;
+      }
+
+      // Create membership record
+      await this.membershipRepo.save({
+        assetId: asset.id,
+        indexName,
+        participationPercent: item.participation ?? item.participationPercent ?? null,
+        theoreticalQuantity: item.quantity ?? item.theoreticalQuantity ?? null,
+        validFrom: validFromDate,
+        validTo: validToDate,
+        metadata: {
+          source: metadata?.source ?? item.source ?? 'B3',
+          scrapedAt: metadata?.scrapedAt ?? new Date().toISOString(),
+          confidence: metadata?.confidence ?? item.confidence ?? 100,
+        },
+      });
+
+      count++;
+    }
+
+    return count;
   }
 
   /**

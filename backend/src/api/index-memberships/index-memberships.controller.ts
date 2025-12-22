@@ -3,12 +3,14 @@ import {
   Get,
   Post,
   Param,
+  Body,
   HttpCode,
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { IndexMembershipsService } from './index-memberships.service';
+import { BulkSyncDto, BulkSyncResultDto } from './dto';
 
 @ApiTags('index-memberships')
 @Controller('index-memberships')
@@ -50,6 +52,83 @@ export class IndexMembershipsController {
   async syncComposition(@Param('indexName') indexName: string) {
     this.logger.log(`POST /sync/${indexName} - Starting composition sync`);
     return this.indexMembershipsService.syncComposition(indexName);
+  }
+
+  /**
+   * POST /api/v1/index-memberships/sync/:indexName/bulk
+   * Bulk import of historical index compositions
+   */
+  @Post('sync/:indexName/bulk')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Bulk import historical index compositions',
+    description:
+      'Imports multiple historical period compositions for an index. ' +
+      'Each period is processed independently - one failure does not affect others. ' +
+      'Useful for backfilling historical IDIV, IBOV, IFIX compositions.',
+  })
+  @ApiParam({
+    name: 'indexName',
+    description: 'Index name (e.g., IDIV, IBOV, IFIX, SMLL)',
+    example: 'IDIV',
+  })
+  @ApiBody({
+    type: BulkSyncDto,
+    description: 'Array of historical period compositions',
+    examples: {
+      example1: {
+        summary: 'IDIV historical periods',
+        value: {
+          compositions: [
+            {
+              composition: [
+                { ticker: 'PETR4', participation: 3.45, quantity: 1000000 },
+                { ticker: 'VALE3', participation: 2.89, quantity: 800000 },
+              ],
+              validFrom: '2019-01-07',
+              validTo: '2019-04-30',
+              metadata: { source: 'B3', confidence: 100 },
+            },
+            {
+              composition: [
+                { ticker: 'PETR4', participation: 3.52, quantity: 1050000 },
+                { ticker: 'ITUB4', participation: 2.75, quantity: 750000 },
+              ],
+              validFrom: '2019-05-06',
+              validTo: '2019-08-30',
+              metadata: { source: 'B3', confidence: 100 },
+            },
+          ],
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Bulk sync completed',
+    type: BulkSyncResultDto,
+    schema: {
+      example: {
+        success: true,
+        totalPeriods: 20,
+        successful: 18,
+        failed: 2,
+        totalAssets: 1640,
+        errors: [
+          { validFrom: '2019-09-02', error: 'Asset XXXX4 not found' },
+        ],
+        message: 'Bulk sync completed: 18/20 periods successful, 1640 assets imported',
+      },
+    },
+  })
+  async syncBulkCompositions(
+    @Param('indexName') indexName: string,
+    @Body() bulkSyncDto: BulkSyncDto,
+  ): Promise<BulkSyncResultDto> {
+    this.logger.log(
+      `POST /sync/${indexName}/bulk - Starting bulk import of ${bulkSyncDto.compositions.length} periods`,
+    );
+    return this.indexMembershipsService.syncBulkCompositions(indexName, bulkSyncDto);
   }
 
   /**
