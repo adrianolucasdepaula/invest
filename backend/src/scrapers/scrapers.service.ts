@@ -23,6 +23,8 @@ import {
   SOURCE_PRIORITY,
   TRACKABLE_FIELDS,
   DEFAULT_TOLERANCES,
+  FIELD_AVAILABILITY,
+  ABSOLUTE_FIELDS,
 } from './interfaces';
 import {
   QualityStatsResponseDto,
@@ -162,33 +164,46 @@ export class ScrapersService {
       { name: 'fundamentus', scraper: this.fundamentusScraper },
       { name: 'brapi', scraper: this.brapiScraper },
       { name: 'statusinvest', scraper: this.statusInvestScraper },
-      // { name: 'investidor10', scraper: this.investidor10Scraper },
+      { name: 'investidor10', scraper: this.investidor10Scraper },  // FASE DISCREPANCY-FIX: Ativado para ter 4+ fontes
       // { name: 'fundamentei', scraper: this.fundamenteiScraper },
-      // { name: 'investsite', scraper: this.investsiteScraper },
+      { name: 'investsite', scraper: this.investsiteScraper },  // FASE DISCREPANCY-FIX: Ativado para ter 4+ fontes
     ];
 
     const successfulResults: ScraperResult[] = [];
     const rawSourcesData: Array<{ source: string; data: any; scrapedAt: string }> = [];
 
-    // ✅ FASE 1: Coletar de TODAS as fontes (sem early exit)
-    // Isso aumenta a confiança dos dados e permite rastreamento completo
-    for (const { name, scraper } of scrapers) {
+    // ✅ FASE 1: Coletar de TODAS as fontes EM PARALELO (2025-12-22)
+    // Reduz tempo de ~77s (serial) para ~36s (paralelo - tempo do mais lento)
+    const scraperPromises = scrapers.map(async ({ name, scraper }) => {
       const scrapedAt = new Date().toISOString();
       try {
         const result = await scraper.scrape(ticker);
-        if (result.success && result.data) {
-          successfulResults.push(result);
-          rawSourcesData.push({
-            source: name,
-            data: result.data,
-            scrapedAt,
-          });
-          this.logger.debug(`[${ticker}] ${name}: SUCCESS (${Object.keys(result.data).length} fields)`);
-        } else {
-          this.logger.debug(`[${ticker}] ${name}: FAILED (no data)`);
-        }
+        return {
+          name,
+          scrapedAt,
+          result: result.success && result.data ? result : null,
+          success: result.success && result.data,
+        };
       } catch (error) {
         this.logger.debug(`[${ticker}] ${name}: ERROR - ${error.message}`);
+        return { name, scrapedAt, result: null, success: false, error };
+      }
+    });
+
+    const scraperResults = await Promise.all(scraperPromises);
+
+    // Processar resultados
+    for (const { name, scrapedAt, result, success } of scraperResults) {
+      if (success && result) {
+        successfulResults.push(result);
+        rawSourcesData.push({
+          source: name,
+          data: result.data,
+          scrapedAt,
+        });
+        this.logger.debug(`[${ticker}] ${name}: SUCCESS (${Object.keys(result.data).length} fields)`);
+      } else {
+        this.logger.debug(`[${ticker}] ${name}: FAILED`);
       }
     }
 
@@ -199,59 +214,16 @@ export class ScrapersService {
     // ✅ FASE 3: Cross-validate inicial para detectar discrepâncias
     const initialValidation = this.crossValidateData(successfulResults, rawSourcesData);
 
-    // Detectar se precisa de fallback Python
-    const needsFallbackDueToSources = successfulResults.length < this.minSources;
-    const needsFallbackDueToDiscrepancy = this.hasSignificantDiscrepancies(initialValidation);
+    // ✅ NOVO (2025-12-22): Python Fallback Adaptativo - Loop Exaustivo
+    // Tenta TODOS os scrapers disponíveis (até 31!) até atingir mínimo + confidence
+    // SEM circuit breaker - queremos ver TODOS os erros durante desenvolvimento
+    const finalValidation = await this.adaptivePythonFallback(
+      ticker,
+      successfulResults,
+      rawSourcesData,
+    );
 
-    if (needsFallbackDueToSources || needsFallbackDueToDiscrepancy) {
-      const reason = needsFallbackDueToSources
-        ? `only ${successfulResults.length} sources (min: ${this.minSources})`
-        : `significant discrepancies detected (confidence: ${(initialValidation.confidence * 100).toFixed(1)}%)`;
-
-      this.logger.warn(
-        `[SCRAPE] ${ticker}: Activating Python fallback - ${reason}`,
-      );
-
-      // Solicitar mais fontes para resolver discrepâncias ou completar mínimo
-      const neededSources = needsFallbackDueToSources
-        ? this.minSources - successfulResults.length
-        : 2; // Pedir 2 fontes extras para resolver discrepâncias
-
-      const pythonResults = await this.runPythonFallbackScrapers(ticker, neededSources);
-
-      // Adicionar resultados do fallback Python
-      for (const pyResult of pythonResults) {
-        // Evitar duplicar fontes que já temos
-        const sourceKey = `python-${pyResult.source.toLowerCase()}`;
-        const alreadyHasSource = rawSourcesData.some(
-          (s) => s.source.toLowerCase().includes(pyResult.source.toLowerCase()),
-        );
-
-        if (!alreadyHasSource) {
-          successfulResults.push({
-            success: true,
-            source: sourceKey,
-            data: pyResult.data,
-            timestamp: new Date(),
-            responseTime: pyResult.execution_time * 1000, // Converter para ms
-          });
-          rawSourcesData.push({
-            source: sourceKey,
-            data: pyResult.data,
-            scrapedAt: new Date().toISOString(),
-          });
-        }
-      }
-
-      this.logger.log(
-        `[SCRAPE] ${ticker}: After Python fallback: ${successfulResults.length} sources total`,
-      );
-
-      // Re-validar com as novas fontes
-      return this.crossValidateData(successfulResults, rawSourcesData);
-    }
-
-    return initialValidation;
+    return finalValidation;
   }
 
   /**
@@ -392,7 +364,7 @@ export class ScrapersService {
     const confidence = this.calculateConfidence(results, discrepancies);
 
     return {
-      isValid: results.length >= this.minSources && confidence >= 0.5,
+      isValid: results.length >= 2 && confidence >= 0.33,  // FASE DISCREPANCY-FIX: Aceita 2 fontes (era 3)
       data: mergedData,
       sources,
       sourcesCount: results.length,
@@ -455,8 +427,12 @@ export class ScrapersService {
         });
       }
 
+      // FASE DISCREPANCY-FIX: Filtrar fontes que realmente fornecem este campo
+      // Isso previne discrepâncias falsas (ex: StatusInvest vs Fundamentus para lucroLiquido)
+      const sourcesForField = this.filterSourcesForField(field, values);
+
       // Filtrar valores válidos (não-nulos e não-zero para a maioria dos campos)
-      const validValues = values.filter(
+      const validValues = sourcesForField.filter(
         (v) => v.value !== null && (v.value !== 0 || this.isZeroValidForField(field)),
       );
 
@@ -468,7 +444,9 @@ export class ScrapersService {
       const result = this.selectByConsensus(field, validValues);
 
       fieldSources[field] = {
-        values,
+        // FASE DISCREPANCY-FIX: Armazenar apenas fontes que fornecem o campo
+        // Isso evita mostrar StatusInvest com valor 0 para campos que não extrai
+        values: sourcesForField,
         finalValue: result.finalValue,
         finalSource: result.finalSource,
         sourcesCount: validValues.length,
@@ -494,6 +472,69 @@ export class ScrapersService {
       'dividaLiquidaPatrimonio', // Empresa sem dívida
     ];
     return zeroValidFields.includes(field);
+  }
+
+  /**
+   * Filtra fontes válidas para um campo específico
+   *
+   * FASE DISCREPANCY-FIX: Previne discrepâncias falsas ao:
+   * 1. Excluir fontes que NÃO fornecem o campo (ex: StatusInvest não tem lucroLiquido)
+   * 2. Para campos absolutos (R$), excluir valores 0 que indicam "não disponível"
+   *
+   * @param field - Nome do campo
+   * @param values - Array de valores de todas as fontes
+   * @returns Array filtrado com apenas fontes válidas para o campo
+   */
+  private filterSourcesForField(field: string, values: FieldSourceValue[]): FieldSourceValue[] {
+    // Normalizar nome da fonte (remove prefixo 'python-' se presente)
+    const normalizeSourceName = (source: string): string => {
+      if (source.startsWith('python-')) {
+        return source.substring(7);
+      }
+      return source;
+    };
+
+    // Obter lista de fontes que fornecem este campo
+    const validSources = FIELD_AVAILABILITY[field];
+
+    // Se não temos mapeamento para este campo, aceitar todas as fontes
+    if (!validSources) {
+      this.logger.debug(`[FILTER] Field ${field}: no availability map, accepting all sources`);
+      return values;
+    }
+
+    // Verificar se é campo absoluto (valores em R$)
+    const isAbsoluteField = (ABSOLUTE_FIELDS as readonly string[]).includes(field);
+
+    const filteredValues = values.filter((v) => {
+      const normalizedSource = normalizeSourceName(v.source);
+
+      // 1. Verificar se a fonte fornece este campo
+      if (!validSources.includes(normalizedSource as any)) {
+        this.logger.debug(
+          `[FILTER] Field ${field}: excluding source ${v.source} (not in FIELD_AVAILABILITY)`,
+        );
+        return false;
+      }
+
+      // 2. Para campos absolutos, excluir valores 0 ou null (indica "não disponível")
+      if (isAbsoluteField && (v.value === 0 || v.value === null)) {
+        this.logger.debug(
+          `[FILTER] Field ${field}: excluding source ${v.source} with value ${v.value} (absolute field with zero/null)`,
+        );
+        return false;
+      }
+
+      return true;
+    });
+
+    if (filteredValues.length < values.length) {
+      this.logger.debug(
+        `[FILTER] Field ${field}: filtered from ${values.length} to ${filteredValues.length} sources`,
+      );
+    }
+
+    return filteredValues;
   }
 
   /**
@@ -650,10 +691,25 @@ export class ScrapersService {
 
   /**
    * Calcula desvio percentual entre dois valores
+   * IMPORTANTE: Aplica cap de 10000% para evitar valores astronômicos
    */
+  private readonly MAX_DEVIATION = 10000; // Cap em 10,000% (100x)
+
   private calculateDeviation(value: number, reference: number): number {
-    if (reference === 0) return value === 0 ? 0 : 100;
-    return Math.round(Math.abs((value - reference) / reference) * 10000) / 100; // Em percentual
+    // Proteção para divisão por zero
+    if (reference === 0) {
+      return value === 0 ? 0 : this.MAX_DEVIATION;
+    }
+
+    // Proteção para valores muito pequenos (evita overflow)
+    if (Math.abs(reference) < 0.0001) {
+      return this.MAX_DEVIATION;
+    }
+
+    const deviation = Math.round(Math.abs((value - reference) / reference) * 10000) / 100; // Em percentual
+
+    // Aplica cap para evitar valores astronômicos
+    return Math.min(deviation, this.MAX_DEVIATION);
   }
 
   /**
@@ -833,9 +889,9 @@ export class ScrapersService {
     // ✅ FINAL CONFIDENCE: Apply penalty
     const confidence = sourcesScore * (1 - discrepancyPenalty);
 
-    // ✅ MINIMUM GUARANTEE: 50% if >= minSources (never return 0 with valid data)
-    // FASE 2: minSources agora é 3 para maior confiança via consenso
-    const minConfidence = results.length >= this.minSources ? 0.5 : 0;
+    // ✅ MINIMUM GUARANTEE: 33% if >= 2 sources (never return 0 with valid data)
+    // FASE DISCREPANCY-FIX: Aceita 2 fontes (era minSources=3) devido a instabilidade do StatusInvest
+    const minConfidence = results.length >= 2 ? 0.33 : 0;
     const finalConfidence = Math.max(confidence, minConfidence);
 
     this.logger.log(
@@ -1035,26 +1091,56 @@ export class ScrapersService {
   /**
    * Get list of all Python scrapers from Python API
    *
+   * MODIFICADO (2025-12-22): Retry com timeout maior
+   * Motivo: Python API pode estar ocupada com análises de sentimento
+   *
    * Calls GET http://localhost:8000/api/scrapers/list
-   * Returns list of 26 scrapers with metadata
+   * Returns list of 27+ scrapers with metadata
    */
   async getPythonScrapersList(): Promise<PythonScraperInfo[]> {
-    this.logger.log('[PYTHON-API] Fetching scrapers list from Python API');
+    const maxRetries = 3;
+    const timeout = 30000; // 30s (vs 10s antes)
 
-    try {
-      const url = `${this.pythonApiUrl}/api/scrapers/list`;
-      const response = await firstValueFrom(
-        this.httpService.get(url, { timeout: 10000 }),
-      );
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        this.logger.log(
+          `[PYTHON-API] Fetching scrapers list (attempt ${attempt}/${maxRetries}, timeout ${timeout}ms)`,
+        );
 
-      const data = response.data;
-      this.logger.log(`[PYTHON-API] Got ${data.total} scrapers (${data.public} public, ${data.private} private)`);
+        const url = `${this.pythonApiUrl}/api/scrapers/list`;
+        const response = await firstValueFrom(
+          this.httpService.get(url, { timeout }),
+        );
 
-      return data.scrapers || [];
-    } catch (error) {
-      this.logger.error(`[PYTHON-API] Failed to get scrapers list: ${error.message}`);
-      return [];
+        const data = response.data;
+        this.logger.log(
+          `[PYTHON-API] ✅ Got ${data.total} scrapers (${data.public} public, ${data.private} private)`,
+        );
+
+        return data.scrapers || [];
+      } catch (error) {
+        const errorMsg = error.message || String(error);
+        const isTimeout = errorMsg.includes('timeout') || errorMsg.includes('ETIMEDOUT');
+
+        if (attempt < maxRetries) {
+          const backoffMs = 5000 * attempt; // 5s, 10s, 15s
+          this.logger.warn(
+            `[PYTHON-API] Attempt ${attempt} failed: ${errorMsg}. ` +
+              `${isTimeout ? 'Timeout - ' : ''}Retrying in ${backoffMs}ms...`,
+          );
+          await this.sleep(backoffMs);
+        } else {
+          this.logger.error(
+            `[PYTHON-API] ❌ Failed to get scrapers list after ${maxRetries} attempts. ` +
+              `Last error: ${errorMsg}. Continuing WITHOUT Python fallback.`,
+          );
+        }
+      }
     }
+
+    // Se todas as tentativas falharam, retornar array vazio
+    // Coleta continuará apenas com TypeScript scrapers (5 fontes)
+    return [];
   }
 
   /**
@@ -1067,9 +1153,11 @@ export class ScrapersService {
 
     try {
       const url = `${this.pythonApiUrl}/api/scrapers/test`;
+      // Remove 'python-' prefix if present (e.g., 'python-fundamentus' -> 'FUNDAMENTUS')
+      const normalizedScraperId = scraperId.replace(/^python-/i, '').toUpperCase();
       const response = await firstValueFrom(
         this.httpService.post(url, {
-          scraper: scraperId.toUpperCase(),
+          scraper: normalizedScraperId,
           query: ticker,
         }, { timeout: 120000 }), // 2 minute timeout for scraper tests
       );
@@ -2120,5 +2208,360 @@ export class ScrapersService {
       duration,
       results,
     };
+  }
+
+  // ================================================================
+  // FALLBACK EXAUSTIVO - FASE 2025-12-22
+  // ================================================================
+
+  /**
+   * Salva erro de scraper para análise durante desenvolvimento
+   *
+   * SEM circuit breaker - queremos VER todos os erros!
+   */
+  private async saveScraperErrorForDev(
+    ticker: string,
+    scraperId: string,
+    error: Error,
+    attempts: number,
+    context?: any,
+  ): Promise<void> {
+    const errorType = this.classifyError(error);
+
+    try {
+      await this.fundamentalDataRepository.query(
+        `INSERT INTO scraper_errors
+         (ticker, scraper_id, error_message, error_stack, error_type, attempts, context, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
+        [
+          ticker,
+          scraperId,
+          error.message,
+          error.stack || null,
+          errorType,
+          attempts,
+          context ? JSON.stringify(context) : null,
+        ],
+      );
+
+      this.logger.debug(
+        `[ERROR-TRACKING] Saved error for ${ticker}/${scraperId}: ${errorType}`,
+      );
+    } catch (e) {
+      // Se falhar ao salvar, apenas loga (não bloqueia)
+      this.logger.error(`Failed to save error log: ${e.message}`);
+    }
+  }
+
+  /**
+   * Classifica tipo de erro para análise estatística
+   */
+  private classifyError(error: Error): string {
+    const msg = error.message.toLowerCase();
+
+    if (msg.includes('timeout') || msg.includes('etimedout')) return 'timeout';
+    if (msg.includes('404') || msg.includes('not found')) return 'not_found';
+    if (msg.includes('503')) return 'service_unavailable';
+    if (msg.includes('429')) return 'rate_limit';
+    if (msg.includes('network') || msg.includes('econnrefused') || msg.includes('err_aborted'))
+      return 'network_error';
+    if (msg.includes('validation') || msg.includes('schema')) return 'validation_failed';
+    if (msg.includes('navigation') || msg.includes('unable to retrieve'))
+      return 'navigation_error';
+    if (msg.includes('auth') || msg.includes('401') || msg.includes('403'))
+      return 'authentication_error';
+
+    return 'unknown_error';
+  }
+
+  /**
+   * Verifica se erro é temporário e vale retry
+   */
+  private isRetryableError(error: Error): boolean {
+    const retryableTypes = [
+      'timeout',
+      'network_error',
+      'service_unavailable',
+      'navigation_error',
+    ];
+    return retryableTypes.includes(this.classifyError(error));
+  }
+
+  /**
+   * Helper para sleep
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Chama Python API para scraper específico
+   */
+  private async callPythonSingleScraper(
+    ticker: string,
+    scraperId: string,
+  ): Promise<{
+    success: boolean;
+    data?: any;
+    error?: string;
+    execution_time: number;
+  }> {
+    try {
+      const url = `${this.pythonApiUrl}/api/scrapers/fundamental/${ticker}`;
+      const response = await firstValueFrom(
+        this.httpService.post(
+          url,
+          {
+            scraper_ids: [scraperId], // Apenas 1 scraper específico
+            timeout: 60,
+          },
+          { timeout: 65000 }, // Timeout HTTP ligeiramente maior
+        ),
+      );
+
+      const data = response.data;
+
+      if (data.data && data.data.length > 0 && data.data[0].data) {
+        return {
+          success: true,
+          data: data.data[0].data,
+          execution_time: data.data[0].execution_time || 0,
+        };
+      }
+
+      return {
+        success: false,
+        error: 'No data returned from Python API',
+        execution_time: data.execution_time || 0,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        execution_time: 0,
+      };
+    }
+  }
+
+  /**
+   * Tenta scraper com retry automático
+   *
+   * Retry apenas se erro é temporário (timeout, network, etc)
+   */
+  private async tryScraperWithRetry(
+    ticker: string,
+    scraperId: string,
+    maxRetries: number,
+  ): Promise<{
+    success: boolean;
+    data?: any;
+    error?: Error;
+    responseTime: number;
+    attempts: number;
+  }> {
+    let lastError: Error;
+    let totalAttempts = 0;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      totalAttempts++;
+
+      if (attempt > 0) {
+        // Exponential backoff: 5s, 10s, 20s
+        const backoffMs = Math.pow(2, attempt - 1) * 5000;
+        this.logger.log(
+          `[RETRY] ${ticker}/${scraperId}: Retry ${attempt}/${maxRetries} after ${backoffMs}ms backoff`,
+        );
+        await this.sleep(backoffMs);
+      }
+
+      try {
+        const startTime = Date.now();
+        const result = await this.callPythonSingleScraper(ticker, scraperId);
+        const responseTime = Date.now() - startTime;
+
+        if (result.success && result.data) {
+          if (attempt > 0) {
+            this.logger.log(
+              `[RETRY] ${ticker}/${scraperId}: ✅ Success on attempt ${attempt + 1}`,
+            );
+          }
+          return {
+            success: true,
+            data: result.data,
+            responseTime,
+            attempts: totalAttempts,
+          };
+        }
+
+        lastError = new Error(result.error || 'No data returned');
+      } catch (error) {
+        lastError = error;
+        this.logger.warn(
+          `[RETRY] ${ticker}/${scraperId}: Attempt ${attempt + 1} error: ${error.message}`,
+        );
+
+        // Se erro NÃO é temporário, não vale retry
+        if (!this.isRetryableError(error)) {
+          this.logger.warn(
+            `[RETRY] ${ticker}/${scraperId}: Non-retryable error (${this.classifyError(error)}). Stopping retries.`,
+          );
+          break;
+        }
+      }
+    }
+
+    // Todas as tentativas falharam
+    this.logger.error(
+      `[RETRY] ${ticker}/${scraperId}: ❌ Failed after ${totalAttempts} attempts. Last error: ${lastError.message}`,
+    );
+
+    return {
+      success: false,
+      error: lastError,
+      responseTime: 0,
+      attempts: totalAttempts,
+    };
+  }
+
+  /**
+   * Python Fallback Adaptativo - Loop Exaustivo
+   *
+   * ESTRATÉGIA (2025-12-22):
+   * - Tenta TODOS os scrapers Python disponíveis (até 31!)
+   * - SEM circuit breaker (desenvolvimento - queremos ver erros)
+   * - COM retry automático para erros temporários
+   * - Para quando: sources >= 3 E confidence >= 60% OU esgotou todos
+   *
+   * @param ticker - Código do ativo
+   * @param successfulResults - Fontes TypeScript já coletadas
+   * @param rawSourcesData - Dados brutos das fontes
+   * @returns Validação com novas fontes adicionadas
+   */
+  private async adaptivePythonFallback(
+    ticker: string,
+    successfulResults: ScraperResult[],
+    rawSourcesData: Array<{ source: string; data: any; scrapedAt: string }>,
+  ) {
+    let validation = this.crossValidateData(successfulResults, rawSourcesData);
+
+    // Verificar se já atende critérios
+    if (successfulResults.length >= this.minSources && validation.confidence >= 0.60) {
+      this.logger.log(
+        `[FALLBACK] ${ticker}: Already meets criteria. ` +
+          `${successfulResults.length} sources, confidence ${(validation.confidence * 100).toFixed(1)}%. Skipping fallback.`,
+      );
+      return validation;
+    }
+
+    this.logger.log(
+      `[FALLBACK] ${ticker}: Starting adaptive fallback. ` +
+        `Current: ${successfulResults.length} sources, confidence ${(validation.confidence * 100).toFixed(1)}%`,
+    );
+
+    // Obter lista de scrapers Python
+    const pythonScrapers = await this.getPythonScrapersList();
+
+    // Filtrar apenas categorias úteis para fundamentals
+    const usefulScrapers = pythonScrapers.filter((s) =>
+      ['fundamental_analysis', 'market_data', 'official_data', 'market_indices'].includes(
+        s.category,
+      ),
+    );
+
+    this.logger.log(
+      `[FALLBACK] ${ticker}: ${usefulScrapers.length} Python scrapers available ` +
+        `(filtered from ${pythonScrapers.length} total)`,
+    );
+
+    // Rastrear scrapers já tentados (incluindo TypeScript)
+    const attempted = new Set<string>(
+      rawSourcesData.map((s) => s.source.toLowerCase().replace('python-', '')),
+    );
+
+    let round = 0;
+    const startTime = Date.now();
+    const MAX_TOTAL_TIME = 600000; // 10 min (dev mode - mais generoso)
+
+    // ✅ Loop EXAUSTIVO - tenta TODOS os scrapers disponíveis
+    for (const scraper of usefulScrapers) {
+      // Timeout global
+      if (Date.now() - startTime > MAX_TOTAL_TIME) {
+        this.logger.warn(
+          `[FALLBACK] ${ticker}: Global timeout (10min) reached after ${round} rounds. Stopping.`,
+        );
+        break;
+      }
+
+      // Skip se já tentou (versão TypeScript)
+      if (attempted.has(scraper.id.toLowerCase())) {
+        continue;
+      }
+
+      round++;
+
+      // Verificar critérios a cada round (pode parar antes de esgotar)
+      if (successfulResults.length >= this.minSources && validation.confidence >= 0.60) {
+        this.logger.log(
+          `[FALLBACK] ${ticker}: ✅ Criteria met after ${round} rounds. ` +
+            `Sources: ${successfulResults.length}, Confidence: ${(validation.confidence * 100).toFixed(1)}%. Stopping.`,
+        );
+        break;
+      }
+
+      this.logger.log(
+        `[FALLBACK] ${ticker}: Round ${round}/${usefulScrapers.length} - ` +
+          `Trying ${scraper.id} (${scraper.category})${scraper.requires_login ? ' 🔒' : ''}`,
+      );
+
+      // ✅ Retry automático (SEM circuit breaker!)
+      const result = await this.tryScraperWithRetry(ticker, scraper.id, 2);
+
+      attempted.add(scraper.id.toLowerCase());
+
+      if (result.success) {
+        // ✅ Sucesso - adicionar fonte
+        const sourceKey = `python-${scraper.id.toLowerCase()}`;
+        successfulResults.push({
+          success: true,
+          source: sourceKey,
+          data: result.data,
+          timestamp: new Date(),
+          responseTime: result.responseTime,
+        });
+        rawSourcesData.push({
+          source: sourceKey,
+          data: result.data,
+          scrapedAt: new Date().toISOString(),
+        });
+
+        // Re-validar
+        validation = this.crossValidateData(successfulResults, rawSourcesData);
+
+        this.logger.log(
+          `[FALLBACK] ${ticker}: ✅ ${scraper.id} succeeded in ${result.responseTime}ms. ` +
+            `Total: ${successfulResults.length} sources, confidence: ${(validation.confidence * 100).toFixed(1)}%`,
+        );
+      } else {
+        // ❌ Falha - salvar erro para análise (MAS NÃO desativa scraper!)
+        this.logger.error(
+          `[FALLBACK] ${ticker}: ❌ ${scraper.id} failed after ${result.attempts} attempts: ` +
+            `${result.error.message}. Continuing to next scraper...`,
+        );
+
+        // Salvar erro para debug
+        await this.saveScraperErrorForDev(ticker, scraper.id, result.error, result.attempts, {
+          category: scraper.category,
+          requires_login: scraper.requires_login,
+        });
+      }
+    }
+
+    this.logger.log(
+      `[FALLBACK] ${ticker}: Exhausted ${round} scrapers in ${((Date.now() - startTime) / 1000).toFixed(1)}s. ` +
+        `Final: ${successfulResults.length} sources (${successfulResults.length - 5} from Python), ` +
+        `confidence ${(validation.confidence * 100).toFixed(1)}%`,
+    );
+
+    return validation;
   }
 }
