@@ -8,7 +8,9 @@ import {
   Index,
   Unique,
 } from 'typeorm';
+import Decimal from 'decimal.js';
 import { Asset } from './asset.entity';
+import { DecimalTransformer } from '../transformers/decimal.transformer';
 
 /**
  * Enum for data source traceability (FINRA Rule 6140 compliance)
@@ -58,20 +60,20 @@ export class AssetPrice {
   @Column({ type: 'date', primary: true })
   date: Date;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4 })
-  open: number;
+  @Column({ type: 'decimal', precision: 18, scale: 4, transformer: new DecimalTransformer() })
+  open: Decimal;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4 })
-  high: number;
+  @Column({ type: 'decimal', precision: 18, scale: 4, transformer: new DecimalTransformer() })
+  high: Decimal;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4 })
-  low: number;
+  @Column({ type: 'decimal', precision: 18, scale: 4, transformer: new DecimalTransformer() })
+  low: Decimal;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4 })
-  close: number;
+  @Column({ type: 'decimal', precision: 18, scale: 4, transformer: new DecimalTransformer() })
+  close: Decimal;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4, name: 'adjusted_close', nullable: true })
-  adjustedClose: number;
+  @Column({ type: 'decimal', precision: 18, scale: 4, name: 'adjusted_close', nullable: true, transformer: new DecimalTransformer() })
+  adjustedClose: Decimal | null;
 
   @Column({ type: 'bigint' })
   volume: number;
@@ -91,14 +93,14 @@ export class AssetPrice {
   })
   source: PriceSource;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2, name: 'market_cap', nullable: true })
-  marketCap: number;
+  @Column({ type: 'decimal', precision: 18, scale: 2, name: 'market_cap', nullable: true, transformer: new DecimalTransformer() })
+  marketCap: Decimal | null;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2, nullable: true })
-  change: number;
+  @Column({ type: 'decimal', precision: 18, scale: 2, nullable: true, transformer: new DecimalTransformer() })
+  change: Decimal | null;
 
-  @Column({ type: 'decimal', precision: 10, scale: 4, name: 'change_percent', nullable: true })
-  changePercent: number;
+  @Column({ type: 'decimal', precision: 10, scale: 4, name: 'change_percent', nullable: true, transformer: new DecimalTransformer() })
+  changePercent: Decimal | null;
 
   @Column({ name: 'number_of_trades', nullable: true })
   numberOfTrades: number;

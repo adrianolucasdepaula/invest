@@ -11,6 +11,12 @@ import {
   DataSource,
   ScrapedData,
   Analysis,
+  Dividend,
+  StockLendingRate,
+  BacktestResult,
+  OptionPrice,
+  WheelStrategy,
+  WheelTrade,
 } from './entities';
 
 @Module({
@@ -26,6 +32,12 @@ import {
       DataSource,
       ScrapedData,
       Analysis,
+      Dividend,
+      StockLendingRate,
+      BacktestResult,
+      OptionPrice,
+      WheelStrategy,
+      WheelTrade,
     ]),
   ],
   exports: [TypeOrmModule],
