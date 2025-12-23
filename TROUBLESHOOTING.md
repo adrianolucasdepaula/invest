@@ -528,6 +528,23 @@ docker restart <container_name>
 | docker-compose.yml | Rebuild obrigatório |
 | Dockerfile | Rebuild obrigatório |
 | .env files | Restart |
+| **Componentes novos não aparecem** | **`.\system-manager.ps1 rebuild-frontend-complete`** |
+
+**⚠️ CRÍTICO: Turbopack In-Memory Cache (FASE 133/136)**
+
+Se componentes novos não aparecem mesmo com código correto, o problema é o cache in-memory do Turbopack:
+
+- `docker restart` → **NÃO FUNCIONA** (processo suspende/resume, cache persiste)
+- `docker rm` → **FUNCIONA** (processo morre, cache é destruído)
+
+**Solução Definitiva:**
+
+```powershell
+# Use o comando do system-manager que mata o processo
+.\system-manager.ps1 rebuild-frontend-complete
+```
+
+**Referência:** `BUG_CRITICO_TURBOPACK_MEMORY_CACHE.md`, `BUG_CRITICO_DOCKER_NEXT_CACHE.md`
 
 ---
 

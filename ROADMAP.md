@@ -11662,6 +11662,8 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 137** | API Service Health Check Fix - Liveness vs Readiness Probes | ✅ 100% | 2025-12-21 |
 | **FASE 138** | Complete Ecosystem Validation Post-Consolidation | ✅ 100% | 2025-12-21 |
 | **FASE 139** | IDIV Historical Backfill (2019-2025) + B3 Date Parameter Discovery | ✅ 100% | 2025-12-22 |
+| **FASE 140** | Turbopack Cache Fix - system-manager.ps1 Integration | ✅ 100% | 2025-12-23 |
+| **FASE 141** | LLM Local Feasibility Study (100% Gratuito) | ✅ 100% | 2025-12-23 |
 | **FASE 101.4** | Wheel Turbinada Backtesting Engine | ✅ 100% | 2025-12-21 |
 
 **Funcionalidades Implementadas:**
@@ -11728,11 +11730,13 @@ Sistema em estado de manutenção e evolução contínua.
 > **Nota:** FASE 137 concluída em 2025-12-21 (API Service Health Check Fix: Container unhealthy (595 failing streak) → healthy | Root Cause: Heavy I/O health check (PostgreSQL, Redis, import scrapers) causing timeout >10s under load | Solução: Split health check into 2 endpoints | /health (lightweight liveness probe, sem I/O, 5.8ms response) | /health/detailed (comprehensive readiness probe, com I/O, 11.6ms response) | Docker health check uses /health | Cascaded dependency fix: job_routes.py disabled (imported removed scheduler.py) | Arquivos modificados: backend/api-service/main.py, docker-compose.yml health check config | Documentação: .claude/guides/health-check-best-practices.md (420+ linhas) | Lições: Liveness vs Readiness, False negatives under load, Cascaded dependencies | Validação: Container healthy ✅, Response <100ms ✅, Zero Tolerance ✅ | Tempo: 1h 30min)
 > **Nota:** FASE 138 concluída em 2025-12-21 (Complete Ecosystem Validation Post-Consolidation: 8-phase validation após FASE 135 e 137 | Pré-validação: 18 containers, git clean, docs sync ✅ | Zero Tolerance: 0 erros TS backend/frontend, builds OK (17.7s/11.8s) ✅ | Container Health: 7 core services healthy, api-service RECOVERED ✅ | API: All endpoints OK, jobs 404 expected ✅ | Integration: PostgreSQL (861 assets), Redis (133 BullMQ keys), WebSocket active ✅ | Regression: Orchestrator removed, scheduler não importado, BullMQ única solução ✅ | Documentation: CLAUDE/GEMINI sync, Core (7) correto ✅ | Métricas: 14/14 (100%) ✅ | Documentação: VALIDACAO_FASE_138_ECOSSISTEMA_COMPLETO.md | Next steps: Task 2 (Otimizar BullMQ), Task 3 (Revisar Health Checks 20 containers) | Tempo: 2h 10min)
 > **Nota:** FASE 101.4 concluída em 2025-12-21 (Wheel Turbinada Backtesting Engine: 4 Entities (Dividend, StockLendingRate, BacktestResult, AssetIndexMembership) | 4 Migrations | Backend Services (DividendsService, StockLendingService, BacktestService) | Frontend Hooks (use-backtest, use-dividends) | API isolation for Turbopack fix | Metrics: CAGR, Sharpe, Sortino, MaxDD, Win Rate, Profit Factor | UI: 4 metric cards, 3 tabs, empty state | Zero Tolerance ✅ | Validação MCP ✅)
+> **Nota:** FASE 140 concluída em 2025-12-23 (Turbopack Cache Fix - system-manager.ps1 Integration: Problema CRÔNICO resolvido (3 ocorrências: FASE 133, 136, atual) | Root Cause: Next.js 16 Turbopack mantém módulos compilados em MEMÓRIA do processo Node.js | docker restart suspende/resume processo (cache persiste) | docker rm mata processo (cache destruído) | Solução: Nova função Rebuild-FrontendComplete em system-manager.ps1 | Arquivos modificados: system-manager.ps1 (+67 linhas), CLAUDE.md (anti-pattern + quick ref), GEMINI.md (sync), TROUBLESHOOTING.md (+18 linhas, seção crítica Turbopack) | Comando: `.\system-manager.ps1 rebuild-frontend-complete` | Validação: Hydration error /analysis resolvido, 9 botões filtro visíveis | Referência: BUG_CRITICO_TURBOPACK_MEMORY_CACHE.md, BUG_CRITICO_DOCKER_NEXT_CACHE.md | Next Steps: Usar rebuild-frontend-complete após adicionar componentes novos)
+> **Nota:** FASE 141 concluída em 2025-12-23 (LLM Local Feasibility Study: 100% gratuito, 0 cloud/APIs | Hardware: RTX 3060 6GB VRAM verificada, Docker GPU funcional (`--gpus all`) | Readiness: 78% (5-8 dias implementação) | Modelos mapeados: FinBERT-PT-BR 97% sentiment, Llama 3.1 8B 5.4% hallucination, Phi-3 Mini 3.8B reasoning, DeepSeek-R1-Distill-8B chain-of-thought | 6 problemas identificados: sentiment 45%→97%, OAuth expiration, HTML parsing, negations, outliers, summarization | Custo: R$ 0/mês (100% economia vs ~R$ 100/mês atual) | Framework: Ollama (recomendado) | Próximos: Ollama install + PoC 100 notícias | Documentação: docs/ESTUDO_VIABILIDADE_LLM_LOCAL.md)
 
 ---
 
-**Ultima Atualizacao:** 2025-12-21
-**Total de Fases:** 142 completas (incluindo sub-fases)
-**Versao:** 1.38.0
-**Responsavel:** Claude Code (Sonnet 4.5)
+**Ultima Atualizacao:** 2025-12-23
+**Total de Fases:** 144 completas (incluindo sub-fases)
+**Versao:** 1.40.0
+**Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

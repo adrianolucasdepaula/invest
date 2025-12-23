@@ -1375,20 +1375,88 @@ function Clean-Cache {
     Print-Info "Execute 'start' ou 'rebuild-frontend' para iniciar novamente."
 }
 
-# Rebuild Frontend
+# Rebuild Frontend (simple - may NOT clear Turbopack in-memory cache)
 function Rebuild-Frontend {
     Print-Header "Rebuild Frontend"
-    
+
     Clean-Cache
-    
+
     Print-Info "Iniciando frontend com rebuild..."
     docker-compose up -d --build frontend
-    
+
     if ($LASTEXITCODE -eq 0) {
         Print-Success "Frontend reiniciado com sucesso!"
     } else {
         Print-Error "Erro ao reiniciar frontend"
     }
+}
+
+# Rebuild Frontend Complete (KILLS Turbopack in-memory cache)
+# Use this when components are not rendering despite code being correct
+# Root cause: Next.js 16 + Turbopack keeps compiled modules in Node.js process memory
+# Solution: docker rm (kills process) instead of docker restart (suspends/resumes)
+function Rebuild-FrontendComplete {
+    Print-Header "Full Frontend Rebuild (Kill Turbopack Cache)"
+
+    Print-Warning "Este comando mata o processo Node.js para limpar cache in-memory do Turbopack."
+    Print-Info "Use quando componentes novos nao aparecem mesmo com codigo correto."
+    Write-Host ""
+
+    # 1. Stop + Remove container (KILLS Node.js process = clears memory cache)
+    Print-Info "Parando e removendo container (mata processo Turbopack)..."
+    docker stop invest_frontend 2>$null
+    docker rm invest_frontend 2>$null
+    Print-Success "Processo Turbopack encerrado"
+
+    # 2. Remove frontend volumes (compiled bundles)
+    Print-Info "Removendo volumes do frontend..."
+    docker volume rm invest-claude-web_frontend_node_modules 2>$null
+    docker volume rm invest-claude-web_frontend_next 2>$null
+    Print-Success "Volumes removidos"
+
+    # 3. Remove .next local (if exists)
+    Print-Info "Removendo .next local..."
+    if (Test-Path "frontend/.next") {
+        Remove-Item -Recurse -Force "frontend/.next"
+        Print-Success ".next local removido"
+    } else {
+        Print-Info ".next local nao existe (OK)"
+    }
+
+    # 4. Rebuild without cache
+    Print-Info "Reconstruindo imagem sem cache..."
+    docker-compose build --no-cache frontend
+
+    if ($LASTEXITCODE -ne 0) {
+        Print-Error "Erro ao fazer build do frontend"
+        return
+    }
+    Print-Success "Build concluido"
+
+    # 5. Start container
+    Print-Info "Iniciando container..."
+    docker-compose up -d frontend
+
+    if ($LASTEXITCODE -ne 0) {
+        Print-Error "Erro ao iniciar frontend"
+        return
+    }
+
+    # 6. Wait for compilation
+    Print-Info "Aguardando compilacao (45s)..."
+    Start-Sleep -Seconds 45
+
+    # 7. Verify health
+    $health = docker inspect --format='{{.State.Health.Status}}' invest_frontend 2>$null
+    if ($health -eq "healthy") {
+        Print-Success "Frontend reconstruido e saudavel!"
+    } else {
+        Print-Warning "Frontend iniciado mas health check: $health"
+        Print-Info "Verifique: docker logs invest_frontend --tail 20"
+    }
+
+    Write-Host ""
+    Print-Success "Full rebuild completo! Valide no browser: http://localhost:3100"
 }
 
 # Prune System
@@ -1486,8 +1554,10 @@ function Show-Help {
     Write-Host "  restore            Restaura backup do banco de dados"
     Write-Host ""
     Write-Host "${CYAN}Comandos de Cache:${RESET}"
-    Write-Host "  clean-cache        Limpa cache do frontend (seguro)"
-    Write-Host "  rebuild-frontend   Limpa cache e recria container frontend"
+    Write-Host "  clean-cache                 Limpa cache do frontend (seguro)"
+    Write-Host "  rebuild-frontend            Limpa cache e recria container frontend"
+    Write-Host "  rebuild-frontend-complete   ${YELLOW}MATA processo Turbopack + limpa volumes${RESET}"
+    Write-Host "                              Use quando componentes novos nao aparecem"
     Write-Host ""
     Write-Host "${RED}Comandos de Limpeza:${RESET}"
     Write-Host "  prune              Limpeza profunda do Docker (prune -a)"
@@ -1560,6 +1630,7 @@ switch ($command) {
     "restore" { Restore-Database }
     "clean-cache" { Clean-Cache }
     "rebuild-frontend" { Rebuild-Frontend }
+    "rebuild-frontend-complete" { Rebuild-FrontendComplete }
     "check-types" { Check-Types }
     "prune" { Prune-System }
     "clean" { Clear-System }

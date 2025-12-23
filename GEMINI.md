@@ -340,6 +340,9 @@ cd frontend && npx tsc --noEmit && npm run build && npm run lint
 docker-compose up -d                    # Start all
 .\system-manager.ps1 health             # Health check
 docker logs invest_backend --tail 50    # Backend logs
+
+# Cache Turbopack (CRÍTICO - componentes novos não aparecem)
+.\system-manager.ps1 rebuild-frontend-complete  # MATA processo + limpa volumes
 ```
 
 **Arquivos de Referência Rápida:**
@@ -363,6 +366,7 @@ docker logs invest_backend --tail 50    # Backend logs
 | ❌ console.log() em NestJS | Logs não estruturados | ✅ this.logger.log() |
 | ❌ Múltiplos await em scraper | Exit Code 137 | ✅ BeautifulSoup Single Fetch |
 | ❌ Aceitar sugestão Gemini sem validar | 88% hallucination rate | ✅ Verificar no código |
+| ❌ `docker restart frontend` para cache | Turbopack cache persiste | ✅ `rebuild-frontend-complete` |
 
 ---
 
