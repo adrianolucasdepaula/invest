@@ -35,6 +35,8 @@ import { AlertsModule } from './modules/alerts'; // FASE 75.3 - Sistema de Alert
 import { OptionsModule } from './modules/options'; // FASE 75.4 - Options Chain
 import { WheelModule } from './api/wheel/wheel.module'; // FASE 101 - WHEEL Strategy
 import { IndexMembershipsModule } from './api/index-memberships/index-memberships.module'; // FASE Marcação IDIV
+import { DividendsModule } from './api/dividends/dividends.module'; // FASE 101.2 - Dividendos
+import { StockLendingModule } from './api/stock-lending/stock-lending.module'; // FASE 101.3 - Aluguel de Ações
 import {
   User,
   Asset,
@@ -69,6 +71,12 @@ import {
   WheelTrade,
   // FASE Marcação IDIV
   AssetIndexMembership,
+  // FASE 101.2 - Dividendos
+  Dividend,
+  // FASE 101.3 - Aluguel de Ações (BTC)
+  StockLendingRate,
+  // FASE 101.4 - Backtesting Engine
+  BacktestResult,
 } from './database/entities';
 
 @Module({
@@ -123,6 +131,12 @@ import {
           WheelTrade,
           // FASE Marcação IDIV
           AssetIndexMembership,
+          // FASE 101.2 - Dividendos
+          Dividend,
+          // FASE 101.3 - Aluguel de Ações (BTC)
+          StockLendingRate,
+          // FASE 101.4 - Backtesting Engine
+          BacktestResult,
         ],
         synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
         logging: configService.get('DB_LOGGING', 'false') === 'true',
@@ -196,6 +210,8 @@ import {
     OptionsModule, // FASE 75.4 - Options Chain
     WheelModule, // FASE 101 - WHEEL Strategy
     IndexMembershipsModule, // FASE Marcação IDIV
+    DividendsModule, // FASE 101.2 - Dividendos
+    StockLendingModule, // FASE 101.3 - Aluguel de Ações (BTC)
   ],
   controllers: [AppController],
   providers: [

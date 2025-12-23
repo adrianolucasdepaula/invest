@@ -64,3 +64,15 @@ export {
   WheelTradeType,
   WheelTradeStatus,
 } from './wheel-trade.entity';
+// FASE 101.2 - Dividendos para Wheel Turbinada
+export { Dividend, DividendType, DividendStatus } from './dividend.entity';
+// FASE 101.3 - Aluguel de Ações (BTC) para Wheel Turbinada
+export { StockLendingRate } from './stock-lending.entity';
+// FASE 101.4 - Backtesting Engine para Wheel Turbinada
+export {
+  BacktestResult,
+  BacktestStatus,
+  BacktestConfig,
+  EquityCurvePoint,
+  SimulatedTrade,
+} from './backtest-result.entity';
