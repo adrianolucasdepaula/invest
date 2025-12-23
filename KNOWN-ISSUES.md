@@ -1,9 +1,9 @@
 # 🔍 KNOWN ISSUES - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-17
-**Versão:** 1.12.4
-**Mantenedor:** Claude Code (Opus 4.5)
+**Última Atualização:** 2025-12-23
+**Versão:** 1.13.0
+**Mantenedor:** Claude Code (Sonnet 4.5)
 
 ---
 
@@ -35,6 +35,73 @@ Este documento centraliza **todos os problemas conhecidos** encontrados durante 
 ## 🔴 ISSUES ATIVOS (NÃO RESOLVIDOS)
 
 > **Nota:** Issue #DY_COLUMN_NOT_RENDERING foi **RESOLVIDO** e movido para seção "ISSUES RESOLVIDOS" abaixo.
+
+---
+
+### Issue #SCRAPERS_NOT_INTEGRATED: Dividends/Lending Scrapers Não Automáticos
+
+**Severidade:** 🟡 **MÉDIA**
+**Status:** ⚠️ **DOCUMENTADO - AGUARDA IMPLEMENTAÇÃO**
+**Data Identificado:** 2025-12-23
+**Identificado Por:** PM Expert Agent (af87cb7) + Explore (acbb6b1)
+
+#### Descrição
+
+Scrapers de dividends e stock lending (FASE 101.2 + 101.3) estão implementados mas **NÃO integrados ao fluxo automático** de coleta de dados.
+
+#### Sintomas
+
+- Tabelas `dividends` e `stock_lending_rates` permanecem vazias
+- Backtest executa com dividend_income = 0, lending_income = 0
+- Apenas premium_income + selic_income são calculados
+- User precisa trigger manual via API (não há botão UI)
+
+#### Root Cause
+
+**Código implementado mas não conectado:**
+- ✅ Python scrapers: statusinvest_dividends_scraper.py (552L), stock_lending_scraper.py (426L)
+- ✅ Backend endpoints: POST /dividends/import/:ticker, POST /stock-lending/import/:ticker
+- ✅ Frontend hooks: useSyncDividends(), useSyncStockLending()
+- ❌ **Nenhum é chamado automaticamente** (bulk update NÃO trigger scrapers)
+- ❌ **Sem scheduled jobs** (CRON/BullMQ)
+- ❌ **Sem botões UI** para sync manual
+
+#### Solução Proposta
+
+**Plano:** `C:\Users\adria\.claude\plans\agile-beaming-pillow.md`
+
+**OPÇÃO 1 (Recomendada):** Integrar ao bulk asset update
+```typescript
+// assets-update.service.ts
+async updateSingleAsset(ticker) {
+  await this.saveFundamentalData(...);  // Atual
+
+  // ADICIONAR:
+  const dividends = await this.scrapeDividendsForAsset(ticker);
+  await this.dividendsService.importFromScraper(ticker, dividends);
+
+  const lending = await this.scrapeStockLendingForAsset(ticker);
+  await this.stockLendingService.importFromScraper(ticker, [lending]);
+}
+```
+
+**Estimativa:** 9-14 horas
+**Impacto:** Bulk update 2.5-4h → 4.8-7.4h (ou 1.1-1.7h se filtrar só assets com opções)
+
+#### Workaround Temporário
+
+```bash
+# Popular manualmente via API
+curl -X POST http://localhost:3101/api/v1/dividends/import/PETR4 \
+  -H "Authorization: Bearer TOKEN" \
+  -d '[{"tipo":"dividendo","valor_bruto":0.50,...}]'
+```
+
+#### Impacto
+
+- **Funcionalidade:** 🟡 MÉDIA - Backtest roda mas com accuracy reduzida
+- **Data:** ✅ OK - DY% vem de fundamental_data (451 assets)
+- **UX:** 🟡 MÉDIA - User não vê histórico detalhado de proventos
 
 ---
 
