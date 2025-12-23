@@ -212,6 +212,7 @@ services:
       context: ./backend/python-scrapers
       dockerfile: Dockerfile
     container_name: invest_scrapers
+    init: true  # FASE 139.1: Prevent zombie processes (headless_shell defunct) - Best Practice 2025
     environment:
       # Database
       - DB_HOST=postgres
@@ -285,6 +286,7 @@ services:
       context: ./backend/api-service
       dockerfile: Dockerfile
     container_name: invest_api_service
+    init: true  # FASE 139.1: Prevent zombie processes (headless_shell defunct) - Best Practice 2025
     environment:
       # Database - Using hostname for DNS resolution (Best Practice)
       # Avoids IP changes when network is recreated
