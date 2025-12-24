@@ -337,10 +337,10 @@ services:
       resources:
         limits:
           cpus: '2.0'
-          memory: 4G  # FASE 94: Increased from 2G to support 3 concurrent browsers
+          memory: 8G  # FASE 139.4: Increased from 4G - Python API travando com 99.9% memory usage
         reservations:
           cpus: '0.5'
-          memory: 1G
+          memory: 2G  # FASE 139.4: Increased proportionally
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   # Frontend Next.js
