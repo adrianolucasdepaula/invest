@@ -37,6 +37,7 @@ import { WheelModule } from './api/wheel/wheel.module'; // FASE 101 - WHEEL Stra
 import { IndexMembershipsModule } from './api/index-memberships/index-memberships.module'; // FASE Marcação IDIV
 import { DividendsModule } from './api/dividends/dividends.module'; // FASE 101.2 - Dividendos
 import { StockLendingModule } from './api/stock-lending/stock-lending.module'; // FASE 101.3 - Aluguel de Ações
+import { ScraperConfigModule } from './api/scraper-config/scraper-config.module'; // FASE: Dynamic Scraper Configuration
 import {
   User,
   Asset,
@@ -77,6 +78,9 @@ import {
   StockLendingRate,
   // FASE 101.4 - Backtesting Engine
   BacktestResult,
+  // FASE: Dynamic Scraper Configuration
+  ScraperConfig,
+  ScraperExecutionProfile,
 } from './database/entities';
 
 @Module({
@@ -137,6 +141,9 @@ import {
           StockLendingRate,
           // FASE 101.4 - Backtesting Engine
           BacktestResult,
+          // FASE: Dynamic Scraper Configuration
+          ScraperConfig,
+          ScraperExecutionProfile,
         ],
         synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
         logging: configService.get('DB_LOGGING', 'false') === 'true',
@@ -212,6 +219,7 @@ import {
     IndexMembershipsModule, // FASE Marcação IDIV
     DividendsModule, // FASE 101.2 - Dividendos
     StockLendingModule, // FASE 101.3 - Aluguel de Ações (BTC)
+    ScraperConfigModule, // FASE: Dynamic Scraper Configuration
   ],
   controllers: [AppController],
   providers: [
