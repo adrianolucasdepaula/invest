@@ -76,3 +76,6 @@ export {
   EquityCurvePoint,
   SimulatedTrade,
 } from './backtest-result.entity';
+// FASE: Dynamic Scraper Configuration
+export { ScraperConfig, ScraperParameters } from './scraper-config.entity';
+export { ScraperExecutionProfile, ProfileConfig } from './scraper-execution-profile.entity';
