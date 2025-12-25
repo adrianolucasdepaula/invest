@@ -17,7 +17,9 @@ import {
   Database,
   List,
   Settings2,
+  Sliders,
 } from 'lucide-react';
+import Link from 'next/link';
 
 /**
  * FASE 116: Dropdown para atualização de dados fundamentalistas
@@ -118,6 +120,16 @@ export function AssetUpdateDropdown({
         >
           <Settings2 className="h-4 w-4" />
           <span>Selecionar Manualmente...</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        {/* FASE: Dynamic Scraper Configuration - Link para admin/scrapers */}
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link href="/admin/scrapers" className="flex items-center gap-2">
+            <Sliders className="h-4 w-4" />
+            <span>Configurar Scrapers</span>
+          </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
