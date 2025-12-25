@@ -15,6 +15,7 @@ import { ScraperMetricsService } from './scraper-metrics.service'; // FASE 93
 import { AppWebSocketGateway } from '../websocket/websocket.gateway'; // FASE 93.4
 import { ScraperResult } from './base/base-scraper.interface';
 import { FundamentalData } from '../database/entities/fundamental-data.entity';
+import { ScraperConfigService } from '../api/scraper-config/scraper-config.service'; // FASE: Dynamic Scraper Configuration
 import {
   FieldSourcesMap,
   FieldSourceValue,
@@ -137,12 +138,39 @@ export class ScrapersService {
     private scraperMetricsService: ScraperMetricsService, // FASE 93
     @Inject(forwardRef(() => AppWebSocketGateway))
     private wsGateway: AppWebSocketGateway, // FASE 93.4
+    private scraperConfigService: ScraperConfigService, // FASE: Dynamic Scraper Configuration
   ) {
     // FASE 2: Aumentado de 2 para 3 - maior confiança com sistema de consenso
     // Com 6 scrapers ativos, 3 fontes é o mínimo razoável para validação por consenso
     this.minSources = this.configService.get<number>('MIN_DATA_SOURCES', 3);
     // URL da API Python para fallback
     this.pythonApiUrl = this.configService.get<string>('PYTHON_API_URL', 'http://localhost:8000');
+  }
+
+  /**
+   * Helper: Mapeia scraperId para instância do scraper
+   *
+   * FASE: Dynamic Scraper Configuration
+   * Usado por scrapeFundamentalData() para obter scraper instance a partir do ID
+   */
+  private getScraperInstance(scraperId: string): any {
+    const map: Record<string, any> = {
+      fundamentus: this.fundamentusScraper,
+      brapi: this.brapiScraper,
+      statusinvest: this.statusInvestScraper,
+      investidor10: this.investidor10Scraper,
+      fundamentei: this.fundamenteiScraper,
+      investsite: this.investsiteScraper,
+    };
+
+    const scraper = map[scraperId];
+    if (!scraper) {
+      throw new Error(
+        `Scraper "${scraperId}" not found. Available: ${Object.keys(map).join(', ')}`,
+      );
+    }
+
+    return scraper;
   }
 
   /**
@@ -154,20 +182,21 @@ export class ScrapersService {
    * ✅ Execução sequencial para evitar sobrecarga do browser
    */
   async scrapeFundamentalData(ticker: string): Promise<CrossValidationResult> {
-    this.logger.log(`[SCRAPE] Starting fundamental data collection for ${ticker} from PRIMARY sources (3/6)`);
+    // FASE: Dynamic Scraper Configuration
+    // Consulta configs dinâmicas ao invés de usar scrapers hardcoded
+    const configs = await this.scraperConfigService.getEnabledScrapersForAsset(ticker, 'fundamental');
 
-    // ✅ FIX (2025-12-17): Reduced from 6 → 3 scrapers to prevent Near-OOM
-    // Keep only most reliable sources: fundamentus (Playwright), brapi (API), statusinvest (Playwright)
-    // This reduces job duration from ~180s to ~90s and memory consumption from ~3.6GB to ~1.8GB
-    // Minimum 3 sources still maintained for cross-validation
-    const scrapers = [
-      { name: 'fundamentus', scraper: this.fundamentusScraper },
-      { name: 'brapi', scraper: this.brapiScraper },
-      { name: 'statusinvest', scraper: this.statusInvestScraper },
-      { name: 'investidor10', scraper: this.investidor10Scraper },  // FASE DISCREPANCY-FIX: Ativado para ter 4+ fontes
-      // { name: 'fundamentei', scraper: this.fundamenteiScraper },
-      { name: 'investsite', scraper: this.investsiteScraper },  // FASE DISCREPANCY-FIX: Ativado para ter 4+ fontes
-    ];
+    this.logger.log(
+      `[SCRAPE] Starting fundamental data collection for ${ticker} from ${configs.length} DYNAMIC sources: ${configs.map((c) => c.scraperId).join(', ')}`,
+    );
+
+    // Mapear configs para scrapers
+    const scrapers = configs.map((config) => ({
+      name: config.scraperId,
+      scraper: this.getScraperInstance(config.scraperId),
+      timeout: config.parameters.timeout,
+      weight: config.parameters.validationWeight,
+    }));
 
     const successfulResults: ScraperResult[] = [];
     const rawSourcesData: Array<{ source: string; data: any; scrapedAt: string }> = [];

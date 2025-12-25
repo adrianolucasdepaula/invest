@@ -313,22 +313,21 @@ export class ScraperConfigService {
     await queryRunner.startTransaction();
 
     try {
-      // 1. Desativar TODOS
-      await queryRunner.manager.update(ScraperConfig, {}, { isEnabled: false });
+      // 1. Desativar TODOS usando SQL direto (TypeORM não aceita critério vazio em update)
+      await queryRunner.query(`UPDATE scraper_configs SET "isEnabled" = false`);
 
       // 2. Ativar apenas os do perfil
-      await queryRunner.manager.update(
-        ScraperConfig,
-        { scraperId: In(scraperIds) },
-        { isEnabled: true },
+      const placeholders = scraperIds.map((_, i) => `$${i + 1}`).join(',');
+      await queryRunner.query(
+        `UPDATE scraper_configs SET "isEnabled" = true WHERE "scraperId" IN (${placeholders})`,
+        scraperIds,
       );
 
       // 3. Atualizar prioridades
       for (let i = 0; i < priorityOrder.length; i++) {
-        await queryRunner.manager.update(
-          ScraperConfig,
-          { scraperId: priorityOrder[i] },
-          { priority: i + 1 },
+        await queryRunner.query(
+          `UPDATE scraper_configs SET priority = $1 WHERE "scraperId" = $2`,
+          [i + 1, priorityOrder[i]],
         );
       }
 

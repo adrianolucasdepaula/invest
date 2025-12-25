@@ -23,6 +23,7 @@ import { ScrapersController } from './scrapers.controller';
 import { RateLimiterService } from './rate-limiter.service'; // ✅ FASE 3
 import { CircuitBreakerService } from './circuit-breaker.service'; // ✅ FASE 117
 import { WebSocketModule } from '../websocket/websocket.module'; // FASE 93.4
+import { ScraperConfigModule } from '../api/scraper-config/scraper-config.module'; // FASE: Dynamic Scraper Configuration
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { WebSocketModule } from '../websocket/websocket.module'; // FASE 93.4
       maxRedirects: 3,
     }),
     forwardRef(() => WebSocketModule), // FASE 93.4: WebSocket for test-all progress
+    ScraperConfigModule, // FASE: Dynamic Scraper Configuration - Import para usar ScraperConfigService
   ],
   controllers: [ScrapersController],
   providers: [
