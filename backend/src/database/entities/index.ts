@@ -79,3 +79,4 @@ export {
 // FASE: Dynamic Scraper Configuration
 export { ScraperConfig, ScraperParameters } from './scraper-config.entity';
 export { ScraperExecutionProfile, ProfileConfig } from './scraper-execution-profile.entity';
+export { ScraperConfigAudit } from './scraper-config-audit.entity';

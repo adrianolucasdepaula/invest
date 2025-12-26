@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ScraperConfig, ScraperExecutionProfile } from '@database/entities';
+import {
+  ScraperConfig,
+  ScraperExecutionProfile,
+  ScraperConfigAudit,
+} from '@database/entities';
 import { ScraperConfigController } from './scraper-config.controller';
 import { ScraperConfigService } from './scraper-config.service';
 
@@ -22,7 +26,7 @@ import { ScraperConfigService } from './scraper-config.service';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ScraperConfig, ScraperExecutionProfile]),
+    TypeOrmModule.forFeature([ScraperConfig, ScraperExecutionProfile, ScraperConfigAudit]),
   ],
   controllers: [ScraperConfigController],
   providers: [ScraperConfigService],

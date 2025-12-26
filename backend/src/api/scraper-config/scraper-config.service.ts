@@ -6,7 +6,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, Not } from 'typeorm';
-import { ScraperConfig, ScraperExecutionProfile } from '@database/entities';
+import {
+  ScraperConfig,
+  ScraperExecutionProfile,
+  ScraperConfigAudit,
+} from '@database/entities';
 import {
   UpdateScraperConfigDto,
   BulkToggleDto,
@@ -40,7 +44,49 @@ export class ScraperConfigService {
     private scraperConfigRepo: Repository<ScraperConfig>,
     @InjectRepository(ScraperExecutionProfile)
     private profileRepo: Repository<ScraperExecutionProfile>,
+    @InjectRepository(ScraperConfigAudit)
+    private auditRepo: Repository<ScraperConfigAudit>,
   ) {}
+
+  // ============================================================================
+  // AUDIT TRAIL (GAP-006)
+  // ============================================================================
+
+  /**
+   * Registra uma acao no audit trail
+   *
+   * GAP-006: Rastreabilidade de mudancas para compliance financeiro
+   */
+  private async logAudit(
+    action: ScraperConfigAudit['action'],
+    scraperId: string | null,
+    changes: ScraperConfigAudit['changes'],
+    userId?: string,
+    profileId?: string,
+    reason?: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<void> {
+    try {
+      await this.auditRepo.save({
+        action,
+        userId: userId || null,
+        scraperId,
+        profileId: profileId || null,
+        changes,
+        reason: reason || null,
+        ipAddress: ipAddress || null,
+        userAgent: userAgent || null,
+      });
+
+      this.logger.debug(
+        `[AUDIT] ${action} | scraper=${scraperId || 'N/A'} | user=${userId || 'system'}`,
+      );
+    } catch (error) {
+      // Nao falhar operacao principal se audit falhar
+      this.logger.error(`[AUDIT] Falha ao registrar audit: ${error.message}`);
+    }
+  }
 
   // ============================================================================
   // MÉTODOS PRINCIPAIS (Usados pelo ScrapersService)
@@ -179,10 +225,17 @@ export class ScraperConfigService {
         }
       }
 
+      const beforeState = config.isEnabled;
       config.isEnabled = newState;
       const updated = await queryRunner.manager.save(ScraperConfig, config);
 
       await queryRunner.commitTransaction();
+
+      // GAP-006: Registrar audit
+      await this.logAudit('TOGGLE', config.scraperId, {
+        before: { isEnabled: beforeState },
+        after: { isEnabled: newState },
+      });
 
       this.logger.log(
         `[TOGGLE] ✅ ${config.scraperName} ${newState ? 'ativado' : 'desativado'}`,
@@ -231,6 +284,12 @@ export class ScraperConfigService {
 
       await queryRunner.commitTransaction();
 
+      // GAP-006: Registrar audit
+      await this.logAudit('BULK_TOGGLE', null, {
+        after: { enabled: dto.enabled },
+        affectedScrapers: dto.scraperIds,
+      });
+
       const action = dto.enabled ? 'ativados' : 'desativados';
       this.logger.log(`[BULK-TOGGLE] ✅ ${dto.scraperIds.length} scrapers ${action}`);
 
@@ -275,6 +334,12 @@ export class ScraperConfigService {
       }
 
       await queryRunner.commitTransaction();
+
+      // GAP-006: Registrar audit
+      await this.logAudit('UPDATE_PRIORITY', null, {
+        after: { priorities: dto.priorities },
+        affectedScrapers: dto.priorities.map((p) => p.scraperId),
+      });
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -388,6 +453,21 @@ export class ScraperConfigService {
       }
 
       await queryRunner.commitTransaction();
+
+      // GAP-006: Registrar audit
+      await this.logAudit(
+        'APPLY_PROFILE',
+        null,
+        {
+          after: {
+            profileName: profile.name,
+            profileDisplayName: profile.displayName,
+          },
+          affectedScrapers: scraperIds,
+        },
+        undefined,
+        profileId,
+      );
 
       this.logger.log(
         `[APPLY-PROFILE] ✅ Profile "${profile.displayName}" applied successfully`,
