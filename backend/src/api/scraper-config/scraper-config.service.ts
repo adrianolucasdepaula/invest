@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, Not } from 'typeorm';
 import { ScraperConfig, ScraperExecutionProfile } from '@database/entities';
 import {
   UpdateScraperConfigDto,
@@ -143,51 +143,107 @@ export class ScraperConfigService {
 
   /**
    * Toggle ON/OFF de um scraper
+   *
+   * BUG-001 FIX: Agora usa transação atômica com pessimistic lock
+   * para prevenir race conditions entre leitura e escrita.
    */
   async toggleEnabled(id: string): Promise<ScraperConfig> {
-    const config = await this.getOne(id);
-    config.isEnabled = !config.isEnabled;
+    const queryRunner = this.scraperConfigRepo.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    // Validar que ainda haverá mínimo 2 ativos
-    const enabledCount = await this.scraperConfigRepo.count({
-      where: { isEnabled: true },
-    });
+    try {
+      // PESSIMISTIC LOCK: Bloqueia row para escrita durante transação
+      const config = await queryRunner.manager.findOne(ScraperConfig, {
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
 
-    if (!config.isEnabled && enabledCount <= 2) {
-      throw new BadRequestException(
-        'Não é possível desabilitar este scraper. Mínimo de 2 scrapers deve estar ativo.',
+      if (!config) {
+        throw new NotFoundException(`Scraper config ${id} not found`);
+      }
+
+      const newState = !config.isEnabled;
+
+      // Validação: Se desabilitando, verificar se ainda haverá mínimo 2
+      if (!newState) {
+        const enabledCount = await queryRunner.manager.count(ScraperConfig, {
+          where: { isEnabled: true },
+        });
+
+        if (enabledCount <= 2) {
+          throw new BadRequestException(
+            `Não é possível desabilitar ${config.scraperName}. ` +
+              `Mínimo de 2 scrapers deve estar ativo. Atualmente: ${enabledCount} ativos.`,
+          );
+        }
+      }
+
+      config.isEnabled = newState;
+      const updated = await queryRunner.manager.save(ScraperConfig, config);
+
+      await queryRunner.commitTransaction();
+
+      this.logger.log(
+        `[TOGGLE] ✅ ${config.scraperName} ${newState ? 'ativado' : 'desativado'}`,
       );
-    }
 
-    return this.scraperConfigRepo.save(config);
+      return updated;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(`[TOGGLE] ❌ Falha: ${error.message}`);
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   /**
    * Toggle em lote de múltiplos scrapers
+   *
+   * BUG-001 FIX: Agora usa transação atômica para garantir
+   * rollback automático se validação falhar.
    */
   async bulkToggle(dto: BulkToggleDto): Promise<{ updated: number }> {
-    await this.scraperConfigRepo.update(
-      { scraperId: In(dto.scraperIds) },
-      { isEnabled: dto.enabled },
-    );
+    const queryRunner = this.scraperConfigRepo.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    // Validar após mudança
-    const enabledCount = await this.scraperConfigRepo.count({
-      where: { isEnabled: true },
-    });
+    try {
+      // 1. Atualizar scrapers
+      const result = await queryRunner.query(
+        `UPDATE scraper_configs SET "isEnabled" = $1 WHERE "scraperId" = ANY($2::text[])`,
+        [dto.enabled, dto.scraperIds],
+      );
 
-    if (enabledCount < 2) {
-      // Reverter
-      await this.scraperConfigRepo.update(
-        { scraperId: In(dto.scraperIds) },
-        { isEnabled: !dto.enabled },
+      // 2. Validar APÓS atualização (dentro da transação)
+      const enabledCount = await queryRunner.manager.count(ScraperConfig, {
+        where: { isEnabled: true },
+      });
+
+      if (enabledCount < 2) {
+        // Rollback automático via throw (não precisa reverter manualmente)
+        throw new BadRequestException(
+          `Operação resultaria em apenas ${enabledCount} scraper(s) ativo(s). ` +
+            `Mínimo 2 necessário para cross-validation.`,
+        );
+      }
+
+      await queryRunner.commitTransaction();
+
+      const action = dto.enabled ? 'ativados' : 'desativados';
+      this.logger.log(`[BULK-TOGGLE] ✅ ${dto.scraperIds.length} scrapers ${action}`);
+
+      return { updated: result.rowCount || 0 };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(
+        `[BULK-TOGGLE] ❌ Falha ao ${dto.enabled ? 'ativar' : 'desativar'}: ${error.message}`,
       );
-      throw new BadRequestException(
-        `Operação resultaria em apenas ${enabledCount} scraper(s) ativo(s). Mínimo 2 necessário.`,
-      );
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
-
-    return { updated: dto.scraperIds.length };
   }
 
   /**
@@ -456,11 +512,11 @@ export class ScraperConfigService {
     }
 
     // Validar que não estamos criando prioridade duplicada
+    // FIX BUG-002: Usar Not() do TypeORM ao invés de sintaxe incorreta
     const existingWithSamePriority = await this.scraperConfigRepo.findOne({
-      where: {
-        priority: config.priority,
-        id: config.id ? { toString: () => `NOT '${config.id}'` } as any : undefined,
-      },
+      where: config.id
+        ? { priority: config.priority, id: Not(config.id) }
+        : { priority: config.priority },
     });
 
     if (existingWithSamePriority) {
