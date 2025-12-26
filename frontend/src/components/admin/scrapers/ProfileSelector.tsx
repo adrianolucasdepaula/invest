@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { useApplyProfile } from '@/lib/hooks/useScraperConfig';
 import type { ScraperExecutionProfile } from '@/types/scraper-config';
 import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ProfileSelectorProps {
   profiles: ScraperExecutionProfile[];
@@ -60,10 +61,22 @@ export function ProfileSelector({ profiles }: ProfileSelectorProps) {
           return (
             <Card
               key={profile.id}
-              className={`p-4 cursor-pointer transition-all hover:border-primary ${
-                isSelected ? 'border-primary bg-primary/5' : ''
-              }`}
               onClick={() => setSelectedProfile(profile.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedProfile(profile.id);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-pressed={isSelected}
+              aria-label={`Perfil ${profile.displayName}: ${profile.description}. ${profile.config.minScrapers} scrapers, ${profile.config.estimatedDuration}s`}
+              className={cn(
+                'p-4 cursor-pointer transition-all hover:border-primary',
+                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                isSelected && 'border-primary bg-primary/5'
+              )}
             >
               <div className="flex items-start justify-between mb-3">
                 <div>
