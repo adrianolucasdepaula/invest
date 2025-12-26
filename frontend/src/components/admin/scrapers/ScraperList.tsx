@@ -2,6 +2,7 @@
  * Component: ScraperList
  *
  * Lista de scrapers com funcionalidades de bulk selection e actions.
+ * GAP-001 Frontend: Drag & Drop com @dnd-kit/sortable
  *
  * FASE 5: Frontend UI Components
  */
@@ -9,9 +10,24 @@
 'use client';
 
 import { useState } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
-import { ScraperCard } from './ScraperCard';
-import { useBulkToggle } from '@/lib/hooks/useScraperConfig';
+import { SortableScraperCard } from './SortableScraperCard';
+import { useBulkToggle, useUpdatePriorities } from '@/lib/hooks/useScraperConfig';
 import type { ScraperConfig } from '@/types/scraper-config';
 
 interface ScraperListProps {
@@ -22,8 +38,43 @@ interface ScraperListProps {
 export function ScraperList({ configs, category }: ScraperListProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const bulkToggleMutation = useBulkToggle();
+  const updatePrioritiesMutation = useUpdatePriorities();
 
-  const sortedConfigs = [...configs].sort((a, b) => a.priority - b.priority);
+  // GAP-001: Estado local para drag & drop
+  const [items, setItems] = useState(
+    [...configs].sort((a, b) => a.priority - b.priority)
+  );
+
+  const sortedConfigs = items;
+
+  // GAP-001: Sensores de drag (mouse + keyboard para a11y)
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // GAP-001: Handler de drag end
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = items.findIndex((i) => i.id === active.id);
+      const newIndex = items.findIndex((i) => i.id === over.id);
+
+      const newItems = arrayMove(items, oldIndex, newIndex);
+      setItems(newItems);
+
+      // Atualizar priorities no backend
+      const priorities = newItems.map((item, index) => ({
+        scraperId: item.scraperId,
+        priority: index + 1,
+      }));
+
+      updatePrioritiesMutation.mutate({ priorities });
+    }
+  }
 
   const handleSelectAll = () => {
     if (selectedIds.size === configs.length) {
@@ -96,26 +147,37 @@ export function ScraperList({ configs, category }: ScraperListProps) {
         </div>
       </div>
 
-      {/* Scraper Cards */}
-      <div className="space-y-2">
-        {sortedConfigs.map((config, index) => (
-          <ScraperCard
-            key={config.id}
-            config={config}
-            index={index}
-            isSelected={selectedIds.has(config.id)}
-            onSelectChange={(selected) => {
-              const newSelected = new Set(selectedIds);
-              if (selected) {
-                newSelected.add(config.id);
-              } else {
-                newSelected.delete(config.id);
-              }
-              setSelectedIds(newSelected);
-            }}
-          />
-        ))}
-      </div>
+      {/* Scraper Cards - GAP-001: Drag & Drop Context */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={sortedConfigs.map((c) => c.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-2 pl-8">
+            {sortedConfigs.map((config, index) => (
+              <SortableScraperCard
+                key={config.id}
+                config={config}
+                index={index}
+                isSelected={selectedIds.has(config.id)}
+                onSelectChange={(selected) => {
+                  const newSelected = new Set(selectedIds);
+                  if (selected) {
+                    newSelected.add(config.id);
+                  } else {
+                    newSelected.delete(config.id);
+                  }
+                  setSelectedIds(newSelected);
+                }}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 }
