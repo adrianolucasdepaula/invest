@@ -520,6 +520,9 @@ export class ScraperConfigService {
     // Audit trail
     await this.logAudit('UPDATE', null, { before, after: updated }, userId, id);
 
+    // GAP-005: Invalidar cache após mudança (priorityOrder pode afetar scrapers)
+    await this.invalidateScraperCache(); // Invalidar todas categorias
+
     this.logger.log(`[UPDATE-PROFILE] ✅ Profile ${id} (${profile.name}) updated successfully`);
 
     return updated;
