@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '@/api/auth/guards/jwt-auth.guard';
 import { ScraperConfig, ScraperExecutionProfile } from '@database/entities';
 import { ScraperConfigService } from './scraper-config.service';
@@ -62,6 +63,7 @@ export class ScraperConfigController {
     return this.scraperConfigService.createProfile(dto);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // SEC-002: Max 10 req/min
   @Post('profiles/:id/apply')
   @ApiOperation({ summary: 'Aplica perfil' })
   async applyProfile(@Param('id') id: string): Promise<{ applied: number; message: string }> {
@@ -79,12 +81,14 @@ export class ScraperConfigController {
   // BULK OPERATIONS (Rotas específicas)
   // ============================================================================
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // SEC-002: Max 10 req/min
   @Patch('bulk/toggle')
   @ApiOperation({ summary: 'Toggle múltiplos scrapers' })
   async bulkToggle(@Body() dto: BulkToggleDto): Promise<{ updated: number }> {
     return this.scraperConfigService.bulkToggle(dto);
   }
 
+  @Throttle({ default: { limit: 20, ttl: 60000 } }) // SEC-002: Max 20 req/min (drag & drop)
   @Put('bulk/priority')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Atualiza prioridades (drag & drop)' })
