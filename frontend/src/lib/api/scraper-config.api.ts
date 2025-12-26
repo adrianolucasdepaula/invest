@@ -18,6 +18,7 @@ import type {
   PreviewImpactDto,
   ImpactAnalysis,
   CreateProfileDto,
+  UpdateProfileDto,
   ApplyProfileResponse,
 } from '@/types/scraper-config';
 
@@ -96,6 +97,23 @@ export async function createExecutionProfile(
   data: CreateProfileDto,
 ): Promise<ScraperExecutionProfile> {
   const response = await api.post(`${BASE_PATH}/profiles`, data);
+  return response.data;
+}
+
+/**
+ * Atualiza perfil de execução customizado
+ * GAP-001: Implementação frontend para PUT /profiles/:id
+ *
+ * @param id - ID do perfil a atualizar
+ * @param data - Dados do perfil (UpdateProfileDto)
+ * @returns Perfil atualizado
+ * @throws Error se perfil não existe ou é system profile
+ */
+export async function updateExecutionProfile(
+  id: string,
+  data: UpdateProfileDto,
+): Promise<ScraperExecutionProfile> {
+  const response = await api.put(`${BASE_PATH}/profiles/${id}`, data);
   return response.data;
 }
 

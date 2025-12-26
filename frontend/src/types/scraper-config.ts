@@ -149,6 +149,12 @@ export interface CreateProfileDto {
   config: ProfileConfig;
 }
 
+/**
+ * DTO para atualizar perfil existente
+ * GAP-001: Type definition para PUT /profiles/:id
+ */
+export interface UpdateProfileDto extends CreateProfileDto {}
+
 export interface ApplyProfileResponse {
   applied: number;
   message: string;

@@ -21,6 +21,7 @@ import type {
   PreviewImpactDto,
   ImpactAnalysis,
   CreateProfileDto,
+  UpdateProfileDto,
 } from '@/types/scraper-config';
 import * as scraperConfigApi from '../api/scraper-config.api';
 
@@ -224,6 +225,34 @@ export function useCreateProfile() {
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || 'Erro ao criar perfil');
+    },
+  });
+}
+
+/**
+ * Hook: Atualiza perfil de execução existente
+ * GAP-001: Frontend integration para PUT /profiles/:id
+ *
+ * @example
+ * const updateProfile = useUpdateProfile();
+ * updateProfile.mutate({ id: '123', data: { displayName: 'Novo Nome', ... } });
+ */
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateProfileDto }) =>
+      scraperConfigApi.updateExecutionProfile(id, data),
+    onSuccess: (updated) => {
+      // Invalidar cache de perfis
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.executionProfiles });
+
+      toast.success(`Perfil "${updated.displayName}" atualizado com sucesso`);
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message || 'Erro ao atualizar perfil',
+      );
     },
   });
 }
