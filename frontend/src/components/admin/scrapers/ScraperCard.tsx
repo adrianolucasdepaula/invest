@@ -14,6 +14,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useDebouncedCallback } from 'use-debounce';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
@@ -44,6 +46,7 @@ interface ScraperCardProps {
 
 export function ScraperCard({ config, index, isSelected, onSelectChange }: ScraperCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const toggleMutation = useToggleScraperEnabled();
   const updateMutation = useUpdateScraperConfig();
 
@@ -51,7 +54,34 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
     toggleMutation.mutate(config.id);
   };
 
-  const handleParameterChange = (key: string, value: any) => {
+  // BUG-005 FIX: Validações frontend antes de enviar ao backend
+  const validateTimeout = (value: string): number | null => {
+    const num = Number(value);
+    if (isNaN(num) || num < 10000 || num > 300000) return null;
+    return num;
+  };
+
+  const validateRetry = (value: string): number | null => {
+    const num = Number(value);
+    if (isNaN(num) || num < 0 || num > 10) return null;
+    return num;
+  };
+
+  const validateWeight = (value: string): number | null => {
+    const num = Number(value);
+    if (isNaN(num) || num < 0 || num > 1) return null;
+    return num;
+  };
+
+  const validateCache = (value: string): number | null => {
+    const num = Number(value);
+    if (isNaN(num) || num < 0 || num > 86400) return null;
+    return num;
+  };
+
+  // BUG-007 FIX: Debounce para prevenir race conditions
+  // Múltiplas mudanças rápidas → 1 request após 1 segundo
+  const debouncedUpdate = useDebouncedCallback((key: string, value: any) => {
     updateMutation.mutate({
       id: config.id,
       data: {
@@ -60,6 +90,21 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
         },
       },
     });
+    setHasUnsavedChanges(false);
+  }, 1000);
+
+  const handleParameterChange = (key: string, value: any, validator?: (v: string) => number | null) => {
+    if (validator) {
+      const validated = validator(String(value));
+      if (validated === null) {
+        toast.error(`Valor inválido para ${key}. Verifique os limites permitidos.`);
+        return;
+      }
+      value = validated;
+    }
+
+    setHasUnsavedChanges(true);
+    debouncedUpdate(key, value);
   };
 
   return (
@@ -181,13 +226,13 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
                 id={`timeout-${config.id}`}
                 type="number"
                 value={config.parameters.timeout}
-                onChange={(e) => handleParameterChange('timeout', Number(e.target.value))}
+                onChange={(e) => handleParameterChange('timeout', e.target.value, validateTimeout)}
                 min={10000}
                 max={300000}
                 step={1000}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Mín: 10s, Máx: 5min
+                Mín: 10s (10000ms), Máx: 5min (300000ms)
               </p>
             </div>
 
@@ -198,10 +243,13 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
                 id={`retry-${config.id}`}
                 type="number"
                 value={config.parameters.retryAttempts}
-                onChange={(e) => handleParameterChange('retryAttempts', Number(e.target.value))}
+                onChange={(e) => handleParameterChange('retryAttempts', e.target.value, validateRetry)}
                 min={0}
                 max={10}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Mín: 0, Máx: 10 tentativas
+              </p>
             </div>
 
             {/* Validation Weight */}
@@ -211,7 +259,7 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
                 id={`weight-${config.id}`}
                 type="number"
                 value={config.parameters.validationWeight}
-                onChange={(e) => handleParameterChange('validationWeight', Number(e.target.value))}
+                onChange={(e) => handleParameterChange('validationWeight', e.target.value, validateWeight)}
                 min={0}
                 max={1}
                 step={0.1}
@@ -246,7 +294,7 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
               id={`cache-${config.id}`}
               type="number"
               value={config.parameters.cacheExpiry}
-              onChange={(e) => handleParameterChange('cacheExpiry', Number(e.target.value))}
+              onChange={(e) => handleParameterChange('cacheExpiry', e.target.value, validateCache)}
               min={0}
               max={86400}
               step={60}
@@ -255,6 +303,14 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
               0 = sem cache, 86400 = 24 horas
             </p>
           </div>
+
+          {/* Indicador de mudanças não salvas */}
+          {hasUnsavedChanges && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="h-2 w-2 bg-yellow-500 rounded-full animate-pulse" />
+              <span>Salvando alterações...</span>
+            </div>
+          )}
         </div>
       )}
     </Card>
