@@ -184,8 +184,8 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
 7. **Scraper Config Module** (`src/api/scraper-config/`) - FASE 142
    - ScraperConfigController: 11 endpoints REST para configuracao dinamica
    - ScraperConfigService: Logica de negocios (toggle, perfis, impacto)
-   - Entities: ScraperConfig, ScraperExecutionProfile
-   - DTOs: BulkToggleDto, PreviewImpactDto, CreateProfileDto
+   - Entities: ScraperConfig, ScraperExecutionProfile, ScraperConfigAudit (GAP-006)
+   - DTOs: BulkToggleDto, PreviewImpactDto, CreateProfileDto, UpdateProfileDto (FASE 142.1)
    - Features:
      - Toggle individual e em lote de scrapers
      - Perfis de execucao pre-definidos (Minimo, Rapido, Fundamentalista, Alta Precisao)
@@ -201,6 +201,29 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
      - 2 Options (OpLab, Opcoes.net)
      - 2 Crypto (CoinMarketCap, CoinGecko)
      - 1 Technical (TradingView)
+   - **Audit Trail (GAP-006):** ScraperConfigAudit
+     - Rastreabilidade completa de mudanças (compliance financeiro)
+     - Ações: CREATE, UPDATE, DELETE, APPLY_PROFILE, BULK_TOGGLE, TOGGLE
+     - Campos: userId, scraperId, profileId, changes (before/after), reason
+     - Índice: (scraperId, createdAt) para queries rápidas
+   - **Endpoints Completos (12):**
+     - GET /scraper-config - Lista scrapers (42)
+     - GET /scraper-config/:id - Detalhes
+     - PUT /scraper-config/:id - Atualiza config
+     - PATCH /scraper-config/:id/toggle - Toggle ON/OFF
+     - PATCH /scraper-config/bulk/toggle - Bulk toggle
+     - PUT /scraper-config/bulk/priority - Drag & drop priorities
+     - GET /scraper-config/profiles - Lista perfis (4 system)
+     - POST /scraper-config/profiles - Cria custom
+     - **PUT /scraper-config/profiles/:id** - **Atualiza custom (FASE 142.1)**
+     - DELETE /scraper-config/profiles/:id - Deleta custom
+     - POST /scraper-config/profiles/:id/apply - Aplica perfil
+     - POST /scraper-config/preview-impact - Análise impacto
+   - **Cache Strategy (GAP-005 - FASE 142.1):**
+     - Redis cache com TTL 5 minutos
+     - Key format: `enabled_scrapers:<category>:<ticker|all>`
+     - Invalidação automática após: update, toggle, bulkToggle, applyProfile, updateProfile
+     - Performance: 50ms → <1ms (95% redução queries repetidas)
 
 **Padroes:**
 

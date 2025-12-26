@@ -23,14 +23,20 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   - Validação: scraperIds devem existir
   - Validação: priorityOrder deve conter TODOS os scraperIds exatamente uma vez
   - Audit trail integrado
+  - Cache invalidation (adicionado pós code review)
 - ✅ **Redis Cache** - Cache de 5 minutos para getEnabledScrapers() (GAP-005)
   - Cache key: `enabled_scrapers:<category>:<ticker|all>`
   - TTL: 300s (5 minutos)
-  - Invalidação automática após mudanças (update, toggle, applyProfile)
+  - Invalidação automática após mudanças (update, toggle, applyProfile, bulkToggle, updateProfile)
   - Logs de cache hit/miss
   - Redução de ~95% nas queries repetidas
 
 **Frontend (Next.js):**
+- ✅ **API Client + Hook:** updateExecutionProfile() + useUpdateProfile() (GAP-001 completion)
+  - API: PUT /profiles/:id integration
+  - Hook: React Query mutation com invalidação de cache
+  - Toast notifications (success/error)
+  - Type-safe com UpdateProfileDto
 - ✅ **Drag & Drop Visual** - Reordenação de scrapers com @dnd-kit (GAP-001)
   - @dnd-kit/core + @dnd-kit/sortable + @dnd-kit/utilities
   - Drag handle com GripVertical icon
@@ -54,6 +60,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - ✅ Decimal serialization: Backend agora retorna string ("0.00") ao invés de objeto
 - ✅ ScraperConfigAudit: Adicionado em app.module.ts entities array
 - ✅ applyProfile(): Priority update usa temporárias negativas (evita duplicate key)
+- ✅ **GAP CRÍTICO #1:** updateExecutionProfile() implementado (frontend pode chamar PUT)
+- ✅ **GAP CRÍTICO #2:** useUpdateProfile() hook implementado (React Query integration)
+- ✅ **GAP MÉDIO:** Cache invalidation adicionado em updateProfile() backend
 
 ### Performance
 
@@ -65,6 +74,11 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 - Atualizado `ROADMAP.md` com FASE 142.1
 - Atualizado `CHANGELOG.md` com versão 1.42.1
+- **Sincronizado `CLAUDE.md` ↔ `GEMINI.md`** (100% idêntico)
+- Atualizado `ARCHITECTURE.md` (ScraperConfigAudit + Endpoints + Cache)
+- Atualizado `DATABASE_SCHEMA.md` (schema completo scraper_config_audit)
+- Atualizado `INDEX.md` (corrigido false gap, adicionado audit refs)
+- Atualizado `README.md` (FASE 142 features + usage)
 
 ### Commits
 

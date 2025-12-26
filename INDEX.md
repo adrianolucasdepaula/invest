@@ -134,20 +134,25 @@
 | [backend/src/api/scraper-config/](backend/src/api/scraper-config/) | Controller + Service + DTOs | IMPORTANTE |
 | [backend/src/database/entities/scraper-config.entity.ts](backend/src/database/entities/scraper-config.entity.ts) | Entity ScraperConfig | IMPORTANTE |
 | [backend/src/database/entities/scraper-execution-profile.entity.ts](backend/src/database/entities/scraper-execution-profile.entity.ts) | Entity ScraperExecutionProfile | IMPORTANTE |
+| [backend/src/database/entities/scraper-config-audit.entity.ts](backend/src/database/entities/scraper-config-audit.entity.ts) | Entity ScraperConfigAudit (GAP-006) | IMPORTANTE |
 | [frontend/src/app/(dashboard)/admin/scrapers/](frontend/src/app/(dashboard)/admin/scrapers/) | Pagina de administracao | IMPORTANTE |
-| [frontend/src/lib/hooks/useScraperConfig.ts](frontend/src/lib/hooks/useScraperConfig.ts) | Hooks React Query | IMPORTANTE |
+| [frontend/src/lib/hooks/useScraperConfig.ts](frontend/src/lib/hooks/useScraperConfig.ts) | Hooks React Query (12 hooks) | IMPORTANTE |
+| [frontend/src/components/admin/scrapers/SortableScraperCard.tsx](frontend/src/components/admin/scrapers/SortableScraperCard.tsx) | Drag & Drop component (FASE 142.1) | IMPORTANTE |
 
-**Endpoints (11):**
+**Endpoints (13):**
 
 - `GET /scraper-config` - Lista todos os scrapers (42)
 - `GET /scraper-config/:id` - Detalhes de um scraper
+- `PUT /scraper-config/:id` - Atualiza configuracao de scraper
 - `PATCH /scraper-config/:id/toggle` - Toggle ON/OFF individual
 - `PATCH /scraper-config/bulk/toggle` - Toggle multiplos scrapers
+- `PUT /scraper-config/bulk/priority` - Atualiza prioridades (drag & drop)
 - `POST /scraper-config/preview-impact` - Analise de impacto
 - `GET /scraper-config/profiles` - Lista perfis (4)
 - `POST /scraper-config/profiles` - Cria perfil customizado
-- `POST /scraper-config/profiles/:id/apply` - Aplica perfil
+- **`PUT /scraper-config/profiles/:id`** - **Atualiza perfil custom (FASE 142.1)** ✅
 - `DELETE /scraper-config/profiles/:id` - Remove perfil customizado
+- `POST /scraper-config/profiles/:id/apply` - Aplica perfil
 
 **Perfis Pre-definidos (4):**
 

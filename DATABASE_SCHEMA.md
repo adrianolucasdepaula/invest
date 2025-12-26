@@ -1207,6 +1207,74 @@ WHERE an.status = 'completed'
 ORDER BY an.completed_at DESC;
 ```
 
+### scraper_config_audit (FASE 142 - GAP-006)
+
+Audit trail para rastreabilidade de mudanças em configurações de scrapers.
+
+**Colunas:**
+- `id` UUID PRIMARY KEY
+- `action` ENUM('CREATE', 'UPDATE', 'DELETE', 'APPLY_PROFILE', 'BULK_TOGGLE', 'TOGGLE')
+- `userId` UUID - Quem executou a ação
+- `scraperId` VARCHAR(100) - Scraper afetado (null se ação global)
+- `profileId` VARCHAR(100) - Perfil afetado (null se não aplicável)
+- `changes` JSONB - Estado before/after
+- `reason` TEXT - Motivo da mudança (opcional)
+- `ipAddress` VARCHAR(45) - IP do request (futuro)
+- `userAgent` TEXT - User agent (futuro)
+- `createdAt` TIMESTAMP DEFAULT now()
+
+**Exemplo changes JSONB:**
+```json
+{
+  "before": { "isEnabled": true, "priority": 1 },
+  "after": { "isEnabled": false, "priority": 1 },
+  "affectedScrapers": ["brapi", "fundamentus"]
+}
+```
+
+**Índices:**
+- `IDX_audit_scraper_created` (scraperId, createdAt) - Queries por scraper
+- `IDX_audit_user` (userId, createdAt) - Auditoria por usuário
+
+**Constraints:**
+- Nenhuma (audit não deve bloquear operações principais)
+
+**Queries Comuns:**
+```sql
+-- Histórico de mudanças de um scraper
+SELECT * FROM scraper_config_audit
+WHERE scraperId = 'fundamentus'
+ORDER BY createdAt DESC LIMIT 10;
+
+-- Histórico de um perfil
+SELECT * FROM scraper_config_audit
+WHERE profileId = 'abc-123'
+ORDER BY createdAt DESC;
+
+-- Todas ações de APPLY_PROFILE nos últimos 7 dias
+SELECT * FROM scraper_config_audit
+WHERE action = 'APPLY_PROFILE'
+  AND createdAt >= NOW() - INTERVAL '7 days'
+ORDER BY createdAt DESC;
+
+-- Auditoria por usuário
+SELECT
+  userId,
+  action,
+  COUNT(*) as total_actions,
+  MAX(createdAt) as last_action
+FROM scraper_config_audit
+WHERE userId IS NOT NULL
+GROUP BY userId, action
+ORDER BY total_actions DESC;
+```
+
+**Registros Esperados:** ~10-20 por semana (dependendo de uso)
+
+**Compliance:** Obrigatório para sistemas financeiros (rastreabilidade de mudanças em fontes de dados)
+
+---
+
 ### Performance de Portfólios
 
 ```sql
