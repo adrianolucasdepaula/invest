@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Logger } from '@nestjs/common';
+import { Decimal } from 'decimal.js';
 import { ScraperConfig, ScraperParameters } from '../entities';
 
 const logger = new Logger('ScraperConfigsSeed');
@@ -573,8 +574,15 @@ export async function seedScraperConfigs(dataSource: DataSource): Promise<void> 
     },
   ];
 
+  // BUG-002 FIX: Adicionar successRate inicial em todos os scrapers
+  const scrapersWithDefaults = scrapers.map((scraper) => ({
+    ...scraper,
+    successRate: new Decimal('0.00'), // Valor inicial (0.00%)
+    avgResponseTime: 0, // Valor inicial (0ms)
+  }));
+
   // Inserir em batch
-  await scraperConfigRepo.save(scrapers);
+  await scraperConfigRepo.save(scrapersWithDefaults);
 
   // BUG-010 FIX: Usar logger estruturado ao invés de console.log (CLAUDE.md)
   logger.log(`✅ Seed: ${scrapers.length} scrapers inseridos em scraper_configs`);

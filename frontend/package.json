@@ -4,7 +4,7 @@
   "description": "Frontend para plataforma de análise de investimentos B3 com IA",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000 --turbopack",
+    "dev": "TURBOPACK=0 next dev -p 3000",
     "build": "cross-env NODE_ENV=production next build",
     "start": "next start -p 3000",
     "lint": "next lint",

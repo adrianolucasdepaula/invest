@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Transform } from 'class-transformer';
 import { Decimal } from 'decimal.js';
 import { DecimalTransformer } from '../transformers/decimal.transformer';
 
@@ -133,6 +134,7 @@ export class ScraperConfig {
    * Atualizada pelo ScraperMetricsService
    *
    * CRITICAL (CLAUDE.md): Usa Decimal.js (não Float) para precisão financeira
+   * @Transform para serialização JSON: Decimal → string "0.00"
    */
   @Column({
     type: 'numeric',
@@ -140,6 +142,9 @@ export class ScraperConfig {
     scale: 2,
     default: '0.00',
     transformer: new DecimalTransformer(),
+  })
+  @Transform(({ value }) => (value instanceof Decimal ? value.toString() : value), {
+    toPlainOnly: true,
   })
   successRate: Decimal;
 

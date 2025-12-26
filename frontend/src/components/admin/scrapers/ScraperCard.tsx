@@ -9,6 +9,7 @@
  * - Estatísticas (success rate, avg response time)
  *
  * FASE 5: Frontend UI Components
+ * BUG-002 FIX: Handle Decimal serialization (backend sends "0.00" string)
  */
 
 'use client';
@@ -34,6 +35,7 @@ import { ChevronDown, ChevronUp, GripVertical, Lock } from 'lucide-react';
 import { useToggleScraperEnabled, useUpdateScraperConfig } from '@/lib/hooks/useScraperConfig';
 import type { ScraperConfig } from '@/types/scraper-config';
 import { cn } from '@/lib/utils';
+import { formatSuccessRate, getSuccessRateColor } from '@/lib/format-success-rate';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -164,17 +166,8 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
               <span>
                 Taxa de Sucesso:{' '}
-                <span
-                  className={cn(
-                    'font-semibold',
-                    Number(config.successRate) >= 90
-                      ? 'text-green-600 dark:text-green-400'
-                      : Number(config.successRate) >= 70
-                        ? 'text-yellow-600 dark:text-yellow-400'
-                        : 'text-red-600 dark:text-red-400',
-                  )}
-                >
-                  {Number(config.successRate).toFixed(1)}%
+                <span className={cn('font-semibold', getSuccessRateColor(config.successRate))}>
+                  {formatSuccessRate(config.successRate)}%
                 </span>
               </span>
               <span>Tempo Médio: {config.avgResponseTime}ms</span>

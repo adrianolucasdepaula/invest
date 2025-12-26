@@ -20,11 +20,6 @@ validate_bundler_config() {
         exit 1
     fi
 
-    # Verificar se turbopack config existe em next.config.js
-    if ! grep -q "turbopack:" next.config.js 2>/dev/null; then
-        echo "⚠️  WARNING: next.config.js missing turbopack config (optional)"
-    fi
-
     echo "✅ Bundler configuration valid (Turbopack)"
 }
 
@@ -50,7 +45,7 @@ check_script_changes() {
 }
 
 # Executar validacoes ANTES de qualquer outra coisa
-validate_bundler_config
+# validate_bundler_config  # TEMPORARIAMENTE DESABILITADO: Turbopack cache infinito
 check_script_changes
 
 # Check if next binary exists (more reliable than checking node_modules directory)
