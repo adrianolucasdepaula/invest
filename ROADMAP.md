@@ -11665,9 +11665,18 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 140** | Turbopack Cache Fix - system-manager.ps1 Integration | ✅ 100% | 2025-12-23 |
 | **FASE 141** | LLM Local Feasibility Study (100% Gratuito) | ✅ 100% | 2025-12-23 |
 | **FASE 142** | Dynamic Scraper Configuration System | ✅ 100% | 2025-12-25 |
+| **FASE 142.1** | Code Review Fixes + Performance Enhancements | ✅ 100% | 2025-12-26 |
 | **FASE 101.4** | Wheel Turbinada Backtesting Engine | ✅ 100% | 2025-12-21 |
 
-**Funcionalidades Implementadas:**
+**FASE 142.1 - Melhorias (2025-12-26):**
+- ✅ PUT /profiles/:id endpoint (updateProfile)
+- ✅ Redis cache (5min TTL, invalidação automática)
+- ✅ Drag & Drop visual para reordenação
+- ✅ Validações frontend (timeout, retry, weight)
+- ✅ Debounce (1s delay, race condition prevention)
+- ✅ Keyboard navigation (a11y)
+
+**FASE 142 - Funcionalidades Implementadas:**
 - Seleção de candidatos por critérios fundamentalistas (ROE, DY, Dív/EBITDA)
 - Recomendações de PUT e CALL cobertas com scoring
 - Cronograma semanal de distribuição de capital
