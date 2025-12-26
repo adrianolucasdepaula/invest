@@ -5,6 +5,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Decimal } from 'decimal.js';
+import { DecimalTransformer } from '../transformers/decimal.transformer';
 
 /**
  * ScraperConfig Entity
@@ -129,9 +131,17 @@ export class ScraperConfig {
   /**
    * Taxa de sucesso (0-100%)
    * Atualizada pelo ScraperMetricsService
+   *
+   * CRITICAL (CLAUDE.md): Usa Decimal.js (não Float) para precisão financeira
    */
-  @Column({ type: 'float', default: 0 })
-  successRate: number;
+  @Column({
+    type: 'numeric',
+    precision: 5,
+    scale: 2,
+    default: '0.00',
+    transformer: new DecimalTransformer(),
+  })
+  successRate: Decimal;
 
   /**
    * Tempo médio de resposta em millisegundos
