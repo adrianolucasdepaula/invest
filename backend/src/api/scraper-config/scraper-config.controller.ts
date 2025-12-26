@@ -9,8 +9,10 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from '@/api/auth/guards/jwt-auth.guard';
 import { ScraperConfig, ScraperExecutionProfile } from '@database/entities';
 import { ScraperConfigService } from './scraper-config.service';
 import {
@@ -29,9 +31,17 @@ import {
  * IMPORTANTE: Rotas específicas DEVEM vir ANTES de rotas parametrizadas
  * Ordem correta: profiles → bulk → preview-impact → :id
  *
+ * SEGURANÇA (SEC-001): Endpoints de modificação protegidos com JwtAuthGuard
+ * - GET: Público (autenticado)
+ * - POST/PUT/PATCH/DELETE: Protegido (admin)
+ *
+ * TODO: Implementar RolesGuard para separar 'user' vs 'admin'
+ *
  * FASE: Dynamic Scraper Configuration
  */
 @ApiTags('Scraper Configuration')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard) // Todos endpoints requerem autenticação
 @Controller('scraper-config')
 export class ScraperConfigController {
   constructor(private readonly scraperConfigService: ScraperConfigService) {}
