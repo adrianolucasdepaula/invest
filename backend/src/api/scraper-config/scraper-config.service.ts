@@ -425,11 +425,25 @@ export class ScraperConfigService {
       throw new BadRequestException('Nenhum scraper válido fornecido');
     }
 
+    // BUG-004 FIX: Lista de scrapers que usam Playwright (browser automation)
+    // ANTES: Lógica incorreta "python OU fundamentus" (Python NÃO é Playwright!)
+    // DEPOIS: Lista explícita de scrapers TypeScript que usam Playwright
+    const PLAYWRIGHT_SCRAPERS = [
+      'fundamentus',
+      'statusinvest',
+      'investidor10',
+      'fundamentei',
+    ];
+
     // Contar Playwright vs API
-    const playwrightCount = scrapers.filter(
-      (s) => s.runtime === 'python' || s.scraperId === 'fundamentus',
+    const playwrightCount = scrapers.filter((s) =>
+      PLAYWRIGHT_SCRAPERS.includes(s.scraperId),
     ).length;
-    const apiCount = scrapers.filter((s) => s.scraperId === 'brapi').length;
+
+    // API: brapi (TypeScript API) + todos Python (API-based)
+    const apiCount = scrapers.filter(
+      (s) => s.scraperId === 'brapi' || s.runtime === 'python',
+    ).length;
 
     // ESTIMATIVAS baseadas em métricas reais
     // Playwright: ~30s por scraper (browser spawn + scrape)
