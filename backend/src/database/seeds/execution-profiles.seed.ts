@@ -1,5 +1,8 @@
 import { DataSource } from 'typeorm';
+import { Logger } from '@nestjs/common';
 import { ScraperExecutionProfile, ProfileConfig } from '../entities';
+
+const logger = new Logger('ExecutionProfilesSeed');
 
 /**
  * Seed: Popular tabela scraper_execution_profiles
@@ -104,5 +107,6 @@ export async function seedExecutionProfiles(dataSource: DataSource): Promise<voi
   // Inserir em batch
   await profileRepo.save(profiles);
 
-  console.log(`✅ Seed: ${profiles.length} perfis inseridos em scraper_execution_profiles`);
+  // BUG-010 FIX: Usar logger estruturado ao invés de console.log (CLAUDE.md)
+  logger.log(`✅ Seed: ${profiles.length} perfis inseridos em scraper_execution_profiles`);
 }
