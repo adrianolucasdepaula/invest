@@ -81,6 +81,7 @@ import {
   // FASE: Dynamic Scraper Configuration
   ScraperConfig,
   ScraperExecutionProfile,
+  ScraperConfigAudit,
 } from './database/entities';
 
 @Module({
@@ -144,6 +145,7 @@ import {
           // FASE: Dynamic Scraper Configuration
           ScraperConfig,
           ScraperExecutionProfile,
+          ScraperConfigAudit, // GAP-006: Audit Trail
         ],
         synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
         logging: configService.get('DB_LOGGING', 'false') === 'true',

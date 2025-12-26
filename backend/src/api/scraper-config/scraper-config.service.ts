@@ -79,12 +79,12 @@ export class ScraperConfigService {
         userAgent: userAgent || null,
       });
 
-      this.logger.debug(
-        `[AUDIT] ${action} | scraper=${scraperId || 'N/A'} | user=${userId || 'system'}`,
+      this.logger.log(
+        `[AUDIT] ✅ ${action} | scraper=${scraperId || 'N/A'} | user=${userId || 'system'}`,
       );
     } catch (error) {
       // Nao falhar operacao principal se audit falhar
-      this.logger.error(`[AUDIT] Falha ao registrar audit: ${error.message}`);
+      this.logger.error(`[AUDIT] ❌ Falha ao registrar audit: ${error.message}`, error.stack);
     }
   }
 
@@ -231,15 +231,17 @@ export class ScraperConfigService {
 
       await queryRunner.commitTransaction();
 
-      // GAP-006: Registrar audit
+      this.logger.log(
+        `[TOGGLE] ✅ ${config.scraperName} ${newState ? 'ativado' : 'desativado'}`,
+      );
+
+      // GAP-006: Registrar audit (após commit para não bloquear transação)
+      this.logger.log(`[TOGGLE] Registrando audit para ${config.scraperId}...`);
       await this.logAudit('TOGGLE', config.scraperId, {
         before: { isEnabled: beforeState },
         after: { isEnabled: newState },
       });
-
-      this.logger.log(
-        `[TOGGLE] ✅ ${config.scraperName} ${newState ? 'ativado' : 'desativado'}`,
-      );
+      this.logger.log(`[TOGGLE] Audit registrado com sucesso`);
 
       return updated;
     } catch (error) {
@@ -444,13 +446,25 @@ export class ScraperConfigService {
         scraperIds,
       );
 
-      // 3. Atualizar prioridades
+      // 3. Atualizar prioridades (evitar duplicate key usando temporárias negativas)
+      // PASSO 3.1: Setar priorities temporárias negativas para scrapers do perfil
       for (let i = 0; i < priorityOrder.length; i++) {
         await queryRunner.query(
           `UPDATE scraper_configs SET priority = $1 WHERE "scraperId" = $2`,
-          [i + 1, priorityOrder[i]],
+          [-(i + 1), priorityOrder[i]], // Negativo temporário: -1, -2, -3...
         );
       }
+
+      // PASSO 3.2: Converter priorities negativas para finais positivas (sem conflitos)
+      for (let i = 0; i < priorityOrder.length; i++) {
+        await queryRunner.query(
+          `UPDATE scraper_configs SET priority = $1 WHERE "scraperId" = $2`,
+          [i + 1, priorityOrder[i]], // Final: 1, 2, 3...
+        );
+      }
+
+      // Nota: Scrapers desabilitados mantêm priorities antigas (pode haver gaps)
+      // Gaps não afetam funcionalidade pois usamos ORDER BY priority
 
       await queryRunner.commitTransaction();
 
