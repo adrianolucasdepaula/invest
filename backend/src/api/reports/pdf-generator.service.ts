@@ -158,9 +158,9 @@ export class PdfGeneratorService {
     return {
       analysis,
       asset,
-      currentPrice: latestPrice?.close,
+      currentPrice: latestPrice?.close ? Number(latestPrice.close) : undefined,
       currentPriceDate: latestPrice?.date,
-      changePercent: latestPrice?.changePercent,
+      changePercent: latestPrice?.changePercent ? Number(latestPrice.changePercent) : undefined,
       formattedDate,
       formattedPrice,
       formattedChangePercent,

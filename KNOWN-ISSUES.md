@@ -1,9 +1,9 @@
 # 🔍 KNOWN ISSUES - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-23
-**Versão:** 1.13.0
-**Mantenedor:** Claude Code (Sonnet 4.5)
+**Ultima Atualizacao:** 2025-12-25
+**Versao:** 1.41.0
+**Mantenedor:** Claude Code (Opus 4.5)
 
 ---
 
@@ -32,13 +32,71 @@ Este documento centraliza **todos os problemas conhecidos** encontrados durante 
 
 ---
 
-## 🔴 ISSUES ATIVOS (NÃO RESOLVIDOS)
+## ISSUES ATIVOS (NAO RESOLVIDOS)
 
-> **Nota:** Issue #DY_COLUMN_NOT_RENDERING foi **RESOLVIDO** e movido para seção "ISSUES RESOLVIDOS" abaixo.
+> **Nota:** Issue #DY_COLUMN_NOT_RENDERING foi **RESOLVIDO** e movido para secao "ISSUES RESOLVIDOS" abaixo.
 
 ---
 
-### Issue #SCRAPERS_NOT_INTEGRATED: Dividends/Lending Scrapers Não Automáticos
+### Issue #SCRAPER_CONFIG_SIDEBAR: Falta Link na Sidebar para /admin/scrapers
+
+**Severidade:** BAIXA
+**Status:** DOCUMENTADO - AGUARDA IMPLEMENTACAO
+**Data Identificado:** 2025-12-25
+**Identificado Por:** Claude Opus 4.5 (Validacao FASE 142)
+
+#### Descricao
+
+A pagina de administracao de scrapers (`/admin/scrapers`) nao tem link direto na sidebar principal. Acesso apenas via `AssetUpdateDropdown`.
+
+#### Impacto
+
+- Usabilidade reduzida
+- Usuario pode nao descobrir a funcionalidade
+- Sem impacto funcional
+
+#### Solucao Proposta
+
+Adicionar item na sidebar em `frontend/src/components/layout/sidebar.tsx`:
+
+```typescript
+{ name: 'Controle de Scrapers', href: '/admin/scrapers', icon: Sliders }
+```
+
+**Esforco:** 30 minutos
+
+---
+
+### Issue #SCRAPER_CONFIG_EDIT: Falta Endpoint PUT /profiles/:id
+
+**Severidade:** MEDIA
+**Status:** DOCUMENTADO - AGUARDA IMPLEMENTACAO
+**Data Identificado:** 2025-12-25
+**Identificado Por:** Claude Opus 4.5 (Validacao FASE 142)
+
+#### Descricao
+
+O sistema de configuracao de scrapers permite criar e deletar perfis customizados, mas nao permite editar perfis existentes.
+
+#### Impacto
+
+- Usuario precisa deletar e recriar perfil para alterar
+- Nao impacta perfis de sistema (isSystem: true)
+
+#### Solucao Proposta
+
+Adicionar endpoint PUT em `scraper-config.controller.ts`:
+
+```typescript
+@Put('profiles/:id')
+async updateProfile(@Param('id') id: string, @Body() dto: UpdateProfileDto): Promise<ScraperExecutionProfile>
+```
+
+**Esforco:** 1-2 horas
+
+---
+
+### Issue #SCRAPERS_NOT_INTEGRATED: Dividends/Lending Scrapers Nao Automaticos
 
 **Severidade:** 🟡 **MÉDIA**
 **Status:** ⚠️ **DOCUMENTADO - AGUARDA IMPLEMENTAÇÃO**

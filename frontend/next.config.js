@@ -29,6 +29,15 @@ const nextConfig = {
   // Ref: https://www.corewebvitals.io/pagespeed/nextjs-remove-render-blocking-css
   experimental: {
     optimizeCss: true, // Inline critical CSS automaticamente via critters
+    // FASE 133: Desabilitar filesystem cache do Turbopack para resolver bug de hot reload em Docker
+    // Issue: Turbopack não detecta mudanças em arquivos dentro de Docker volumes
+    // Ref: https://github.com/vercel/next.js/issues/68255
+    // Ref: https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopackFileSystemCache
+    turbopackFileSystemCacheForDev: false,
+    // FASE 133: Desabilitar cache de Server Components durante HMR (causa hydration error)
+    // Mesmo Client Components passam por SSR inicial no App Router
+    // Ref: https://nextjs.org/docs/app/api-reference/config/next-config-js/serverComponentsHmrCache
+    serverComponentsHmrCache: false,
   },
   // FASE 130+: Turbopack config - Now the default bundler for development
   // Switched from webpack to turbopack to fix RSC module resolution errors

@@ -63,6 +63,19 @@ export class ScraperConfigController {
     return this.scraperConfigService.createProfile(dto);
   }
 
+  @Put('profiles/:id')
+  @ApiOperation({ summary: 'Atualiza perfil customizado (GAP-001)' })
+  @ApiResponse({ status: 200, description: 'Perfil atualizado com sucesso' })
+  @ApiResponse({ status: 404, description: 'Perfil não encontrado' })
+  @ApiResponse({ status: 400, description: 'Tentativa de modificar perfil system ou validação falhou' })
+  async updateProfile(
+    @Param('id') id: string,
+    @Body() dto: UpdateProfileDto,
+    // TODO: @CurrentUser() user: User após SEC-001
+  ): Promise<ScraperExecutionProfile> {
+    return this.scraperConfigService.updateProfile(id, dto);
+  }
+
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // SEC-002: Max 10 req/min
   @Post('profiles/:id/apply')
   @ApiOperation({ summary: 'Aplica perfil' })

@@ -1,8 +1,8 @@
 # 📚 Índice de Documentação - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-13
-**Versão:** 1.17.0
+**Ultima Atualizacao:** 2025-12-25
+**Versao:** 1.41.0
 
 ---
 
@@ -32,6 +32,12 @@
 | [CHANGELOG.md](CHANGELOG.md)                                   | **Histórico de versões** (23 versões)             | ✅ Atualizado            |
 | [NEXT_STEPS.md](NEXT_STEPS.md)                                 | Próximos passos planejados                        | ⚠️ Consultar ROADMAP     |
 | [PROXIMO_PASSO_APOS_FASE_30.md](PROXIMO_PASSO_APOS_FASE_30.md) | Decisões pós-FASE 30                              | 📜 Histórico             |
+
+### Estudos de Viabilidade
+
+| Arquivo | Descrição | Data |
+| ------- | --------- | ---- |
+| **[docs/ESTUDO_VIABILIDADE_LLM_LOCAL.md](docs/ESTUDO_VIABILIDADE_LLM_LOCAL.md)** | **Estudo LLM Local 100% Gratuito (FASE 141)** - FinBERT-PT-BR 97%, Llama 3.1 8B, RTX 3060 6GB | 2025-12-23 |
 
 ### Planejamento de Fases
 
@@ -120,9 +126,41 @@
 
 ---
 
-## 📊 VALIDAÇÃO & TESTES
+## SCRAPER CONFIGURATION (FASE 142)
 
-### Framework de Validação
+| Arquivo | Descricao | Criticidade |
+| ------- | --------- | ----------- |
+| **[VALIDACAO_FINAL_COMPLETA_SCRAPER_CONFIG.md](VALIDACAO_FINAL_COMPLETA_SCRAPER_CONFIG.md)** | **Relatorio de validacao completo** | CRITICO |
+| [backend/src/api/scraper-config/](backend/src/api/scraper-config/) | Controller + Service + DTOs | IMPORTANTE |
+| [backend/src/database/entities/scraper-config.entity.ts](backend/src/database/entities/scraper-config.entity.ts) | Entity ScraperConfig | IMPORTANTE |
+| [backend/src/database/entities/scraper-execution-profile.entity.ts](backend/src/database/entities/scraper-execution-profile.entity.ts) | Entity ScraperExecutionProfile | IMPORTANTE |
+| [frontend/src/app/(dashboard)/admin/scrapers/](frontend/src/app/(dashboard)/admin/scrapers/) | Pagina de administracao | IMPORTANTE |
+| [frontend/src/lib/hooks/useScraperConfig.ts](frontend/src/lib/hooks/useScraperConfig.ts) | Hooks React Query | IMPORTANTE |
+
+**Endpoints (11):**
+
+- `GET /scraper-config` - Lista todos os scrapers (42)
+- `GET /scraper-config/:id` - Detalhes de um scraper
+- `PATCH /scraper-config/:id/toggle` - Toggle ON/OFF individual
+- `PATCH /scraper-config/bulk/toggle` - Toggle multiplos scrapers
+- `POST /scraper-config/preview-impact` - Analise de impacto
+- `GET /scraper-config/profiles` - Lista perfis (4)
+- `POST /scraper-config/profiles` - Cria perfil customizado
+- `POST /scraper-config/profiles/:id/apply` - Aplica perfil
+- `DELETE /scraper-config/profiles/:id` - Remove perfil customizado
+
+**Perfis Pre-definidos (4):**
+
+- Minimo (2 scrapers) - BRAPI + Fundamentus
+- Rapido (4 scrapers) - Core fundamentalistas
+- Fundamentalista (6 scrapers) - Analise completa
+- Alta Precisao (10+ scrapers) - Cross-validation maximo
+
+---
+
+## VALIDACAO & TESTES
+
+### Framework de Validacao
 
 | Arquivo                                                                                              | Descrição                                            |
 | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
@@ -134,6 +172,7 @@
 
 | Arquivo Pattern       | Exemplos                                                                                                 | Total        |
 | --------------------- | -------------------------------------------------------------------------------------------------------- | ------------ |
+| `VALIDACAO_MCP_QUADRUPLO_*.md` ⭐ | [docs/VALIDACAO_MCP_QUADRUPLO_FASE_136.md](docs/VALIDACAO_MCP_QUADRUPLO_FASE_136.md) **NOVO** | **Validações MCP Quadruplo** |
 | `VALIDACAO_FASE_*.md` | [VALIDACAO_FASE_48_NETWORK_SLOW3G_2025-11-23.md](VALIDACAO_FASE_48_NETWORK_SLOW3G_2025-11-23.md)         | 50+ arquivos |
 | `VALIDACAO_*.md`      | [VALIDACAO_PRECISAO_DADOS_FINANCEIROS_2025-11-23.md](VALIDACAO_PRECISAO_DADOS_FINANCEIROS_2025-11-23.md) |              |
 
@@ -234,6 +273,61 @@
 
 ---
 
+## 📘 GUIAS TÉCNICOS (.claude/guides/)
+
+### Development & Quality
+
+| Arquivo | Descrição | Criticidade |
+|---------|-----------|-------------|
+| **[.claude/guides/development-principles.md](.claude/guides/development-principles.md)** | **Quality > Velocity, KISS, Root Cause Analysis, Anti-Workaround, Observabilidade** | 🔥 CRÍTICO |
+| **[.claude/guides/zero-tolerance-policy.md](.claude/guides/zero-tolerance-policy.md)** | **Zero errors enforcement, Git workflow, Husky hooks** | 🔥 CRÍTICO |
+| [.claude/guides/error-handling.md](.claude/guides/error-handling.md) | NestJS exceptions, error codes, global filters, validation | ⚠️ IMPORTANTE |
+
+### Testing & Validation
+
+| Arquivo | Descrição | Criticidade |
+|---------|-----------|-------------|
+| [.claude/guides/testing-patterns.md](.claude/guides/testing-patterns.md) | Multi-layer testing, React Testing Library, Playwright E2E, Vitest | ⚠️ IMPORTANTE |
+| [.claude/guides/web-research-strategy.md](.claude/guides/web-research-strategy.md) | Proactive WebSearch, 4 parallel queries, cross-validation | ⚠️ IMPORTANTE |
+
+### Security & Financial Data
+
+| Arquivo | Descrição | Criticidade |
+|---------|-----------|-------------|
+| **[.claude/guides/financial-data-rules.md](.claude/guides/financial-data-rules.md)** | **Decimal.js, cross-validation, timezone, outlier detection** | 🔥 CRÍTICO |
+| [.claude/guides/security-practices.md](.claude/guides/security-practices.md) | OWASP Top 10 2025, XSS/CSRF prevention, JWT security, input validation | ⚠️ IMPORTANTE |
+
+### Backend & Database
+
+| Arquivo | Descrição | Criticidade |
+|---------|-----------|-------------|
+| [.claude/guides/api-versioning.md](.claude/guides/api-versioning.md) | URL versioning, semantic versioning, deprecation policy | ⚠️ IMPORTANTE |
+| [.claude/guides/environment-validation.md](.claude/guides/environment-validation.md) | @nestjs/config, class-validator, Joi, secrets management | ⚠️ IMPORTANTE |
+| [.claude/guides/database-transactions.md](.claude/guides/database-transactions.md) | TypeORM QueryRunner, isolation levels, deadlock handling | ⚠️ IMPORTANTE |
+
+### Python Scrapers
+
+| Arquivo | Descrição | Criticidade |
+|---------|-----------|-------------|
+| **[.claude/guides/python-scrapers.md](.claude/guides/python-scrapers.md)** | **BeautifulSoup Single Fetch pattern, Playwright migration, Exit 137 prevention** | 🔥 CRÍTICO |
+
+### Context & Agents
+
+| Arquivo | Descrição | Criticidade |
+|---------|-----------|-------------|
+| **[.claude/guides/context-management.md](.claude/guides/context-management.md)** | **1M token context, Read tool limits, chunked reading, MCP protection** | 🔥 CRÍTICO |
+| [.claude/guides/pm-expert-agent.md](.claude/guides/pm-expert-agent.md) | PM Expert sub-agent, 100% ecosystem validation, 4 roles in 1 | ⚠️ IMPORTANTE |
+| [.claude/guides/specialized-agents.md](.claude/guides/specialized-agents.md) | 10 sub-agents: backend-api, frontend-components, scraper-dev, etc. | ⚠️ IMPORTANTE |
+| [.claude/guides/gemini-advisor-protocol.md](.claude/guides/gemini-advisor-protocol.md) | Gemini 3 Pro integration, 88% hallucination rate, consultation protocol | ⚠️ IMPORTANTE |
+
+### Workflow & Commands
+
+| Arquivo | Descrição | Criticidade |
+|---------|-----------|-------------|
+| [.claude/guides/skills-slash-commands.md](.claude/guides/skills-slash-commands.md) | 15 slash commands: /validate-all, /mcp-triplo, /check-context, etc. | ⚠️ IMPORTANTE |
+
+---
+
 ## 📖 REFERÊNCIA RÁPIDA
 
 ### Onde Documentar O Quê?
@@ -281,15 +375,17 @@ grep -r "MCP Triplo" VALIDACAO_*.md
 
 ---
 
-## 📊 ESTATÍSTICAS (Atualizado 2025-12-13)
+## 📊 ESTATÍSTICAS (Atualizado 2025-12-23)
 
-- **Total de Arquivos .md:** 230+
-- **Fases Concluídas:** 114 (100%)
-- **Fase Atual:** 109 (React Query Migration + Race Condition Fix)
+- **Total de Arquivos .md:** 247+ (246+ anteriores + ESTUDO_VIABILIDADE_LLM_LOCAL.md)
+- **Guias Técnicos (.claude/guides/):** 16 (6 novos + 10 migrados)
+- **Fases Concluídas:** 144 (incluindo sub-fases)
+- **Fase Atual:** 141 (LLM Local Feasibility Study)
 - **Validações Documentadas:** 60+
 - **Problemas Resolvidos:** 120+
 - **MCPs Integrados:** 8
-- **Sub-Agents:** 7 (inclui PM Expert)
+- **Sub-Agents:** 10 (inclui PM Expert + 9 especializados)
+- **Estudos de Viabilidade:** 1 (LLM Local 100% Gratuito)
 
 ---
 
@@ -305,5 +401,5 @@ grep -r "MCP Triplo" VALIDACAO_*.md
 ---
 
 **Mantenedor:** Claude Code (Opus 4.5) + Google Gemini AI
-**Última Atualização:** 2025-11-29 12:00
+**Última Atualização:** 2025-12-23
 **Próxima Revisão:** A cada fase concluída

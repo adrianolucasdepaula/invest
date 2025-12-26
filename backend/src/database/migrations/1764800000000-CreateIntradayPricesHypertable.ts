@@ -17,6 +17,14 @@ export class CreateIntradayPricesHypertable1764800000000 implements MigrationInt
   name = 'CreateIntradayPricesHypertable1764800000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Check if TimescaleDB is available
+    const tsdbCheck = await queryRunner.query(`
+      SELECT EXISTS (
+        SELECT 1 FROM pg_extension WHERE extname = 'timescaledb'
+      ) AS has_timescaledb;
+    `);
+    const hasTimescaleDB = tsdbCheck[0]?.has_timescaledb === true;
+
     // 1. Criar enum types
     await queryRunner.query(`
       DO $$
@@ -57,6 +65,34 @@ export class CreateIntradayPricesHypertable1764800000000 implements MigrationInt
         PRIMARY KEY (asset_id, timestamp, timeframe)
       );
     `);
+
+    // Skip TimescaleDB features if not available
+    if (!hasTimescaleDB) {
+      console.log('TimescaleDB not installed. Skipping hypertable conversion and continuous aggregates.');
+      // Just create basic indexes and FK for regular PostgreSQL
+      await queryRunner.query(`
+        CREATE INDEX IF NOT EXISTS idx_intraday_asset_time
+        ON intraday_prices (asset_id, timestamp DESC);
+      `);
+      await queryRunner.query(`
+        CREATE INDEX IF NOT EXISTS idx_intraday_timeframe
+        ON intraday_prices (timeframe, timestamp DESC);
+      `);
+      await queryRunner.query(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'fk_intraday_asset'
+          ) THEN
+            ALTER TABLE intraday_prices
+            ADD CONSTRAINT fk_intraday_asset
+            FOREIGN KEY (asset_id) REFERENCES assets(id) ON DELETE CASCADE;
+          END IF;
+        END
+        $$;
+      `);
+      return;
+    }
 
     // 3. Converter para Hypertable (particionamento por timestamp)
     // chunk_time_interval: 1 dia (ideal para dados intraday)

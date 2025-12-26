@@ -151,8 +151,8 @@ export class ReportsService {
             name: asset.name,
             type: asset.type,
             sector: asset.sector || 'N/A',
-            currentPrice: latestPrice?.close,
-            changePercent: latestPrice?.changePercent,
+            currentPrice: latestPrice?.close ? Number(latestPrice.close) : undefined,
+            changePercent: latestPrice?.changePercent ? Number(latestPrice.changePercent) : undefined,
 
             // Status da análise
             hasAnalysis: !!lastAnalysis,

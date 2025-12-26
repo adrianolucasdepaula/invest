@@ -1,0 +1,362 @@
+[
+  {
+    "pattern": "/day/IDIV?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?date=2019-01-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?date=2020-05-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?date=2021-09-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?date=2024-01-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?language=pt-br&date={date}",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?language=pt-br&date=2019-01-15",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?language=pt-br&date={date}",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?language=pt-br&date=2020-05-15",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?language=pt-br&date={date}",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?language=pt-br&date=2021-09-15",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?language=pt-br&date={date}",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?language=pt-br&date=2024-01-15",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?period={period}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?period=2019-Q1&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?period={period}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?period=2020-Q2&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?period={period}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?period=2021-Q3&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?period={period}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?period=2024-Q1&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?quarter={quarter}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?quarter=2019-Q1&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?quarter={quarter}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?quarter=2020-Q2&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?quarter={quarter}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?quarter=2021-Q3&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV?quarter={quarter}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV?quarter=2024-Q1&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": true,
+    "data_sample": "CNJN5",
+    "error": null
+  },
+  {
+    "pattern": "/month/IDIV?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/month/IDIV?date=2019-01-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/month/IDIV?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/month/IDIV?date=2020-05-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/month/IDIV?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/month/IDIV?date=2021-09-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/month/IDIV?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/month/IDIV?date=2024-01-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/quarter/IDIV?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/quarter/IDIV?date=2019-01-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/quarter/IDIV?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/quarter/IDIV?date=2020-05-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/quarter/IDIV?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/quarter/IDIV?date=2021-09-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/quarter/IDIV?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/quarter/IDIV?date=2024-01-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV/{date}?language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV/2019-01-15?language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV/{date}?language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV/2020-05-15?language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV/{date}?language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV/2021-09-15?language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV/{date}?language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV/2024-01-15?language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/IDIV/{date}/day?language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/IDIV/2019-01-15/day?language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/IDIV/{date}/day?language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/IDIV/2020-05-15/day?language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/IDIV/{date}/day?language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/IDIV/2021-09-15/day?language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/IDIV/{date}/day?language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/IDIV/2024-01-15/day?language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV/history?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV/history?date=2019-01-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV/history?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV/history?date=2020-05-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV/history?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV/history?date=2021-09-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV/history?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV/history?date=2024-01-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV/archive?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV/archive?date=2019-01-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV/archive?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV/archive?date=2020-05-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV/archive?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV/archive?date=2021-09-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  },
+  {
+    "pattern": "/day/IDIV/archive?date={date}&language=pt-br",
+    "url": "https://sistemaswebb3-listados.b3.com.br/indexPage/day/IDIV/archive?date=2024-01-15&language=pt-br",
+    "success": true,
+    "status_code": 200,
+    "has_data": false,
+    "data_sample": null,
+    "error": null
+  }
+]

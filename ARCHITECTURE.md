@@ -1,8 +1,8 @@
 # 🏗️ ARCHITECTURE - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2025-12-21
-**Versão:** 1.14.0
+**Ultima Atualizacao:** 2025-12-25
+**Versao:** 1.41.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -170,18 +170,39 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
    - Events: Eventos emitidos para frontend
 
 6. **WHEEL Module** (`src/api/wheel/`) - FASE 101-108
-   - WheelController: 15 endpoints REST para estratégia WHEEL
-   - WheelService: Lógica de negócio (candidatos, recomendações, trades)
+   - WheelController: 15 endpoints REST para estrategia WHEEL
+   - WheelService: Logica de negocio (candidatos, recomendacoes, trades)
    - Entities: WheelStrategy, WheelTrade, OptionPrice
    - DTOs: CreateWheelStrategy, WheelCandidate, WheelTrade, OptionRecommendation
    - Features:
-     - Seleção de candidatos com scoring (40% fundamental, 30% liquidez, 30% volatilidade)
-     - Recomendações de PUT/CALL com Greeks
-     - Schedule semanal de distribuição de capital
-     - Cálculo de cash yield (Tesouro SELIC)
+     - Selecao de candidatos com scoring (40% fundamental, 30% liquidez, 30% volatilidade)
+     - Recomendacoes de PUT/CALL com Greeks
+     - Schedule semanal de distribuicao de capital
+     - Calculo de cash yield (Tesouro SELIC)
      - Tracking de trades com P&L
 
-**Padrões:**
+7. **Scraper Config Module** (`src/api/scraper-config/`) - FASE 142
+   - ScraperConfigController: 11 endpoints REST para configuracao dinamica
+   - ScraperConfigService: Logica de negocios (toggle, perfis, impacto)
+   - Entities: ScraperConfig, ScraperExecutionProfile
+   - DTOs: BulkToggleDto, PreviewImpactDto, CreateProfileDto
+   - Features:
+     - Toggle individual e em lote de scrapers
+     - Perfis de execucao pre-definidos (Minimo, Rapido, Fundamentalista, Alta Precisao)
+     - Analise de impacto em tempo real (tempo, memoria, CPU)
+     - Integracao com Bulk Update para selecao dinamica
+     - Validacao de minimo 2 scrapers ativos
+   - **42 Scrapers Configurados:**
+     - 13 Fundamental (BRAPI, Fundamentus, StatusInvest, etc.)
+     - 8 News (Bloomberg, Google News, Valor, etc.)
+     - 6 AI (ChatGPT, Gemini, Claude, DeepSeek, Grok, Perplexity)
+     - 6 Market Data (Yahoo Finance, Investing.com, B3, etc.)
+     - 4 Macro (BCB, ANBIMA, FRED, IPEA)
+     - 2 Options (OpLab, Opcoes.net)
+     - 2 Crypto (CoinMarketCap, CoinGecko)
+     - 1 Technical (TradingView)
+
+**Padroes:**
 
 - Dependency Injection (NestJS native)
 - Repository Pattern (TypeORM)

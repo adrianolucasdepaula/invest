@@ -59,6 +59,14 @@ from scrapers import (
     ANBIMAScraper,  # FASE 100: Public API (Tesouro Direto)
     FREDScraper,  # FASE 100: API Key required (free)
     IPEADATAScraper,  # FASE 100: Public API
+    # Wheel Turbinada Scrapers (FASE 101)
+    StatusInvestDividendsScraper,  # FASE 101.2: Dividends history
+    StockLendingScraper,  # FASE 101.3: BTC lending rates
+    # New Scrapers (FASE 102)
+    CoinGeckoScraper,  # FASE 102: Crypto API (public)
+    IBGEScraper,  # FASE 102: SIDRA API (public)
+    Oceans14Scraper,  # FASE 102: Fundamental data (public)
+    EInvestidorScraper,  # FASE 102: News OAuth (Google)
 )
 
 
@@ -144,13 +152,29 @@ class ScraperService:
         self.scrapers["FRED"] = FREDScraper  # FASE 100: API Key required (free)
         self.scrapers["IPEADATA"] = IPEADATAScraper  # FASE 100: Public API
 
+        # ===========================================
+        # FASE 101: Wheel Turbinada Scrapers
+        # ===========================================
+        self.scrapers["STATUSINVEST_DIVIDENDS"] = StatusInvestDividendsScraper  # FASE 101.2: Dividends history
+        self.scrapers["STOCK_LENDING"] = StockLendingScraper  # FASE 101.3: BTC lending rates
+
+        # ===========================================
+        # FASE 102: New Scrapers (Crypto, Economic, News)
+        # ===========================================
+        self.scrapers["COINGECKO"] = CoinGeckoScraper  # FASE 102: Crypto API (public)
+        self.scrapers["IBGE"] = IBGEScraper  # FASE 102: SIDRA API (public)
+        self.scrapers["OCEANS14"] = Oceans14Scraper  # FASE 102: Fundamental data (public)
+        self.scrapers["EINVESTIDOR"] = EInvestidorScraper  # FASE 102: News OAuth (Google)
+
         logger.info(f"✅ PLAYWRIGHT MIGRATION COMPLETE: Registered {len(self.scrapers)} scrapers")
-        logger.info(f"📊 Fundamental: FUNDAMENTUS, BCB, STATUSINVEST, INVESTSITE, INVESTIDOR10, TRADINGVIEW, GOOGLEFINANCE, GRIFFIN, COINMARKETCAP")
-        logger.info(f"📰 News: BLOOMBERG, GOOGLENEWS, INVESTING_NEWS, VALOR, EXAME, INFOMONEY, ESTADAO")
+        logger.info(f"📊 Fundamental: FUNDAMENTUS, BCB, STATUSINVEST, INVESTSITE, INVESTIDOR10, TRADINGVIEW, GOOGLEFINANCE, GRIFFIN, COINMARKETCAP, OCEANS14")
+        logger.info(f"📰 News: BLOOMBERG, GOOGLENEWS, INVESTING_NEWS, VALOR, EXAME, INFOMONEY, ESTADAO, EINVESTIDOR")
         logger.info(f"🤖 AI: CHATGPT, GEMINI, DEEPSEEK, CLAUDE, GROK, PERPLEXITY")
-        logger.info(f"📈 Market: YAHOO_FINANCE, OPLAB, OPCOES_NET, KINVO, INVESTING, B3, ADVFN")
-        logger.info(f"🔐 OAuth: FUNDAMENTEI, MAISRETORNO (require cookie collection)")
-        logger.info(f"📉 Economic: ANBIMA, FRED, IPEADATA (API-based, no browser)")
+        logger.info(f"📈 Market: YAHOO_FINANCE, OPLAB, OPCOES_NET, KINVO, INVESTING, B3, ADVFN, IDIV")
+        logger.info(f"🔐 OAuth: FUNDAMENTEI, MAISRETORNO, EINVESTIDOR (require cookie collection)")
+        logger.info(f"📉 Economic: ANBIMA, FRED, IPEADATA, IBGE (API-based, no browser)")
+        logger.info(f"🪙 Crypto: COINGECKO, COINMARKETCAP (API-based)")
+        logger.info(f"🎡 Wheel Turbinada: STATUSINVEST_DIVIDENDS, STOCK_LENDING (FASE 101)")
 
     async def initialize(self):
         """Initialize connections and resources"""

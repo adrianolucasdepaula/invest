@@ -272,8 +272,21 @@ function validateResponse(inputData) {
 }
 
 // Output result as JSON
+// ✅ FIX: Stop hooks não usam "decision" e "reason" - schema diferente de PreToolUse
+// Para Stop hooks, schema válido: {continue?, suppressOutput?, stopReason?, systemMessage?}
 function outputResult(result) {
-  console.log(JSON.stringify(result));
+  // Converter schema PreToolUse para Stop hook
+  const stopHookResult = {
+    // Stop hooks não tem "decision" - apenas retornar vazio ou systemMessage
+    suppressOutput: false
+  };
+
+  // Opcional: adicionar systemMessage se houver informação relevante
+  if (result.decision === 'block') {
+    stopHookResult.systemMessage = `⚠️ Response validator: ${result.reason}`;
+  }
+
+  console.log(JSON.stringify(stopHookResult));
 }
 
 // Main execution

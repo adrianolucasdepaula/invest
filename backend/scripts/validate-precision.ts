@@ -1,5 +1,6 @@
 
 import { DataSource } from 'typeorm';
+import Decimal from 'decimal.js';
 import { AssetPrice } from '../src/database/entities/asset-price.entity';
 import { Asset } from '../src/database/entities/asset.entity';
 import { FundamentalData } from '../src/database/entities/fundamental-data.entity';
@@ -42,10 +43,10 @@ async function validatePrecision() {
         const newPrice = new AssetPrice();
         newPrice.asset = petr4;
         newPrice.date = new Date(testDate);
-        newPrice.open = testPrice;
-        newPrice.high = testPrice;
-        newPrice.low = testPrice;
-        newPrice.close = testPrice;
+        newPrice.open = new Decimal(testPrice);
+        newPrice.high = new Decimal(testPrice);
+        newPrice.low = new Decimal(testPrice);
+        newPrice.close = new Decimal(testPrice);
         newPrice.volume = 1000;
         newPrice.source = 'cotahist' as any;
 

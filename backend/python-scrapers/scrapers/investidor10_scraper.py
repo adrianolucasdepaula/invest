@@ -348,34 +348,88 @@ class Investidor10Scraper(BaseScraper):
 
         return scores
 
-    def _parse_indicator_value(self, value_text: str) -> Optional[float]:
-        """Parse indicator value"""
+    def _parse_value(self, value_text: str) -> Optional[float]:
+        """
+        Parse numeric value from text (consolidated parser)
+        Handles Brazilian number format (comma as decimal separator)
+        Handles percentages
+        Handles billions/millions/thousands notation (B, BI, M, MI, K, T)
+        Returns None for non-numeric values
+
+        Examples:
+        - "1.234.567,89" → 1234567.89
+        - "1,5 Bi" → 1500000000
+        - "500 Mi" → 500000000
+        - "10,5 K" → 10500
+        - "15,75%" → 15.75
+        - "R$ 123,45" → 123.45
+        """
+        import re
+
+        # Handle empty/invalid values
+        if not value_text or value_text in ["-", "N/A", "n/a", "", "—", "–", "n/d"]:
+            return None
+
         try:
-            if not value_text or value_text in ["-", "N/A", "n/a", "", "—", "–"]:
+            # Normalize: lowercase and strip whitespace
+            text = value_text.lower().strip()
+
+            # Remove common prefixes
+            text = text.replace("r$", "").strip()
+
+            # Check for percentage (preserve info but remove symbol)
+            text = text.replace("%", "").strip()
+
+            # Remove extra spaces
+            text = text.replace(" ", "")
+
+            # Detect and handle magnitude suffixes BEFORE removing letters
+            multiplier = 1
+
+            # Trillion (T, Tri)
+            if "tri" in text or text.endswith("t"):
+                multiplier = 1_000_000_000_000
+                text = re.sub(r'tri?', '', text)
+            # Billion (B, BI, Bi)
+            elif "bi" in text or text.endswith("b"):
+                multiplier = 1_000_000_000
+                text = re.sub(r'bi?', '', text)
+            # Million (M, MI, Mi)
+            elif "mi" in text or text.endswith("m"):
+                multiplier = 1_000_000
+                text = re.sub(r'mi?', '', text)
+            # Thousand (K, Mil)
+            elif "mil" in text or text.endswith("k"):
+                multiplier = 1_000
+                text = re.sub(r'mil|k', '', text)
+
+            # After handling suffixes, reject if there are still letters
+            if any(c.isalpha() for c in text):
                 return None
 
-            value_text = value_text.replace("%", "").replace("R$", "").strip()
+            # Replace Brazilian decimal separator
+            # Thousands: 1.234.567 → 1234567
+            # Decimal: 123,45 → 123.45
+            text = text.replace(".", "").replace(",", ".")
 
-            # Handle Brazilian number format
-            # Remove thousand separators and convert decimal
-            value_text = value_text.replace(".", "").replace(",", ".")
+            # Handle negative values (various Unicode minus signs)
+            text = text.replace("−", "-").replace("–", "-")
 
-            return float(value_text)
+            # Parse number and apply multiplier
+            parsed = float(text) * multiplier
+
+            return parsed
 
         except Exception:
             return None
+
+    def _parse_indicator_value(self, value_text: str) -> Optional[float]:
+        """Parse indicator value - delegates to _parse_value()"""
+        return self._parse_value(value_text)
 
     def _parse_number(self, text: str) -> Optional[float]:
-        """Parse number from text"""
-        try:
-            if not text:
-                return None
-
-            text = text.replace("R$", "").replace("%", "").strip()
-            text = text.replace(" ", "").replace(".", "").replace(",", ".")
-            return float(text)
-        except Exception:
-            return None
+        """Parse number from text - delegates to _parse_value()"""
+        return self._parse_value(text)
 
     async def health_check(self) -> bool:
         """Check if Investidor10 is accessible"""

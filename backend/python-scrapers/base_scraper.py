@@ -103,14 +103,18 @@ class BaseScraper(ABC):
 
                 launch_args = {
                     'headless': settings.CHROME_HEADLESS,
-                    'timeout': 60000,  # FASE 94: Reduced from 180s to 60s for faster failure
+                    'timeout': 120000,  # FASE 141: Increased from 60s to 120s (high timeout rate 94.7%)
                     'args': [
                         '--no-sandbox',
                         '--disable-setuid-sandbox',
                         '--disable-dev-shm-usage',
                         '--disable-accelerated-2d-canvas',
                         '--disable-gpu',
-                        '--single-process',  # FASE 94: Reduce memory footprint
+                        # FASE 102 FIX: Removed --single-process (causes EPIPE crashes)
+                        # '--single-process',  # DISABLED - causes pipe communication failures
+                        '--disable-background-timer-throttling',
+                        '--disable-backgrounding-occluded-windows',
+                        '--disable-renderer-backgrounding',
                     ],
                 }
 
@@ -132,13 +136,13 @@ class BaseScraper(ABC):
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                 })
 
-                # Set default timeout (reduced to 60s for faster failure detection)
-                self.page.set_default_timeout(60000)
+                # Set default timeout (120s for complex pages like Fundamentus)
+                self.page.set_default_timeout(120000)
 
                 logger.debug(f"Playwright page created for {self.name}")
 
         except asyncio.TimeoutError:
-            logger.error(f"[TIMEOUT] Browser creation timed out for {self.name} after 60s - cleaning up")
+            logger.error(f"[TIMEOUT] Browser creation timed out for {self.name} after 120s - cleaning up")
             await self._force_cleanup()  # Force cleanup on timeout
             raise
         except Exception as e:
@@ -154,7 +158,7 @@ class BaseScraper(ABC):
         - Semaphore(3) permite 3 browsers simultâneos (antes era Lock serializado)
         - Backpressure: aguarda se memória > 70%
         - Gap reduzido para 0.5s (era 1s)
-        - Timeout total de 90s
+        - Timeout total de 120s (FASE 141: increased from 90s)
         """
         if self._initialized:
             return
@@ -170,8 +174,8 @@ class BaseScraper(ABC):
             if not await ResourceMonitor.wait_until_safe(timeout=60):
                 raise Exception(f"Resources unavailable for {self.name} - system under pressure")
 
-            # Timeout total de 90s para inicialização
-            async with asyncio.timeout(90):
+            # Timeout total de 120s para inicialização (FASE 141: increased from 90s)
+            async with asyncio.timeout(120):
                 async with BaseScraper._initialization_semaphore:
                     try:
                         logger.info(f"[INIT] Initializing {self.name}...")
@@ -195,48 +199,87 @@ class BaseScraper(ABC):
                         raise
 
         except asyncio.TimeoutError:
-            logger.error(f"[INIT] ⏱️ Timeout for {self.name} after 90s")
-            raise Exception(f"Initialization timed out after 90s for {self.name}")
+            logger.error(f"[INIT] ⏱️ Timeout for {self.name} after 120s")
+            raise Exception(f"Initialization timed out after 120s for {self.name}")
 
     async def login(self):
         """Override in subclasses that require login"""
         pass
 
     async def cleanup(self):
-        """Cleanup resources (page, browser, playwright, and stealth context - individual per scraper)"""
+        """
+        Cleanup resources (page, browser, playwright, and stealth context - individual per scraper)
+        FASE 102 FIX: Added EPIPE/BrokenPipeError handling to prevent crashes on browser death
+        """
         try:
             if self.page:
-                await self.page.close()
-                self.page = None
+                try:
+                    await self.page.close()
+                except (BrokenPipeError, ConnectionResetError) as e:
+                    logger.warning(f"[{self.name}] EPIPE on page close (browser died): {e}")
+                except Exception as e:
+                    if 'EPIPE' in str(e) or 'Target page, context or browser has been closed' in str(e):
+                        logger.warning(f"[{self.name}] Browser already closed during page cleanup")
+                    else:
+                        logger.debug(f"[{self.name}] Page close error: {e}")
+                finally:
+                    self.page = None
                 logger.debug(f"Page closed for {self.name}")
 
             if self.browser:
-                await self.browser.close()
-                self.browser = None
+                try:
+                    await self.browser.close()
+                except (BrokenPipeError, ConnectionResetError) as e:
+                    logger.warning(f"[{self.name}] EPIPE on browser close (process died): {e}")
+                except Exception as e:
+                    if 'EPIPE' in str(e) or 'Browser has been closed' in str(e):
+                        logger.warning(f"[{self.name}] Browser already terminated")
+                    else:
+                        logger.debug(f"[{self.name}] Browser close error: {e}")
+                finally:
+                    self.browser = None
                 logger.debug(f"Browser closed for {self.name}")
 
             # Close stealth context (which closes playwright internally)
             if self._stealth_context:
                 try:
                     await self._stealth_context.__aexit__(None, None, None)
+                except (BrokenPipeError, ConnectionResetError):
+                    logger.warning(f"[{self.name}] EPIPE on stealth context exit")
                 except Exception:
                     pass  # Ignore errors on stealth context cleanup
-                self._stealth_context = None
-                self.playwright = None
+                finally:
+                    self._stealth_context = None
+                    self.playwright = None
                 logger.debug(f"Stealth context closed for {self.name}")
             elif self.playwright:
-                await self.playwright.stop()
-                self.playwright = None
+                try:
+                    await self.playwright.stop()
+                except (BrokenPipeError, ConnectionResetError):
+                    logger.warning(f"[{self.name}] EPIPE on playwright stop")
+                except Exception:
+                    pass  # Ignore errors
+                finally:
+                    self.playwright = None
                 logger.debug(f"Playwright stopped for {self.name}")
 
             self._initialized = False
 
+        except (BrokenPipeError, ConnectionResetError) as e:
+            logger.warning(f"[{self.name}] EPIPE during cleanup - browser process died: {e}")
+            # Reset all references to allow GC
+            self.page = None
+            self.browser = None
+            self._stealth_context = None
+            self.playwright = None
+            self._initialized = False
         except Exception as e:
             logger.error(f"Error during cleanup of {self.name}: {e}")
 
     async def _force_cleanup(self):
         """
         FASE 94: Force cleanup with timeout - used when browser creation fails or times out.
+        FASE 102 FIX: Added EPIPE handling for graceful recovery from browser crashes.
         This ensures no zombie processes are left behind even when cleanup itself hangs.
         """
         logger.warning(f"[FORCE CLEANUP] Starting force cleanup for {self.name}")
@@ -253,8 +296,20 @@ class BaseScraper(ABC):
             self._stealth_context = None
             self.playwright = None
             self._initialized = False
+        except (BrokenPipeError, ConnectionResetError) as e:
+            # FASE 102 FIX: Handle EPIPE gracefully - browser process already dead
+            logger.warning(f"[FORCE CLEANUP] EPIPE for {self.name} - browser already dead: {e}")
+            self.page = None
+            self.browser = None
+            self._stealth_context = None
+            self.playwright = None
+            self._initialized = False
         except Exception as e:
-            logger.error(f"[FORCE CLEANUP] ❌ Error during force cleanup of {self.name}: {e}")
+            # Check if it's an EPIPE error wrapped in another exception
+            if 'EPIPE' in str(e):
+                logger.warning(f"[FORCE CLEANUP] EPIPE error for {self.name}: {e}")
+            else:
+                logger.error(f"[FORCE CLEANUP] ❌ Error during force cleanup of {self.name}: {e}")
             # Reset references even if cleanup failed
             self.page = None
             self.browser = None
@@ -300,6 +355,7 @@ class BaseScraper(ABC):
     async def scrape_with_retry(self, ticker: str) -> ScraperResult:
         """
         Scrape with automatic retry logic and exponential backoff
+        FASE 102 FIX: Added EPIPE handling with browser restart on pipe failure
 
         Args:
             ticker: Stock ticker symbol
@@ -331,9 +387,22 @@ class BaseScraper(ABC):
                         logger.warning(f"[{self.name}] Scrape failed for {ticker}: {result.error}")
                         last_error = result.error
 
+                except (BrokenPipeError, ConnectionResetError) as e:
+                    # FASE 102 FIX: Handle EPIPE by forcing cleanup and retry with new browser
+                    logger.warning(f"[{self.name}] EPIPE error for {ticker} - browser died, restarting: {e}")
+                    last_error = f"EPIPE: {str(e)}"
+                    await self._force_cleanup()  # Force cleanup to reset state
+                    self._initialized = False  # Ensure next iteration creates new browser
+
                 except Exception as e:
                     last_error = str(e)
-                    logger.error(f"[{self.name}] Error scraping {ticker}: {e}")
+                    # FASE 102 FIX: Check for EPIPE wrapped in other exceptions
+                    if 'EPIPE' in str(e) or 'Target page, context or browser has been closed' in str(e):
+                        logger.warning(f"[{self.name}] Browser crash for {ticker}, restarting: {e}")
+                        await self._force_cleanup()
+                        self._initialized = False
+                    else:
+                        logger.error(f"[{self.name}] Error scraping {ticker}: {e}")
 
                 # Wait before retry (exponential backoff)
                 if attempt < settings.SCRAPER_MAX_RETRIES - 1:

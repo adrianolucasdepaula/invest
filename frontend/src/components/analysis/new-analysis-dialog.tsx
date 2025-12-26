@@ -27,10 +27,33 @@ interface NewAnalysisDialogProps {
   children?: React.ReactNode;
 }
 
+// Analysis types including FASE 102 LLM prompts
+type AnalysisType =
+  | 'fundamental'
+  | 'technical'
+  | 'complete'
+  | 'daytrade'
+  | 'swingtrade'
+  | 'position'
+  | 'market-overview'
+  | 'sector-analysis';
+
+// Labels for analysis types
+const analysisTypeLabels: Record<AnalysisType, string> = {
+  complete: 'Completa (IA + Fundamentalista + Técnica)',
+  fundamental: 'Fundamentalista',
+  technical: 'Técnica',
+  daytrade: 'Day Trade (Intraday)',
+  swingtrade: 'Swing Trade (Dias/Semanas)',
+  position: 'Position Trade (Meses)',
+  'market-overview': 'Visão Geral do Mercado',
+  'sector-analysis': 'Análise Setorial',
+};
+
 export function NewAnalysisDialog({ children }: NewAnalysisDialogProps) {
   const [open, setOpen] = useState(false);
   const [ticker, setTicker] = useState('');
-  const [type, setType] = useState<'fundamental' | 'technical' | 'complete'>('complete');
+  const [type, setType] = useState<AnalysisType>('complete');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -109,9 +132,7 @@ export function NewAnalysisDialog({ children }: NewAnalysisDialogProps) {
 
       toast({
         title: 'Análise solicitada!',
-        description: `A análise ${
-          type === 'complete' ? 'completa' : type === 'fundamental' ? 'fundamentalista' : 'técnica'
-        } de ${ticker.toUpperCase()} foi solicitada com sucesso. ID: ${data.id}`,
+        description: `A análise "${analysisTypeLabels[type]}" de ${ticker.toUpperCase()} foi solicitada com sucesso. ID: ${data.id}`,
       });
 
       setOpen(false);
@@ -172,15 +193,23 @@ export function NewAnalysisDialog({ children }: NewAnalysisDialogProps) {
               </label>
               <Select
                 value={type}
-                onValueChange={(value) => setType(value as 'fundamental' | 'technical' | 'complete')}
+                onValueChange={(value) => setType(value as AnalysisType)}
               >
                 <SelectTrigger id="type">
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
+                  {/* Análises tradicionais */}
                   <SelectItem value="complete">Completa (IA + Fundamentalista + Técnica)</SelectItem>
                   <SelectItem value="fundamental">Fundamentalista</SelectItem>
                   <SelectItem value="technical">Técnica</SelectItem>
+                  {/* FASE 102: LLM Prompts - Trading Horizons */}
+                  <SelectItem value="daytrade">Day Trade (Intraday)</SelectItem>
+                  <SelectItem value="swingtrade">Swing Trade (Dias/Semanas)</SelectItem>
+                  <SelectItem value="position">Position Trade (Meses)</SelectItem>
+                  {/* FASE 102: LLM Prompts - Market Analysis */}
+                  <SelectItem value="market-overview">Visão Geral do Mercado</SelectItem>
+                  <SelectItem value="sector-analysis">Análise Setorial</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">

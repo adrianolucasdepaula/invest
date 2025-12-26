@@ -16,7 +16,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "python-scrapers"))
 
 from routes.scraper_test_routes import router as scraper_router
 from routes.config_routes import router as config_router
-from routes.job_routes import router as job_router
+# FASE 135: job_routes disabled - depends on scheduler.py (removed with orchestrator)
+# from routes.job_routes import router as job_router
 from routes.oauth_routes import router as oauth_router
 # Temporarily disabled - requires analysis-service volume mount
 # from routes.analysis_routes import router as analysis_router
@@ -129,7 +130,8 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Include routers
 app.include_router(scraper_router)
 app.include_router(config_router)
-app.include_router(job_router)
+# FASE 135: job_router disabled - depends on scheduler.py (removed with orchestrator)
+# app.include_router(job_router)
 app.include_router(oauth_router)
 
 # Temporarily disabled - requires analysis-service volume mount
@@ -157,6 +159,8 @@ async def root():
                 "test_scraper": "POST /api/scrapers/test",
                 "test_all": "POST /api/scrapers/test-all",
                 "health": "GET /api/scrapers/health",
+                "system_health": "GET /health",
+                "system_health_detailed": "GET /health/detailed",
                 "cookies_status": "GET /api/scrapers/cookies/status",
                 "ping": "GET /api/scrapers/ping",
             },
@@ -168,17 +172,18 @@ async def root():
                 "all": "GET /api/config/all",
                 "categories": "GET /api/config/categories",
             },
-            "jobs": {
-                "create_job": "POST /api/jobs/create",
-                "get_job": "GET /api/jobs/{job_id}",
-                "list_jobs": "GET /api/jobs/list",
-                "cancel_job": "DELETE /api/jobs/{job_id}",
-                "retry_job": "POST /api/jobs/{job_id}/retry",
-                "queue_status": "GET /api/jobs/queue/status",
-                "stats_summary": "GET /api/jobs/stats/summary",
-                "stats_by_scraper": "GET /api/jobs/stats/by-scraper",
-                "health": "GET /api/jobs/health",
-            },
+            # FASE 135: jobs routes disabled - depend on scheduler.py (removed with orchestrator)
+            # "jobs": {
+            #     "create_job": "POST /api/jobs/create",
+            #     "get_job": "GET /api/jobs/{job_id}",
+            #     "list_jobs": "GET /api/jobs/list",
+            #     "cancel_job": "DELETE /api/jobs/{job_id}",
+            #     "retry_job": "POST /api/jobs/{job_id}/retry",
+            #     "queue_status": "GET /api/jobs/queue/status",
+            #     "stats_summary": "GET /api/jobs/stats/summary",
+            #     "stats_by_scraper": "GET /api/jobs/stats/by-scraper",
+            #     "health": "GET /api/jobs/health",
+            # },
             "analysis": {
                 "stock_analysis": "GET /api/analysis/stock/{ticker}",
                 "fundamental": "GET /api/analysis/stock/{ticker}/fundamental",
@@ -218,16 +223,50 @@ async def root():
     }
 
 
-# Comprehensive health check
+# Lightweight health check (for Docker/Kubernetes liveness probe)
 @app.get(
     "/health",
-    summary="Complete System Health Check",
-    description="Check health of all services: API, Database, Redis, Scrapers",
+    summary="Lightweight Health Check",
+    description="Fast health check for Docker/K8s liveness probe - checks only API availability",
     tags=["Health"]
 )
 async def health_check():
     """
-    Comprehensive health check for all system components
+    Lightweight health check for container orchestration.
+
+    IMPORTANT: This endpoint is optimized for speed and does NOT check dependencies.
+    Use /health/detailed for comprehensive health checks.
+
+    Rationale (FASE 135 Lesson):
+    - Docker health checks timeout at 10s
+    - Heavy I/O operations (DB, Redis) can cause false negatives under load
+    - Liveness probe should only verify the API process is alive
+
+    Returns:
+        Simple status indicating API is running
+    """
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "service": "b3-ai-analysis-platform-api",
+        "version": "2.0.0",
+        "message": "API service is running"
+    }
+
+
+# Detailed health check (for monitoring/debugging)
+@app.get(
+    "/health/detailed",
+    summary="Detailed System Health Check",
+    description="Comprehensive health check of all services: API, Database, Redis, Scrapers",
+    tags=["Health"]
+)
+async def health_check_detailed():
+    """
+    Comprehensive health check for all system components.
+
+    WARNING: This endpoint performs I/O operations and may be slow under load.
+    DO NOT use for Docker health checks - use /health instead.
 
     Checks:
     - API service status

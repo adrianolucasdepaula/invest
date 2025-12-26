@@ -137,10 +137,37 @@ const getConfidenceColor = (confidence?: number) => {
   return 'text-red-600';
 };
 
+// FASE 102: Analysis type labels including LLM prompts
+const getAnalysisTypeLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    complete: 'Completa',
+    fundamental: 'Fundamentalista',
+    technical: 'Técnica',
+    daytrade: 'Day Trade',
+    swingtrade: 'Swing Trade',
+    position: 'Position Trade',
+    'market-overview': 'Visão de Mercado',
+    'sector-analysis': 'Análise Setorial',
+  };
+  return labels[type] || type;
+};
+
+// Analysis filter types including FASE 102 LLM prompts
+type AnalysisFilterType =
+  | 'all'
+  | 'fundamental'
+  | 'technical'
+  | 'complete'
+  | 'daytrade'
+  | 'swingtrade'
+  | 'position'
+  | 'market-overview'
+  | 'sector-analysis';
+
 export function AnalysisPageClient() {
   const [activeTab, setActiveTab] = useState('by-analysis');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'fundamental' | 'technical' | 'complete'>('all');
+  const [filterType, setFilterType] = useState<AnalysisFilterType>('all');
   const [selectedAnalysis, setSelectedAnalysis] = useState<any>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
@@ -529,8 +556,8 @@ export function AnalysisPageClient() {
         </TabsList>
 
         <TabsContent value="by-analysis" className="space-y-4 mt-6">
-      <div className="flex items-center space-x-4">
-        <Card className="flex-1 p-4">
+      <div className="space-y-4">
+        <Card className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -542,30 +569,72 @@ export function AnalysisPageClient() {
             />
           </div>
         </Card>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant={filterType === 'all' ? 'default' : 'outline'}
             onClick={() => setFilterType('all')}
+            size="sm"
           >
             Todas
           </Button>
           <Button
             variant={filterType === 'fundamental' ? 'default' : 'outline'}
             onClick={() => setFilterType('fundamental')}
+            size="sm"
           >
             Fundamentalista
           </Button>
           <Button
             variant={filterType === 'technical' ? 'default' : 'outline'}
             onClick={() => setFilterType('technical')}
+            size="sm"
           >
             Técnica
           </Button>
           <Button
             variant={filterType === 'complete' ? 'default' : 'outline'}
             onClick={() => setFilterType('complete')}
+            size="sm"
           >
             Completa
+          </Button>
+          {/* FASE 102: LLM Prompts - Trading Horizons - TEST123 */}
+          <Button
+            variant={filterType === 'daytrade' ? 'default' : 'outline'}
+            onClick={() => setFilterType('daytrade')}
+            size="sm"
+            data-testid="btn-daytrade-test123"
+          >
+            Day Trade TEST
+          </Button>
+          <Button
+            variant={filterType === 'swingtrade' ? 'default' : 'outline'}
+            onClick={() => setFilterType('swingtrade')}
+            size="sm"
+          >
+            Swing Trade
+          </Button>
+          <Button
+            variant={filterType === 'position' ? 'default' : 'outline'}
+            onClick={() => setFilterType('position')}
+            size="sm"
+          >
+            Position
+          </Button>
+          {/* FASE 102: LLM Prompts - Market Analysis */}
+          <Button
+            variant={filterType === 'market-overview' ? 'default' : 'outline'}
+            onClick={() => setFilterType('market-overview')}
+            size="sm"
+          >
+            Mercado
+          </Button>
+          <Button
+            variant={filterType === 'sector-analysis' ? 'default' : 'outline'}
+            onClick={() => setFilterType('sector-analysis')}
+            size="sm"
+          >
+            Setorial
           </Button>
         </div>
       </div>
@@ -627,8 +696,8 @@ export function AnalysisPageClient() {
                       <p className="text-sm text-muted-foreground">{analysis.asset?.name || 'N/A'}</p>
                     </div>
                     <div className="rounded-full bg-primary/10 px-3 py-1">
-                      <span className="text-sm font-medium text-primary capitalize">
-                        {analysis.type === 'complete' ? 'Completa' : analysis.type === 'fundamental' ? 'Fundamentalista' : 'Técnica'}
+                      <span className="text-sm font-medium text-primary">
+                        {getAnalysisTypeLabel(analysis.type)}
                       </span>
                     </div>
                     {hasDuplicates(analysis) && (
@@ -715,7 +784,7 @@ export function AnalysisPageClient() {
                       <p className="text-sm text-muted-foreground">Realizada em</p>
                       <div className="flex items-center space-x-1">
                         <Clock className="h-3 w-3 text-muted-foreground" />
-                        <p className="text-sm font-medium">
+                        <p className="text-sm font-medium" suppressHydrationWarning>
                           {new Date(analysis.createdAt).toLocaleDateString('pt-BR')}
                         </p>
                       </div>
@@ -772,7 +841,7 @@ export function AnalysisPageClient() {
             </DialogTitle>
             <DialogDescription>
               {selectedAnalysis?.asset?.name} | {' '}
-              {selectedAnalysis?.type === 'complete' ? 'Análise Completa' : selectedAnalysis?.type === 'fundamental' ? 'Análise Fundamentalista' : 'Análise Técnica'}
+              Análise {getAnalysisTypeLabel(selectedAnalysis?.type || '')}
             </DialogDescription>
           </DialogHeader>
 

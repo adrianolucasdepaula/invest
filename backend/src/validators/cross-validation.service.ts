@@ -1,4 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
+import {
+  DEFAULT_TOLERANCES,
+  SOURCE_PRIORITY,
+  isPercentageField,
+  normalizePercentageValue,
+} from '../scrapers/interfaces/field-source.interface';
 
 /**
  * Source data for cross-validation
@@ -43,36 +49,8 @@ export interface FieldSourceInfo {
   divergentSources?: Array<{ source: string; value: number; deviation: number }>;
 }
 
-/**
- * Default tolerances for field comparisons
- */
-export const DEFAULT_TOLERANCES = {
-  default: 0.05, // 5% tolerance by default
-  byField: {
-    pl: 0.10, // P/L can vary more
-    pvp: 0.08,
-    roe: 0.05,
-    roa: 0.05,
-    roic: 0.05,
-    dividendYield: 0.10,
-    margemBruta: 0.05,
-    margemLiquida: 0.05,
-    evEbitda: 0.10,
-    evEbit: 0.10,
-  } as Record<string, number>,
-};
-
-/**
- * Priority order for sources when selecting values
- */
-export const SOURCE_PRIORITY = [
-  'fundamentus',
-  'brapi',
-  'statusinvest',
-  'investidor10',
-  'fundamentei',
-  'investsite',
-];
+// NOTE: DEFAULT_TOLERANCES e SOURCE_PRIORITY importados de field-source.interface.ts
+// para manter única fonte de verdade (FASE DISCREPANCY-FIX)
 
 /**
  * Cross-Validation Service
@@ -106,17 +84,33 @@ export class CrossValidationService {
   }
 
   /**
+   * Maximum deviation cap to prevent astronomical values
+   * 10000 = 10,000% (100x difference)
+   */
+  private readonly MAX_DEVIATION = 10000;
+
+  /**
    * Calculate the percentage deviation between two values
    *
    * @param value - Value to compare
    * @param reference - Reference value
-   * @returns Deviation as percentage (0-100+)
+   * @returns Deviation as percentage (0-10000, capped)
    */
   calculateDeviation(value: number, reference: number): number {
+    // Protection: if reference is 0, cap the deviation
     if (reference === 0) {
-      return value === 0 ? 0 : 100;
+      return value === 0 ? 0 : this.MAX_DEVIATION;
     }
-    return Math.round(Math.abs((value - reference) / reference) * 10000) / 100;
+
+    // Protection: if reference is very small (could cause overflow)
+    if (Math.abs(reference) < 0.0001) {
+      return this.MAX_DEVIATION;
+    }
+
+    const deviation = Math.round(Math.abs((value - reference) / reference) * 10000) / 100;
+
+    // Cap the deviation to prevent astronomical values
+    return Math.min(deviation, this.MAX_DEVIATION);
   }
 
   /**
@@ -127,6 +121,27 @@ export class CrossValidationService {
    */
   getFieldTolerance(field: string): number {
     return DEFAULT_TOLERANCES.byField[field] ?? DEFAULT_TOLERANCES.default;
+  }
+
+  /**
+   * Normalize values for comparison
+   *
+   * For percentage fields, normalizes to 0-1 format to handle
+   * different scraper formats (Fundamentus 0-100 vs Investidor10 0-1)
+   *
+   * @param values - Array of source values
+   * @param field - Field name
+   * @returns Array with normalized values
+   */
+  normalizeValuesForComparison(values: SourceValue[], field: string): SourceValue[] {
+    if (!isPercentageField(field)) {
+      return values;
+    }
+
+    return values.map((v) => ({
+      ...v,
+      value: v.value !== null ? normalizePercentageValue(v.value, field) : null,
+    }));
   }
 
   /**
@@ -168,10 +183,11 @@ export class CrossValidationService {
    * Select a value by consensus from multiple sources
    *
    * Algorithm:
-   * 1. Group similar values (within tolerance)
-   * 2. Find the group with most sources agreeing
-   * 3. If tie or no consensus, use priority source
-   * 4. Mark discrepancies for analysis
+   * 1. Normalize percentage fields for comparison (0-100 → 0-1)
+   * 2. Group similar values (within tolerance)
+   * 3. Find the group with most sources agreeing
+   * 4. If tie or no consensus, use priority source
+   * 5. Mark discrepancies for analysis
    *
    * @param field - Field name for tolerance lookup
    * @param validValues - Array of valid (non-null) values
@@ -204,11 +220,20 @@ export class CrossValidationService {
       };
     }
 
-    // Get tolerance for this field
-    const tolerance = customTolerance ?? this.getFieldTolerance(field);
+    // Get tolerance for this field (increased for percentage fields)
+    let tolerance = customTolerance ?? this.getFieldTolerance(field);
 
-    // Group similar values
-    const groups = this.groupSimilarValues(validValues, tolerance);
+    // Increase tolerance for percentage fields due to format conversion uncertainty
+    if (isPercentageField(field) && !customTolerance) {
+      tolerance = Math.max(tolerance, 0.05); // Minimum 5% tolerance for percentage fields
+    }
+
+    // Normalize percentage fields before comparison
+    // This handles Fundamentus (0-100) vs Investidor10 (0-1) format difference
+    const normalizedValues = this.normalizeValuesForComparison(validValues, field);
+
+    // Group similar values using normalized values
+    const groups = this.groupSimilarValues(normalizedValues, tolerance);
 
     // Find group with most consensus
     let bestGroup = groups[0];
@@ -239,15 +264,26 @@ export class CrossValidationService {
     const finalValue = selectedValue?.value ?? bestGroup.representativeValue;
 
     // Identify divergent sources
+    // For percentage fields, calculate deviation using normalized values to avoid 9900% deviations
     let divergentSources: Array<{ source: string; value: number; deviation: number }> | undefined;
     if (hasDiscrepancy) {
+      const isPercent = isPercentageField(field);
+      const normalizedFinal = isPercent
+        ? normalizePercentageValue(finalValue as number, field)
+        : (finalValue as number);
+
       divergentSources = validValues
         .filter((v) => !bestGroup.sources.includes(v.source) && v.value !== null)
-        .map((v) => ({
-          source: v.source,
-          value: v.value as number,
-          deviation: this.calculateDeviation(v.value as number, finalValue as number),
-        }));
+        .map((v) => {
+          const normalizedValue = isPercent
+            ? normalizePercentageValue(v.value as number, field)
+            : (v.value as number);
+          return {
+            source: v.source,
+            value: v.value as number, // Keep original value for display
+            deviation: this.calculateDeviation(normalizedValue, normalizedFinal),
+          };
+        });
     }
 
     return {

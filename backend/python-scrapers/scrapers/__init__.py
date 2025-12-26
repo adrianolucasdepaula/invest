@@ -67,6 +67,20 @@ from .advfn_scraper import ADVFNScraper  # FASE 98: Credentials optional
 from .anbima_scraper import ANBIMAScraper  # FASE 100: Public API (Tesouro Direto)
 from .fred_scraper import FREDScraper  # FASE 100: API Key required (free)
 from .ipeadata_scraper import IPEADATAScraper  # FASE 100: Public API
+from .ibge_scraper import IBGEScraper  # FASE 102: SIDRA API (public)
+
+# ==============================
+# WHEEL TURBINADA SCRAPERS (FASE 101)
+# ==============================
+from .statusinvest_dividends_scraper import StatusInvestDividendsScraper  # FASE 101.2: Dividends history
+from .stock_lending_scraper import StockLendingScraper  # FASE 101.3: BTC lending rates
+
+# ==============================
+# NEW SCRAPERS (FASE 102)
+# ==============================
+from .coingecko_scraper import CoinGeckoScraper  # FASE 102: Crypto API (public)
+from .oceans14_scraper import Oceans14Scraper  # FASE 102: Fundamental data (public)
+from .einvestidor_scraper import EInvestidorScraper  # FASE 102: News OAuth (Google)
 
 __all__ = [
     # Fundamental Data
@@ -111,4 +125,12 @@ __all__ = [
     "ANBIMAScraper",  # FASE 100
     "FREDScraper",  # FASE 100
     "IPEADATAScraper",  # FASE 100
+    # Wheel Turbinada Scrapers (FASE 101)
+    "StatusInvestDividendsScraper",  # FASE 101.2
+    "StockLendingScraper",  # FASE 101.3
+    # New Scrapers (FASE 102)
+    "CoinGeckoScraper",  # FASE 102
+    "IBGEScraper",  # FASE 102
+    "Oceans14Scraper",  # FASE 102
+    "EInvestidorScraper",  # FASE 102
 ]

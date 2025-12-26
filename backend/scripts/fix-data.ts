@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+import Decimal from 'decimal.js';
 import { Asset } from '../src/database/entities/asset.entity';
 import { AssetPrice } from '../src/database/entities/asset-price.entity';
 import { FundamentalData } from '../src/database/entities/fundamental-data.entity';
@@ -55,8 +56,8 @@ async function fixData() {
                     const change = close - prevClose;
                     const changePercent = (change / prevClose) * 100;
 
-                    current.change = change;
-                    current.changePercent = changePercent;
+                    current.change = new Decimal(change);
+                    current.changePercent = new Decimal(changePercent);
 
                     await priceRepository.save(current);
                     updatedCount++;
@@ -65,8 +66,8 @@ async function fixData() {
 
             // Also update the first record to have 0 change if null
             if (prices[0].change === null) {
-                prices[0].change = 0;
-                prices[0].changePercent = 0;
+                prices[0].change = new Decimal(0);
+                prices[0].changePercent = new Decimal(0);
                 await priceRepository.save(prices[0]);
                 updatedCount++;
             }

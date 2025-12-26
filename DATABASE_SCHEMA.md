@@ -3,8 +3,8 @@
 **Projeto:** B3 AI Analysis Platform
 **Banco de Dados:** PostgreSQL 16.x
 **ORM:** TypeORM 0.3.x
-**Última Atualização:** 2025-12-15
-**Versão:** 1.12.3
+**Ultima Atualizacao:** 2025-12-25
+**Versao:** 1.13.0
 
 ---
 
@@ -26,7 +26,7 @@ O banco de dados PostgreSQL armazena dados de ativos financeiros da B3, análise
 
 ### Estatísticas Gerais
 
-- **Total de Tabelas:** 25
+- **Total de Tabelas:** 27
 - **Total de Registros (aprox.):** 5.000+
   - Assets: 861
   - AssetPrices: 10.000+
@@ -52,6 +52,8 @@ O banco de dados PostgreSQL armazena dados de ativos financeiros da B3, análise
   - WheelStrategies: 0+ (FASE 101-108)
   - WheelTrades: 0+ (FASE 101-108)
   - OptionPrices: 0+ (FASE 107)
+  - **ScraperConfigs: 42 (FASE 142)** - Configuracao dinamica de scrapers
+  - **ScraperExecutionProfiles: 4 (FASE 142)** - Perfis de execucao
 
 ### Convenções
 

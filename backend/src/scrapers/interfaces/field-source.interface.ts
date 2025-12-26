@@ -278,8 +278,168 @@ export const SOURCE_PRIORITY = [
 
 export type SourceName = (typeof SOURCE_PRIORITY)[number];
 
+/**
+ * Campos que são valores absolutos financeiros (R$)
+ * Estes campos precisam de tratamento especial:
+ * - StatusInvest e BRAPI NÃO fornecem estes valores
+ * - Comparar valor real vs 0 gera discrepância falsa
+ */
+export const ABSOLUTE_FIELDS = [
+  'receitaLiquida',
+  'lucroLiquido',
+  'patrimonioLiquido',
+  'ebit',
+  'ebitda',
+  'dividaBruta',
+  'dividaLiquida',
+  'ativoTotal',
+  'disponibilidades',
+] as const;
+
+export type AbsoluteField = (typeof ABSOLUTE_FIELDS)[number];
+
+/**
+ * Mapa de disponibilidade de campos por fonte
+ *
+ * IMPORTANTE: Fontes que NÃO fornecem um campo devem ser EXCLUÍDAS
+ * da comparação para evitar discrepâncias falsas (real vs 0).
+ *
+ * Baseado na análise detalhada dos scrapers:
+ * - StatusInvest: NÃO extrai valores absolutos (DRE/Balanço)
+ * - BRAPI: API limitada, apenas P/L, DY, LPA
+ * - Fundamentus: Completo (33+ campos)
+ * - Investidor10: Completo (54 campos), requer login
+ * - Investsite: Completo (23-30 campos)
+ */
+export const FIELD_AVAILABILITY: Record<string, SourceName[]> = {
+  // === VALORES ABSOLUTOS (R$) ===
+  // StatusInvest e BRAPI NÃO fornecem estes campos!
+  receitaLiquida: ['fundamentus', 'investidor10', 'investsite'],
+  lucroLiquido: ['fundamentus', 'investidor10', 'investsite'],
+  patrimonioLiquido: ['fundamentus', 'investidor10', 'investsite'],
+  ebit: ['fundamentus', 'investidor10', 'investsite'],
+  ebitda: ['fundamentus', 'investidor10', 'investsite'],
+  dividaBruta: ['fundamentus', 'investidor10', 'investsite'],
+  dividaLiquida: ['fundamentus', 'investidor10', 'investsite'],
+  ativoTotal: ['fundamentus', 'investidor10', 'investsite'],
+  disponibilidades: ['fundamentus', 'investidor10', 'investsite'],
+
+  // === VALUATION RATIOS ===
+  pl: ['fundamentus', 'statusinvest', 'brapi', 'investidor10', 'investsite'],
+  pvp: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'],
+  psr: ['fundamentus', 'investidor10', 'investsite'],
+  pEbit: ['fundamentus'],
+  pAtivos: ['fundamentus'],
+  pCapitalGiro: ['fundamentus'],
+  evEbit: ['fundamentus', 'investidor10', 'investsite'],
+  evEbitda: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'],
+  pegRatio: ['investidor10'],
+
+  // === RENTABILIDADE ===
+  roe: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'],
+  roic: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'],
+  roa: ['fundamentus', 'investidor10'],
+
+  // === MARGENS ===
+  margemBruta: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'],
+  margemEbit: ['fundamentus', 'investidor10', 'investsite'],
+  margemEbitda: ['investidor10', 'investsite'],
+  margemLiquida: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'],
+
+  // === DIVIDENDOS ===
+  dividendYield: ['fundamentus', 'statusinvest', 'brapi', 'investidor10', 'investsite'],
+  payout: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'],
+
+  // === PER SHARE ===
+  lpa: ['fundamentus', 'statusinvest', 'brapi', 'investidor10', 'investsite'],
+  vpa: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'],
+
+  // === LIQUIDEZ ===
+  liquidezCorrente: ['fundamentus', 'investidor10', 'investsite'],
+
+  // === GROWTH (EXCLUSIVO INVESTIDOR10) ===
+  cagrReceitas5anos: ['investidor10'],
+  cagrLucros5anos: ['investidor10'],
+
+  // === DÍVIDA RATIOS ===
+  dividaLiquidaPatrimonio: ['fundamentus', 'investidor10', 'investsite'],
+  dividaLiquidaEbitda: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'],
+  dividaLiquidaEbit: ['fundamentus', 'investidor10'],
+};
+
 // Mantendo exports antigos para compatibilidade (deprecated)
 /** @deprecated Use SelectionStrategy instead */
 export const MergeStrategy = SelectionStrategy;
 /** @deprecated Use FIELD_SELECTION_STRATEGY instead */
 export const DEFAULT_FIELD_MERGE_CONFIG = FIELD_SELECTION_STRATEGY;
+
+/**
+ * Campos que são valores percentuais
+ *
+ * IMPORTANTE: Scrapers retornam formatos diferentes:
+ * - Fundamentus: 25.95 (formato 0-100)
+ * - Investidor10: 0.2595 (formato 0-1)
+ *
+ * Para cross-validation, precisamos NORMALIZAR antes de comparar!
+ * Padrão adotado: formato 0-1 (decimal)
+ */
+export const PERCENTAGE_FIELDS = [
+  // Rentabilidade
+  'roe',
+  'roa',
+  'roic',
+
+  // Margens
+  'margemBruta',
+  'margemEbit',
+  'margemEbitda',
+  'margemLiquida',
+
+  // Dividendos
+  'dividendYield',
+  'payout',
+
+  // Growth
+  'cagrReceitas5anos',
+  'cagrLucros5anos',
+] as const;
+
+export type PercentageField = (typeof PERCENTAGE_FIELDS)[number];
+
+/**
+ * Verifica se um campo é percentual
+ */
+export function isPercentageField(field: string): boolean {
+  return PERCENTAGE_FIELDS.includes(field as PercentageField);
+}
+
+/**
+ * Normaliza um valor percentual para formato decimal (0-1)
+ *
+ * Detecta automaticamente se está em formato 0-100 ou 0-1:
+ * - Se |valor| > 1 → assume 0-100, converte para 0-1
+ * - Se |valor| <= 1 → assume já estar em 0-1
+ *
+ * Exceções: valores como 1.5 (150%) são tratados corretamente
+ * verificando se são plausíveis como percentual direto
+ *
+ * @param value - Valor a normalizar
+ * @param field - Nome do campo (para logging)
+ * @returns Valor normalizado em formato 0-1
+ */
+export function normalizePercentageValue(value: number, _field?: string): number {
+  if (value === null || value === undefined || isNaN(value)) {
+    return value;
+  }
+
+  // Valores entre -1 e 1 assumimos já estar em formato decimal
+  // EXCETO se for um valor muito pequeno (tipo 0.0025 que claramente é 0.25%)
+  if (Math.abs(value) <= 1) {
+    return value;
+  }
+
+  // Valores > 1 ou < -1 assumimos formato 0-100, convertemos para 0-1
+  // Ex: ROE = 25.95 → 0.2595
+  // Ex: ROE = -15.3 → -0.153
+  return value / 100;
+}

@@ -9,3 +9,4 @@ export * from './bulk-toggle.dto';
 export * from './update-priority.dto';
 export * from './preview-impact.dto';
 export * from './create-profile.dto';
+export { UpdateProfileDto } from './create-profile.dto';

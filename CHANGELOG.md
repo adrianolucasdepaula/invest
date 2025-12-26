@@ -9,6 +9,106 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Added
 
+- (Proximas features serao listadas aqui)
+
+---
+
+## [1.41.0] - 2025-12-25
+
+### Added
+
+- **FASE 142: Dynamic Scraper Configuration System** - **CONCLUIDO**
+  - **Sistema completo de controle dinamico de scrapers**
+  - **Backend (NestJS):**
+    - `ScraperConfig` entity (145 linhas) - Configuracao individual de scrapers
+    - `ScraperExecutionProfile` entity (95 linhas) - Perfis de execucao
+    - `ScraperConfigController` (11 endpoints) - API REST completa
+    - `ScraperConfigService` (450 linhas) - Logica de negocios
+    - Seeds para 42 scrapers e 4 perfis pre-definidos
+    - Migrations para novas tabelas
+  - **Frontend (Next.js):**
+    - Pagina `/admin/scrapers` - Interface de administracao
+    - `ProfileSelector` - Selecao de perfis pre-definidos
+    - `ImpactAnalysis` - Analise de impacto em tempo real
+    - `ScraperList` - Lista de scrapers por categoria
+    - `ScraperCard` - Card individual com toggle
+    - `useScraperConfig` hooks - React Query integration
+  - **Perfis de Execucao (4):**
+    - Minimo (2 scrapers) - BRAPI + Fundamentus
+    - Rapido (4 scrapers) - Core fundamentalistas
+    - Fundamentalista (6 scrapers) - Analise completa
+    - Alta Precisao (10+ scrapers) - Cross-validation maximo
+  - **Features:**
+    - Toggle individual e em lote
+    - Validacao de minimo 2 scrapers ativos
+    - Analise de impacto (tempo, memoria, CPU)
+    - Aplicacao de perfis com um clique
+    - Integracao com Bulk Update
+  - **42 Scrapers Configurados:**
+    - 13 Fundamental (BRAPI, Fundamentus, StatusInvest, etc.)
+    - 8 News (Bloomberg, Google News, Valor, etc.)
+    - 6 AI (ChatGPT, Gemini, Claude, DeepSeek, Grok, Perplexity)
+    - 6 Market Data (Yahoo Finance, Investing.com, B3, etc.)
+    - 4 Macro (BCB, ANBIMA, FRED, IPEA)
+    - 2 Options (OpLab, Opcoes.net)
+    - 2 Crypto (CoinMarketCap, CoinGecko)
+    - 1 Technical (TradingView)
+  - **Validacao:** 0 TypeScript errors, 11/11 endpoints funcionais
+
+### Documentation
+
+- Novo arquivo: `VALIDACAO_FINAL_COMPLETA_SCRAPER_CONFIG.md` - Relatorio de validacao
+- Atualizado `CHANGELOG.md` com versao 1.41.0
+- Atualizado `ROADMAP.md` com FASE 142
+- Atualizado `DATABASE_SCHEMA.md` com novas tabelas
+- Atualizado `INDEX.md` com links
+
+---
+
+## [1.40.0] - 2025-12-23
+
+### Added
+
+- **FASE 141: LLM Local Feasibility Study (100% Gratuito)** ✅ **CONCLUÍDO**
+  - **Estudo completo de viabilidade para LLMs 100% locais e gratuitos**
+  - **Hardware Verificado:**
+    - RTX 3060 Laptop GPU (6GB VRAM)
+    - CUDA 13.1, Driver 591.44
+    - Docker GPU funcional (`--gpus all` verificado)
+  - **Readiness:** 78% (5-8 dias para implementação completa)
+  - **Modelos Mapeados (8 modelos locais):**
+    - FinBERT-PT-BR: 97% accuracy sentiment, 0.5GB VRAM
+    - Llama 3.1 8B Q4: 5.4% hallucination rate, 5.5GB VRAM (PRINCIPAL)
+    - Phi-3 Mini 3.8B: 86.2% GSM8K reasoning, 2.8GB VRAM
+    - DeepSeek-R1-Distill-Llama-8B: chain-of-thought, 5.5GB VRAM
+    - Llama 3.2 3B Q4: Tool calling, parsing, 2.5GB VRAM
+    - Qwen2.5 7B Q4: Código/JSON parsing, 4.5GB VRAM
+    - Qwen3 4B/8B: Extração de dados, 3.0-5.0GB VRAM
+    - Phi-4 Mini: Reasoning aprimorado, 2.8GB VRAM
+  - **6 Problemas Identificados + Soluções:**
+    - Sentiment 45% → 97% (FinBERT-PT-BR)
+    - OAuth expiration (AI scrapers) → Llama 3.1 8B local
+    - HTML parsing quebra → Llama 3.2 3B extração semântica
+    - Negações perdidas → DeepSeek-R1-Distill reasoning
+    - Outliers não investigados → Phi-3 Mini reasoning
+    - Sumarização inexistente → Phi-3 Mini 86.2%
+  - **ROI:** 100% economia (R$ 0/mês vs ~R$ 100/mês atual)
+  - **Framework:** Ollama (recomendado)
+  - **Documentação:** `docs/ESTUDO_VIABILIDADE_LLM_LOCAL.md`
+  - **Próximos Passos:** Ollama install + PoC 100 notícias
+
+### Documentation
+
+- Novo arquivo: `docs/ESTUDO_VIABILIDADE_LLM_LOCAL.md` - Estudo completo LLM Local
+- Atualizado `ROADMAP.md` com FASE 141
+- Atualizado `INDEX.md` com seção "Estudos de Viabilidade"
+
+---
+
+## [1.39.0] - 2025-12-22
+
+### Added
+
 - **FASE 101: Wheel Turbinada Strategy - Implementação Completa (2025-12-22)** ✅ **CONCLUÍDA**
   - **Database Schema (FASE 101.1):**
     - **Entities (3 novas):**

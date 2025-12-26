@@ -38,7 +38,7 @@ export class CreateAssetPricesArchive1765600000000 implements MigrationInterface
         close DECIMAL(18,4) NOT NULL,
         adjusted_close DECIMAL(18,4),
         volume BIGINT NOT NULL,
-        source asset_prices_source_enum NOT NULL,
+        source "public"."price_source_enum" NOT NULL,
         market_cap DECIMAL(18,2),
         change DECIMAL(18,2),
         change_percent DECIMAL(10,4),

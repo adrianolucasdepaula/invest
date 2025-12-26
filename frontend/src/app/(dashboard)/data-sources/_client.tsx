@@ -212,6 +212,26 @@ const getSourceLabel = (source: string) => {
     yahoofinance: 'Yahoo Finance',
     oplab: 'OpLab',
     kinvo: 'Kinvo',
+    // FASE 95-96: Investing + B3
+    investing: 'Investing.com',
+    b3: 'B3 (CVM)',
+    idiv: 'IDIV (B3)',
+    // FASE 97: OAuth Scrapers
+    maisretorno: 'Mais Retorno',
+    // FASE 98: Credentials Scrapers
+    advfn: 'ADVFN',
+    // FASE 100: Economic Data Scrapers
+    anbima: 'ANBIMA',
+    fred: 'FRED (Federal Reserve)',
+    ipeadata: 'IPEA Data',
+    // FASE 101: Wheel Turbinada Scrapers
+    statusinvest_dividends: 'Status Invest Dividendos',
+    stock_lending: 'B3 Aluguel de Ações',
+    // FASE 102: New Scrapers
+    coingecko: 'CoinGecko',
+    ibge: 'IBGE SIDRA',
+    oceans14: 'Oceans14',
+    einvestidor: 'E-Investidor',
   };
   return labels[source] || source;
 };

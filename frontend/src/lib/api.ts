@@ -2,6 +2,40 @@ import axios, { AxiosInstance, AxiosError } from 'axios';
 import Cookies from 'js-cookie';
 import { logger } from './logger';
 
+// =============================================================================
+// DYNAMIC URL RESOLUTION FOR SSR + CLIENT-SIDE
+// =============================================================================
+// Problem: In Next.js with Docker, the module is loaded ONCE during SSR and
+// the same instance is reused on the client. If we set the URL at module load
+// time, SSR sets it to 'invest_backend:3101' which doesn't work from the browser.
+//
+// Solution: Determine the URL at REQUEST time, not at module load time.
+// =============================================================================
+
+/**
+ * Get the correct API base URL based on execution context.
+ * Called at REQUEST time, not module load time.
+ */
+function getApiBaseUrl(): string {
+  const isServer = typeof window === 'undefined';
+  if (isServer) {
+    return process.env.INTERNAL_API_URL || 'http://invest_backend:3101/api/v1';
+  }
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api/v1';
+}
+
+/**
+ * Get the correct OAuth base URL based on execution context.
+ */
+function getOAuthBaseUrl(): string {
+  const isServer = typeof window === 'undefined';
+  if (isServer) {
+    return process.env.INTERNAL_OAUTH_URL || 'http://oauth-service:8080';
+  }
+  return process.env.NEXT_PUBLIC_OAUTH_URL || 'http://localhost:8080';
+}
+
+// Legacy constants for backward compatibility (used by standalone functions)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api/v1';
 const OAUTH_BASE_URL = process.env.NEXT_PUBLIC_OAUTH_URL || 'http://localhost:8080';
 
@@ -31,8 +65,9 @@ class ApiClient {
   private client: AxiosInstance;
 
   constructor() {
+    // NOTE: Do NOT set baseURL here - it will be set dynamically in the request interceptor
+    // This is required for proper SSR + client-side hydration in Docker
     this.client = axios.create({
-      baseURL: API_BASE_URL,
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -46,6 +81,13 @@ class ApiClient {
     // Request interceptor
     this.client.interceptors.request.use(
       config => {
+        // DYNAMIC BASE URL: Set at request time based on execution context
+        // This fixes SSR + client hydration in Docker where SSR uses invest_backend:3101
+        // but client needs localhost:3101
+        if (!config.baseURL) {
+          config.baseURL = getApiBaseUrl();
+        }
+
         const token = Cookies.get('access_token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
@@ -617,7 +659,7 @@ class ApiClient {
   // Note: These use direct connection to api-service
   private getOAuthClient() {
     return axios.create({
-      baseURL: OAUTH_BASE_URL,
+      baseURL: getOAuthBaseUrl(), // Dynamic URL based on SSR vs client context
       timeout: 150000, // OAuth operations can take longer (150s for heavy sites like ADVFN)
       headers: {
         'Content-Type': 'application/json',
@@ -863,10 +905,11 @@ export const api = new ApiClient();
 /**
  * Create a standalone axios instance for Turbopack-safe calls
  * This avoids class method resolution issues in Turbopack HMR
+ * Uses dynamic URL resolution for SSR + client-side hydration compatibility
  */
 function createStandaloneClient() {
   const client = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: getApiBaseUrl(), // Dynamic URL based on SSR vs client context
     timeout: 30000,
     headers: {
       'Content-Type': 'application/json',
@@ -1146,5 +1189,85 @@ export async function getWheelWeeklyScheduleApi(strategyId: string) {
 export async function getWheelAnalyticsApi(strategyId: string) {
   const client = createStandaloneClient();
   const response = await client.get(`/wheel/strategies/${strategyId}/analytics`);
+  return response.data;
+}
+
+// FASE 101.4: Backtest API Functions
+// ========================================
+
+/**
+ * Create and start a new backtest - Turbopack-safe standalone function
+ */
+export async function createBacktestApi(data: {
+  assetId: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  config: {
+    initialCapital: number;
+    targetDelta: number;
+    minROE: number;
+    minDividendYield: number;
+    maxDebtEbitda: number;
+    minMargemLiquida?: number;
+    expirationDays?: number;
+    weeklyDistribution: boolean;
+    maxWeeklyAllocation?: number;
+    reinvestDividends: boolean;
+    includeLendingIncome: boolean;
+  };
+}) {
+  const client = createStandaloneClient();
+  const response = await client.post('/wheel/backtest', data);
+  return response.data;
+}
+
+/**
+ * Get all backtests for the user - Turbopack-safe standalone function
+ */
+export async function getBacktestsApi(params?: {
+  assetId?: string;
+  status?: 'running' | 'completed' | 'failed';
+  limit?: number;
+  offset?: number;
+}) {
+  const client = createStandaloneClient();
+  const response = await client.get('/wheel/backtest', { params });
+  return response.data;
+}
+
+/**
+ * Get a specific backtest result - Turbopack-safe standalone function
+ */
+export async function getBacktestApi(id: string) {
+  const client = createStandaloneClient();
+  const response = await client.get(`/wheel/backtest/${id}`);
+  return response.data;
+}
+
+/**
+ * Get backtest progress - Turbopack-safe standalone function
+ */
+export async function getBacktestProgressApi(id: string) {
+  const client = createStandaloneClient();
+  const response = await client.get(`/wheel/backtest/${id}/progress`);
+  return response.data;
+}
+
+/**
+ * Delete a backtest - Turbopack-safe standalone function
+ */
+export async function deleteBacktestApi(id: string) {
+  const client = createStandaloneClient();
+  const response = await client.delete(`/wheel/backtest/${id}`);
+  return response.data;
+}
+
+/**
+ * Compare two backtests - Turbopack-safe standalone function
+ */
+export async function compareBacktestsApi(id1: string, id2: string) {
+  const client = createStandaloneClient();
+  const response = await client.get(`/wheel/backtest/compare/${id1}/${id2}`);
   return response.data;
 }

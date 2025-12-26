@@ -390,6 +390,75 @@ export class ScraperConfigService {
   }
 
   /**
+   * Atualiza perfil existente (apenas custom, não system)
+   *
+   * GAP-001: Implementação de updateProfile() endpoint
+   */
+  async updateProfile(
+    id: string,
+    dto: UpdateProfileDto,
+    userId?: string,
+  ): Promise<ScraperExecutionProfile> {
+    const profile = await this.profileRepo.findOne({ where: { id } });
+
+    if (!profile) {
+      throw new NotFoundException(`Profile ${id} not found`);
+    }
+
+    if (profile.isSystem) {
+      throw new BadRequestException(
+        'System profiles cannot be modified. Create a custom profile instead.',
+      );
+    }
+
+    // Validar scraperIds existem
+    const scrapers = await this.scraperConfigRepo.find({
+      where: { scraperId: In(dto.config.scraperIds) },
+    });
+
+    if (scrapers.length !== dto.config.scraperIds.length) {
+      throw new BadRequestException('One or more scraperIds are invalid');
+    }
+
+    // Validar priorityOrder contém TODOS os scraperIds exatamente uma vez
+    if (dto.config.priorityOrder.length !== dto.config.scraperIds.length) {
+      throw new BadRequestException(
+        'priorityOrder must contain ALL scraperIds exactly once',
+      );
+    }
+
+    // Verificar se todos os scraperIds estão no priorityOrder
+    const prioritySet = new Set(dto.config.priorityOrder);
+    const hasAllScrapers = dto.config.scraperIds.every((id) => prioritySet.has(id));
+
+    if (!hasAllScrapers) {
+      throw new BadRequestException(
+        'priorityOrder must contain all scraperIds from config.scraperIds',
+      );
+    }
+
+    // Capturar estado antes para audit
+    const before = {
+      name: profile.name,
+      displayName: profile.displayName,
+      description: profile.description,
+      isDefault: profile.isDefault,
+      config: profile.config,
+    };
+
+    // Aplicar mudanças
+    Object.assign(profile, dto);
+    const updated = await this.profileRepo.save(profile);
+
+    // Audit trail
+    await this.logAudit('UPDATE', null, { before, after: updated }, userId, id);
+
+    this.logger.log(`[UPDATE-PROFILE] ✅ Profile ${id} (${profile.name}) updated successfully`);
+
+    return updated;
+  }
+
+  /**
    * Deleta perfil (apenas custom, não system)
    */
   async deleteProfile(id: string): Promise<void> {

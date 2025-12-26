@@ -347,35 +347,70 @@ class FundamentusScraper(BaseScraper):
         Parse numeric value from text
         Handles Brazilian number format (comma as decimal separator)
         Handles percentages
-        Handles billions/millions notation
+        Handles billions/millions/thousands notation (B, BI, M, MI, K, T)
         Returns None for non-numeric values
+
+        Examples:
+        - "1.234.567,89" → 1234567.89
+        - "1,5 Bi" → 1500000000
+        - "500 Mi" → 500000000
+        - "10,5 K" → 10500
+        - "15,75%" → 15.75
+        - "R$ 123,45" → 123.45
         """
         if not value_text or value_text == "-":
             return None
 
-        # Quick check: if it contains letters (except R$), it's not a number
-        # This avoids trying to parse company names, etc.
-        if any(c.isalpha() and c not in 'R$' for c in value_text):
-            return None
-
         try:
-            # Remove common prefixes
-            value_text = value_text.replace("R$", "").strip()
+            # Normalize: lowercase and strip whitespace
+            text = value_text.lower().strip()
 
-            # Check for percentage
-            is_percent = "%" in value_text
-            value_text = value_text.replace("%", "").strip()
+            # Remove common prefixes
+            text = text.replace("r$", "").strip()
+
+            # Check for percentage (preserve info but remove symbol)
+            text = text.replace("%", "").strip()
+
+            # Detect and handle magnitude suffixes BEFORE removing letters
+            multiplier = 1
+
+            # Quadrillion (Q, QI) - 10^15 (Quadrilhão brasileiro)
+            if " qi" in text or text.endswith("qi") or " q" in text or text.endswith("q"):
+                multiplier = 1_000_000_000_000_000  # 10^15
+                text = re.sub(r'\s*qi?\s*$', '', text, flags=re.IGNORECASE)
+            # Trillion (T)
+            elif " t" in text or text.endswith("t"):
+                multiplier = 1_000_000_000_000
+                text = re.sub(r'\s*t\s*$', '', text)
+            # Billion (B, BI, Bi)
+            elif " bi" in text or text.endswith("bi") or " b" in text or text.endswith("b"):
+                multiplier = 1_000_000_000
+                # Remove bi/b suffix with optional preceding space
+                text = re.sub(r'\s*bi?\s*$', '', text)
+            # Million (M, MI, Mi)
+            elif " mi" in text or text.endswith("mi") or " m" in text or text.endswith("m"):
+                multiplier = 1_000_000
+                text = re.sub(r'\s*mi?\s*$', '', text)
+            # Thousand (K)
+            elif " k" in text or text.endswith("k"):
+                multiplier = 1_000
+                text = re.sub(r'\s*k\s*$', '', text)
+
+            # After handling suffixes, reject if there are still letters
+            # (except for edge cases like company names that slipped through)
+            if any(c.isalpha() for c in text):
+                return None
 
             # Replace Brazilian decimal separator
             # Thousands: 1.234.567 → 1234567
             # Decimal: 123,45 → 123.45
-            value_text = value_text.replace(".", "").replace(",", ".")
+            text = text.replace(".", "").replace(",", ".")
 
-            # Parse number
-            parsed = float(value_text)
+            # Handle negative values
+            text = text.replace("−", "-").replace("–", "-")  # Unicode minus signs
 
-            # Convert percentage to decimal if needed
-            # (keep as-is for now, let the consumer decide)
+            # Parse number and apply multiplier
+            parsed = float(text) * multiplier
 
             return parsed
 

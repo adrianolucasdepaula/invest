@@ -11664,6 +11664,7 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 139** | IDIV Historical Backfill (2019-2025) + B3 Date Parameter Discovery | ✅ 100% | 2025-12-22 |
 | **FASE 140** | Turbopack Cache Fix - system-manager.ps1 Integration | ✅ 100% | 2025-12-23 |
 | **FASE 141** | LLM Local Feasibility Study (100% Gratuito) | ✅ 100% | 2025-12-23 |
+| **FASE 142** | Dynamic Scraper Configuration System | ✅ 100% | 2025-12-25 |
 | **FASE 101.4** | Wheel Turbinada Backtesting Engine | ✅ 100% | 2025-12-21 |
 
 **Funcionalidades Implementadas:**
@@ -11735,8 +11736,8 @@ Sistema em estado de manutenção e evolução contínua.
 
 ---
 
-**Ultima Atualizacao:** 2025-12-23
-**Total de Fases:** 144 completas (incluindo sub-fases)
-**Versao:** 1.40.0
+**Ultima Atualizacao:** 2025-12-25
+**Total de Fases:** 145 completas (incluindo sub-fases)
+**Versao:** 1.41.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0
