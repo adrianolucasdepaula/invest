@@ -167,14 +167,14 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
                 <span
                   className={cn(
                     'font-semibold',
-                    config.successRate >= 90
+                    Number(config.successRate) >= 90
                       ? 'text-green-600 dark:text-green-400'
-                      : config.successRate >= 70
+                      : Number(config.successRate) >= 70
                         ? 'text-yellow-600 dark:text-yellow-400'
                         : 'text-red-600 dark:text-red-400',
                   )}
                 >
-                  {config.successRate.toFixed(1)}%
+                  {Number(config.successRate).toFixed(1)}%
                 </span>
               </span>
               <span>Tempo Médio: {config.avgResponseTime}ms</span>

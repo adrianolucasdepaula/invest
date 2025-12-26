@@ -64,7 +64,7 @@ export interface ScraperConfig {
   priority: number;
   enabledFor: string[] | null;
   parameters: ScraperParameters;
-  successRate: number;
+  successRate: number | string; // Backend serializa Decimal como string "0.00"
   avgResponseTime: number;
   lastSuccess: string | null;
   lastError: string | null;
