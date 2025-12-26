@@ -20,6 +20,7 @@ import {
   CreateProfileDto,
   UpdateProfileDto,
 } from './dto';
+import { CacheService } from '@/common/services/cache.service';
 
 /**
  * ScraperConfigService
@@ -46,6 +47,7 @@ export class ScraperConfigService {
     private profileRepo: Repository<ScraperExecutionProfile>,
     @InjectRepository(ScraperConfigAudit)
     private auditRepo: Repository<ScraperConfigAudit>,
+    private cacheService: CacheService, // GAP-005: Redis cache
   ) {}
 
   // ============================================================================
@@ -89,6 +91,49 @@ export class ScraperConfigService {
   }
 
   // ============================================================================
+  // CACHE INVALIDATION (GAP-005)
+  // ============================================================================
+
+  /**
+   * Invalida cache de scrapers
+   *
+   * GAP-005: Deve ser chamado após qualquer modificação que afete scrapers ativos
+   */
+  private async invalidateScraperCache(category?: string): Promise<void> {
+    try {
+      if (category) {
+        // Invalidar cache específico de uma categoria
+        // Cache keys: enabled_scrapers:<category>:<ticker|all>
+        // Como não temos acesso direto ao Redis SCAN, vamos invalidar individual
+        await this.cacheService.del(`enabled_scrapers:${category}:all`);
+        this.logger.debug(`[CACHE] Invalidated category ${category}`);
+      } else {
+        // Invalidar todos os caches de scrapers (sem ticker específico)
+        // Para ser mais eficiente, vamos invalidar as categorias principais
+        const categories = [
+          'fundamental',
+          'technical',
+          'news',
+          'ai',
+          'market_data',
+          'crypto',
+          'options',
+          'macro',
+        ];
+
+        for (const cat of categories) {
+          await this.cacheService.del(`enabled_scrapers:${cat}:all`);
+        }
+
+        this.logger.debug('[CACHE] Invalidated all scraper cache');
+      }
+    } catch (error) {
+      // Não falhar operação principal se invalidação falhar
+      this.logger.error(`[CACHE] Falha ao invalidar cache: ${error.message}`);
+    }
+  }
+
+  // ============================================================================
   // MÉTODOS PRINCIPAIS (Usados pelo ScrapersService)
   // ============================================================================
 
@@ -108,39 +153,50 @@ export class ScraperConfigService {
   ): Promise<ScraperConfig[]> {
     this.logger.debug(`[GET-ENABLED] ticker=${ticker}, category=${category}`);
 
-    // Buscar todos scrapers ativos da categoria
-    const configs = await this.scraperConfigRepo.find({
-      where: {
-        isEnabled: true,
-        category: category as any,
+    // GAP-005: Cache com Redis (TTL 5 min = 300s)
+    const cacheKey = `enabled_scrapers:${category}:${ticker || 'all'}`;
+
+    return this.cacheService.wrap<ScraperConfig[]>(
+      cacheKey,
+      async () => {
+        this.logger.debug(`[CACHE-MISS] Fetching from DB: ${cacheKey}`);
+
+        // Buscar todos scrapers ativos da categoria
+        const configs = await this.scraperConfigRepo.find({
+          where: {
+            isEnabled: true,
+            category: category as any,
+          },
+        });
+
+        // Filtrar por ticker se especificado
+        const filtered = ticker
+          ? configs.filter(
+              (c) =>
+                c.enabledFor === null || // Habilitado para todos
+                c.enabledFor.includes(ticker), // Habilitado para este ticker
+            )
+          : configs;
+
+        // VALIDAÇÃO CRÍTICA: Mínimo 2 scrapers
+        if (filtered.length < 2) {
+          this.logger.warn(
+            `Ticker ${ticker}: Apenas ${filtered.length} scraper(s) disponível(is). ` +
+              `Mínimo 2 necessário. Sistema usará fallback Python se necessário.`,
+          );
+        }
+
+        // Ordenar por prioridade (1 = maior)
+        const sorted = filtered.sort((a, b) => a.priority - b.priority);
+
+        this.logger.debug(
+          `[GET-ENABLED] Retornando ${sorted.length} scrapers: ${sorted.map((s) => s.scraperId).join(', ')}`,
+        );
+
+        return sorted;
       },
-    });
-
-    // Filtrar por ticker se especificado
-    const filtered = ticker
-      ? configs.filter(
-          (c) =>
-            c.enabledFor === null || // Habilitado para todos
-            c.enabledFor.includes(ticker), // Habilitado para este ticker
-        )
-      : configs;
-
-    // VALIDAÇÃO CRÍTICA: Mínimo 2 scrapers
-    if (filtered.length < 2) {
-      this.logger.warn(
-        `Ticker ${ticker}: Apenas ${filtered.length} scraper(s) disponível(is). ` +
-          `Mínimo 2 necessário. Sistema usará fallback Python se necessário.`,
-      );
-    }
-
-    // Ordenar por prioridade (1 = maior)
-    const sorted = filtered.sort((a, b) => a.priority - b.priority);
-
-    this.logger.debug(
-      `[GET-ENABLED] Retornando ${sorted.length} scrapers: ${sorted.map((s) => s.scraperId).join(', ')}`,
+      300, // TTL 5 minutos
     );
-
-    return sorted;
   }
 
   // ============================================================================
@@ -184,7 +240,12 @@ export class ScraperConfigService {
     // Validar antes de salvar
     await this.validateSingleConfig(config);
 
-    return this.scraperConfigRepo.save(config);
+    const updated = await this.scraperConfigRepo.save(config);
+
+    // GAP-005: Invalidar cache após mudança
+    await this.invalidateScraperCache(updated.category);
+
+    return updated;
   }
 
   /**
@@ -230,6 +291,9 @@ export class ScraperConfigService {
       const updated = await queryRunner.manager.save(ScraperConfig, config);
 
       await queryRunner.commitTransaction();
+
+      // GAP-005: Invalidar cache após mudança
+      await this.invalidateScraperCache(config.category);
 
       this.logger.log(
         `[TOGGLE] ✅ ${config.scraperName} ${newState ? 'ativado' : 'desativado'}`,
@@ -285,6 +349,9 @@ export class ScraperConfigService {
       }
 
       await queryRunner.commitTransaction();
+
+      // GAP-005: Invalidar cache após mudança
+      await this.invalidateScraperCache(); // Invalidar todas categorias (não sabemos quais foram afetadas)
 
       // GAP-006: Registrar audit
       await this.logAudit('BULK_TOGGLE', null, {
@@ -536,6 +603,9 @@ export class ScraperConfigService {
       // Gaps não afetam funcionalidade pois usamos ORDER BY priority
 
       await queryRunner.commitTransaction();
+
+      // GAP-005: Invalidar cache após mudanças
+      await this.invalidateScraperCache(); // Invalidar todas categorias
 
       // GAP-006: Registrar audit
       await this.logAudit(
