@@ -12,6 +12,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import type { AxiosError } from 'axios';
 import type {
   ScraperConfig,
   ScraperExecutionProfile,
@@ -24,6 +25,21 @@ import type {
   UpdateProfileDto,
 } from '@/types/scraper-config';
 import * as scraperConfigApi from '../api/scraper-config.api';
+
+// ============================================================================
+// ERROR TYPES
+// ============================================================================
+
+/**
+ * Interface para erros da API
+ * Zero Tolerance: Substituir error: any por tipo específico
+ */
+interface ApiErrorResponse {
+  message?: string;
+  statusCode?: number;
+  error?: string;
+  details?: Record<string, any>;
+}
 
 // ============================================================================
 // QUERY KEYS
@@ -125,8 +141,10 @@ export function useUpdateScraperConfig() {
 
       toast.success(`Scraper ${updatedConfig.scraperName} atualizado com sucesso`);
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Erro ao atualizar scraper');
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      const message = axiosError?.response?.data?.message || 'Erro ao atualizar scraper';
+      toast.error(message);
     },
   });
 }
@@ -149,10 +167,10 @@ export function useToggleScraperEnabled() {
       const status = updatedConfig.isEnabled ? 'ativado' : 'desativado';
       toast.success(`Scraper ${updatedConfig.scraperName} ${status}`);
     },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || 'Erro ao alternar scraper',
-      );
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      const message = axiosError?.response?.data?.message || 'Erro ao alternar scraper';
+      toast.error(message);
     },
   });
 }
@@ -175,10 +193,10 @@ export function useBulkToggle() {
       const status = variables.enabled ? 'ativados' : 'desativados';
       toast.success(`${response.updated} scrapers ${status}`);
     },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || 'Erro ao atualizar scrapers em lote',
-      );
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      const message = axiosError?.response?.data?.message || 'Erro ao atualizar scrapers em lote';
+      toast.error(message);
     },
   });
 }
@@ -199,10 +217,10 @@ export function useUpdatePriorities() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.scraperConfigs });
       toast.success('Prioridades atualizadas');
     },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || 'Erro ao atualizar prioridades',
-      );
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      const message = axiosError?.response?.data?.message || 'Erro ao atualizar prioridades';
+      toast.error(message);
     },
   });
 }
@@ -223,8 +241,10 @@ export function useCreateProfile() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.executionProfiles });
       toast.success(`Perfil "${newProfile.displayName}" criado com sucesso`);
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Erro ao criar perfil');
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      const message = axiosError?.response?.data?.message || 'Erro ao criar perfil';
+      toast.error(message);
     },
   });
 }
@@ -249,10 +269,10 @@ export function useUpdateProfile() {
 
       toast.success(`Perfil "${updated.displayName}" atualizado com sucesso`);
     },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || 'Erro ao atualizar perfil',
-      );
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      const message = axiosError?.response?.data?.message || 'Erro ao atualizar perfil';
+      toast.error(message);
     },
   });
 }
@@ -273,10 +293,10 @@ export function useDeleteProfile() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.executionProfiles });
       toast.success('Perfil deletado');
     },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || 'Erro ao deletar perfil',
-      );
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      const message = axiosError?.response?.data?.message || 'Erro ao deletar perfil';
+      toast.error(message);
     },
   });
 }
@@ -301,8 +321,10 @@ export function useApplyProfile() {
 
       toast.success(response.message);
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Erro ao aplicar perfil');
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      const message = axiosError?.response?.data?.message || 'Erro ao aplicar perfil';
+      toast.error(message);
     },
   });
 }
