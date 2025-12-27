@@ -94,7 +94,6 @@ export function AssetsPageClient() {
   useEffect(() => {
     const interval = setInterval(
       () => {
-        console.log('Auto-refreshing assets...');
         refetch();
       },
       60 * 60 * 1000
@@ -147,7 +146,6 @@ export function AssetsPageClient() {
       } else {
         // Atualizar todos ou apenas com opções
         const hasOptionsOnly = config.mode === 'with_options';
-        console.log('[SYNC ALL] mode:', config.mode, 'hasOptionsOnly:', hasOptionsOnly);
         await api.bulkUpdateAllAssetsFundamentals(undefined, hasOptionsOnly);
       }
       setIsUpdateModalOpen(false);

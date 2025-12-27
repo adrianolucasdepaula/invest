@@ -144,22 +144,8 @@ export function AssetDetailPageClient({ params }: { params: Promise<{ ticker: st
         };
 
         setTechnicalData(transformedData);
-
-        // Log metadata (cache hit/miss, duration, errors)
-        console.log('Technical data metadata:', data.metadata);
-        console.log(
-          'Transformed indicators keys:',
-          transformedData.indicators ? Object.keys(transformedData.indicators) : 'null'
-        );
-
-        // Show warning if insufficient data
-        if (data.metadata.error === 'INSUFFICIENT_DATA') {
-          console.warn(
-            `Insufficient data: ${data.metadata.available}/${data.metadata.required} points`
-          );
-        }
       } catch (error) {
-        console.error('Error fetching technical data:', error);
+        setTechnicalError(error instanceof Error ? error.message : 'Failed to fetch technical data');
       } finally {
         setTechnicalLoading(false);
       }

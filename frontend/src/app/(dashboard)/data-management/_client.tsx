@@ -33,7 +33,6 @@ export function DataManagementPageClient() {
    * Refresh sync status to show updated data
    */
   const handleSyncStarted = () => {
-    console.log('[DATA MANAGEMENT] Sync started, refreshing status...');
     refetchSyncStatus();
   };
 
@@ -42,7 +41,6 @@ export function DataManagementPageClient() {
    * Refresh sync status to show final results
    */
   const handleSyncCompleted = () => {
-    console.log('[DATA MANAGEMENT] Sync completed, refreshing status...');
     refetchSyncStatus();
   };
 

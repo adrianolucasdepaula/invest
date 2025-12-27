@@ -1,10 +1,5 @@
 'use client';
 
-// TOP LEVEL DEBUG - Module load
-console.log('🟢 MODULE LOADED: _client.tsx');
-if (typeof window !== 'undefined') {
-  console.log('🟢 WINDOW EXISTS - Client-side');
-}
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useHydrated } from '@/hooks/useHydrated';
@@ -158,8 +153,6 @@ export function BacktestPageClient() {
   // TEST: Confirm client-side JavaScript is executing
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      window.console.log('=== CLIENT HYDRATION CONFIRMED ===');
-      window.console.log('window.location:', window.location.href);
     }
   }, []);
   const [activeTab, setActiveTab] = useState('history');
@@ -221,7 +214,6 @@ export function BacktestPageClient() {
 
   // IMMEDIATE DEBUG - Runs on EVERY render
   if (typeof window !== 'undefined') {
-    console.error('🔴 RENDER DEBUG:', { assetsData, loadingAssets, assetsError });
   }
 
   // DEBUG: useEffect to track client-side data changes
@@ -231,13 +223,6 @@ export function BacktestPageClient() {
       const msg = `ALERT DEBUG:\nassetsData: ${Array.isArray(assetsData) ? assetsData.length + ' items' : 'NOT ARRAY'}\nloading: ${loadingAssets}\nerror: ${assetsError ? 'YES' : 'NO'}`;
       window.alert(msg);
     }
-    console.log('[CLIENT DEBUG] assetsData changed:', {
-      hasData: !!assetsData,
-      isArray: Array.isArray(assetsData),
-      length: Array.isArray(assetsData) ? assetsData.length : 0,
-      isLoading: loadingAssets,
-      error: assetsError,
-    });
   }, [assetsData, loadingAssets, assetsError]);
 
   // Mutations
@@ -260,12 +245,6 @@ export function BacktestPageClient() {
 
   // Get all assets and apply optional filters
   const allAssets: AssetForBacktest[] = useMemo(() => {
-    // DEBUG v2: Log what assetsData contains
-    console.log('[DEBUG v2] assetsData:', assetsData);
-    console.log('[DEBUG v2] typeof assetsData:', typeof assetsData);
-    console.log('[DEBUG v2] Array.isArray(assetsData):', Array.isArray(assetsData));
-    console.log('[DEBUG v2] loadingAssets:', loadingAssets);
-
     // API returns array directly, not {data: [...]}
     if (!assetsData || !Array.isArray(assetsData)) return [];
     return assetsData.map((asset: any) => ({

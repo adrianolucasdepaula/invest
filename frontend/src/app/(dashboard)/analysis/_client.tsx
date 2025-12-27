@@ -250,8 +250,6 @@ export function AnalysisPageClient() {
       }
 
       const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/analysis/${analysis.asset.ticker}/${analysis.type}`;
-      console.log('[Atualizar] Requesting URL:', apiUrl);
-      console.log('[Atualizar] Token:', token ? 'exists' : 'missing');
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -261,13 +259,9 @@ export function AnalysisPageClient() {
         },
       });
 
-      console.log('[Atualizar] Response status:', response.status);
-      console.log('[Atualizar] Response URL:', response.url);
-
       if (!response.ok) {
         // Capturar o corpo da resposta como texto primeiro
         const errorText = await response.text();
-        console.error(`[Atualizar] Erro ${response.status}:`, errorText);
 
         let errorMessage = '';
         try {
@@ -293,7 +287,6 @@ export function AnalysisPageClient() {
       // Refetch analyses after a short delay to allow processing
       setTimeout(() => refetch(), 2000);
     } catch (error: any) {
-      console.error('[Atualizar] Erro ao atualizar análise:', error);
       toast({
         title: 'Erro ao atualizar análise',
         description: error.message || 'Ocorreu um erro ao atualizar a análise. Tente novamente.',
@@ -360,7 +353,6 @@ export function AnalysisPageClient() {
       // Refetch analyses
       refetch();
     } catch (error: any) {
-      console.error('[Remover] Erro ao remover análise:', error);
       toast({
         title: 'Erro ao remover análise',
         description: error.message || 'Ocorreu um erro ao remover a análise. Tente novamente.',
@@ -457,7 +449,6 @@ export function AnalysisPageClient() {
       // Refetch analyses after a delay
       setTimeout(() => refetch(), 2000);
     } catch (error: any) {
-      console.error('[Bulk] Erro ao solicitar análises em massa:', error);
       toast({
         title: 'Erro ao solicitar análises',
         description: error.message || 'Ocorreu um erro ao solicitar as análises. Tente novamente.',

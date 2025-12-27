@@ -159,8 +159,8 @@ export function PortfolioPageClient() {
         name: 'Meu Portfólio',
         description: 'Portfólio principal de investimentos',
       });
-    } catch (error) {
-      console.error('Failed to create portfolio:', error);
+    } catch {
+      // Error is handled by React Query's mutation error state
     }
   };
 

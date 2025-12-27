@@ -107,7 +107,6 @@ export function ReportDetailPageClient() {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Download error:', error);
       alert(`Erro ao fazer download: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   };
