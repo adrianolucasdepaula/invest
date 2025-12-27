@@ -1718,6 +1718,93 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 
 ---
 
+## 🔐 LIMITAÇÕES DE SEGURANÇA CONHECIDAS
+
+### LIMITAÇÃO: Scraper Config - Role-Based Access Control (SEC-001)
+
+**Status:** ⏳ PLANEJADO
+**Severidade:** MÉDIA
+**Data Identificação:** 2025-12-26
+**Bloqueante:** NÃO
+
+**Problema:**
+- Endpoints de modificação de scraper config estão protegidos apenas com `JwtAuthGuard`
+- Qualquer usuário autenticado pode modificar scrapers e perfis
+- Não há validação de role (admin vs user)
+- Audit trail não registra userId real (sempre null em userId field)
+
+**Impacto:**
+- **Security concern:** Users comuns podem modificar configurações críticas do sistema
+- **Audit compliance:** Não sabemos qual usuário específico fez cada mudança
+- **Accountability:** Falta rastreabilidade por usuário individual
+
+**Mitigação Atual:**
+- Acesso via `/admin/scrapers` (frontend restringe por rota - UI only)
+- JWT obrigatório (não permite acesso anônimo)
+- Todos endpoints de modificação exigem autenticação
+- Audit trail registra todas ações (exceto userId)
+
+**Solução Planejada (FASE futura - SEC-001):**
+
+1. **Implementar RolesGuard:**
+   - Arquivo: `backend/src/api/auth/guards/roles.guard.ts`
+   - Verificar role do usuário no JWT payload
+   - Bloquear se role !== 'admin'
+
+2. **Criar Decorators:**
+   - `@Roles('admin')` - Especifica roles permitidas
+   - `@CurrentUser()` - Extrai usuário do JWT para inject no controller
+
+3. **Aplicar em Controller:**
+   ```typescript
+   @UseGuards(JwtAuthGuard, RolesGuard)  // Adicionar RolesGuard
+   @Controller('scraper-config')
+   export class ScraperConfigController {
+
+     @Roles('admin')  // Apenas admins
+     @Put(':id')
+     async update(
+       @Param('id') id: string,
+       @Body() dto: UpdateScraperConfigDto,
+       @CurrentUser() user: User,  // Capturar usuário
+     ) {
+       return this.scraperConfigService.update(id, dto, user.id);
+     }
+   }
+   ```
+
+4. **Atualizar Services:**
+   - Passar userId para método logAudit()
+   - Registrar userId real em scraper_config_audit table
+
+5. **Testar:**
+   - User comum tenta PUT /scraper-config/:id → 403 Forbidden
+   - Admin tenta PUT /scraper-config/:id → 200 OK
+   - Audit trail mostra userId correto
+
+**Estimativa:** 3-4h
+**Prioridade:** MÉDIA (não afeta funcionalidade core)
+**Bloqueador:** Nenhum (pode ser feito em FASE futura dedicada a Security)
+
+**Arquivos Afetados:**
+- `backend/src/api/scraper-config/scraper-config.controller.ts` (linha 39, 74: TODOs atuais)
+- `backend/src/api/auth/guards/roles.guard.ts` (criar novo)
+- `backend/src/api/auth/decorators/roles.decorator.ts` (criar novo)
+- `backend/src/api/auth/decorators/current-user.decorator.ts` (criar novo)
+
+**Referência:**
+- `prancy-napping-stroustrup.md` - Batch 1, Item 2: SEC-001
+- `CLAUDE.md` - Security Practices
+
+**Workaround Temporário:**
+- Frontend: Não expor rota `/admin/scrapers` para users comuns (apenas admins veem link)
+- Backend: Confiar que frontend restringe acesso
+- Audit: Aceitar userId null temporariamente
+
+**Nota:** Esta é uma limitação documentada e aceita para MVP. Segurança completa será implementada em FASE dedicada (SEC-001).
+
+---
+
 ## 📊 MÉTRICAS DE PROBLEMAS
 
 ### Resumo Geral

@@ -37,6 +37,7 @@ import {
  * - POST/PUT/PATCH/DELETE: Protegido (admin)
  *
  * TODO: Implementar RolesGuard para separar 'user' vs 'admin'
+ * DOCUMENTED: See KNOWN-ISSUES.md #SEC-001 (limitation accepted for MVP)
  *
  * FASE: Dynamic Scraper Configuration
  */
@@ -72,6 +73,7 @@ export class ScraperConfigController {
     @Param('id') id: string,
     @Body() dto: UpdateProfileDto,
     // TODO: @CurrentUser() user: User após SEC-001
+    // DOCUMENTED: See KNOWN-ISSUES.md #SEC-001 (userId tracking pending)
   ): Promise<ScraperExecutionProfile> {
     return this.scraperConfigService.updateProfile(id, dto);
   }
