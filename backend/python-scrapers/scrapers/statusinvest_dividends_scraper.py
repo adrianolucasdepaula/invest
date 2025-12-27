@@ -65,8 +65,10 @@ class StatusInvestDividendsScraper(BaseScraper):
         super().__init__(
             name="StatusInvestDividends",
             source=self.SOURCE_NAME,
-            requires_login=False,
+            requires_login=False,  # FASE 144 NOTE: Cloudflare may require cookies
         )
+        # BUGFIX FASE 144: Force non-headless to bypass Cloudflare
+        self._force_headed = True
 
     async def scrape(self, ticker: str) -> ScraperResult:
         """
@@ -85,24 +87,66 @@ class StatusInvestDividendsScraper(BaseScraper):
             if not self.page:
                 await self.initialize()
 
+            # BUGFIX FASE 144: Anti-Cloudflare detection
+            # Set realistic headers and viewport
+            await self.page.set_extra_http_headers({
+                'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Referer': 'https://www.google.com/',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'cross-site',
+                'Upgrade-Insecure-Requests': '1',
+            })
+
+            await self.page.set_viewport_size({"width": 1920, "height": 1080})
+
             # Build URL
             url = f"{self.BASE_URL}{ticker.lower()}"
             logger.info(f"[{self.name}] Navigating to {url}")
 
-            # Navigate (Playwright)
-            await self.page.goto(url, wait_until="load", timeout=60000)
+            # Navigate (Playwright) - wait for networkidle to ensure full load
+            await self.page.goto(url, wait_until="networkidle", timeout=90000)
 
-            # Small delay for JS execution
-            await asyncio.sleep(2)
+            # BUGFIX FASE 144: Wait for potential Cloudflare challenge (10s)
+            # Cloudflare typically shows challenge for 5-8 seconds
+            logger.info(f"[{self.name}] Waiting for potential Cloudflare challenge...")
+            await asyncio.sleep(10)
 
-            # Check if ticker exists
+            # Check if still on challenge page
+            current_url = self.page.url
+            if "challenge" in current_url.lower() or current_url != url:
+                logger.warning(f"[{self.name}] Still on challenge page, waiting additional 10s...")
+                await asyncio.sleep(10)
+
+            # Check if ticker exists or Cloudflare blocked
             page_source = await self.page.content()
+
+            # BUGFIX FASE 144: Detectar bloqueio Cloudflare
+            if "cloudflare" in page_source.lower() and "blocked" in page_source.lower():
+                logger.error(f"[{self.name}] Cloudflare blocked access to {ticker}")
+                return ScraperResult(
+                    success=False,
+                    error=f"Cloudflare blocked access (anti-bot detected). Try with authenticated cookies.",
+                    source=self.source,
+                )
+
             if "não encontrado" in page_source.lower() or "erro 404" in page_source.lower():
                 return ScraperResult(
                     success=False,
                     error=f"Ticker {ticker} not found",
                     source=self.source,
                 )
+
+            # DEBUG FASE 144: Salvar HTML para análise offline
+            try:
+                debug_file = f"statusinvest_{ticker.lower()}_debug.html"
+                with open(debug_file, "w", encoding="utf-8") as f:
+                    f.write(page_source)
+                logger.info(f"[{self.name}] HTML salvo em: {debug_file} ({len(page_source):,} bytes)")
+            except Exception as e:
+                logger.warning(f"[{self.name}] Failed to save debug HTML: {e}")
 
             # Scroll to load dividend section (may be lazy-loaded)
             await self._scroll_to_dividends()
@@ -190,10 +234,14 @@ class StatusInvestDividendsScraper(BaseScraper):
                     break
 
             if table:
+                logger.info(f"[{ticker}] Usando Strategy 1: _extract_from_table")
                 dividends.extend(self._extract_from_table(table, ticker))
+            else:
+                logger.warning(f"[{ticker}] Nenhuma tabela encontrada! Tentando estratégias alternativas...")
 
             # Strategy 2: Look for dividend cards/rows (alternative structure)
             if not dividends:
+                logger.info(f"[{ticker}] Usando Strategy 2: _extract_from_card")
                 card_selectors = [
                     "div[class*='provento'] .card",
                     "div[class*='dividend'] .row",
@@ -211,6 +259,7 @@ class StatusInvestDividendsScraper(BaseScraper):
 
             # Strategy 3: Look for data in structured divs (grid layout)
             if not dividends:
+                logger.info(f"[{ticker}] Usando Strategy 3: _extract_from_grid")
                 dividends.extend(self._extract_from_grid(soup, ticker))
 
             # Deduplicate by (data_ex, tipo)
@@ -258,9 +307,15 @@ class StatusInvestDividendsScraper(BaseScraper):
                         "status": "pago",  # assume paid if in history
                     }
 
+                    # BUGFIX FASE 144: Coletar TODOS os valores primeiro, depois validar
+                    # Problema anterior: pegava primeiro valor encontrado (podia ser yield% ou total)
+                    found_values = []  # Lista de (index, value) para debug
+                    all_cells_text = []  # DEBUG: Armazenar texto de todas as células
+
                     # Parse cells based on content
                     for i, cell in enumerate(cells):
                         text = cell.get_text().strip()
+                        all_cells_text.append(f"[{i}]='{text}'")  # DEBUG
 
                         # Detect type
                         text_lower = text.lower()
@@ -278,11 +333,40 @@ class StatusInvestDividendsScraper(BaseScraper):
                                 dividend["data_pagamento"] = parsed_date
                             continue
 
-                        # Detect value (R$ X,XX format)
+                        # Detect value (R$ X,XX format) - COLETAR TODOS
                         parsed_value = self._parse_value(text)
                         if parsed_value is not None and parsed_value > 0:
-                            dividend["valor_bruto"] = parsed_value
-                            continue
+                            found_values.append((i, parsed_value))
+
+                    # DEBUG: Logar TODAS as células da linha
+                    logger.debug(f"{ticker} ROW DEBUG: {' | '.join(all_cells_text)}")
+
+                    # BUGFIX: Selecionar valor correto (valor POR AÇÃO, não total/yield)
+                    # Heurística: Para ações brasileiras, dividendos unitários raramente > R$ 2.00
+                    # Se encontrou múltiplos valores, pegar o MENOR razoável (ignora yields altos)
+                    if found_values:
+                        # Filtrar valores < R$ 10.00 (threshold razoável para dividendo unitário)
+                        reasonable_values = [(i, v) for i, v in found_values if v < 10.0]
+
+                        if reasonable_values:
+                            # Pegar o primeiro valor razoável (geralmente é "valor por ação")
+                            chosen_index, chosen_value = reasonable_values[0]
+                            dividend["valor_bruto"] = chosen_value
+
+                            # Debug log para investigação
+                            if len(found_values) > 1:
+                                logger.debug(
+                                    f"{ticker} linha com múltiplos valores: {found_values}, "
+                                    f"escolhido: R$ {chosen_value:.4f} (coluna {chosen_index})"
+                                )
+                        else:
+                            # Todos os valores > R$ 10 (suspeito), logar aviso
+                            logger.warning(
+                                f"{ticker} valores suspeitos (todos > R$ 10): {found_values}"
+                            )
+                            # Usar o menor mesmo assim
+                            chosen_index, chosen_value = min(found_values, key=lambda x: x[1])
+                            dividend["valor_bruto"] = chosen_value
 
                     # Calculate valor_liquido based on tipo
                     if dividend["valor_bruto"]:
@@ -359,20 +443,32 @@ class StatusInvestDividendsScraper(BaseScraper):
 
             # Find all elements containing 'R$' (likely dividend values)
             value_elements = soup.find_all(string=lambda t: t and 'R$' in t)
+            logger.debug(f"{ticker} _extract_from_grid: Found {len(value_elements)} elements with R$")
 
-            for elem in value_elements:
+            for idx, elem in enumerate(value_elements):
                 parent = elem.parent
                 if not parent:
                     continue
 
-                # Go up to find container with date
-                container = parent.parent or parent
-                container_text = container.get_text()
+                # BUGFIX FASE 144: Subir mais na árvore para capturar contexto completo
+                # parent.parent.parent geralmente contém a linha completa com tipo + valor + datas
+                container = parent.parent.parent or parent.parent or parent
+                container_text = container.get_text(separator=" ", strip=True)
+
+                # DEBUG: Logar primeiros 5 containers
+                if idx < 5:
+                    logger.debug(f"{ticker} Container {idx} (len={len(container_text)}): {container_text[:200]}...")
+
+                # Skip se container vazio ou muito pequeno
+                if not container_text or len(container_text) < 5:
+                    continue
 
                 # Check if container has dividend-like data
                 if self._looks_like_dividend(container_text):
+                    logger.debug(f"{ticker} Container aceito como dividendo: {container_text[:200]}...")
                     dividend = self._parse_dividend_text(container_text, ticker)
                     if dividend:
+                        logger.info(f"{ticker} Dividend extracted: valor_bruto=R$ {dividend['valor_bruto']:.4f}, data_ex={dividend['data_ex']}, from text: {container_text[:150]}...")
                         dividends.append(dividend)
 
         except Exception as e:

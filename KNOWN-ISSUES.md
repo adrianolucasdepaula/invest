@@ -38,6 +38,91 @@ Este documento centraliza **todos os problemas conhecidos** encontrados durante 
 
 ---
 
+### Issue #DIVID-001: StatusInvest Dividends - Cloudflare Blocking (FASE 144)
+
+**Severidade:** MÉDIA (feature não-crítica)
+**Status:** 🔴 **BLOQUEADO** - Requer OAuth
+**Data Identificado:** 2025-12-27
+**Identificado Por:** Claude Sonnet 4.5 (Troubleshooting FASE 144)
+**Tempo Investigação:** 3.5 horas
+
+#### Descrição
+
+StatusInvest Dividends scraper bloqueado por Cloudflare Enterprise anti-bot protection.
+
+**Sintomas:**
+- HTML retornado: "Sorry, you have been blocked" (Cloudflare Ray ID: 9b4ca0e44b06ccfb)
+- Cloudflare challenge page ao invés de dados reais
+- Bypass parcial possível mas parsing falha (estrutura HTML dinâmica)
+- Valores incorretos extraídos: R$ 4.00, R$ 1111.00 (ao invés de R$ 0.67-0.94)
+
+#### Root Cause
+
+1. **Cloudflare Detection:**
+   - StatusInvest usa Cloudflare Enterprise
+   - Playwright detectado mesmo com stealth mode avançado
+   - Requer cookies de sessão OAuth autenticada
+
+2. **Estrutura HTML Dinâmica:**
+   - Não usa `<table>` tradicional para dividendos
+   - Dados em "Mapa de Calor de Proventos" carregado via JavaScript
+   - Seletores CSS genéricos capturam cabeçalhos ao invés de dados
+
+#### Investigação Realizada (3.5h)
+
+**Tentativas Implementadas:**
+- ✅ Playwright stealth mode (playwright-stealth library)
+- ✅ Headers realistas + User-Agent + Referer
+- ✅ Viewport 1920x1080 não-headless
+- ✅ Delays 10-20s para Cloudflare challenge
+- ✅ Captura HTML pós-bypass (967KB dados reais)
+- ✅ Análise estrutura HTML completa
+- ❌ Parsing estrutura dinâmica (seletores incorretos)
+- ❌ Acesso estável sem autenticação
+
+**Resultado:**
+- Bypass parcial: Cloudflare permite acesso após 10-20s delay
+- Parsing: Captura percentuais do mapa (11.11% → R$ 1111.00)
+- Dados individuais: Inacessíveis sem autenticação OAuth
+
+#### Solução
+
+**Temporária (FASE 144):**
+```typescript
+// backend/src/api/assets/assets-update.service.ts
+// Linhas 222-285: Dividends/Stock Lending COMENTADOS
+// Bulk update funciona apenas com fundamentals
+```
+
+**Definitiva (FASE 145 - Futura):**
+1. Implementar OAuth StatusInvest completo (Google + Email)
+2. Usar cookies autenticados no scraper
+3. API endpoint discovery (se disponível)
+4. Reescrever seletores CSS após autenticação
+5. Cross-validation com B3 oficial
+
+#### Workaround Disponíveis
+
+**Alternativas para dividendos:**
+1. **Fundamentus:** Dividend Yield (%) anual ✅ Funcional
+2. **B3 Oficial:** Dados via CSV download (manual)
+3. **InfoMoney:** Web scraping público (sem Cloudflare)
+
+#### Files Affected
+
+- `backend/python-scrapers/scrapers/statusinvest_dividends_scraper.py` (Cloudflare bypass implementado)
+- `backend/src/api/assets/assets-update.service.ts` (integração comentada - linhas 222-285)
+- `backend/src/api/assets/assets.module.ts` (imports DividendsModule/StockLendingModule comentados)
+- `KNOWN-ISSUES.md` (este documento)
+
+#### Cross-References
+
+- OAuth Implementation: Pendente FASE 145
+- Scraper Patterns: `backend/python-scrapers/PLAYWRIGHT_SCRAPER_PATTERN.md`
+- Cloudflare Bypass: `backend/python-scrapers/scrapers/statusinvest_dividends_scraper.py` (linhas 88-121)
+
+---
+
 ### Issue #SCRAPER_CONFIG_SIDEBAR: Falta Link na Sidebar para /admin/scrapers
 
 **Severidade:** BAIXA
