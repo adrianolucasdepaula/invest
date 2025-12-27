@@ -946,6 +946,69 @@ export class ScrapersService {
   }
 
   /**
+   * Coleta dados de dividendos para um ativo
+   * FASE 144: Public method para uso no AssetsUpdateService
+   *
+   * @param ticker - Ticker do ativo (e.g., 'PETR4')
+   * @returns Success status e array de dividendos
+   */
+  async fetchDividendsData(ticker: string): Promise<{
+    success: boolean;
+    data?: any[];
+    error?: string;
+  }> {
+    this.logger.log(`[DIVIDENDS] Fetching for ${ticker}`);
+
+    const result = await this.callPythonDividendsScraper(ticker);
+
+    if (result.success && result.data?.dividends) {
+      this.logger.log(`[DIVIDENDS] ${ticker}: ${result.data.dividends.length} encontrados`);
+      return {
+        success: true,
+        data: result.data.dividends,
+      };
+    }
+
+    return {
+      success: false,
+      error: result.error || 'Failed to fetch dividends',
+    };
+  }
+
+  /**
+   * Coleta dados de aluguel de ações para um ativo
+   * FASE 144: Public method para uso no AssetsUpdateService
+   *
+   * @param ticker - Ticker do ativo (e.g., 'PETR4')
+   * @returns Success status e dados de aluguel
+   */
+  async fetchStockLendingData(ticker: string): Promise<{
+    success: boolean;
+    data?: any;
+    error?: string;
+  }> {
+    this.logger.log(`[STOCK-LENDING] Fetching for ${ticker}`);
+
+    const result = await this.callPythonStockLendingScraper(ticker);
+
+    if (result.success && result.data) {
+      this.logger.log(
+        `[STOCK-LENDING] ${ticker}: Taxa ${result.data.taxa_aluguel_ano}% a.a.`,
+      );
+      // Converter objeto único em array para importFromScraper
+      return {
+        success: true,
+        data: [result.data],
+      };
+    }
+
+    return {
+      success: false,
+      error: result.error || 'Failed to fetch lending data',
+    };
+  }
+
+  /**
    * FASE 3 - Detecta se há discrepâncias significativas que justificam fallback
    *
    * Critérios para acionar fallback por discrepância:
@@ -2364,6 +2427,98 @@ export class ScrapersService {
         execution_time: data.execution_time || 0,
       };
     } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        execution_time: 0,
+      };
+    }
+  }
+
+  /**
+   * Chama Python API para scraper de dividendos
+   * FASE 144: Dividends integration
+   *
+   * @param ticker - Ticker do ativo (e.g., 'PETR4')
+   * @returns Dados de dividendos do StatusInvest
+   */
+  private async callPythonDividendsScraper(
+    ticker: string,
+  ): Promise<{
+    success: boolean;
+    data?: any;
+    error?: string;
+    execution_time: number;
+  }> {
+    try {
+      const url = `${this.pythonApiUrl}/api/scrapers/dividends/${ticker}`;
+      const response = await firstValueFrom(
+        this.httpService.get(url, { timeout: 65000 }),
+      );
+
+      const data = response.data;
+
+      if (data.success && data.data) {
+        return {
+          success: true,
+          data: data.data,
+          execution_time: data.response_time || 0,
+        };
+      }
+
+      return {
+        success: false,
+        error: data.error || 'No dividend data returned',
+        execution_time: data.response_time || 0,
+      };
+    } catch (error) {
+      this.logger.error(`Python dividends scraper failed for ${ticker}: ${error.message}`);
+      return {
+        success: false,
+        error: error.message,
+        execution_time: 0,
+      };
+    }
+  }
+
+  /**
+   * Chama Python API para scraper de aluguel de ações
+   * FASE 144: Stock Lending integration
+   *
+   * @param ticker - Ticker do ativo (e.g., 'PETR4')
+   * @returns Taxas de aluguel do StatusInvest/BTC
+   */
+  private async callPythonStockLendingScraper(
+    ticker: string,
+  ): Promise<{
+    success: boolean;
+    data?: any;
+    error?: string;
+    execution_time: number;
+  }> {
+    try {
+      const url = `${this.pythonApiUrl}/api/scrapers/stock-lending/${ticker}`;
+      const response = await firstValueFrom(
+        this.httpService.get(url, { timeout: 65000 }),
+      );
+
+      const data = response.data;
+
+      if (data.success && data.data) {
+        return {
+          success: true,
+          data: data.data,
+          execution_time: data.response_time || 0,
+        };
+      }
+
+      return {
+        success: false,
+        error: data.error || 'No lending data returned',
+        execution_time: data.response_time || 0,
+      };
+    } catch (error) {
+      this.logger.error(`Python lending scraper failed for ${ticker}: ${error.message}`);
       return {
         success: false,
         error: error.message,
