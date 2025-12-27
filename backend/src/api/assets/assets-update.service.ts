@@ -24,6 +24,8 @@ import {
 } from '../news/services';
 import { NewsService } from '../news/news.service';
 import { News } from '@database/entities';
+import { DividendsService } from '../dividends/dividends.service';  // FASE 144
+import { StockLendingService } from '../stock-lending/stock-lending.service';  // FASE 144
 
 export interface UpdateResult {
   success: boolean;
@@ -97,6 +99,8 @@ export class AssetsUpdateService {
     private aiOrchestatorService: AIOrchestatorService,
     private consensusService: ConsensusService,
     private newsService: NewsService,
+    private dividendsService: DividendsService,  // FASE 144: Dividends integration
+    private stockLendingService: StockLendingService,  // FASE 144: Stock Lending integration
   ) {}
 
   /**
