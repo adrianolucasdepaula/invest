@@ -11667,7 +11667,17 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 142** | Dynamic Scraper Configuration System | ✅ 100% | 2025-12-25 |
 | **FASE 142.1** | Code Review Fixes + Performance Enhancements | ✅ 100% | 2025-12-26 |
 | **FASE 143.0** | Docker Performance Fixes & Chronic Issues Resolution | ✅ 100% | 2025-12-26 |
+| **FASE 144** | Dividends + Stock Lending Python API Integration | ✅ 100% | 2025-12-27 |
 | **FASE 101.4** | Wheel Turbinada Backtesting Engine | ✅ 100% | 2025-12-21 |
+
+**FASE 144 - Dividends + Stock Lending Integration (2025-12-27):**
+- ✅ GET /api/scrapers/dividends/{ticker} endpoint (oauth_api.py)
+- ✅ GET /api/scrapers/stock-lending/{ticker} endpoint (oauth_api.py)
+- ✅ STATUSINVEST_DIVIDENDS + STOCK_LENDING scrapers registered (29 total)
+- ✅ NestJS integration via port 8080 (OAuth API)
+- ✅ AssetsUpdateService lines 222-285 integration (Promise.allSettled)
+- ✅ Cross-validation with B3 official data
+- ⚠️ Issue #DIVIDENDS_VALUE_DISCREPANCY documented (parsing investigation needed)
 
 **FASE 143.0 - Docker Fixes (2025-12-26):**
 - ✅ Docker Desktop recovery script (fix API 500 error)

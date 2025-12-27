@@ -96,16 +96,84 @@ async updateProfile(@Param('id') id: string, @Body() dto: UpdateProfileDto): Pro
 
 ---
 
+### Issue #DIVIDENDS_VALUE_DISCREPANCY: Valor de Dividendos Discrepante
+
+**Severidade:** 🔴 **ALTA**
+**Status:** ⚠️ **DOCUMENTADO - AGUARDA INVESTIGACAO**
+**Data Identificado:** 2025-12-27
+**Identificado Por:** Claude Opus 4.5 (Cross-Validation FASE 144)
+
+#### Descricao
+
+O scraper de dividendos StatusInvestDividendsScraper retorna valores que nao correspondem aos dados oficiais da B3/Petrobras.
+
+#### Evidencia Cross-Validation
+
+**Dados Coletados pelo Scraper (PETR4):**
+- valor_bruto: R$ 4.00
+- data_ex: 2025-12-22
+- status: pago
+
+**Dados Oficiais B3/Petrobras:**
+- Agosto/2025: R$ 0.67192409 por acao, 2a parcela em 22/12/2025
+- Novembro/2025: R$ 0.94320755 por acao, data-com em 22/12/2025
+
+#### Discrepancia
+
+- Scraper: R$ 4.00
+- Oficial: ~R$ 0.67 ou ~R$ 0.94
+- **Diferenca: ~400-500% (EXCEDE threshold de 10%)**
+
+#### Hipoteses de Root Cause
+
+1. Scraper pode estar concatenando valores
+2. StatusInvest pode exibir por lote de 100 acoes
+3. Parsing incorreto do HTML
+4. Campo errado sendo lido
+
+#### Solucao Proposta
+
+1. Investigar parsing em `statusinvest_dividends_scraper.py`
+2. Comparar HTML bruto com valores parseados
+3. Adicionar normalizacao para dividir por 100 se necessario
+4. Implementar cross-validation automatica com threshold de 10%
+
+**Esforco Estimado:** 2-4 horas
+
+#### Referencias
+
+- [Petrobras IR - Dividendos](https://www.investidorpetrobras.com.br/en/shares-dividends-and-debts/dividends/)
+- [InfoMoney - Dividendos PETR4](https://www.infomoney.com.br/onde-investir/quando-a-petrobras-petr4-paga-dividendos-em-2025-veja-como-receber-renda-todo-mes/)
+
+---
+
 ### Issue #SCRAPERS_NOT_INTEGRATED: Dividends/Lending Scrapers Nao Automaticos
 
 **Severidade:** 🟡 **MÉDIA**
-**Status:** ⚠️ **DOCUMENTADO - AGUARDA IMPLEMENTAÇÃO**
+**Status:** ✅ **RESOLVIDO** (FASE 144)
 **Data Identificado:** 2025-12-23
+**Data Resolucao:** 2025-12-27
 **Identificado Por:** PM Expert Agent (af87cb7) + Explore (acbb6b1)
+**Resolvido Por:** Claude Opus 4.5 (commit 187a7cd)
 
-#### Descrição
+#### Descricao (Historico)
 
-Scrapers de dividends e stock lending (FASE 101.2 + 101.3) estão implementados mas **NÃO integrados ao fluxo automático** de coleta de dados.
+Scrapers de dividends e stock lending (FASE 101.2 + 101.3) estavam implementados mas **NÃO integrados ao fluxo automático** de coleta de dados.
+
+#### Resolucao (FASE 144)
+
+**Commits:**
+- 187a7cd: feat(fase-144): implement dividends and stock-lending Python API endpoints
+
+**Implementacoes:**
+- GET /api/scrapers/dividends/{ticker} - endpoint na OAuth API (porta 8080)
+- GET /api/scrapers/stock-lending/{ticker} - endpoint na OAuth API (porta 8080)
+- Integracao em AssetsUpdateService linhas 222-285 (Promise.allSettled)
+- NestJS chama scrapers via callPythonDividendsScraper/callPythonStockLendingScraper
+
+**Testes:**
+- PETR4 dividends: 1 dividendo coletado (R$ 4.00, data_ex: 2025-12-22)
+- Endpoints funcionando via http://localhost:8080/api/scrapers/*
 
 #### Sintomas
 
