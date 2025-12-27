@@ -66,7 +66,15 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
-    command: redis-server --appendonly yes --maxmemory 768mb --maxmemory-policy allkeys-lru
+    command: >
+      redis-server
+      --maxmemory 768mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+      --loglevel warning
+      --tcp-backlog 511
+      --timeout 300
 
   # Python Technical Analysis Service (NEW - 10-50x faster indicators)
   python-service:
@@ -117,7 +125,7 @@ services:
     environment:
       # Server
       - NODE_ENV=${NODE_ENV:-development}
-      - NODE_OPTIONS=--max-old-space-size=2560  # Increased from 1536 to reduce GC pressure
+      - NODE_OPTIONS=--max-old-space-size=4096 --expose-gc  # FASE 143.0: Increased from 2560 + expose GC for manual triggers
       - APP_PORT=3101
       - PORT=3101
 
@@ -184,13 +192,18 @@ services:
         condition: service_healthy
     networks:
       - invest_network
+    dns:
+      - 8.8.8.8  # FASE 143.0: Google DNS primary (prevent EAI_AGAIN errors)
+      - 8.8.4.4  # FASE 143.0: Google DNS secondary
+      - 127.0.0.11  # FASE 143.0: Docker embedded DNS (fallback)
+    dns_search: []  # FASE 143.0: Disable search domains (faster resolution)
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3101/api/v1/health"]
-      interval: 30s
-      timeout: 10s
+      interval: 60s  # FASE 143.0: Increased from 30s (reduce overhead)
+      timeout: 15s  # FASE 143.0: Increased from 10s (allow slower responses under load)
       retries: 3
-      start_period: 60s
+      start_period: 90s  # FASE 143.0: Increased from 60s (Playwright initialization)
     logging:
       driver: "json-file"
       options:
@@ -199,11 +212,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2.0'
-          memory: 4G  # FASE 115: Aumentado de 2G para suportar 3 browsers Playwright concorrentes
+          cpus: '3.0'  # FASE 143.0: Increased from 2.0 (better concurrent job throughput)
+          memory: 6G  # FASE 143.0: Increased from 4G (NODE_OPTIONS=4096MB + headroom)
         reservations:
-          cpus: '1.0'
-          memory: 2G  # FASE 115: Aumentado proporcional
+          cpus: '1.5'  # FASE 143.0: Increased from 1.0
+          memory: 3G  # FASE 143.0: Increased from 2G (proportional to limit)
     command: npm run start:dev
 
   # Python Scrapers
@@ -259,11 +272,16 @@ services:
         condition: service_healthy
     networks:
       - invest_network
+    dns:
+      - 8.8.8.8  # FASE 143.0: Google DNS primary (prevent EAI_AGAIN, shared with api-service via network_mode)
+      - 8.8.4.4  # FASE 143.0: Google DNS secondary
+      - 127.0.0.11  # FASE 143.0: Docker DNS fallback
+    dns_search: []  # FASE 143.0: Disable search domains
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import redis; r=redis.Redis(host='redis', port=6379); r.ping()"]
-      interval: 30s
-      timeout: 10s
+      interval: 60s  # FASE 143.0: Increased from 30s (reduce overhead)
+      timeout: 15s  # FASE 143.0: Increased from 10s
       retries: 3
       start_period: 60s
     logging:
@@ -304,6 +322,7 @@ services:
       - API_HOST=0.0.0.0
       - API_PORT=8000
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - MAX_WORKERS=2  # FASE 143.0: Limit FastAPI workers (prevent memory exhaustion)
 
       # VNC/Display Configuration (compartilhado via network_mode com scrapers)
       - DISPLAY=:99
@@ -324,10 +343,10 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
+      interval: 60s  # FASE 143.0: Increased from 30s (reduce health check overhead)
+      timeout: 15s  # FASE 143.0: Increased from 10s (Playwright initialization can be slow)
       retries: 3
-      start_period: 40s
+      start_period: 90s  # FASE 143.0: Increased from 40s (Playwright browsers take time to start)
     logging:
       driver: "json-file"
       options:
@@ -336,11 +355,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2.0'
-          memory: 8G  # FASE 139.4: Increased from 4G - Python API travando com 99.9% memory usage
+          cpus: '3.0'  # FASE 143.0: Increased from 2.0 (better throughput for concurrent scrapers)
+          memory: 10G  # FASE 143.0: Increased from 8G (observed 91-92% usage, prevent OOM)
         reservations:
-          cpus: '0.5'
-          memory: 2G  # FASE 139.4: Increased proportionally
+          cpus: '1.0'  # FASE 143.0: Increased from 0.5
+          memory: 4G  # FASE 143.0: Increased from 2G (proportional to limit)
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   # Frontend Next.js
