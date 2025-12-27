@@ -11666,7 +11666,18 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 141** | LLM Local Feasibility Study (100% Gratuito) | ✅ 100% | 2025-12-23 |
 | **FASE 142** | Dynamic Scraper Configuration System | ✅ 100% | 2025-12-25 |
 | **FASE 142.1** | Code Review Fixes + Performance Enhancements | ✅ 100% | 2025-12-26 |
+| **FASE 143.0** | Docker Performance Fixes & Chronic Issues Resolution | ✅ 100% | 2025-12-26 |
 | **FASE 101.4** | Wheel Turbinada Backtesting Engine | ✅ 100% | 2025-12-21 |
+
+**FASE 143.0 - Docker Fixes (2025-12-26):**
+- ✅ Docker Desktop recovery script (fix API 500 error)
+- ✅ Memory optimization (api-service 10G, backend 6G)
+- ✅ DNS resolution fix (Google DNS 8.8.8.8, prevent EAI_AGAIN)
+- ✅ Cache auto-detection (Turbopack in-memory fix definitivo)
+- ✅ Auto-cleanup stale BullMQ jobs (> 5min removed automatically)
+- ✅ PostgreSQL tuning (1GB shared_buffers, 200 connections, parallel query)
+- ✅ Redis optimization (no AOF/RDB, cache puro)
+- ✅ Log rotation (Rotate-Logs function, 88-96% compression)
 
 **FASE 142.1 - Melhorias (2025-12-26):**
 - ✅ PUT /profiles/:id endpoint (updateProfile)

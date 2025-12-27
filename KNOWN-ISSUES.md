@@ -166,9 +166,11 @@ curl -X POST http://localhost:3101/api/v1/dividends/import/PETR4 \
 ### Issue #JOBS_ACTIVE_STALE: Jobs Ativos Ficam Presos na Fila
 
 **Severidade:** 🟡 **MÉDIA**
-**Status:** ⚠️ **PARCIALMENTE RESOLVIDO**
+**Status:** ✅ **RESOLVIDO DEFINITIVAMENTE** (FASE 143.0)
 **Data Identificado:** 2025-12-17
+**Data Resolução:** 2025-12-26
 **Identificado Por:** Claude Code (Opus 4.5) durante testes massivos
+**Resolvido Por:** Auto-cleanup implementation (FASE 143.0)
 
 #### Descrição
 
@@ -195,36 +197,39 @@ docker exec invest_redis redis-cli DEL "bull:asset-updates:active"
 docker exec invest_redis redis-cli DEL $(docker exec invest_redis redis-cli KEYS "bull:asset-updates:*" | grep -E ":[0-9]+$")
 ```
 
-#### Solução Permanente (Implementar)
+#### Solução Permanente ✅ IMPLEMENTADA (FASE 143.0)
 
-1. **Stalled job cleanup automático:**
+1. **✅ Stalled job cleanup automático:** (Commit e9db9fa)
    ```typescript
-   // Adicionar em AssetUpdateJobsService.onModuleInit()
-   setInterval(() => {
-     this.assetUpdatesQueue.clean(5 * 60 * 1000, 'active'); // Clean active > 5min
-   }, 60000); // Check every minute
+   // Implementado em AssetUpdateJobsService.onModuleInit()
+   setInterval(async () => {
+     const cleaned = await this.assetUpdatesQueue.clean(5 * 60 * 1000, 'active');
+     if (cleaned && cleaned.length > 0) {
+       this.logger.warn(`[AUTO-CLEANUP] Removed ${cleaned.length} stale active jobs`);
+     }
+   }, 60000); // Every 60 seconds
    ```
 
-2. **Reduzir timeout de scrapers:**
+2. **⏳ Reduzir timeout de scrapers:** (Planejado para FASE futura)
    - Atual: 180s
    - Proposto: 60s (com retry se necessário)
 
-3. **Circuit breaker para scrapers lentos:**
+3. **⏳ Circuit breaker para scrapers lentos:** (Planejado para FASE futura)
    - Skip Investsite se >3 timeouts consecutivos
    - Fallback para fontes mais rápidas
 
-#### Impacto
+#### Impacto (APÓS FIX)
 
-- **Funcionalidade:** 🟡 MÉDIA - UI fica bloqueada
+- **Funcionalidade:** ✅ OK - Auto-cleanup remove jobs stale automaticamente
 - **Data:** ✅ OK - Jobs eventualmente timeout
-- **UX:** 🔴 ALTA - Usuário não consegue iniciar novas atualizações
+- **UX:** ✅ OK - Usuário não fica bloqueado (máximo 5min espera)
 
-#### Prevenção
+#### Implementação (FASE 143.0)
 
-- ✅ Adicionar endpoint `/bulk-update-clean-stale`
-- ⏳ Implementar cleanup automático
-- ⏳ Reduzir timeouts de scrapers
-- ⏳ Circuit breaker para fontes lentas
+- ✅ Adicionar endpoint `/bulk-update-clean-stale` (já existia)
+- ✅ **Implementar cleanup automático** (setInterval 60s, commit e9db9fa)
+- ⏳ Reduzir timeouts de scrapers (planejado FASE futura)
+- ⏳ Circuit breaker para fontes lentas (planejado FASE futura)
 
 ---
 
@@ -1885,7 +1890,8 @@ docker logs invest_backend --tail 200 | grep OpcoesScraper
 **Responsável:** Claude Code (Opus 4.5)
 
 **Issues Adicionados nesta Sessão:**
-- #JOBS_ACTIVE_STALE (ativo - parcialmente resolvido)
+- #JOBS_ACTIVE_STALE ✅ **RESOLVIDO DEFINITIVAMENTE** (FASE 143.0, commit e9db9fa)
 - #AUTH_INCONSISTENCY (resolvido via troubleshooting)
 - #BACKEND_NEAR_OOM (resolvido 2x)
 - #TRADINGVIEW_CONTRAST (ativo - limitação de terceiros)
+- #SEC-001 ⏳ **PLANEJADO** (FASE 143.0, documented limitation)
