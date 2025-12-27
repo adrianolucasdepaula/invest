@@ -24,22 +24,35 @@ validate_bundler_config() {
 }
 
 # FASE 131: Detectar mudancas em scripts (nao apenas dependencias)
+# FASE 143.0: Enhanced detection - package.json completo + force rebuild se necessário
 # Resolve problema de restart vs rebuild - scripts mudados requerem rebuild
 check_script_changes() {
     SCRIPT_HASH_FILE=".script-hash"
 
-    # Calcular hash dos scripts relevantes (sha256 para integridade)
-    CURRENT_HASH=$(grep -E '"(dev|build|start)"' package.json | sha256sum | cut -d' ' -f1 2>/dev/null || echo "no-hash")
+    # FASE 143.0: Calcular hash de package.json COMPLETO (não apenas scripts)
+    # Detecta mudanças em dependencies, devDependencies, scripts, etc
+    CURRENT_HASH=$(md5sum package.json 2>/dev/null | cut -d' ' -f1 || sha256sum package.json | cut -d' ' -f1 || echo "no-hash")
 
     if [ -f "$SCRIPT_HASH_FILE" ]; then
         STORED_HASH=$(cat "$SCRIPT_HASH_FILE")
         if [ "$CURRENT_HASH" != "$STORED_HASH" ]; then
-            echo "📦 Scripts changed in package.json, clearing cache..."
+            echo "⚠️  package.json changed! Clearing cache and forcing rebuild..."
+            echo "   Previous hash: $STORED_HASH"
+            echo "   Current hash:  $CURRENT_HASH"
+
+            # Limpar TODOS os caches
             rm -rf .next node_modules/.cache 2>/dev/null || true
+
+            # FASE 143.0: CRITICAL - Exit with code 0 to trigger container restart
+            # Docker restart policy will restart container, killing Node.js process
+            # This clears Turbopack IN-MEMORY cache (not just disk cache)
+            echo "🔄 Forcing container restart to clear Turbopack in-memory cache..."
             echo "$CURRENT_HASH" > "$SCRIPT_HASH_FILE"
-            echo "✅ Cache cleared due to script changes"
+            echo "✅ Cache cleared. Container will restart to apply changes."
+            exit 0  # Trigger container restart (clears memory cache)
         fi
     else
+        echo "📝 First run, storing package.json hash"
         echo "$CURRENT_HASH" > "$SCRIPT_HASH_FILE"
     fi
 }
