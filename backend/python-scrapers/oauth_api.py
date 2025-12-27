@@ -670,6 +670,149 @@ async def check_sentiment_health():
     }
 
 
+# ==========================================================================
+# FASE 144: DIVIDENDS AND STOCK LENDING ENDPOINTS
+# ==========================================================================
+
+from scrapers import StatusInvestDividendsScraper, StockLendingScraper
+
+# Scraper instances (singleton pattern)
+_dividends_scraper = None
+_lending_scraper = None
+
+
+async def get_dividends_scraper() -> StatusInvestDividendsScraper:
+    """Get or create dividends scraper instance"""
+    global _dividends_scraper
+    if _dividends_scraper is None:
+        _dividends_scraper = StatusInvestDividendsScraper()
+        await _dividends_scraper.initialize()
+    return _dividends_scraper
+
+
+async def get_lending_scraper() -> StockLendingScraper:
+    """Get or create lending scraper instance"""
+    global _lending_scraper
+    if _lending_scraper is None:
+        _lending_scraper = StockLendingScraper()
+        await _lending_scraper.initialize()
+    return _lending_scraper
+
+
+@app.get("/api/scrapers/dividends/{ticker}")
+async def scrape_dividends(ticker: str):
+    """
+    Scrape dividends history for a stock ticker.
+    FASE 144 - Wheel Turbinada Integration
+
+    Args:
+        ticker: Stock ticker (e.g., 'PETR4', 'VALE3')
+
+    Returns:
+        Dict with dividends history
+    """
+    import time
+
+    ticker = ticker.upper().strip()
+    if not ticker or len(ticker) < 4 or len(ticker) > 6:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid ticker format: {ticker}. Expected 4-6 characters."
+        )
+
+    logger.info(f"[DIVIDENDS] Scraping for {ticker}")
+    start_time = time.time()
+
+    try:
+        scraper = await get_dividends_scraper()
+        result = await scraper.scrape(ticker)
+
+        execution_time = round(time.time() - start_time, 2)
+
+        if result.success:
+            dividends = result.data.get("dividends", []) if result.data else []
+            logger.info(f"[DIVIDENDS] Found {len(dividends)} dividends for {ticker}")
+
+            return {
+                "success": True,
+                "ticker": ticker,
+                "dividends": dividends,
+                "total_count": len(dividends),
+                "execution_time": execution_time,
+                "source": "STATUSINVEST_DIVIDENDS"
+            }
+        else:
+            logger.warning(f"[DIVIDENDS] Failed for {ticker}: {result.error}")
+            return {
+                "success": False,
+                "ticker": ticker,
+                "error": result.error or "Unknown error",
+                "execution_time": execution_time
+            }
+
+    except Exception as e:
+        logger.error(f"[DIVIDENDS] Exception for {ticker}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/scrapers/stock-lending/{ticker}")
+async def scrape_stock_lending(ticker: str):
+    """
+    Scrape stock lending rates for a stock ticker.
+    FASE 144 - Wheel Turbinada Integration
+
+    Args:
+        ticker: Stock ticker (e.g., 'PETR4', 'VALE3')
+
+    Returns:
+        Dict with lending rate data
+    """
+    import time
+
+    ticker = ticker.upper().strip()
+    if not ticker or len(ticker) < 4 or len(ticker) > 6:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid ticker format: {ticker}. Expected 4-6 characters."
+        )
+
+    logger.info(f"[STOCK-LENDING] Scraping for {ticker}")
+    start_time = time.time()
+
+    try:
+        scraper = await get_lending_scraper()
+        result = await scraper.scrape(ticker)
+
+        execution_time = round(time.time() - start_time, 2)
+
+        if result.success:
+            data = result.data or {}
+            logger.info(
+                f"[STOCK-LENDING] Found rate for {ticker}: "
+                f"{data.get('taxa_aluguel_ano', 'N/A')}% a.a."
+            )
+
+            return {
+                "success": True,
+                "ticker": ticker,
+                "data": data,
+                "execution_time": execution_time,
+                "source": "STOCK_LENDING"
+            }
+        else:
+            logger.warning(f"[STOCK-LENDING] Failed for {ticker}: {result.error}")
+            return {
+                "success": False,
+                "ticker": ticker,
+                "error": result.error or "Unknown error",
+                "execution_time": execution_time
+            }
+
+    except Exception as e:
+        logger.error(f"[STOCK-LENDING] Exception for {ticker}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Run with uvicorn if executed directly
 if __name__ == "__main__":
     import uvicorn

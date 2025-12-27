@@ -703,3 +703,218 @@ async def ping() -> Dict[str, Any]:
         "version": "1.0.0",
         "total_scrapers": len(scraper_controller.SCRAPERS_REGISTRY)
     }
+
+
+# ================================================================
+# FASE 144: Dividends and Stock Lending Endpoints
+# ================================================================
+
+@router.get(
+    "/dividends/{ticker}",
+    summary="Scrape dividends history for a stock",
+    description="""
+    Scrape historical dividends and proventos (JCP, bonus, etc.) for a stock ticker.
+
+    **FASE 144 - Wheel Turbinada Integration**
+
+    Uses StatusInvestDividendsScraper to fetch:
+    - Dividend history (type, value, dates)
+    - JCP (Juros sobre Capital Proprio)
+    - Bonus and other proventos
+    - Ex-date, payment date, status
+
+    **Response format:**
+    - success: Whether scraping succeeded
+    - ticker: The requested ticker
+    - dividends: Array of dividend records
+    - execution_time: Time taken in seconds
+    """,
+    responses={
+        200: {
+            "description": "Dividends scraped successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": True,
+                        "ticker": "PETR4",
+                        "dividends": [
+                            {
+                                "tipo": "dividendo",
+                                "valor_bruto": 1.23,
+                                "valor_liquido": 1.23,
+                                "data_ex": "2024-12-15",
+                                "data_pagamento": "2024-12-30",
+                                "status": "pago"
+                            }
+                        ],
+                        "execution_time": 5.2
+                    }
+                }
+            }
+        },
+        400: {"description": "Invalid ticker format"},
+        500: {"description": "Scraper error"}
+    }
+)
+async def scrape_dividends(ticker: str) -> Dict[str, Any]:
+    """
+    Scrape dividends history for a stock ticker.
+
+    Args:
+        ticker: Stock ticker (e.g., 'PETR4', 'VALE3')
+
+    Returns:
+        Dict with dividends history
+    """
+    import time
+
+    # Validate ticker
+    ticker = ticker.upper().strip()
+    if not ticker or len(ticker) < 4 or len(ticker) > 6:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid ticker format: {ticker}. Expected 4-6 characters."
+        )
+
+    logger.info(f"Scraping dividends for {ticker}")
+    start_time = time.time()
+
+    try:
+        # Use the controller to test the scraper
+        result = await scraper_controller.test_scraper(
+            scraper_name="STATUSINVEST_DIVIDENDS",
+            query=ticker
+        )
+
+        execution_time = round(time.time() - start_time, 2)
+
+        if result.get("success"):
+            data = result.get("data", {})
+            dividends = data.get("dividends", [])
+
+            logger.info(f"Found {len(dividends)} dividends for {ticker}")
+
+            return {
+                "success": True,
+                "ticker": ticker,
+                "dividends": dividends,
+                "total_count": len(dividends),
+                "execution_time": execution_time,
+                "source": "STATUSINVEST_DIVIDENDS"
+            }
+        else:
+            logger.warning(f"Failed to scrape dividends for {ticker}: {result.get('error')}")
+            return {
+                "success": False,
+                "ticker": ticker,
+                "error": result.get("error", "Unknown error"),
+                "execution_time": execution_time
+            }
+
+    except Exception as e:
+        logger.error(f"Exception scraping dividends for {ticker}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get(
+    "/stock-lending/{ticker}",
+    summary="Scrape stock lending rates for a stock",
+    description="""
+    Scrape current stock lending (BTC) rates for a stock ticker.
+
+    **FASE 144 - Wheel Turbinada Integration**
+
+    Uses StockLendingScraper to fetch:
+    - Annual lending rate (% a.a.)
+    - Daily lending rate (calculated)
+    - Available quantity for lending
+    - Reference date
+
+    **Response format:**
+    - success: Whether scraping succeeded
+    - ticker: The requested ticker
+    - data: Lending rate data
+    - execution_time: Time taken in seconds
+    """,
+    responses={
+        200: {
+            "description": "Lending rates scraped successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": True,
+                        "ticker": "PETR4",
+                        "data": {
+                            "taxa_aluguel_ano": 5.50,
+                            "taxa_aluguel_dia": 0.0218,
+                            "quantidade_disponivel": 1000000,
+                            "data_referencia": "2024-12-20"
+                        },
+                        "execution_time": 4.8
+                    }
+                }
+            }
+        },
+        400: {"description": "Invalid ticker format"},
+        500: {"description": "Scraper error"}
+    }
+)
+async def scrape_stock_lending(ticker: str) -> Dict[str, Any]:
+    """
+    Scrape stock lending rates for a stock ticker.
+
+    Args:
+        ticker: Stock ticker (e.g., 'PETR4', 'VALE3')
+
+    Returns:
+        Dict with lending rate data
+    """
+    import time
+
+    # Validate ticker
+    ticker = ticker.upper().strip()
+    if not ticker or len(ticker) < 4 or len(ticker) > 6:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid ticker format: {ticker}. Expected 4-6 characters."
+        )
+
+    logger.info(f"Scraping stock lending for {ticker}")
+    start_time = time.time()
+
+    try:
+        # Use the controller to test the scraper
+        result = await scraper_controller.test_scraper(
+            scraper_name="STOCK_LENDING",
+            query=ticker
+        )
+
+        execution_time = round(time.time() - start_time, 2)
+
+        if result.get("success"):
+            data = result.get("data", {})
+
+            logger.info(
+                f"Found lending rate for {ticker}: "
+                f"{data.get('taxa_aluguel_ano', 'N/A')}% a.a."
+            )
+
+            return {
+                "success": True,
+                "ticker": ticker,
+                "data": data,
+                "execution_time": execution_time,
+                "source": "STOCK_LENDING"
+            }
+        else:
+            logger.warning(f"Failed to scrape lending for {ticker}: {result.get('error')}")
+            return {
+                "success": False,
+                "ticker": ticker,
+                "error": result.get("error", "Unknown error"),
+                "execution_time": execution_time
+            }
+
+    except Exception as e:
+        logger.error(f"Exception scraping lending for {ticker}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))

@@ -59,6 +59,11 @@ from scrapers import (
     YahooFinanceScraper,
     OplabScraper,
     KinvoScraper,
+    # ==============================
+    # WHEEL TURBINADA SCRAPERS (2) - FASE 101/144
+    # ==============================
+    StatusInvestDividendsScraper,
+    StockLendingScraper,
 )
 
 # DISABLED: cookie_manager uses Selenium (needs Playwright migration)
@@ -354,8 +359,31 @@ class ScraperTestController:
             "source": "KINVO",
             "requires_login": True,
             "category": "market_data",
-            "description": "Gestão de carteiras e fundos",
+            "description": "Gestao de carteiras e fundos",
             "url": "https://www.kinvo.com.br/",
+            "status": "active",
+        },
+        # ==============================
+        # WHEEL TURBINADA SCRAPERS (2) - FASE 101/144
+        # ==============================
+        "STATUSINVEST_DIVIDENDS": {
+            "class": StatusInvestDividendsScraper,
+            "name": "StatusInvest Dividends",
+            "source": "STATUSINVEST_DIVIDENDS",
+            "requires_login": False,
+            "category": "wheel_strategy",
+            "description": "Historico de dividendos e proventos (JCP, bonus, etc)",
+            "url": "https://statusinvest.com.br/",
+            "status": "active",
+        },
+        "STOCK_LENDING": {
+            "class": StockLendingScraper,
+            "name": "Stock Lending (BTC)",
+            "source": "STOCK_LENDING",
+            "requires_login": False,
+            "category": "wheel_strategy",
+            "description": "Taxas de aluguel de acoes (BTC B3)",
+            "url": "https://statusinvest.com.br/",
             "status": "active",
         },
     }

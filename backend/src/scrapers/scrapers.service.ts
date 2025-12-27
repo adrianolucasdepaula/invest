@@ -2451,25 +2451,29 @@ export class ScrapersService {
     execution_time: number;
   }> {
     try {
-      const url = `${this.pythonApiUrl}/api/scrapers/dividends/${ticker}`;
+      // FASE 144: Use OAuth API port (8080) for dividends/lending scrapers
+      // The OAuth API runs on scrapers container which has working network
+      const oauthApiUrl = this.pythonApiUrl.replace(':8000', ':8080');
+      const url = `${oauthApiUrl}/api/scrapers/dividends/${ticker}`;
       const response = await firstValueFrom(
         this.httpService.get(url, { timeout: 65000 }),
       );
 
       const data = response.data;
 
-      if (data.success && data.data) {
+      // FASE 144: API returns dividends array directly in response
+      if (data.success && data.dividends) {
         return {
           success: true,
-          data: data.data,
-          execution_time: data.response_time || 0,
+          data: { dividends: data.dividends },
+          execution_time: data.execution_time || 0,
         };
       }
 
       return {
         success: false,
         error: data.error || 'No dividend data returned',
-        execution_time: data.response_time || 0,
+        execution_time: data.execution_time || 0,
       };
     } catch (error) {
       this.logger.error(`Python dividends scraper failed for ${ticker}: ${error.message}`);
@@ -2497,7 +2501,10 @@ export class ScrapersService {
     execution_time: number;
   }> {
     try {
-      const url = `${this.pythonApiUrl}/api/scrapers/stock-lending/${ticker}`;
+      // FASE 144: Use OAuth API port (8080) for dividends/lending scrapers
+      // The OAuth API runs on scrapers container which has working network
+      const oauthApiUrl = this.pythonApiUrl.replace(':8000', ':8080');
+      const url = `${oauthApiUrl}/api/scrapers/stock-lending/${ticker}`;
       const response = await firstValueFrom(
         this.httpService.get(url, { timeout: 65000 }),
       );
