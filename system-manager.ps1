@@ -1592,6 +1592,80 @@ function Show-Help {
     Write-Host ""
 }
 
+# ============================================
+# FASE 143.0: Log Rotation & Cleanup
+# ============================================
+
+function Rotate-Logs {
+    <#
+    .SYNOPSIS
+    Compacta logs grandes (> 10MB) em arquivos .gz
+
+    .DESCRIPTION
+    Encontra arquivos .txt > 10MB e os compacta com gzip.
+    Útil para manter logs históricos sem ocupar muito espaço.
+
+    .EXAMPLE
+    .\system-manager.ps1 rotate-logs
+    #>
+
+    Print-Header "LOG ROTATION"
+
+    Write-Host "${YELLOW}Buscando logs grandes (> 10MB)...${RESET}"
+
+    $largeLogs = Get-ChildItem -Path . -Filter "*.txt" -File |
+        Where-Object { $_.Length -gt 10MB } |
+        Sort-Object Length -Descending
+
+    if ($largeLogs.Count -eq 0) {
+        Print-Success "Nenhum log grande encontrado"
+        return
+    }
+
+    Write-Host "${CYAN}Encontrados ${largeLogs.Count} logs para rotação:${RESET}"
+    foreach ($log in $largeLogs) {
+        $sizeMB = [math]::Round($log.Length / 1MB, 2)
+        Write-Host "  - $($log.Name): ${sizeMB}MB"
+    }
+    Write-Host ""
+
+    foreach ($log in $largeLogs) {
+        try {
+            $compressedPath = "$($log.FullName).gz"
+
+            # Se já existe .gz, pular
+            if (Test-Path $compressedPath) {
+                Write-Host "${YELLOW}⚠️  $($log.Name).gz já existe, pulando${RESET}"
+                continue
+            }
+
+            Write-Host "${BLUE}Comprimindo $($log.Name)...${RESET}"
+
+            # Usar 7zip se disponível, senão Compress-Archive
+            if (Get-Command 7z -ErrorAction SilentlyContinue) {
+                7z a -tgzip "$compressedPath" "$($log.FullName)" | Out-Null
+            } else {
+                Compress-Archive -Path $log.FullName -DestinationPath "$compressedPath.tmp"
+                Rename-Item "$compressedPath.tmp" "$compressedPath"
+            }
+
+            $originalSize = [math]::Round($log.Length / 1MB, 2)
+            $compressedSize = [math]::Round((Get-Item $compressedPath).Length / 1MB, 2)
+            $ratio = [math]::Round((1 - ($compressedSize / $originalSize)) * 100, 1)
+
+            # Remover original após comprimir
+            Remove-Item $log.FullName
+
+            Print-Success "$($log.Name): ${originalSize}MB → ${compressedSize}MB (${ratio}% redução)"
+        } catch {
+            Print-Error "Falha ao comprimir $($log.Name): $_"
+        }
+    }
+
+    Write-Host ""
+    Print-Success "Rotação de logs completa"
+}
+
 # Main script logic
 $command = $args[0]
 $param = $null
@@ -1631,6 +1705,7 @@ switch ($command) {
     "clean-cache" { Clean-Cache }
     "rebuild-frontend" { Rebuild-Frontend }
     "rebuild-frontend-complete" { Rebuild-FrontendComplete }
+    "rotate-logs" { Rotate-Logs }  # FASE 143.0: Automatic log rotation
     "check-types" { Check-Types }
     "prune" { Prune-System }
     "clean" { Clear-System }
