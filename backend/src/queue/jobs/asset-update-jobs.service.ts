@@ -35,6 +35,26 @@ export class AssetUpdateJobsService implements OnModuleInit {
     // This prevents "auto-start" behavior from orphaned jobs of previous sessions
     await this.cleanStaleJobs();
 
+    // FASE 143.0: Auto-cleanup de jobs active presos (> 5 minutos)
+    // Fix definitivo para KNOWN-ISSUES.md #JOBS_ACTIVE_STALE
+    setInterval(async () => {
+      try {
+        const cleaned = await this.assetUpdatesQueue.clean(
+          5 * 60 * 1000, // 5 minutos
+          'active', // Apenas jobs active órfãos
+        );
+
+        if (cleaned && cleaned.length > 0) {
+          this.logger.warn(
+            `[AUTO-CLEANUP] Removed ${cleaned.length} stale active jobs (> 5min)`,
+          );
+        }
+      } catch (error) {
+        this.logger.error(`[AUTO-CLEANUP] Failed: ${error.message}`);
+      }
+    }, 60000); // Cada 60 segundos
+
+    this.logger.log('[AUTO-CLEANUP] Stale jobs cleanup enabled (interval: 60s, threshold: 5min)');
     this.logger.log('🔄 Cron jobs ENABLED');
   }
 
