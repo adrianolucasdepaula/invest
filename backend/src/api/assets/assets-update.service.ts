@@ -219,6 +219,71 @@ export class AssetsUpdateService {
       // This updates the sentiment thermometer for the asset
       await this.collectAndAnalyzeNews(ticker, logPrefix);
 
+      // 7.2. FASE 144: Coleta paralela de dividendos e aluguel (non-blocking)
+      const [dividendsResult, lendingResult] = await Promise.allSettled([
+        this.scrapersService.fetchDividendsData(ticker),
+        this.scrapersService.fetchStockLendingData(ticker),
+      ]);
+
+      // Import dividends (try/catch individual para não bloquear update)
+      if (dividendsResult.status === 'fulfilled' && dividendsResult.value.success) {
+        try {
+          const syncResult = await this.dividendsService.importFromScraper(
+            ticker,
+            dividendsResult.value.data,
+          );
+
+          this.logger.log(
+            `${logPrefix} Dividends: ${syncResult.imported} imported, ${syncResult.skipped} skipped`,
+          );
+
+          // Telemetry tracking
+          span.setAttributes({
+            'dividends.imported': syncResult.imported,
+            'dividends.skipped': syncResult.skipped,
+            'dividends.total': dividendsResult.value.data.length,
+          });
+        } catch (error) {
+          this.logger.error(`${logPrefix} Failed to import dividends: ${error.message}`);
+          // Non-blocking: continue even if dividends fail
+        }
+      } else {
+        const reason =
+          dividendsResult.status === 'fulfilled'
+            ? dividendsResult.value.error
+            : dividendsResult.reason;
+        this.logger.warn(`${logPrefix} Dividends scraping failed: ${reason}`);
+      }
+
+      // Import stock lending (try/catch individual)
+      if (lendingResult.status === 'fulfilled' && lendingResult.value.success) {
+        try {
+          const syncResult = await this.stockLendingService.importFromScraper(
+            ticker,
+            lendingResult.value.data,
+          );
+
+          this.logger.log(
+            `${logPrefix} Stock Lending: ${syncResult.imported} imported, ${syncResult.skipped} skipped`,
+          );
+
+          // Telemetry tracking
+          span.setAttributes({
+            'lending.imported': syncResult.imported,
+            'lending.skipped': syncResult.skipped,
+          });
+        } catch (error) {
+          this.logger.error(`${logPrefix} Failed to import lending: ${error.message}`);
+          // Non-blocking: continue even if lending fails
+        }
+      } else {
+        const reason =
+          lendingResult.status === 'fulfilled'
+            ? lendingResult.value.error
+            : lendingResult.reason;
+        this.logger.warn(`${logPrefix} Stock lending scraping failed: ${reason}`);
+      }
+
       // 8. Extract sector from rawSourcesData (BRAPI provides this)
       // Try BRAPI first (most reliable for sector), then other sources
       this.logger.debug(

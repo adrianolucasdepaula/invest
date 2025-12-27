@@ -18,6 +18,8 @@ import { ScrapersModule } from '../../scrapers/scrapers.module';
 import { WebSocketModule } from '../../websocket/websocket.module';
 import { QueueModule } from '../../queue/queue.module';
 import { NewsModule } from '../news/news.module';
+import { DividendsModule } from '../dividends/dividends.module';  // FASE 144
+import { StockLendingModule } from '../stock-lending/stock-lending.module';  // FASE 144
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { NewsModule } from '../news/news.module';
     WebSocketModule,
     forwardRef(() => QueueModule),
     NewsModule,
+    DividendsModule,  // FASE 144: Enable dividends integration
+    StockLendingModule,  // FASE 144: Enable stock lending integration
   ],
   controllers: [AssetsController, AssetsUpdateController],
   providers: [AssetsService, AssetsUpdateService],
