@@ -829,14 +829,15 @@ export class AssetsUpdateService {
     const MAX_VALUE = 999999999999999.99;
     const MIN_VALUE = -999999999999999.99;
 
-    // Clamp to valid range
+    // FASE 144: REJECT invalid values (do NOT clamp - violates financial data rules)
+    // Financial data must NEVER be manipulated. If invalid, return null.
     if (num > MAX_VALUE) {
-      this.logger.warn(`[SANITIZE] Value ${num} exceeds max (${MAX_VALUE}), clamping`);
-      return new Decimal(MAX_VALUE);
+      this.logger.error(`[SANITIZE] Value ${num} exceeds max (${MAX_VALUE}), REJECTING (invalid data)`);
+      return null;  // BUGFIX: Reject instead of clamp
     }
     if (num < MIN_VALUE) {
-      this.logger.warn(`[SANITIZE] Value ${num} below min (${MIN_VALUE}), clamping`);
-      return new Decimal(MIN_VALUE);
+      this.logger.error(`[SANITIZE] Value ${num} below min (${MIN_VALUE}), REJECTING (invalid data)`);
+      return null;  // BUGFIX: Reject instead of clamp
     }
 
     // Return Decimal for precise financial calculations
@@ -945,30 +946,55 @@ export class AssetsUpdateService {
     });
 
     // FASE 144: UPSERT para prevenir duplicatas (ON CONFLICT DO UPDATE)
-    // Se já existe registro para (asset_id, reference_date), atualiza
+    // BUGFIX: orUpdate() nao funciona no TypeORM 0.3.27 - usar onConflict() explicito
     await this.fundamentalDataRepository
       .createQueryBuilder()
       .insert()
       .into(FundamentalData)
       .values(fundamentalData)
-      .orUpdate(
-        [
-          'pl', 'pvp', 'psr', 'p_ativos', 'p_capital_giro', 'p_ebit',
-          'ev_ebit', 'ev_ebitda', 'peg_ratio',
-          'roe', 'roa', 'roic', 'margem_bruta', 'margem_ebit', 'margem_ebitda',
-          'margem_liquida', 'giro_ativos',
-          'divida_bruta', 'divida_liquida', 'divida_liquida_ebitda',
-          'divida_liquida_ebit', 'divida_liquida_patrimonio',
-          'patrimonio_liquido_ativos', 'passivos_ativos',
-          'cagr_receitas_5anos', 'cagr_lucros_5anos',
-          'dividend_yield', 'payout',
-          'receita_liquida', 'ebit', 'ebitda', 'lucro_liquido',
-          'patrimonio_liquido', 'ativo_total', 'disponibilidades',
-          'lpa', 'vpa', 'liquidez_corrente',
-          'metadata', 'field_sources', 'updated_at',
-        ],
-        ['asset_id', 'reference_date'], // conflict target
-      )
+      .onConflict(`("asset_id", "reference_date") DO UPDATE SET
+        "pl" = EXCLUDED."pl",
+        "pvp" = EXCLUDED."pvp",
+        "psr" = EXCLUDED."psr",
+        "p_ativos" = EXCLUDED."p_ativos",
+        "p_capital_giro" = EXCLUDED."p_capital_giro",
+        "p_ebit" = EXCLUDED."p_ebit",
+        "ev_ebit" = EXCLUDED."ev_ebit",
+        "ev_ebitda" = EXCLUDED."ev_ebitda",
+        "peg_ratio" = EXCLUDED."peg_ratio",
+        "roe" = EXCLUDED."roe",
+        "roa" = EXCLUDED."roa",
+        "roic" = EXCLUDED."roic",
+        "margem_bruta" = EXCLUDED."margem_bruta",
+        "margem_ebit" = EXCLUDED."margem_ebit",
+        "margem_ebitda" = EXCLUDED."margem_ebitda",
+        "margem_liquida" = EXCLUDED."margem_liquida",
+        "giro_ativos" = EXCLUDED."giro_ativos",
+        "divida_bruta" = EXCLUDED."divida_bruta",
+        "divida_liquida" = EXCLUDED."divida_liquida",
+        "divida_liquida_ebitda" = EXCLUDED."divida_liquida_ebitda",
+        "divida_liquida_ebit" = EXCLUDED."divida_liquida_ebit",
+        "divida_liquida_patrimonio" = EXCLUDED."divida_liquida_patrimonio",
+        "patrimonio_liquido_ativos" = EXCLUDED."patrimonio_liquido_ativos",
+        "passivos_ativos" = EXCLUDED."passivos_ativos",
+        "cagr_receitas_5anos" = EXCLUDED."cagr_receitas_5anos",
+        "cagr_lucros_5anos" = EXCLUDED."cagr_lucros_5anos",
+        "dividend_yield" = EXCLUDED."dividend_yield",
+        "payout" = EXCLUDED."payout",
+        "receita_liquida" = EXCLUDED."receita_liquida",
+        "ebit" = EXCLUDED."ebit",
+        "ebitda" = EXCLUDED."ebitda",
+        "lucro_liquido" = EXCLUDED."lucro_liquido",
+        "patrimonio_liquido" = EXCLUDED."patrimonio_liquido",
+        "ativo_total" = EXCLUDED."ativo_total",
+        "disponibilidades" = EXCLUDED."disponibilidades",
+        "lpa" = EXCLUDED."lpa",
+        "vpa" = EXCLUDED."vpa",
+        "liquidez_corrente" = EXCLUDED."liquidez_corrente",
+        "metadata" = EXCLUDED."metadata",
+        "field_sources" = EXCLUDED."field_sources",
+        "updated_at" = EXCLUDED."updated_at"
+      `)
       .execute();
 
     // Retornar o registro (buscar do banco após UPSERT)

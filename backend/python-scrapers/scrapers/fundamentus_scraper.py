@@ -412,6 +412,10 @@ class FundamentusScraper(BaseScraper):
             # Parse number and apply multiplier
             parsed = float(text) * multiplier
 
+            # BUGFIX FASE 144: Debug scientific notation
+            if parsed > 1e20:  # Valores absurdos
+                logger.warning(f"[PARSE-DEBUG] Suspicious value: '{value_text}' → text='{text}' multiplier={multiplier} → {parsed:.2e}")
+
             return parsed
 
         except Exception as e:
