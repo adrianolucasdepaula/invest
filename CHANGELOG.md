@@ -13,6 +13,40 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.44.0] - 2025-12-28
+
+### Fixed - FASE 144: Bulk Update Testing + Critical Bugfixes
+
+**Bug 1: cache.wrap() Returning Undefined (CRITICAL):**
+- **Root Cause:** `cacheManager.get()` returns `undefined` on cache miss (not `null`)
+- **Impact:** 100% failure rate on bulk updates (blocked all scraper config queries)
+- **Fix:** `cache.service.ts` - get() explicitly returns null, wrap() validates both
+- **Test:** PETR4 ✅ (4 sources, 66.7% confidence, P/L 5.06, ROE 18.30%)
+- **Commit:** 31b5f7e
+
+**Bug 2: Duplicates in fundamental_data (HIGH):**
+- **Root Cause:** Missing UNIQUE constraint on (asset_id, reference_date)
+- **Impact:** Multiple rows for same asset+date (data integrity issue)
+- **Fix 1:** Migration 1735408200000 - Cleaned duplicates + added UNIQUE constraint
+- **Fix 2:** UPSERT behavior (ON CONFLICT DO UPDATE SET) in assets-update.service
+- **Test:** VALE3 ✅ (3 executions, 2 rows final, 0 duplicates)
+- **Commit:** db5d741
+
+### Changed
+
+**Scope Revision:**
+- Dividends/StockLending disabled (Issue #DIVID-001 - StatusInvest Cloudflare blocking)
+- Bulk update now works with fundamentals only (4 sources: brapi, fundamentus, bcb, statusinvest)
+- Deferred to FASE 145: OAuth implementation required for authenticated scraping
+
+### Documentation
+
+- Added Issue #DIVID-001 to KNOWN-ISSUES.md (comprehensive root cause analysis)
+- Added FASE_144_PROGRESSO.md (progress tracking)
+- Updated ROADMAP.md (FASE 144 complete, FASE 145 planned)
+
+---
+
 ## [1.43.0] - 2025-12-26
 
 ### Added - FASE 143.0: Docker Performance Fixes & Chronic Issues Resolution

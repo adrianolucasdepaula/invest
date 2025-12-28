@@ -11667,17 +11667,18 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 142** | Dynamic Scraper Configuration System | ✅ 100% | 2025-12-25 |
 | **FASE 142.1** | Code Review Fixes + Performance Enhancements | ✅ 100% | 2025-12-26 |
 | **FASE 143.0** | Docker Performance Fixes & Chronic Issues Resolution | ✅ 100% | 2025-12-26 |
-| **FASE 144** | Dividends + Stock Lending Python API Integration | ✅ 100% | 2025-12-27 |
+| **FASE 144** | Bulk Update Testing + Critical Bugfixes | ✅ 100% | 2025-12-28 |
 | **FASE 101.4** | Wheel Turbinada Backtesting Engine | ✅ 100% | 2025-12-21 |
 
-**FASE 144 - Dividends + Stock Lending Integration (2025-12-27):**
-- ✅ GET /api/scrapers/dividends/{ticker} endpoint (oauth_api.py)
-- ✅ GET /api/scrapers/stock-lending/{ticker} endpoint (oauth_api.py)
-- ✅ STATUSINVEST_DIVIDENDS + STOCK_LENDING scrapers registered (29 total)
-- ✅ NestJS integration via port 8080 (OAuth API)
-- ✅ AssetsUpdateService lines 222-285 integration (Promise.allSettled)
-- ✅ Cross-validation with B3 official data
-- ⚠️ Issue #DIVIDENDS_VALUE_DISCREPANCY documented (parsing investigation needed)
+**FASE 144 - Bulk Update Testing + Bugfixes (2025-12-28):**
+- ✅ Bug Fix: cache.wrap() returning undefined (bloqueava todos updates)
+- ✅ Migration: UNIQUE constraint on (asset_id, reference_date)
+- ✅ Feature: UPSERT behavior (ON CONFLICT DO UPDATE)
+- ✅ Testing: PETR4 single update (4 sources, 66.7% confidence)
+- ✅ Testing: VALE3 UNIQUE validation (3 runs, 0 duplicates final)
+- ✅ Database: 0 duplicates em fundamental_data
+- ⚠️ Issue #DIVID-001: StatusInvest blocked (deferred to FASE 145)
+- ✅ Scope: Bulk update fundamentals only (dividends/lending disabled)
 
 **FASE 143.0 - Docker Fixes (2025-12-26):**
 - ✅ Docker Desktop recovery script (fix API 500 error)
@@ -11712,7 +11713,17 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 
 ### Fases Planejadas
 
-Todas as fases planejadas foram implementadas!
+**FASE 145 - StatusInvest OAuth + Dividends/StockLending (Planejada):**
+- Implementar OAuth StatusInvest (Google + Email/Password)
+- Reescrever scrapers dividends/stock-lending com autenticação
+- Resolver Issue #DIVID-001 (Cloudflare blocking)
+- Reativar integração em AssetsUpdateService
+- Cross-validation com B3 oficial
+- **Prioridade:** MÉDIA (feature não-crítica)
+- **Estimativa:** 4-6h
+- **Ref:** KNOWN-ISSUES.md - Issue #DIVID-001
+
+Todas as outras fases planejadas foram implementadas!
 
 ### Cronograma Estimado
 
