@@ -781,6 +781,16 @@ export class ScrapersService {
       vpa: ['vpa', 'valor_patrimonial_acao', 'bookValuePerShare'],
       // Liquidez
       liquidezCorrente: ['liquidezCorrente', 'liquidez_corrente', 'current_ratio'],
+      // FASE 144 BUGFIX: Financial Statement Values (Python API usa snake_case)
+      receitaLiquida: ['receitaLiquida', 'receita_liquida', 'revenue', 'netRevenue'],
+      ebit: ['ebit', 'EBIT'],
+      ebitda: ['ebitda', 'EBITDA'],
+      lucroLiquido: ['lucroLiquido', 'lucro_liquido', 'netIncome'],
+      patrimonioLiquido: ['patrimonioLiquido', 'patrimonio_liquido', 'patrim_liquido', 'equity'],
+      ativoTotal: ['ativoTotal', 'ativo_total', 'ativos', 'totalAssets'],
+      dividaBruta: ['dividaBruta', 'divida_bruta', 'totalDebt'],
+      dividaLiquida: ['dividaLiquida', 'divida_liquida', 'div_liquida', 'netDebt'],
+      disponibilidades: ['disponibilidades', 'cash'],
     };
 
     const aliases = fieldAliases[field] || [field];
@@ -788,7 +798,13 @@ export class ScrapersService {
     for (const alias of aliases) {
       const value = data[alias];
       if (value !== undefined && value !== null && !isNaN(Number(value))) {
-        return Number(value);
+        const numValue = Number(value);
+        // FASE 144 BUGFIX: Detect scientific notation overflow from parsing errors
+        if (Math.abs(numValue) > 1e20) {
+          this.logger.error(`[EXTRACT-FIELD] Suspicious value for field '${field}' from alias '${alias}': ${value} → ${numValue.toExponential()}`);
+          return null;  // Reject scientifically improbable values
+        }
+        return numValue;
       }
     }
 

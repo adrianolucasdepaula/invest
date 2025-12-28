@@ -73,17 +73,54 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
     const $ = cheerio.load(content);
 
     const getValue = (label: string): number => {
-      const text = $(`td:contains("${label}")`)
+      const rawText = $(`td:contains("${label}")`)
         .next('td')
         .text()
-        .trim()
-        .replace(/\./g, '')
-        .replace(',', '.')
-        .replace('%', '')
-        .replace('R$', '')
         .trim();
 
-      return parseFloat(text) || 0;
+      const text = rawText
+        .replace('R$', '')
+        .replace('%', '')
+        .trim();
+
+      // FASE 144 DEBUG: Log raw extractions for critical fields
+      if (label === 'Receita Líquida' || label === 'Lucro Líquido' || label === 'EBIT') {
+        this.logger.debug(`[FUNDAMENTUS-TS] "${label}" raw HTML text: "${rawText}"`);
+      }
+
+      // FASE 144 BUGFIX: Handle Brazilian number format correctly
+      // "1.234.567,89" → 1234567.89
+      // "1,5 Bi" → 1500000000
+      // Validate before parsing to prevent scientific notation overflow
+
+      let value = text;
+      let multiplier = 1;
+
+      // Handle magnitude suffixes (case-insensitive)
+      const lowerText = text.toLowerCase();
+      if (lowerText.includes(' bi') || lowerText.endsWith('bi')) {
+        multiplier = 1_000_000_000;
+        value = value.replace(/\s*bi\s*/gi, '');
+      } else if (lowerText.includes(' mi') || lowerText.endsWith('mi')) {
+        multiplier = 1_000_000;
+        value = value.replace(/\s*mi\s*/gi, '');
+      } else if (lowerText.includes(' k') || lowerText.endsWith('k')) {
+        multiplier = 1_000;
+        value = value.replace(/\s*k\s*/gi, '');
+      }
+
+      // Brazilian format: remove thousand separators (dots) and convert decimal (comma to dot)
+      value = value.replace(/\./g, '').replace(',', '.');
+
+      const parsed = parseFloat(value) * multiplier;
+
+      // FASE 144: Reject scientifically improbable values
+      if (parsed > 1e20 || isNaN(parsed)) {
+        this.logger.warn(`[FUNDAMENTUS-TS] Suspicious value for "${label}": text="${text}" → parsed=${parsed.toExponential()}`);
+        return 0;  // Return 0 for invalid values (will be filtered by cross-validation)
+      }
+
+      return parsed || 0;
     };
 
     // Get text value (for sector, subsetor, etc.)
