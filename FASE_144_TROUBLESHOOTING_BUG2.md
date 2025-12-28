@@ -138,12 +138,21 @@ DEBUG | scrapers.fundamentus_scraper:_extract_data:338 - Extracted Fundamentus d
 
 ## Solução Requerida (DEFINITIVA)
 
-1. Identificar transformação incorreta em `scrapers.service.ts`
-2. Corrigir conversão/mapping
-3. Re-executar bulk update para popular valores corretos
+1. ✅ Identificar transformação incorreta em `scrapers.service.ts` - NÃO ERA O PROBLEMA
+2. ❌ Root Cause REAL: Cheerio selector em `fundamentus.scraper.ts`
+3. **PROBLEMA CONFIRMADO (2025-12-28 20:14):**
+   - `$('td:contains("EBIT")')` casa com "P/EBIT" E "EBIT"
+   - Receita Líquida: HTML retorna valores concatenados "491.446.000.000127.906.000.000"
+   - EBIT: Retorna 1.97 (P/EBIT ratio) em vez de 51bi (EBIT absoluto)
+
+**Próximos Passos:**
+1. Reescrever getValue() para usar seletores exatos ou navegação DOM
+2. Verificar TODOS os campos (33 total) para seletores incorretos
+3. Re-testar PETR4 com scraper corrigido
 4. Validar cross-validation 100% consenso
 
 ---
 
 **Ref:** PM Expert Report - FASE 144 Validation
 **Bloqueante:** GO/NO-GO para FASE 145
+**Status:** BUG-4 AMPLIADO - Scraper TypeScript precisa reescrita completa

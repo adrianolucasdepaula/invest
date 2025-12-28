@@ -1,0 +1,219 @@
+2025-12-27 23:22:21.695 | INFO     | main:log_requests:98 - → GET /health
+2025-12-27 23:22:21.697 | INFO     | main:log_requests:105 - ← GET /health [200] 0.00s
+INFO:     127.0.0.1:41810 - "GET /health HTTP/1.1" 200 OK
+2025-12-27 23:22:23.852 | INFO     | main:log_requests:98 - → POST /api/scrapers/test
+2025-12-27 23:22:23.854 | INFO     | routes.scraper_test_routes:test_scraper:270 - Testing scraper: STATUSINVEST_DIVIDENDS with query: PETR4
+2025-12-27 23:22:23.854 | INFO     | controllers.scraper_test_controller:test_scraper:470 - Testing scraper: STATUSINVEST_DIVIDENDS with query: PETR4
+2025-12-27 23:22:23.854 | INFO     | base_scraper:scrape_with_retry:372 - [StatusInvestDividends] Scraping PETR4 (attempt 1/3)
+2025-12-27 23:22:23.854 | INFO     | base_scraper:initialize:181 - [INIT] Initializing StatusInvestDividends...
+2025-12-27 23:22:24.202 | DEBUG    | base_scraper:_create_browser_and_page:96 - Playwright with Stealth started for StatusInvestDividends
+2025-12-27 23:22:24.294 | DEBUG    | base_scraper:_create_browser_and_page:126 - Playwright browser created for StatusInvestDividends (with Stealth)
+2025-12-27 23:22:24.433 | DEBUG    | base_scraper:_create_browser_and_page:142 - Playwright page created for StatusInvestDividends
+2025-12-27 23:22:24.433 | INFO     | base_scraper:initialize:191 - [INIT] ✅ StatusInvestDividends initialized successfully
+2025-12-27 23:22:24.933 | INFO     | scrapers.statusinvest_dividends_scraper:scrape:90 - [StatusInvestDividends] Navigating to https://statusinvest.com.br/acoes/petr4
+2025-12-27 23:22:31.602 | INFO     | scrapers.statusinvest_dividends_scraper:scrape:118 - [StatusInvestDividends] PETR4: 1 dividends in 6.67s
+2025-12-27 23:22:31.602 | SUCCESS  | base_scraper:scrape_with_retry:384 - [StatusInvestDividends] Successfully scraped PETR4 in 7.75s
+2025-12-27 23:22:31.783 | DEBUG    | base_scraper:cleanup:227 - Page closed for StatusInvestDividends
+2025-12-27 23:22:31.865 | DEBUG    | base_scraper:cleanup:241 - Browser closed for StatusInvestDividends
+2025-12-27 23:22:31.876 | DEBUG    | base_scraper:cleanup:254 - Stealth context closed for StatusInvestDividends
+2025-12-27 23:22:31.876 | DEBUG    | base_scraper:scrape_with_retry:425 - [StatusInvestDividends] Cleanup completed for PETR4
+2025-12-27 23:22:31.876 | INFO     | main:log_requests:105 - ← POST /api/scrapers/test [200] 8.02s
+INFO:     172.19.0.1:36202 - "POST /api/scrapers/test HTTP/1.1" 200 OK
+2025-12-27 23:23:26.934 | INFO     | main:log_requests:98 - → GET /health
+2025-12-27 23:23:26.934 | INFO     | main:log_requests:105 - ← GET /health [200] 0.00s
+INFO:     127.0.0.1:49210 - "GET /health HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'python-scrapers/scrapers/statusinvest_dividends_scraper.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2025-12-27 23:24:14.331 | INFO     | main:shutdown_event:436 - ================================================================================
+2025-12-27 23:24:14.331 | INFO     | main:shutdown_event:437 - 🛑 B3 AI Analysis Platform - API Shutting Down...
+2025-12-27 23:24:14.331 | INFO     | main:shutdown_event:438 - ================================================================================
+2025-12-27 23:24:14.332 | INFO     | database:disconnect:52 - Database connection closed
+2025-12-27 23:24:14.332 | INFO     | main:shutdown_event:444 - ✓ Database disconnected
+2025-12-27 23:24:14.333 | INFO     | redis_client:disconnect:43 - Redis connection closed
+2025-12-27 23:24:14.333 | INFO     | main:shutdown_event:452 - ✓ Redis disconnected
+2025-12-27 23:24:14.333 | INFO     | main:shutdown_event:456 - ================================================================================
+2025-12-27 23:24:14.333 | SUCCESS  | main:shutdown_event:457 - 👋 Shutdown complete
+2025-12-27 23:24:14.333 | INFO     | main:shutdown_event:458 - ================================================================================
+INFO:     Application shutdown complete.
+INFO:     Finished server process [9]
+2025-12-27 23:24:15,007 - config_manager - INFO - ConfigManager initialized with base_path: /app
+2025-12-27 23:24:15,007 - config_manager - INFO - Loading configuration from all sources...
+2025-12-27 23:24:15,013 - config_manager - INFO - Loaded 38 variables from .env
+2025-12-27 23:24:15,021 - config_manager - INFO - Loaded 38 variables from environment
+2025-12-27 23:24:15,021 - config_manager - INFO - ================================================================================
+2025-12-27 23:24:15,022 - config_manager - INFO - Configuration Status:
+2025-12-27 23:24:15,022 - config_manager - INFO -   Sources: .env, environment
+2025-12-27 23:24:15,022 - config_manager - INFO -   Loaded variables: 38
+2025-12-27 23:24:15,022 - config_manager - INFO -   Missing required: 0
+2025-12-27 23:24:15,022 - config_manager - INFO -   Missing optional: 10
+2025-12-27 23:24:15,022 - config_manager - INFO -   Warnings: 0
+2025-12-27 23:24:15,022 - config_manager - INFO -   Errors: 0
+2025-12-27 23:24:15,022 - config_manager - WARNING - Missing optional variables: REDIS_PASSWORD, OPCOES_USERNAME, OPCOES_PASSWORD, GOOGLE_EMAIL, GOOGLE_PASSWORD, BTG_LOGIN_TOKEN, XPI_LOGIN_TOKEN, BRAPI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY
+2025-12-27 23:24:15,022 - config_manager - INFO - ================================================================================
+2025-12-27 23:24:15.145 | WARNING  | resource_monitor:<module>:19 - [ResourceMonitor] psutil not available - backpressure disabled
+2025-12-27 23:24:15.569 | INFO     | controllers.scraper_test_controller:__init__:393 - ScraperTestController initialized with 29 scrapers
+INFO:     Started server process [122]
+INFO:     Waiting for application startup.
+2025-12-27 23:24:15.890 | INFO     | main:startup_event:375 - ================================================================================
+2025-12-27 23:24:15.890 | INFO     | main:startup_event:376 - 🚀 B3 AI Analysis Platform - Complete API Starting...
+2025-12-27 23:24:15.890 | INFO     | main:startup_event:377 - ================================================================================
+2025-12-27 23:24:15.890 | INFO     | main:startup_event:378 - Version: 2.0.0
+2025-12-27 23:24:15.890 | INFO     | main:startup_event:379 - Environment: Development
+2025-12-27 23:24:15.890 | INFO     | main:startup_event:380 - ================================================================================
+2025-12-27 23:24:15.939 | INFO     | database:connect:42 - Connected to database: postgres:5432/invest_db
+2025-12-27 23:24:15.939 | SUCCESS  | main:startup_event:386 - ✓ Database connected
+2025-12-27 23:24:15.941 | INFO     | redis_client:connect:33 - Connected to Redis: redis:6379
+2025-12-27 23:24:15.941 | SUCCESS  | main:startup_event:396 - ✓ Redis connected
+2025-12-27 23:24:15.941 | SUCCESS  | main:startup_event:406 - ✓ 29 scrapers registered
+2025-12-27 23:24:15.941 | INFO     | main:startup_event:410 - ================================================================================
+2025-12-27 23:24:15.941 | INFO     | main:startup_event:411 - 📚 API Documentation:
+2025-12-27 23:24:15.941 | INFO     | main:startup_event:412 -    - Swagger UI: http://localhost:8000/docs
+2025-12-27 23:24:15.942 | INFO     | main:startup_event:413 -    - ReDoc: http://localhost:8000/redoc
+2025-12-27 23:24:15.942 | INFO     | main:startup_event:414 - ================================================================================
+2025-12-27 23:24:15.942 | INFO     | main:startup_event:415 - 🔌 Endpoints:
+2025-12-27 23:24:15.942 | INFO     | main:startup_event:416 -    - Scrapers: /api/scrapers/*
+2025-12-27 23:24:15.942 | INFO     | main:startup_event:417 -    - Jobs: /api/jobs/*
+2025-12-27 23:24:15.942 | INFO     | main:startup_event:418 -    - Config: /api/config/*
+2025-12-27 23:24:15.942 | INFO     | main:startup_event:419 -    - Analysis: /api/analysis/*
+2025-12-27 23:24:15.942 | INFO     | main:startup_event:420 -    - Health: /health
+2025-12-27 23:24:15.942 | INFO     | main:startup_event:421 - ================================================================================
+2025-12-27 23:24:15.942 | SUCCESS  | main:startup_event:422 - 🎉 API is ready to accept requests!
+2025-12-27 23:24:15.942 | INFO     | main:startup_event:423 - ================================================================================
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'python-scrapers/scrapers/statusinvest_dividends_scraper.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2025-12-27 23:24:22.355 | INFO     | main:shutdown_event:436 - ================================================================================
+2025-12-27 23:24:22.355 | INFO     | main:shutdown_event:437 - 🛑 B3 AI Analysis Platform - API Shutting Down...
+2025-12-27 23:24:22.355 | INFO     | main:shutdown_event:438 - ================================================================================
+2025-12-27 23:24:22.357 | INFO     | database:disconnect:52 - Database connection closed
+2025-12-27 23:24:22.357 | INFO     | main:shutdown_event:444 - ✓ Database disconnected
+2025-12-27 23:24:22.358 | INFO     | redis_client:disconnect:43 - Redis connection closed
+2025-12-27 23:24:22.358 | INFO     | main:shutdown_event:452 - ✓ Redis disconnected
+2025-12-27 23:24:22.358 | INFO     | main:shutdown_event:456 - ================================================================================
+2025-12-27 23:24:22.358 | SUCCESS  | main:shutdown_event:457 - 👋 Shutdown complete
+2025-12-27 23:24:22.358 | INFO     | main:shutdown_event:458 - ================================================================================
+INFO:     Application shutdown complete.
+INFO:     Finished server process [122]
+2025-12-27 23:24:25,769 - config_manager - INFO - ConfigManager initialized with base_path: /app
+2025-12-27 23:24:25,769 - config_manager - INFO - Loading configuration from all sources...
+2025-12-27 23:24:25,775 - config_manager - INFO - Loaded 38 variables from .env
+2025-12-27 23:24:25,780 - config_manager - INFO - Loaded 38 variables from environment
+2025-12-27 23:24:25,781 - config_manager - INFO - ================================================================================
+2025-12-27 23:24:25,781 - config_manager - INFO - Configuration Status:
+2025-12-27 23:24:25,781 - config_manager - INFO -   Sources: .env, environment
+2025-12-27 23:24:25,781 - config_manager - INFO -   Loaded variables: 38
+2025-12-27 23:24:25,781 - config_manager - INFO -   Missing required: 0
+2025-12-27 23:24:25,781 - config_manager - INFO -   Missing optional: 10
+2025-12-27 23:24:25,781 - config_manager - INFO -   Warnings: 0
+2025-12-27 23:24:25,781 - config_manager - INFO -   Errors: 0
+2025-12-27 23:24:25,781 - config_manager - WARNING - Missing optional variables: REDIS_PASSWORD, OPCOES_USERNAME, OPCOES_PASSWORD, GOOGLE_EMAIL, GOOGLE_PASSWORD, BTG_LOGIN_TOKEN, XPI_LOGIN_TOKEN, BRAPI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY
+2025-12-27 23:24:25,781 - config_manager - INFO - ================================================================================
+2025-12-27 23:24:25.884 | WARNING  | resource_monitor:<module>:19 - [ResourceMonitor] psutil not available - backpressure disabled
+2025-12-27 23:24:26.250 | INFO     | controllers.scraper_test_controller:__init__:393 - ScraperTestController initialized with 29 scrapers
+INFO:     Started server process [123]
+INFO:     Waiting for application startup.
+2025-12-27 23:24:26.524 | INFO     | main:startup_event:375 - ================================================================================
+2025-12-27 23:24:26.524 | INFO     | main:startup_event:376 - 🚀 B3 AI Analysis Platform - Complete API Starting...
+2025-12-27 23:24:26.524 | INFO     | main:startup_event:377 - ================================================================================
+2025-12-27 23:24:26.524 | INFO     | main:startup_event:378 - Version: 2.0.0
+2025-12-27 23:24:26.524 | INFO     | main:startup_event:379 - Environment: Development
+2025-12-27 23:24:26.524 | INFO     | main:startup_event:380 - ================================================================================
+2025-12-27 23:24:26.584 | INFO     | database:connect:42 - Connected to database: postgres:5432/invest_db
+2025-12-27 23:24:26.584 | SUCCESS  | main:startup_event:386 - ✓ Database connected
+2025-12-27 23:24:26.589 | INFO     | redis_client:connect:33 - Connected to Redis: redis:6379
+2025-12-27 23:24:26.589 | SUCCESS  | main:startup_event:396 - ✓ Redis connected
+2025-12-27 23:24:26.589 | SUCCESS  | main:startup_event:406 - ✓ 29 scrapers registered
+2025-12-27 23:24:26.589 | INFO     | main:startup_event:410 - ================================================================================
+2025-12-27 23:24:26.589 | INFO     | main:startup_event:411 - 📚 API Documentation:
+2025-12-27 23:24:26.589 | INFO     | main:startup_event:412 -    - Swagger UI: http://localhost:8000/docs
+2025-12-27 23:24:26.589 | INFO     | main:startup_event:413 -    - ReDoc: http://localhost:8000/redoc
+2025-12-27 23:24:26.590 | INFO     | main:startup_event:414 - ================================================================================
+2025-12-27 23:24:26.590 | INFO     | main:startup_event:415 - 🔌 Endpoints:
+2025-12-27 23:24:26.590 | INFO     | main:startup_event:416 -    - Scrapers: /api/scrapers/*
+2025-12-27 23:24:26.590 | INFO     | main:startup_event:417 -    - Jobs: /api/jobs/*
+2025-12-27 23:24:26.590 | INFO     | main:startup_event:418 -    - Config: /api/config/*
+2025-12-27 23:24:26.590 | INFO     | main:startup_event:419 -    - Analysis: /api/analysis/*
+2025-12-27 23:24:26.590 | INFO     | main:startup_event:420 -    - Health: /health
+2025-12-27 23:24:26.590 | INFO     | main:startup_event:421 - ================================================================================
+2025-12-27 23:24:26.590 | SUCCESS  | main:startup_event:422 - 🎉 API is ready to accept requests!
+2025-12-27 23:24:26.591 | INFO     | main:startup_event:423 - ================================================================================
+INFO:     Application startup complete.
+2025-12-27 23:24:32.429 | INFO     | main:log_requests:98 - → GET /health
+2025-12-27 23:24:32.430 | INFO     | main:log_requests:105 - ← GET /health [200] 0.00s
+INFO:     127.0.0.1:43224 - "GET /health HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'python-scrapers/scrapers/statusinvest_dividends_scraper.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2025-12-27 23:24:36.115 | INFO     | main:shutdown_event:436 - ================================================================================
+2025-12-27 23:24:36.115 | INFO     | main:shutdown_event:437 - 🛑 B3 AI Analysis Platform - API Shutting Down...
+2025-12-27 23:24:36.115 | INFO     | main:shutdown_event:438 - ================================================================================
+2025-12-27 23:24:36.119 | INFO     | database:disconnect:52 - Database connection closed
+2025-12-27 23:24:36.120 | INFO     | main:shutdown_event:444 - ✓ Database disconnected
+2025-12-27 23:24:36.121 | INFO     | redis_client:disconnect:43 - Redis connection closed
+2025-12-27 23:24:36.121 | INFO     | main:shutdown_event:452 - ✓ Redis disconnected
+2025-12-27 23:24:36.121 | INFO     | main:shutdown_event:456 - ================================================================================
+2025-12-27 23:24:36.122 | SUCCESS  | main:shutdown_event:457 - 👋 Shutdown complete
+2025-12-27 23:24:36.122 | INFO     | main:shutdown_event:458 - ================================================================================
+INFO:     Application shutdown complete.
+INFO:     Finished server process [123]
+2025-12-27 23:24:36,649 - config_manager - INFO - ConfigManager initialized with base_path: /app
+2025-12-27 23:24:36,649 - config_manager - INFO - Loading configuration from all sources...
+2025-12-27 23:24:36,658 - config_manager - INFO - Loaded 38 variables from .env
+2025-12-27 23:24:36,663 - config_manager - INFO - Loaded 38 variables from environment
+2025-12-27 23:24:36,663 - config_manager - INFO - ================================================================================
+2025-12-27 23:24:36,663 - config_manager - INFO - Configuration Status:
+2025-12-27 23:24:36,663 - config_manager - INFO -   Sources: .env, environment
+2025-12-27 23:24:36,663 - config_manager - INFO -   Loaded variables: 38
+2025-12-27 23:24:36,663 - config_manager - INFO -   Missing required: 0
+2025-12-27 23:24:36,663 - config_manager - INFO -   Missing optional: 10
+2025-12-27 23:24:36,663 - config_manager - INFO -   Warnings: 0
+2025-12-27 23:24:36,663 - config_manager - INFO -   Errors: 0
+2025-12-27 23:24:36,664 - config_manager - WARNING - Missing optional variables: REDIS_PASSWORD, OPCOES_USERNAME, OPCOES_PASSWORD, GOOGLE_EMAIL, GOOGLE_PASSWORD, BTG_LOGIN_TOKEN, XPI_LOGIN_TOKEN, BRAPI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY
+2025-12-27 23:24:36,664 - config_manager - INFO - ================================================================================
+2025-12-27 23:24:36.800 | WARNING  | resource_monitor:<module>:19 - [ResourceMonitor] psutil not available - backpressure disabled
+2025-12-27 23:24:37.171 | INFO     | controllers.scraper_test_controller:__init__:393 - ScraperTestController initialized with 29 scrapers
+INFO:     Started server process [131]
+INFO:     Waiting for application startup.
+2025-12-27 23:24:37.431 | INFO     | main:startup_event:375 - ================================================================================
+2025-12-27 23:24:37.431 | INFO     | main:startup_event:376 - 🚀 B3 AI Analysis Platform - Complete API Starting...
+2025-12-27 23:24:37.431 | INFO     | main:startup_event:377 - ================================================================================
+2025-12-27 23:24:37.431 | INFO     | main:startup_event:378 - Version: 2.0.0
+2025-12-27 23:24:37.431 | INFO     | main:startup_event:379 - Environment: Development
+2025-12-27 23:24:37.431 | INFO     | main:startup_event:380 - ================================================================================
+2025-12-27 23:24:37.478 | INFO     | database:connect:42 - Connected to database: postgres:5432/invest_db
+2025-12-27 23:24:37.479 | SUCCESS  | main:startup_event:386 - ✓ Database connected
+2025-12-27 23:24:37.483 | INFO     | redis_client:connect:33 - Connected to Redis: redis:6379
+2025-12-27 23:24:37.483 | SUCCESS  | main:startup_event:396 - ✓ Redis connected
+2025-12-27 23:24:37.483 | SUCCESS  | main:startup_event:406 - ✓ 29 scrapers registered
+2025-12-27 23:24:37.483 | INFO     | main:startup_event:410 - ================================================================================
+2025-12-27 23:24:37.483 | INFO     | main:startup_event:411 - 📚 API Documentation:
+2025-12-27 23:24:37.483 | INFO     | main:startup_event:412 -    - Swagger UI: http://localhost:8000/docs
+2025-12-27 23:24:37.483 | INFO     | main:startup_event:413 -    - ReDoc: http://localhost:8000/redoc
+2025-12-27 23:24:37.483 | INFO     | main:startup_event:414 - ================================================================================
+2025-12-27 23:24:37.483 | INFO     | main:startup_event:415 - 🔌 Endpoints:
+2025-12-27 23:24:37.483 | INFO     | main:startup_event:416 -    - Scrapers: /api/scrapers/*
+2025-12-27 23:24:37.483 | INFO     | main:startup_event:417 -    - Jobs: /api/jobs/*
+2025-12-27 23:24:37.483 | INFO     | main:startup_event:418 -    - Config: /api/config/*
+2025-12-27 23:24:37.483 | INFO     | main:startup_event:419 -    - Analysis: /api/analysis/*
+2025-12-27 23:24:37.483 | INFO     | main:startup_event:420 -    - Health: /health
+2025-12-27 23:24:37.483 | INFO     | main:startup_event:421 - ================================================================================
+2025-12-27 23:24:37.483 | SUCCESS  | main:startup_event:422 - 🎉 API is ready to accept requests!
+2025-12-27 23:24:37.483 | INFO     | main:startup_event:423 - ================================================================================
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2025-12-27 23:24:53.817 | INFO     | main:shutdown_event:436 - ================================================================================
+2025-12-27 23:24:53.817 | INFO     | main:shutdown_event:437 - 🛑 B3 AI Analysis Platform - API Shutting Down...
+2025-12-27 23:24:53.817 | INFO     | main:shutdown_event:438 - ================================================================================
+2025-12-27 23:24:53.818 | INFO     | database:disconnect:52 - Database connection closed
+2025-12-27 23:24:53.818 | INFO     | main:shutdown_event:444 - ✓ Database disconnected
+2025-12-27 23:24:53.818 | INFO     | redis_client:disconnect:43 - Redis connection closed
+2025-12-27 23:24:53.818 | INFO     | main:shutdown_event:452 - ✓ Redis disconnected
+2025-12-27 23:24:53.818 | INFO     | main:shutdown_event:456 - ================================================================================
+2025-12-27 23:24:53.818 | SUCCESS  | main:shutdown_event:457 - 👋 Shutdown complete
+2025-12-27 23:24:53.818 | INFO     | main:shutdown_event:458 - ================================================================================
+INFO:     Application shutdown complete.
+INFO:     Finished server process [131]
+INFO:     Stopping reloader process [7]

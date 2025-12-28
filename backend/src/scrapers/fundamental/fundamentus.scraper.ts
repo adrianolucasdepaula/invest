@@ -70,29 +70,83 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
     await this.page.goto(url, { waitUntil: 'load', timeout: this.config.timeout });
 
     const content = await this.page.content();
+
+    // FASE 144 DEBUG: Save HTML to file for analysis
+    if (ticker === 'PETR4') {
+      const fs = require('fs');
+      const path = require('path');
+      const debugPath = path.join(process.cwd(), '..', 'fundamentus_petr4_debug.html');
+      fs.writeFileSync(debugPath, content, 'utf8');
+      this.logger.log(`[FUNDAMENTUS-TS] Saved HTML to ${debugPath}`);
+    }
+
     const $ = cheerio.load(content);
 
+    // FASE 144 BUGFIX: Rewritten to use exact label matching (like Python scraper)
+    // Old approach used :contains() which matched "P/EBIT" when searching for "EBIT"
     const getValue = (label: string): number => {
-      const rawText = $(`td:contains("${label}")`)
-        .next('td')
-        .text()
-        .trim();
+      let rawText = '';
+      const allLabelsFound: string[] = [];  // FASE 144 ULTRA-DEBUG
 
-      const text = rawText
-        .replace('R$', '')
-        .replace('%', '')
-        .trim();
+      // Find exact label match using table navigation (like Python BeautifulSoup)
+      $('table.w728').each((_, table) => {
+        $(table).find('tr').each((__, row) => {
+          const cells = $(row).find('td');
+
+          // FASE 144 CRITICAL FIX: Fundamentus has structure: value(3m) | label | value(12m)
+          // We need to find labels and get the value AFTER them (12-month data)
+          for (let i = 0; i < cells.length; i++) {
+            const labelCell = $(cells[i]).find('.txt').text().trim();
+            if (labelCell) allLabelsFound.push(labelCell);  // FASE 144 ULTRA-DEBUG
+
+            // EXACT match (case-insensitive, normalized)
+            const normalizedLabel = labelCell.toLowerCase().replace('?', '').trim();
+            const searchLabel = label.toLowerCase().replace('?', '').trim();
+
+            if (normalizedLabel === searchLabel) {
+              // Get the NEXT cell (12-month value), NOT the previous cell (3-month value)
+              if (i + 1 < cells.length) {
+                const valueCell = $(cells[i + 1]);
+
+                // FASE 144 ULTRA-DEBUG: Log cell structure for financial fields
+                if (label === 'Receita Líquida' || label === 'Lucro Líquido' || label === 'EBIT') {
+                  this.logger.log(`[FUNDAMENTUS-TS] Found "${label}" at cell ${i}, getting value from cell ${i+1}`);
+                  this.logger.log(`[FUNDAMENTUS-TS] Cell ${i+1} HTML: ${valueCell.html()}`);
+                }
+
+                rawText = valueCell.find('.txt').text().trim();
+                return false; // Break out of loop
+              }
+            }
+          }
+        });
+
+        if (rawText) return false; // Break out of table loop
+      });
+
+      // FASE 144 ULTRA-DEBUG: If not found, log all labels
+      if (!rawText && (label === 'Receita Líquida' || label === 'Lucro Líquido' || label === 'EBIT')) {
+        this.logger.warn(`[FUNDAMENTUS-TS] Label "${label}" NOT FOUND. All labels found in tables: ${JSON.stringify(allLabelsFound.slice(0, 50))}`);
+      }
+
+      if (!rawText) {
+        this.logger.debug(`[FUNDAMENTUS-TS] Label "${label}" not found in tables`);
+        return 0;
+      }
 
       // FASE 144 DEBUG: Log raw extractions for critical fields
       if (label === 'Receita Líquida' || label === 'Lucro Líquido' || label === 'EBIT') {
         this.logger.debug(`[FUNDAMENTUS-TS] "${label}" raw HTML text: "${rawText}"`);
       }
 
+      const text = rawText
+        .replace('R$', '')
+        .replace('%', '')
+        .trim();
+
       // FASE 144 BUGFIX: Handle Brazilian number format correctly
       // "1.234.567,89" → 1234567.89
       // "1,5 Bi" → 1500000000
-      // Validate before parsing to prevent scientific notation overflow
-
       let value = text;
       let multiplier = 1;
 
@@ -123,12 +177,38 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
       return parsed || 0;
     };
 
-    // Get text value (for sector, subsetor, etc.)
+    // Get text value (for sector, subsetor, etc.) - EXACT match like getValue()
     const getTextValue = (label: string): string => {
-      return $(`td:contains("${label}")`)
-        .next('td')
-        .text()
-        .trim();
+      let rawText = '';
+
+      // Find exact label match using table navigation
+      $('table.w728').each((_, table) => {
+        $(table).find('tr').each((__, row) => {
+          const cells = $(row).find('td');
+
+          // Process in pairs
+          for (let i = 0; i < cells.length - 1; i += 2) {
+            const labelCell = $(cells[i]).find('.txt').text().trim();
+
+            // EXACT match (case-insensitive)
+            if (labelCell.toLowerCase() === label.toLowerCase()) {
+              // For text values, check for links first, then .txt
+              const valueCell = $(cells[i + 1]);
+              const linkText = valueCell.find('a').text().trim();
+              if (linkText) {
+                rawText = linkText;
+              } else {
+                rawText = valueCell.find('.txt').text().trim();
+              }
+              return false; // Break
+            }
+          }
+        });
+
+        if (rawText) return false; // Break
+      });
+
+      return rawText;
     };
 
     // Extract sector and subsetor from Fundamentus

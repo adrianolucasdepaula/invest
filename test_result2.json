@@ -1,0 +1,1 @@
+{"success":true,"scraper":"STATUSINVEST_DIVIDENDS","query":"PETR4","data":{"ticker":"PETR4","dividends":[{"ticker":"PETR4","tipo":"dividendo","valor_bruto":4.0,"valor_liquido":4.0,"imposto_retido":0,"data_ex":"2025-12-22","data_com":null,"data_pagamento":"2025-12-22","status":"pago"}],"count":1},"error":null,"execution_time":8.94}
