@@ -24,12 +24,13 @@ export class CacheService {
   async get<T>(key: string): Promise<T | null> {
     try {
       const value = await this.cacheManager.get<T>(key);
-      if (value) {
+      if (value !== undefined && value !== null) {
         this.logger.debug(`Cache hit: ${key}`);
+        return value;
       } else {
         this.logger.debug(`Cache miss: ${key}`);
+        return null;  // BUGFIX FASE 144: Sempre retornar null em cache miss (não undefined)
       }
-      return value;
     } catch (error) {
       this.logger.error(`Cache get error for key ${key}: ${error.message}`);
       return null;
@@ -87,15 +88,18 @@ export class CacheService {
     try {
       // Try to get from cache
       const cached = await this.get<T>(key);
-      if (cached !== null) {
+      // BUGFIX FASE 144: Verificar null E undefined (cache miss retorna null garantido)
+      if (cached !== null && cached !== undefined) {
         return cached;
       }
 
       // Execute callback
       const result = await callback();
 
-      // Cache result
-      await this.set(key, result, ttl);
+      // BUGFIX FASE 144: Não cachear undefined (indica erro no callback)
+      if (result !== undefined && result !== null) {
+        await this.set(key, result, ttl);
+      }
 
       return result;
     } catch (error) {
