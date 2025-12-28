@@ -156,10 +156,11 @@ export class ScraperConfigService {
     // GAP-005: Cache com Redis (TTL 5 min = 300s)
     const cacheKey = `enabled_scrapers:${category}:${ticker || 'all'}`;
 
-    return this.cacheService.wrap<ScraperConfig[]>(
-      cacheKey,
-      async () => {
-        this.logger.debug(`[CACHE-MISS] Fetching from DB: ${cacheKey}`);
+    try {
+      const result = await this.cacheService.wrap<ScraperConfig[]>(
+        cacheKey,
+        async () => {
+          this.logger.debug(`[CACHE-MISS] Fetching from DB: ${cacheKey}`);
 
         // Buscar todos scrapers ativos da categoria
         const configs = await this.scraperConfigRepo.find({
@@ -197,6 +198,14 @@ export class ScraperConfigService {
       },
       300, // TTL 5 minutos
     );
+
+      this.logger.debug(`[GET-ENABLED] Cache result: ${result?.length || 0} scrapers`);
+      return result || [];  // BUGFIX: Garantir retorno de array mesmo se cache falhar
+    } catch (error) {
+      this.logger.error(`[GET-ENABLED] Error in getEnabledScrapersForAsset: ${error.message}`);
+      // Fallback: retornar array vazio ao invés de undefined
+      return [];
+    }
   }
 
   // ============================================================================

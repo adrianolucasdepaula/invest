@@ -186,6 +186,12 @@ export class ScrapersService {
     // Consulta configs dinâmicas ao invés de usar scrapers hardcoded
     const configs = await this.scraperConfigService.getEnabledScrapersForAsset(ticker, 'fundamental');
 
+    // BUGFIX: Validar se configs não é undefined/null
+    if (!configs || !Array.isArray(configs)) {
+      this.logger.error(`[SCRAPE] getEnabledScrapersForAsset returned invalid value: ${configs}`);
+      throw new Error(`Failed to get scraper configs for ${ticker}`);
+    }
+
     this.logger.log(
       `[SCRAPE] Starting fundamental data collection for ${ticker} from ${configs.length} DYNAMIC sources: ${configs.map((c) => c.scraperId).join(', ')}`,
     );

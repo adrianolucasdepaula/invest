@@ -24,8 +24,9 @@ import {
 } from '../news/services';
 import { NewsService } from '../news/news.service';
 import { News } from '@database/entities';
-import { DividendsService } from '../dividends/dividends.service';  // FASE 144
-import { StockLendingService } from '../stock-lending/stock-lending.service';  // FASE 144
+// FASE 144: Dividends/StockLending DESABILITADOS (Issue #DIVID-001)
+// import { DividendsService } from '../dividends/dividends.service';
+// import { StockLendingService } from '../stock-lending/stock-lending.service';
 
 export interface UpdateResult {
   success: boolean;
@@ -99,8 +100,9 @@ export class AssetsUpdateService {
     private aiOrchestatorService: AIOrchestatorService,
     private consensusService: ConsensusService,
     private newsService: NewsService,
-    private dividendsService: DividendsService,  // FASE 144: Dividends integration
-    private stockLendingService: StockLendingService,  // FASE 144: Stock Lending integration
+    // FASE 144: Dividends/StockLending DESABILITADOS (Issue #DIVID-001 - Cloudflare blocking)
+    // private dividendsService: DividendsService,
+    // private stockLendingService: StockLendingService,
   ) {}
 
   /**
@@ -125,10 +127,13 @@ export class AssetsUpdateService {
       : '';
     const logPrefix = `[TRACE-${traceId}]${positionInfo}`;
 
+    this.logger.log(`${logPrefix} [PRE-SPAN] updateSingleAsset called for ${ticker}`);
+
     // OpenTelemetry span for the entire update operation
     return this.telemetryService.withSpan(
       'asset.update.single',
       async (span) => {
+        this.logger.log(`${logPrefix} [IN-SPAN] Inside withSpan callback`);
         span.setAttributes({
           'asset.ticker': ticker,
           'asset.trigger': triggeredBy,
@@ -140,13 +145,16 @@ export class AssetsUpdateService {
     this.logger.log(
       `${logPrefix} Starting update for ${ticker} (user: ${userId || 'system'}, trigger: ${triggeredBy})`,
     );
+    this.logger.debug(`${logPrefix} DEBUG 1: Method called successfully`);
     const startTime = Date.now();
 
+    this.logger.debug(`${logPrefix} DEBUG 2: Looking up asset...`);
     // 1. Find asset in database
     const asset = await this.assetRepository.findOne({ where: { ticker } });
     if (!asset) {
       throw new NotFoundException(`Asset ${ticker} not found`);
     }
+    this.logger.debug(`${logPrefix} DEBUG 3: Asset found: ${asset.id}`);
 
     // 2. Check if asset has auto-update disabled
     if (!asset.autoUpdateEnabled && triggeredBy === UpdateTrigger.CRON) {
@@ -183,12 +191,15 @@ export class AssetsUpdateService {
     try {
       // 5. Execute scrapers with nested span
       this.logger.log(`${logPrefix} Scraping data for ${ticker}...`);
+      this.logger.debug(`${logPrefix} DEBUG 4: Starting scrapers...`);
       const scraperStartTime = Date.now();
 
       // Add event for scraper start
       this.telemetryService.addSpanEvent('scraper.start', { ticker });
 
       const scrapedResult = await this.scrapersService.scrapeFundamentalData(ticker);
+      this.logger.debug(`${logPrefix} DEBUG 5: Scrapers returned, duration: ${Date.now() - scraperStartTime}ms`);
+      this.logger.debug(`${logPrefix} DEBUG 6: scrapedResult = ${JSON.stringify(scrapedResult).substring(0, 200)}...`);
       const scraperDuration = Date.now() - scraperStartTime;
 
       // Record scraper duration metric
@@ -219,13 +230,14 @@ export class AssetsUpdateService {
       // This updates the sentiment thermometer for the asset
       await this.collectAndAnalyzeNews(ticker, logPrefix);
 
-      // 7.2. FASE 144: Coleta paralela de dividendos e aluguel (non-blocking)
+      // 7.2. FASE 144: DESABILITADO - Issue #DIVID-001 (Cloudflare blocking)
+      // StatusInvest Dividends/StockLending requer OAuth (adiado para FASE 145)
+      /*
       const [dividendsResult, lendingResult] = await Promise.allSettled([
         this.scrapersService.fetchDividendsData(ticker),
         this.scrapersService.fetchStockLendingData(ticker),
       ]);
 
-      // Import dividends (try/catch individual para não bloquear update)
       if (dividendsResult.status === 'fulfilled' && dividendsResult.value.success) {
         try {
           const syncResult = await this.dividendsService.importFromScraper(
@@ -237,7 +249,6 @@ export class AssetsUpdateService {
             `${logPrefix} Dividends: ${syncResult.imported} imported, ${syncResult.skipped} skipped`,
           );
 
-          // Telemetry tracking
           span.setAttributes({
             'dividends.imported': syncResult.imported,
             'dividends.skipped': syncResult.skipped,
@@ -245,7 +256,6 @@ export class AssetsUpdateService {
           });
         } catch (error) {
           this.logger.error(`${logPrefix} Failed to import dividends: ${error.message}`);
-          // Non-blocking: continue even if dividends fail
         }
       } else {
         const reason =
@@ -255,7 +265,6 @@ export class AssetsUpdateService {
         this.logger.warn(`${logPrefix} Dividends scraping failed: ${reason}`);
       }
 
-      // Import stock lending (try/catch individual)
       if (lendingResult.status === 'fulfilled' && lendingResult.value.success) {
         try {
           const syncResult = await this.stockLendingService.importFromScraper(
@@ -267,14 +276,12 @@ export class AssetsUpdateService {
             `${logPrefix} Stock Lending: ${syncResult.imported} imported, ${syncResult.skipped} skipped`,
           );
 
-          // Telemetry tracking
           span.setAttributes({
             'lending.imported': syncResult.imported,
             'lending.skipped': syncResult.skipped,
           });
         } catch (error) {
           this.logger.error(`${logPrefix} Failed to import lending: ${error.message}`);
-          // Non-blocking: continue even if lending fails
         }
       } else {
         const reason =
@@ -283,6 +290,7 @@ export class AssetsUpdateService {
             : lendingResult.reason;
         this.logger.warn(`${logPrefix} Stock lending scraping failed: ${reason}`);
       }
+      */
 
       // 8. Extract sector from rawSourcesData (BRAPI provides this)
       // Try BRAPI first (most reliable for sector), then other sources
@@ -344,7 +352,7 @@ export class AssetsUpdateService {
         sources: scrapedResult.sources,
         sourcesCount: scrapedResult.sourcesCount,
         confidence: scrapedResult.confidence,
-        dataPoints: Object.keys(scrapedResult.data).length,
+        dataPoints: scrapedResult.data ? Object.keys(scrapedResult.data).length : 0,  // BUGFIX: Handle undefined data
         discrepancies: scrapedResult.discrepancies,
         duration,
         traceId,
