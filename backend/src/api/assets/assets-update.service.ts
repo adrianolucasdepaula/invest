@@ -944,7 +944,40 @@ export class AssetsUpdateService {
       },
     });
 
-    return this.fundamentalDataRepository.save(fundamentalData);
+    // FASE 144: UPSERT para prevenir duplicatas (ON CONFLICT DO UPDATE)
+    // Se já existe registro para (asset_id, reference_date), atualiza
+    await this.fundamentalDataRepository
+      .createQueryBuilder()
+      .insert()
+      .into(FundamentalData)
+      .values(fundamentalData)
+      .orUpdate(
+        [
+          'pl', 'pvp', 'psr', 'p_ativos', 'p_capital_giro', 'p_ebit',
+          'ev_ebit', 'ev_ebitda', 'peg_ratio',
+          'roe', 'roa', 'roic', 'margem_bruta', 'margem_ebit', 'margem_ebitda',
+          'margem_liquida', 'giro_ativos',
+          'divida_bruta', 'divida_liquida', 'divida_liquida_ebitda',
+          'divida_liquida_ebit', 'divida_liquida_patrimonio',
+          'patrimonio_liquido_ativos', 'passivos_ativos',
+          'cagr_receitas_5anos', 'cagr_lucros_5anos',
+          'dividend_yield', 'payout',
+          'receita_liquida', 'ebit', 'ebitda', 'lucro_liquido',
+          'patrimonio_liquido', 'ativo_total', 'disponibilidades',
+          'lpa', 'vpa', 'liquidez_corrente',
+          'metadata', 'field_sources', 'updated_at',
+        ],
+        ['asset_id', 'reference_date'], // conflict target
+      )
+      .execute();
+
+    // Retornar o registro (buscar do banco após UPSERT)
+    return this.fundamentalDataRepository.findOne({
+      where: {
+        assetId: asset.id,
+        referenceDate: fundamentalData.referenceDate,
+      },
+    });
   }
 
   /**
