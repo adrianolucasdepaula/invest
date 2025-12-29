@@ -1,4 +1,5 @@
 import { Controller, Post, Get, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DataCleanupService, CleanupStats } from '../../queue/jobs/data-cleanup.service';
 
 /**
@@ -6,8 +7,11 @@ import { DataCleanupService, CleanupStats } from '../../queue/jobs/data-cleanup.
  *
  * Provides admin endpoints for triggering cleanup jobs manually
  * for testing and debugging purposes.
+ *
+ * SECURITY: All endpoints require JWT authentication
  */
 @Controller('admin/data-cleanup')
+@UseGuards(JwtAuthGuard)
 export class DataCleanupController {
   constructor(private readonly dataCleanupService: DataCleanupService) {}
 

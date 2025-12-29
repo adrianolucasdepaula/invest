@@ -163,6 +163,65 @@
 
 ---
 
+## DATA CLEANUP & LIFECYCLE (FASE 145)
+
+| Arquivo | Descricao | Criticidade |
+| ------- | --------- | ----------- |
+| **[backend/FASE_145_CONFIG.md](backend/FASE_145_CONFIG.md)** | **Guia de configuracao completo** | CRITICO |
+| [backend/src/queue/jobs/data-cleanup.service.ts](backend/src/queue/jobs/data-cleanup.service.ts) | Service de cleanup com 7 jobs | CRITICO |
+| [backend/src/api/data-cleanup/](backend/src/api/data-cleanup/) | Controller + Module para admin | IMPORTANTE |
+| [backend/src/modules/storage/storage.service.ts](backend/src/modules/storage/storage.service.ts) | Archival methods (JSONL MinIO) | IMPORTANTE |
+| [backend/src/metrics/metrics.service.ts](backend/src/metrics/metrics.service.ts) | Cleanup metrics (Prometheus) | IMPORTANTE |
+
+**Cleanup Jobs (7):**
+
+**Fase 1 (Critico):**
+- ScrapedData: Daily 3:00 AM, 30d retention, archive to MinIO
+- Analysis: Weekly Sunday 2:00 AM, 90d retention (optional), cleanup failed/stuck
+
+**Fase 2 (Alto):**
+- ScraperMetric: Weekly Sunday 3:30 AM, 30d retention, no archival
+- News/NewsAnalysis: Monthly 1st 4:00 AM, 180d retention, archive + CASCADE
+- UpdateLog: Quarterly 1st 5:00 AM, 365d retention, archival (compliance)
+- SyncHistory: Yearly Jan 1st 6:00 AM, 1095d retention, long-term compliance
+
+**REST Endpoints (6):**
+
+- `POST /admin/data-cleanup/trigger/scraped-data` - Manual cleanup ScrapedData
+- `POST /admin/data-cleanup/trigger/scraper-metrics` - Manual cleanup ScraperMetric
+- `POST /admin/data-cleanup/trigger/news` - Manual cleanup News
+- `POST /admin/data-cleanup/trigger/update-logs` - Manual cleanup UpdateLog
+- `POST /admin/data-cleanup/trigger/sync-history` - Manual cleanup SyncHistory
+- `GET /admin/data-cleanup/status` - Config status (dry-run, retention periods)
+
+**Environment Variables (9):**
+
+```bash
+CLEANUP_ENABLED=true
+CLEANUP_DRY_RUN=false  # true por 1 semana primeiro!
+CLEANUP_SCRAPED_DATA_RETENTION_DAYS=30
+CLEANUP_ANALYSES_RETENTION_DAYS=90
+CLEANUP_SCRAPER_METRICS_RETENTION_DAYS=30
+CLEANUP_NEWS_RETENTION_DAYS=180
+CLEANUP_UPDATE_LOGS_RETENTION_DAYS=365
+CLEANUP_SYNC_HISTORY_RETENTION_DAYS=1095
+MINIO_LIFECYCLE_ENABLED=true
+```
+
+**Prometheus Metrics (3):**
+
+- `invest_cleanup_records_deleted_total{entity}` - Counter de records deletados
+- `invest_cleanup_job_duration_seconds{entity}` - Histogram de duracao
+- `invest_cleanup_job_result_total{entity,result}` - Counter de resultados
+
+**Rollout Strategy:**
+
+1. Semana 1: Dry-run mode (CLEANUP_DRY_RUN=true)
+2. Validar logs e metrics
+3. Semana 2+: Produção (CLEANUP_DRY_RUN=false)
+
+---
+
 ## VALIDACAO & TESTES
 
 ### Framework de Validacao

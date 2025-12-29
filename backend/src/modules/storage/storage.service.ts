@@ -30,6 +30,7 @@ export class StorageService implements OnModuleInit {
     SCRAPED_HTML: 'scraped-html',
     REPORTS: 'reports',
     EXPORTS: 'exports',
+    ARCHIVES: 'archives', // FASE 145: Dedicated bucket for archived data (JSONL)
     BACKUPS: 'backups',
   } as const;
 

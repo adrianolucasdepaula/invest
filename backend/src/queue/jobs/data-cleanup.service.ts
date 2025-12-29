@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan, Connection } from 'typeorm';
+import { Repository, LessThan, DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { ScrapedData } from '@database/entities/scraped-data.entity';
 import { ScraperMetric } from '@database/entities/scraper-metric.entity';
@@ -52,7 +52,7 @@ export class DataCleanupService {
     private updateLogRepository: Repository<UpdateLog>,
     @InjectRepository(SyncHistory)
     private syncHistoryRepository: Repository<SyncHistory>,
-    private readonly connection: Connection,
+    private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
     private readonly storageService: StorageService,
     private readonly metricsService: MetricsService,
@@ -249,10 +249,10 @@ export class DataCleanupService {
           )
           .join('\n');
 
-        // Upload to MinIO (scraped-html bucket - reusing existing bucket)
+        // Upload to MinIO (dedicated archives bucket)
         await this.storageService.uploadFile(
-          this.storageService.BUCKETS.SCRAPED_HTML,
-          `archives/${filename}`,
+          this.storageService.BUCKETS.ARCHIVES,
+          `scraped-data/${filename}`,
           jsonl,
           'application/x-ndjson',
           {
@@ -276,7 +276,7 @@ export class DataCleanupService {
    * FASE 145 FIX: Delete scraped data batch with transaction timeout
    */
   private async deleteScrapedDataBatch(records: ScrapedData[]): Promise<number> {
-    const queryRunner = this.connection.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
 
     try {
@@ -336,6 +336,14 @@ export class DataCleanupService {
   })
   async cleanupScraperMetrics(): Promise<CleanupStats> {
     const startTime = Date.now();
+
+    // Check if cleanup is enabled
+    const cleanupEnabled = this.configService.get<string>('CLEANUP_ENABLED') === 'true';
+    if (!cleanupEnabled) {
+      this.logger.debug('Data cleanup disabled (CLEANUP_ENABLED != true), skipping scraper metrics cleanup');
+      return { archived: 0, deleted: 0, errors: 0, duration: 0 };
+    }
+
     const isDryRun = this.configService.get<string>('CLEANUP_DRY_RUN') === 'true';
     const retentionDays = parseInt(
       this.configService.get<string>('CLEANUP_SCRAPER_METRICS_RETENTION_DAYS') || '30',
@@ -416,6 +424,14 @@ export class DataCleanupService {
   })
   async cleanupNews(): Promise<CleanupStats> {
     const startTime = Date.now();
+
+    // Check if cleanup is enabled
+    const cleanupEnabled = this.configService.get<string>('CLEANUP_ENABLED') === 'true';
+    if (!cleanupEnabled) {
+      this.logger.debug('Data cleanup disabled (CLEANUP_ENABLED != true), skipping news cleanup');
+      return { archived: 0, deleted: 0, errors: 0, duration: 0 };
+    }
+
     const isDryRun = this.configService.get<string>('CLEANUP_DRY_RUN') === 'true';
     const retentionDays = parseInt(
       this.configService.get<string>('CLEANUP_NEWS_RETENTION_DAYS') || '180',
@@ -505,6 +521,14 @@ export class DataCleanupService {
   })
   async cleanupUpdateLogs(): Promise<CleanupStats> {
     const startTime = Date.now();
+
+    // Check if cleanup is enabled
+    const cleanupEnabled = this.configService.get<string>('CLEANUP_ENABLED') === 'true';
+    if (!cleanupEnabled) {
+      this.logger.debug('Data cleanup disabled (CLEANUP_ENABLED != true), skipping update logs cleanup');
+      return { archived: 0, deleted: 0, errors: 0, duration: 0 };
+    }
+
     const isDryRun = this.configService.get<string>('CLEANUP_DRY_RUN') === 'true';
     const retentionDays = parseInt(
       this.configService.get<string>('CLEANUP_UPDATE_LOGS_RETENTION_DAYS') || '365',
@@ -590,6 +614,14 @@ export class DataCleanupService {
   })
   async cleanupSyncHistory(): Promise<CleanupStats> {
     const startTime = Date.now();
+
+    // Check if cleanup is enabled
+    const cleanupEnabled = this.configService.get<string>('CLEANUP_ENABLED') === 'true';
+    if (!cleanupEnabled) {
+      this.logger.debug('Data cleanup disabled (CLEANUP_ENABLED != true), skipping sync history cleanup');
+      return { archived: 0, deleted: 0, errors: 0, duration: 0 };
+    }
+
     const isDryRun = this.configService.get<string>('CLEANUP_DRY_RUN') === 'true';
     const retentionDays = parseInt(
       this.configService.get<string>('CLEANUP_SYNC_HISTORY_RETENTION_DAYS') || '1095',
@@ -691,10 +723,10 @@ export class DataCleanupService {
         )
         .join('\n');
 
-      // Upload to MinIO
+      // Upload to MinIO (dedicated archives bucket)
       await this.storageService.uploadFile(
-        this.storageService.BUCKETS.SCRAPED_HTML,
-        `archives/${filename}`,
+        this.storageService.BUCKETS.ARCHIVES,
+        `news/${filename}`,
         jsonl,
         'application/x-ndjson',
         {
@@ -736,10 +768,10 @@ export class DataCleanupService {
         )
         .join('\n');
 
-      // Upload to MinIO
+      // Upload to MinIO (dedicated archives bucket)
       await this.storageService.uploadFile(
-        this.storageService.BUCKETS.SCRAPED_HTML,
-        `archives/${filename}`,
+        this.storageService.BUCKETS.ARCHIVES,
+        `update-logs/${filename}`,
         jsonl,
         'application/x-ndjson',
         {
@@ -783,10 +815,10 @@ export class DataCleanupService {
         )
         .join('\n');
 
-      // Upload to MinIO
+      // Upload to MinIO (dedicated archives bucket)
       await this.storageService.uploadFile(
-        this.storageService.BUCKETS.SCRAPED_HTML,
-        `archives/${filename}`,
+        this.storageService.BUCKETS.ARCHIVES,
+        `sync-history/${filename}`,
         jsonl,
         'application/x-ndjson',
         {

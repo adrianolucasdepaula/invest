@@ -225,6 +225,45 @@ Plataforma completa de análise de investimentos B3 com Inteligência Artificial
      - Invalidação automática após: update, toggle, bulkToggle, applyProfile, updateProfile
      - Performance: 50ms → <1ms (95% redução queries repetidas)
 
+8. **Data Cleanup Module** (`src/queue/jobs/data-cleanup.service.ts` + `src/api/data-cleanup/`) - FASE 145
+   - **DataCleanupService:** 7 cron jobs para cleanup automatizado
+   - **DataCleanupController:** 6 endpoints REST para trigger manual (Admin-only, JWT protected)
+   - **Entities Afetadas:** ScrapedData, Analysis, ScraperMetric, News, NewsAnalysis, UpdateLog, SyncHistory
+   - **Storage Module:** MinIO S3-compatible com 5 buckets (scraped-html, reports, exports, archives, backups)
+   - **Features:**
+     - Archive-before-delete pattern (JSONL format)
+     - Dry-run mode para validação segura
+     - Transaction-safe deletes com QueryRunner + timeout (30s)
+     - Prometheus metrics (cleanup_records_deleted_total, cleanup_job_duration_seconds, cleanup_job_result_total)
+     - MinIO lifecycle policies (auto-expiration por bucket)
+     - Dedicated ARCHIVES bucket (long-term retention)
+   - **7 Cleanup Jobs:**
+     - cleanup-scraped-data: Daily 3:00 AM, >30d retention
+     - cleanup-stale-analyses: Weekly Sunday 2:00 AM, >90d retention + failed/stuck
+     - cleanup-scraper-metrics: Weekly Sunday 3:30 AM, >30d retention (no archival)
+     - cleanup-news: Monthly 1st 4:00 AM, >180d retention (CASCADE to NewsAnalysis)
+     - cleanup-update-logs: Quarterly 1st 5:00 AM, >365d retention (regulatory compliance)
+     - cleanup-sync-history: Yearly Jan 1st 6:00 AM, >1095d retention (long-term compliance)
+   - **6 Admin Endpoints:**
+     - POST /admin/data-cleanup/trigger/scraped-data - Manual trigger ScrapedData cleanup
+     - POST /admin/data-cleanup/trigger/scraper-metrics - Manual trigger ScraperMetric cleanup
+     - POST /admin/data-cleanup/trigger/news - Manual trigger News cleanup
+     - POST /admin/data-cleanup/trigger/update-logs - Manual trigger UpdateLog cleanup
+     - POST /admin/data-cleanup/trigger/sync-history - Manual trigger SyncHistory cleanup
+     - GET /admin/data-cleanup/status - Get cleanup config (enabled, dryRun, retention periods, lifecycle)
+   - **9 Environment Variables:**
+     - CLEANUP_ENABLED (true/false) - Master switch
+     - CLEANUP_DRY_RUN (true/false) - Safety mode (run 1 week in production first)
+     - CLEANUP_SCRAPED_DATA_RETENTION_DAYS (default: 30)
+     - CLEANUP_ANALYSES_RETENTION_DAYS (default: 90)
+     - CLEANUP_SCRAPER_METRICS_RETENTION_DAYS (default: 30)
+     - CLEANUP_NEWS_RETENTION_DAYS (default: 180)
+     - CLEANUP_UPDATE_LOGS_RETENTION_DAYS (default: 365)
+     - CLEANUP_SYNC_HISTORY_RETENTION_DAYS (default: 1095)
+     - MINIO_LIFECYCLE_ENABLED, MINIO_LIFECYCLE_*_DAYS
+   - **Timezone:** America/Sao_Paulo (ALL cron jobs)
+   - **Rollout Strategy:** Dry-run 1 semana → Production (ver backend/FASE_145_CONFIG.md)
+
 **Padroes:**
 
 - Dependency Injection (NestJS native)
@@ -547,10 +586,21 @@ Antes de criar nova entity, verificar:
 
 **Jobs Implementados:**
 
+**Core Jobs:**
 - `process-pending-analysis`: Processa análises pendentes
 - `update-asset-prices`: Atualiza preços de ativos
 - `daily-update`: Atualização diária automática
 - `batch-update`: Atualização em lote
+
+**FASE 145: Data Cleanup & Lifecycle Management**
+- `cleanup-scraped-data`: Cleanup ScrapedData >30d (Daily 3:00 AM)
+- `cleanup-stale-analyses`: Cleanup análises >90d + failed/stuck (Weekly Sunday 2:00 AM)
+- `cleanup-scraper-metrics`: Cleanup ScraperMetric >30d (Weekly Sunday 3:30 AM)
+- `cleanup-news`: Cleanup News+NewsAnalysis >180d (Monthly 1st 4:00 AM)
+- `cleanup-update-logs`: Cleanup UpdateLog >365d (Quarterly 1st 5:00 AM)
+- `cleanup-sync-history`: Cleanup SyncHistory >1095d (Yearly Jan 1st 6:00 AM)
+
+**Detalhes:** Ver `backend/FASE_145_CONFIG.md` para configuração completa, variáveis de ambiente, métricas Prometheus e estratégia de rollout.
 
 ---
 
