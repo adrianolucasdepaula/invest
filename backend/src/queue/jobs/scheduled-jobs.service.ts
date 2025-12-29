@@ -4,7 +4,15 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
-import { Asset, AssetType, News, OptionPrice, OptionStatus, OptionType } from '@database/entities';
+import {
+  Analysis,
+  Asset,
+  AssetType,
+  News,
+  OptionPrice,
+  OptionStatus,
+  OptionType,
+} from '@database/entities';
 import { NewsCollectorsService } from '../../api/news/services/news-collectors.service';
 import { EconomicCalendarService } from '../../api/news/services/economic-calendar.service';
 import { AIOrchestatorService } from '../../api/news/services/ai-orchestrator.service';
@@ -14,12 +22,17 @@ import { AppWebSocketGateway } from '../../websocket/websocket.gateway';
 @Injectable()
 export class ScheduledJobsService {
   private readonly logger = new Logger(ScheduledJobsService.name);
+  // ✅ FASE 145 FIX: Job lock flags to prevent overlap
+  private isCleaningOldData = false;
+  private isUpdatingOptionPrices = false;
 
   constructor(
     @InjectQueue('scraping') private scrapingQueue: Queue,
     @InjectQueue('analysis') private analysisQueue: Queue,
     @InjectRepository(Asset)
     private assetRepository: Repository<Asset>,
+    @InjectRepository(Analysis)
+    private analysisRepository: Repository<Analysis>,
     @InjectRepository(News)
     private newsRepository: Repository<News>,
     @InjectRepository(OptionPrice)
@@ -88,18 +101,140 @@ export class ScheduledJobsService {
   }
 
   /**
-   * Clean old scraped data every week on Sunday at 3 AM
+   * FASE 145: Clean stale analyses every week on Sunday at 2 AM
+   *
+   * Removes:
+   * 1. Analyses from inactive assets
+   * 2. Failed analyses >7 days
+   * 3. Pending stuck analyses >1 hour
+   * 4. (Optional) Very old analyses >90 days
+   *
+   * FASE 145 FIX: Added overlap prevention + 60s timeout per DELETE
    */
-  @Cron(CronExpression.EVERY_WEEK)
+  @Cron('0 2 * * 0', {
+    name: 'cleanup-stale-analyses',
+    timeZone: 'America/Sao_Paulo',
+  })
   async cleanOldData() {
-    this.logger.log('Starting scheduled data cleanup');
+    // ✅ FASE 145 FIX: Prevent overlap
+    if (this.isCleaningOldData) {
+      this.logger.warn('⚠️  Previous cleanOldData still running, skipping...');
+      return;
+    }
+
+    this.isCleaningOldData = true;
 
     try {
-      // TODO: Implement cleanup logic
-      // Delete scraped data older than 90 days
-      this.logger.log('Data cleanup completed');
+      this.logger.log('🧹 Starting scheduled analysis cleanup');
+      const startTime = Date.now();
+      let totalDeleted = 0;
+      const TIMEOUT_MS = 60000; // 60s per DELETE
+
+      // 1. Remove analyses from inactive assets
+      const inactiveAssets = await this.assetRepository.find({
+        where: { isActive: false },
+        select: ['id'],
+      });
+
+      if (inactiveAssets.length > 0) {
+        const inactiveAssetIds = inactiveAssets.map((asset) => asset.id);
+        const inactiveCount = await this.deleteWithTimeout(
+          () => this.analysisRepository
+            .createQueryBuilder()
+            .delete()
+            .from(Analysis)
+            .where('assetId IN (:...ids)', { ids: inactiveAssetIds })
+            .execute(),
+          TIMEOUT_MS,
+          'Analyses from inactive assets',
+        );
+        totalDeleted += inactiveCount;
+      }
+
+      // 2. Remove failed analyses >7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const failedCount = await this.deleteWithTimeout(
+        () => this.analysisRepository
+          .createQueryBuilder()
+          .delete()
+          .from(Analysis)
+          .where('status = :status', { status: 'failed' })
+          .andWhere('createdAt < :date', { date: sevenDaysAgo })
+          .execute(),
+        TIMEOUT_MS,
+        'Failed analyses (>7 days)',
+      );
+      totalDeleted += failedCount;
+
+      // 3. Remove pending stuck analyses >1 hour
+      const oneHourAgo = new Date();
+      oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+
+      const stuckCount = await this.deleteWithTimeout(
+        () => this.analysisRepository
+          .createQueryBuilder()
+          .delete()
+          .from(Analysis)
+          .where('status = :status', { status: 'pending' })
+          .andWhere('createdAt < :date', { date: oneHourAgo })
+          .execute(),
+        TIMEOUT_MS,
+        'Stuck pending analyses (>1 hour)',
+      );
+      totalDeleted += stuckCount;
+
+      // 4. (Optional) Remove very old analyses >90 days
+      const retentionDays = parseInt(process.env.CLEANUP_ANALYSES_RETENTION_DAYS || '0', 10);
+      if (retentionDays > 0) {
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+        const oldCount = await this.deleteWithTimeout(
+          () => this.analysisRepository
+            .createQueryBuilder()
+            .delete()
+            .from(Analysis)
+            .where('createdAt < :date', { date: cutoffDate })
+            .execute(),
+          TIMEOUT_MS,
+          `Very old analyses (>${retentionDays} days)`,
+        );
+        totalDeleted += oldCount;
+      }
+
+      const duration = Date.now() - startTime;
+      this.logger.log(`✅ Analysis cleanup completed: ${totalDeleted} total removed in ${duration}ms`);
     } catch (error) {
-      this.logger.error(`Failed to clean old data: ${error.message}`);
+      this.logger.error(`❌ Failed to clean old analyses: ${error.message}`);
+    } finally {
+      this.isCleaningOldData = false; // ✅ Release lock
+    }
+  }
+
+  /**
+   * FASE 145 FIX: Helper method to execute DELETE with timeout
+   */
+  private async deleteWithTimeout(
+    deleteOperation: () => Promise<any>,
+    timeoutMs: number,
+    entityName: string,
+  ): Promise<number> {
+    try {
+      const result = await Promise.race([
+        deleteOperation(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error(`${entityName} delete timeout`)), timeoutMs)
+        ),
+      ]);
+
+      const affected = result.affected || 0;
+      this.logger.log(`  ✅ Removed ${affected} ${entityName}`);
+      return affected;
+    } catch (error) {
+      this.logger.error(`  ❌ Failed to delete ${entityName}: ${error.message}`);
+      throw error;
     }
   }
 
@@ -235,103 +370,127 @@ export class ScheduledJobsService {
    * Update option prices and emit WebSocket events every 15 minutes during market hours
    * Updates Greeks based on current underlying price
    * Cron: Every 15 min, 10 AM to 5:30 PM (B3 options market hours), Mon-Fri
+   *
+   * FASE 145 FIX: Added overlap prevention + 5-minute total timeout
    */
   @Cron('*/15 10-17 * * 1-5') // Every 15 min, 10 AM to 5 PM, Mon-Fri
   async updateOptionPricesRealtime() {
+    // ✅ FASE 145 FIX: Prevent overlap
+    if (this.isUpdatingOptionPrices) {
+      this.logger.warn('⚠️  Previous updateOptionPricesRealtime still running, skipping...');
+      return;
+    }
+
+    this.isUpdatingOptionPrices = true;
+
+    try {
+      // ✅ FASE 145 FIX: Add 5-minute total timeout
+      await Promise.race([
+        this.doUpdateOptionPrices(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Option prices update timeout')), 5 * 60 * 1000)
+        ),
+      ]);
+    } catch (error) {
+      this.logger.error(`Failed to update option prices: ${error.message}`);
+    } finally {
+      this.isUpdatingOptionPrices = false; // ✅ Release lock
+    }
+  }
+
+  /**
+   * FASE 145 FIX: Extracted option prices update logic
+   */
+  private async doUpdateOptionPrices() {
     this.logger.log('🎯 Starting scheduled option prices real-time update');
     const startTime = Date.now();
 
-    try {
-      // Get assets with active options (hasOptions = true)
-      const assetsWithOptions = await this.assetRepository.find({
-        where: { isActive: true, hasOptions: true },
-        take: 20, // Top 20 most liquid options
-        order: { ticker: 'ASC' },
-      });
+    // Get assets with active options (hasOptions = true)
+    const assetsWithOptions = await this.assetRepository.find({
+      where: { isActive: true, hasOptions: true },
+      take: 20, // Top 20 most liquid options
+      order: { ticker: 'ASC' },
+    });
 
-      if (assetsWithOptions.length === 0) {
-        this.logger.debug('No assets with options found');
-        return;
-      }
-
-      let updatedCount = 0;
-      const tickers = assetsWithOptions.map((a) => a.ticker);
-
-      for (const asset of assetsWithOptions) {
-        try {
-          // Get all active options for this asset
-          const options = await this.optionPriceRepository.find({
-            where: {
-              underlyingAssetId: asset.id,
-              status: OptionStatus.ACTIVE,
-            },
-            relations: ['underlyingAsset'],
-          });
-
-          if (options.length === 0) continue;
-
-          // Group by expiration date for chain updates
-          const byExpiration = new Map<string, typeof options>();
-          for (const option of options) {
-            const expKey = option.expirationDate.toISOString().split('T')[0];
-            if (!byExpiration.has(expKey)) {
-              byExpiration.set(expKey, []);
-            }
-            byExpiration.get(expKey).push(option);
-          }
-
-          // Emit chain updates per expiration
-          for (const [expDate, expOptions] of byExpiration) {
-            const calls = expOptions
-              .filter((o) => o.type === OptionType.CALL)
-              .map((o) => ({
-                optionTicker: o.ticker,
-                strike: Number(o.strike),
-                lastPrice: Number(o.lastPrice) || 0,
-                bid: Number(o.bid) || 0,
-                ask: Number(o.ask) || 0,
-                volume: o.volume || 0,
-                openInterest: o.openInterest || 0,
-                delta: o.delta ? Number(o.delta) : undefined,
-                impliedVolatility: o.impliedVolatility ? Number(o.impliedVolatility) : undefined,
-              }));
-
-            const puts = expOptions
-              .filter((o) => o.type === OptionType.PUT)
-              .map((o) => ({
-                optionTicker: o.ticker,
-                strike: Number(o.strike),
-                lastPrice: Number(o.lastPrice) || 0,
-                bid: Number(o.bid) || 0,
-                ask: Number(o.ask) || 0,
-                volume: o.volume || 0,
-                openInterest: o.openInterest || 0,
-                delta: o.delta ? Number(o.delta) : undefined,
-                impliedVolatility: o.impliedVolatility ? Number(o.impliedVolatility) : undefined,
-              }));
-
-            // Emit WebSocket event
-            this.wsGateway.emitOptionChainUpdate(asset.ticker, {
-              expirationDate: expDate,
-              calls,
-              puts,
-            });
-          }
-
-          updatedCount++;
-        } catch (error) {
-          // FASE 110.2: Use error level for failures per observability standards
-          this.logger.error(`Failed to update options for ${asset.ticker}: ${error.message}`);
-        }
-      }
-
-      const duration = Date.now() - startTime;
-      this.logger.log(
-        `🎯 Option prices real-time update completed: ${updatedCount}/${assetsWithOptions.length} assets (${duration}ms)`,
-      );
-    } catch (error) {
-      this.logger.error(`Failed to update option prices: ${error.message}`);
+    if (assetsWithOptions.length === 0) {
+      this.logger.debug('No assets with options found');
+      return;
     }
+
+    let updatedCount = 0;
+
+    for (const asset of assetsWithOptions) {
+      try {
+        // Get all active options for this asset
+        const options = await this.optionPriceRepository.find({
+          where: {
+            underlyingAssetId: asset.id,
+            status: OptionStatus.ACTIVE,
+          },
+          relations: ['underlyingAsset'],
+        });
+
+        if (options.length === 0) continue;
+
+        // Group by expiration date for chain updates
+        const byExpiration = new Map<string, typeof options>();
+        for (const option of options) {
+          const expKey = option.expirationDate.toISOString().split('T')[0];
+          if (!byExpiration.has(expKey)) {
+            byExpiration.set(expKey, []);
+          }
+          byExpiration.get(expKey).push(option);
+        }
+
+        // Emit chain updates per expiration
+        for (const [expDate, expOptions] of byExpiration) {
+          const calls = expOptions
+            .filter((o) => o.type === OptionType.CALL)
+            .map((o) => ({
+              optionTicker: o.ticker,
+              strike: Number(o.strike),
+              lastPrice: Number(o.lastPrice) || 0,
+              bid: Number(o.bid) || 0,
+              ask: Number(o.ask) || 0,
+              volume: o.volume || 0,
+              openInterest: o.openInterest || 0,
+              delta: o.delta ? Number(o.delta) : undefined,
+              impliedVolatility: o.impliedVolatility ? Number(o.impliedVolatility) : undefined,
+            }));
+
+          const puts = expOptions
+            .filter((o) => o.type === OptionType.PUT)
+            .map((o) => ({
+              optionTicker: o.ticker,
+              strike: Number(o.strike),
+              lastPrice: Number(o.lastPrice) || 0,
+              bid: Number(o.bid) || 0,
+              ask: Number(o.ask) || 0,
+              volume: o.volume || 0,
+              openInterest: o.openInterest || 0,
+              delta: o.delta ? Number(o.delta) : undefined,
+              impliedVolatility: o.impliedVolatility ? Number(o.impliedVolatility) : undefined,
+            }));
+
+          // Emit WebSocket event
+          this.wsGateway.emitOptionChainUpdate(asset.ticker, {
+            expirationDate: expDate,
+            calls,
+            puts,
+          });
+        }
+
+        updatedCount++;
+      } catch (error) {
+        // FASE 110.2: Use error level for failures per observability standards
+        this.logger.error(`Failed to update options for ${asset.ticker}: ${error.message}`);
+      }
+    }
+
+    const duration = Date.now() - startTime;
+    this.logger.log(
+      `🎯 Option prices real-time update completed: ${updatedCount}/${assetsWithOptions.length} assets (${duration}ms)`,
+    );
   }
 
   /**

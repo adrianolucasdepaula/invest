@@ -26,6 +26,11 @@ export class MetricsService implements OnModuleInit {
   private readonly deadLetterJobsTotal: promClient.Gauge<string>;
   private readonly deadLetterJobsProcessed: promClient.Counter<string>;
 
+  // FASE 145: Data Cleanup metrics
+  private readonly cleanupRecordsDeleted: promClient.Counter<string>;
+  private readonly cleanupJobDuration: promClient.Histogram<string>;
+  private readonly cleanupJobResult: promClient.Counter<string>;
+
   constructor() {
     // Create a new registry
     this.registry = new promClient.Registry();
@@ -147,6 +152,29 @@ export class MetricsService implements OnModuleInit {
       name: 'invest_dead_letter_jobs_processed_total',
       help: 'Total number of dead letter jobs processed (retried or cleared)',
       labelNames: ['action'],
+      registers: [this.registry],
+    });
+
+    // FASE 145: Data Cleanup metrics
+    this.cleanupRecordsDeleted = new promClient.Counter({
+      name: 'invest_cleanup_records_deleted_total',
+      help: 'Total number of records deleted by cleanup jobs',
+      labelNames: ['entity'],
+      registers: [this.registry],
+    });
+
+    this.cleanupJobDuration = new promClient.Histogram({
+      name: 'invest_cleanup_job_duration_seconds',
+      help: 'Duration of cleanup jobs in seconds',
+      labelNames: ['entity'],
+      buckets: [1, 5, 10, 30, 60, 120, 300, 600],
+      registers: [this.registry],
+    });
+
+    this.cleanupJobResult = new promClient.Counter({
+      name: 'invest_cleanup_job_result_total',
+      help: 'Result of cleanup jobs (success, failure, partial_failure)',
+      labelNames: ['entity', 'result'],
       registers: [this.registry],
     });
   }
@@ -273,6 +301,19 @@ export class MetricsService implements OnModuleInit {
 
   incrementDeadLetterProcessed(action: 'retried' | 'cleared'): void {
     this.deadLetterJobsProcessed.inc({ action });
+  }
+
+  // FASE 145: Data Cleanup Metrics methods
+  recordCleanup(entity: string, count: number): void {
+    this.cleanupRecordsDeleted.inc({ entity }, count);
+  }
+
+  recordCleanupDuration(entity: string, durationSeconds: number): void {
+    this.cleanupJobDuration.observe({ entity }, durationSeconds);
+  }
+
+  recordCleanupResult(entity: string, result: 'success' | 'failure' | 'partial_failure'): void {
+    this.cleanupJobResult.inc({ entity, result });
   }
 
   /**

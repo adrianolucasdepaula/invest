@@ -13,6 +13,145 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.45.0] - 2025-12-29
+
+### Added - FASE 145: Data Cleanup & Lifecycle Management
+
+**Automated Data Cleanup System:**
+- ✅ **DataCleanupService** - Automated cleanup for old scraped data
+  - Daily job (3:00 AM) for ScrapedData >30 days
+  - Archive to MinIO (JSONL format) before deletion
+  - Transaction-safe batch processing (1000 records/batch)
+  - Dry-run mode support (CLEANUP_DRY_RUN=true)
+  - Timezone: America/Sao_Paulo
+  - `backend/src/queue/jobs/data-cleanup.service.ts`
+
+- ✅ **Analysis Cleanup** - ScheduledJobsService enhancements
+  - Weekly job (Sunday 2:00 AM) for stale analyses
+  - Remove failed analyses >7 days
+  - Remove stuck pending analyses >1 hour
+  - Optional: Remove all analyses >90 days (CLEANUP_ANALYSES_RETENTION_DAYS)
+  - `backend/src/queue/jobs/scheduled-jobs.service.ts`
+
+- ✅ **MinIO Lifecycle Policies** - Automatic object expiration
+  - scraped-html bucket: 30 days retention
+  - reports bucket: 90 days retention
+  - exports bucket: 14 days retention
+  - Automatic policy setup on module init
+  - `backend/src/modules/storage/storage.service.ts`
+
+- ✅ **Prometheus Metrics** - Observability for cleanup jobs
+  - `invest_cleanup_records_deleted_total{entity}` - Counter
+  - `invest_cleanup_job_duration_seconds{entity}` - Histogram
+  - `invest_cleanup_job_result_total{entity,result}` - Counter
+  - `backend/src/metrics/metrics.service.ts`
+
+- ✅ **Admin REST Endpoints** - Manual trigger and monitoring
+  - POST `/api/v1/admin/data-cleanup/trigger/scraped-data` - Manual cleanup trigger
+  - GET `/api/v1/admin/data-cleanup/status` - Configuration status
+  - `backend/src/api/data-cleanup/` (controller + module)
+
+**Configuration:**
+- 9 new environment variables (CLEANUP_*, MINIO_LIFECYCLE_*)
+- CLEANUP_ENABLED (default: true)
+- CLEANUP_DRY_RUN (default: true for safety)
+- CLEANUP_SCRAPED_DATA_RETENTION_DAYS (default: 30)
+- CLEANUP_ANALYSES_RETENTION_DAYS (default: 90)
+- MINIO_LIFECYCLE_ENABLED (default: true)
+- MINIO_LIFECYCLE_SCRAPED_HTML_DAYS (default: 30)
+- MINIO_LIFECYCLE_REPORTS_DAYS (default: 90)
+- MINIO_LIFECYCLE_EXPORTS_DAYS (default: 14)
+
+**Testing:**
+- ✅ Manual trigger: 0 archived, 0 deleted (no old data, dry-run mode)
+- ✅ Backend logs: Proper execution flow
+- ✅ Prometheus metrics: All 3 metrics exposed correctly
+  - Duration: 23ms (0.023s)
+  - Result: success (1 execution)
+  - Records deleted: 0 (expected in dry-run)
+
+**Documentation:**
+- `backend/FASE_145_CONFIG.md` - Complete configuration guide
+  - Environment variables reference
+  - Cron job schedules
+  - Prometheus metrics documentation
+  - Rollout strategy (1 week dry-run mandatory)
+  - Troubleshooting guide
+  - Next phases roadmap (6 phases planned)
+
+**Architecture:**
+- Zero Tolerance compliance: TypeScript 0 errors, Build SUCCESS
+- Transaction safety: QueryRunner with rollback on error
+- Batch processing: Prevents memory exhaustion on large datasets
+- Archive-before-delete: No data loss, reprocessing capability
+- Timezone-aware: All cron jobs use America/Sao_Paulo
+
+### Added - FASE 145 Fase 2: Extended Cleanup (ScraperMetric, News, UpdateLog, SyncHistory)
+
+**New Cleanup Jobs:**
+- ✅ **ScraperMetric Cleanup** - Weekly Sunday 3:30 AM
+  - 30 days retention
+  - No archival (aggregates kept separately)
+  - Deletes raw scraper execution metrics
+  - Batch size: 5000 records
+
+- ✅ **News/NewsAnalysis Cleanup** - Monthly 1st day 4:00 AM
+  - 180 days retention (6 months)
+  - Archive to MinIO before deletion (JSONL format)
+  - CASCADE delete to NewsAnalysis
+  - Batch size: 1000 records
+  - Archive path: `archives/news/{timestamp}.jsonl`
+
+- ✅ **UpdateLog Archival** - Quarterly 1st day 5:00 AM
+  - 1 year retention (365 days - regulatory compliance)
+  - Archive to MinIO before deletion (JSONL format)
+  - Maintains audit trail for compliance
+  - Batch size: 1000 records
+  - Archive path: `archives/update-logs/{timestamp}.jsonl`
+
+- ✅ **SyncHistory Archival** - Yearly January 1st 6:00 AM
+  - 3 years retention (1095 days - long-term compliance)
+  - Archive to MinIO before deletion (JSONL format)
+  - Historical sync records preserved
+  - Batch size: 1000 records
+  - Archive path: `archives/sync-history/{timestamp}.jsonl`
+
+**New REST Endpoints:**
+- POST `/api/v1/admin/data-cleanup/trigger/scraper-metrics` - Manual scraper metrics cleanup
+- POST `/api/v1/admin/data-cleanup/trigger/news` - Manual news cleanup
+- POST `/api/v1/admin/data-cleanup/trigger/update-logs` - Manual update logs cleanup
+- POST `/api/v1/admin/data-cleanup/trigger/sync-history` - Manual sync history cleanup
+- GET `/api/v1/admin/data-cleanup/status` - Updated with new retention periods
+
+**Configuration:**
+- 4 new environment variables:
+  - CLEANUP_SCRAPER_METRICS_RETENTION_DAYS (default: 30)
+  - CLEANUP_NEWS_RETENTION_DAYS (default: 180)
+  - CLEANUP_UPDATE_LOGS_RETENTION_DAYS (default: 365)
+  - CLEANUP_SYNC_HISTORY_RETENTION_DAYS (default: 1095)
+
+**Testing:**
+- ✅ ScraperMetric cleanup: 0 deleted (dry-run, 24ms)
+- ✅ News cleanup: 1000 found, 0 archived, 1000 deleted (dry-run, 173ms)
+- ✅ UpdateLog cleanup: 0 archived, 0 deleted (dry-run, 16ms)
+- ✅ SyncHistory cleanup: 0 archived, 0 deleted (dry-run, 21ms)
+- ✅ All Prometheus metrics emitting correctly
+
+**Files Modified:**
+- `backend/src/queue/jobs/data-cleanup.service.ts` - 4 new cleanup methods + 3 archive methods
+- `backend/src/api/data-cleanup/data-cleanup.controller.ts` - 4 new trigger endpoints
+- `backend/src/api/data-cleanup/data-cleanup.module.ts` - 5 new entity repositories
+- `backend/src/queue/queue.module.ts` - 3 new entity imports
+- `docker-compose.yml` - 4 new environment variables
+
+**Next Phases (Roadmap in FASE_145_CONFIG.md):**
+- Fase 3 (MÉDIO): EconomicEvent/OptionPrice archival
+- Fase 4: TimescaleDB migration for ScrapedData/News
+- Fase 5: Backup automation (full/incremental)
+- Fase 6: Grafana dashboard + alerting rules
+
+---
+
 ## [1.44.0] - 2025-12-28
 
 ### Fixed - FASE 144: Bulk Update Testing + Critical Bugfixes

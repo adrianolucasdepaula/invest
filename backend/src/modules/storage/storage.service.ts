@@ -45,21 +45,41 @@ export class StorageService implements OnModuleInit {
       useSSL: false,
       accessKey,
       secretKey,
+      // Note: Timeout is handled via Promise.race in operations instead of transport
     });
   }
 
   async onModuleInit() {
     try {
-      // Test connection
-      await this.client.listBuckets();
-      this.isConnected = true;
-      this.logger.log('MinIO connected successfully');
-
-      // Initialize default buckets
-      await this.initializeBuckets();
+      // ✅ FASE 145 FIX: Add timeout wrapper (10s total)
+      await Promise.race([
+        this.initializeMinIO(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('MinIO init timeout after 10s')), 10000)
+        ),
+      ]);
     } catch (error) {
       this.logger.warn(`MinIO not available: ${error.message}. Storage features disabled.`);
+      this.isConnected = false;  // ✅ Graceful degradation
     }
+  }
+
+  /**
+   * FASE 145 FIX: Initialize MinIO with parallelized operations
+   */
+  private async initializeMinIO() {
+    // Test connection
+    await this.client.listBuckets();
+    this.isConnected = true;
+    this.logger.log('MinIO connected successfully');
+
+    // ✅ PARALLELIZE bucket creation + lifecycle setup
+    const lifecycleEnabled = this.configService.get<string>('MINIO_LIFECYCLE_ENABLED') === 'true';
+
+    await Promise.all([
+      this.initializeBuckets(),
+      lifecycleEnabled ? this.setupLifecyclePolicies() : Promise.resolve(),
+    ]);
   }
 
   private async initializeBuckets() {
@@ -73,6 +93,71 @@ export class StorageService implements OnModuleInit {
       } catch (error) {
         this.logger.error(`Failed to create bucket ${bucket}: ${error.message}`);
       }
+    }
+  }
+
+  /**
+   * FASE 145: Setup lifecycle policies for all buckets
+   */
+  private async setupLifecyclePolicies() {
+    try {
+      // Get retention days from config
+      const scrapedHtmlDays = parseInt(
+        this.configService.get<string>('MINIO_LIFECYCLE_SCRAPED_HTML_DAYS', '30'),
+        10,
+      );
+      const reportsDays = parseInt(
+        this.configService.get<string>('MINIO_LIFECYCLE_REPORTS_DAYS', '90'),
+        10,
+      );
+      const exportsDays = parseInt(
+        this.configService.get<string>('MINIO_LIFECYCLE_EXPORTS_DAYS', '14'),
+        10,
+      );
+
+      // Setup lifecycle for each bucket
+      await this.setupBucketLifecycle(this.BUCKETS.SCRAPED_HTML, scrapedHtmlDays);
+      await this.setupBucketLifecycle(this.BUCKETS.REPORTS, reportsDays);
+      await this.setupBucketLifecycle(this.BUCKETS.EXPORTS, exportsDays);
+
+      this.logger.log('✅ MinIO lifecycle policies configured successfully');
+    } catch (error) {
+      this.logger.error(`Failed to setup lifecycle policies: ${error.message}`);
+    }
+  }
+
+  /**
+   * FASE 145: Setup lifecycle policy for a specific bucket
+   * Automatically deletes objects older than specified days
+   *
+   * @param bucket - Bucket name
+   * @param days - Number of days to retain objects
+   */
+  async setupBucketLifecycle(bucket: string, days: number): Promise<void> {
+    if (!this.isConnected) {
+      throw new Error('MinIO not connected');
+    }
+
+    try {
+      const lifecycleConfig = {
+        Rule: [
+          {
+            ID: `cleanup-${bucket}`,
+            Status: 'Enabled',
+            Expiration: {
+              Days: days,
+            },
+          },
+        ],
+      };
+
+      // MinIO uses setBucketLifecycle method
+      await this.client.setBucketLifecycle(bucket, lifecycleConfig);
+
+      this.logger.log(`Lifecycle policy set for ${bucket}: delete after ${days} days`);
+    } catch (error) {
+      this.logger.error(`Failed to set lifecycle for ${bucket}: ${error.message}`);
+      throw error;
     }
   }
 

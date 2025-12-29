@@ -11668,6 +11668,7 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 142.1** | Code Review Fixes + Performance Enhancements | ✅ 100% | 2025-12-26 |
 | **FASE 143.0** | Docker Performance Fixes & Chronic Issues Resolution | ✅ 100% | 2025-12-26 |
 | **FASE 144** | Bulk Update Testing + Critical Bugfixes | ✅ 100% | 2025-12-28 |
+| **FASE 145** | Data Cleanup & Lifecycle Management | ✅ 100% | 2025-12-29 |
 | **FASE 101.4** | Wheel Turbinada Backtesting Engine | ✅ 100% | 2025-12-21 |
 
 **FASE 144 - Bulk Update Testing + Bugfixes (2025-12-28 - 2025-12-29):**
@@ -11727,9 +11728,61 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 - `frontend/src/app/(dashboard)/wheel/` (page, [id]/page)
 - `frontend/src/lib/hooks/use-wheel.ts`
 
+**FASE 145 - Data Cleanup & Lifecycle Management (2025-12-29):**
+- ✅ DataCleanupService: Automated cleanup for ScrapedData >30 days
+- ✅ Archive to MinIO (JSONL format) before PostgreSQL deletion
+- ✅ Transaction-safe batch processing (1000 records/batch)
+- ✅ Dry-run mode support (CLEANUP_DRY_RUN=true)
+- ✅ ScheduledJobsService: Analysis cleanup (failed >7d, stuck >1h, >90d optional)
+- ✅ MinIO lifecycle policies: scraped-html (30d), reports (90d), exports (14d)
+- ✅ StorageService: Automatic lifecycle policy setup on module init
+- ✅ Prometheus metrics: cleanup_records_deleted_total, cleanup_job_duration_seconds, cleanup_job_result_total
+- ✅ REST endpoints: POST /admin/data-cleanup/trigger/scraped-data, GET /admin/data-cleanup/status
+- ✅ Cron scheduling: Daily 3:00 AM (scraped_data), Weekly Sunday 2:00 AM (analysis)
+- ✅ Environment variables: 9 config vars (CLEANUP_*, MINIO_LIFECYCLE_*)
+- ✅ Testing: Manual trigger, dry-run validation, Prometheus metrics verification
+- ✅ Documentation: FASE_145_CONFIG.md (rollout strategy, troubleshooting, next phases)
+- **Timezone:** America/Sao_Paulo (all cron jobs)
+- **Commits:** [pending]
+- **Files Created:**
+  - `backend/src/queue/jobs/data-cleanup.service.ts`
+  - `backend/src/api/data-cleanup/data-cleanup.controller.ts`
+  - `backend/src/api/data-cleanup/data-cleanup.module.ts`
+  - `backend/FASE_145_CONFIG.md`
+- **Files Modified:**
+  - `backend/src/app.module.ts` (DataCleanupModule import)
+  - `backend/src/queue/queue.module.ts` (Analysis entity import)
+  - `backend/src/modules/storage/storage.service.ts` (lifecycle policies)
+  - `backend/src/queue/jobs/scheduled-jobs.service.ts` (analysis cleanup)
+  - `backend/src/metrics/metrics.service.ts` (cleanup metrics)
+  - `docker-compose.yml` (9 new env vars)
+
+**FASE 145 - Fase 2: Extended Cleanup (ScraperMetric, News, UpdateLog, SyncHistory) (2025-12-29):**
+- ✅ ScraperMetric cleanup: Weekly Sunday 3:30 AM, 30 days retention (no archival - aggregates kept)
+- ✅ News/NewsAnalysis cleanup: Monthly 1st 4:00 AM, 180 days retention (archive + CASCADE delete)
+- ✅ UpdateLog archival: Quarterly 1st 5:00 AM, 1 year retention (regulatory compliance)
+- ✅ SyncHistory archival: Yearly Jan 1st 6:00 AM, 3 years retention (long-term compliance)
+- ✅ MinIO archival: JSONL format for News, UpdateLog, SyncHistory (not ScraperMetric)
+- ✅ REST endpoints: POST /admin/data-cleanup/trigger/{scraper-metrics,news,update-logs,sync-history}
+- ✅ Environment variables: 4 new retention configs (CLEANUP_SCRAPER_METRICS_RETENTION_DAYS, etc.)
+- ✅ Prometheus metrics: All 4 cleanup jobs emit metrics (deleted, duration, result)
+- ✅ Testing: All 4 manual trigger endpoints validated in dry-run mode
+- **Files Modified:**
+  - `backend/src/queue/jobs/data-cleanup.service.ts` (4 new cleanup methods + 3 archive methods)
+  - `backend/src/api/data-cleanup/data-cleanup.controller.ts` (4 new trigger endpoints, updated status endpoint)
+  - `backend/src/api/data-cleanup/data-cleanup.module.ts` (5 new entity repositories)
+  - `backend/src/queue/queue.module.ts` (3 new entity imports for DataCleanupService dependency injection)
+  - `docker-compose.yml` (4 new env vars)
+
+- **Next Phases:**
+  - Fase 3 (MÉDIO): EconomicEvent/OptionPrice archival
+  - Fase 4: TimescaleDB migration for ScrapedData/News
+  - Fase 5: Backup automation (full/incremental)
+  - Fase 6: Grafana dashboard + alerting rules
+
 ### Fases Planejadas
 
-**FASE 145 - StatusInvest OAuth + Dividends/StockLending (Planejada):**
+**FASE 146 - StatusInvest OAuth + Dividends/StockLending (Planejada):**
 - Implementar OAuth StatusInvest (Google + Email/Password)
 - Reescrever scrapers dividends/stock-lending com autenticação
 - Resolver Issue #DIVID-001 (Cloudflare blocking)

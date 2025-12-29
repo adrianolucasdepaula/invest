@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -13,9 +13,11 @@ import { UpdateTrigger } from '@database/entities';
 import { AppWebSocketGateway } from '../../websocket/websocket.gateway';
 
 @Injectable()
-export class AssetUpdateJobsService implements OnModuleInit {
+export class AssetUpdateJobsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(AssetUpdateJobsService.name);
   private readonly isProductionOrStaging: boolean;
+  // ✅ FASE 145 FIX: Store interval ID for cleanup
+  private cleanupIntervalId: NodeJS.Timeout;
 
   constructor(
     @InjectQueue('asset-updates') private assetUpdatesQueue: Queue,
@@ -37,7 +39,8 @@ export class AssetUpdateJobsService implements OnModuleInit {
 
     // FASE 143.0: Auto-cleanup de jobs active presos (> 5 minutos)
     // Fix definitivo para KNOWN-ISSUES.md #JOBS_ACTIVE_STALE
-    setInterval(async () => {
+    // ✅ FASE 145 FIX: Store interval reference for cleanup
+    this.cleanupIntervalId = setInterval(async () => {
       try {
         const cleaned = await this.assetUpdatesQueue.clean(
           5 * 60 * 1000, // 5 minutos
@@ -56,6 +59,18 @@ export class AssetUpdateJobsService implements OnModuleInit {
 
     this.logger.log('[AUTO-CLEANUP] Stale jobs cleanup enabled (interval: 60s, threshold: 5min)');
     this.logger.log('🔄 Cron jobs ENABLED');
+  }
+
+  /**
+   * FASE 145 FIX: Cleanup interval on module destroy
+   */
+  async onModuleDestroy() {
+    this.logger.log('🛑 [ASSET-UPDATE-JOBS] Shutting down...');
+
+    if (this.cleanupIntervalId) {
+      clearInterval(this.cleanupIntervalId);
+      this.logger.log('✅ [ASSET-UPDATE-JOBS] Cleanup interval cleared');
+    }
   }
 
   /**

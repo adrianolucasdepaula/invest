@@ -170,6 +170,31 @@ services:
       # Nota: api-service usa network_mode: "service:scrapers", então acesso via hostname scrapers
       - PYTHON_API_URL=http://scrapers:8000
 
+      # MinIO Object Storage (FASE 145)
+      - MINIO_ENDPOINT=minio
+      - MINIO_PORT=9000
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin123}
+
+      # Data Cleanup & Lifecycle (FASE 145)
+      # ✅ RE-ENABLED with Fix #1 (Storage timeouts) and Fix #2 (DataCleanup limits)
+      - CLEANUP_ENABLED=true
+      - CLEANUP_DRY_RUN=${CLEANUP_DRY_RUN:-true}  # Start with dry-run by default
+      - CLEANUP_SCRAPED_DATA_RETENTION_DAYS=${CLEANUP_SCRAPED_DATA_RETENTION_DAYS:-30}
+      - CLEANUP_ANALYSES_RETENTION_DAYS=${CLEANUP_ANALYSES_RETENTION_DAYS:-90}
+      # FASE 145 - Fase 2: Extended Cleanup Policies
+      - CLEANUP_SCRAPER_METRICS_RETENTION_DAYS=${CLEANUP_SCRAPER_METRICS_RETENTION_DAYS:-30}
+      - CLEANUP_NEWS_RETENTION_DAYS=${CLEANUP_NEWS_RETENTION_DAYS:-180}
+      - CLEANUP_UPDATE_LOGS_RETENTION_DAYS=${CLEANUP_UPDATE_LOGS_RETENTION_DAYS:-365}
+      - CLEANUP_SYNC_HISTORY_RETENTION_DAYS=${CLEANUP_SYNC_HISTORY_RETENTION_DAYS:-1095}
+
+      # MinIO Lifecycle Policies (FASE 145)
+      # ✅ RE-ENABLED with Fix #1 (parallelized initialization)
+      - MINIO_LIFECYCLE_ENABLED=true
+      - MINIO_LIFECYCLE_SCRAPED_HTML_DAYS=${MINIO_LIFECYCLE_SCRAPED_HTML_DAYS:-30}
+      - MINIO_LIFECYCLE_REPORTS_DAYS=${MINIO_LIFECYCLE_REPORTS_DAYS:-90}
+      - MINIO_LIFECYCLE_EXPORTS_DAYS=${MINIO_LIFECYCLE_EXPORTS_DAYS:-14}
+
       # OpenTelemetry (FASE 76.3)
       - OTEL_ENABLED=${OTEL_ENABLED:-true}
       - OTEL_SERVICE_NAME=invest-backend
