@@ -589,44 +589,6 @@ export function AnalysisPageClient() {
           >
             Completa
           </Button>
-          {/* FASE 102: LLM Prompts - Trading Horizons - TEST123 */}
-          <Button
-            variant={filterType === 'daytrade' ? 'default' : 'outline'}
-            onClick={() => setFilterType('daytrade')}
-            size="sm"
-            data-testid="btn-daytrade-test123"
-          >
-            Day Trade TEST
-          </Button>
-          <Button
-            variant={filterType === 'swingtrade' ? 'default' : 'outline'}
-            onClick={() => setFilterType('swingtrade')}
-            size="sm"
-          >
-            Swing Trade
-          </Button>
-          <Button
-            variant={filterType === 'position' ? 'default' : 'outline'}
-            onClick={() => setFilterType('position')}
-            size="sm"
-          >
-            Position
-          </Button>
-          {/* FASE 102: LLM Prompts - Market Analysis */}
-          <Button
-            variant={filterType === 'market-overview' ? 'default' : 'outline'}
-            onClick={() => setFilterType('market-overview')}
-            size="sm"
-          >
-            Mercado
-          </Button>
-          <Button
-            variant={filterType === 'sector-analysis' ? 'default' : 'outline'}
-            onClick={() => setFilterType('sector-analysis')}
-            size="sm"
-          >
-            Setorial
-          </Button>
         </div>
       </div>
 
