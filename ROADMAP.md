@@ -11670,15 +11670,31 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 144** | Bulk Update Testing + Critical Bugfixes | ✅ 100% | 2025-12-28 |
 | **FASE 101.4** | Wheel Turbinada Backtesting Engine | ✅ 100% | 2025-12-21 |
 
-**FASE 144 - Bulk Update Testing + Bugfixes (2025-12-28):**
+**FASE 144 - Bulk Update Testing + Bugfixes (2025-12-28 - 2025-12-29):**
 - ✅ Bug Fix: cache.wrap() returning undefined (bloqueava todos updates)
 - ✅ Migration: UNIQUE constraint on (asset_id, reference_date)
 - ✅ Feature: UPSERT behavior (ON CONFLICT DO UPDATE)
 - ✅ Testing: PETR4 single update (4 sources, 66.7% confidence)
 - ✅ Testing: VALE3 UNIQUE validation (3 runs, 0 duplicates final)
 - ✅ Database: 0 duplicates em fundamental_data
+- ✅ **BUG-4 Fix**: Fundamentus scraper scientific notation overflow (b8a9069, 1605028)
+  - Root cause: HTML labels appear TWICE (3m + 12m data), was grabbing wrong row
+  - Solution: "Last occurrence wins" strategy - iterate all tables, keep final match
+  - Validation: PETR4 values corrected (127.9B, 51B, 32.7B receita/ebit/lucro)
+- ✅ **Hydration Error Fix**: /analysis page SSR/client mismatch (6958a0b)
+  - Root cause: FASE 102 test buttons causing className mismatch
+  - Solution: Removed 37 lines (daytrade, swingtrade, position filters)
+  - Validation: MCP Triplo (0 console errors, 0 warnings, WCAG 2.1 AA compliant)
+- ✅ **Zero Tolerance Enforcement**: 100% compliance
+  - TypeScript: 0 errors (backend + frontend)
+  - Build: SUCCESS (webpack + Next.js Turbopack)
+  - Console: 0 errors, 0 warnings (runtime validation)
+  - Husky: pre-commit + commit-msg hooks passing
 - ⚠️ Issue #DIVID-001: StatusInvest blocked (deferred to FASE 145)
 - ✅ Scope: Bulk update fundamentals only (dividends/lending disabled)
+
+**Commits:** b8a9069, 1605028, 6958a0b
+**Documentação:** Inline comments + commit messages
 
 **FASE 143.0 - Docker Fixes (2025-12-26):**
 - ✅ Docker Desktop recovery script (fix API 500 error)

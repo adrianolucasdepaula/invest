@@ -32,6 +32,39 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **Test:** VALE3 ✅ (3 executions, 2 rows final, 0 duplicates)
 - **Commit:** db5d741
 
+**Bug 3: BUG-4 - Fundamentus Scraper Scientific Notation Overflow (CRITICAL):**
+- **Root Cause:** HTML labels appear TWICE per row (3-month + 12-month data)
+  - First occurrence: Quarterly data (e.g., "Receita Líquida: 491B")
+  - Second occurrence: Annual data (e.g., "Receita Líquida: 127.9B") ← **CORRECT**
+  - Scraper was grabbing first occurrence, causing massive value inflation
+- **Impact:** Financial data corruption (PETR4 showing 4.91e+20 instead of 127.9B)
+- **Fix v1:** `fundamentus.scraper.ts:88-121` - Iterate all tables, find exact label match
+- **Fix v2:** "Last occurrence wins" strategy - keep final match (12-month data)
+- **Added:** Brazilian number format parser (handles "Bi", "Mi", "K" suffixes)
+- **Added:** Scientifically improbable value rejection (> 1e20 → return 0)
+- **Test:** PETR4 database validation ✅
+  - `receita_liquida`: 127.9B (was 491B from 3m data)
+  - `ebit`: 51B (was 1.97 ratio)
+  - `lucro_liquido`: 32.7B (was NULL)
+- **Commits:** b8a9069, 1605028
+
+**Bug 4: Hydration Error - /analysis Page SSR/Client Mismatch (CRITICAL - Zero Tolerance):**
+- **Root Cause:** FASE 102 LLM Prompt test buttons causing conditional rendering
+  - Test buttons (daytrade, swingtrade, position, mercado, setorial) in `_client.tsx:592-629`
+  - className mismatch: Server `"flex items-center space-x-4"` vs Client `"space-y-4"`
+  - Extra buttons on server: `btn-daytrade-test123`
+- **Impact:** Console hydration error blocking Zero Tolerance validation
+- **Fix:** Removed 37 lines of FASE 102 test code
+  - Kept only 4 core filters: Todas, Fundamentalista, Técnica, Completa
+  - Removed: Day Trade TEST, Swing Trade, Position, Mercado, Setorial
+- **Validation (MCP Triplo):**
+  - ✅ Console: 0 errors, 0 warnings
+  - ✅ UI: 4 filter buttons rendering correctly
+  - ✅ A11y: WCAG 2.1 AA compliant (only external TradingView iframe violation)
+  - ✅ Hydration: SSR/client match perfect
+- **Workaround:** Dev server port 3002 (Docker API v1.52 incompatibility)
+- **Commit:** 6958a0b
+
 ### Changed
 
 **Scope Revision:**
