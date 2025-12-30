@@ -20,6 +20,14 @@ route:
 
   # Child routes for different severities
   routes:
+    # FASE 146: Disk Lifecycle Management - dedicated webhook
+    - match:
+        service: disk-lifecycle
+      receiver: 'disk-lifecycle-receiver'
+      group_wait: 10s
+      repeat_interval: 5m  # 5-min cooldown between cleanup executions
+      continue: false  # Don't send to other receivers
+
     # Critical alerts - immediate notification
     - match:
         severity: critical
@@ -50,6 +58,15 @@ inhibit_rules:
 
 # Receivers configuration
 receivers:
+  # FASE 146: Disk Lifecycle Management - dedicated webhook for cleanup automation
+  - name: 'disk-lifecycle-receiver'
+    webhook_configs:
+      - url: 'http://backend:3101/api/v1/webhooks/disk-cleanup'
+        send_resolved: true
+        http_config:
+          follow_redirects: true
+        max_alerts: 0  # No limit on alerts per notification
+
   # Default receiver - webhook for logging (local development)
   - name: 'default-receiver'
     webhook_configs:
