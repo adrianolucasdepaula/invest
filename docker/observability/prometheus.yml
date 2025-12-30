@@ -45,6 +45,12 @@ scrape_configs:
       - targets: ['redis-exporter:9121']
     scrape_timeout: 10s
 
+  # FASE 146: Node Exporter - System & Disk Metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_timeout: 10s
+
   # Tempo metrics
   - job_name: 'tempo'
     static_configs:

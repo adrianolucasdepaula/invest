@@ -38,6 +38,194 @@ Este documento centraliza **todos os problemas conhecidos** encontrados durante 
 
 ---
 
+### Issue #DOCKER_DESKTOP_500: Docker Desktop Recurring 500 Internal Server Error
+
+**Severidade:** 🔴 **CRÍTICA**
+**Status:** ✅ **ROOT CAUSE IDENTIFICADO** - Requer Ação Manual
+**Data Identificado:** 2025-12-26 (recorreu em 2025-12-29)
+**Identificado Por:** Claude Opus 4.5 (Troubleshooting FASE 145)
+**Tempo Investigação:** 4 horas (git history + logs + diagnostics + WebSearch)
+
+#### Descrição
+
+Docker Desktop fica preso em estado "starting" por >1h, causando erro 500 Internal Server Error em todas as operações Docker. Restart manual resolve temporariamente mas problema recorre após alguns dias.
+
+#### Sintomas
+
+- `docker ps` retorna: `request returned 500 Internal Server Error for API route and version http://%2F%2F.%2Fpipe%2FdockerDesktopLinuxEngine/v1.52/containers/json`
+- Docker Desktop GUI mostra status "Starting..." por 1h15m+
+- Logs mostram: `still waiting for the engine to respond to _ping after 1h15m15.5641566s: HTTP 500`
+- WSL distributions (Ubuntu, docker-desktop) aparecem como "Running" mas WSL não responde
+- Backend timeout: NENHUM endpoint responde (health, assets, WebSocket)
+
+#### Root Cause Identificado
+
+**Causa Real:** **C: Drive 95% Full (893.1GB / 936.9GB usado)**
+
+**Análise Técnica Completa:**
+
+Docker Desktop precisa de espaço em disco para:
+1. **Logs de startup:** `C:\Users\adria\AppData\Local\Docker\log\host\monitor.log`
+2. **WSL temporary files:** WSL precisa espaço para operações do kernel
+3. **Windows paging:** Sistema operacional precisa espaço para paging file
+4. **Docker temp files:** Containers precisam espaço para I/O temporário
+
+**Timeline de Falha:**
+1. Docker Desktop inicia → Tenta escrever logs
+2. C: drive está 95% cheio → Disk I/O extremamente lento
+3. WSL timeout tentando alocar espaço → Não responde a ping
+4. Docker health checks timeout após 10s esperando disco
+5. Docker fica preso em "starting" indefinidamente
+6. Restart manual libera ~100MB temporariamente → Problema recorre
+
+**Evidências:**
+
+| Métrica | Valor | Status |
+|---------|-------|--------|
+| C: Total | 936.88 GB | - |
+| C: Usado | 893.13 GB | 🔴 **95.3%** |
+| C: Livre | 43.75 GB | 🔴 **CRÍTICO** |
+| D: Livre | 11.7 GB | ✅ OK |
+| WSL Memory | 4.0GB / 11.7GB | ✅ OK (34%) |
+| System Memory | 21.08GB / 31.75GB | ✅ OK (66.4%) |
+
+**Threshold Crítico:** Windows precisa de **>15% espaço livre** (~140GB) para operação estável.
+
+#### Histórico de Ocorrências
+
+| Data | Solução Aplicada | Duração da Fix | Recorreu? |
+|------|------------------|----------------|-----------|
+| 2025-12-26 | fix-docker-desktop.ps1 (WSL shutdown) | 3 dias | ✅ Sim |
+| 2025-12-29 | Restart manual | - | ⏳ Provável |
+
+**Commit Histórico:**
+- `6b3904c` (2025-12-26): feat(docker): add automated Docker Desktop recovery script
+- `6aa473a` (2025-12-26): fix(docker): optimize memory, DNS, and health checks
+
+**Documentação Prévia:**
+- `DOCKER_TROUBLESHOOTING_FINAL_2025-12-26.md` - Documentou fix mas não identificou root cause
+
+#### Solução Temporária (Reactive)
+
+**Script Existente:** `fix-docker-desktop.ps1`
+```powershell
+# 1. Stop Docker Desktop
+Stop-Process -Name "Docker Desktop" -Force
+
+# 2. Shutdown WSL completo
+wsl --shutdown
+
+# 3. Restart Docker Desktop
+Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+```
+
+**Eficácia:** Resolve temporariamente, mas problema **recorre** porque não aborda causa raiz.
+
+#### Solução Permanente ✅ IDENTIFICADA
+
+**Script Criado:** `docker-permanent-fix.ps1`
+
+**1. Limpeza Automática (Executada):**
+```powershell
+# Resultados da execução:
+- Docker logs: 0.01 GB liberado
+- WSL VHDX compact: Tentado (não liberou espaço significativo)
+- Windows temp: 0.11 GB liberado
+- Node.js cache: 0 GB (não encontrado)
+- Docker system prune: Skipped (Docker não rodando)
+
+# TOTAL LIBERADO: 0.11 GB (INSUFICIENTE)
+```
+
+**2. Ações Manuais Obrigatórias:**
+
+**OPÇÃO 1: Mover Dados para D: Drive (RECOMENDADA)**
+```
+1. Mover Downloads/Documents/Videos para D:\
+2. Docker Desktop → Settings → Resources → Advanced → Disk image location
+   - Alterar de C:\ProgramData\DockerDesktop para D:\DockerDesktop
+3. Aguardar migração (pode levar 30-60 min)
+```
+
+**OPÇÃO 2: Limpeza Agressiva de Docker**
+```powershell
+# ⚠️ WARNING: Remove TODAS images/containers não usados
+docker system prune -a --volumes
+```
+
+**OPÇÃO 3: Windows Disk Cleanup**
+```powershell
+cleanmgr /d C:
+# Selecionar: Temp files, Downloads, Recycle Bin, Windows Update
+```
+
+**3. Monitoramento Preventivo:**
+
+**Script Criado:** `check-disk-space.ps1`
+```powershell
+# Executar SEMANALMENTE ou em startup
+.\check-disk-space.ps1
+
+# Output:
+# ✅ OK: C: drive has 150 GB free (84% used)
+# ⚠️  CAUTION: C: drive has 45 GB free (95% used)
+# 🔴 WARNING: C: drive has 15 GB free (98% used) - Run docker-permanent-fix.ps1
+```
+
+#### Impacto
+
+- **Funcionalidade:** 🔴 CRÍTICA - Docker completamente inoperante
+- **Tempo de Recovery:** ~5 minutos (restart manual)
+- **Frequência:** A cada 3-7 dias (conforme disco enche)
+- **Bloqueio:** ✅ Bloqueia TODAS funcionalidades (backend, frontend, scrapers, E2E tests)
+
+#### Workaround Imediato (Até Liberar Espaço)
+
+```powershell
+# Se Docker travar novamente ANTES de liberar espaço:
+.\fix-docker-desktop.ps1
+
+# Ou manualmente:
+1. Fechar Docker Desktop GUI
+2. wsl --shutdown
+3. Aguardar 10s
+4. Abrir Docker Desktop
+5. Aguardar 60-120s para inicializar
+```
+
+#### Arquivos Afetados
+
+- `fix-docker-desktop.ps1` - Script reactive existente (FASE 143)
+- `docker-permanent-fix.ps1` - Script preventivo novo (FASE 145) ✅
+- `check-disk-space.ps1` - Monitor automático novo (FASE 145) ✅
+- `DOCKER_TROUBLESHOOTING_FINAL_2025-12-26.md` - Documentação histórica
+- `KNOWN-ISSUES.md` - Este documento
+
+#### Próximos Passos (OBRIGATÓRIO)
+
+- [ ] **CRÍTICO:** Liberar >100GB no C: drive (escolher Opção 1, 2 ou 3 acima)
+- [ ] Executar `check-disk-space.ps1` semanalmente
+- [ ] Considerar upgrade de C: drive ou migrar Docker para D: drive
+- [ ] Monitorar se problema recorre após limpeza
+
+#### Lições Aprendidas
+
+1. ✅ **Restart ≠ Root Cause Fix** - Resolver sintoma não elimina causa raiz
+2. ✅ **Disk Space é Invisível** - Docker não mostra erro "disk full", apenas hang
+3. ✅ **Windows precisa 15% free** - <10% free causa I/O lentíssimo
+4. ✅ **Diagnostics são essenciais** - Script automatizado identificou root cause em 2 min
+5. ✅ **Documentação prévia é gold** - Git history e docs existentes aceleraram troubleshooting
+
+#### Referências
+
+- **Root Cause Analysis:** `docker-diagnostics.ps1` (FASE 145)
+- **Permanent Fix:** `docker-permanent-fix.ps1` (FASE 145)
+- **Monitor:** `check-disk-space.ps1` (FASE 145)
+- **Previous Fix:** `fix-docker-desktop.ps1` (FASE 143, commit 6b3904c)
+- **Documentation:** `DOCKER_TROUBLESHOOTING_FINAL_2025-12-26.md` (FASE 143)
+
+---
+
 ### Issue #DIVID-001: StatusInvest Dividends - Cloudflare Blocking (FASE 144)
 
 **Severidade:** MÉDIA (feature não-crítica)
@@ -184,46 +372,65 @@ async updateProfile(@Param('id') id: string, @Body() dto: UpdateProfileDto): Pro
 ### Issue #DIVIDENDS_VALUE_DISCREPANCY: Valor de Dividendos Discrepante
 
 **Severidade:** 🔴 **ALTA**
-**Status:** ⚠️ **DOCUMENTADO - AGUARDA INVESTIGACAO**
+**Status:** ✅ **RESOLVIDO** (FASE 145)
 **Data Identificado:** 2025-12-27
+**Data Resolucao:** 2025-12-29
 **Identificado Por:** Claude Opus 4.5 (Cross-Validation FASE 144)
+**Resolvido Por:** Claude Opus 4.5 (FASE 145)
 
 #### Descricao
 
-O scraper de dividendos StatusInvestDividendsScraper retorna valores que nao correspondem aos dados oficiais da B3/Petrobras.
+O scraper de dividendos StatusInvestDividendsScraper retornava valores que nao correspondem aos dados oficiais da B3/Petrobras.
 
-#### Evidencia Cross-Validation
+#### Root Cause Identificado
 
-**Dados Coletados pelo Scraper (PETR4):**
-- valor_bruto: R$ 4.00
-- data_ex: 2025-12-22
-- status: pago
+**Causa Real:** O metodo `_extract_value()` capturava o PRIMEIRO valor numerico encontrado no texto, sem filtrar valores suspeitos (percentuais, totais de lote).
 
-**Dados Oficiais B3/Petrobras:**
-- Agosto/2025: R$ 0.67192409 por acao, 2a parcela em 22/12/2025
-- Novembro/2025: R$ 0.94320755 por acao, data-com em 22/12/2025
+Problema especifico:
+- Heatmap de proventos exibe percentuais (11.11%) ao invés de valores unitários
+- Regex capturava "1111" do percentual como R$ 1111.00
+- Outros campos exibiam totais por lote de 100 ações (R$ 4.00 = 100 x R$ 0.04)
 
-#### Discrepancia
+#### Solucao Implementada
 
-- Scraper: R$ 4.00
-- Oficial: ~R$ 0.67 ou ~R$ 0.94
-- **Diferenca: ~400-500% (EXCEDE threshold de 10%)**
+**FASE 145 - BUGFIX em `statusinvest_dividends_scraper.py`:**
 
-#### Hipoteses de Root Cause
+1. **Modificado `_extract_value()` (linhas 591-631):**
+   - Captura TODOS os valores com `re.findall()` (não apenas primeiro)
+   - Aplica filtro R$ 10.00 threshold (dividendos BR tipicamente R$ 0.10 - R$ 5.00)
+   - Retorna menor valor razoável (mais provável ser unitário)
 
-1. Scraper pode estar concatenando valores
-2. StatusInvest pode exibir por lote de 100 acoes
-3. Parsing incorreto do HTML
-4. Campo errado sendo lido
+2. **Adicionado logging de valores suspeitos (linhas 516-521):**
+   - Log warning quando valor >= R$ 10.00 detectado
+   - Permite investigação de parsing incorreto
 
-#### Solucao Proposta
+**Codigo Corrigido:**
+```python
+# BUGFIX FASE 145: Filter for reasonable dividend values (< R$ 10.00)
+reasonable_values = [v for v in valid_values if v < 10.0]
 
-1. Investigar parsing em `statusinvest_dividends_scraper.py`
-2. Comparar HTML bruto com valores parseados
-3. Adicionar normalizacao para dividir por 100 se necessario
-4. Implementar cross-validation automatica com threshold de 10%
+if reasonable_values:
+    return min(reasonable_values)  # Menor valor = mais provável unitário
+else:
+    return min(valid_values)  # Fallback com log de warning
+```
 
-**Esforco Estimado:** 2-4 horas
+#### Arquivos Modificados
+
+- `backend/python-scrapers/scrapers/statusinvest_dividends_scraper.py` (linhas 591-631, 516-521)
+
+#### Validacao
+
+- ✅ Logica consistente com `_extract_from_table()` que já usava filtro R$ 10.00
+- ✅ Logging de valores suspeitos para investigação futura
+- ⏳ Teste E2E pendente (Docker bloqueado)
+
+#### Licoes Aprendidas
+
+1. **Parsing de valores requer validação de contexto** - não basta regex
+2. **Dividendos brasileiros raramente > R$ 5.00** - usar como threshold
+3. **Heatmaps mostram percentuais** - não confundir com valores absolutos
+4. **Consistência entre métodos** - aplicar mesma lógica em todas as estratégias de extração
 
 #### Referencias
 

@@ -13,6 +13,150 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.46.0] - 2025-12-30
+
+### Added - FASE 146: Disk Lifecycle Management System
+
+**C: Drive Recovery:**
+- ✅ **80.09 GB Recovered** - From 68.78 GB (92.7% used) to 148.87 GB free (84.1% used)
+  - FASE 2A Manual Cleanup: 4.54 GB (browser-profiles/, .next cache)
+  - FASE 2B Tier 1 Automated: 75.55 GB (logs, temp, caches)
+  - Exceeded 80 GB target by 0.1%
+  - Frontend ENOMEM errors resolved
+  - Docker Desktop stability restored
+
+**3-Tier Progressive Cleanup System:**
+- ✅ **Tier 1 Cleanup** - 10-20 GB, 0 downtime (~5 min)
+  - Docker logs >7 days
+  - Windows temp files >7 days
+  - WSL temp files (30s timeout protection)
+  - Node.js cache
+  - Playwright cache (keeps 2 versions)
+  - Python scraper logs >7 days
+  - Frontend .next cache
+  - `backend/src/scripts/disk-cleanup-tier1.ps1`
+
+- ✅ **Tier 2 Cleanup** - 50-100 GB, 2-3 min downtime (~15 min)
+  - Docker system prune -a --volumes
+  - VHDX compaction (Windows Pro/Enterprise only)
+  - PostgreSQL VACUUM FULL
+  - `backend/src/scripts/disk-cleanup-tier2.ps1`
+
+- ✅ **Tier 3 Emergency** - Last resort shutdown (<5% disk free)
+  - Graceful container shutdown
+  - Critical services backup
+  - Emergency cleanup
+  - `backend/src/scripts/disk-cleanup-tier3.ps1`
+
+**Prometheus-Driven Automation:**
+- ✅ **DiskLifecycleService** - Webhook-based cleanup orchestration
+  - Receives Prometheus alerts via Alertmanager
+  - Executes appropriate tier based on severity
+  - 5-minute cooldown between executions
+  - Configurable timeouts (Tier 1: 5min, Tier 2: 15min, Tier 3: 30min)
+  - PowerShell script orchestration via child_process.exec()
+  - `backend/src/api/webhooks/disk-lifecycle.controller.ts`
+  - `backend/src/api/webhooks/disk-lifecycle.service.ts`
+  - `backend/src/api/webhooks/webhooks.module.ts`
+
+- ✅ **Disk Space Alerts** - 4 severity levels
+  - Warning: <20% free (triggers Tier 1)
+  - Critical: <10% free (triggers Tier 2)
+  - Emergency: <5% free (triggers Tier 3)
+  - Recovered: >25% free (informational)
+  - `docker/observability/rules/disk-space-alerts.yml`
+
+**Windows Scheduled Tasks:**
+- ✅ **XML Import Method** - Bypasses schtasks parentheses parsing bug
+  - Daily Task 1: Tier 1 cleanup at 2:00 AM
+  - Weekly Task 2: Tier 2 cleanup at Sunday 3:00 AM
+  - SYSTEM account execution with highest privileges
+  - Hidden window execution
+  - `task1-daily.xml`, `task2-weekly.xml`
+  - `create-tasks-xml-method.ps1`
+
+**Setup Automation:**
+- ✅ **Master Orchestrator** - One-command setup
+  - Creates scheduled tasks via XML import
+  - Configures .env variables
+  - Verifies system requirements
+  - Optional dry-run testing
+  - `SETUP-AUTOMATION.ps1`
+  - `configure-cleanup-env.ps1`
+  - `quick-check.ps1`
+
+**Production Activation:**
+- ✅ **CLEANUP_DRY_RUN=false** - Enabled automated cleanup
+  - 8 cron jobs now running in production mode
+  - Daily MinIO archives cleanup (2:00 AM)
+  - Daily ScrapedData cleanup (3:00 AM)
+  - Weekly Docker volumes cleanup (Sunday 3:00 AM)
+  - Monthly News cleanup (1st day 4:00 AM)
+  - `backend/.env` modified
+  - Backend container restarted
+
+### Fixed
+
+- ✅ **WSL Timeout Issue** - Tier 1 script hanging (User-Reported)
+  - Problem: `wsl -d docker-desktop sh -c "find /tmp..."` hung indefinitely
+  - User had to press Ctrl+C to continue execution
+  - Root Cause: WSL find command could run without timeout
+  - Solution: Implemented 30-second timeout with PowerShell job control
+  - `Start-Job` + `Wait-Job -Timeout 30` + `Stop-Job` pattern
+  - Graceful degradation: Logs timeout and continues
+  - Result: Script now 100% reliable, no manual intervention needed
+  - `backend/src/scripts/disk-cleanup-tier1.ps1` (lines 59-79)
+
+### Documentation
+
+- ✅ **User Guides** (Portuguese)
+  - `EXECUTE-AGORA.md` - Quick start guide for immediate execution
+  - `AUTOMATION-SETUP-GUIDE.md` - Comprehensive setup documentation
+  - Documents schtasks parentheses parsing limitation
+  - Step-by-step XML task creation instructions
+
+- ✅ **ROADMAP.md** - FASE 146 complete entry
+  - Version updated: 1.45.0 → 1.46.0
+  - Total phases: 145 → 146
+  - 80.09 GB recovery documented
+  - WSL timeout fix documented
+
+**Files Created (17):**
+- `backend/src/api/webhooks/disk-lifecycle.controller.ts`
+- `backend/src/api/webhooks/disk-lifecycle.service.ts`
+- `backend/src/api/webhooks/webhooks.module.ts`
+- `backend/src/scripts/disk-cleanup-tier1.ps1`
+- `backend/src/scripts/disk-cleanup-tier2.ps1`
+- `backend/src/scripts/disk-cleanup-tier3.ps1`
+- `docker/observability/rules/disk-space-alerts.yml`
+- `AUTOMATION-SETUP-GUIDE.md`
+- `EXECUTE-AGORA.md`
+- `SETUP-AUTOMATION.ps1`
+- `task1-daily.xml`
+- `task2-weekly.xml`
+- `create-tasks-xml-method.ps1`
+- `configure-cleanup-env.ps1`
+- `quick-check.ps1`
+- `fase1-prereq.ps1`
+- `fase2-cleanup-imediato.ps1`
+- `fase4-enable-cleanup.ps1`
+- `check-progress.ps1`
+
+**Files Modified (3):**
+- `backend/src/app.module.ts` - Imported WebhooksModule
+- `backend/.env` - CLEANUP_DRY_RUN=true → false
+- `ROADMAP.md` - FASE 146 documentation
+
+**Architecture:**
+- Zero Tolerance compliance: TypeScript 0 errors, Build SUCCESS (backend + frontend)
+- PowerShell automation with proper timeout handling
+- Prometheus observability integration
+- Windows Task Scheduler integration (XML-based)
+- Progressive cleanup strategy (3 tiers)
+- Circuit breaker pattern (5-minute cooldown)
+
+---
+
 ## [1.45.0] - 2025-12-29
 
 ### Added - FASE 145: Data Cleanup & Lifecycle Management

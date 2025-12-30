@@ -1,0 +1,159 @@
+# FASE 146: Disk Lifecycle Management - Alerting Rules
+# Monitora espaço em disco C: e dispara webhooks para limpeza automatizada
+#
+# Thresholds:
+# - WARNING (<20% free): Tier 1 cleanup (logs, temp, cache) ~10-20GB
+# - CRITICAL (<10% free): Tier 2 cleanup (volumes, archives) ~50-100GB
+# - EMERGENCY (<5% free): Tier 3 shutdown preventivo + backup
+
+groups:
+  - name: disk_space_lifecycle
+    interval: 30s  # Check every 30 seconds for quick response
+    rules:
+      # WARNING: <20% free space (target threshold)
+      - alert: DiskSpaceWarning
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint=~"/host/[cC].*"}
+            /
+            node_filesystem_size_bytes{mountpoint=~"/host/[cC].*"}
+          ) < 0.20
+        for: 2m  # Must persist for 2 minutes to avoid flapping
+        labels:
+          severity: warning
+          tier: tier1
+          service: disk-lifecycle
+          environment: production
+        annotations:
+          summary: "C: Drive < 20% free space"
+          description: |
+            Disk space on C: drive is below 20% free.
+            Current: {{ $value | humanizePercentage }} free
+            Available: {{ with query "node_filesystem_avail_bytes{mountpoint=~\"/host/[cC].*\"}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+            Total: {{ with query "node_filesystem_size_bytes{mountpoint=~\"/host/[cC].*\"}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+
+            Auto-action: Tier 1 cleanup will be triggered
+            - Docker logs >7 days
+            - Windows temp >7 days
+            - WSL temp files
+            - Node.js cache
+            - Playwright cache (keep 2 versions)
+            - Python scraper logs >7 days
+            - Frontend .next rebuild
+
+            Expected space to free: 10-20GB
+          webhook_url: "http://invest_backend:3101/api/v1/webhooks/disk-cleanup"
+
+      # CRITICAL: <10% free space (dangerous threshold)
+      - alert: DiskSpaceCritical
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint=~"/host/[cC].*"}
+            /
+            node_filesystem_size_bytes{mountpoint=~"/host/[cC].*"}
+          ) < 0.10
+        for: 1m  # Faster response for critical situation
+        labels:
+          severity: critical
+          tier: tier2
+          service: disk-lifecycle
+          environment: production
+          pagerduty: "true"  # Can trigger PagerDuty if configured
+        annotations:
+          summary: "C: Drive < 10% free space - CRITICAL"
+          description: |
+            CRITICAL: Disk space on C: drive is dangerously low!
+            Current: {{ $value | humanizePercentage }} free
+            Available: {{ with query "node_filesystem_avail_bytes{mountpoint=~\"/host/[cC].*\"}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+            Total: {{ with query "node_filesystem_size_bytes{mountpoint=~\"/host/[cC].*\"}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+
+            Auto-action: Tier 2 AGGRESSIVE cleanup will be triggered
+            - All Tier 1 actions
+            - Docker system prune -a --volumes
+            - MinIO archives >365 days
+            - Docker orphan volumes
+            - PostgreSQL VACUUM FULL
+            - WSL VHDX compact
+
+            Expected space to free: 50-100GB
+            Impact: Services will restart (2-3min downtime)
+          webhook_url: "http://invest_backend:3101/api/v1/webhooks/disk-cleanup"
+
+      # EMERGENCY: <5% free space (system failure imminent)
+      - alert: DiskSpaceEmergency
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint=~"/host/[cC].*"}
+            /
+            node_filesystem_size_bytes{mountpoint=~"/host/[cC].*"}
+          ) < 0.05
+        for: 30s  # Immediate response
+        labels:
+          severity: emergency
+          tier: tier3
+          service: disk-lifecycle
+          environment: production
+          pagerduty: "true"
+          oncall: "true"  # Alert on-call engineer immediately
+        annotations:
+          summary: "C: Drive < 5% free space - EMERGENCY SHUTDOWN"
+          description: |
+            EMERGENCY: System failure imminent! Disk space critically low!
+            Current: {{ $value | humanizePercentage }} free
+            Available: {{ with query "node_filesystem_avail_bytes{mountpoint=~\"/host/[cC].*\"}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+            Total: {{ with query "node_filesystem_size_bytes{mountpoint=~\"/host/[cC].*\"}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+
+            Auto-action: PREVENTIVE SHUTDOWN will be triggered
+            1. Email + desktop notification to admin
+            2. Backup PostgreSQL → MinIO
+            3. Shutdown Docker Desktop (prevent 500 errors)
+            4. Execute Tier 2 cleanup
+            5. Block docker-compose up until >10% free
+
+            Manual intervention REQUIRED to restart system.
+          webhook_url: "http://invest_backend:3101/api/v1/webhooks/disk-cleanup"
+
+      # RECOVERY: Disk space recovered to healthy levels
+      - alert: DiskSpaceRecovered
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint=~"/host/[cC].*"}
+            /
+            node_filesystem_size_bytes{mountpoint=~"/host/[cC].*"}
+          ) > 0.25
+        for: 5m  # Sustained recovery
+        labels:
+          severity: info
+          service: disk-lifecycle
+          environment: production
+        annotations:
+          summary: "C: Drive recovered to healthy levels (>25% free)"
+          description: |
+            Disk space has recovered to healthy levels.
+            Current: {{ $value | humanizePercentage }} free
+            Available: {{ with query "node_filesystem_avail_bytes{mountpoint=~\"/host/[cC].*\"}" }}{{ . | first | value | humanize1024 }}B{{ end }}
+
+            System is operating normally.
+            Automated cleanup policies are in effect.
+
+      # MONITORING: High disk I/O latency (indicates disk stress)
+      - alert: HighDiskIOLatency
+        expr: |
+          rate(node_disk_io_time_seconds_total{device=~"sd.*"}[5m]) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          service: disk-lifecycle
+          environment: production
+        annotations:
+          summary: "High disk I/O latency detected"
+          description: |
+            Disk I/O latency is high, which can cause Docker startup issues.
+            Current I/O time: {{ $value | humanizePercentage }}
+
+            This may indicate:
+            - Disk is nearly full (check disk space alerts)
+            - Heavy write operations in progress
+            - Disk hardware issues
+
+            If accompanied by low disk space, cleanup will be triggered automatically.

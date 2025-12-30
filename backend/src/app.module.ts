@@ -39,6 +39,7 @@ import { DividendsModule } from './api/dividends/dividends.module'; // FASE 101.
 import { StockLendingModule } from './api/stock-lending/stock-lending.module'; // FASE 101.3 - Aluguel de Ações
 import { ScraperConfigModule } from './api/scraper-config/scraper-config.module'; // FASE: Dynamic Scraper Configuration
 import { DataCleanupModule } from './api/data-cleanup/data-cleanup.module'; // FASE 145 - Data Cleanup
+import { WebhooksModule } from './api/webhooks/webhooks.module'; // FASE 146 - Disk Lifecycle Management Webhooks
 import {
   User,
   Asset,
@@ -224,6 +225,7 @@ import {
     StockLendingModule, // FASE 101.3 - Aluguel de Ações (BTC)
     ScraperConfigModule, // FASE: Dynamic Scraper Configuration
     DataCleanupModule, // FASE 145 - Data Cleanup & Lifecycle
+    WebhooksModule, // FASE 146 - Disk Lifecycle Management Webhooks
   ],
   controllers: [AppController],
   providers: [

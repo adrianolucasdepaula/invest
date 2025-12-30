@@ -836,6 +836,276 @@ export class DataCleanupService {
   }
 
   /**
+   * FASE 146: Cleanup MinIO Archives (>1 year)
+   *
+   * Strategy: Delete old archives from MinIO to free disk space
+   * Cron: Daily at 2:00 AM (BEFORE Tier 1 cleanup)
+   */
+  @Cron('0 2 * * *', {
+    name: 'cleanup-minio-archives',
+    timeZone: 'America/Sao_Paulo',
+  })
+  async cleanupMinIOArchives(): Promise<CleanupStats> {
+    const startTime = Date.now();
+
+    // Check if cleanup is enabled
+    const cleanupEnabled = this.configService.get<string>('CLEANUP_ENABLED') === 'true';
+    if (!cleanupEnabled) {
+      this.logger.debug('Data cleanup disabled (CLEANUP_ENABLED != true), skipping MinIO archives cleanup');
+      return { archived: 0, deleted: 0, errors: 0, duration: 0 };
+    }
+
+    const isDryRun = this.configService.get<string>('CLEANUP_DRY_RUN') === 'true';
+    const retentionDays = parseInt(
+      this.configService.get<string>('CLEANUP_MINIO_ARCHIVES_RETENTION_DAYS') || '365',
+      10,
+    );
+
+    this.logger.log(
+      `🧹 Starting MinIO archives cleanup (retention: ${retentionDays} days, dry-run: ${isDryRun})`,
+    );
+
+    const stats: CleanupStats = {
+      archived: 0,
+      deleted: 0,
+      errors: 0,
+      duration: 0,
+    };
+
+    try {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+      // List all objects in archives bucket
+      const objects = await this.storageService.listObjects(
+        this.storageService.BUCKETS.ARCHIVES,
+        '',
+      );
+
+      // Filter objects older than retention period
+      const oldObjects = objects.filter((obj) => {
+        return obj.lastModified && obj.lastModified < cutoffDate;
+      });
+
+      if (oldObjects.length === 0) {
+        this.logger.log('No old MinIO archives to cleanup');
+        stats.duration = Date.now() - startTime;
+        return stats;
+      }
+
+      this.logger.debug(`Found ${oldObjects.length} old archives to delete`);
+
+      if (isDryRun) {
+        this.logger.warn(
+          `[DRY RUN] Would delete ${oldObjects.length} MinIO archive objects`,
+        );
+        stats.deleted = oldObjects.length;
+      } else {
+        // Delete old archives
+        for (const obj of oldObjects) {
+          try {
+            await this.storageService.deleteObject(
+              this.storageService.BUCKETS.ARCHIVES,
+              obj.name,
+            );
+            stats.deleted++;
+          } catch (error) {
+            this.logger.error(`Failed to delete ${obj.name}: ${error.message}`);
+            stats.errors++;
+          }
+        }
+
+        this.logger.log(`Deleted ${stats.deleted} old MinIO archives`);
+      }
+
+      stats.duration = Date.now() - startTime;
+
+      // Emit metrics
+      this.metricsService.recordCleanup('minio_archives', stats.deleted);
+      this.metricsService.recordCleanupDuration('minio_archives', stats.duration / 1000);
+      this.metricsService.recordCleanupResult('minio_archives', stats.errors === 0 ? 'success' : 'partial_failure');
+
+      this.logger.log(
+        `✅ MinIO archives cleanup completed: ${stats.deleted} deleted in ${stats.duration}ms`,
+      );
+
+      return stats;
+    } catch (error) {
+      stats.duration = Date.now() - startTime;
+      this.logger.error(`❌ MinIO archives cleanup failed: ${error.message}`);
+      this.metricsService.recordCleanupResult('minio_archives', 'failure');
+      throw error;
+    }
+  }
+
+  /**
+   * FASE 146: Cleanup Docker Orphan Volumes
+   *
+   * Strategy: Execute PowerShell script to remove orphaned Docker volumes
+   * Cron: Weekly Sunday at 3:00 AM
+   */
+  @Cron('0 3 * * 0', {
+    name: 'cleanup-docker-volumes',
+    timeZone: 'America/Sao_Paulo',
+  })
+  async cleanupDockerOrphanVolumes(): Promise<CleanupStats> {
+    const startTime = Date.now();
+
+    // Check if cleanup is enabled
+    const cleanupEnabled = this.configService.get<string>('CLEANUP_ENABLED') === 'true';
+    if (!cleanupEnabled) {
+      this.logger.debug('Data cleanup disabled (CLEANUP_ENABLED != true), skipping Docker volumes cleanup');
+      return { archived: 0, deleted: 0, errors: 0, duration: 0 };
+    }
+
+    const isDryRun = this.configService.get<string>('CLEANUP_DRY_RUN') === 'true';
+
+    this.logger.log(
+      `🧹 Starting Docker orphan volumes cleanup (dry-run: ${isDryRun})`,
+    );
+
+    const stats: CleanupStats = {
+      archived: 0,
+      deleted: 0,
+      errors: 0,
+      duration: 0,
+    };
+
+    try {
+      if (isDryRun) {
+        this.logger.warn('[DRY RUN] Would execute: docker volume prune -f');
+        stats.duration = Date.now() - startTime;
+        return stats;
+      }
+
+      // Execute docker volume prune via PowerShell
+      const { exec } = await import('child_process');
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
+
+      const { stdout, stderr } = await execAsync(
+        'docker volume prune -f',
+        { timeout: 30000 },
+      );
+
+      // Parse output for deleted volumes count
+      const match = stdout.match(/Total reclaimed space:\s*([\d.]+)\s*(GB|MB)/);
+      if (match) {
+        const spaceFreed = parseFloat(match[1]);
+        const unit = match[2];
+        this.logger.log(`Docker volumes pruned: ${spaceFreed}${unit} freed`);
+      }
+
+      // Count volumes removed from stdout
+      const volumeMatches = stdout.match(/Deleted Volumes:/);
+      if (volumeMatches) {
+        // Extract volume count from subsequent lines
+        const lines = stdout.split('\n');
+        const volumeLines = lines.filter((line) => line.trim().startsWith('local'));
+        stats.deleted = volumeLines.length;
+      }
+
+      if (stderr) {
+        this.logger.warn(`Docker volume prune warnings: ${stderr}`);
+      }
+
+      stats.duration = Date.now() - startTime;
+
+      // Emit metrics
+      this.metricsService.recordCleanup('docker_volumes', stats.deleted);
+      this.metricsService.recordCleanupDuration('docker_volumes', stats.duration / 1000);
+      this.metricsService.recordCleanupResult('docker_volumes', 'success');
+
+      this.logger.log(
+        `✅ Docker volumes cleanup completed: ${stats.deleted} volumes removed in ${stats.duration}ms`,
+      );
+
+      return stats;
+    } catch (error) {
+      stats.duration = Date.now() - startTime;
+      this.logger.error(`❌ Docker volumes cleanup failed: ${error.message}`);
+      this.metricsService.recordCleanupResult('docker_volumes', 'failure');
+      throw error;
+    }
+  }
+
+  /**
+   * FASE 146: Generate Monthly Cleanup Report
+   *
+   * Strategy: Aggregate cleanup metrics and generate report
+   * Cron: Monthly 1st at 4:00 AM
+   */
+  @Cron('0 4 1 * *', {
+    name: 'generate-cleanup-report',
+    timeZone: 'America/Sao_Paulo',
+  })
+  async generateCleanupReport(): Promise<void> {
+    const startTime = Date.now();
+
+    this.logger.log('📊 Generating monthly cleanup report...');
+
+    try {
+      // Calculate date range (last month)
+      const now = new Date();
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      // Query Prometheus metrics for last month
+      // Note: This requires Prometheus query API integration
+      // For now, we'll generate a basic report from available data
+
+      const report = {
+        period: {
+          start: lastMonth.toISOString(),
+          end: thisMonth.toISOString(),
+        },
+        summary: {
+          scrapedDataDeleted: 'N/A - Query Prometheus /api/v1/query_range',
+          scraperMetricsDeleted: 'N/A - Query Prometheus /api/v1/query_range',
+          newsDeleted: 'N/A - Query Prometheus /api/v1/query_range',
+          updateLogsDeleted: 'N/A - Query Prometheus /api/v1/query_range',
+          syncHistoryDeleted: 'N/A - Query Prometheus /api/v1/query_range',
+          minioArchivesDeleted: 'N/A - Query Prometheus /api/v1/query_range',
+          dockerVolumesDeleted: 'N/A - Query Prometheus /api/v1/query_range',
+        },
+        recommendations: [
+          'Review retention policies if disk space remains critical',
+          'Consider archiving old data to external storage',
+          'Monitor disk space trends via Grafana dashboards',
+        ],
+        generatedAt: new Date().toISOString(),
+        generatedBy: 'DataCleanupService',
+      };
+
+      // Log report
+      this.logger.log(
+        `📄 Cleanup Report (${lastMonth.toISOString().slice(0, 7)}):\n${JSON.stringify(report, null, 2)}`,
+      );
+
+      // Save report to MinIO for audit trail
+      const reportFilename = `cleanup-reports/${lastMonth.toISOString().slice(0, 7)}-report.json`;
+      await this.storageService.uploadFile(
+        this.storageService.BUCKETS.ARCHIVES,
+        reportFilename,
+        JSON.stringify(report, null, 2),
+        'application/json',
+        {
+          reportType: 'monthly_cleanup',
+          generatedAt: new Date().toISOString(),
+        },
+      );
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `✅ Cleanup report generated and saved to MinIO: ${reportFilename} (${duration}ms)`,
+      );
+    } catch (error) {
+      this.logger.error(`❌ Failed to generate cleanup report: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * Manual trigger for testing/debugging
    */
   async triggerCleanupManually(): Promise<{
