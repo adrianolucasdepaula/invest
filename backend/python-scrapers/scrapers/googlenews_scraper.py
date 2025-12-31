@@ -8,6 +8,7 @@ OPTIMIZED: Uses single HTML fetch + BeautifulSoup local parsing (~10x faster)
 """
 import asyncio
 from datetime import datetime
+import pytz
 from typing import Dict, Any, List, Optional
 from loguru import logger
 from bs4 import BeautifulSoup
@@ -73,7 +74,7 @@ class GoogleNewsScraper(BaseScraper):
                         "url": url,
                         "articles_count": len(articles),
                         "articles": articles,
-                        "scraped_at": datetime.now().isoformat(),
+                        "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                     },
                     source=self.source,
                     metadata={

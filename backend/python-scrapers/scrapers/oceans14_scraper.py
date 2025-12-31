@@ -8,6 +8,7 @@ MIGRATED TO PLAYWRIGHT - BeautifulSoup Single Fetch Pattern
 """
 import asyncio
 from datetime import datetime
+import pytz
 from typing import Dict, Any, Optional
 from loguru import logger
 from bs4 import BeautifulSoup
@@ -181,7 +182,7 @@ class Oceans14Scraper(BaseScraper):
             data = {
                 "ticker": ticker.upper(),
                 "source": "Oceans14",
-                "scraped_at": datetime.now().isoformat(),
+                "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
             }
 
             # OPTIMIZATION: Get HTML once and parse locally

@@ -12,6 +12,7 @@ from loguru import logger
 import aiohttp
 import json
 from datetime import datetime, timedelta
+import pytz
 
 from base_scraper import BaseScraper, ScraperResult
 
@@ -147,7 +148,7 @@ class BCBScraper(BaseScraper):
         try:
             data = {
                 "source": "BCB API (SGS)",
-                "updated_at": datetime.now().isoformat(),
+                "updated_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 "indicators": {},
             }
 
@@ -194,7 +195,7 @@ class BCBScraper(BaseScraper):
                     serie_code = self.SERIES[indicator_key]
 
                     # Get last 12 months of data
-                    end_date = datetime.now()
+                    end_date = datetime.now(pytz.timezone('America/Sao_Paulo'))  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                     start_date = end_date - timedelta(days=365)
 
                     url = self.API_SGS_URL.format(serie=serie_code)
@@ -315,7 +316,7 @@ class BCBScraper(BaseScraper):
             # Extract data from main page indicators
             data = {
                 "source": "BCB Website",
-                "updated_at": datetime.now().isoformat(),
+                "updated_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 "indicators": {},
             }
 
@@ -341,7 +342,7 @@ class BCBScraper(BaseScraper):
                                 value_text = elem.get_text().strip().replace(",", ".").replace("%", "")
                                 data["indicators"]["selic"] = {
                                     "current_value": float(value_text),
-                                    "date": datetime.now().strftime("%d/%m/%Y"),
+                                    "date": datetime.now(pytz.timezone('America/Sao_Paulo')).strftime("%d/%m/%Y"),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                                 }
                                 break
                     except:
@@ -369,7 +370,7 @@ class BCBScraper(BaseScraper):
                                 value_text = elem.get_text().strip().replace(",", ".")
                                 data["indicators"]["cambio_usd"] = {
                                     "current_value": float(value_text),
-                                    "date": datetime.now().strftime("%d/%m/%Y"),
+                                    "date": datetime.now(pytz.timezone('America/Sao_Paulo')).strftime("%d/%m/%Y"),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                                 }
                                 break
                     except:
@@ -401,7 +402,7 @@ class BCBScraper(BaseScraper):
             List of date/value pairs
         """
         try:
-            end_date = datetime.now()
+            end_date = datetime.now(pytz.timezone('America/Sao_Paulo'))  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
             start_date = end_date - timedelta(days=days_back)
 
             url = self.API_SGS_URL.format(serie=serie_code)

@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   Target,
   Activity,
+  Wrench,
   LucideIcon,
 } from 'lucide-react';
 
@@ -37,6 +38,7 @@ const navigation: NavItem[] = [
   { name: 'Fontes de Dados', href: '/data-sources', icon: Database },
   { name: 'Discrepancias', href: '/discrepancies', icon: AlertTriangle },
   { name: 'Gerenciamento de Dados', href: '/data-management', icon: RefreshCw },
+  { name: 'Scraper Config', href: '/admin/scrapers', icon: Wrench },
   { name: 'OAuth Manager', href: '/oauth-manager', icon: Shield },
   { name: 'System Health', href: '/health', icon: Activity },
   { name: 'Configurações', href: '/settings', icon: Settings },

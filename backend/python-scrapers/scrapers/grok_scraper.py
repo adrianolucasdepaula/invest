@@ -9,10 +9,12 @@ OPTIMIZED: Uses Playwright for browser automation
 import asyncio
 import json
 from datetime import datetime
+import pytz
 from pathlib import Path
 from typing import Optional
 from loguru import logger
 
+from bs4 import BeautifulSoup
 from base_scraper import BaseScraper, ScraperResult
 
 
@@ -42,10 +44,8 @@ class GrokScraper(BaseScraper):
         await super().initialize()
 
         try:
-            await self.page.goto(self.BASE_URL, wait_until="load", timeout=60000)
-            await asyncio.sleep(3)
-
-            # Load cookies if available
+            # FASE 7.4: BUG-GROK-COOKIE-001 FIX
+            # Load cookies BEFORE navigation to avoid auth block
             if self.COOKIES_FILE.exists():
                 try:
                     with open(self.COOKIES_FILE, 'r') as f:
@@ -71,14 +71,16 @@ class GrokScraper(BaseScraper):
 
                     if grok_cookies:
                         await self.page.context.add_cookies(grok_cookies)
-                        logger.info(f"Loaded {len(grok_cookies)} cookies for Grok")
-                        await self.page.reload()
-                        await asyncio.sleep(3)
+                        logger.info(f"Loaded {len(grok_cookies)} cookies for Grok BEFORE navigation")
 
                 except Exception as e:
                     logger.warning(f"Could not load Grok cookies: {e}")
             else:
                 logger.debug("Grok cookies not found. Manual login may be required.")
+
+            # Navigate AFTER cookies are loaded (authenticated from first request)
+            await self.page.goto(self.BASE_URL, wait_until="load", timeout=60000)
+            await asyncio.sleep(3)
 
             self._initialized = True
 
@@ -142,7 +144,7 @@ class GrokScraper(BaseScraper):
                         "prompt": prompt,
                         "response": response_text,
                         "source": "Grok",
-                        "timestamp": datetime.now().isoformat(),
+                        "timestamp": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                     },
                     source=self.source,
                     metadata={
@@ -187,7 +189,13 @@ class GrokScraper(BaseScraper):
         return None
 
     async def _extract_response(self) -> Optional[str]:
-        """Extract Grok response from page"""
+        """Extract Grok response from page
+
+        FASE 7.5: BUG-SCRAPER-EXIT137-001 FIX
+        Uses BeautifulSoup single fetch pattern to prevent OOM (Exit Code 137)
+        - Single await per iteration (page.content()) instead of multiple query_selector_all()
+        - Local parsing with BeautifulSoup (no await)
+        """
         max_wait = 60  # 60 seconds max
         waited = 0
         check_interval = 2
@@ -198,7 +206,12 @@ class GrokScraper(BaseScraper):
 
         while waited < max_wait:
             try:
-                # Look for response messages
+                # FASE 7.5: BUG-SCRAPER-EXIT137-001 FIX
+                # Single HTML fetch per iteration (NOT multiple query_selectors)
+                html_content = await self.page.content()  # SINGLE await per iteration
+                soup = BeautifulSoup(html_content, 'html.parser')  # Local parsing
+
+                # Look for response messages (local, no await)
                 response_selectors = [
                     "[data-testid*='grok-response']",
                     "[data-testid*='assistant']",
@@ -210,14 +223,14 @@ class GrokScraper(BaseScraper):
                     "[class*='answer']",
                 ]
 
+                current_text = ""
                 for selector in response_selectors:
                     try:
-                        elements = await self.page.query_selector_all(selector)
+                        elements = soup.select(selector)  # Local, no await
                         if elements:
                             # Get the last (most recent) response
                             last_response = elements[-1]
-                            current_text = await last_response.text_content()
-                            current_text = current_text.strip() if current_text else ""
+                            current_text = last_response.get_text(strip=True)  # Local, no await
 
                             # Check if response is meaningful
                             if current_text and len(current_text) > 20:
@@ -233,6 +246,7 @@ class GrokScraper(BaseScraper):
                                     stable_count = 0
                                     previous_text = current_text
                                     logger.debug(f"Response growing... ({len(current_text)} chars)")
+                                break
                     except:
                         continue
 

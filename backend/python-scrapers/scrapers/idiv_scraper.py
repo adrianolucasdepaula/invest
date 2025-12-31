@@ -8,6 +8,7 @@ CREATED: 2025-12-20 - FASE Marcação IDIV
 import asyncio
 from typing import Dict, Any, Optional, List
 from datetime import date, datetime
+import pytz
 from loguru import logger
 from bs4 import BeautifulSoup
 import re
@@ -129,7 +130,7 @@ class IdivScraper(BaseScraper):
                         "url": url,
                         "requires_login": False,
                         "source": "B3",
-                        "scraped_at": datetime.now().isoformat(),
+                        "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                         "total_assets": len(composition),
                         "confidence": 100,  # Single source (B3 official)
                         "requested_date": date_param,  # None if current, YYYY-MM-DD if historical

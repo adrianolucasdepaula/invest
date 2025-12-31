@@ -11,10 +11,12 @@ import asyncio
 import json
 import time
 from datetime import datetime
+import pytz
 from pathlib import Path
 from typing import Optional, Dict, Any
 from loguru import logger
 
+from bs4 import BeautifulSoup
 from base_scraper import BaseScraper, ScraperResult
 
 
@@ -207,7 +209,7 @@ class DeepSeekScraper(BaseScraper):
                         "prompt": prompt,
                         "response": response_text,
                         "source": "DeepSeek",
-                        "timestamp": datetime.now().isoformat(),
+                        "timestamp": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                     },
                     source=self.source,
                     metadata={
@@ -267,7 +269,13 @@ class DeepSeekScraper(BaseScraper):
         return None
 
     async def _extract_response(self) -> Optional[str]:
-        """Extract DeepSeek response from page"""
+        """Extract DeepSeek response from page
+
+        FASE 7.5: BUG-SCRAPER-EXIT137-001 FIX
+        Uses BeautifulSoup single fetch pattern to prevent OOM (Exit Code 137)
+        - Single await per iteration (page.content()) instead of query_selector_all()
+        - Local parsing with BeautifulSoup (no await)
+        """
         max_wait = 60  # 60 seconds max
         waited = 0
         check_interval = 2
@@ -278,14 +286,18 @@ class DeepSeekScraper(BaseScraper):
 
         while waited < max_wait:
             try:
-                # Primary selector for DeepSeek responses
-                elements = await self.page.query_selector_all('.ds-markdown')
+                # FASE 7.5: BUG-SCRAPER-EXIT137-001 FIX
+                # Single HTML fetch per iteration (NOT multiple query_selectors)
+                html_content = await self.page.content()  # SINGLE await per iteration
+                soup = BeautifulSoup(html_content, 'html.parser')  # Local parsing
+
+                # Primary selector for DeepSeek responses (local, no await)
+                elements = soup.select('.ds-markdown')
 
                 if elements:
                     # Get the last (most recent) response
                     last_response = elements[-1]
-                    current_text = await last_response.text_content()
-                    current_text = current_text.strip() if current_text else ""
+                    current_text = last_response.get_text(strip=True)  # Local, no await
 
                     # Check if response exists (min 1 char)
                     if current_text:

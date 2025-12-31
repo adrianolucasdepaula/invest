@@ -8,6 +8,7 @@ OPTIMIZED: Uses single HTML fetch + BeautifulSoup local parsing (~10x faster)
 """
 import asyncio
 from datetime import datetime
+import pytz
 from typing import Dict, Any, Optional, List
 from loguru import logger
 from bs4 import BeautifulSoup
@@ -120,7 +121,7 @@ class GriffinScraper(BaseScraper):
                     "total_buy_volume": 0,
                     "total_sell_volume": 0,
                 },
-                "scraped_at": datetime.now().isoformat(),
+                "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
             }
 
             # Company name

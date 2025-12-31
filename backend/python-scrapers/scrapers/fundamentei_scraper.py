@@ -10,6 +10,7 @@ import asyncio
 import json
 import time
 from datetime import datetime
+import pytz
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from loguru import logger
@@ -220,7 +221,7 @@ class FundamenteiScraper(BaseScraper):
             data = {
                 "ticker": ticker.upper(),
                 "source": "Fundamentei",
-                "scraped_at": datetime.now().isoformat(),
+                "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 "company_name": None,
                 "price": None,
                 "sector": None,
@@ -309,7 +310,7 @@ class FundamenteiScraper(BaseScraper):
             data = {
                 "ticker": ticker.upper(),
                 "source": "Fundamentei",
-                "scraped_at": datetime.now().isoformat(),
+                "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 "company_name": None,
                 "price": None,
                 "sector": None,

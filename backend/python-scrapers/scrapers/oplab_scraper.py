@@ -9,6 +9,7 @@ OPTIMIZED: Uses Playwright for browser automation with stealth
 import asyncio
 import json
 from datetime import datetime
+import pytz
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from bs4 import BeautifulSoup
@@ -95,7 +96,7 @@ class OplabScraper(BaseScraper):
             data = {
                 "source": "Oplab",
                 "url": self.BASE_URL,
-                "scraped_at": datetime.now().isoformat(),
+                "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 "market_overview": {},
                 "top_options": [],
                 "statistics": {},
@@ -148,7 +149,7 @@ class OplabScraper(BaseScraper):
                 source=self.source,
                 metadata={
                     "options_count": len(data["top_options"]),
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 },
             )
 
@@ -179,7 +180,7 @@ class OplabScraper(BaseScraper):
             data = {
                 "ticker": ticker,
                 "source": "Oplab",
-                "scraped_at": datetime.now().isoformat(),
+                "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 "calls": [],
                 "puts": [],
                 "summary": {},
@@ -220,7 +221,7 @@ class OplabScraper(BaseScraper):
                     "ticker": ticker,
                     "calls_count": len(data["calls"]),
                     "puts_count": len(data["puts"]),
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 },
             )
 
@@ -246,7 +247,7 @@ class OplabScraper(BaseScraper):
 
             data = {
                 "source": "Oplab",
-                "scraped_at": datetime.now().isoformat(),
+                "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 "most_traded": [],
             }
 

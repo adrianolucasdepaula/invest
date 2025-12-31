@@ -7,6 +7,7 @@ FASE 102: Novos scrapers para expandir cobertura (30/36 → 34/36)
 """
 import asyncio
 from datetime import datetime
+import pytz
 from typing import Dict, Any, Optional, List
 import aiohttp
 from loguru import logger
@@ -199,7 +200,7 @@ class IBGEScraper(BaseScraper):
                         "values": values,
                         "latest_value": values[0]["value"] if values else None,
                         "latest_period": values[0]["period"] if values else None,
-                        "scraped_at": datetime.now().isoformat(),
+                        "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                     }
 
         except aiohttp.ClientError as e:
@@ -215,7 +216,7 @@ class IBGEScraper(BaseScraper):
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         data = {
-            "scraped_at": datetime.now().isoformat(),
+            "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
             "indicators": {},
             "summary": {},
         }

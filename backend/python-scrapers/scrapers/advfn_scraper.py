@@ -13,6 +13,7 @@ import os
 import re
 import time
 from datetime import datetime
+import pytz
 from pathlib import Path
 from typing import Dict, Any, Optional
 from loguru import logger
@@ -299,7 +300,7 @@ class ADVFNScraper(BaseScraper):
 
                 session_data = {
                     'cookies': advfn_cookies,
-                    'saved_at': datetime.now().isoformat(),
+                    'saved_at': datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 }
 
                 with open(self.COOKIES_FILE, 'w', encoding='utf-8') as f:
@@ -358,7 +359,7 @@ class ADVFNScraper(BaseScraper):
                     source=self.source,
                     metadata={
                         "url": url,
-                        "timestamp": datetime.now().isoformat(),
+                        "timestamp": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                     },
                 )
             else:

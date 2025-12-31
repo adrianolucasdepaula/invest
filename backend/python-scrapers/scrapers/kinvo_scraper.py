@@ -9,6 +9,7 @@ OPTIMIZED: Uses Playwright for browser automation
 import asyncio
 import json
 from datetime import datetime
+import pytz
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from loguru import logger
@@ -417,7 +418,7 @@ class KinvoScraper(BaseScraper):
                     "source": "Kinvo",
                     "section": "portfolio",
                     "portfolio": portfolio_data,
-                    "scraped_at": datetime.now().isoformat(),
+                    "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 },
                 source=self.source,
                 metadata={
@@ -467,7 +468,7 @@ class KinvoScraper(BaseScraper):
                     "section": "assets",
                     "assets": assets,
                     "count": len(assets),
-                    "scraped_at": datetime.now().isoformat(),
+                    "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 },
                 source=self.source,
             )
@@ -517,7 +518,7 @@ class KinvoScraper(BaseScraper):
                     "source": "Kinvo",
                     "section": "performance",
                     "performance": performance,
-                    "scraped_at": datetime.now().isoformat(),
+                    "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 },
                 source=self.source,
             )
@@ -564,7 +565,7 @@ class KinvoScraper(BaseScraper):
                     "section": "history",
                     "transactions": transactions,
                     "count": len(transactions),
-                    "scraped_at": datetime.now().isoformat(),
+                    "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 },
                 source=self.source,
             )

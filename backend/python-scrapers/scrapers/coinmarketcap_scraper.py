@@ -8,6 +8,7 @@ OPTIMIZED: Uses aiohttp for API + Playwright fallback with BeautifulSoup
 """
 import asyncio
 from datetime import datetime
+import pytz
 from typing import Dict, Any, Optional
 import aiohttp
 from loguru import logger
@@ -147,7 +148,7 @@ class CoinMarketCapScraper(BaseScraper):
                         "change_7d": None,
                         "circulating_supply": None,
                         "total_supply": None,
-                        "scraped_at": datetime.now().isoformat(),
+                        "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                     }
 
                     # Extract price
@@ -225,7 +226,7 @@ class CoinMarketCapScraper(BaseScraper):
                 "volume_24h": None,
                 "change_24h": None,
                 "rank": None,
-                "scraped_at": datetime.now().isoformat(),
+                "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
             }
 
             # Extract price

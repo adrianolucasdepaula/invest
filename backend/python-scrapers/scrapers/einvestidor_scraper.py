@@ -9,6 +9,7 @@ MIGRATED TO PLAYWRIGHT - OAuth Manager pattern
 import asyncio
 import json
 from datetime import datetime
+import pytz
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from loguru import logger
@@ -171,7 +172,7 @@ class EInvestidorScraper(BaseScraper):
             data = {
                 "ticker": ticker.upper(),
                 "source": "EInvestidor",
-                "scraped_at": datetime.now().isoformat(),
+                "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 "articles": [],
             }
 

@@ -9,6 +9,7 @@ OPTIMIZED: Uses Playwright for browser automation with stealth
 import asyncio
 import json
 from datetime import datetime
+import pytz
 from pathlib import Path
 from typing import Optional, Dict, Any
 from bs4 import BeautifulSoup
@@ -154,7 +155,7 @@ class YahooFinanceScraper(BaseScraper):
                     metadata={
                         "ticker": ticker,
                         "yahoo_ticker": yahoo_ticker,
-                        "timestamp": datetime.now().isoformat(),
+                        "timestamp": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                     },
                 )
 
@@ -188,7 +189,7 @@ class YahooFinanceScraper(BaseScraper):
             data = {
                 "ticker": ticker,
                 "source": "Yahoo Finance",
-                "scraped_at": datetime.now().isoformat(),
+                "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
             }
 
             # Price - look for main price element in the quote header section
@@ -319,7 +320,7 @@ class YahooFinanceScraper(BaseScraper):
             data = {
                 "source": "Yahoo Finance Markets",
                 "url": "https://finance.yahoo.com/markets/",
-                "scraped_at": datetime.now().isoformat(),
+                "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 "indices": [],
                 "world_indices": [],
                 "stocks": [],
@@ -384,7 +385,7 @@ class YahooFinanceScraper(BaseScraper):
                 source=self.source,
                 metadata={
                     "indices_count": len(data["indices"]),
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
                 },
             )
 

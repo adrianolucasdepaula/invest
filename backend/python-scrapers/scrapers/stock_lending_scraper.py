@@ -16,6 +16,7 @@ Dados extraídos:
 import asyncio
 from typing import Dict, Any, Optional
 from datetime import datetime
+import pytz
 from loguru import logger
 from bs4 import BeautifulSoup
 import re
@@ -66,7 +67,7 @@ class StockLendingScraper(BaseScraper):
         Returns:
             ScraperResult with lending rate data
         """
-        start_time = datetime.now()
+        start_time = datetime.now(pytz.timezone('America/Sao_Paulo'))  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
 
         try:
             # Ensure page is initialized (Playwright)
@@ -88,12 +89,12 @@ class StockLendingScraper(BaseScraper):
                     source=self.source,
                 )
 
-            elapsed = (datetime.now() - start_time).total_seconds()
+            elapsed = (datetime.now(pytz.timezone('America/Sao_Paulo')) - start_time).total_seconds()  # FASE 7.3
 
             # Add calculated fields
             data["ticker"] = ticker.upper()
-            data["data_referencia"] = datetime.now().strftime("%Y-%m-%d")
-            data["data_coleta"] = datetime.now().isoformat()
+            data["data_referencia"] = datetime.now(pytz.timezone('America/Sao_Paulo')).strftime("%Y-%m-%d")  # FASE 7.3
+            data["data_coleta"] = datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat()  # FASE 7.3
 
             # Calculate daily rate from annual
             if data.get("taxa_aluguel_ano") is not None:
