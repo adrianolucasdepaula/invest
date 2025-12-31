@@ -49,7 +49,8 @@ describe('CacheService', () => {
 
       const result = await service.get('nonexistent');
 
-      expect(result).toBeUndefined();
+      // Service now returns null instead of undefined for consistency
+      expect(result).toBeNull();
     });
 
     it('should return null on error', async () => {

@@ -13,7 +13,15 @@ import {
   PortfolioPosition,
 } from '@database/entities';
 import { ScrapersService } from '../../scrapers/scrapers.service';
+import { OpcoesScraper } from '../../scrapers/options/opcoes.scraper';
 import { AppWebSocketGateway } from '../../websocket/websocket.gateway';
+import { TelemetryService } from '../../telemetry/telemetry.service';
+import {
+  NewsCollectorsService,
+  AIOrchestatorService,
+  ConsensusService,
+} from '../news/services';
+import { NewsService } from '../news/news.service';
 
 describe('AssetsUpdateService', () => {
   let service: AssetsUpdateService;
@@ -65,6 +73,14 @@ describe('AssetsUpdateService', () => {
   const mockFundamentalDataRepository = {
     create: jest.fn(),
     save: jest.fn(),
+    createQueryBuilder: jest.fn().mockReturnValue({
+      insert: jest.fn().mockReturnThis(),
+      into: jest.fn().mockReturnThis(),
+      values: jest.fn().mockReturnThis(),
+      onConflict: jest.fn().mockReturnThis(),
+      execute: jest.fn().mockResolvedValue({ identifiers: [{ id: 'fd-123' }] }),
+    }),
+    findOne: jest.fn().mockResolvedValue({ id: 'fd-123' }),
   };
 
   const mockUpdateLogRepository = {
@@ -91,6 +107,33 @@ describe('AssetsUpdateService', () => {
     emitBatchUpdateCompleted: jest.fn(),
   };
 
+  const mockOpcoesScraper = {
+    scrapeLiquidityWithDetails: jest.fn().mockResolvedValue(new Map()),
+  };
+
+  const mockTelemetryService = {
+    withSpan: jest.fn((name, fn, opts) => fn({ setAttributes: jest.fn() })),
+    addSpanEvent: jest.fn(),
+    recordScraperDuration: jest.fn(),
+  };
+
+  const mockNewsCollectorsService = {
+    collectForTicker: jest.fn().mockResolvedValue([]),
+  };
+
+  const mockAIOrchestatorService = {
+    analyzeNews: jest.fn().mockResolvedValue({}),
+  };
+
+  const mockConsensusService = {
+    calculateConsensus: jest.fn().mockResolvedValue({}),
+  };
+
+  const mockNewsService = {
+    findAll: jest.fn().mockResolvedValue({ data: [], total: 0 }),
+    findOneEntity: jest.fn().mockResolvedValue(null),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -103,7 +146,13 @@ describe('AssetsUpdateService', () => {
         { provide: getRepositoryToken(Portfolio), useValue: mockPortfolioRepository },
         { provide: getRepositoryToken(PortfolioPosition), useValue: mockPortfolioPositionRepository },
         { provide: ScrapersService, useValue: mockScrapersService },
+        { provide: OpcoesScraper, useValue: mockOpcoesScraper },
         { provide: AppWebSocketGateway, useValue: mockWebSocketGateway },
+        { provide: TelemetryService, useValue: mockTelemetryService },
+        { provide: NewsCollectorsService, useValue: mockNewsCollectorsService },
+        { provide: AIOrchestatorService, useValue: mockAIOrchestatorService },
+        { provide: ConsensusService, useValue: mockConsensusService },
+        { provide: NewsService, useValue: mockNewsService },
       ],
     }).compile();
 
@@ -117,7 +166,7 @@ describe('AssetsUpdateService', () => {
   });
 
   describe('sanitizeNumericValue (private method via reflection)', () => {
-    let sanitizeNumericValue: (value: any) => number | null;
+    let sanitizeNumericValue: (value: any) => any;
 
     beforeEach(() => {
       sanitizeNumericValue = (service as any).sanitizeNumericValue.bind(service);
@@ -140,24 +189,30 @@ describe('AssetsUpdateService', () => {
       expect(sanitizeNumericValue(-Infinity)).toBeNull();
     });
 
-    it('should clamp value exceeding max', () => {
+    it('should reject value exceeding max (FASE 144: no clamping)', () => {
       const result = sanitizeNumericValue(1e20); // Much larger than max
-      expect(result).toBe(999999999999999.99);
+      // FASE 144: Invalid financial data is REJECTED, not clamped
+      expect(result).toBeNull();
     });
 
-    it('should clamp negative value below min', () => {
+    it('should reject negative value below min (FASE 144: no clamping)', () => {
       const result = sanitizeNumericValue(-1e20);
-      expect(result).toBe(-999999999999999.99);
+      // FASE 144: Invalid financial data is REJECTED, not clamped
+      expect(result).toBeNull();
     });
 
-    it('should round to 2 decimal places', () => {
+    it('should return Decimal for valid number', () => {
       const result = sanitizeNumericValue(123.456789);
-      expect(result).toBe(123.46);
+      // Returns Decimal.js instance
+      expect(result).not.toBeNull();
+      expect(result.toNumber()).toBe(123.456789);
     });
 
-    it('should parse numeric string', () => {
+    it('should parse numeric string to Decimal', () => {
       const result = sanitizeNumericValue('45.67');
-      expect(result).toBe(45.67);
+      // Returns Decimal.js instance
+      expect(result).not.toBeNull();
+      expect(result.toNumber()).toBe(45.67);
     });
   });
 
@@ -308,7 +363,7 @@ describe('AssetsUpdateService', () => {
       );
     });
 
-    it('should disable auto-update after max retries', async () => {
+    it('should reset retry count after max retries (FASE 144: never disable asset)', async () => {
       mockAssetRepository.findOne.mockResolvedValue({ ...mockAsset, updateRetryCount: 2 }); // Already at 2
       mockAssetRepository.save.mockResolvedValue({ ...mockAsset });
       mockUpdateLogRepository.create.mockReturnValue({ id: 'log-123' });
@@ -317,10 +372,12 @@ describe('AssetsUpdateService', () => {
 
       await service.updateSingleAsset('PETR4');
 
+      // FASE 144: Max retries now RESETS counter instead of disabling
+      // Assets are NEVER disabled, allowing retry in next batch
       expect(mockAssetRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          updateRetryCount: 3,
-          autoUpdateEnabled: false,
+          updateRetryCount: 0, // Reset to 0 for next batch
+          autoUpdateEnabled: true, // Never disabled
         }),
       );
     });
@@ -568,36 +625,33 @@ describe('AssetsUpdateService', () => {
 
     it('should create fundamental data with field sources', async () => {
       mockFundamentalDataRepository.create.mockReturnValue({ id: 'fd-123' });
-      mockFundamentalDataRepository.save.mockResolvedValue({ id: 'fd-123' });
 
       await saveFundamentalData(mockAsset as Asset, mockScrapedResult);
 
-      expect(mockFundamentalDataRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          assetId: 'asset-123',
-          pl: 8.5,
-          pvp: 1.2,
-          fieldSources: mockScrapedResult.fieldSources,
-        }),
-      );
+      // Values are now Decimal.js instances, check assetId and fieldSources
+      expect(mockFundamentalDataRepository.create).toHaveBeenCalled();
+      const createCall = mockFundamentalDataRepository.create.mock.calls[0][0];
+      expect(createCall.assetId).toBe('asset-123');
+      expect(createCall.fieldSources).toEqual(mockScrapedResult.fieldSources);
+      // Decimal values: check toNumber()
+      expect(createCall.pl?.toNumber()).toBe(8.5);
+      expect(createCall.pvp?.toNumber()).toBe(1.2);
     });
 
-    it('should sanitize numeric values', async () => {
+    it('should reject invalid large values (FASE 144: no clamping)', async () => {
       const scrapedWithLargeValue = {
         ...mockScrapedResult,
-        data: { pl: 1e20 }, // Very large value
+        data: { pl: 1e20 }, // Very large value - exceeds max
         fieldSources: {},
       };
       mockFundamentalDataRepository.create.mockReturnValue({ id: 'fd-123' });
-      mockFundamentalDataRepository.save.mockResolvedValue({ id: 'fd-123' });
 
       await saveFundamentalData(mockAsset as Asset, scrapedWithLargeValue);
 
-      expect(mockFundamentalDataRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          pl: 999999999999999.99, // Clamped
-        }),
-      );
+      // FASE 144: Invalid financial data is REJECTED (null), not clamped
+      expect(mockFundamentalDataRepository.create).toHaveBeenCalled();
+      const createCall = mockFundamentalDataRepository.create.mock.calls[0][0];
+      expect(createCall.pl).toBeNull();
     });
   });
 });
