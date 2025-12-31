@@ -81,6 +81,78 @@ function Test-Command {
     $null -ne (Get-Command $Command -ErrorAction SilentlyContinue)
 }
 
+# FASE 146: Check disk space before starting Docker
+function Test-DiskSpace {
+    Print-Header "Verificando Espaço em Disco"
+
+    # Check for emergency blocker file
+    $blockerFile = "DISK_EMERGENCY_BLOCK"
+    if (Test-Path $blockerFile) {
+        Print-Error "Startup bloqueado por emergência de disco!"
+        Write-Host ""
+        Get-Content $blockerFile
+        Write-Host ""
+        Print-Error "Resolva o problema de espaço em disco e delete: $blockerFile"
+        return $false
+    }
+
+    # Get C: drive space
+    $drive = Get-PSDrive -Name C
+    $freeGB = [math]::Round($drive.Free / 1GB, 2)
+    $totalGB = [math]::Round(($drive.Free + $drive.Used) / 1GB, 2)
+    $usedGB = [math]::Round($drive.Used / 1GB, 2)
+    $freePercent = [math]::Round(($drive.Free / ($drive.Free + $drive.Used)) * 100, 1)
+
+    # Thresholds (based on 936GB total)
+    $CRITICAL_GB = 94     # 10%
+    $WARNING_GB = 187     # 20%
+
+    Print-Info "C: Drive - ${freeGB}GB livre de ${totalGB}GB (${freePercent}%)"
+
+    # CRITICAL: <10% free - Block startup
+    if ($freeGB -lt $CRITICAL_GB) {
+        Write-Host ""
+        Print-Error "ESPAÇO CRÍTICO: C: Drive tem menos de 10% livre!"
+        Write-Host ""
+        Write-Host "${RED}Docker Desktop NÃO será iniciado para prevenir erros 500.${RESET}"
+        Write-Host ""
+        Write-Host "${YELLOW}Ações recomendadas:${RESET}"
+        Write-Host "  1. Mova arquivos grandes para D: drive (Downloads, Documentos, etc.)"
+        Write-Host "  2. Execute Windows Disk Cleanup: cleanmgr /d C:"
+        Write-Host "  3. Desinstale aplicativos não utilizados"
+        Write-Host "  4. Execute: .\backend\src\scripts\disk-cleanup-tier2.ps1"
+        Write-Host ""
+        Write-Host "${CYAN}Após liberar espaço, execute:${RESET}"
+        Write-Host "  .\system-manager.ps1 start"
+        Write-Host ""
+        return $false
+    }
+
+    # WARNING: <20% free - Show warning but allow startup
+    if ($freeGB -lt $WARNING_GB) {
+        Write-Host ""
+        Print-Warning "ATENÇÃO: C: Drive tem menos de 20% livre!"
+        Write-Host ""
+        Write-Host "${YELLOW}Sistema pode ficar instável se espaço continuar diminuindo.${RESET}"
+        Write-Host ""
+        Write-Host "${CYAN}Recomendações:${RESET}"
+        Write-Host "  • Sistema de limpeza automática está ativo (Tier 1 diário às 2 AM)"
+        Write-Host "  • Monitore métricas no Grafana: http://localhost:3000"
+        Write-Host "  • Alertas Prometheus configurados (webhook ativo)"
+        Write-Host ""
+
+        $continue = Read-Host "Deseja continuar mesmo assim? (y/n)"
+        if ($continue -ne "y") {
+            Print-Info "Startup cancelado pelo usuário"
+            return $false
+        }
+    } else {
+        Print-Success "Espaço em disco OK (${freePercent}% livre)"
+    }
+
+    return $true
+}
+
 # Check prerequisites
 function Test-Prerequisites {
     Print-Header "Verificando Pré-requisitos"
@@ -658,6 +730,12 @@ function Start-System {
         return
     }
 
+    # FASE 146: Check disk space before continuing
+    if (-not (Test-DiskSpace)) {
+        Print-Error "Espaço em disco insuficiente. Resolva o problema antes de iniciar o Docker."
+        return
+    }
+
     # Validate essential files first
     if (-not (Test-EssentialFiles)) {
         Print-Error "Arquivos essenciais faltando. Corrija os problemas antes de continuar."
@@ -1210,6 +1288,12 @@ function Start-Dev {
     Print-Info "Isso inclui: pgadmin, redis-commander"
     Write-Host ""
 
+    # FASE 146: Check disk space
+    if (-not (Test-DiskSpace)) {
+        Print-Error "Espaço em disco insuficiente. Resolva o problema antes de iniciar o Docker."
+        return
+    }
+
     # Check prerequisites
     if (-not (Test-Prerequisites)) {
         Print-Error "Pré-requisitos não atendidos. Corrija os problemas antes de continuar."
@@ -1255,6 +1339,12 @@ function Start-Production {
     Print-Header "Iniciando Sistema com Profile PRODUCTION"
     Print-Info "Isso inclui: nginx (reverse proxy)"
     Write-Host ""
+
+    # FASE 146: Check disk space
+    if (-not (Test-DiskSpace)) {
+        Print-Error "Espaço em disco insuficiente. Resolva o problema antes de iniciar o Docker."
+        return
+    }
 
     # Check prerequisites
     if (-not (Test-Prerequisites)) {
