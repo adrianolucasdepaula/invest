@@ -2,7 +2,7 @@
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
 **Última Atualização:** 2025-12-30
-**Versão:** 1.46.0
+**Versão:** 1.47.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -11670,6 +11670,7 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 144** | Bulk Update Testing + Critical Bugfixes | ✅ 100% | 2025-12-28 |
 | **FASE 145** | Data Cleanup & Lifecycle Management | ✅ 100% | 2025-12-29 |
 | **FASE 146** | Disk Lifecycle Management (Automated Cleanup System) | ✅ 100% | 2025-12-30 |
+| **FASE 147** | Gap Remediation & Documentation Update (5 CRITICAL bugs + 3 docs) | 🔄 60% | 2025-12-30 |
 | **FASE 101.4** | Wheel Turbinada Backtesting Engine | ✅ 100% | 2025-12-21 |
 
 **FASE 146 - Disk Lifecycle Management (2025-12-30):**
@@ -11895,6 +11896,39 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
   - FASE 146.2: Node Exporter integration (docker-compose.yml)
   - FASE 146.3: Alertmanager webhook URL fix
   - FASE 147-148: Grafana dashboard + Capacity planning + Governance
+
+**FASE 147 - Gap Remediation & Documentation Update (2025-12-30):**
+- ✅ **FASE 7: Gap Remediation** - 5 CRITICAL bugs corrigidos:
+  - BUG-WHEEL-001: strategyId NULL constraint violation (TypeORM precedência fix)
+  - BUG-CRON-001: 9 cron jobs sem timezone → America/Sao_Paulo aplicado
+  - BUG-SCRAPER-TIMEZONE-001: 37 scrapers Python sem timezone → America/Sao_Paulo aplicado
+  - BUG-GROK-COOKIE-001: Ordem de cookies incorreta → Load BEFORE navigation implementado
+  - BUG-SCRAPER-EXIT137-001: 6 AI scrapers Exit Code 137 (OOM) → BeautifulSoup Single Fetch pattern aplicado
+- ✅ **FASE 8: Documentation Update** - Documentação 100% atualizada:
+  - KNOWN-ISSUES.md: 5 resolved issues documentados (root cause, correction, impact, lessons learned)
+  - DATABASE_SCHEMA.md: 27 → 32 entities documentadas, numbering duplication fixed (#1-#32 clean sequence)
+  - ARCHITECTURE.md: 18 controllers + 32 entities documentados em nova seção "RESUMO EXECUTIVO"
+  - ROADMAP.md: Versão 1.47.0, FASE 147 adicionada
+  - CLAUDE.md/GEMINI.md: Sync completo (pending)
+  - CHANGELOG.md: v1.47.0 entry (pending)
+- **Files Modified:**
+  - `KNOWN-ISSUES.md` (+350 linhas: 5 resolved issues)
+  - `DATABASE_SCHEMA.md` (+500 linhas: 7 new entities + numbering fix em 23 entities)
+  - `ARCHITECTURE.md` (+45 linhas: RESUMO EXECUTIVO section + version update)
+  - `ROADMAP.md` (version update + FASE 147 entry)
+  - `backend/src/api/wheel/wheel.service.ts` (strategyId explicit assignment)
+  - `backend/src/queue/jobs/*.service.ts` (9 cron jobs timezone fix)
+  - `backend/python-scrapers/scrapers/*.py` (37 scrapers timezone fix)
+  - `backend/python-scrapers/scrapers/grok_scraper.py` (cookie order fix)
+  - `backend/python-scrapers/scrapers/{chatgpt,grok,gemini,deepseek,perplexity,claude}_scraper.py` (6 AI scrapers BeautifulSoup pattern)
+- **Métricas:**
+  - Bugs CRITICAL Corrigidos: 5/5 (100%)
+  - Documentação Atualizada: 3/6 arquivos (50% - CLAUDE.md/GEMINI.md/CHANGELOG.md pending)
+  - Entity Coverage: 32/32 (100% - anteriormente 27/32 = 84.4%)
+  - Controller Coverage: 18/18 (100% - anteriormente não documentado)
+- **Timeline:** FASE 7 + FASE 8 (partial) executadas em 2025-12-30
+- **Status:** 🔄 **FASE 8 EM ANDAMENTO** (CLAUDE.md/GEMINI.md/CHANGELOG.md pendentes)
+- **Next:** FASE 9 - Final Validation & Report
 
 ### Fases Planejadas
 

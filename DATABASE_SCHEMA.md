@@ -26,7 +26,7 @@ O banco de dados PostgreSQL armazena dados de ativos financeiros da B3, análise
 
 ### Estatísticas Gerais
 
-- **Total de Tabelas:** 27
+- **Total de Tabelas:** 32
 - **Total de Registros (aprox.):** 5.000+
   - Assets: 861
   - AssetPrices: 10.000+
@@ -332,7 +332,7 @@ Armazena análises fundamentalistas/técnicas realizadas por IA com cross-valida
 
 ---
 
-### 4. Portfolios (Portfólios)
+### 6. Portfolios (Portfólios)
 
 Armazena portfólios de investimento dos usuários.
 
@@ -361,7 +361,7 @@ Armazena portfólios de investimento dos usuários.
 
 ---
 
-### 5. PortfolioPositions (Posições)
+### 7. PortfolioPositions (Posições)
 
 Armazena posições (ativos) dentro de cada portfólio.
 
@@ -393,7 +393,7 @@ Armazena posições (ativos) dentro de cada portfólio.
 
 ---
 
-### 6. WheelStrategies (Estratégias WHEEL) - FASE 101-108
+### 8. WheelStrategies (Estratégias WHEEL) - FASE 101-108
 
 Armazena estratégias WHEEL (venda de PUTs e CALLs cobertas) dos usuários.
 
@@ -430,7 +430,7 @@ Armazena estratégias WHEEL (venda de PUTs e CALLs cobertas) dos usuários.
 
 ---
 
-### 7. WheelTrades (Trades WHEEL) - FASE 101-108
+### 9. WheelTrades (Trades WHEEL) - FASE 101-108
 
 Armazena operações de opções realizadas dentro de uma estratégia WHEEL.
 
@@ -476,7 +476,7 @@ Armazena operações de opções realizadas dentro de uma estratégia WHEEL.
 
 ---
 
-### 8. OptionPrices (Preços de Opções) - FASE 107
+### 10. OptionPrices (Preços de Opções) - FASE 107
 
 Armazena cotações de opções da B3 para análise e recomendações.
 
@@ -526,7 +526,7 @@ Armazena cotações de opções da B3 para análise e recomendações.
 
 ---
 
-### 9. Users (Usuários)
+### 11. Users (Usuários)
 
 Armazena informações de usuários do sistema com autenticação local e OAuth.
 
@@ -565,7 +565,7 @@ Armazena informações de usuários do sistema com autenticação local e OAuth.
 
 ---
 
-### 10. Alerts (Alertas de Preço)
+### 12. Alerts (Alertas de Preço)
 
 Armazena alertas de preço configurados pelos usuários para monitoramento automático.
 
@@ -604,7 +604,7 @@ Armazena alertas de preço configurados pelos usuários para monitoramento autom
 
 ---
 
-### 11. DataSources (Fontes de Dados)
+### 13. DataSources (Fontes de Dados)
 
 Armazena informações sobre as fontes de dados utilizadas pelos scrapers.
 
@@ -644,7 +644,7 @@ Armazena informações sobre as fontes de dados utilizadas pelos scrapers.
 
 ---
 
-### 12. CrossValidationConfig (Configuração de Validação Cruzada)
+### 14. CrossValidationConfig (Configuração de Validação Cruzada)
 
 Armazena configurações dinâmicas para o sistema de cross-validation de dados.
 
@@ -671,7 +671,7 @@ Armazena configurações dinâmicas para o sistema de cross-validation de dados.
 
 ---
 
-### 13. DiscrepancyResolutions (Resoluções de Discrepâncias)
+### 15. DiscrepancyResolutions (Resoluções de Discrepâncias)
 
 Armazena histórico de resoluções de discrepâncias para auditoria (FASE 90).
 
@@ -706,7 +706,7 @@ Armazena histórico de resoluções de discrepâncias para auditoria (FASE 90).
 
 ---
 
-### 14. EconomicEvents (Eventos Econômicos)
+### 16. EconomicEvents (Eventos Econômicos)
 
 Armazena eventos do calendário econômico (FASE 75.7).
 
@@ -747,7 +747,7 @@ Armazena eventos do calendário econômico (FASE 75.7).
 
 ---
 
-### 15. EconomicIndicators (Indicadores Econômicos)
+### 17. EconomicIndicators (Indicadores Econômicos)
 
 Armazena indicadores macroeconômicos brasileiros (SELIC, IPCA, CDI, PIB).
 
@@ -774,7 +774,7 @@ Armazena indicadores macroeconômicos brasileiros (SELIC, IPCA, CDI, PIB).
 
 ---
 
-### 16. IntradayPrices (Preços Intraday)
+### 18. IntradayPrices (Preços Intraday)
 
 Armazena dados de alta frequência para análise técnica. Preparado para TimescaleDB.
 
@@ -809,7 +809,7 @@ Armazena dados de alta frequência para análise técnica. Preparado para Timesc
 
 ---
 
-### 17. News (Notícias)
+### 19. News (Notícias)
 
 Armazena notícias financeiras de múltiplas fontes (FASE 75).
 
@@ -850,7 +850,7 @@ Armazena notícias financeiras de múltiplas fontes (FASE 75).
 
 ---
 
-### 18. NewsAnalysis (Análise de Notícias por IA)
+### 20. NewsAnalysis (Análise de Notícias por IA)
 
 Armazena análise de sentimento individual por provider de IA (FASE 75).
 
@@ -885,7 +885,7 @@ Armazena análise de sentimento individual por provider de IA (FASE 75).
 
 ---
 
-### 19. SentimentConsensus (Consenso de Sentimento)
+### 21. SentimentConsensus (Consenso de Sentimento)
 
 Armazena resultado consolidado de cross-validation de múltiplos providers (FASE 75).
 
@@ -918,7 +918,7 @@ Armazena resultado consolidado de cross-validation de múltiplos providers (FASE
 
 ---
 
-### 20. ScrapedData (Dados Raspados)
+### 22. ScrapedData (Dados Raspados)
 
 Armazena dados brutos coletados pelos scrapers para auditoria e reprocessamento.
 
@@ -949,7 +949,7 @@ Armazena dados brutos coletados pelos scrapers para auditoria e reprocessamento.
 
 ---
 
-### 21. ScraperMetrics (Métricas de Scrapers)
+### 23. ScraperMetrics (Métricas de Scrapers)
 
 Armazena métricas de performance dos scrapers para monitoramento.
 
@@ -976,7 +976,7 @@ Armazena métricas de performance dos scrapers para monitoramento.
 
 ---
 
-### 22. SyncHistory (Histórico de Sincronização)
+### 24. SyncHistory (Histórico de Sincronização)
 
 Armazena audit trail de operações de sync (FASE 34.6).
 
@@ -1009,7 +1009,7 @@ Armazena audit trail de operações de sync (FASE 34.6).
 
 ---
 
-### 23. UpdateLogs (Logs de Atualização)
+### 25. UpdateLogs (Logs de Atualização)
 
 Armazena logs de operações de atualização de dados de ativos.
 
@@ -1035,6 +1035,474 @@ Armazena logs de operações de atualização de dados de ativos.
 - INDEX (asset, startedAt)
 - INDEX (status)
 - INDEX (startedAt)
+
+---
+
+### 26. ScraperConfig (Configuração Dinâmica de Scrapers) - FASE 142
+
+Armazena configuração dinâmica de todos os 42 scrapers do sistema, permitindo controle granular de parâmetros de execução, priorização e monitoramento de taxa de sucesso.
+
+**Schema:**
+
+```typescript
+{
+  id: UUID;                        // Primary Key
+  scraperId: string(UNIQUE);       // ID único do scraper (ex: 'fundamentus', 'brapi')
+  scraperName: string;             // Nome legível (ex: 'Fundamentus', 'BRAPI')
+  runtime: 'typescript' | 'python'; // ENUM: Runtime de execução
+  category: ScraperCategory;       // ENUM: fundamental, technical, news, ai, market_data, crypto, options, macro
+  isEnabled: boolean;              // Flag ON/OFF (default: true)
+  priority: integer;               // Ordem de execução (1 = highest priority)
+  parameters: JSONB;               // { timeout: 30000, retryAttempts: 3, cacheExpiry: 3600, rateLimit: 100 }
+  successRate: decimal(5,2);       // Taxa de sucesso 0-100% (atualizado automaticamente)
+  lastExecutionAt: timestamp;      // Última execução do scraper
+  lastSuccessAt: timestamp;        // Última execução bem-sucedida
+  executionCount: integer;         // Contador de execuções (total)
+  failureCount: integer;           // Contador de falhas
+  avgResponseTime: integer;        // Tempo médio de resposta (ms)
+  metadata: JSONB;                 // { sources: [], requiredAuth: false, expectedFields: [] }
+  createdAt: timestamp;
+  updatedAt: timestamp;
+}
+```
+
+**Constraints:**
+
+- `scraperId` UNIQUE NOT NULL (ex: 'fundamentus')
+- `isEnabled` DEFAULT true
+- `priority` DEFAULT 1
+- INDEX (scraperId)
+- INDEX (category)
+- INDEX (isEnabled)
+
+**Exemplo:**
+
+```json
+{
+  "id": "c1d2e3f4-a5b6-7890-cdef-123456789abc",
+  "scraperId": "fundamentus",
+  "scraperName": "Fundamentus",
+  "runtime": "python",
+  "category": "fundamental",
+  "isEnabled": true,
+  "priority": 1,
+  "parameters": {
+    "timeout": 30000,
+    "retryAttempts": 3,
+    "cacheExpiry": 3600,
+    "rateLimit": 100,
+    "userAgent": "Mozilla/5.0"
+  },
+  "successRate": 98.50,
+  "lastExecutionAt": "2025-12-30T10:00:00Z",
+  "lastSuccessAt": "2025-12-30T10:00:00Z",
+  "executionCount": 1500,
+  "failureCount": 22,
+  "avgResponseTime": 2500,
+  "metadata": {
+    "sources": ["https://fundamentus.com.br"],
+    "requiredAuth": false,
+    "expectedFields": ["pl", "pvp", "roe", "dy"]
+  }
+}
+```
+
+---
+
+### 27. ScraperExecutionProfile (Perfis de Execução de Scrapers) - FASE 142
+
+Armazena perfis pré-definidos de execução de scrapers, permitindo usuários escolherem entre diferentes modos (Minimal, Fast, High Accuracy, Fundamentals Only).
+
+**Schema:**
+
+```typescript
+{
+  id: UUID;                     // Primary Key
+  name: string(UNIQUE);         // Nome do perfil (ex: 'minimal', 'fast', 'high_accuracy')
+  displayName: string;          // Nome exibido ao usuário (ex: 'Mínimo', 'Rápido')
+  description: text;            // Descrição detalhada do perfil
+  isDefault: boolean;           // Perfil padrão para novos usuários
+  isSystem: boolean;            // Perfil do sistema (não pode ser deletado)
+  config: JSONB;                // { scraperIds: [], priorityOrder: [], estimatedDuration: 120 }
+  metadata: JSONB;              // Dados extras
+  createdAt: timestamp;
+  updatedAt: timestamp;
+}
+```
+
+**Constraints:**
+
+- `name` UNIQUE NOT NULL
+- `isDefault` DEFAULT false
+- `isSystem` DEFAULT false
+- INDEX (name)
+- INDEX (isDefault)
+
+**Exemplo:**
+
+```json
+{
+  "id": "d2e3f4a5-b6c7-8901-defg-234567890abc",
+  "name": "high_accuracy",
+  "displayName": "Alta Precisão",
+  "description": "Executa TODOS scrapers com cross-validation mínimo 3 fontes. Tempo estimado: 8-10 minutos.",
+  "isDefault": false,
+  "isSystem": true,
+  "config": {
+    "scraperIds": [
+      "fundamentus", "statusinvest_fundamentals", "investidor10",
+      "brapi", "yahoofinance", "cotahist",
+      "b3_dividends", "infomoney_dividends", "fundamentus_dividends",
+      "chatgpt", "gemini", "deepseek"
+    ],
+    "priorityOrder": [1, 1, 1, 2, 2, 3, 1, 1, 1, 2, 2, 2],
+    "estimatedDuration": 600
+  },
+  "metadata": {
+    "minSources": 3,
+    "parallelExecution": true,
+    "maxConcurrency": 5
+  }
+}
+```
+
+---
+
+### 28. Dividend (Dividendos e Proventos)
+
+Armazena histórico completo de dividendos, JCP (Juros sobre Capital Próprio), bonificações e subscrições, com suporte a cross-validation de múltiplas fontes.
+
+**Schema:**
+
+```typescript
+{
+  id: UUID;                     // Primary Key
+  assetId: UUID;                // FK -> Assets.id
+  ticker: string;               // Ticker relacionado
+  tipo: DividendType;           // ENUM: dividendo, jcp, bonus, rendimento, fracao, subscricao
+  valorBruto: decimal(18,8);    // Valor bruto por ação (R$) - Decimal.js obrigatório
+  valorLiquido: decimal(18,8);  // Valor líquido após IR (R$) - Decimal.js obrigatório
+  dataEx: date;                 // Data ex-dividendos (data base para receber)
+  dataPagamento: date;          // Data de pagamento efetivo (nullable)
+  dataAprovacao: date;          // Data de aprovação (nullable)
+  periodo: string;              // Período referente (ex: "2025-Q1", "2024")
+  source: string;               // Fonte do dado (FUNDAMENTUS, B3, INFOMONEY, STATUSINVEST)
+  metadata: JSONB;              // { isPreliminary: false, hasWithholdingTax: true, taxRate: 15 }
+  createdAt: timestamp;
+  updatedAt: timestamp;
+}
+```
+
+**Constraints:**
+
+- `assetId` FOREIGN KEY REFERENCES assets(id) ON DELETE CASCADE
+- UNIQUE (assetId, dataEx, tipo, valorBruto) - Evita duplicatas
+- INDEX (assetId, dataEx)
+- INDEX (ticker)
+- INDEX (tipo)
+- INDEX (source)
+
+**Exemplo:**
+
+```json
+{
+  "id": "e3f4a5b6-c7d8-9012-efgh-345678901bcd",
+  "assetId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "ticker": "PETR4",
+  "tipo": "jcp",
+  "valorBruto": "1.85000000",
+  "valorLiquido": "1.57250000",
+  "dataEx": "2025-11-15",
+  "dataPagamento": "2025-12-10",
+  "dataAprovacao": "2025-10-20",
+  "periodo": "2024-Q3",
+  "source": "FUNDAMENTUS",
+  "metadata": {
+    "isPreliminary": false,
+    "hasWithholdingTax": true,
+    "taxRate": 15,
+    "crossValidated": true,
+    "sourcesCount": 3
+  }
+}
+```
+
+---
+
+### 29. BacktestResult (Resultados de Backtest WHEEL) - FASE 101
+
+Armazena resultados completos de backtests da estratégia WHEEL, incluindo métricas de performance (CAGR, Sharpe, Sortino), equity curve e trades simulados.
+
+**Schema:**
+
+```typescript
+{
+  id: UUID;                       // Primary Key
+  userId: UUID;                   // FK -> Users.id
+  assetId: UUID;                  // FK -> Assets.id
+  name: string;                   // Nome do backtest (ex: "PETR4 2023-2024")
+  startDate: date;                // Data início do backtest
+  endDate: date;                  // Data fim do backtest
+  config: JSONB;                  // BacktestConfig (initialCapital, targetDelta, filters)
+  initialCapital: decimal(18,2);  // Capital inicial (R$) - Decimal.js obrigatório
+  finalCapital: decimal(18,2);    // Capital final (R$) - Decimal.js obrigatório
+  totalReturn: decimal(18,2);     // Retorno absoluto (R$) - Decimal.js obrigatório
+  totalReturnPercent: decimal(10,4); // Retorno percentual (%) - Decimal.js obrigatório
+  cagr: decimal(10,4);            // CAGR - Compound Annual Growth Rate (%)
+  sharpeRatio: decimal(10,4);     // Sharpe Ratio (risk-adjusted return)
+  sortinoRatio: decimal(10,4);    // Sortino Ratio (downside risk)
+  maxDrawdown: decimal(10,4);     // Maximum Drawdown (%)
+  maxDrawdownDays: integer;       // Dias em max drawdown
+  winRate: decimal(10,4);         // Taxa de acerto (%)
+  profitFactor: decimal(10,4);    // Profit Factor (gross profit / gross loss)
+  calmarRatio: decimal(10,4);     // Calmar Ratio (CAGR / MaxDD)
+  totalTrades: integer;           // Total de trades executados
+  winningTrades: integer;         // Trades vencedores
+  losingTrades: integer;          // Trades perdedores
+  exercises: integer;             // Número de exercícios (PUT/CALL)
+  premiumIncome: decimal(18,2);   // Renda de prêmios de opções (R$)
+  dividendIncome: decimal(18,2);  // Renda de dividendos/JCP (R$)
+  lendingIncome: decimal(18,2);   // Renda de aluguel de ações (R$)
+  selicIncome: decimal(18,2);     // Renda de Selic (colateral) (R$)
+  equityCurve: JSONB;             // EquityCurvePoint[] - Curva de equity diária
+  simulatedTrades: JSONB;         // SimulatedTrade[] - Todos trades simulados
+  status: BacktestStatus;         // ENUM: running, completed, failed
+  errorMessage: text;             // Mensagem de erro se status = failed
+  progress: integer;              // Progresso (0-100%)
+  executionTime: decimal(10,2);   // Tempo de execução (segundos)
+  createdAt: timestamp;
+  updatedAt: timestamp;
+}
+```
+
+**Constraints:**
+
+- `userId` FOREIGN KEY REFERENCES users(id) ON DELETE CASCADE
+- `assetId` FOREIGN KEY REFERENCES assets(id) ON DELETE CASCADE
+- INDEX (userId)
+- INDEX (assetId)
+- INDEX (status)
+- INDEX (createdAt)
+
+**Exemplo:**
+
+```json
+{
+  "id": "f4a5b6c7-d8e9-0123-fghi-456789012cde",
+  "userId": "user-uuid-1234",
+  "assetId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "name": "PETR4 Wheel 2023-2024",
+  "startDate": "2023-01-01",
+  "endDate": "2024-12-31",
+  "config": {
+    "initialCapital": 100000,
+    "targetDelta": 0.30,
+    "minROE": 15,
+    "minDividendYield": 5,
+    "weeklyDistribution": true,
+    "reinvestDividends": true,
+    "includeLendingIncome": true
+  },
+  "initialCapital": "100000.00",
+  "finalCapital": "152000.00",
+  "totalReturn": "52000.00",
+  "totalReturnPercent": "52.0000",
+  "cagr": "24.5000",
+  "sharpeRatio": "1.8500",
+  "sortinoRatio": "2.1200",
+  "maxDrawdown": "-8.5000",
+  "maxDrawdownDays": 45,
+  "winRate": "78.5000",
+  "profitFactor": "3.2000",
+  "calmarRatio": "2.8824",
+  "totalTrades": 104,
+  "winningTrades": 82,
+  "losingTrades": 22,
+  "exercises": 12,
+  "premiumIncome": "38000.00",
+  "dividendIncome": "9000.00",
+  "lendingIncome": "3500.00",
+  "selicIncome": "1500.00",
+  "status": "completed",
+  "progress": 100,
+  "executionTime": "45.50"
+}
+```
+
+---
+
+### 30. AssetIndexMembership (Participação em Índices)
+
+Armazena histórico de participação de ativos em índices de mercado (IBOV, IDIV, IFIX, SMLL) com períodos de validade.
+
+**Schema:**
+
+```typescript
+{
+  id: UUID;                       // Primary Key
+  assetId: UUID;                  // FK -> Assets.id
+  indexName: string;              // Nome do índice (ex: 'IDIV', 'IBOV', 'IFIX', 'SMLL')
+  participationPercent: decimal(10,6); // Percentual de participação (ex: 3.456789%)
+  validFrom: date;                // Data de início da validade
+  validTo: date;                  // Data de fim (null = ainda válido)
+  metadata: JSONB;                // { quantity: 1000000, theoreticalQuantity: 1500000 }
+  createdAt: timestamp;
+  updatedAt: timestamp;
+}
+```
+
+**Constraints:**
+
+- `assetId` FOREIGN KEY REFERENCES assets(id) ON DELETE CASCADE
+- UNIQUE (assetId, indexName, validFrom)
+- INDEX (assetId)
+- INDEX (indexName)
+- INDEX (validFrom, validTo)
+
+**Exemplo:**
+
+```json
+{
+  "id": "a5b6c7d8-e9f0-1234-ghij-567890123def",
+  "assetId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "indexName": "IDIV",
+  "participationPercent": "4.123456",
+  "validFrom": "2025-01-01",
+  "validTo": null,
+  "metadata": {
+    "quantity": 1200000,
+    "theoreticalQuantity": 1500000,
+    "segment": "Dividendos"
+  }
+}
+```
+
+---
+
+### 31. StockLendingRate (Taxas de Aluguel de Ações - BTC) - FASE 101.3
+
+Armazena histórico de taxas de aluguel de ações do Banco de Títulos B3, usado na estratégia WHEEL para calcular renda adicional durante fase HOLDING_SHARES.
+
+**Schema:**
+
+```typescript
+{
+  id: UUID;                        // Primary Key
+  assetId: UUID;                   // FK -> Assets.id
+  taxaAluguelAno: decimal(10,4);   // Taxa média anual (% a.a.) - Ex: 5.5000 = 5.5%
+  taxaAluguelDia: decimal(10,8);   // Taxa diária = taxa_ano / 252 (Decimal.js obrigatório)
+  taxaMin: decimal(10,4);          // Taxa mínima do dia (nullable)
+  taxaMax: decimal(10,4);          // Taxa máxima do dia (nullable)
+  quantidadeDisponivel: bigint;    // Quantidade disponível para aluguel
+  quantidadeAlugada: bigint;       // Quantidade já alugada
+  volumeFinanceiro: decimal(18,2); // Volume financeiro (R$) - Decimal.js obrigatório
+  dataReferencia: date;            // Data de referência
+  dataColeta: timestamp;           // Timestamp da coleta
+  source: string;                  // Fonte: STATUSINVEST, B3_BTC, TRADEMAP
+  metadata: JSONB;                 // { custodiante: 'B3', prazoMedio: 30, tipoContrato: 'D+0' }
+  createdAt: timestamp;
+  updatedAt: timestamp;
+}
+```
+
+**Constraints:**
+
+- `assetId` FOREIGN KEY REFERENCES assets(id) ON DELETE CASCADE
+- UNIQUE (assetId, dataReferencia)
+- INDEX (assetId, dataReferencia)
+- INDEX (assetId)
+- INDEX (dataReferencia)
+- INDEX (taxaAluguelAno)
+
+**Exemplo:**
+
+```json
+{
+  "id": "b6c7d8e9-f0a1-2345-hijk-678901234efg",
+  "assetId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "taxaAluguelAno": "5.5000",
+  "taxaAluguelDia": "0.02182540",
+  "taxaMin": "4.8000",
+  "taxaMax": "6.2000",
+  "quantidadeDisponivel": 1500000,
+  "quantidadeAlugada": 800000,
+  "volumeFinanceiro": "3500000.00",
+  "dataReferencia": "2025-12-30",
+  "dataColeta": "2025-12-30T10:00:00Z",
+  "source": "STATUSINVEST",
+  "metadata": {
+    "custodiante": "B3",
+    "prazoMedio": 30,
+    "tipoContrato": "D+0",
+    "openInterest": 5000
+  }
+}
+```
+
+---
+
+### 32. ScraperConfigAudit (Auditoria de Configurações) - FASE 142
+
+Registro de auditoria para TODAS mudanças em configurações de scrapers, garantindo compliance com regulamentações financeiras e rastreabilidade completa de alterações.
+
+**Schema:**
+
+```typescript
+{
+  id: UUID;                     // Primary Key
+  action: AuditAction;          // ENUM: CREATE, UPDATE, DELETE, TOGGLE, BULK_TOGGLE, APPLY_PROFILE, UPDATE_PRIORITY
+  userId: UUID;                 // FK -> Users.id (null = sistema automático)
+  scraperId: string;            // ID do scraper afetado (null para ações em lote)
+  profileId: UUID;              // ID do perfil aplicado (nullable)
+  changes: JSONB;               // { before: {}, after: {}, affectedScrapers: [] }
+  reason: text;                 // Motivo da mudança (opcional)
+  ipAddress: string;            // IP do cliente (max 45 chars - IPv6)
+  userAgent: string;            // User Agent do navegador (max 500 chars)
+  createdAt: timestamptz;       // Data/hora da ação (timezone aware)
+}
+```
+
+**Constraints:**
+
+- `action` NOT NULL
+- INDEX (scraperId, createdAt)
+- INDEX (userId, createdAt)
+- INDEX (action, createdAt)
+
+**Exemplo:**
+
+```json
+{
+  "id": "c7d8e9f0-a1b2-3456-ijkl-789012345fgh",
+  "action": "APPLY_PROFILE",
+  "userId": "user-uuid-5678",
+  "scraperId": null,
+  "profileId": "d2e3f4a5-b6c7-8901-defg-234567890abc",
+  "changes": {
+    "before": {
+      "scraperIds": ["fundamentus", "brapi"],
+      "enabledCount": 2
+    },
+    "after": {
+      "scraperIds": ["fundamentus", "statusinvest_fundamentals", "investidor10", "brapi", "yahoofinance"],
+      "enabledCount": 5
+    },
+    "affectedScrapers": ["statusinvest_fundamentals", "investidor10", "yahoofinance"]
+  },
+  "reason": "Switching to High Accuracy profile for better cross-validation",
+  "ipAddress": "192.168.1.100",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+  "createdAt": "2025-12-30T10:15:30-03:00"
+}
+```
+
+**Casos de Uso:**
+
+1. **Compliance Financeiro:** Auditoria completa de mudanças em configurações de coleta de dados
+2. **Troubleshooting:** Investigar quando/por que um scraper foi desabilitado
+3. **Rastreabilidade:** Saber quem alterou prioridades ou aplicou perfis
+4. **Security:** Detectar ações suspeitas ou não autorizadas
+5. **Analytics:** Análise de padrões de uso de perfis e scrapers
 
 ---
 

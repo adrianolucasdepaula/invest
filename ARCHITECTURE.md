@@ -1,8 +1,8 @@
 # 🏗️ ARCHITECTURE - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Ultima Atualizacao:** 2025-12-25
-**Versao:** 1.41.0
+**Ultima Atualizacao:** 2025-12-30 (FASE 8 - Documentation Update)
+**Versao:** 1.47.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -16,6 +16,50 @@
 5. [Estrutura de Pastas](#estrutura-de-pastas)
 6. [Portas e Serviços](#portas-e-serviços)
 7. [Fluxo de Dados](#fluxo-de-dados)
+
+---
+
+## 📊 RESUMO EXECUTIVO
+
+**Ecossistema Completo:**
+- **Backend:** 18 Controllers REST, 32 Entities TypeORM, 14+ Cron Jobs, 5 BullMQ Queues
+- **Frontend:** 21 páginas Next.js App Router, 93+ componentes React
+- **Scrapers:** 42 scrapers Python (Playwright + BeautifulSoup)
+- **Infraestrutura:** 20 containers Docker
+
+**Controllers REST API (18):**
+1. AnalysisController - Análises fundamentalistas, técnicas e completas
+2. AssetsController - CRUD ativos, sincronização B3
+3. AssetsUpdateController - Atualização de preços em tempo real
+4. AuthController - Autenticação OAuth, JWT
+5. BacktestController - Backtesting de estratégia WHEEL
+6. DataCleanupController - Limpeza de dados (manual trigger)
+7. DataSourcesController - Status e métricas de scrapers
+8. DiskLifecycleController - Gerenciamento de espaço em disco (Webhooks Prometheus)
+9. DividendsController - Dividendos, JCP, bonificações
+10. EconomicIndicatorsController - Indicadores macroeconômicos
+11. IndexMembershipsController - Participação em índices (IBOV, IDIV, IFIX)
+12. MarketDataController - Dados de mercado, ticker merge
+13. NewsController - Notícias e sentiment analysis
+14. PortfolioController - Gestão de portfólios e posições
+15. ReportsController - Relatórios analíticos
+16. ScraperConfigController - Configuração dinâmica de scrapers
+17. StockLendingController - Taxas de aluguel BTC (FASE 101.3)
+18. WheelController - Estratégia WHEEL (candidatos, trades, P&L)
+
+**Entities Database (32):**
+- Core: Asset, AssetPrice, TickerChange, FundamentalData, Analysis
+- Portfolio: Portfolio, PortfolioPosition
+- Options: OptionPrice, WheelStrategy, WheelTrade
+- News: News, NewsAnalysis, SentimentConsensus
+- Dividends: Dividend (tipos: dividendo, JCP, bonus, rendimento, fracao, subscricao)
+- Market Data: IntradayPrice, AssetIndexMembership, StockLendingRate
+- Scrapers: ScraperMetrics, ScrapedData, ScraperConfig, ScraperExecutionProfile, ScraperConfigAudit
+- Economics: EconomicEvent, EconomicIndicator
+- Cross-Validation: DataSource, CrossValidationConfig, DiscrepancyResolution
+- System: User, Alert, SyncHistory, UpdateLog, BacktestResult
+
+**Documentação Completa:** Ver `DATABASE_SCHEMA.md` (32 entities detalhadas)
 
 ---
 
@@ -1005,5 +1049,6 @@ invest-claude-web/
 
 ---
 
-**Última atualização:** 2025-12-21
+**Última atualização:** 2025-12-30 (FASE 8 - Documentation Update)
+**Versão:** 1.47.0
 **Mantido por:** Claude Code (Sonnet 4.5)
