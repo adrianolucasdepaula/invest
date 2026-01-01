@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
-import Decimal from 'decimal.js';
 import { AnalysisService } from './analysis.service';
 import {
   Analysis,
@@ -50,10 +49,10 @@ describe('AnalysisService', () => {
         id: `price-${i}`,
         assetId: 'asset-123',
         date,
-        open: new Decimal(basePrice + variance - 0.5),
-        high: new Decimal(basePrice + variance + 0.5),
-        low: new Decimal(basePrice + variance - 1),
-        close: new Decimal(basePrice + variance),
+        open: basePrice + variance - 0.5,
+        high: basePrice + variance + 0.5,
+        low: basePrice + variance - 1,
+        close: basePrice + variance,
         volume: 1000000 + Math.random() * 500000,
       });
     }

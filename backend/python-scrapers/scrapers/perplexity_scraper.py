@@ -10,12 +10,10 @@ Direct browser access (no API - we don't have API access)
 import asyncio
 import json
 from datetime import datetime
-import pytz
 from pathlib import Path
 from typing import Optional
 from loguru import logger
 
-from bs4 import BeautifulSoup
 from base_scraper import BaseScraper, ScraperResult
 
 
@@ -176,7 +174,7 @@ class PerplexityScraper(BaseScraper):
                         "response": response_data.get("answer", ""),
                         "sources": response_data.get("sources", []),
                         "source": "Perplexity",
-                        "timestamp": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+                        "timestamp": datetime.now().isoformat(),
                     },
                     source=self.source,
                     metadata={
@@ -237,13 +235,7 @@ class PerplexityScraper(BaseScraper):
         return None
 
     async def _extract_response(self) -> Optional[dict]:
-        """Extract Perplexity response from page
-
-        FASE 7.5: BUG-SCRAPER-EXIT137-001 FIX
-        Uses BeautifulSoup single fetch pattern to prevent OOM (Exit Code 137)
-        - Single await per iteration (page.content()) instead of multiple query_selector_all()
-        - Local parsing with BeautifulSoup (no await)
-        """
+        """Extract Perplexity response from page"""
         max_wait = 60  # 60 seconds max
         waited = 0
         check_interval = 2
@@ -265,10 +257,10 @@ class PerplexityScraper(BaseScraper):
         waited = 0
         while waited < max_wait:
             try:
-                # FASE 7.5: BUG-SCRAPER-EXIT137-001 FIX
-                # Single HTML fetch per iteration (NOT multiple query_selectors)
-                html_content = await self.page.content()  # SINGLE await per iteration
-                soup = BeautifulSoup(html_content, 'html.parser')  # Local parsing
+                # Get page content and parse with BeautifulSoup for better extraction
+                html_content = await self.page.content()
+                from bs4 import BeautifulSoup
+                soup = BeautifulSoup(html_content, 'html.parser')
 
                 # Look for the main answer text - Perplexity typically has the answer
                 # in a div that contains substantial text about the query
@@ -344,21 +336,10 @@ class PerplexityScraper(BaseScraper):
         return None
 
     async def _extract_sources(self) -> list:
-        """Extract source citations from Perplexity response
-
-        FASE 7.5: BUG-SCRAPER-EXIT137-001 FIX
-        Uses BeautifulSoup single fetch pattern to prevent OOM (Exit Code 137)
-        - Single await (page.content()) instead of multiple query_selector_all()
-        - Local parsing with BeautifulSoup (no await)
-        """
+        """Extract source citations from Perplexity response"""
         sources = []
         try:
-            # FASE 7.5: BUG-SCRAPER-EXIT137-001 FIX
-            # Single HTML fetch (NOT multiple query_selectors)
-            html_content = await self.page.content()  # SINGLE await
-            soup = BeautifulSoup(html_content, 'html.parser')  # Local parsing
-
-            # Look for source links/citations (local, no await)
+            # Look for source links/citations
             source_selectors = [
                 'a[href*="http"][class*="source"]',
                 'a[href*="http"][class*="citation"]',
@@ -368,15 +349,15 @@ class PerplexityScraper(BaseScraper):
             ]
 
             for selector in source_selectors:
-                elements = soup.select(selector)  # Local, no await
+                elements = await self.page.query_selector_all(selector)
                 for element in elements[:10]:  # Limit to 10 sources
                     try:
-                        href = element.get('href')  # Local, no await
-                        text = element.get_text(strip=True)  # Local, no await
+                        href = await element.get_attribute('href')
+                        text = await element.text_content()
                         if href and href.startswith('http'):
                             sources.append({
                                 "url": href,
-                                "title": text if text else "",
+                                "title": text.strip() if text else "",
                             })
                     except:
                         continue

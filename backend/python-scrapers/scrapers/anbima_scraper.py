@@ -7,7 +7,6 @@ API ANBIMA disponível (com Bearer token)
 import asyncio
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
-import pytz
 from loguru import logger
 import aiohttp
 import json
@@ -133,7 +132,7 @@ class ANBIMAScraper(BaseScraper):
                         # Extract relevant data
                         data = {
                             "source": "Gabriel Gaspar API (Tesouro Direto)",
-                            "updated_at": api_data.get("updated_at", datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat()),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+                            "updated_at": api_data.get("updated_at", datetime.now().isoformat()),
                             "yield_curve": {},
                             "bonds": [],
                         }
@@ -183,7 +182,7 @@ class ANBIMAScraper(BaseScraper):
                             if bond_data["maturity_date"]:
                                 try:
                                     maturity = datetime.strptime(bond_data["maturity_date"], "%d/%m/%Y")
-                                    years_to_maturity = (maturity - datetime.now(pytz.timezone('America/Sao_Paulo'))).days / 365.25  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+                                    years_to_maturity = (maturity - datetime.now()).days / 365.25
 
                                     # Map to standard vertices (1y, 2y, 3y, 5y, 10y, 15y, 20y, 30y)
                                     vertex = self._map_to_vertex(years_to_maturity)
@@ -298,7 +297,7 @@ class ANBIMAScraper(BaseScraper):
                         # Process ANBIMA data (structure depends on API response)
                         data = {
                             "source": "ANBIMA",
-                            "updated_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+                            "updated_at": datetime.now().isoformat(),
                             "raw_data": api_data,  # Store raw for debugging
                         }
 

@@ -47,10 +47,7 @@ export class ScheduledJobsService {
   /**
    * Update fundamental data for popular stocks every day at 9 PM
    */
-  @Cron(CronExpression.EVERY_DAY_AT_9PM, {
-    name: 'update-fundamental-data',
-    timeZone: 'America/Sao_Paulo',
-  })
+  @Cron(CronExpression.EVERY_DAY_AT_9PM)
   async updateFundamentalData() {
     this.logger.log('Starting scheduled fundamental data update');
 
@@ -87,10 +84,7 @@ export class ScheduledJobsService {
    * Updates hasOptions flag and optionsLiquidityMetadata with detailed data
    * from opcoes.net.br/estudos/liquidez/opcoes
    */
-  @Cron(CronExpression.EVERY_DAY_AT_6PM, {
-    name: 'update-options-data',
-    timeZone: 'America/Sao_Paulo',
-  })
+  @Cron(CronExpression.EVERY_DAY_AT_6PM)
   async updateOptionsData() {
     this.logger.log('📊 Starting scheduled options liquidity sync');
 
@@ -247,10 +241,7 @@ export class ScheduledJobsService {
   /**
    * Update price data every 15 minutes during market hours
    */
-  @Cron('*/15 9-18 * * 1-5', {
-    name: 'update-price-data',
-    timeZone: 'America/Sao_Paulo',
-  })
+  @Cron('*/15 9-18 * * 1-5') // Every 15 min, 9 AM to 6 PM, Mon-Fri
   async updatePriceData() {
     this.logger.log('Starting scheduled price data update');
 
@@ -299,10 +290,7 @@ export class ScheduledJobsService {
    * Collect news for top tickers every 2 hours (8h-20h, Mon-Fri)
    * Feeds: Termômetro do Mercado
    */
-  @Cron('0 */2 8-20 * * 1-5', {
-    name: 'collect-news-top-tickers',
-    timeZone: 'America/Sao_Paulo',
-  })
+  @Cron('0 */2 8-20 * * 1-5') // Every 2h, 8 AM to 8 PM, Mon-Fri
   async collectNewsForTopTickers() {
     this.logger.log('📰 Starting scheduled news collection for top tickers');
 
@@ -326,10 +314,7 @@ export class ScheduledJobsService {
    * Collect economic calendar events (6h and 18h daily)
    * Feeds: Calendário Econômico widget
    */
-  @Cron('0 0 6,18 * * *', {
-    name: 'collect-economic-calendar',
-    timeZone: 'America/Sao_Paulo',
-  })
+  @Cron('0 0 6,18 * * *') // At 6 AM and 6 PM every day
   async collectEconomicCalendar() {
     this.logger.log('📅 Starting scheduled economic calendar collection');
 
@@ -345,10 +330,7 @@ export class ScheduledJobsService {
    * Analyze unprocessed news every 30 minutes
    * Generates sentiment for Termômetro do Mercado
    */
-  @Cron('0 */30 * * * *', {
-    name: 'analyze-unprocessed-news',
-    timeZone: 'America/Sao_Paulo',
-  })
+  @Cron('0 */30 * * * *') // Every 30 minutes
   async analyzeUnprocessedNews() {
     this.logger.log('🤖 Starting scheduled news sentiment analysis');
 
@@ -391,10 +373,7 @@ export class ScheduledJobsService {
    *
    * FASE 145 FIX: Added overlap prevention + 5-minute total timeout
    */
-  @Cron('*/15 10-17 * * 1-5', {
-    name: 'update-option-prices-realtime',
-    timeZone: 'America/Sao_Paulo',
-  })
+  @Cron('*/15 10-17 * * 1-5') // Every 15 min, 10 AM to 5 PM, Mon-Fri
   async updateOptionPricesRealtime() {
     // ✅ FASE 145 FIX: Prevent overlap
     if (this.isUpdatingOptionPrices) {
@@ -517,10 +496,7 @@ export class ScheduledJobsService {
   /**
    * Check for expiring options and emit alerts (daily at 9 AM)
    */
-  @Cron('0 9 * * 1-5', {
-    name: 'check-expiring-options',
-    timeZone: 'America/Sao_Paulo',
-  })
+  @Cron('0 9 * * 1-5') // 9 AM Mon-Fri
   async checkExpiringOptions() {
     this.logger.log('⏰ Checking for expiring options');
 
@@ -570,10 +546,7 @@ export class ScheduledJobsService {
    * Auto-expire past options (daily at midnight)
    * FASE 110.1: Fixed bug - now expires ALL past options, not just today's
    */
-  @Cron('0 0 * * *', {
-    name: 'auto-expire-options',
-    timeZone: 'America/Sao_Paulo',
-  })
+  @Cron('0 0 * * *') // Midnight daily
   async autoExpireOptions() {
     this.logger.log('🔄 Auto-expiring past options');
 

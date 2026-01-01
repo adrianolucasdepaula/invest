@@ -8,7 +8,6 @@ MIGRATED TO PLAYWRIGHT - 2025-12-04
 import asyncio
 import json
 from datetime import datetime
-import pytz
 from pathlib import Path
 from typing import Dict, Any, Optional
 from loguru import logger
@@ -160,7 +159,7 @@ class TradingViewScraper(BaseScraper):
             data = {
                 "ticker": ticker.upper(),
                 "source": "TradingView",
-                "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+                "scraped_at": datetime.now().isoformat(),
                 "recommendation": None,
                 "technical_indicators": {},
                 "oscillators": {},

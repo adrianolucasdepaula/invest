@@ -178,10 +178,7 @@ describe('ScraperMetricsService', () => {
         failedRequests: 0,
         avgResponseTime: 0,
         lastTest: null,
-        lastTestSuccess: null,
         lastSync: null,
-        lastSyncSuccess: null,
-        lastErrorMessage: null,
       });
     });
 
@@ -324,14 +321,13 @@ describe('ScraperMetricsService', () => {
       const result = await service.getAllMetricsSummaries();
 
       expect(result).toBeInstanceOf(Map);
-      expect(result.size).toBe(7);
+      expect(result.size).toBe(6);
       expect(result.has('fundamentus')).toBe(true);
       expect(result.has('brapi')).toBe(true);
       expect(result.has('statusinvest')).toBe(true);
       expect(result.has('investidor10')).toBe(true);
       expect(result.has('fundamentei')).toBe(true);
       expect(result.has('investsite')).toBe(true);
-      expect(result.has('opcoes')).toBe(true);
     });
 
     it('should query metrics for each scraper', async () => {
@@ -339,8 +335,8 @@ describe('ScraperMetricsService', () => {
 
       await service.getAllMetricsSummaries();
 
-      // Should be called once for each of the 7 scrapers
-      expect(mockQueryBuilder.where).toHaveBeenCalledTimes(7);
+      // Should be called once for each of the 6 scrapers
+      expect(mockQueryBuilder.where).toHaveBeenCalledTimes(6);
     });
   });
 
@@ -492,8 +488,8 @@ describe('ScraperMetricsService', () => {
         service.getAllMetricsSummaries(),
       ]);
 
-      expect(result1.size).toBe(7);
-      expect(result2.size).toBe(7);
+      expect(result1.size).toBe(6);
+      expect(result2.size).toBe(6);
     });
   });
 });

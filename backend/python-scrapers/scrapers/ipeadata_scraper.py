@@ -6,7 +6,6 @@ SEM necessidade de login - API pública
 import asyncio
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
-import pytz
 from loguru import logger
 import aiohttp
 import json
@@ -97,7 +96,7 @@ class IPEADATAScraper(BaseScraper):
         try:
             data = {
                 "source": "IPEADATA API",
-                "updated_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+                "updated_at": datetime.now().isoformat(),
                 "commodities": {},
             }
 
@@ -125,7 +124,7 @@ class IPEADATAScraper(BaseScraper):
                     serie_code = self.SERIES[commodity_key]
 
                     # Get last 12 months of data
-                    end_date = datetime.now(pytz.timezone('America/Sao_Paulo'))  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+                    end_date = datetime.now()
                     start_date = end_date - timedelta(days=365)
 
                     # IPEADATA API endpoint
@@ -261,7 +260,7 @@ class IPEADATAScraper(BaseScraper):
             List of date/value pairs
         """
         try:
-            end_date = datetime.now(pytz.timezone('America/Sao_Paulo'))  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+            end_date = datetime.now()
             start_date = end_date - timedelta(days=days_back)
 
             url = f"{self.BASE_URL}/ValoresSerie(SERCODIGO='{serie_code}')"

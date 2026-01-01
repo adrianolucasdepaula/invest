@@ -403,6 +403,9 @@ services:
       - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-http://localhost:3101}
       - NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV:-development}
 
+      # FASE 148.4: Internal API URL for SSR requests (Docker internal network)
+      - INTERNAL_API_URL=http://invest_backend:3101/api/v1
+
       # Google OAuth (optional)
       - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
 

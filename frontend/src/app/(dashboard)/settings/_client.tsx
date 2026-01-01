@@ -99,21 +99,21 @@ export function SettingsPageClient() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <label className="text-sm font-medium">Tema Escuro</label>
+                        <label htmlFor="dark-theme-toggle" className="text-sm font-medium">Tema Escuro</label>
                         <p className="text-sm text-muted-foreground">
                           Ativar tema escuro na interface
                         </p>
                       </div>
-                      <input type="checkbox" className="h-4 w-4" />
+                      <input type="checkbox" id="dark-theme-toggle" aria-label="Ativar tema escuro" className="h-4 w-4" />
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <label className="text-sm font-medium">Modo Compacto</label>
+                        <label htmlFor="compact-mode-toggle" className="text-sm font-medium">Modo Compacto</label>
                         <p className="text-sm text-muted-foreground">
                           Reduzir espaçamento entre elementos
                         </p>
                       </div>
-                      <input type="checkbox" className="h-4 w-4" />
+                      <input type="checkbox" id="compact-mode-toggle" aria-label="Ativar modo compacto" className="h-4 w-4" />
                     </div>
                   </div>
                 </div>

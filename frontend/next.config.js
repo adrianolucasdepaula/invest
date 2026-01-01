@@ -22,7 +22,8 @@ const nextConfig = {
     ],
   },
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101',
+    // FASE 148: Fallback DEVE incluir /api/v1 para compatibilidade com NestJS global prefix
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api/v1',
     NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3101',
   },
   // FASE 46: CSS Critical Inlining - Eliminar render-blocking

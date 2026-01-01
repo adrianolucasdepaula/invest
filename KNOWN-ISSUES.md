@@ -1,8 +1,8 @@
 # 🔍 KNOWN ISSUES - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Ultima Atualizacao:** 2025-12-30
-**Versao:** 1.45.0
+**Ultima Atualizacao:** 2025-12-25
+**Versao:** 1.41.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -308,6 +308,69 @@ StatusInvest Dividends scraper bloqueado por Cloudflare Enterprise anti-bot prot
 - OAuth Implementation: Pendente FASE 145
 - Scraper Patterns: `backend/python-scrapers/PLAYWRIGHT_SCRAPER_PATTERN.md`
 - Cloudflare Bypass: `backend/python-scrapers/scrapers/statusinvest_dividends_scraper.py` (linhas 88-121)
+
+---
+
+### Issue #FRED-001: FRED API Key Required for Economic Indicators
+
+**Severidade:** BAIXA (feature nao-critica)
+**Status:** DOCUMENTADO - Requer Configuracao
+**Data Identificado:** 2025-12-31
+**Identificado Por:** Claude Opus 4.5 (Validacao FASE 148)
+
+#### Descricao
+
+O scraper FRED (Federal Reserve Economic Data) requer uma API key gratuita do FRED para funcionar corretamente. Sem a chave, o scraper retorna erro 401 Unauthorized.
+
+#### Sintomas
+
+- `fred_scraper.py` retorna `{"error": "API key required"}`
+- HTTP 401 ao tentar acessar endpoints FRED
+- Indicadores economicos dos EUA (Fed Funds Rate, Treasury Yields) nao sao coletados
+
+#### Root Cause
+
+O FRED API e gratuito mas requer registro e obtencao de API key:
+- URL: https://fred.stlouisfed.org/docs/api/api_key.html
+- Registro gratuito, limite de 120 requests/minute
+
+#### Solucao
+
+**1. Obter API Key (5 minutos):**
+1. Acessar https://fred.stlouisfed.org/
+2. Criar conta gratuita
+3. Gerar API key em "My Account"
+
+**2. Configurar no Projeto:**
+```bash
+# Adicionar em backend/.env
+FRED_API_KEY=your_api_key_here
+```
+
+**3. Verificar Configuracao:**
+```bash
+docker restart invest_scrapers
+curl http://localhost:8000/api/fred/test
+```
+
+#### Impacto
+
+- **Funcionalidade:** BAIXA - Indicadores economicos dos EUA sao complementares
+- **Alternativas:** BCB scraper fornece SELIC, IPCA, cambio (Brasil)
+- **Bloqueio:** Nao bloqueia funcionalidades core
+
+#### Workaround
+
+Indicadores economicos brasileiros estao disponiveis via:
+- BCB (Banco Central): SELIC, IPCA, CDI, cambio
+- IBGE: PIB, desemprego, inflacao
+- IPEADATA: Series historicas
+
+#### Files Affected
+
+- `backend/python-scrapers/scrapers/fred_scraper.py`
+- `backend/.env` (requer FRED_API_KEY)
+- `backend/src/integrations/fred/fred.service.ts`
 
 ---
 
@@ -779,76 +842,6 @@ O TradingView Ticker Tape é um widget embed externo (iframe) que:
 
 ---
 
-### Issue #WHEEL_TRADE_CREATE: Trade Creation Fails with strategyId Null Constraint
-
-**Severidade:** 🔴 **CRITICA**
-**Status:** 🔴 **ATIVO** - Aguardando fix
-**Data Identificado:** 2025-12-30
-**Identificado Por:** Claude Opus 4.5 durante FASE 5.2 Integration Testing
-
-#### Descricao
-
-Ao tentar criar uma trade WHEEL via POST /api/v1/wheel/trades, o endpoint retorna erro 500 com violacao de constraint not-null na coluna strategy_id.
-
-#### Sintomas
-
-- POST /api/v1/wheel/trades retorna HTTP 500
-- Erro: `null value in column "strategy_id" of relation "wheel_trades" violates not-null constraint`
-- strategyId enviado no body nao e propagado para a entidade
-
-#### Request que Falhou
-
-```json
-{
-  "strategyId": "60204144-bb03-49a0-a89c-2fd46eb383c1",
-  "tradeType": "sell_put",
-  "optionSymbol": "PETRH300",
-  "underlyingTicker": "PETR4",
-  "optionType": "PUT",
-  "strike": 30.00,
-  "expiration": "2025-02-17",
-  "contracts": 10,
-  "entryPrice": 1.25,
-  "underlyingPriceAtEntry": 36.82
-}
-```
-
-#### Root Cause Analise
-
-**Hipotese Principal:** Mapeamento incorreto entre DTO field `strategyId` e entity column `strategy_id`.
-
-**Arquivos Envolvidos:**
-- `backend/src/api/wheel/wheel.service.ts` linha 620-654 (createTrade)
-- `backend/src/api/wheel/dto/wheel-trade.dto.ts` (CreateWheelTradeDto)
-- `backend/src/database/entities/wheel-trade.entity.ts` (WheelTrade)
-
-**Codigo Suspeito (wheel.service.ts:630):**
-```typescript
-const trade = this.tradeRepository.create({
-  ...dto,  // strategyId do DTO nao e mapeado para strategy (relacao)
-  sharesPerContract: 100,
-  // ...
-});
-```
-
-#### Impacto
-
-- **Severidade:** CRITICA - Bloqueia completamente o fluxo de criacao de trades WHEEL
-- **Usuarios Afetados:** Todos os usuarios tentando criar trades WHEEL
-- **Workaround:** Nenhum disponivel
-
-#### Solucao Proposta
-
-1. Verificar entidade WheelTrade e relacionamento ManyToOne com WheelStrategy
-2. Garantir que `strategy` (objeto) ou `strategyId` (FK) e corretamente atribuido
-3. Adicionar teste de integracao para prevenir regressao
-
-#### Referencia
-
-- Relatorio completo: `docs/FASE_5.2_INTEGRATION_WHEEL_ANALYSIS_REPORT_2025-12-30.md`
-
----
-
 ## ✅ ISSUES RESOLVIDOS
 
 ### Issue #DY_COLUMN_NOT_RENDERING: Coluna DY% Não Renderiza no Browser
@@ -1006,446 +999,90 @@ sleep 45
 
 ---
 
-### Issue #BUG-WHEEL-001: WHEEL Trade Creation - strategyId NULL Constraint Violation
+### Issue #HEALTH_PAGE_404: Health Page Retorna 404 por URL Incorreta + Turbopack Cache
 
-**Severidade:** 🔴 **CRÍTICA**
+**Severidade:** 🟡 **MÉDIA**
 **Status:** ✅ **RESOLVIDO**
-**Data Identificado:** 2025-12-30 (FASE 6 - Data Quality Validation)
-**Data Resolução:** 2025-12-30 (FASE 7.1)
-**Tempo de Resolução:** ~30 minutos
-**Identificado Por:** Claude Opus 4.5 (Gap Remediation)
-**Resolvido Por:** Claude Opus 4.5
+**Data Identificado:** 2026-01-01
+**Data Resolução:** 2026-01-01 (resolvido no mesmo dia)
+**Tempo de Resolução:** ~40 minutos (debugging + análise post-mortem)
+**Identificado Por:** Claude Code (Opus 4.5) durante FASE 148 ecosystem validation
 
 #### Descrição
 
-Todas tentativas de criar WHEEL trades via POST `/api/v1/wheel/trades` falhavam com erro de constraint NULL no campo `strategy_id`.
+Página `/health` retornava 404 para chamadas ao backend porque a URL estava incorreta (faltava `/api/v1`) combinado com Turbopack in-memory cache que persistia mesmo após correções no código.
 
 #### Sintomas
 
-- Database error: `null value in column "strategy_id" violates not-null constraint`
-- DTO validação OK (strategyId presente e válido UUID)
-- Entity tem coluna `strategy_id` com NOT NULL constraint
-- 100% falha rate em criação de trades
+- Network tab mostrava `http://localhost:3101/health => 404`
+- URL correta deveria ser `http://localhost:3101/api/v1/health`
+- Código fonte corrigido mas browser executava JavaScript antigo
+- 10+ tentativas de cache clear sem sucesso
 
 #### Root Cause Identificado
 
-**Causa Real:** TypeORM relação `@ManyToOne` tem precedência sobre spread operator em `repository.create()`.
+**Causa Real:** **3 Fatores Combinados**
+
+1. **URL Incorreta em next.config.js:** Fallback `NEXT_PUBLIC_API_URL` não incluía `/api/v1`
+2. **Hardcoded URLs na health page:** `_client.tsx` fazia fetch direto sem usar `getApiBaseUrl()`
+3. **Turbopack In-Memory Cache:** Mesmo após corrigir código, cache in-memory persistia
 
 **Análise Técnica:**
+- NestJS usa `app.setGlobalPrefix('api/v1')` - todos endpoints requerem este prefixo
+- `getApiBaseUrl()` já existia mas não era usado na health page
+- `docker restart` mantém processo Node.js vivo → cache in-memory persiste
+
+#### Solução Aplicada
+
+**1. Refatorar health page para usar `getApiBaseUrl()`:**
 ```typescript
-// Arquivo: backend/src/api/wheel/wheel.service.ts (linha 620-641)
+// ANTES (vulnerável)
+const backendHealthUrl = 'http://localhost:3101/api/v1/health';
 
-// ANTES (ERRADO)
-const trade = this.tradeRepository.create({
-  ...dto,  // strategyId: "uuid-123" é espalhado aqui
-  // MAS relation "strategy" sobrescreve e seta strategyId como undefined
-  sharesPerContract: 100,
-  // ...
-});
-
-// TypeORM internals:
-// 1. Spread {...dto} seta strategyId = "uuid-123"
-// 2. TypeORM detecta @ManyToOne relation "strategy"
-// 3. TypeORM checa se dto.strategy existe (não existe, é undefined)
-// 4. TypeORM SOBRESCREVE strategyId = undefined (para manter consistência com relation)
-// 5. save() falha: NULL constraint violation
+// DEPOIS (correto)
+const apiBaseUrl = getApiBaseUrl();
+const backendHealthUrl = `${apiBaseUrl}/health`;
 ```
 
-#### Correção Aplicada
-
-**Arquivo:** `backend/src/api/wheel/wheel.service.ts` (linha 631)
-
-```typescript
-const trade = this.tradeRepository.create({
-  ...dto,
-  strategyId: dto.strategyId,  // FASE 7: Explicitly set to prevent NULL (BUG-WHEEL-001)
-  sharesPerContract: 100,
-  // ...
-});
+**2. Adicionar INTERNAL_API_URL no docker-compose.yml:**
+```yaml
+environment:
+  - INTERNAL_API_URL=http://invest_backend:3101/api/v1
 ```
 
-**Explicação:** Setar explicitamente `strategyId` APÓS spread operator garante que não será sobrescrito pela precedência da relação.
+**3. Rebuild com --no-cache para limpar cache in-memory:**
+```bash
+docker stop invest_frontend
+docker rm invest_frontend
+docker-compose build --no-cache frontend
+docker-compose up -d frontend
+```
 
-#### Resultado
-
-- ✅ 100% success rate em criação de trades
-- ✅ strategyId corretamente persistido
-- ✅ 0 erros TypeScript
-- ✅ 0 erros Build
-
-#### Impacto
-
-- **Módulo WHEEL:** 0% funcional → 100% funcional
-- **Bloqueio:** Critical feature desbloqueada
+**Resultado:**
+- ✅ Health page mostra 4/4 services healthy
+- ✅ Network requests corretos: `/api/v1/health => 200`
+- ✅ Console mostra URL correta nos logs
 
 #### Arquivos Modificados
 
-- `backend/src/api/wheel/wheel.service.ts` (1 linha adicionada)
+- `frontend/src/app/(dashboard)/health/_client.tsx` - Usar `getApiBaseUrl()` + useCallback
+- `frontend/next.config.js` - Fallback URL com `/api/v1`
+- `docker-compose.yml` - Adicionado `INTERNAL_API_URL`
+- `TROUBLESHOOTING.md` - Documentação expandida
+- `system-manager.ps1` - Novo comando `clear-turbopack-cache`
 
 #### Lições Aprendidas
 
-- TypeORM relations têm precedência sobre spread operator em `create()`
-- Sempre setar explicitamente foreign keys quando há `@ManyToOne`
-- Validação de DTO não previne bugs de precedência de framework
-
----
-
-### Issue #BUG-CRON-001: Cron Jobs Missing Timezone Configuration
-
-**Severidade:** 🔴 **CRÍTICA**
-**Status:** ✅ **RESOLVIDO**
-**Data Identificado:** 2025-12-30 (FASE 6 - Data Quality Validation - Timezone Compliance 57%)
-**Data Resolução:** 2025-12-30 (FASE 7.2)
-**Tempo de Resolução:** ~45 minutos
-**Identificado Por:** Claude Opus 4.5 (Gap Remediation)
-**Resolvido Por:** Claude Opus 4.5
-
-#### Descrição
-
-9 scheduled cron jobs em `scheduled-jobs.service.ts` rodavam em UTC (timezone padrão) ao invés de America/Sao_Paulo, causando 3h de diferença nos horários de execução.
-
-#### Sintomas
-
-- Jobs configurados para 9 AM executavam às 6 AM (Brasil time)
-- Daily jobs rodando 3 horas antes do esperado
-- Timezone compliance: **57%** (12/21 jobs com timezone correto)
-- Potencial data synchronization issues com B3 market hours
-
-#### Root Cause Identificado
-
-**Causa Real:** NestJS `@Cron` decorator sem opção `timeZone` usa UTC como padrão.
-
-**Jobs Afetados (9):**
-1. `updateFundamentalData` - 9 PM daily
-2. `updateOptionsData` - 6 PM daily
-3. `updatePriceData` - Every 15 min, 9 AM-6 PM Mon-Fri
-4. `collectNewsForTopTickers` - Every 2h, 8 AM-8 PM Mon-Fri
-5. `collectEconomicCalendar` - 6 AM and 6 PM daily
-6. `analyzeUnprocessedNews` - Every 30 min
-7. `updateOptionPricesRealtime` - Every 15 min, 10 AM-5 PM Mon-Fri
-8. `checkExpiringOptions` - 9 AM Mon-Fri
-9. `autoExpireOptions` - Midnight daily
-
-#### Correção Aplicada
-
-**Arquivo:** `backend/src/queue/jobs/scheduled-jobs.service.ts`
-
-**Padrão aplicado em TODOS os 9 jobs:**
-```typescript
-// ANTES
-@Cron('0 0 21 * * *', { name: 'update-fundamental-data' })
-
-// DEPOIS
-@Cron('0 0 21 * * *', {
-  name: 'update-fundamental-data',
-  timeZone: 'America/Sao_Paulo',  // FASE 7.2: BUG-CRON-001
-})
-```
-
-#### Resultado
-
-- ✅ Jobs agora executam em horário de Brasília (America/Sao_Paulo)
-- ✅ Timezone compliance: 57% → **100%** (21/21 jobs)
-- ✅ B3 market hours alignment: CORRETO
-- ✅ 0 erros TypeScript
-- ✅ 0 erros Build
-
-#### Impacto
-
-- **Data Quality:** Timezone compliance +43%
-- **B3 Compliance:** 100% (market hours corretos)
-- **Job Execution:** Horários corretos para todos os scheduled tasks
-
-#### Arquivos Modificados
-
-- `backend/src/queue/jobs/scheduled-jobs.service.ts` (9 decorators updated)
-
-#### Lições Aprendidas
-
-- NestJS `@Cron` usa UTC se `timeZone` não especificado
-- America/Sao_Paulo é NON-NEGOTIABLE para dados do mercado brasileiro
-- B3 opera em horário de Brasília (UTC-3)
-
----
-
-### Issue #BUG-SCRAPER-TIMEZONE-001: Python Scrapers Missing Timezone Configuration
-
-**Severidade:** 🔴 **CRÍTICA**
-**Status:** ✅ **RESOLVIDO**
-**Data Identificado:** 2025-12-30 (FASE 6 - Timezone Compliance 57%)
-**Data Resolução:** 2025-12-30 (FASE 7.3)
-**Tempo de Resolução:** ~1 hora (37 scrapers)
-**Identificado Por:** Claude Opus 4.5 (Data Quality Validation)
-**Resolvido Por:** Claude Opus 4.5 + MQL5 Compiler Expert Agent
-
-#### Descrição
-
-TODOS os 37 Python scrapers usavam `datetime.now()` sem especificar timezone, resultando em timestamps UTC ao invés de America/Sao_Paulo.
-
-#### Sintomas
-
-- Timestamps em ScrapedData com timezone incorreto
-- Discrepâncias em análises de tempo real
-- Timezone compliance: **0%** para scrapers Python (37/37 missing)
-- Overall timezone compliance: **57%** (backend OK, cron partial, scrapers 0%)
-
-#### Root Cause Identificado
-
-**Causa Real:** Python `datetime.now()` retorna local timezone do sistema (UTC em containers Docker), não America/Sao_Paulo.
-
-**Pattern Incorreto (37 occurrências):**
-```python
-from datetime import datetime
-
-start_time = datetime.now()  # Retorna UTC
-data["scraped_at"] = datetime.now().isoformat()  # Timestamp UTC
-```
-
-#### Correção Aplicada
-
-**62 ocorrências corrigidas em 37 arquivos:**
-
-**Scrapers Corrigidos:**
-- Financial Data (10): advfn, fundamentei, googlefinance, idiv, investidor10, oceans14, oplab, opcoes, stock_lending, statusinvest_dividends
-- News (8): bloomberg, einvestidor, estadao, exame, googlenews, infomoney, investing_news, valor
-- AI/LLMs (6): chatgpt, claude, deepseek, gemini, grok, perplexity
-- Macro/APIs (8): anbima, bcb, coingecko, coinmarketcap, fred, ibge, ipeadata, yahoo_finance
-- Others (5): griffin, investing, kinvo, maisretorno, tradingview
-
-**Pattern Aplicado:**
-```python
-from datetime import datetime
-import pytz  # Adicionado
-
-# ANTES
-start_time = datetime.now()
-data["scraped_at"] = datetime.now().isoformat()
-
-# DEPOIS
-start_time = datetime.now(pytz.timezone('America/Sao_Paulo'))  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
-data["scraped_at"] = datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat()  # FASE 7.3
-```
-
-#### Resultado
-
-- ✅ 37 scrapers com timezone America/Sao_Paulo
-- ✅ 62 ocorrências de `datetime.now()` corrigidas
-- ✅ Timezone compliance: 0% → **100%** (scrapers)
-- ✅ Overall timezone compliance: 57% → **~95%** (backend + cron + scrapers)
-- ✅ Timestamps consistentes para cross-validation
-
-#### Impacto
-
-- **Data Quality:** Timezone compliance +38%
-- **Cross-Validation:** Timestamps agora comparáveis entre fontes
-- **B3 Compliance:** 100% (timestamps em horário de Brasília)
-
-#### Arquivos Modificados
-
-- `backend/python-scrapers/scrapers/*.py` (37 arquivos, 62 modificações)
-
-#### Lições Aprendidas
-
-- `datetime.now()` sem timezone usa local system timezone (UTC em Docker)
-- `pytz.timezone('America/Sao_Paulo')` é obrigatório para dados brasileiros
-- Timestamp consistency é crítico para cross-validation multi-source
-
----
-
-### Issue #BUG-GROK-COOKIE-001: Grok Scraper Cookie Loading Order
-
-**Severidade:** 🔴 **CRÍTICA**
-**Status:** ✅ **RESOLVIDO**
-**Data Identificado:** 2025-12-30 (FASE 7.4)
-**Data Resolução:** 2025-12-30 (FASE 7.4)
-**Tempo de Resolução:** ~20 minutos
-**Identificado Por:** Claude Opus 4.5 (Gap Remediation)
-**Resolvido Por:** Claude Opus 4.5
-
-#### Descrição
-
-Grok scraper (`grok_scraper.py`) carregava cookies de autenticação APÓS navegar para grok.com, causando falha de autenticação.
-
-#### Sintomas
-
-- Grok scraper sempre falhava com authentication error
-- Cookies eram carregados mas não efetivos
-- Manual login required em todas execuções
-- 0% success rate com saved cookies
-
-#### Root Cause Identificado
-
-**Causa Real:** Ordem incorreta de operações no método `initialize()`.
-
-**Flow Incorreto (linhas 46-76):**
-```python
-async def initialize(self):
-    await super().initialize()
-
-    # 1. NAVEGA PRIMEIRO (sem cookies)
-    await self.page.goto(self.BASE_URL, wait_until="load", timeout=60000)
-    await asyncio.sleep(3)
-
-    # 2. CARREGA COOKIES DEPOIS (tarde demais - request já foi feito)
-    if self.COOKIES_FILE.exists():
-        cookies = json.load(f)
-        await self.page.context.add_cookies(grok_cookies)
-        await self.page.reload()  # Reload desnecessário
-```
-
-**Problema:** Primeira request para grok.com é enviada SEM cookies de autenticação, resultando em bloqueio/redirect para login.
-
-#### Correção Aplicada
-
-**Arquivo:** `backend/python-scrapers/scrapers/grok_scraper.py` (linhas 46-82)
-
-**Flow Correto:**
-```python
-async def initialize(self):
-    await super().initialize()
-
-    # FASE 7.4: BUG-GROK-COOKIE-001 FIX
-    # 1. CARREGA COOKIES PRIMEIRO
-    if self.COOKIES_FILE.exists():
-        cookies = json.load(f)
-        await self.page.context.add_cookies(grok_cookies)
-        logger.info(f"Loaded {len(grok_cookies)} cookies for Grok BEFORE navigation")
-
-    # 2. NAVEGA DEPOIS (authenticated from first request)
-    await self.page.goto(self.BASE_URL, wait_until="load", timeout=60000)
-    await asyncio.sleep(3)
-    # Sem reload desnecessário
-```
-
-#### Resultado
-
-- ✅ Cookies carregados ANTES de navegação
-- ✅ First request autenticado corretamente
-- ✅ Sem reload desnecessário
-- ✅ Expected success rate com saved cookies
-
-#### Impacto
-
-- **Grok Scraper:** 0% success → 100% success (com cookies salvos)
-- **Authentication:** First request autenticado
-
-#### Arquivos Modificados
-
-- `backend/python-scrapers/scrapers/grok_scraper.py` (linhas 46-82 reordenadas)
-
-#### Lições Aprendidas
-
-- Cookies SEMPRE antes de primeira navegação
-- `page.goto()` envia request imediatamente, sem esperar cookies posteriores
-- Reload após `add_cookies()` é desnecessário se cookies adicionados ANTES de goto
-
----
-
-### Issue #BUG-SCRAPER-EXIT137-001: AI Scrapers Exit Code 137 (OOM Killed)
-
-**Severidade:** 🔴 **CRÍTICA**
-**Status:** ✅ **RESOLVIDO**
-**Data Identificado:** 2025-12-30 (FASE 7.5)
-**Data Resolução:** 2025-12-30 (FASE 7.5)
-**Tempo de Resolução:** ~1 hora (6 scrapers)
-**Identificado Por:** Claude Opus 4.5 (Gap Remediation)
-**Resolvido Por:** Claude Opus 4.5 + Scraper Development Expert Agent
-
-#### Descrição
-
-6 AI scrapers (chatgpt, gemini, claude, deepseek, grok, perplexity) apresentavam risco de Exit Code 137 (OOM Killed) devido a múltiplos `await query_selector_all()` em loops de polling.
-
-#### Sintomas
-
-- Exit Code 137 esporádico durante extração de respostas AI
-- Memory consumption crescente durante polling
-- 60s polling × 5 selectors × 2 awaits/iteration = **300+ awaits**
-- OOM risk em containers com limite de memória
-
-#### Root Cause Identificado
-
-**Causa Real:** Anti-pattern de múltiplos awaits em loop de polling (método `_extract_response()`).
-
-**Pattern Incorreto:**
-```python
-while waited < max_wait:  # 60s / 2s interval = 30 iterações
-    for selector in response_selectors:  # 5 selectors
-        elements = await self.page.query_selector_all(selector)  # AWAIT #1 (140ms)
-        if elements:
-            last_response = elements[-1]
-            current_text = await last_response.text_content()  # AWAIT #2 (140ms)
-            # ...
-    await asyncio.sleep(2)
-    waited += 2
-
-# Total: 30 iterações × 5 selectors × 2 awaits = 300 awaits
-# Memory: Crescente, risco de OOM após ~60s
-```
-
-**Referência:** `ERROR_137_ANALYSIS.md` (linhas 163-182)
-
-#### Correção Aplicada
-
-**Pattern BeautifulSoup Single Fetch (aplicado em 6 scrapers):**
-
-```python
-from bs4 import BeautifulSoup
-
-while waited < max_wait:
-    # FASE 7.5: BUG-SCRAPER-EXIT137-001 FIX
-    # Single HTML fetch per iteration (NOT multiple query_selectors)
-    html_content = await self.page.content()  # ÚNICO await (140ms)
-    soup = BeautifulSoup(html_content, 'html.parser')  # Local parsing (0ms)
-
-    for selector in response_selectors:  # 5 selectors
-        elements = soup.select(selector)  # Local, no await (0ms)
-        if elements:
-            current_text = last_response.get_text(strip=True)  # Local, no await (0ms)
-            break
-
-    await asyncio.sleep(2)
-    waited += 2
-
-# Total: 30 iterações × 1 await = 30 awaits (10x redução)
-# Memory: Estável, OOM risk eliminado
-```
-
-**Scrapers Otimizados (6):**
-1. `chatgpt_scraper.py` - `_extract_response()` (lines 251-320)
-2. `gemini_scraper.py` - `_extract_response()` (lines 208-268)
-3. `claude_scraper.py` - `_extract_response()` (lines 363-434)
-4. `deepseek_scraper.py` - `_extract_response()` (lines 271-329)
-5. `grok_scraper.py` - `_extract_response()` (lines 191-264)
-6. `perplexity_scraper.py` - `_extract_response()` + `_extract_sources()` (lines 239-390)
-
-#### Resultado
-
-- ✅ 300+ awaits → ~30 awaits (10x redução)
-- ✅ Memory consumption: HIGH → NORMAL
-- ✅ Exit Code 137 risk: HIGH → **ELIMINATED**
-- ✅ Performance: ~10x faster extraction (~2s vs ~20s)
-
-#### Impacto
-
-- **AI Scrapers:** Exit 137 risk eliminado
-- **Memory:** Consumption estável durante polling
-- **Performance:** 10x improvement em response extraction
-
-#### Arquivos Modificados
-
-- `backend/python-scrapers/scrapers/chatgpt_scraper.py`
-- `backend/python-scrapers/scrapers/gemini_scraper.py`
-- `backend/python-scrapers/scrapers/claude_scraper.py`
-- `backend/python-scrapers/scrapers/deepseek_scraper.py`
-- `backend/python-scrapers/scrapers/grok_scraper.py`
-- `backend/python-scrapers/scrapers/perplexity_scraper.py`
-
-#### Lições Aprendidas
-
-- `await` em loops causa memory leak e OOM risk
-- BeautifulSoup local parsing é 10x mais rápido que múltiplos awaits Playwright
-- Single HTML fetch pattern é obrigatório para polling loops
-- Exit Code 137 previsto por análise de padrões (PLAYWRIGHT_SCRAPER_PATTERN.md)
+1. ✅ **NestJS global prefix é obrigatório** - Sempre incluir `/api/v1` nas URLs
+2. ✅ **Usar funções centralizadas** - `getApiBaseUrl()` evita hardcoding
+3. ✅ **`docker restart` ≠ `docker rm`** - Restart mantém cache in-memory
+4. ✅ **`build --no-cache` é a solução definitiva** - Mata processo e rebuild
+
+#### Referências
+
+- **Análise Post-Mortem:** `C:\Users\adria\.claude\plans\inherited-marinating-curry.md`
+- **Precedentes:** Issue #DY_COLUMN_NOT_RENDERING, `BLOQUEIO_TURBOPACK_CACHE_2025-12-26.md`
+- **GitHub Issues:** [#85883](https://github.com/vercel/next.js/issues/85883), [#66326](https://github.com/vercel/next.js/issues/66326)
 
 ---
 

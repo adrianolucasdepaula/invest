@@ -533,6 +533,7 @@ export function DiscrepanciesPageClient() {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                aria-label={`Resolver discrepância de ${d.fieldLabel} para ${d.ticker}`}
                                 onClick={() => setResolutionModal({ ticker: d.ticker, field: d.field })}
                               >
                                 <Wrench className="h-4 w-4" />
@@ -546,8 +547,8 @@ export function DiscrepanciesPageClient() {
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Link href={`/assets/${d.ticker}`}>
-                                <Button variant="ghost" size="icon">
+                              <Link href={`/assets/${d.ticker}`} aria-label={`Ver detalhes do ativo ${d.ticker}`}>
+                                <Button variant="ghost" size="icon" aria-label={`Ver detalhes do ativo ${d.ticker}`}>
                                   <ExternalLink className="h-4 w-4" />
                                 </Button>
                               </Link>

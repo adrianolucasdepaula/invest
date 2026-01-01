@@ -530,21 +530,48 @@ docker restart <container_name>
 | .env files | Restart |
 | **Componentes novos não aparecem** | **`.\system-manager.ps1 rebuild-frontend-complete`** |
 
-**⚠️ CRÍTICO: Turbopack In-Memory Cache (FASE 133/136)**
+**⚠️ CRÍTICO: Turbopack In-Memory Cache (FASE 133/136/148)**
 
 Se componentes novos não aparecem mesmo com código correto, o problema é o cache in-memory do Turbopack:
 
 - `docker restart` → **NÃO FUNCIONA** (processo suspende/resume, cache persiste)
 - `docker rm` → **FUNCIONA** (processo morre, cache é destruído)
+- `rm -rf .next node_modules/.cache` → **NÃO FUNCIONA** (cache está em memória, não em disco)
+- `docker volume rm` → **NÃO FUNCIONA** (cache não está nos volumes)
 
-**Solução Definitiva:**
+**Solução Definitiva (3 opções):**
 
 ```powershell
-# Use o comando do system-manager que mata o processo
+# Opção 1: Use o comando do system-manager
 .\system-manager.ps1 rebuild-frontend-complete
+
+# Opção 2: Build --no-cache manual (mais completo)
+docker stop invest_frontend
+docker rm invest_frontend
+docker-compose build --no-cache frontend
+docker-compose up -d frontend
+
+# Opção 3: Apenas docker rm + up (mais rápido)
+docker stop invest_frontend
+docker rm invest_frontend
+docker-compose up -d frontend
 ```
 
-**Referência:** `BUG_CRITICO_TURBOPACK_MEMORY_CACHE.md`, `BUG_CRITICO_DOCKER_NEXT_CACHE.md`
+**Diferença Crítica:**
+
+| Comando | Processo Node.js | Cache In-Memory |
+|---------|------------------|-----------------|
+| `docker restart` | Continua vivo | ❌ PERSISTE |
+| `docker rm` + `up` | Morre + novo | ✅ LIMPO |
+| `build --no-cache` | Morre + rebuild | ✅ LIMPO + imagem nova |
+
+**Sintomas do bug:**
+- Código fonte correto (verificar com `docker exec invest_frontend cat /app/src/...`)
+- Browser executa JavaScript antigo (verificar hash do bundle)
+- `console.log()` adicionado não aparece
+- Mudanças em `next.config.js` não aplicadas
+
+**Referência:** `BUG_CRITICO_TURBOPACK_MEMORY_CACHE.md`, `BUG_CRITICO_DOCKER_NEXT_CACHE.md`, `BLOQUEIO_TURBOPACK_CACHE_2025-12-26.md`
 
 ---
 

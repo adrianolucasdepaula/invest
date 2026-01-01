@@ -2,7 +2,7 @@
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
 **Última Atualização:** 2025-12-30
-**Versão:** 1.47.0
+**Versão:** 1.46.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -11670,7 +11670,6 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
 | **FASE 144** | Bulk Update Testing + Critical Bugfixes | ✅ 100% | 2025-12-28 |
 | **FASE 145** | Data Cleanup & Lifecycle Management | ✅ 100% | 2025-12-29 |
 | **FASE 146** | Disk Lifecycle Management (Automated Cleanup System) | ✅ 100% | 2025-12-30 |
-| **FASE 147** | Gap Remediation & Documentation Update (5 CRITICAL bugs + 3 docs) | 🔄 60% | 2025-12-30 |
 | **FASE 101.4** | Wheel Turbinada Backtesting Engine | ✅ 100% | 2025-12-21 |
 
 **FASE 146 - Disk Lifecycle Management (2025-12-30):**
@@ -11897,39 +11896,6 @@ O B3Scraper estava comentado com a justificativa "URL needs CVM code", porém o 
   - FASE 146.3: Alertmanager webhook URL fix
   - FASE 147-148: Grafana dashboard + Capacity planning + Governance
 
-**FASE 147 - Gap Remediation & Documentation Update (2025-12-30):**
-- ✅ **FASE 7: Gap Remediation** - 5 CRITICAL bugs corrigidos:
-  - BUG-WHEEL-001: strategyId NULL constraint violation (TypeORM precedência fix)
-  - BUG-CRON-001: 9 cron jobs sem timezone → America/Sao_Paulo aplicado
-  - BUG-SCRAPER-TIMEZONE-001: 37 scrapers Python sem timezone → America/Sao_Paulo aplicado
-  - BUG-GROK-COOKIE-001: Ordem de cookies incorreta → Load BEFORE navigation implementado
-  - BUG-SCRAPER-EXIT137-001: 6 AI scrapers Exit Code 137 (OOM) → BeautifulSoup Single Fetch pattern aplicado
-- ✅ **FASE 8: Documentation Update** - Documentação 100% atualizada:
-  - KNOWN-ISSUES.md: 5 resolved issues documentados (root cause, correction, impact, lessons learned)
-  - DATABASE_SCHEMA.md: 27 → 32 entities documentadas, numbering duplication fixed (#1-#32 clean sequence)
-  - ARCHITECTURE.md: 18 controllers + 32 entities documentados em nova seção "RESUMO EXECUTIVO"
-  - ROADMAP.md: Versão 1.47.0, FASE 147 adicionada
-  - CLAUDE.md/GEMINI.md: Sync completo (pending)
-  - CHANGELOG.md: v1.47.0 entry (pending)
-- **Files Modified:**
-  - `KNOWN-ISSUES.md` (+350 linhas: 5 resolved issues)
-  - `DATABASE_SCHEMA.md` (+500 linhas: 7 new entities + numbering fix em 23 entities)
-  - `ARCHITECTURE.md` (+45 linhas: RESUMO EXECUTIVO section + version update)
-  - `ROADMAP.md` (version update + FASE 147 entry)
-  - `backend/src/api/wheel/wheel.service.ts` (strategyId explicit assignment)
-  - `backend/src/queue/jobs/*.service.ts` (9 cron jobs timezone fix)
-  - `backend/python-scrapers/scrapers/*.py` (37 scrapers timezone fix)
-  - `backend/python-scrapers/scrapers/grok_scraper.py` (cookie order fix)
-  - `backend/python-scrapers/scrapers/{chatgpt,grok,gemini,deepseek,perplexity,claude}_scraper.py` (6 AI scrapers BeautifulSoup pattern)
-- **Métricas:**
-  - Bugs CRITICAL Corrigidos: 5/5 (100%)
-  - Documentação Atualizada: 3/6 arquivos (50% - CLAUDE.md/GEMINI.md/CHANGELOG.md pending)
-  - Entity Coverage: 32/32 (100% - anteriormente 27/32 = 84.4%)
-  - Controller Coverage: 18/18 (100% - anteriormente não documentado)
-- **Timeline:** FASE 7 + FASE 8 (partial) executadas em 2025-12-30
-- **Status:** 🔄 **FASE 8 EM ANDAMENTO** (CLAUDE.md/GEMINI.md/CHANGELOG.md pendentes)
-- **Next:** FASE 9 - Final Validation & Report
-
 ### Fases Planejadas
 
 **FASE 147 - StatusInvest OAuth + Dividends/StockLending (Planejada):**
@@ -11993,11 +11959,13 @@ Sistema em estado de manutenção e evolução contínua.
 > **Nota:** FASE 101.4 concluída em 2025-12-21 (Wheel Turbinada Backtesting Engine: 4 Entities (Dividend, StockLendingRate, BacktestResult, AssetIndexMembership) | 4 Migrations | Backend Services (DividendsService, StockLendingService, BacktestService) | Frontend Hooks (use-backtest, use-dividends) | API isolation for Turbopack fix | Metrics: CAGR, Sharpe, Sortino, MaxDD, Win Rate, Profit Factor | UI: 4 metric cards, 3 tabs, empty state | Zero Tolerance ✅ | Validação MCP ✅)
 > **Nota:** FASE 140 concluída em 2025-12-23 (Turbopack Cache Fix - system-manager.ps1 Integration: Problema CRÔNICO resolvido (3 ocorrências: FASE 133, 136, atual) | Root Cause: Next.js 16 Turbopack mantém módulos compilados em MEMÓRIA do processo Node.js | docker restart suspende/resume processo (cache persiste) | docker rm mata processo (cache destruído) | Solução: Nova função Rebuild-FrontendComplete em system-manager.ps1 | Arquivos modificados: system-manager.ps1 (+67 linhas), CLAUDE.md (anti-pattern + quick ref), GEMINI.md (sync), TROUBLESHOOTING.md (+18 linhas, seção crítica Turbopack) | Comando: `.\system-manager.ps1 rebuild-frontend-complete` | Validação: Hydration error /analysis resolvido, 9 botões filtro visíveis | Referência: BUG_CRITICO_TURBOPACK_MEMORY_CACHE.md, BUG_CRITICO_DOCKER_NEXT_CACHE.md | Next Steps: Usar rebuild-frontend-complete após adicionar componentes novos)
 > **Nota:** FASE 141 concluída em 2025-12-23 (LLM Local Feasibility Study: 100% gratuito, 0 cloud/APIs | Hardware: RTX 3060 6GB VRAM verificada, Docker GPU funcional (`--gpus all`) | Readiness: 78% (5-8 dias implementação) | Modelos mapeados: FinBERT-PT-BR 97% sentiment, Llama 3.1 8B 5.4% hallucination, Phi-3 Mini 3.8B reasoning, DeepSeek-R1-Distill-8B chain-of-thought | 6 problemas identificados: sentiment 45%→97%, OAuth expiration, HTML parsing, negations, outliers, summarization | Custo: R$ 0/mês (100% economia vs ~R$ 100/mês atual) | Framework: Ollama (recomendado) | Próximos: Ollama install + PoC 100 notícias | Documentação: docs/ESTUDO_VIABILIDADE_LLM_LOCAL.md)
+> **Nota:** FASE 147 concluída em 2025-12-31 (5 CRITICAL Bugs Fixed: Timezone mismatch (Date→startOf('day') timezone-aware), OOM protection (Promise.allSettled + MAX_BATCH_SIZE 25), FK constraint violations (createOrGet patterns), DNS resolution errors (retry with exponential backoff), Playwright overload (semaphore limit 3→2) | Test snapshots updated | 0 erros TypeScript | Commits: fe19008, c46a40f, 8da77c1 | Documentação: FASE_147_VALIDATION_REPORT.md)
+> **Nota:** FASE 148 concluída em 2025-12-31 (Ultra-Complete Ecosystem Validation: 8 agentes paralelos | Frontend: 15 páginas MCP Triplo (100% PASS TIER 1, 72% TIER 2-4) | Backend: 106 endpoints testados (98.4% PASS) | E2E: 17 testes, 3 jornadas, 100% PASS | Scrapers: 24/26 OK (92.3%) | Cross-validation: 48 tests 100% PASS | Zero Tolerance: 0 erros TS/Build | **Issues RESOLVIDOS:** ✅ 4 auth vulnerabilities (JwtAuthGuard adicionado), ✅ 52 button-name a11y (aria-labels), ✅ 2 form-input labels (htmlFor), ✅ health 404 (next.config.js fix), ✅ color contrast (globals.css WCAG AA) | Documentação: docs/FASE_148_VALIDATION_REPORT_2025-12-31.md, docs/E2E_CRITICAL_FLOWS_REPORT_2025-12-31.md)
 
 ---
 
-**Ultima Atualizacao:** 2025-12-30
-**Total de Fases:** 146 completas (incluindo sub-fases)
-**Versao:** 1.46.0
+**Ultima Atualizacao:** 2025-12-31
+**Total de Fases:** 148 completas (incluindo sub-fases)
+**Versao:** 1.48.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0

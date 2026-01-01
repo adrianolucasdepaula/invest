@@ -7,7 +7,6 @@ FASE 102: Novos scrapers para expandir cobertura (30/36 → 34/36)
 """
 import asyncio
 from datetime import datetime
-import pytz
 from typing import Dict, Any, Optional
 import aiohttp
 from loguru import logger
@@ -164,7 +163,7 @@ class CoinGeckoScraper(BaseScraper):
                         "market_cap_rank": data.get("market_cap_rank"),
                         "coingecko_rank": data.get("coingecko_rank"),
                         "last_updated": data.get("last_updated"),
-                        "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+                        "scraped_at": datetime.now().isoformat(),
                     }
 
         except aiohttp.ClientError as e:

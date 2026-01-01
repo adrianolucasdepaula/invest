@@ -28,7 +28,6 @@ This scraper is now aligned with the TypeScript version (opcoes.scraper.ts) for 
 import asyncio
 import json
 from datetime import datetime
-import pytz
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from loguru import logger
@@ -353,7 +352,7 @@ class OpcoesNetScraper(BaseScraper):
                 "iv_percentile_puts": None,
                 "selected_expiration": None,
                 "options_chain": [],
-                "scraped_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+                "scraped_at": datetime.now().isoformat(),
             }
 
             # Extract underlying price

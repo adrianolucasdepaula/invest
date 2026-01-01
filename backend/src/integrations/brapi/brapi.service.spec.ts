@@ -54,9 +54,8 @@ describe('BrapiService', () => {
       expect(result).toHaveLength(1);
       expect(result[0].value).toBe(1.28);
       expect(result[0].date).toBeInstanceOf(Date);
-      // FASE 112: Changed from series 4390 to 432 (SELIC Meta % a.a.)
       expect(mockHttpService.get).toHaveBeenCalledWith(
-        expect.stringContaining('.432/dados/ultimos/1'),
+        expect.stringContaining('.4390/dados/ultimos/1'),
         expect.any(Object),
       );
     });

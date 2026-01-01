@@ -2,11 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
   CrossValidationService,
   SourceValue,
-} from './cross-validation.service';
-import {
   DEFAULT_TOLERANCES,
   SOURCE_PRIORITY,
-} from '../scrapers/interfaces/field-source.interface';
+} from './cross-validation.service';
 
 describe('CrossValidationService', () => {
   let service: CrossValidationService;
@@ -58,7 +56,7 @@ describe('CrossValidationService', () => {
 
     it('should handle zero reference', () => {
       expect(service.calculateDeviation(0, 0)).toBe(0);
-      expect(service.calculateDeviation(10, 0)).toBe(10000); // MAX_DEVIATION cap
+      expect(service.calculateDeviation(10, 0)).toBe(100);
     });
 
     it('should return 0 for identical values', () => {
@@ -75,16 +73,15 @@ describe('CrossValidationService', () => {
 
   describe('getFieldTolerance', () => {
     it('should return specific tolerance for known fields', () => {
-      // Stricter tolerances per FASE DISCREPANCY-FIX
-      expect(service.getFieldTolerance('pl')).toBe(0.02); // 2%
-      expect(service.getFieldTolerance('pvp')).toBe(0.02); // 2%
-      expect(service.getFieldTolerance('roe')).toBe(0.005); // 0.5%
-      expect(service.getFieldTolerance('dividendYield')).toBe(0.005); // 0.5%
+      expect(service.getFieldTolerance('pl')).toBe(0.10);
+      expect(service.getFieldTolerance('pvp')).toBe(0.08);
+      expect(service.getFieldTolerance('roe')).toBe(0.05);
+      expect(service.getFieldTolerance('dividendYield')).toBe(0.10);
     });
 
     it('should return default tolerance for unknown fields', () => {
-      expect(service.getFieldTolerance('unknownField')).toBe(0.01); // 1% default
-      expect(service.getFieldTolerance('customMetric')).toBe(0.01);
+      expect(service.getFieldTolerance('unknownField')).toBe(0.05);
+      expect(service.getFieldTolerance('customMetric')).toBe(0.05);
     });
   });
 
@@ -234,10 +231,10 @@ describe('CrossValidationService', () => {
     });
 
     it('should use field-specific tolerance', () => {
-      // P/L has 2% tolerance (stricter per FASE DISCREPANCY-FIX)
+      // P/L has 10% tolerance
       const values: SourceValue[] = [
         { source: 'fundamentus', value: 10 },
-        { source: 'statusinvest', value: 10.15 }, // 1.5% deviation - within 2%
+        { source: 'statusinvest', value: 10.8 }, // 8% deviation - within 10%
       ];
 
       const result = service.selectByConsensus('pl', values);
@@ -510,15 +507,13 @@ describe('CrossValidationService', () => {
 
   describe('DEFAULT_TOLERANCES', () => {
     it('should have correct default tolerance', () => {
-      // Stricter 1% default per FASE DISCREPANCY-FIX
-      expect(DEFAULT_TOLERANCES.default).toBe(0.01);
+      expect(DEFAULT_TOLERANCES.default).toBe(0.05);
     });
 
     it('should have field-specific tolerances', () => {
-      // Stricter tolerances per FASE DISCREPANCY-FIX
-      expect(DEFAULT_TOLERANCES.byField.pl).toBe(0.02); // 2%
-      expect(DEFAULT_TOLERANCES.byField.pvp).toBe(0.02); // 2%
-      expect(DEFAULT_TOLERANCES.byField.evEbitda).toBe(0.02); // 2%
+      expect(DEFAULT_TOLERANCES.byField.pl).toBe(0.10);
+      expect(DEFAULT_TOLERANCES.byField.pvp).toBe(0.08);
+      expect(DEFAULT_TOLERANCES.byField.evEbitda).toBe(0.10);
     });
   });
 

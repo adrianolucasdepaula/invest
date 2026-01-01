@@ -10,12 +10,10 @@ OPTIMIZED: Uses Playwright for browser automation
 import asyncio
 import json
 from datetime import datetime
-import pytz
 from pathlib import Path
 from typing import Optional
 from loguru import logger
 
-from bs4 import BeautifulSoup
 from base_scraper import BaseScraper, ScraperResult
 
 
@@ -205,7 +203,7 @@ class ChatGPTScraper(BaseScraper):
                         "prompt": prompt,
                         "response": response_text,
                         "source": "ChatGPT",
-                        "timestamp": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+                        "timestamp": datetime.now().isoformat(),
                     },
                     source=self.source,
                     metadata={
@@ -249,13 +247,7 @@ class ChatGPTScraper(BaseScraper):
         return None
 
     async def _extract_response(self) -> Optional[str]:
-        """Extract ChatGPT response from page
-
-        FASE 7.5: BUG-SCRAPER-EXIT137-001 FIX
-        Uses BeautifulSoup single fetch pattern to prevent OOM (Exit Code 137)
-        - Single await per iteration (page.content()) instead of multiple query_selector_all()
-        - Local parsing with BeautifulSoup (no await)
-        """
+        """Extract ChatGPT response from page"""
         max_wait = 120  # 2 minutes max
         waited = 0
         check_interval = 2
@@ -266,12 +258,7 @@ class ChatGPTScraper(BaseScraper):
 
         while waited < max_wait:
             try:
-                # FASE 7.5: BUG-SCRAPER-EXIT137-001 FIX
-                # Single HTML fetch per iteration (NOT multiple query_selectors)
-                html_content = await self.page.content()  # SINGLE await per iteration
-                soup = BeautifulSoup(html_content, 'html.parser')  # Local parsing
-
-                # Look for response messages (local, no await)
+                # Look for response messages
                 response_selectors = [
                     "[data-message-author-role='assistant']",
                     ".agent-turn",
@@ -280,31 +267,36 @@ class ChatGPTScraper(BaseScraper):
                     "[class*='assistant']",
                 ]
 
-                current_text = ""
+                response_elements = []
                 for selector in response_selectors:
                     try:
-                        elements = soup.select(selector)  # Local, no await
+                        elements = await self.page.query_selector_all(selector)
                         if elements:
-                            last_response = elements[-1]
-                            current_text = last_response.get_text(strip=True)  # Local, no await
+                            response_elements = elements
                             break
                     except:
                         continue
 
-                # Check if response is meaningful
-                if current_text and len(current_text) > 20:
-                    # Check if text has stopped changing (response complete)
-                    if current_text == previous_text:
-                        stable_count += 1
+                if response_elements:
+                    # Get the last (most recent) response
+                    last_response = response_elements[-1]
+                    current_text = await last_response.text_content()
+                    current_text = current_text.strip() if current_text else ""
 
-                        if stable_count >= stability_threshold:
-                            logger.info(f"Response received ({len(current_text)} chars)")
-                            return current_text
-                    else:
-                        # Text changed, reset stability counter
-                        stable_count = 0
-                        previous_text = current_text
-                        logger.debug(f"Response growing... ({len(current_text)} chars)")
+                    # Check if response is meaningful
+                    if current_text and len(current_text) > 20:
+                        # Check if text has stopped changing (response complete)
+                        if current_text == previous_text:
+                            stable_count += 1
+
+                            if stable_count >= stability_threshold:
+                                logger.info(f"Response received ({len(current_text)} chars)")
+                                return current_text
+                        else:
+                            # Text changed, reset stability counter
+                            stable_count = 0
+                            previous_text = current_text
+                            logger.debug(f"Response growing... ({len(current_text)} chars)")
 
             except Exception as e:
                 logger.debug(f"Error while waiting for response: {e}")

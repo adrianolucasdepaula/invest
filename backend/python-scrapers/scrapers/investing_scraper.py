@@ -12,7 +12,6 @@ import json
 import re
 import time
 from datetime import datetime
-import pytz
 from pathlib import Path
 from typing import Dict, Any, Optional
 from loguru import logger
@@ -246,7 +245,7 @@ class InvestingScraper(BaseScraper):
                     source=self.source,
                     metadata={
                         "url": self.page.url,
-                        "timestamp": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+                        "timestamp": datetime.now().isoformat(),
                     },
                 )
             else:

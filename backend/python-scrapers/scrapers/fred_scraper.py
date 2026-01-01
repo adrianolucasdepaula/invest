@@ -6,7 +6,6 @@ Requer API Key (gratuita)
 import asyncio
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
-import pytz
 from loguru import logger
 import aiohttp
 import json
@@ -114,7 +113,7 @@ class FREDScraper(BaseScraper):
         try:
             data = {
                 "source": "FRED API (Federal Reserve)",
-                "updated_at": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+                "updated_at": datetime.now().isoformat(),
                 "indicators": {},
             }
 
@@ -146,7 +145,7 @@ class FREDScraper(BaseScraper):
                     serie_code = self.SERIES[indicator_key]
 
                     # Get last 12 months of data
-                    end_date = datetime.now(pytz.timezone('America/Sao_Paulo'))  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+                    end_date = datetime.now()
                     start_date = end_date - timedelta(days=365)
 
                     # FRED API endpoint: /fred/series/observations
@@ -313,7 +312,7 @@ class FREDScraper(BaseScraper):
                 logger.error("FRED API key not provided")
                 return []
 
-            end_date = datetime.now(pytz.timezone('America/Sao_Paulo'))  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+            end_date = datetime.now()
             start_date = end_date - timedelta(days=days_back)
 
             url = f"{self.BASE_URL}/series/observations"

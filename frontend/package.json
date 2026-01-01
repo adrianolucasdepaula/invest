@@ -57,6 +57,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
     "@eslint/eslintrc": "^3.3.3",
     "@playwright/test": "^1.57.0",
     "@types/node": "^24.10.1",

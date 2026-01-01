@@ -9,12 +9,10 @@ OPTIMIZED: Uses Playwright for browser automation
 import asyncio
 import json
 from datetime import datetime
-import pytz
 from pathlib import Path
 from typing import Optional
 from loguru import logger
 
-from bs4 import BeautifulSoup
 from base_scraper import BaseScraper, ScraperResult
 
 
@@ -182,7 +180,7 @@ class GeminiScraper(BaseScraper):
                         "prompt": prompt,
                         "response": response,
                         "source": "Gemini",
-                        "timestamp": datetime.now(pytz.timezone('America/Sao_Paulo')).isoformat(),  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+                        "timestamp": datetime.now().isoformat(),
                     },
                     source=self.source,
                     metadata={
@@ -206,13 +204,7 @@ class GeminiScraper(BaseScraper):
             )
 
     async def _extract_response(self) -> Optional[str]:
-        """Extract Gemini response from page
-
-        FASE 7.5: BUG-SCRAPER-EXIT137-001 FIX
-        Uses BeautifulSoup single fetch pattern to prevent OOM (Exit Code 137)
-        - Single await per iteration (page.content()) instead of multiple query_selector_all()
-        - Local parsing with BeautifulSoup (no await)
-        """
+        """Extract Gemini response from page"""
         max_wait = 60
         waited = 0
         check_interval = 2
@@ -223,11 +215,6 @@ class GeminiScraper(BaseScraper):
 
         while waited < max_wait:
             try:
-                # FASE 7.5: BUG-SCRAPER-EXIT137-001 FIX
-                # Single HTML fetch per iteration (NOT multiple query_selectors)
-                html_content = await self.page.content()  # SINGLE await per iteration
-                soup = BeautifulSoup(html_content, 'html.parser')  # Local parsing
-
                 response_selectors = [
                     ".model-response",
                     ".response-container",
@@ -235,24 +222,23 @@ class GeminiScraper(BaseScraper):
                     ".markdown",
                 ]
 
-                current_text = ""
                 for selector in response_selectors:
                     try:
-                        elements = soup.select(selector)  # Local, no await
+                        elements = await self.page.query_selector_all(selector)
                         if elements:
                             last_element = elements[-1]
-                            current_text = last_element.get_text(strip=True)  # Local, no await
+                            text = await last_element.text_content()
+                            text = text.strip() if text else ""
 
-                            if current_text and len(current_text) > 20:
-                                if current_text == previous_text:
+                            if text and len(text) > 20:
+                                if text == previous_text:
                                     stable_count += 1
                                     if stable_count >= stability_threshold:
-                                        logger.info(f"Response received ({len(current_text)} chars)")
-                                        return current_text
+                                        logger.info(f"Response received ({len(text)} chars)")
+                                        return text
                                 else:
                                     stable_count = 0
-                                    previous_text = current_text
-                                break
+                                    previous_text = text
                     except:
                         continue
 

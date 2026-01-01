@@ -15,8 +15,9 @@ import { logger } from './logger';
 /**
  * Get the correct API base URL based on execution context.
  * Called at REQUEST time, not module load time.
+ * Exported for use in components that make direct fetch calls (e.g., health page)
  */
-function getApiBaseUrl(): string {
+export function getApiBaseUrl(): string {
   const isServer = typeof window === 'undefined';
   if (isServer) {
     return process.env.INTERNAL_API_URL || 'http://invest_backend:3101/api/v1';

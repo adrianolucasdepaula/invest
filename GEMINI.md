@@ -370,6 +370,6 @@ docker logs invest_backend --tail 50    # Backend logs
 
 ---
 
-**Última Atualização:** 2025-12-30
-**Versão:** 2.1 (FASE 147 - Gap Remediation & Documentation Update)
+**Última Atualização:** 2025-12-21
+**Versão:** 2.0 (Modular com @ references)
 **Total de Guias:** 16 (6 novos + 10 migrados do CLAUDE.md original)

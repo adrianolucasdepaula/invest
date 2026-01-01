@@ -1,10 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, CheckCircle2, XCircle, Clock, Server, Database, Zap } from 'lucide-react';
+import { getApiBaseUrl } from '@/lib/api';
+
+// Environment-based Python service URL (client-side only)
+const PYTHON_SERVICE_URL = process.env.NEXT_PUBLIC_PYTHON_SERVICE_URL || 'http://localhost:8001';
 
 interface ServiceHealth {
   name: string;
@@ -22,8 +26,6 @@ interface BackendHealth {
   version: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api/v1';
-
 export function HealthPageClient() {
   const [services, setServices] = useState<ServiceHealth[]>([
     { name: 'Backend API', status: 'loading' },
@@ -34,14 +36,17 @@ export function HealthPageClient() {
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const checkHealth = async () => {
+  const checkHealth = useCallback(async () => {
     setIsRefreshing(true);
-    const startTime = Date.now();
 
-    // Check Backend API
+    // Check Backend API using HARDCODED URL (FASE 148.5: Bypass getApiBaseUrl() for debugging)
+    // CRITICAL: This is a workaround until Turbopack cache issue is fully resolved
     try {
       const backendStart = Date.now();
-      const response = await fetch(`${API_BASE_URL.replace('/api/v1', '')}/health`, {
+      // HARDCODED: Bypass getApiBaseUrl() to ensure correct URL
+      const backendHealthUrl = 'http://localhost:3101/api/v1/health';
+      console.log('[HealthCheck] HARDCODED Backend URL:', backendHealthUrl);
+      const response = await fetch(backendHealthUrl, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -89,10 +94,13 @@ export function HealthPageClient() {
       }));
     }
 
-    // Check Python Services
+    // Check Python Services using environment-based URL
+    // FASE 148.4: Refactored to use NEXT_PUBLIC_PYTHON_SERVICE_URL
     try {
       const pythonStart = Date.now();
-      const response = await fetch('http://localhost:8001/health', {
+      const pythonHealthUrl = `${PYTHON_SERVICE_URL}/health`;
+      console.log('[HealthCheck] Python URL:', pythonHealthUrl);
+      const response = await fetch(pythonHealthUrl, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -122,13 +130,13 @@ export function HealthPageClient() {
 
     setLastCheck(new Date());
     setIsRefreshing(false);
-  };
+  }, []);
 
   useEffect(() => {
     checkHealth();
     const interval = setInterval(checkHealth, 30000); // Auto-refresh every 30s
     return () => clearInterval(interval);
-  }, []);
+  }, [checkHealth]);
 
   const getStatusIcon = (status: ServiceHealth['status']) => {
     switch (status) {

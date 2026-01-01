@@ -16,7 +16,6 @@ Dados extraídos:
 import asyncio
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-import pytz
 from loguru import logger
 from bs4 import BeautifulSoup
 
@@ -81,7 +80,7 @@ class StatusInvestDividendsScraper(BaseScraper):
         Returns:
             ScraperResult with dividend history
         """
-        start_time = datetime.now(pytz.timezone('America/Sao_Paulo'))  # FASE 7.3: BUG-SCRAPER-TIMEZONE-001
+        start_time = datetime.now()
 
         try:
             # Ensure page is initialized (Playwright)
@@ -159,7 +158,7 @@ class StatusInvestDividendsScraper(BaseScraper):
             # Extract dividends
             dividends = self._extract_dividends(soup, ticker)
 
-            elapsed = (datetime.now(pytz.timezone('America/Sao_Paulo')) - start_time).total_seconds()  # FASE 7.3
+            elapsed = (datetime.now() - start_time).total_seconds()
             logger.info(f"[{self.name}] {ticker}: {len(dividends)} dividends in {elapsed:.2f}s")
 
             return ScraperResult(
@@ -511,15 +510,9 @@ class StatusInvestDividendsScraper(BaseScraper):
                 if len(dates) > 1:
                     dividend["data_pagamento"] = dates[1]
 
-            # Value - with validation logging
+            # Value
             value = self._extract_value(text)
             if value:
-                # BUGFIX FASE 145: Log warning for suspicious values
-                if value >= 10.0:
-                    logger.warning(
-                        f"{ticker} valor suspeito >= R$ 10.00: R$ {value:.2f} - "
-                        f"pode ser percentual ou total, não valor unitário"
-                    )
                 dividend["valor_bruto"] = value
                 dividend["valor_liquido"], dividend["imposto_retido"] = (
                     self._calculate_net_value(value, dividend["tipo"])
@@ -596,46 +589,16 @@ class StatusInvestDividendsScraper(BaseScraper):
             return None
 
     def _extract_value(self, text: str) -> Optional[float]:
-        """
-        Extract monetary value from text with validation
-
-        BUGFIX FASE 145: Apply R$ 10.00 threshold filter to avoid capturing
-        percentage values (11.11% → 1111.00) or yield totals instead of
-        per-share dividend values.
-
-        Brazilian stock dividends are typically R$ 0.10 - R$ 5.00 per share.
-        Values > R$ 10.00 are likely parsing errors (capturing yields/totals).
-        """
+        """Extract first monetary value from text"""
         import re
 
         # Pattern: R$ X,XX or X,XX
         pattern = r'R?\$?\s*(\d+[.,]?\d*)'
-        matches = re.findall(pattern, text.replace(" ", ""))
+        match = re.search(pattern, text.replace(" ", ""))
+        if match:
+            return self._parse_value(match.group(1))
 
-        if not matches:
-            return None
-
-        # Parse all found values
-        valid_values = []
-        for match in matches:
-            value = self._parse_value(match)
-            if value is not None and value > 0:
-                valid_values.append(value)
-
-        if not valid_values:
-            return None
-
-        # BUGFIX FASE 145: Filter for reasonable dividend values (< R$ 10.00)
-        # Same logic as _extract_from_table for consistency
-        reasonable_values = [v for v in valid_values if v < 10.0]
-
-        if reasonable_values:
-            # Return smallest reasonable value (most likely to be per-share dividend)
-            return min(reasonable_values)
-        else:
-            # All values > R$ 10 - suspicious, but return smallest as fallback
-            # This will be logged by caller for investigation
-            return min(valid_values)
+        return None
 
     def _calculate_net_value(self, gross: float, dividend_type: str) -> tuple:
         """

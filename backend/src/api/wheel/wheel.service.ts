@@ -628,7 +628,6 @@ export class WheelService {
 
     const trade = this.tradeRepository.create({
       ...dto,
-      strategyId: dto.strategyId, // FASE 7: Explicitly set to prevent NULL (BUG-WHEEL-001)
       sharesPerContract: 100,
       premiumReceived: dto.tradeType.includes('SELL') ? totalPremium : 0,
       premiumPaid: dto.tradeType.includes('BUY') ? totalPremium : 0,

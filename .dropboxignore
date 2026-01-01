@@ -1,0 +1,65 @@
+# ==========================================
+# DROPBOX IGNORE FILE - B3 AI Analysis
+# Previne corrupcao de extensoes VSCode
+# ==========================================
+
+# VSCode Extensions (CRITICO - causa corrupcao)
+.vscode/extensions
+
+# Node modules (muito grande, recria com npm install)
+node_modules
+frontend/node_modules
+backend/node_modules
+backend/python-scrapers/node_modules
+
+# Build outputs
+dist
+.next
+frontend/.next
+backend/dist
+
+# Cache
+.cache
+.turbo
+*.tsbuildinfo
+
+# Docker volumes
+postgres_data
+redis_data
+minio_data
+
+# Logs
+*.log
+logs/
+
+# Temporarios
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Python cache
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Environment files (seguranca)
+.env.local
+.env.production
+.env*.local
+
+# Playwright
+playwright-report/
+test-results/
+.playwright-mcp/screenshots/
+
+# Large binary files
+*.zip
+*.tar.gz
+*.rar

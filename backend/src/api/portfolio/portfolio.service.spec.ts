@@ -334,10 +334,9 @@ describe('PortfolioService', () => {
 
       const result = await service.importFromFile('user-1', mockFileBuffer, 'portfolio.csv');
 
-      // PortfolioResponseDto has id, name, totalInvested properties
-      expect(result.id).toBe('new-portfolio');
-      expect(result.name).toContain('B3');
-      expect(result.totalInvested).toBe(5000);
+      expect(result.success).toBe(true);
+      expect(result.source).toBe('B3');
+      expect(result.positionsCount).toBe(2);
     });
 
     it('should throw error if no parser found', async () => {
