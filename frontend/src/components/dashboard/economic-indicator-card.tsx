@@ -52,21 +52,8 @@ export function EconomicIndicatorCard({ indicator, isLoading, icon }: EconomicIn
   // IMPORTANT: DO NOT round financial data
   // Format conditionally: % for rates, US$ for monetary values
   const isMonetary = React.useMemo(() => {
-    const result = indicator.unit?.includes('US$') || indicator.unit?.includes('milhões');
-
-    // DEBUG: Log durante renderização
-    if (indicator.type === 'IDP_INGRESSOS' || indicator.type === 'IDE_SAIDAS') {
-      console.log('[DEBUG RENDER] isMonetary:', {
-        type: indicator.type,
-        unit: indicator.unit,
-        result,
-        includesUS: indicator.unit?.includes('US$'),
-        includesMilhoes: indicator.unit?.includes('milhões')
-      });
-    }
-
-    return result;
-  }, [indicator.unit, indicator.type]);
+    return indicator.unit?.includes('US$') || indicator.unit?.includes('milhões');
+  }, [indicator.unit]);
 
   const formatValue = React.useCallback(
     (value: unknown) => {
