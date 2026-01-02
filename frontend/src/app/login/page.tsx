@@ -98,9 +98,6 @@ export default function LoginPage() {
     // Redirecionar para o endpoint do backend que inicia o fluxo OAuth
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3101/api/v1';
     const googleAuthUrl = `${apiUrl}/auth/google`;
-    console.log('=== Google Login ===');
-    console.log('API URL:', apiUrl);
-    console.log('Redirecting to:', googleAuthUrl);
     window.location.href = googleAuthUrl;
   };
 
@@ -109,7 +106,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md p-8 space-y-6">
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <TrendingUp className="h-10 w-10 text-primary" />
+            <TrendingUp className="h-10 w-10 text-primary" aria-hidden="true" />
             <h1 className="text-2xl font-bold">B3 AI Analysis</h1>
           </div>
           <h2 className="text-xl font-semibold">Bem-vindo de volta</h2>
@@ -131,6 +128,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
+              autoComplete="email"
             />
           </div>
 
@@ -146,18 +144,20 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
+              autoComplete="current-password"
             />
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center space-x-2 cursor-pointer">
+            <label className="flex items-center space-x-2 cursor-pointer min-h-11 py-2">
               <input
                 type="checkbox"
-                className="rounded border-gray-300"
+                id="remember-me"
+                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
               />
-              <span className="text-muted-foreground">Lembrar-me</span>
+              <span className="text-muted-foreground select-none">Lembrar-me</span>
             </label>
             <button
               type="button"
@@ -239,7 +239,7 @@ export default function LoginPage() {
           onClick={handleGoogleLogin}
           disabled={isLoading}
         >
-          <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+          <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
               fill="#4285F4"

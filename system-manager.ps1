@@ -1412,7 +1412,14 @@ function Rebuild-FrontendComplete {
     Print-Info "Removendo volumes do frontend..."
     docker volume rm invest-claude-web_frontend_node_modules 2>$null
     docker volume rm invest-claude-web_frontend_next 2>$null
-    Print-Success "Volumes removidos"
+
+    # 2b. CRITICAL: Remove anonymous volumes (includes .next cache)
+    # docker-compose.yml uses "- /app/.next" which creates an ANONYMOUS volume
+    # This volume persists Turbopack cache between rebuilds if not explicitly removed
+    # Ref: BUG_CRITICO_TURBOPACK_MEMORY_CACHE.md
+    Print-Info "Removendo volumes anonimos (cache .next do Turbopack)..."
+    docker volume prune -f 2>$null
+    Print-Success "Volumes removidos (incluindo anonimos)"
 
     # 3. Remove .next local (if exists)
     Print-Info "Removendo .next local..."

@@ -10,7 +10,7 @@ import { EconomicIndicators } from '@/components/dashboard/economic-indicators';
 import { MarketThermometer } from '@/components/dashboard/market-thermometer';
 import { EconomicCalendarWidget } from '@/components/dashboard/economic-calendar-widget';
 import { Card } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, Activity, DollarSign } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function DashboardPageClient() {
@@ -21,10 +21,10 @@ export function DashboardPageClient() {
   const showLoading = !hydrated || isLoading;
 
   // Calculate real stats from assets data
+  // BUG-001 FIX: Removed Ibovespa search (indices shown in MarketIndices widget) - FORCE RECOMPILE 2026-01-02
   const stats = useMemo(() => {
     if (!assets || assets.length === 0) {
       return {
-        ibovespa: { value: null, change: null },
         topGainers: 0,
         topLosers: 0,
         activeAssets: 0,
@@ -32,21 +32,12 @@ export function DashboardPageClient() {
       };
     }
 
-    // Find Ibovespa (^BVSP) or use first index asset
-    const ibovespaAsset = assets.find((a: any) =>
-      a.ticker === '^BVSP' || a.ticker === 'IBOV' || a.name?.includes('Ibovespa')
-    );
-
     const topGainers = assets.filter((a: any) => a.changePercent && a.changePercent > 0).length;
     const topLosers = assets.filter((a: any) => a.changePercent && a.changePercent < 0).length;
     const activeAssets = assets.length;
     const avgChange = assets.reduce((sum: number, a: any) => sum + (a.changePercent || 0), 0) / assets.length;
 
     return {
-      ibovespa: {
-        value: ibovespaAsset?.price || null,
-        change: ibovespaAsset?.changePercent || null,
-      },
       topGainers,
       topLosers,
       activeAssets,
@@ -79,11 +70,11 @@ export function DashboardPageClient() {
         ) : (
           <>
             <StatCard
-              title="Ibovespa"
-              value={stats.ibovespa.value ?? 0}
-              change={stats.ibovespa.change ?? undefined}
+              title="Maiores Baixas"
+              value={stats.topLosers}
+              change={undefined}
               format="number"
-              icon={<Activity className="h-4 w-4 text-muted-foreground" />}
+              icon={<TrendingDown className="h-4 w-4 text-muted-foreground" />}
             />
             <StatCard
               title="Ativos Rastreados"

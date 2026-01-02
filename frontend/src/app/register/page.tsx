@@ -59,7 +59,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md p-8 space-y-6">
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <TrendingUp className="h-10 w-10 text-primary" />
+            <TrendingUp className="h-10 w-10 text-primary" aria-hidden="true" />
             <h1 className="text-2xl font-bold">B3 AI Analysis</h1>
           </div>
           <h2 className="text-xl font-semibold">Criar conta</h2>
@@ -81,6 +81,7 @@ export default function RegisterPage() {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 disabled={isLoading}
+                autoComplete="given-name"
               />
             </div>
             <div className="space-y-2">
@@ -94,6 +95,7 @@ export default function RegisterPage() {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 disabled={isLoading}
+                autoComplete="family-name"
               />
             </div>
           </div>
@@ -110,6 +112,7 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
+              autoComplete="email"
             />
           </div>
 
@@ -126,6 +129,7 @@ export default function RegisterPage() {
               required
               minLength={8}
               disabled={isLoading}
+              autoComplete="new-password"
             />
             <p className="text-xs text-muted-foreground">
               Mínimo de 8 caracteres
@@ -145,6 +149,7 @@ export default function RegisterPage() {
               required
               minLength={8}
               disabled={isLoading}
+              autoComplete="new-password"
             />
           </div>
 
