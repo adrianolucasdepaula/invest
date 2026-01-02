@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Repository, LessThanOrEqual } from 'typeorm';
 import { OptionPrice, OptionType, OptionStatus, OptionStyle } from '../../database/entities';
 
 export interface CreateOptionPriceDto {

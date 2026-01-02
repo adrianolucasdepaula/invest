@@ -30,7 +30,7 @@ export class LoggingInterceptor implements NestInterceptor {
     // Add correlation ID to response headers
     response.setHeader('X-Correlation-ID', correlationId);
 
-    const { method, url, path } = request;
+    const { method, path } = request;
     const userAgent = request.headers['user-agent'] || 'unknown';
     const ip = request.ip || request.connection?.remoteAddress || 'unknown';
     const userId = (request as Request & { user?: { id: string } }).user?.id || 'anonymous';

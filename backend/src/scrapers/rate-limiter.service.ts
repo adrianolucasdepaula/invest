@@ -58,7 +58,7 @@ export class RateLimiterService {
       const urlObj = new URL(url);
       // Remove "www." prefix para normalizar
       return urlObj.hostname.replace(/^www\./, '');
-    } catch (error) {
+    } catch (_error) {
       this.logger.warn(`Failed to parse URL: ${url}, using as-is`);
       return url;
     }

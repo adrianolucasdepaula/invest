@@ -108,11 +108,6 @@ export class Investidor10Scraper extends AbstractScraper<Investidor10Data> {
       return isNaN(num) ? 0 : num;
     };
 
-    const getValueByLabel = (label: string): number => {
-      const element = $(`.info ._card:contains("${label}")`).find('._card-body span').first();
-      return cleanValue(element.text());
-    };
-
     const getIndicatorValue = (label: string): number => {
       let value = 0;
 

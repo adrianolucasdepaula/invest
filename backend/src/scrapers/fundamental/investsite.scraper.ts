@@ -82,7 +82,7 @@ export class InvestsiteScraper extends AbstractScraper<InvestsiteData> {
             } else {
               text = textOrElement.text().trim();
             }
-          } catch (error) {
+          } catch (_error) {
             // Se falhar, retornar 0
             return 0;
           }

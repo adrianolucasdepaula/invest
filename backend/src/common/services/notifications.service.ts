@@ -87,7 +87,7 @@ export class NotificationsService {
   /**
    * Send Email notification
    */
-  private async sendEmail(notification: Notification): Promise<void> {
+  private async sendEmail(_notification: Notification): Promise<void> {
     // TODO: Implement email sending
     this.logger.log('Email notification sent (not implemented)');
   }

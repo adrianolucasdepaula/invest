@@ -123,7 +123,7 @@ export class AuthService {
   }
 
   private sanitizeUser(user: User) {
-    const { password, ...sanitized } = user;
+    const { password: _password, ...sanitized } = user;
     return sanitized;
   }
 }

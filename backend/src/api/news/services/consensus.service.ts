@@ -88,7 +88,7 @@ export class ConsensusService {
     }
 
     // Calcular média ponderada
-    const { weightedScore, totalWeight } = this.calculateWeightedScore(validAnalyses);
+    const { weightedScore } = this.calculateWeightedScore(validAnalyses);
 
     // Calcular concordância
     const { agreementCount, agreementScore } = this.calculateAgreement(

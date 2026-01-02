@@ -14,8 +14,6 @@ import {
   NewsResponseDto,
   MarketSentimentSummaryDto,
   TickerSentimentSummaryDto,
-  CollectNewsDto,
-  SentimentSummaryDto,
   SentimentPeriod,
   TimeframeSentimentDto,
   MultiTimeframeSentimentDto,

@@ -1,6 +1,5 @@
-import { Controller, Get, Query, Param, Logger, Res } from '@nestjs/common';
+import { Controller, Get, Query, Param, Logger } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiTags, ApiResponse } from '@nestjs/swagger';
-import { Response } from 'express';
 import { StorageService } from './storage.service';
 
 @ApiTags('Storage')

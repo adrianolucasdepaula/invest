@@ -80,7 +80,12 @@ export class DeadLetterProcessor {
    */
   @Process('retry-failed')
   async processRetry(job: Job<DeadLetterJob & { retryToQueue: string }>) {
-    const { originalQueue, originalJobName, originalData, retryCount = 0 } = job.data;
+    const {
+      originalQueue,
+      originalJobName,
+      originalData: _originalData,
+      retryCount = 0,
+    } = job.data;
 
     this.logger.log(
       `[DLQ] Retrying job from dead letter:\n` +

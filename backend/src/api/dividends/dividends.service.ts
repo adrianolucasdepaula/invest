@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThanOrEqual, In } from 'typeorm';
+import { Repository, Between, In } from 'typeorm';
 import Decimal from 'decimal.js';
 import { Dividend, DividendType, DividendStatus } from '@database/entities/dividend.entity';
 import { Asset, AssetPrice } from '@database/entities';

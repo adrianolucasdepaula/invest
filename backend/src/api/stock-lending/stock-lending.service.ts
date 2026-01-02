@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
+import { Repository, Between, MoreThanOrEqual } from 'typeorm';
 import Decimal from 'decimal.js';
 import { StockLendingRate } from '@database/entities/stock-lending.entity';
 import { Asset, AssetPrice } from '@database/entities';

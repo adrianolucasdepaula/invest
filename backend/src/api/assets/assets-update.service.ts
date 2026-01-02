@@ -227,8 +227,8 @@ export class AssetsUpdateService {
             throw new Error(`Low confidence: ${scrapedResult.confidence} < ${this.MIN_CONFIDENCE}`);
           }
 
-          // 7. Map and save fundamental data
-          const fundamentalData = await this.saveFundamentalData(asset, scrapedResult);
+          // 7. Map and save fundamental data (side effect - result not used)
+          await this.saveFundamentalData(asset, scrapedResult);
 
           // 7.1. Collect and analyze news automatically (FASE 75.6)
           // This updates the sentiment thermometer for the asset
@@ -754,7 +754,6 @@ export class AssetsUpdateService {
    */
   async updateAssetsBySector(sector: string, userId?: string): Promise<BatchUpdateResult> {
     this.logger.log(`[UPDATE-SECTOR] Starting update for sector: ${sector}`);
-    const startTime = Date.now();
 
     // 1. Find all assets in sector
     const assets = await this.assetRepository.find({

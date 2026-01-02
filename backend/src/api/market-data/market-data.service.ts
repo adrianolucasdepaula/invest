@@ -8,14 +8,13 @@ import { PriceRange } from '../assets/dto/historical-prices-query.dto';
 import { PythonServiceClient } from './clients/python-service.client';
 import { SyncGateway } from './sync.gateway'; // FASE 35
 import { BrapiScraper } from '../../scrapers/fundamental/brapi.scraper'; // FASE 69
-import { PriceDataPoint, TechnicalIndicators } from './interfaces';
+import { PriceDataPoint } from './interfaces';
 import { TechnicalDataResponseDto } from './dto/technical-data-response.dto';
 import { SyncCotahistResponseDto } from './dto/sync-cotahist.dto';
 import {
   SyncIntradayTimeframe,
   SyncIntradayRange,
   SyncIntradayResponseDto,
-  SyncIntradayBulkResponseDto,
 } from './dto/sync-intraday.dto'; // FASE 69
 import {
   Asset,
@@ -816,7 +815,6 @@ export class MarketDataService {
       }
 
       // If ticker filter, we need to fetch asset first
-      let assetFilter: string | undefined;
       if (ticker) {
         const asset = await this.assetRepository.findOne({ where: { ticker } });
         if (!asset) {
@@ -1178,10 +1176,7 @@ export class MarketDataService {
       // 2. Calculate time range
       const { start, end } = this.calculateIntradayRange(range, startTime, endTime);
 
-      // 3. Map timeframe param to enum
-      const timeframeEnum = this.mapTimeframeParamToEnum(timeframe);
-
-      // 4. Determine source (hypertable or continuous aggregate)
+      // 3. Determine source (hypertable or continuous aggregate)
       let source: string;
       let query: string;
 

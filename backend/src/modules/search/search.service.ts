@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MeiliSearch, Index, SearchResponse, SearchParams } from 'meilisearch';
+import { MeiliSearch, Index, SearchParams } from 'meilisearch';
 
 export interface AssetSearchDocument {
   id: string;

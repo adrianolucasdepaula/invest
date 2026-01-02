@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import Decimal from 'decimal.js';
 import {
   BacktestResult,
@@ -16,10 +16,6 @@ import {
   BacktestResultDto,
   BacktestSummaryDto,
   BacktestCreatedDto,
-  RiskMetricsDto,
-  TradeStatsDto,
-  IncomeBreakdownDto,
-  BenchmarkComparisonDto,
 } from './dto/backtest.dto';
 
 /**

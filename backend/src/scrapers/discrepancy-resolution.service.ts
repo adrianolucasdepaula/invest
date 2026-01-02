@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -7,11 +7,7 @@ import {
 } from '@database/entities/discrepancy-resolution.entity';
 import { FundamentalData } from '@database/entities/fundamental-data.entity';
 import { Asset } from '@database/entities/asset.entity';
-import {
-  SOURCE_PRIORITY,
-  FieldSourceInfo,
-  FieldSourcesMap,
-} from './interfaces/field-source.interface';
+import { SOURCE_PRIORITY, FieldSourceInfo } from './interfaces/field-source.interface';
 
 /**
  * DTO para resolução manual de discrepância

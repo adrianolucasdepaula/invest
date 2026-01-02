@@ -31,7 +31,6 @@ export class TracingInterceptor implements NestInterceptor {
     const controllerName = context.getClass().name;
     const handlerName = context.getHandler().name;
 
-    const spanName = `${method} ${routePath}`;
     const startTime = Date.now();
 
     // Adiciona atributos ao span atual (criado pela auto-instrumentação HTTP)
@@ -54,7 +53,7 @@ export class TracingInterceptor implements NestInterceptor {
     this.metricsService.incrementActiveConnections();
 
     return next.handle().pipe(
-      tap((response) => {
+      tap((_response) => {
         const duration = Date.now() - startTime;
         const durationSeconds = duration / 1000;
         const statusCode = context.switchToHttp().getResponse().statusCode;

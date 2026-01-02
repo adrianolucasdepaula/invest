@@ -334,7 +334,7 @@ export class TechnicalAnalysisService {
   private generateRecommendations(
     indicators: TechnicalIndicators,
     signals: any,
-    patterns: string[],
+    _patterns: string[],
   ): string[] {
     const recommendations: string[] = [];
 

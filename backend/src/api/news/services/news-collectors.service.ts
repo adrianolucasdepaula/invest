@@ -194,7 +194,7 @@ export class NewsCollectorsService {
           const saved = await this.newsRepository.save(news);
           savedNews.push(saved);
         }
-      } catch (error) {
+      } catch (_error) {
         // URL duplicada ou outro erro
         this.logger.debug(`Skipping duplicate or error: ${collected.url}`);
       }

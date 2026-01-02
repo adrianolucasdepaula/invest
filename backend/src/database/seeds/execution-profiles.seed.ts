@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Logger } from '@nestjs/common';
-import { ScraperExecutionProfile, ProfileConfig } from '../entities';
+import { ScraperExecutionProfile } from '../entities';
 
 const logger = new Logger('ExecutionProfilesSeed');
 

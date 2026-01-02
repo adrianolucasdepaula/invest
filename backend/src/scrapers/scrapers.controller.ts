@@ -19,8 +19,6 @@ import { ScrapersService } from './scrapers.service';
 import { ScraperMetricsService } from './scraper-metrics.service';
 import {
   DiscrepancyResolutionService,
-  ResolveDiscrepancyDto,
-  AutoResolveOptionsDto,
   ResolutionResult,
   DiscrepancyDetailDto,
 } from './discrepancy-resolution.service';

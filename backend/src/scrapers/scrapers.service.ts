@@ -19,8 +19,6 @@ import { ScraperConfigService } from '../api/scraper-config/scraper-config.servi
 import {
   FieldSourcesMap,
   FieldSourceValue,
-  SelectionStrategy,
-  FIELD_SELECTION_STRATEGY,
   SOURCE_PRIORITY,
   TRACKABLE_FIELDS,
   DEFAULT_TOLERANCES,
@@ -260,8 +258,8 @@ export class ScrapersService {
       `[SCRAPE] ${ticker}: Collected from ${successfulResults.length}/${scrapers.length} sources`,
     );
 
-    // ✅ FASE 3: Cross-validate inicial para detectar discrepâncias
-    const initialValidation = this.crossValidateData(successfulResults, rawSourcesData);
+    // ✅ FASE 3: Cross-validate inicial para detectar discrepâncias (side effect only)
+    this.crossValidateData(successfulResults, rawSourcesData);
 
     // ✅ NOVO (2025-12-22): Python Fallback Adaptativo - Loop Exaustivo
     // Tenta TODOS os scrapers disponíveis (até 31!) até atingir mínimo + confidence

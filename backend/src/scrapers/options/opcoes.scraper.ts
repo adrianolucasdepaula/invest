@@ -93,7 +93,7 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
           fullPage: true,
         });
         this.logger.log('[OPCOES-LOGIN] Debug screenshot saved');
-      } catch (e) {
+      } catch (_e) {
         this.logger.warn('[OPCOES-LOGIN] Could not save screenshot');
       }
 
@@ -131,7 +131,7 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
         try {
           await this.page.screenshot({ path: '/app/logs/opcoes-login-error.png' });
           this.logger.log('[OPCOES-LOGIN] Error screenshot saved');
-        } catch (e) {
+        } catch (_e) {
           // Ignore screenshot errors
         }
       }
@@ -359,7 +359,7 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
                 break;
               }
             }
-          } catch (e) {
+          } catch (_e) {
             // Ignore errors
           }
         }
@@ -480,7 +480,7 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
             fullPage: true,
           });
           this.logger.log('[OPTIONS-LIQUIDITY] Debug screenshot saved');
-        } catch (e) {
+        } catch (_e) {
           this.logger.warn('[OPTIONS-LIQUIDITY] Could not save screenshot');
         }
 
@@ -582,7 +582,7 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
                   break;
                 }
               }
-            } catch (e) {
+            } catch (_e) {
               // Ignore errors
             }
           }

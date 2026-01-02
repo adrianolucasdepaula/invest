@@ -46,10 +46,12 @@ module.exports = defineConfig([{
         "@typescript-eslint/explicit-module-boundary-types": "off",
         "@typescript-eslint/no-explicit-any": "off",
         // FASE 150.2: Changed from "error" to "warn" - 67 pre-existing unused vars
+        // FASE 151: Added caughtErrorsIgnorePattern for catch block variables
         // TODO: Fix all unused vars and revert to "error" in future phase
         "@typescript-eslint/no-unused-vars": ["warn", {
             "argsIgnorePattern": "^_",
             "varsIgnorePattern": "^_",
+            "caughtErrorsIgnorePattern": "^_",
         }],
         // FASE 150.2: Allow require() imports - used in some modules
         "@typescript-eslint/no-require-imports": "off",

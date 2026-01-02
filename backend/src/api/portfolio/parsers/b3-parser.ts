@@ -7,7 +7,7 @@ export class B3Parser implements PortfolioParser {
   private readonly logger = new Logger(B3Parser.name);
   readonly source = 'b3';
 
-  canParse(filename: string, fileBuffer: Buffer): boolean {
+  canParse(filename: string, _fileBuffer: Buffer): boolean {
     const ext = filename.toLowerCase();
     return ext.endsWith('.xlsx') || ext.endsWith('.xls');
   }

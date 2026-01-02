@@ -32,7 +32,7 @@ export class ScrapingProcessor {
   }
 
   @OnQueueCompleted()
-  onCompleted(job: Job<ScrapingJob>, result: any) {
+  onCompleted(job: Job<ScrapingJob>, _result: any) {
     this.logger.log(`Job ${job.id} completed for ${job.data.ticker}`);
   }
 

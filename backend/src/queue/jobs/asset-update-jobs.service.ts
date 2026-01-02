@@ -5,7 +5,6 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import {
   SingleAssetUpdateJob,
-  MultipleAssetsUpdateJob,
   PortfolioUpdateJob,
   SectorUpdateJob,
 } from '../processors/asset-update.processor';
@@ -303,7 +302,6 @@ export class AssetUpdateJobsService implements OnModuleInit, OnModuleDestroy {
 
       completed = 0;
       failed = 0;
-      let inProgress = 0;
 
       for (const job of jobs) {
         if (!job) continue;
@@ -313,8 +311,6 @@ export class AssetUpdateJobsService implements OnModuleInit, OnModuleDestroy {
           completed++;
         } else if (state === 'failed') {
           failed++;
-        } else if (state === 'active') {
-          inProgress++;
         }
       }
 

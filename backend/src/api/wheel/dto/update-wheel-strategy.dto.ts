@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, IsEnum, ValidateNested, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsEnum, ValidateNested, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { MarketTrend, WheelPhase, WheelStrategyStatus } from '@database/entities';

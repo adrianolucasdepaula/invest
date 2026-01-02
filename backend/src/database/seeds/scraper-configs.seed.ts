@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { Logger } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
-import { ScraperConfig, ScraperParameters } from '../entities';
+import { ScraperConfig } from '../entities';
 
 const logger = new Logger('ScraperConfigsSeed');
 

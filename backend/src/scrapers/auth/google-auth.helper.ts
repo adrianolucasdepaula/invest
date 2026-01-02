@@ -40,7 +40,7 @@ export class GoogleAuthHelper {
             buttonClicked = true;
             break;
           }
-        } catch (e) {
+        } catch (_e) {
           continue;
         }
       }
@@ -108,7 +108,7 @@ export class GoogleAuthHelper {
           await this.wait(2000);
           return;
         }
-      } catch (e) {
+      } catch (_e) {
         continue;
       }
     }
@@ -172,7 +172,7 @@ export class GoogleAuthHelper {
       }
 
       return false;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
