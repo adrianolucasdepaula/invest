@@ -7,7 +7,7 @@ global:
   evaluation_interval: 15s
   external_labels:
     cluster: invest-local
-    environment: development
+    environment: production
 
 # FASE 130: Alertmanager Integration
 alerting:

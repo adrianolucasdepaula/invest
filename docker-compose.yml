@@ -118,13 +118,13 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: development
+      target: production
     container_name: invest_backend
     env_file:
       - .env
     environment:
       # Server
-      - NODE_ENV=${NODE_ENV:-development}
+      - NODE_ENV=production
       - NODE_OPTIONS=--max-old-space-size=4096 --expose-gc  # FASE 143.0: Increased from 2560 + expose GC for manual triggers
       - APP_PORT=3101
       - PORT=3101
@@ -135,6 +135,7 @@ services:
       - DB_USERNAME=invest_user
       - DB_PASSWORD=invest_password
       - DB_DATABASE=invest_db
+      - DB_SSL=false  # Localhost production - no SSL needed
 
       # Redis
       - REDIS_HOST=redis
@@ -392,11 +393,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: development
+      target: production
     container_name: invest_frontend
     environment:
       # App Environment
-      - NODE_ENV=${NODE_ENV:-development}
+      - NODE_ENV=production
 
       # API Configuration - Hardcoded to ensure /api/v1 is used
       - NEXT_PUBLIC_API_URL=http://localhost:3101/api/v1

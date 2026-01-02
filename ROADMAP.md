@@ -11964,10 +11964,11 @@ Sistema em estado de manutenção e evolução contínua.
 
 ---
 
-**Ultima Atualizacao:** 2026-01-01
-**Total de Fases:** 149 completas (incluindo sub-fases)
-**Versao:** 1.49.0
+**Ultima Atualizacao:** 2026-01-02
+**Total de Fases:** 150 completas (incluindo sub-fases)
+**Versao:** 1.50.0
 **Responsavel:** Claude Code (Opus 4.5)
 **Referencia:** MASTER_ROADMAP.md v2.0
 
 > **Nota:** FASE 149 concluída em 2026-01-01 (Dashboard Exhaustive Validation: 9 sub-fases | Infraestrutura Docker + Health ✅ | MCP Triplo (Playwright + DevTools + A11y) ✅ | Cross-Validation 10 data points ✅ | Testes E2E 7 widgets ✅ | Testes UI (sorting, pagination) ✅ | Code Review 12 arquivos ✅ | **BUG-001 RESOLVIDO:** Ibovespa StatCard "N/A" - Root Cause: buscava ^BVSP/IBOV em assets array, mas índices não estão lá; Fix: substituído por "Maiores Baixas" (symmetric com "Maiores Altas"), MarketIndices widget já exibe IBOV via TradingView | Zero Tolerance: 0 erros TypeScript, 0 build errors, 0 lint warnings | Arquivos modificados: _client.tsx (3 edits: removed ibovespa stats, replaced StatCard, removed Activity import) | Validação: tsc ✅, npm build ✅, eslint ✅ | Commits: [PENDING])
+> **Nota:** FASE 150 concluída em 2026-01-02 (Development → Production Migration: Docker targets development→production | nginx port fix 3001→3101 | NODE_ENV=production | DB_SSL=false for localhost (fix SSL connection error) | Observability stack verified (Prometheus :9090, Grafana :3000, Alertmanager :9093) | MCP Triplo validation ✅ | Data integrity verified (861 assets, 1265 prices, 861 fundamentals) | Zero Tolerance: 0 erros TypeScript | Arquivos modificados: docker-compose.yml (targets + NODE_ENV + DB_SSL), nginx.conf (port fix), prometheus.yml (environment: production), app.module.ts (DB_SSL env variable) | Backup: backups/migration_prod_20260102_123129/ (30.7 MB) | All 7 core services healthy with production builds)
