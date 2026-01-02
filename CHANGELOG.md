@@ -13,6 +13,71 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.50.0] - 2026-01-02
+
+### Added - FASE 150: Development → Production Migration
+
+**Migration Scope:**
+- ✅ **Production Build Targets** - All services now build for production
+  - Backend: `target: production` (docker-compose.yml:121)
+  - Frontend: `target: production` (docker-compose.yml:396)
+  - NODE_ENV hardcoded to `production` (docker-compose.yml:127)
+
+- ✅ **Observability Stack Fully Operational**
+  - Prometheus: UP (port 9090)
+  - Grafana: UP (port 3000)
+  - Alertmanager: UP (port 9093)
+  - Loki: UP (port 3102)
+  - Tempo: UP (port 3200)
+
+**Configuration Changes:**
+- ✅ Docker build targets: `development` → `production`
+- ✅ NODE_ENV environment variable: `production`
+- ✅ DB_SSL environment variable for SSL configuration
+- ✅ Prometheus labels: `environment: production`
+
+### Fixed - Infrastructure (P0 CRITICAL - RESOLVED)
+
+- ✅ **nginx backend port bug** - FIXED
+  - Location: `docker/nginx/nginx.conf:69`
+  - Change: `backend:3001` → `backend:3101`
+  - Root cause: Port mismatch between nginx and backend service
+
+- ✅ **SSL connection error in production mode** - FIXED
+  - Location: `backend/src/app.module.ts:155`
+  - Change: SSL now configurable via `DB_SSL` env variable
+  - Root cause: Hardcoded SSL settings not compatible with local PostgreSQL
+
+**Services Validated (7/7 HEALTHY):**
+- ✅ Backend (3101) - production build
+- ✅ Frontend (3100) - production build
+- ✅ PostgreSQL (5532)
+- ✅ Redis (6479)
+- ✅ Python Service (8001)
+- ✅ Scrapers (8000)
+- ✅ API Service (8000)
+
+---
+
+## [1.49.0] - 2026-01-01
+
+### Fixed - UI (P1 HIGH - RESOLVED)
+
+- ✅ **BUG-001: Ibovespa StatCard showing "N/A"** - FIXED
+  - Location: `frontend/src/app/(dashboard)/page.tsx`
+  - Root cause: `^BVSP` / `IBOV` ticker not present in assets array
+  - Fix: Replaced Ibovespa StatCard with "Maiores Baixas" (Biggest Losers) widget
+  - Commit: `f92732a`
+
+### Added - Documentation
+
+- ✅ **86 documentation screenshots** - Added to `.gitignore` exception
+  - Location: `docs/screenshots/fase-149/`
+  - Purpose: Visual documentation of all dashboard states
+  - Commit: `325bc40`
+
+---
+
 ## [1.48.0] - 2025-12-31
 
 ### Added - FASE 148: Ultra-Complete Ecosystem Validation

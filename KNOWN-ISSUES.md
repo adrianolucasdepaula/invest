@@ -1,8 +1,8 @@
 # 🔍 KNOWN ISSUES - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Ultima Atualizacao:** 2025-12-25
-**Versao:** 1.41.0
+**Ultima Atualizacao:** 2026-01-02
+**Versao:** 1.50.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
@@ -843,6 +843,58 @@ O TradingView Ticker Tape é um widget embed externo (iframe) que:
 ---
 
 ## ✅ ISSUES RESOLVIDOS
+
+### Issue #BUG-001: Ibovespa StatCard Showing "N/A"
+
+**Severidade:** 🟠 **ALTA**
+**Status:** ✅ **RESOLVIDO**
+**Data Identificado:** 2025-12-31
+**Data Resolução:** 2026-01-01 (FASE 149)
+**Tempo de Resolução:** ~2 horas (debugging + análise)
+**Identificado Por:** Usuário durante revisão pós-FASE 148
+**Commit:** `f92732a`
+
+#### Descrição
+
+O StatCard "Ibovespa" no dashboard principal exibia "N/A" ao invés do valor real do índice, mesmo com os dados sendo retornados corretamente pela API.
+
+#### Sintomas
+
+- StatCard "Ibovespa" mostrava "N/A" para valor e variação
+- API `/api/v1/assets` retornava lista de ativos corretamente
+- Outros StatCards (maiores altas, maiores baixas, etc.) funcionavam normalmente
+- 0 erros no console do browser
+
+#### Root Cause Identificado
+
+**Causa Real:** **Ticker ^BVSP/IBOV não presente no array de assets**
+
+**Análise Técnica:**
+1. O componente buscava asset com ticker `^BVSP` ou `IBOV` no array de assets
+2. O Ibovespa é um **índice**, não uma ação, e não estava incluído na lista de assets
+3. A busca retornava `undefined`, resultando em "N/A" no display
+
+#### Solução Aplicada
+
+**Substituição do widget** - Ao invés de adicionar o índice Ibovespa como asset (o que exigiria mudanças no schema e scrapers), o StatCard foi substituído por um widget mais útil:
+
+```typescript
+// ANTES (não funcionava)
+<StatCard title="Ibovespa" asset={assets.find(a => a.ticker === '^BVSP' || a.ticker === 'IBOV')} />
+
+// DEPOIS (FASE 149)
+<MaioresBaixasWidget assets={bottomLosers} />
+```
+
+**Benefício:** O widget "Maiores Baixas" fornece informação actionable para investidores, complementando o já existente "Maiores Altas".
+
+#### Lições Aprendidas
+
+- Validar disponibilidade de dados antes de criar componentes que dependem de tickers específicos
+- Índices de mercado (IBOV, IFIX, etc.) requerem tratamento diferente de ações individuais
+- Preferir widgets com dados dinâmicos ao invés de depender de tickers hardcoded
+
+---
 
 ### Issue #DY_COLUMN_NOT_RENDERING: Coluna DY% Não Renderiza no Browser
 

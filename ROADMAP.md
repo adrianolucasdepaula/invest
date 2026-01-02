@@ -1,8 +1,8 @@
 # 🗺️ ROADMAP - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Última Atualização:** 2026-01-01
-**Versão:** 1.49.0
+**Última Atualização:** 2026-01-02
+**Versão:** 1.50.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---

@@ -1,8 +1,8 @@
 # 📚 Índice de Documentação - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Ultima Atualizacao:** 2025-12-25
-**Versao:** 1.41.0
+**Ultima Atualizacao:** 2026-01-02
+**Versao:** 1.50.0
 
 ---
 
@@ -28,8 +28,8 @@
 
 | Arquivo                                                        | Descrição                                         | Status                   |
 | -------------------------------------------------------------- | ------------------------------------------------- | ------------------------ |
-| [ROADMAP.md](ROADMAP.md)                                       | **Histórico completo** (114 fases, 100% completo) | ✅ Atualizado 2025-12-15 |
-| [CHANGELOG.md](CHANGELOG.md)                                   | **Histórico de versões** (23 versões)             | ✅ Atualizado            |
+| [ROADMAP.md](ROADMAP.md)                                       | **Histórico completo** (150 fases, 100% completo) | ✅ Atualizado 2026-01-02 |
+| [CHANGELOG.md](CHANGELOG.md)                                   | **Histórico de versões** (50 versões)             | ✅ Atualizado 2026-01-02 |
 | [NEXT_STEPS.md](NEXT_STEPS.md)                                 | Próximos passos planejados                        | ⚠️ Consultar ROADMAP     |
 | [PROXIMO_PASSO_APOS_FASE_30.md](PROXIMO_PASSO_APOS_FASE_30.md) | Decisões pós-FASE 30                              | 📜 Histórico             |
 

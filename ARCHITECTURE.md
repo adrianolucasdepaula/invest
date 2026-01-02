@@ -1,8 +1,8 @@
 # 🏗️ ARCHITECTURE - B3 AI Analysis Platform
 
 **Projeto:** B3 AI Analysis Platform (invest-claude-web)
-**Ultima Atualizacao:** 2025-12-25
-**Versao:** 1.41.0
+**Ultima Atualizacao:** 2026-01-02
+**Versao:** 1.50.0
 **Mantenedor:** Claude Code (Opus 4.5)
 
 ---
