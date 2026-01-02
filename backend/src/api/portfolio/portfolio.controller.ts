@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Req, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+  Logger,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { Request } from 'express';
 import { PortfolioService } from './portfolio.service';
@@ -24,8 +35,14 @@ export class PortfolioController {
 
   @Get()
   @ApiOperation({ summary: 'Get user portfolios' })
-  @ApiResponse({ status: 200, description: 'List of user portfolios', type: [PortfolioResponseDto] })
-  async getPortfolios(@Req() req: Request & { user: { id: string } }): Promise<PortfolioResponseDto[]> {
+  @ApiResponse({
+    status: 200,
+    description: 'List of user portfolios',
+    type: [PortfolioResponseDto],
+  })
+  async getPortfolios(
+    @Req() req: Request & { user: { id: string } },
+  ): Promise<PortfolioResponseDto[]> {
     return this.portfolioService.findUserPortfolios(req.user.id);
   }
 

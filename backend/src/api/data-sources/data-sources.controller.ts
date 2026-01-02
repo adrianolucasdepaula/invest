@@ -88,7 +88,9 @@ export class DataSourcesController {
       },
       circuits: states.map((s) => ({
         ...s,
-        lastFailureAgo: s.lastFailure ? `${Math.round((Date.now() - s.lastFailure) / 1000)}s ago` : 'never',
+        lastFailureAgo: s.lastFailure
+          ? `${Math.round((Date.now() - s.lastFailure) / 1000)}s ago`
+          : 'never',
       })),
     };
   }
@@ -130,7 +132,9 @@ export class DataSourcesController {
   async getDeadLetterStats() {
     const stats = await this.deadLetterService.getStats();
 
-    this.logger.log(`[HEALTH] Dead letter queue stats: ${stats.waiting} waiting, ${stats.failed} failed`);
+    this.logger.log(
+      `[HEALTH] Dead letter queue stats: ${stats.waiting} waiting, ${stats.failed} failed`,
+    );
 
     return {
       timestamp: new Date().toISOString(),
@@ -146,7 +150,9 @@ export class DataSourcesController {
   async retryDeadLetterJobs(@Param('queueName') queueName: string) {
     const result = await this.deadLetterService.retryAllFromQueue(queueName);
 
-    this.logger.log(`[HEALTH] Dead letter retry for ${queueName}: ${result.retried} retried, ${result.failed} failed`);
+    this.logger.log(
+      `[HEALTH] Dead letter retry for ${queueName}: ${result.retried} retried, ${result.failed} failed`,
+    );
 
     return {
       success: true,

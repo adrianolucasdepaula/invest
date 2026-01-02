@@ -68,7 +68,10 @@ export class ScraperConfigController {
   @ApiOperation({ summary: 'Atualiza perfil customizado (GAP-001)' })
   @ApiResponse({ status: 200, description: 'Perfil atualizado com sucesso' })
   @ApiResponse({ status: 404, description: 'Perfil não encontrado' })
-  @ApiResponse({ status: 400, description: 'Tentativa de modificar perfil system ou validação falhou' })
+  @ApiResponse({
+    status: 400,
+    description: 'Tentativa de modificar perfil system ou validação falhou',
+  })
   async updateProfile(
     @Param('id') id: string,
     @Body() dto: UpdateProfileDto,

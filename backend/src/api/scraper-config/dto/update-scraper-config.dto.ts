@@ -29,7 +29,11 @@ export class ScraperParametersDto {
   @Max(10)
   retryAttempts: number;
 
-  @ApiProperty({ description: 'Delay entre retries em millisegundos', minimum: 500, maximum: 10000 })
+  @ApiProperty({
+    description: 'Delay entre retries em millisegundos',
+    minimum: 500,
+    maximum: 10000,
+  })
   @IsInt()
   @Min(500)
   @Max(10000)
@@ -89,7 +93,7 @@ export class UpdateScraperConfigDto {
   priority?: number;
 
   @ApiPropertyOptional({
-    description: 'Filtro de tickers (null = todos, [\'PETR4\'] = específicos)',
+    description: "Filtro de tickers (null = todos, ['PETR4'] = específicos)",
     type: [String],
   })
   @IsOptional()
@@ -97,7 +101,10 @@ export class UpdateScraperConfigDto {
   @IsString({ each: true })
   enabledFor?: string[] | null;
 
-  @ApiPropertyOptional({ description: 'Parâmetros ajustáveis do scraper', type: ScraperParametersDto })
+  @ApiPropertyOptional({
+    description: 'Parâmetros ajustáveis do scraper',
+    type: ScraperParametersDto,
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => ScraperParametersDto)

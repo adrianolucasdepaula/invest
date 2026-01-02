@@ -18,13 +18,7 @@ import { DividendsService } from './dividends.service';
  * @phase FASE 101 - Wheel Turbinada
  */
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      Dividend,
-      Asset,
-      AssetPrice,
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([Dividend, Asset, AssetPrice])],
   controllers: [DividendsController],
   providers: [DividendsService],
   exports: [DividendsService],

@@ -36,7 +36,16 @@ export interface DataSourceStatusDto {
   id: string;
   name: string;
   url: string;
-  type: 'fundamental' | 'technical' | 'options' | 'prices' | 'news' | 'ai' | 'market_data' | 'crypto' | 'macro';
+  type:
+    | 'fundamental'
+    | 'technical'
+    | 'options'
+    | 'prices'
+    | 'news'
+    | 'ai'
+    | 'market_data'
+    | 'crypto'
+    | 'macro';
   status: 'active' | 'inactive' | 'error';
   lastTest: string | null;
   lastTestSuccess: boolean | null; // FASE 90: resultado do último teste
@@ -320,14 +329,49 @@ export class ScrapersController {
 
   @Get('discrepancies')
   @ApiOperation({ summary: 'Get list of field discrepancies across all assets' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max results (default 50, ignored if page is set)' })
-  @ApiQuery({ name: 'severity', required: false, enum: ['all', 'high', 'medium', 'low'], description: 'Filter by severity' })
-  @ApiQuery({ name: 'field', required: false, type: String, description: 'Filter by specific field' })
-  @ApiQuery({ name: 'ticker', required: false, type: String, description: 'Filter by asset ticker' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Max results (default 50, ignored if page is set)',
+  })
+  @ApiQuery({
+    name: 'severity',
+    required: false,
+    enum: ['all', 'high', 'medium', 'low'],
+    description: 'Filter by severity',
+  })
+  @ApiQuery({
+    name: 'field',
+    required: false,
+    type: String,
+    description: 'Filter by specific field',
+  })
+  @ApiQuery({
+    name: 'ticker',
+    required: false,
+    type: String,
+    description: 'Filter by asset ticker',
+  })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (1-indexed)' })
-  @ApiQuery({ name: 'pageSize', required: false, type: Number, description: 'Items per page (default 50)' })
-  @ApiQuery({ name: 'orderBy', required: false, enum: ['severity', 'deviation', 'ticker', 'field', 'date'], description: 'Order by field' })
-  @ApiQuery({ name: 'orderDirection', required: false, enum: ['asc', 'desc'], description: 'Order direction (default desc)' })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    type: Number,
+    description: 'Items per page (default 50)',
+  })
+  @ApiQuery({
+    name: 'orderBy',
+    required: false,
+    enum: ['severity', 'deviation', 'ticker', 'field', 'date'],
+    description: 'Order by field',
+  })
+  @ApiQuery({
+    name: 'orderDirection',
+    required: false,
+    enum: ['asc', 'desc'],
+    description: 'Order direction (default desc)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Returns list of discrepancies ordered by severity',
@@ -342,7 +386,9 @@ export class ScrapersController {
     @Query('orderBy') orderBy?: string,
     @Query('orderDirection') orderDirection?: string,
   ): Promise<DiscrepanciesResponseDto> {
-    this.logger.log(`Fetching discrepancies: limit=${limit}, severity=${severity}, field=${field}, ticker=${ticker}, page=${page}`);
+    this.logger.log(
+      `Fetching discrepancies: limit=${limit}, severity=${severity}, field=${field}, ticker=${ticker}, page=${page}`,
+    );
 
     try {
       const discrepancies = await this.scrapersService.getDiscrepancies({
@@ -367,7 +413,12 @@ export class ScrapersController {
 
   @Get('discrepancies/stats')
   @ApiOperation({ summary: 'Get aggregated statistics for discrepancies' })
-  @ApiQuery({ name: 'topLimit', required: false, type: Number, description: 'Limit for top lists (default 10)' })
+  @ApiQuery({
+    name: 'topLimit',
+    required: false,
+    type: Number,
+    description: 'Limit for top lists (default 10)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Returns aggregated discrepancy statistics',
@@ -439,8 +490,15 @@ export class ScrapersController {
     }
 
     // FASE 90.1: Validação robusta de selectedValue (NaN/Infinity)
-    if (typeof body.selectedValue !== 'number' || isNaN(body.selectedValue) || !Number.isFinite(body.selectedValue)) {
-      throw new HttpException('selectedValue must be a valid finite number', HttpStatus.BAD_REQUEST);
+    if (
+      typeof body.selectedValue !== 'number' ||
+      isNaN(body.selectedValue) ||
+      !Number.isFinite(body.selectedValue)
+    ) {
+      throw new HttpException(
+        'selectedValue must be a valid finite number',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // FASE 90.2: Extrair email do usuário autenticado do JWT
@@ -506,8 +564,17 @@ export class ScrapersController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get history of discrepancy resolutions' })
   @ApiQuery({ name: 'ticker', required: false, description: 'Filter by ticker' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max results (default 50)' })
-  @ApiQuery({ name: 'method', required: false, enum: ['manual', 'auto_consensus', 'auto_priority'] })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Max results (default 50)',
+  })
+  @ApiQuery({
+    name: 'method',
+    required: false,
+    enum: ['manual', 'auto_consensus', 'auto_priority'],
+  })
   @ApiResponse({ status: 200, description: 'Returns resolution history' })
   async getResolutionHistory(
     @Query('ticker') ticker?: string,
@@ -598,7 +665,9 @@ export class ScrapersController {
   ): Promise<BatchTestResultDto> {
     const maxConcurrency = concurrency ? parseInt(concurrency, 10) : 5;
     const runtimeFilter = runtime || 'all';
-    this.logger.log(`[TEST-ALL] Starting batch test with concurrency=${maxConcurrency}, runtime=${runtimeFilter}`);
+    this.logger.log(
+      `[TEST-ALL] Starting batch test with concurrency=${maxConcurrency}, runtime=${runtimeFilter}`,
+    );
 
     return this.scrapersService.testAllScrapers(maxConcurrency, runtimeFilter);
   }

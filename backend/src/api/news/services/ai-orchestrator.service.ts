@@ -57,7 +57,9 @@ export class AIOrchestatorService {
     private readonly newsAnalysisRepository: Repository<NewsAnalysis>,
   ) {
     this.scraperApiUrl = this.configService.get('SCRAPER_API_URL', 'http://scrapers:8080');
-    this.defaultProviders = this.configService.get('AI_SCRAPER_PROVIDERS', 'gemini,chatgpt').split(',');
+    this.defaultProviders = this.configService
+      .get('AI_SCRAPER_PROVIDERS', 'gemini,chatgpt')
+      .split(',');
     this.logger.log(`AI Orchestrator initialized (Scrapers Only Mode)`);
     this.logger.log(`Scraper API: ${this.scraperApiUrl}`);
     this.logger.log(`Default providers: ${this.defaultProviders.join(', ')}`);
@@ -138,12 +140,14 @@ export class AIOrchestatorService {
           where: { newsId: news.id, provider: providerEnum },
         });
 
-        let analysis = existing || this.newsAnalysisRepository.create({
-          newsId: news.id,
-          provider: providerEnum,
-          modelVersion: `scraper-${result.provider}`,
-          status: NewsAnalysisStatus.PROCESSING,
-        });
+        const analysis =
+          existing ||
+          this.newsAnalysisRepository.create({
+            newsId: news.id,
+            provider: providerEnum,
+            modelVersion: `scraper-${result.provider}`,
+            status: NewsAnalysisStatus.PROCESSING,
+          });
 
         analysis.sentimentScore = result.sentiment_score ?? 0;
         analysis.confidence = result.confidence ?? 0.5;
@@ -153,7 +157,7 @@ export class AIOrchestatorService {
           bearish: result.key_factors?.bearish ?? [],
           neutral: result.key_factors?.neutral ?? [],
         };
-        analysis.processingTime = result.processing_time || (Date.now() - startTime);
+        analysis.processingTime = result.processing_time || Date.now() - startTime;
         analysis.status = NewsAnalysisStatus.COMPLETED;
         analysis.completedAt = new Date();
 
@@ -165,7 +169,6 @@ export class AIOrchestatorService {
 
       this.logger.log(`Completed ${analyses.length} scraper analyses for news ${news.id}`);
       return analyses;
-
     } catch (error) {
       this.logger.error(`Scraper analysis failed: ${error.message}`);
       return [];
@@ -177,12 +180,12 @@ export class AIOrchestatorService {
    */
   private mapScraperToProvider(scraperName: string): AIProvider | null {
     const mapping: Record<string, AIProvider> = {
-      'chatgpt': AIProvider.CHATGPT,
-      'gemini': AIProvider.GEMINI,
-      'claude': AIProvider.CLAUDE,
-      'deepseek': AIProvider.DEEPSEEK,
-      'grok': AIProvider.GROK,
-      'perplexity': AIProvider.PERPLEXITY,
+      chatgpt: AIProvider.CHATGPT,
+      gemini: AIProvider.GEMINI,
+      claude: AIProvider.CLAUDE,
+      deepseek: AIProvider.DEEPSEEK,
+      grok: AIProvider.GROK,
+      perplexity: AIProvider.PERPLEXITY,
     };
     return mapping[scraperName.toLowerCase()] || null;
   }

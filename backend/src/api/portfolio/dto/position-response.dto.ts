@@ -47,31 +47,31 @@ export class PositionResponseDto {
 
   @ApiProperty({
     description: 'Average purchase price per share/unit',
-    example: 32.50,
+    example: 32.5,
   })
   averagePrice: number;
 
   @ApiPropertyOptional({
     description: 'Current market price per share/unit',
-    example: 35.00,
+    example: 35.0,
   })
   currentPrice?: number;
 
   @ApiProperty({
     description: 'Total amount invested in this position',
-    example: 3250.00,
+    example: 3250.0,
   })
   totalInvested: number;
 
   @ApiPropertyOptional({
     description: 'Current market value of this position',
-    example: 3500.00,
+    example: 3500.0,
   })
   currentValue?: number;
 
   @ApiPropertyOptional({
     description: 'Absolute profit/loss for this position',
-    example: 250.00,
+    example: 250.0,
   })
   profit?: number;
 

@@ -18,13 +18,7 @@ import { StockLendingService } from './stock-lending.service';
  * @phase FASE 101 - Wheel Turbinada
  */
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      StockLendingRate,
-      Asset,
-      AssetPrice,
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([StockLendingRate, Asset, AssetPrice])],
   controllers: [StockLendingController],
   providers: [StockLendingService],
   exports: [StockLendingService],

@@ -104,7 +104,9 @@ export class TelemetryController {
   })
   @ApiBody({ type: FrontendLogBatchDto })
   @ApiResponse({ status: 202, description: 'Logs accepted for processing' })
-  async reportFrontendLogs(@Body() batchDto: FrontendLogBatchDto): Promise<{ status: string; count: number }> {
+  async reportFrontendLogs(
+    @Body() batchDto: FrontendLogBatchDto,
+  ): Promise<{ status: string; count: number }> {
     const { logs } = batchDto;
 
     for (const log of logs) {
@@ -149,7 +151,16 @@ export class TelemetryController {
   private sanitizeContext(context?: LogContextDto): Record<string, unknown> {
     if (!context) return {};
 
-    const sensitiveKeys = ['password', 'token', 'secret', 'apiKey', 'authorization', 'creditCard', 'cvv', 'ssn'];
+    const sensitiveKeys = [
+      'password',
+      'token',
+      'secret',
+      'apiKey',
+      'authorization',
+      'creditCard',
+      'cvv',
+      'ssn',
+    ];
     const sanitized: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(context)) {

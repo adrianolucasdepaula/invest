@@ -131,17 +131,13 @@ export class DiskLifecycleController {
     description: 'Payload inválido',
   })
   async handleDiskCleanupWebhook(@Body() payload: PrometheusWebhookPayload) {
-    this.logger.log(
-      `Webhook received: ${payload.status} - ${payload.alerts.length} alert(s)`,
-    );
+    this.logger.log(`Webhook received: ${payload.status} - ${payload.alerts.length} alert(s)`);
 
     // Log payload for debugging
     this.logger.debug(`Webhook payload: ${JSON.stringify(payload, null, 2)}`);
 
     // Process only firing alerts
-    const firingAlerts = payload.alerts.filter(
-      (alert) => alert.status === 'firing',
-    );
+    const firingAlerts = payload.alerts.filter((alert) => alert.status === 'firing');
 
     if (firingAlerts.length === 0) {
       this.logger.log('No firing alerts to process (all resolved)');
@@ -160,9 +156,7 @@ export class DiskLifecycleController {
         const severity = alert.labels.severity;
         const alertName = alert.labels.alertname;
 
-        this.logger.warn(
-          `Processing alert: ${alertName} | Severity: ${severity} | Tier: ${tier}`,
-        );
+        this.logger.warn(`Processing alert: ${alertName} | Severity: ${severity} | Tier: ${tier}`);
 
         // Execute cleanup based on tier
         await this.diskLifecycleService.executeCleanup(tier, {

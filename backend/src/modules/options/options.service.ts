@@ -267,14 +267,17 @@ export class OptionsService {
     return affected;
   }
 
-  async updateGreeks(id: string, greeks: {
-    delta?: number;
-    gamma?: number;
-    theta?: number;
-    vega?: number;
-    rho?: number;
-    impliedVolatility?: number;
-  }): Promise<OptionPrice> {
+  async updateGreeks(
+    id: string,
+    greeks: {
+      delta?: number;
+      gamma?: number;
+      theta?: number;
+      vega?: number;
+      rho?: number;
+      impliedVolatility?: number;
+    },
+  ): Promise<OptionPrice> {
     const option = await this.findById(id);
     Object.assign(option, greeks);
     return this.optionRepository.save(option);

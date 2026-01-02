@@ -1,4 +1,14 @@
-import { IsString, IsOptional, IsEnum, IsDateString, IsBoolean, IsUUID, IsNumber, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsDateString,
+  IsBoolean,
+  IsUUID,
+  IsNumber,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { NewsSource, AIProvider, SentimentLabel } from '../../../database/entities';
@@ -160,7 +170,11 @@ export class AnalyzeNewsDto {
   @IsUUID()
   newsId: string;
 
-  @ApiPropertyOptional({ description: 'Providers específicos para usar', type: [String], enum: AIProvider })
+  @ApiPropertyOptional({
+    description: 'Providers específicos para usar',
+    type: [String],
+    enum: AIProvider,
+  })
   @IsOptional()
   @IsEnum(AIProvider, { each: true })
   providers?: AIProvider[];
@@ -179,7 +193,11 @@ export class CollectNewsDto {
   @IsString()
   ticker: string;
 
-  @ApiPropertyOptional({ description: 'Fontes específicas para usar', type: [String], enum: NewsSource })
+  @ApiPropertyOptional({
+    description: 'Fontes específicas para usar',
+    type: [String],
+    enum: NewsSource,
+  })
   @IsOptional()
   @IsEnum(NewsSource, { each: true })
   sources?: NewsSource[];

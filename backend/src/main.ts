@@ -25,7 +25,7 @@ async function bootstrap() {
 
   // Security middleware
   app.use(helmet());
-  app.use(compression({ threshold: 1024 }));  // Only compress responses > 1KB
+  app.use(compression({ threshold: 1024 })); // Only compress responses > 1KB
   app.use(cookieParser());
 
   // CORS configuration - secure multi-origin support

@@ -47,7 +47,12 @@ interface NumericSafeOptions {
 export class IsNumericSafeConstraint implements ValidatorConstraintInterface {
   validate(value: unknown, args: ValidationArguments): boolean {
     const options: NumericSafeOptions = args.constraints[0] || {};
-    const { min = SAFE_NUMERIC_LIMITS.MIN_SAFE_INTEGER, max = SAFE_NUMERIC_LIMITS.MAX_SAFE_INTEGER, allowNaN = false, allowInfinity = false } = options;
+    const {
+      min = SAFE_NUMERIC_LIMITS.MIN_SAFE_INTEGER,
+      max = SAFE_NUMERIC_LIMITS.MAX_SAFE_INTEGER,
+      allowNaN = false,
+      allowInfinity = false,
+    } = options;
 
     // Allow null/undefined (use @IsOptional() or @IsNotEmpty() separately)
     if (value === null || value === undefined) {
@@ -75,7 +80,10 @@ export class IsNumericSafeConstraint implements ValidatorConstraintInterface {
 
   defaultMessage(args: ValidationArguments): string {
     const options: NumericSafeOptions = args.constraints[0] || {};
-    const { min = SAFE_NUMERIC_LIMITS.MIN_SAFE_INTEGER, max = SAFE_NUMERIC_LIMITS.MAX_SAFE_INTEGER } = options;
+    const {
+      min = SAFE_NUMERIC_LIMITS.MIN_SAFE_INTEGER,
+      max = SAFE_NUMERIC_LIMITS.MAX_SAFE_INTEGER,
+    } = options;
 
     return `${args.property} must be a safe number between ${min} and ${max}`;
   }
@@ -106,14 +114,9 @@ export function IsNumericSafe(options?: NumericSafeOptions, validationOptions?: 
  * @param options - Sanitization options
  * @returns Sanitized value or null if invalid
  */
-export function sanitizeNumber(
-  value: unknown,
-  options: NumericSafeOptions = {},
-): number | null {
-  const {
-    min = SAFE_NUMERIC_LIMITS.MIN_SAFE_INTEGER,
-    max = SAFE_NUMERIC_LIMITS.MAX_SAFE_INTEGER,
-  } = options;
+export function sanitizeNumber(value: unknown, options: NumericSafeOptions = {}): number | null {
+  const { min = SAFE_NUMERIC_LIMITS.MIN_SAFE_INTEGER, max = SAFE_NUMERIC_LIMITS.MAX_SAFE_INTEGER } =
+    options;
 
   // Handle null/undefined
   if (value === null || value === undefined) {

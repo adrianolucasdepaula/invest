@@ -158,7 +158,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     request: Request,
     status: number,
     correlationId: string,
-    errorDetails: { type: string; message: string; details?: Record<string, unknown>; stack?: string },
+    errorDetails: {
+      type: string;
+      message: string;
+      details?: Record<string, unknown>;
+      stack?: string;
+    },
   ): void {
     const logContext = {
       correlationId,
@@ -197,7 +202,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   /**
    * Removes sensitive data from request body before logging
    */
-  private sanitizeBody(body: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+  private sanitizeBody(
+    body: Record<string, unknown> | undefined,
+  ): Record<string, unknown> | undefined {
     if (!body) return undefined;
 
     const sensitiveFields = ['password', 'token', 'secret', 'apiKey', 'authorization'];

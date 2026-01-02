@@ -111,9 +111,7 @@ export class AssetUpdateProcessor {
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.logger.error(
-        `[JOB-${job.id}] ❌ Batch failed after ${duration}ms: ${error.message}`,
-      );
+      this.logger.error(`[JOB-${job.id}] ❌ Batch failed after ${duration}ms: ${error.message}`);
       throw error;
     }
   }
@@ -121,9 +119,7 @@ export class AssetUpdateProcessor {
   @Process('update-portfolio')
   async handlePortfolio(job: Job<PortfolioUpdateJob>) {
     const startTime = Date.now();
-    this.logger.log(
-      `[JOB-${job.id}] Starting portfolio update: ${job.data.portfolioId}`,
-    );
+    this.logger.log(`[JOB-${job.id}] Starting portfolio update: ${job.data.portfolioId}`);
 
     try {
       const result = await this.assetsUpdateService.updatePortfolioAssets(
@@ -150,9 +146,7 @@ export class AssetUpdateProcessor {
   @Process('update-sector')
   async handleSector(job: Job<SectorUpdateJob>) {
     const startTime = Date.now();
-    this.logger.log(
-      `[JOB-${job.id}] Starting sector update: ${job.data.sector}`,
-    );
+    this.logger.log(`[JOB-${job.id}] Starting sector update: ${job.data.sector}`);
 
     try {
       const result = await this.assetsUpdateService.updateAssetsBySector(
@@ -169,9 +163,7 @@ export class AssetUpdateProcessor {
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.logger.error(
-        `[JOB-${job.id}] ❌ Sector failed after ${duration}ms: ${error.message}`,
-      );
+      this.logger.error(`[JOB-${job.id}] ❌ Sector failed after ${duration}ms: ${error.message}`);
       throw error;
     }
   }
@@ -193,9 +185,7 @@ export class AssetUpdateProcessor {
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.logger.error(
-        `[JOB-${job.id}] ❌ Retry failed after ${duration}ms: ${error.message}`,
-      );
+      this.logger.error(`[JOB-${job.id}] ❌ Retry failed after ${duration}ms: ${error.message}`);
       throw error;
     }
   }
@@ -264,9 +254,10 @@ export class AssetUpdateProcessor {
   @OnQueueCompleted()
   onCompleted(job: Job<AssetUpdateJobData>, result: any) {
     const traceId = result?.traceId || 'N/A';
-    const successRate = result?.totalAssets > 0
-      ? `${((result.successCount / result.totalAssets) * 100).toFixed(1)}%`
-      : 'N/A';
+    const successRate =
+      result?.totalAssets > 0
+        ? `${((result.successCount / result.totalAssets) * 100).toFixed(1)}%`
+        : 'N/A';
     this.logger.debug(
       `[JOB-${job.id}] Queue event: completed (traceId: ${traceId}, successRate: ${successRate})`,
     );

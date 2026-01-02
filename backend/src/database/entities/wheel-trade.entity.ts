@@ -14,11 +14,11 @@ import { WheelStrategy } from './wheel-strategy.entity';
  * Tipo de operação WHEEL
  */
 export enum WheelTradeType {
-  SELL_PUT = 'sell_put',           // Venda de PUT
-  SELL_CALL = 'sell_call',         // Venda de CALL coberta
-  BUY_PUT = 'buy_put',             // Compra de PUT (fechamento)
-  BUY_CALL = 'buy_call',           // Compra de CALL (fechamento)
-  EXERCISE_PUT = 'exercise_put',   // Exercício de PUT (compra de ações)
+  SELL_PUT = 'sell_put', // Venda de PUT
+  SELL_CALL = 'sell_call', // Venda de CALL coberta
+  BUY_PUT = 'buy_put', // Compra de PUT (fechamento)
+  BUY_CALL = 'buy_call', // Compra de CALL (fechamento)
+  EXERCISE_PUT = 'exercise_put', // Exercício de PUT (compra de ações)
   EXERCISE_CALL = 'exercise_call', // Exercício de CALL (venda de ações)
 }
 
@@ -26,10 +26,10 @@ export enum WheelTradeType {
  * Status do trade
  */
 export enum WheelTradeStatus {
-  OPEN = 'open',           // Posição aberta
-  CLOSED = 'closed',       // Fechada antes do vencimento
+  OPEN = 'open', // Posição aberta
+  CLOSED = 'closed', // Fechada antes do vencimento
   EXERCISED = 'exercised', // Exercida no vencimento
-  EXPIRED = 'expired',     // Expirou OTM (lucro máximo para vendedor)
+  EXPIRED = 'expired', // Expirou OTM (lucro máximo para vendedor)
 }
 
 @Entity('wheel_trades')
@@ -98,7 +98,13 @@ export class WheelTrade {
   @Column({ type: 'decimal', precision: 18, scale: 8, name: 'underlying_price_at_entry' })
   underlyingPriceAtEntry: number;
 
-  @Column({ type: 'decimal', precision: 18, scale: 8, name: 'underlying_price_at_exit', nullable: true })
+  @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 8,
+    name: 'underlying_price_at_exit',
+    nullable: true,
+  })
   underlyingPriceAtExit: number;
 
   // Prêmios
@@ -170,7 +176,7 @@ export class WheelTrade {
   // Metadata adicional
   @Column({ type: 'jsonb', nullable: true })
   metadata: {
-    moneyness?: string;      // ITM, ATM, OTM
+    moneyness?: string; // ITM, ATM, OTM
     openInterest?: number;
     volume?: number;
     bidAtEntry?: number;

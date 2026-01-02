@@ -13,13 +13,7 @@ import {
   ParseUUIDPipe,
   Logger,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import Decimal from 'decimal.js';
 import { JwtAuthGuard } from '@api/auth/guards/jwt-auth.guard';
 import { BacktestService } from './backtest.service';

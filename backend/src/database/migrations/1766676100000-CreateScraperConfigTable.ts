@@ -64,7 +64,16 @@ export class CreateScraperConfigTable1766676100000 implements MigrationInterface
           {
             name: 'category',
             type: 'enum',
-            enum: ['fundamental', 'technical', 'news', 'ai', 'market_data', 'crypto', 'options', 'macro'],
+            enum: [
+              'fundamental',
+              'technical',
+              'news',
+              'ai',
+              'market_data',
+              'crypto',
+              'options',
+              'macro',
+            ],
             enumName: 'scraper_configs_category_enum',
             isNullable: false,
           },

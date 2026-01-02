@@ -72,7 +72,14 @@ export class AssetPrice {
   @Column({ type: 'decimal', precision: 18, scale: 4, transformer: new DecimalTransformer() })
   close: Decimal;
 
-  @Column({ type: 'decimal', precision: 18, scale: 4, name: 'adjusted_close', nullable: true, transformer: new DecimalTransformer() })
+  @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 4,
+    name: 'adjusted_close',
+    nullable: true,
+    transformer: new DecimalTransformer(),
+  })
   adjustedClose: Decimal | null;
 
   @Column({ type: 'bigint' })
@@ -93,13 +100,33 @@ export class AssetPrice {
   })
   source: PriceSource;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2, name: 'market_cap', nullable: true, transformer: new DecimalTransformer() })
+  @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 2,
+    name: 'market_cap',
+    nullable: true,
+    transformer: new DecimalTransformer(),
+  })
   marketCap: Decimal | null;
 
-  @Column({ type: 'decimal', precision: 18, scale: 2, nullable: true, transformer: new DecimalTransformer() })
+  @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 2,
+    nullable: true,
+    transformer: new DecimalTransformer(),
+  })
   change: Decimal | null;
 
-  @Column({ type: 'decimal', precision: 10, scale: 4, name: 'change_percent', nullable: true, transformer: new DecimalTransformer() })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 4,
+    name: 'change_percent',
+    nullable: true,
+    transformer: new DecimalTransformer(),
+  })
   changePercent: Decimal | null;
 
   @Column({ name: 'number_of_trades', nullable: true })

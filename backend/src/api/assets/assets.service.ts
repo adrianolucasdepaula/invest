@@ -2,7 +2,14 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual, MoreThanOrEqual, IsNull, In } from 'typeorm';
 import Decimal from 'decimal.js';
-import { Asset, AssetPrice, FundamentalData, PriceSource, TickerChange, AssetIndexMembership } from '@database/entities';
+import {
+  Asset,
+  AssetPrice,
+  FundamentalData,
+  PriceSource,
+  TickerChange,
+  AssetIndexMembership,
+} from '@database/entities';
 import { ScrapersService } from '../../scrapers/scrapers.service';
 import { BrapiScraper } from '../../scrapers/fundamental/brapi.scraper';
 import { OpcoesScraper } from '../../scrapers/options/opcoes.scraper';
@@ -86,12 +93,18 @@ export class AssetsService {
       high: this.toDecimalOrNull(this.sanitizeNumericValue(data.high, 9999999999999.9999, 4)),
       low: this.toDecimalOrNull(this.sanitizeNumericValue(data.low, 9999999999999.9999, 4)),
       close: this.toDecimalOrNull(this.sanitizeNumericValue(data.close, 9999999999999.9999, 4)),
-      adjustedClose: this.toDecimalOrNull(this.sanitizeNumericValue(data.adjustedClose, 9999999999999.9999, 4)),
+      adjustedClose: this.toDecimalOrNull(
+        this.sanitizeNumericValue(data.adjustedClose, 9999999999999.9999, 4),
+      ),
       // numeric(18,2): max 15 digits before decimal + 2 after = 17 total (JS-safe)
-      marketCap: this.toDecimalOrNull(this.sanitizeNumericValue(data.marketCap, 999999999999999.99, 2)),
+      marketCap: this.toDecimalOrNull(
+        this.sanitizeNumericValue(data.marketCap, 999999999999999.99, 2),
+      ),
       change: this.toDecimalOrNull(this.sanitizeNumericValue(data.change, 999999999999999.99, 2)),
       // numeric(10,4): max 6 digits before decimal + 4 after = 10 total (JS-safe)
-      changePercent: this.toDecimalOrNull(this.sanitizeNumericValue(data.changePercent, 999999.9999, 4)),
+      changePercent: this.toDecimalOrNull(
+        this.sanitizeNumericValue(data.changePercent, 999999.9999, 4),
+      ),
     };
   }
 
@@ -121,9 +134,20 @@ export class AssetsService {
 
     if (type) {
       const normalizedType = type.toLowerCase();
-      const validTypes = ['stock', 'fii', 'etf', 'bdr', 'option', 'future', 'crypto', 'fixed_income'];
+      const validTypes = [
+        'stock',
+        'fii',
+        'etf',
+        'bdr',
+        'option',
+        'future',
+        'crypto',
+        'fixed_income',
+      ];
       if (!validTypes.includes(normalizedType)) {
-        this.logger.warn(`Invalid asset type requested: ${type}. Valid types: ${validTypes.join(', ')}`);
+        this.logger.warn(
+          `Invalid asset type requested: ${type}. Valid types: ${validTypes.join(', ')}`,
+        );
         return [];
       }
       whereClause = 'WHERE asset.type = $1';
@@ -228,9 +252,7 @@ export class AssetsService {
       const memberships = membershipsByAsset.get(row.id) || [];
       const currentIndexes = memberships.map((m) => m.indexName);
       const idivMembership = memberships.find((m) => m.indexName === 'IDIV');
-      const idivParticipation = idivMembership
-        ? Number(idivMembership.participationPercent)
-        : null;
+      const idivParticipation = idivMembership ? Number(idivMembership.participationPercent) : null;
 
       if (!latestClose) {
         return {
@@ -302,9 +324,20 @@ export class AssetsService {
     if (type) {
       // Normalize type to lowercase to match PostgreSQL enum values
       const normalizedType = type.toLowerCase();
-      const validTypes = ['stock', 'fii', 'etf', 'bdr', 'option', 'future', 'crypto', 'fixed_income'];
+      const validTypes = [
+        'stock',
+        'fii',
+        'etf',
+        'bdr',
+        'option',
+        'future',
+        'crypto',
+        'fixed_income',
+      ];
       if (!validTypes.includes(normalizedType)) {
-        this.logger.warn(`Invalid asset type requested: ${type}. Valid types: ${validTypes.join(', ')}`);
+        this.logger.warn(
+          `Invalid asset type requested: ${type}. Valid types: ${validTypes.join(', ')}`,
+        );
         // Return empty array for invalid type instead of database error
         return [];
       }
@@ -364,7 +397,9 @@ export class AssetsService {
    * This ensures options-enabled assets are updated first for trading relevance,
    * and stale/never-updated data gets refreshed before recently updated assets.
    */
-  async findAllForBulkUpdate(): Promise<{ ticker: string; hasOptions: boolean; lastUpdated: Date | null }[]> {
+  async findAllForBulkUpdate(): Promise<
+    { ticker: string; hasOptions: boolean; lastUpdated: Date | null }[]
+  > {
     this.logger.log('Fetching assets ordered for bulk update (options first, then by lastUpdated)');
 
     const assets = await this.assetRepository
@@ -375,11 +410,13 @@ export class AssetsService {
       .addOrderBy('asset.lastUpdated', 'ASC') // oldest to newest
       .getMany();
 
-    this.logger.log(`Found ${assets.length} assets for bulk update. ` +
-      `Options-enabled: ${assets.filter(a => a.hasOptions).length}, ` +
-      `Never updated: ${assets.filter(a => !a.lastUpdated).length}`);
+    this.logger.log(
+      `Found ${assets.length} assets for bulk update. ` +
+        `Options-enabled: ${assets.filter((a) => a.hasOptions).length}, ` +
+        `Never updated: ${assets.filter((a) => !a.lastUpdated).length}`,
+    );
 
-    return assets.map(a => ({
+    return assets.map((a) => ({
       ticker: a.ticker,
       hasOptions: a.hasOptions,
       lastUpdated: a.lastUpdated,
@@ -518,8 +555,9 @@ export class AssetsService {
       const toDecimal = (value: Decimal | string | number | null | undefined): Decimal =>
         value instanceof Decimal ? value : new Decimal(value ?? 0);
 
-      const toDecimalOrNull = (value: Decimal | string | number | null | undefined): Decimal | null =>
-        value === null || value === undefined ? null : toDecimal(value);
+      const toDecimalOrNull = (
+        value: Decimal | string | number | null | undefined,
+      ): Decimal | null => (value === null || value === undefined ? null : toDecimal(value));
 
       price.open = toDecimal(price.open);
       price.high = toDecimal(price.high);

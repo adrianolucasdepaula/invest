@@ -5,9 +5,7 @@ import { IndexMembershipsController } from './index-memberships.controller';
 import { IndexMembershipsService } from './index-memberships.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Asset, AssetIndexMembership]),
-  ],
+  imports: [TypeOrmModule.forFeature([Asset, AssetIndexMembership])],
   controllers: [IndexMembershipsController],
   providers: [IndexMembershipsService],
   exports: [IndexMembershipsService],

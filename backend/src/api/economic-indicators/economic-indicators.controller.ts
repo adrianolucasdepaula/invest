@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Query, Param, Logger, HttpCode, HttpStatus, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Query,
+  Param,
+  Logger,
+  HttpCode,
+  HttpStatus,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { EconomicIndicatorsService } from './economic-indicators.service';
 import { GetIndicatorsDto } from './dto/get-indicators.dto';

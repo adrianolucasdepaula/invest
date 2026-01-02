@@ -12,9 +12,7 @@ class SearchContextDto {
 export class ContextController {
   private readonly logger = new Logger(ContextController.name);
 
-  constructor(
-    private readonly knowledgeBaseService: KnowledgeBaseService,
-  ) {}
+  constructor(private readonly knowledgeBaseService: KnowledgeBaseService) {}
 
   @Post('search')
   @ApiOperation({ summary: 'Search relevant code context using AI embeddings' })

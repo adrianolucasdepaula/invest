@@ -1,4 +1,13 @@
-import { IsString, IsNumber, IsOptional, IsDateString, IsObject, Min, MaxLength, Matches } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsDateString,
+  IsObject,
+  Min,
+  MaxLength,
+  Matches,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePositionDto {
@@ -25,7 +34,7 @@ export class CreatePositionDto {
 
   @ApiProperty({
     description: 'Average purchase price per share/unit',
-    example: 32.50,
+    example: 32.5,
     minimum: 0,
   })
   @IsNumber()

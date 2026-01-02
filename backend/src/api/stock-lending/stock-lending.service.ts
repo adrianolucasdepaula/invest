@@ -165,7 +165,8 @@ export class StockLendingService {
     // Calculate trend (compare first vs last half)
     const midPoint = Math.floor(taxas.length / 2);
     const recentAvg = taxas.slice(0, midPoint).reduce((a, b) => a + b, 0) / midPoint || 0;
-    const olderAvg = taxas.slice(midPoint).reduce((a, b) => a + b, 0) / (taxas.length - midPoint) || 0;
+    const olderAvg =
+      taxas.slice(midPoint).reduce((a, b) => a + b, 0) / (taxas.length - midPoint) || 0;
 
     let tendencia: 'alta' | 'baixa' | 'estavel';
     if (recentAvg > olderAvg * 1.05) {
@@ -217,8 +218,7 @@ export class StockLendingService {
     }
 
     // Calculate daily rate if not provided
-    const taxaAluguelDia =
-      dto.taxaAluguelDia ?? dto.taxaAluguelAno.div(this.TRADING_DAYS_PER_YEAR);
+    const taxaAluguelDia = dto.taxaAluguelDia ?? dto.taxaAluguelAno.div(this.TRADING_DAYS_PER_YEAR);
 
     const rate = this.lendingRepository.create({
       ...dto,

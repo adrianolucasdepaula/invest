@@ -41,9 +41,7 @@ export class DeadLetterProcessor {
 
   @OnQueueCompleted()
   onCompleted(job: Job<DeadLetterJob>, result: any) {
-    this.logger.log(
-      `[DLQ-${job.id}] Dead letter processed: ${result?.action || 'logged'}`,
-    );
+    this.logger.log(`[DLQ-${job.id}] Dead letter processed: ${result?.action || 'logged'}`);
   }
 
   /**
@@ -52,15 +50,16 @@ export class DeadLetterProcessor {
    */
   @Process('failed-job')
   async processFailedJob(job: Job<DeadLetterJob>) {
-    const { originalQueue, originalJobName, originalJobId, error, attemptsMade, failedAt } = job.data;
+    const { originalQueue, originalJobName, originalJobId, error, attemptsMade, failedAt } =
+      job.data;
 
     this.logger.warn(
       `[DLQ] Failed job analysis:\n` +
-      `  Queue: ${originalQueue}\n` +
-      `  Job: ${originalJobName} (ID: ${originalJobId})\n` +
-      `  Attempts: ${attemptsMade}\n` +
-      `  Error: ${error}\n` +
-      `  Failed at: ${failedAt}`,
+        `  Queue: ${originalQueue}\n` +
+        `  Job: ${originalJobName} (ID: ${originalJobId})\n` +
+        `  Attempts: ${attemptsMade}\n` +
+        `  Error: ${error}\n` +
+        `  Failed at: ${failedAt}`,
     );
 
     // TODO: Future enhancements
@@ -85,9 +84,9 @@ export class DeadLetterProcessor {
 
     this.logger.log(
       `[DLQ] Retrying job from dead letter:\n` +
-      `  Queue: ${originalQueue}\n` +
-      `  Job: ${originalJobName}\n` +
-      `  Retry #: ${retryCount + 1}`,
+        `  Queue: ${originalQueue}\n` +
+        `  Job: ${originalJobName}\n` +
+        `  Retry #: ${retryCount + 1}`,
     );
 
     // Update retry metadata

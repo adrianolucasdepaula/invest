@@ -152,7 +152,8 @@ import {
         synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
         logging: configService.get('DB_LOGGING', 'false') === 'true',
         // DB_SSL=true for cloud production with SSL, DB_SSL=false for localhost production
-        ssl: configService.get('DB_SSL', 'false') === 'true' ? { rejectUnauthorized: false } : false,
+        ssl:
+          configService.get('DB_SSL', 'false') === 'true' ? { rejectUnauthorized: false } : false,
       }),
       inject: [ConfigService],
     }),

@@ -71,7 +71,9 @@ export class CircuitBreakerService {
           this.logger.log(`[CIRCUIT] ${key}: OPEN → HALF_OPEN (timeout elapsed)`);
           return true;
         }
-        this.logger.warn(`[CIRCUIT] ${key}: Request blocked (OPEN state, ${Math.round((this.TIMEOUT_MS - elapsed) / 1000)}s remaining)`);
+        this.logger.warn(
+          `[CIRCUIT] ${key}: Request blocked (OPEN state, ${Math.round((this.TIMEOUT_MS - elapsed) / 1000)}s remaining)`,
+        );
         return false;
 
       case CircuitState.HALF_OPEN:
@@ -97,7 +99,9 @@ export class CircuitBreakerService {
     if (circuit.state === CircuitState.HALF_OPEN) {
       if (circuit.successes >= this.SUCCESS_THRESHOLD) {
         this.transitionTo(key, CircuitState.CLOSED);
-        this.logger.log(`[CIRCUIT] ${key}: HALF_OPEN → CLOSED (${circuit.successes} consecutive successes)`);
+        this.logger.log(
+          `[CIRCUIT] ${key}: HALF_OPEN → CLOSED (${circuit.successes} consecutive successes)`,
+        );
       }
     }
   }
@@ -115,14 +119,18 @@ export class CircuitBreakerService {
     circuit.lastFailure = Date.now();
     circuit.lastAttempt = Date.now();
 
-    this.logger.warn(`[CIRCUIT] ${key}: Failure recorded (${circuit.failures}/${this.FAILURE_THRESHOLD}) ${error ? `- ${error}` : ''}`);
+    this.logger.warn(
+      `[CIRCUIT] ${key}: Failure recorded (${circuit.failures}/${this.FAILURE_THRESHOLD}) ${error ? `- ${error}` : ''}`,
+    );
 
     // FASE 118: Update Prometheus metrics
     this.metricsService?.incrementCircuitBreakerFailure(key);
 
     if (circuit.state === CircuitState.CLOSED && circuit.failures >= this.FAILURE_THRESHOLD) {
       this.transitionTo(key, CircuitState.OPEN);
-      this.logger.error(`[CIRCUIT] ${key}: CLOSED → OPEN (${circuit.failures} consecutive failures)`);
+      this.logger.error(
+        `[CIRCUIT] ${key}: CLOSED → OPEN (${circuit.failures} consecutive failures)`,
+      );
     }
 
     if (circuit.state === CircuitState.HALF_OPEN) {

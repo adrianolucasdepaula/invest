@@ -34,10 +34,7 @@ export class AlertsController {
   @ApiQuery({ name: 'userId', required: true })
   @ApiQuery({ name: 'status', required: false, enum: AlertStatus })
   @ApiResponse({ status: 200, description: 'List of alerts' })
-  async findByUser(
-    @Query('userId') userId: string,
-    @Query('status') status?: AlertStatus,
-  ) {
+  async findByUser(@Query('userId') userId: string, @Query('status') status?: AlertStatus) {
     return this.alertsService.findByUser(userId, status);
   }
 
@@ -72,10 +69,7 @@ export class AlertsController {
   @ApiOperation({ summary: 'Update an alert' })
   @ApiResponse({ status: 200, description: 'Alert updated successfully' })
   @ApiResponse({ status: 404, description: 'Alert not found' })
-  async update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateAlertDto,
-  ) {
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateAlertDto) {
     return this.alertsService.update(id, dto);
   }
 

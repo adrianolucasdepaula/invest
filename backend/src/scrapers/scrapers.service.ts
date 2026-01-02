@@ -72,7 +72,16 @@ export interface UnifiedScraperStatus {
   id: string;
   name: string;
   url: string;
-  type: 'fundamental' | 'technical' | 'options' | 'prices' | 'news' | 'ai' | 'market_data' | 'crypto' | 'macro';
+  type:
+    | 'fundamental'
+    | 'technical'
+    | 'options'
+    | 'prices'
+    | 'news'
+    | 'ai'
+    | 'market_data'
+    | 'crypto'
+    | 'macro';
   status: 'active' | 'inactive' | 'error';
   lastTest: string | null;
   lastTestSuccess: boolean | null; // FASE 90
@@ -184,7 +193,10 @@ export class ScrapersService {
   async scrapeFundamentalData(ticker: string): Promise<CrossValidationResult> {
     // FASE: Dynamic Scraper Configuration
     // Consulta configs dinâmicas ao invés de usar scrapers hardcoded
-    const configs = await this.scraperConfigService.getEnabledScrapersForAsset(ticker, 'fundamental');
+    const configs = await this.scraperConfigService.getEnabledScrapersForAsset(
+      ticker,
+      'fundamental',
+    );
 
     // BUGFIX: Validar se configs não é undefined/null
     if (!configs || !Array.isArray(configs)) {
@@ -236,7 +248,9 @@ export class ScrapersService {
           data: result.data,
           scrapedAt,
         });
-        this.logger.debug(`[${ticker}] ${name}: SUCCESS (${Object.keys(result.data).length} fields)`);
+        this.logger.debug(
+          `[${ticker}] ${name}: SUCCESS (${Object.keys(result.data).length} fields)`,
+        );
       } else {
         this.logger.debug(`[${ticker}] ${name}: FAILED`);
       }
@@ -399,7 +413,7 @@ export class ScrapersService {
     const confidence = this.calculateConfidence(results, discrepancies);
 
     return {
-      isValid: results.length >= 2 && confidence >= 0.33,  // FASE DISCREPANCY-FIX: Aceita 2 fontes (era 3)
+      isValid: results.length >= 2 && confidence >= 0.33, // FASE DISCREPANCY-FIX: Aceita 2 fontes (era 3)
       data: mergedData,
       sources,
       sourcesCount: results.length,
@@ -801,8 +815,10 @@ export class ScrapersService {
         const numValue = Number(value);
         // FASE 144 BUGFIX: Detect scientific notation overflow from parsing errors
         if (Math.abs(numValue) > 1e20) {
-          this.logger.error(`[EXTRACT-FIELD] Suspicious value for field '${field}' from alias '${alias}': ${value} → ${numValue.toExponential()}`);
-          return null;  // Reject scientifically improbable values
+          this.logger.error(
+            `[EXTRACT-FIELD] Suspicious value for field '${field}' from alias '${alias}': ${value} → ${numValue.toExponential()}`,
+          );
+          return null; // Reject scientifically improbable values
         }
         return numValue;
       }
@@ -1014,9 +1030,7 @@ export class ScrapersService {
     const result = await this.callPythonStockLendingScraper(ticker);
 
     if (result.success && result.data) {
-      this.logger.log(
-        `[STOCK-LENDING] ${ticker}: Taxa ${result.data.taxa_aluguel_ano}% a.a.`,
-      );
+      this.logger.log(`[STOCK-LENDING] ${ticker}: Taxa ${result.data.taxa_aluguel_ano}% a.a.`);
       // Converter objeto único em array para importFromScraper
       return {
         success: true,
@@ -1086,7 +1100,8 @@ export class ScrapersService {
     }
 
     // Critério: >30% dos campos com discrepância alta OU campos críticos com problema
-    const discrepancyRatio = totalFieldsAnalyzed > 0 ? fieldsWithHighDiscrepancy / totalFieldsAnalyzed : 0;
+    const discrepancyRatio =
+      totalFieldsAnalyzed > 0 ? fieldsWithHighDiscrepancy / totalFieldsAnalyzed : 0;
 
     if (discrepancyRatio > 0.3) {
       this.logger.debug(
@@ -1222,9 +1237,7 @@ export class ScrapersService {
         );
 
         const url = `${this.pythonApiUrl}/api/scrapers/list`;
-        const response = await firstValueFrom(
-          this.httpService.get(url, { timeout }),
-        );
+        const response = await firstValueFrom(this.httpService.get(url, { timeout }));
 
         const data = response.data;
         this.logger.log(
@@ -1270,10 +1283,14 @@ export class ScrapersService {
       // Remove 'python-' prefix if present (e.g., 'python-fundamentus' -> 'FUNDAMENTUS')
       const normalizedScraperId = scraperId.replace(/^python-/i, '').toUpperCase();
       const response = await firstValueFrom(
-        this.httpService.post(url, {
-          scraper: normalizedScraperId,
-          query: ticker,
-        }, { timeout: 120000 }), // 2 minute timeout for scraper tests
+        this.httpService.post(
+          url,
+          {
+            scraper: normalizedScraperId,
+            query: ticker,
+          },
+          { timeout: 120000 },
+        ), // 2 minute timeout for scraper tests
       );
 
       const result = response.data;
@@ -1317,9 +1334,7 @@ export class ScrapersService {
    * Merges TypeScript scrapers with Python API scrapers
    * Returns comprehensive list for Data Sources page
    */
-  async getAllScrapersStatus(
-    metricsMap: Map<string, any>,
-  ): Promise<UnifiedScraperStatus[]> {
+  async getAllScrapersStatus(metricsMap: Map<string, any>): Promise<UnifiedScraperStatus[]> {
     this.logger.log('[UNIFIED] Building unified scrapers status');
 
     const results: UnifiedScraperStatus[] = [];
@@ -1459,12 +1474,15 @@ export class ScrapersService {
     for (const pyScraper of pythonScrapers) {
       // Skip if already added as TypeScript scraper (avoid duplicates)
       const existingTs = results.find(
-        (r) => r.id.toLowerCase() === pyScraper.id.toLowerCase() ||
-               r.name.toLowerCase() === pyScraper.name.toLowerCase(),
+        (r) =>
+          r.id.toLowerCase() === pyScraper.id.toLowerCase() ||
+          r.name.toLowerCase() === pyScraper.name.toLowerCase(),
       );
 
       if (existingTs) {
-        this.logger.debug(`[UNIFIED] Skipping Python scraper ${pyScraper.id} - already exists as TypeScript`);
+        this.logger.debug(
+          `[UNIFIED] Skipping Python scraper ${pyScraper.id} - already exists as TypeScript`,
+        );
         continue;
       }
 
@@ -1507,7 +1525,9 @@ export class ScrapersService {
       });
     }
 
-    this.logger.log(`[UNIFIED] Total scrapers: ${results.length} (Python API: ${pythonApiOnline ? 'online' : 'offline'})`);
+    this.logger.log(
+      `[UNIFIED] Total scrapers: ${results.length} (Python API: ${pythonApiOnline ? 'online' : 'offline'})`,
+    );
 
     return results;
   }
@@ -1517,8 +1537,13 @@ export class ScrapersService {
    */
   isPythonScraper(scraperId: string): boolean {
     const typescriptScraperIds = [
-      'fundamentus', 'brapi', 'statusinvest',
-      'investidor10', 'fundamentei', 'investsite', 'opcoes',
+      'fundamentus',
+      'brapi',
+      'statusinvest',
+      'investidor10',
+      'fundamentei',
+      'investsite',
+      'opcoes',
     ];
     return !typescriptScraperIds.includes(scraperId.toLowerCase());
   }
@@ -1545,7 +1570,9 @@ export class ScrapersService {
       };
     }
 
-    this.logger.log(`[QUALITY] Discovered ${Object.keys(scraperConfigs).length} scrapers dynamically`);
+    this.logger.log(
+      `[QUALITY] Discovered ${Object.keys(scraperConfigs).length} scrapers dynamically`,
+    );
 
     // Query all fundamental data with field_sources
     const fundamentalData = await this.fundamentalDataRepository.find({
@@ -1706,9 +1733,7 @@ export class ScrapersService {
     const overallConsensusSum = scrapers.reduce((sum, s) => sum + s.avgConsensus, 0);
     const scrapersWithData = scrapers.filter((s) => s.avgConsensus > 0).length;
     const overallAvgConsensus =
-      scrapersWithData > 0
-        ? Math.round((overallConsensusSum / scrapersWithData) * 10) / 10
-        : 0;
+      scrapersWithData > 0 ? Math.round((overallConsensusSum / scrapersWithData) * 10) / 10 : 0;
 
     const response: QualityStatsResponseDto = {
       scrapers,
@@ -1756,7 +1781,9 @@ export class ScrapersService {
       orderDirection = 'desc',
     } = options;
 
-    this.logger.log(`[DISCREPANCIES] Fetching discrepancies: limit=${limit}, severity=${severity}, field=${field}, ticker=${ticker}, page=${page}`);
+    this.logger.log(
+      `[DISCREPANCIES] Fetching discrepancies: limit=${limit}, severity=${severity}, field=${field}, ticker=${ticker}, page=${page}`,
+    );
 
     // Field labels for display
     const fieldLabels: Record<string, string> = {
@@ -1818,7 +1845,9 @@ export class ScrapersService {
         if (field && fieldName !== field) continue;
 
         // Calculate max deviation for severity
-        const maxDeviation = Math.max(...fieldInfo.divergentSources.map((s: any) => s.deviation || 0));
+        const maxDeviation = Math.max(
+          ...fieldInfo.divergentSources.map((s: any) => s.deviation || 0),
+        );
 
         // Determine severity
         let severityLevel: 'high' | 'medium' | 'low';
@@ -1876,9 +1905,10 @@ export class ScrapersService {
     };
 
     // FASE 93.3: Apply severity filtering AFTER calculating summary
-    const filteredDiscrepancies = severity !== 'all'
-      ? deduplicatedDiscrepancies.filter((d) => d.severity === severity)
-      : deduplicatedDiscrepancies;
+    const filteredDiscrepancies =
+      severity !== 'all'
+        ? deduplicatedDiscrepancies.filter((d) => d.severity === severity)
+        : deduplicatedDiscrepancies;
 
     // Sort based on orderBy and orderDirection
     const severityOrder = { high: 0, medium: 1, low: 2 };
@@ -1920,7 +1950,9 @@ export class ScrapersService {
 
     // Apply pagination or limit to FILTERED discrepancies
     let resultDiscrepancies: DiscrepancyDto[];
-    let pagination: { page: number; pageSize: number; totalPages: number; totalItems: number } | undefined;
+    let pagination:
+      | { page: number; pageSize: number; totalPages: number; totalItems: number }
+      | undefined;
 
     if (page !== undefined) {
       // Pagination mode
@@ -1958,9 +1990,7 @@ export class ScrapersService {
    * FASE 70 - Dashboard de Discrepâncias
    * Returns top assets, top fields, and timeline data
    */
-  async getDiscrepancyStats(options: {
-    topLimit?: number;
-  }): Promise<DiscrepancyStatsResponseDto> {
+  async getDiscrepancyStats(options: { topLimit?: number }): Promise<DiscrepancyStatsResponseDto> {
     const { topLimit = 10 } = options;
 
     this.logger.log(`[DISCREPANCY_STATS] Fetching stats with topLimit=${topLimit}`);
@@ -2000,42 +2030,55 @@ export class ScrapersService {
     });
 
     // Aggregate data
-    const assetStats = new Map<string, {
-      ticker: string;
-      assetName: string;
-      count: number;
-      totalDeviation: number;
-      highCount: number;
-      mediumCount: number;
-      lowCount: number;
-    }>();
+    const assetStats = new Map<
+      string,
+      {
+        ticker: string;
+        assetName: string;
+        count: number;
+        totalDeviation: number;
+        highCount: number;
+        mediumCount: number;
+        lowCount: number;
+      }
+    >();
 
-    const fieldStats = new Map<string, {
-      field: string;
-      fieldLabel: string;
-      count: number;
-      totalDeviation: number;
-    }>();
+    const fieldStats = new Map<
+      string,
+      {
+        field: string;
+        fieldLabel: string;
+        count: number;
+        totalDeviation: number;
+      }
+    >();
 
-    const timelineMap = new Map<string, {
-      date: string;
-      high: number;
-      medium: number;
-      low: number;
-      total: number;
-    }>();
+    const timelineMap = new Map<
+      string,
+      {
+        date: string;
+        high: number;
+        medium: number;
+        low: number;
+        total: number;
+      }
+    >();
 
     for (const data of fundamentalData) {
       if (!data.fieldSources || !data.asset) continue;
 
       const ticker = data.asset.ticker;
       const assetName = data.asset.name;
-      const updateDate = data.updatedAt ? data.updatedAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      const updateDate = data.updatedAt
+        ? data.updatedAt.toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0];
 
       for (const [fieldName, fieldInfo] of Object.entries(data.fieldSources)) {
         if (!fieldInfo || !fieldInfo.hasDiscrepancy || !fieldInfo.divergentSources) continue;
 
-        const maxDeviation = Math.max(...fieldInfo.divergentSources.map((s: any) => s.deviation || 0));
+        const maxDeviation = Math.max(
+          ...fieldInfo.divergentSources.map((s: any) => s.deviation || 0),
+        );
         let severityLevel: 'high' | 'medium' | 'low';
         if (maxDeviation > 20) {
           severityLevel = 'high';
@@ -2110,7 +2153,9 @@ export class ScrapersService {
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(-30); // Last 30 days
 
-    this.logger.log(`[DISCREPANCY_STATS] Stats calculated: ${topAssets.length} top assets, ${topFields.length} top fields`);
+    this.logger.log(
+      `[DISCREPANCY_STATS] Stats calculated: ${topAssets.length} top assets, ${topFields.length} top fields`,
+    );
 
     return {
       topAssets,
@@ -2151,7 +2196,9 @@ export class ScrapersService {
     }>;
   }> {
     const startTime = Date.now();
-    this.logger.log(`[TEST-ALL] Starting batch test with maxConcurrency=${maxConcurrency}, runtime=${runtimeFilter}`);
+    this.logger.log(
+      `[TEST-ALL] Starting batch test with maxConcurrency=${maxConcurrency}, runtime=${runtimeFilter}`,
+    );
 
     // Get all scrapers (TypeScript + Python)
     const metricsMap = await this.scraperMetricsService.getAllMetricsSummaries();
@@ -2163,7 +2210,9 @@ export class ScrapersService {
         ? allScrapersRaw
         : allScrapersRaw.filter((s) => s.runtime === runtimeFilter);
 
-    this.logger.log(`[TEST-ALL] Found ${allScrapers.length} scrapers to test (filtered from ${allScrapersRaw.length} total)`);
+    this.logger.log(
+      `[TEST-ALL] Found ${allScrapers.length} scrapers to test (filtered from ${allScrapersRaw.length} total)`,
+    );
 
     // Emit start event via WebSocket
     this.wsGateway.emitScraperTestAllStarted({
@@ -2185,7 +2234,11 @@ export class ScrapersService {
     let completedCount = 0;
 
     // Create an async function to test a single scraper
-    const testScraper = async (scraper: { id: string; name: string; runtime: 'typescript' | 'python' }) => {
+    const testScraper = async (scraper: {
+      id: string;
+      name: string;
+      runtime: 'typescript' | 'python';
+    }) => {
       const scraperStartTime = Date.now();
 
       try {
@@ -2304,7 +2357,9 @@ export class ScrapersService {
     const successCount = results.filter((r) => r.success).length;
     const failedCount = results.filter((r) => !r.success).length;
 
-    this.logger.log(`[TEST-ALL] Batch test completed in ${duration}ms: ${successCount} success, ${failedCount} failed`);
+    this.logger.log(
+      `[TEST-ALL] Batch test completed in ${duration}ms: ${successCount} success, ${failedCount} failed`,
+    );
 
     // Emit completed event via WebSocket
     this.wsGateway.emitScraperTestAllCompleted({
@@ -2358,9 +2413,7 @@ export class ScrapersService {
         ],
       );
 
-      this.logger.debug(
-        `[ERROR-TRACKING] Saved error for ${ticker}/${scraperId}: ${errorType}`,
-      );
+      this.logger.debug(`[ERROR-TRACKING] Saved error for ${ticker}/${scraperId}: ${errorType}`);
     } catch (e) {
       // Se falhar ao salvar, apenas loga (não bloqueia)
       this.logger.error(`Failed to save error log: ${e.message}`);
@@ -2380,8 +2433,7 @@ export class ScrapersService {
     if (msg.includes('network') || msg.includes('econnrefused') || msg.includes('err_aborted'))
       return 'network_error';
     if (msg.includes('validation') || msg.includes('schema')) return 'validation_failed';
-    if (msg.includes('navigation') || msg.includes('unable to retrieve'))
-      return 'navigation_error';
+    if (msg.includes('navigation') || msg.includes('unable to retrieve')) return 'navigation_error';
     if (msg.includes('auth') || msg.includes('401') || msg.includes('403'))
       return 'authentication_error';
 
@@ -2392,12 +2444,7 @@ export class ScrapersService {
    * Verifica se erro é temporário e vale retry
    */
   private isRetryableError(error: Error): boolean {
-    const retryableTypes = [
-      'timeout',
-      'network_error',
-      'service_unavailable',
-      'navigation_error',
-    ];
+    const retryableTypes = ['timeout', 'network_error', 'service_unavailable', 'navigation_error'];
     return retryableTypes.includes(this.classifyError(error));
   }
 
@@ -2464,9 +2511,7 @@ export class ScrapersService {
    * @param ticker - Ticker do ativo (e.g., 'PETR4')
    * @returns Dados de dividendos do StatusInvest
    */
-  private async callPythonDividendsScraper(
-    ticker: string,
-  ): Promise<{
+  private async callPythonDividendsScraper(ticker: string): Promise<{
     success: boolean;
     data?: any;
     error?: string;
@@ -2477,9 +2522,7 @@ export class ScrapersService {
       // The OAuth API runs on scrapers container which has working network
       const oauthApiUrl = this.pythonApiUrl.replace(':8000', ':8080');
       const url = `${oauthApiUrl}/api/scrapers/dividends/${ticker}`;
-      const response = await firstValueFrom(
-        this.httpService.get(url, { timeout: 65000 }),
-      );
+      const response = await firstValueFrom(this.httpService.get(url, { timeout: 65000 }));
 
       const data = response.data;
 
@@ -2514,9 +2557,7 @@ export class ScrapersService {
    * @param ticker - Ticker do ativo (e.g., 'PETR4')
    * @returns Taxas de aluguel do StatusInvest/BTC
    */
-  private async callPythonStockLendingScraper(
-    ticker: string,
-  ): Promise<{
+  private async callPythonStockLendingScraper(ticker: string): Promise<{
     success: boolean;
     data?: any;
     error?: string;
@@ -2527,9 +2568,7 @@ export class ScrapersService {
       // The OAuth API runs on scrapers container which has working network
       const oauthApiUrl = this.pythonApiUrl.replace(':8000', ':8080');
       const url = `${oauthApiUrl}/api/scrapers/stock-lending/${ticker}`;
-      const response = await firstValueFrom(
-        this.httpService.get(url, { timeout: 65000 }),
-      );
+      const response = await firstValueFrom(this.httpService.get(url, { timeout: 65000 }));
 
       const data = response.data;
 
@@ -2594,9 +2633,7 @@ export class ScrapersService {
 
         if (result.success && result.data) {
           if (attempt > 0) {
-            this.logger.log(
-              `[RETRY] ${ticker}/${scraperId}: ✅ Success on attempt ${attempt + 1}`,
-            );
+            this.logger.log(`[RETRY] ${ticker}/${scraperId}: ✅ Success on attempt ${attempt + 1}`);
           }
           return {
             success: true,
@@ -2658,7 +2695,7 @@ export class ScrapersService {
     let validation = this.crossValidateData(successfulResults, rawSourcesData);
 
     // Verificar se já atende critérios
-    if (successfulResults.length >= this.minSources && validation.confidence >= 0.60) {
+    if (successfulResults.length >= this.minSources && validation.confidence >= 0.6) {
       this.logger.log(
         `[FALLBACK] ${ticker}: Already meets criteria. ` +
           `${successfulResults.length} sources, confidence ${(validation.confidence * 100).toFixed(1)}%. Skipping fallback.`,
@@ -2713,7 +2750,7 @@ export class ScrapersService {
       round++;
 
       // Verificar critérios a cada round (pode parar antes de esgotar)
-      if (successfulResults.length >= this.minSources && validation.confidence >= 0.60) {
+      if (successfulResults.length >= this.minSources && validation.confidence >= 0.6) {
         this.logger.log(
           `[FALLBACK] ${ticker}: ✅ Criteria met after ${round} rounds. ` +
             `Sources: ${successfulResults.length}, Confidence: ${(validation.confidence * 100).toFixed(1)}%. Stopping.`,

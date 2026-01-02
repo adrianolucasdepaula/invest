@@ -118,10 +118,7 @@ export interface DateRange {
  * @param variables - Object with variable values
  * @returns Rendered prompt string
  */
-export function renderPrompt(
-  template: string,
-  variables: Record<string, unknown>,
-): string {
+export function renderPrompt(template: string, variables: Record<string, unknown>): string {
   let rendered = template;
 
   for (const [key, value] of Object.entries(variables)) {

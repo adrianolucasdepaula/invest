@@ -39,7 +39,7 @@ export class BacktestConfigDto implements BacktestConfig {
   })
   @IsNumber()
   @Min(0.05)
-  @Max(0.30)
+  @Max(0.3)
   targetDelta: number;
 
   @ApiProperty({
@@ -102,8 +102,8 @@ export class BacktestConfigDto implements BacktestConfig {
   })
   @IsNumber()
   @IsOptional()
-  @Min(0.10)
-  @Max(0.50)
+  @Min(0.1)
+  @Max(0.5)
   maxWeeklyAllocation?: number;
 
   @ApiProperty({

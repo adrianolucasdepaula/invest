@@ -1,10 +1,17 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { DiscrepancyResolution, ResolutionMethod } from '@database/entities/discrepancy-resolution.entity';
+import {
+  DiscrepancyResolution,
+  ResolutionMethod,
+} from '@database/entities/discrepancy-resolution.entity';
 import { FundamentalData } from '@database/entities/fundamental-data.entity';
 import { Asset } from '@database/entities/asset.entity';
-import { SOURCE_PRIORITY, FieldSourceInfo, FieldSourcesMap } from './interfaces/field-source.interface';
+import {
+  SOURCE_PRIORITY,
+  FieldSourceInfo,
+  FieldSourcesMap,
+} from './interfaces/field-source.interface';
 
 /**
  * DTO para resolução manual de discrepância
@@ -284,9 +291,16 @@ export class DiscrepancyResolutionService {
     await this.resolutionRepository.save(resolution);
 
     // Atualizar fundamental data
-    await this.updateFundamentalDataField(fd, dto.fieldName, dto.selectedValue, dto.selectedSource || 'manual');
+    await this.updateFundamentalDataField(
+      fd,
+      dto.fieldName,
+      dto.selectedValue,
+      dto.selectedSource || 'manual',
+    );
 
-    this.logger.log(`[RESOLUTION] Resolved ${dto.ticker} - ${dto.fieldName}: ${oldValue} -> ${dto.selectedValue}`);
+    this.logger.log(
+      `[RESOLUTION] Resolved ${dto.ticker} - ${dto.fieldName}: ${oldValue} -> ${dto.selectedValue}`,
+    );
 
     return {
       ticker: dto.ticker.toUpperCase(),
@@ -342,7 +356,9 @@ export class DiscrepancyResolutionService {
         if (!fieldInfo?.hasDiscrepancy) continue;
 
         // Filtrar por severidade
-        const maxDeviation = Math.max(...(fieldInfo.divergentSources?.map((s) => s.deviation) || [0]));
+        const maxDeviation = Math.max(
+          ...(fieldInfo.divergentSources?.map((s) => s.deviation) || [0]),
+        );
         const severity = maxDeviation > 20 ? 'high' : maxDeviation > 10 ? 'medium' : 'low';
 
         if (options.severity && options.severity !== 'all' && severity !== options.severity) {
@@ -350,7 +366,13 @@ export class DiscrepancyResolutionService {
         }
 
         try {
-          const result = await this.autoResolveField(fd, fieldName, fieldInfo, options.method, options.dryRun);
+          const result = await this.autoResolveField(
+            fd,
+            fieldName,
+            fieldInfo,
+            options.method,
+            options.dryRun,
+          );
 
           if (result) {
             results.push(result);

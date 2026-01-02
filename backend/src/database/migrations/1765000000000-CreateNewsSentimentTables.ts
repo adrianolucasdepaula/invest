@@ -134,8 +134,12 @@ export class CreateNewsSentimentTables1765000000000 implements MigrationInterfac
     // 6. Criar índices para news
     await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_news_ticker ON news(ticker);`);
     await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_news_source ON news(source);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_news_published_at ON news(published_at DESC);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_news_is_analyzed ON news(is_analyzed);`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_news_published_at ON news(published_at DESC);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_news_is_analyzed ON news(is_analyzed);`,
+    );
     await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_news_asset_id ON news(asset_id);`);
 
     // 7. Criar tabela news_analysis
@@ -161,10 +165,18 @@ export class CreateNewsSentimentTables1765000000000 implements MigrationInterfac
     `);
 
     // 8. Criar índices para news_analysis
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_news_analysis_news_id ON news_analysis(news_id);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_news_analysis_provider ON news_analysis(provider);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_news_analysis_status ON news_analysis(status);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_news_analysis_created_at ON news_analysis(created_at DESC);`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_news_analysis_news_id ON news_analysis(news_id);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_news_analysis_provider ON news_analysis(provider);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_news_analysis_status ON news_analysis(status);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_news_analysis_created_at ON news_analysis(created_at DESC);`,
+    );
 
     // 9. Criar tabela sentiment_consensus
     await queryRunner.query(`
@@ -186,11 +198,21 @@ export class CreateNewsSentimentTables1765000000000 implements MigrationInterfac
     `);
 
     // 10. Criar índices para sentiment_consensus
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_sentiment_consensus_news_id ON sentiment_consensus(news_id);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_sentiment_consensus_final_sentiment ON sentiment_consensus(final_sentiment);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_sentiment_consensus_label ON sentiment_consensus(sentiment_label);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_sentiment_consensus_created_at ON sentiment_consensus(created_at DESC);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_sentiment_consensus_high_confidence ON sentiment_consensus(is_high_confidence);`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_sentiment_consensus_news_id ON sentiment_consensus(news_id);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_sentiment_consensus_final_sentiment ON sentiment_consensus(final_sentiment);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_sentiment_consensus_label ON sentiment_consensus(sentiment_label);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_sentiment_consensus_created_at ON sentiment_consensus(created_at DESC);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_sentiment_consensus_high_confidence ON sentiment_consensus(is_high_confidence);`,
+    );
 
     // 11. Criar tabela economic_events
     await queryRunner.query(`
@@ -219,11 +241,21 @@ export class CreateNewsSentimentTables1765000000000 implements MigrationInterfac
     `);
 
     // 12. Criar índices para economic_events
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_economic_events_date ON economic_events(event_date);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_economic_events_country ON economic_events(country);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_economic_events_importance ON economic_events(importance);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_economic_events_category ON economic_events(category);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_economic_events_country_date ON economic_events(country, event_date);`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_economic_events_date ON economic_events(event_date);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_economic_events_country ON economic_events(country);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_economic_events_importance ON economic_events(importance);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_economic_events_category ON economic_events(category);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_economic_events_country_date ON economic_events(country, event_date);`,
+    );
 
     // 13. Criar trigger para updated_at em sentiment_consensus
     await queryRunner.query(`
@@ -255,8 +287,12 @@ export class CreateNewsSentimentTables1765000000000 implements MigrationInterfac
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop triggers
-    await queryRunner.query(`DROP TRIGGER IF EXISTS update_sentiment_consensus_updated_at ON sentiment_consensus;`);
-    await queryRunner.query(`DROP TRIGGER IF EXISTS update_economic_events_updated_at ON economic_events;`);
+    await queryRunner.query(
+      `DROP TRIGGER IF EXISTS update_sentiment_consensus_updated_at ON sentiment_consensus;`,
+    );
+    await queryRunner.query(
+      `DROP TRIGGER IF EXISTS update_economic_events_updated_at ON economic_events;`,
+    );
 
     // Drop tables (in reverse order due to foreign keys)
     await queryRunner.query(`DROP TABLE IF EXISTS economic_events;`);

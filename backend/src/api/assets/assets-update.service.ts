@@ -17,11 +17,7 @@ import { OpcoesScraper, OptionsLiquidityData } from '../../scrapers/options/opco
 import { AppWebSocketGateway } from '../../websocket/websocket.gateway';
 import { TelemetryService } from '../../telemetry/telemetry.service';
 import { SpanKind } from '@opentelemetry/api';
-import {
-  NewsCollectorsService,
-  AIOrchestatorService,
-  ConsensusService,
-} from '../news/services';
+import { NewsCollectorsService, AIOrchestatorService, ConsensusService } from '../news/services';
 import { NewsService } from '../news/news.service';
 import { News } from '@database/entities';
 // FASE 144: Dividends/StockLending DESABILITADOS (Issue #DIVID-001)
@@ -122,9 +118,7 @@ export class AssetsUpdateService {
   ): Promise<UpdateResult> {
     // Generate trace ID if not provided (for standalone calls)
     const traceId = traceContext?.traceId || this.generateTraceId();
-    const positionInfo = traceContext
-      ? `[${traceContext.position}/${traceContext.batchSize}]`
-      : '';
+    const positionInfo = traceContext ? `[${traceContext.position}/${traceContext.batchSize}]` : '';
     const logPrefix = `[TRACE-${traceId}]${positionInfo}`;
 
     this.logger.log(`${logPrefix} [PRE-SPAN] updateSingleAsset called for ${ticker}`);
@@ -142,97 +136,107 @@ export class AssetsUpdateService {
           'asset.batch_size': traceContext?.batchSize || 1,
         });
 
-    this.logger.log(
-      `${logPrefix} Starting update for ${ticker} (user: ${userId || 'system'}, trigger: ${triggeredBy})`,
-    );
-    this.logger.debug(`${logPrefix} DEBUG 1: Method called successfully`);
-    const startTime = Date.now();
-
-    this.logger.debug(`${logPrefix} DEBUG 2: Looking up asset...`);
-    // 1. Find asset in database
-    const asset = await this.assetRepository.findOne({ where: { ticker } });
-    if (!asset) {
-      throw new NotFoundException(`Asset ${ticker} not found`);
-    }
-    this.logger.debug(`${logPrefix} DEBUG 3: Asset found: ${asset.id}`);
-
-    // 2. Check if asset has auto-update disabled
-    if (!asset.autoUpdateEnabled && triggeredBy === UpdateTrigger.CRON) {
-      this.logger.warn(`${logPrefix} Auto-update disabled for ${ticker}, skipping cron update`);
-      return {
-        success: false,
-        assetId: asset.id,
-        ticker: asset.ticker,
-        status: UpdateStatus.CANCELLED,
-        traceId,
-        error: 'Auto-update disabled for this asset',
-      };
-    }
-
-    // 3. Create update log entry
-    const updateLog = this.updateLogRepository.create({
-      asset,
-      assetId: asset.id,
-      userId,
-      startedAt: new Date(),
-      status: UpdateStatus.RUNNING,
-      triggeredBy,
-    });
-    await this.updateLogRepository.save(updateLog);
-
-    // 4. Emit WebSocket event: update started
-    this.webSocketGateway.emitAssetUpdateStarted({
-      assetId: asset.id,
-      ticker: asset.ticker,
-      updateLogId: updateLog.id,
-      triggeredBy,
-    });
-
-    try {
-      // 5. Execute scrapers with nested span
-      this.logger.log(`${logPrefix} Scraping data for ${ticker}...`);
-      this.logger.debug(`${logPrefix} DEBUG 4: Starting scrapers...`);
-      const scraperStartTime = Date.now();
-
-      // Add event for scraper start
-      this.telemetryService.addSpanEvent('scraper.start', { ticker });
-
-      const scrapedResult = await this.scrapersService.scrapeFundamentalData(ticker);
-      this.logger.debug(`${logPrefix} DEBUG 5: Scrapers returned, duration: ${Date.now() - scraperStartTime}ms`);
-      this.logger.debug(`${logPrefix} DEBUG 6: scrapedResult = ${JSON.stringify(scrapedResult).substring(0, 200)}...`);
-      const scraperDuration = Date.now() - scraperStartTime;
-
-      // Record scraper duration metric
-      this.telemetryService.recordScraperDuration('fundamental_data', scraperDuration, 'success');
-      this.telemetryService.addSpanEvent('scraper.complete', {
-        ticker,
-        duration_ms: scraperDuration,
-        sources_count: scrapedResult?.sourcesCount || 0,
-      });
-
-      this.logger.debug(`${logPrefix} Scrapers completed for ${ticker} in ${scraperDuration}ms`);
-
-      // 6. Validate data quality
-      if (!scrapedResult || scrapedResult.sourcesCount < this.MIN_SOURCES) {
-        throw new Error(
-          `Insufficient data sources: ${scrapedResult?.sourcesCount || 0} < ${this.MIN_SOURCES}`,
+        this.logger.log(
+          `${logPrefix} Starting update for ${ticker} (user: ${userId || 'system'}, trigger: ${triggeredBy})`,
         );
-      }
+        this.logger.debug(`${logPrefix} DEBUG 1: Method called successfully`);
+        const startTime = Date.now();
 
-      if (scrapedResult.confidence < this.MIN_CONFIDENCE) {
-        throw new Error(`Low confidence: ${scrapedResult.confidence} < ${this.MIN_CONFIDENCE}`);
-      }
+        this.logger.debug(`${logPrefix} DEBUG 2: Looking up asset...`);
+        // 1. Find asset in database
+        const asset = await this.assetRepository.findOne({ where: { ticker } });
+        if (!asset) {
+          throw new NotFoundException(`Asset ${ticker} not found`);
+        }
+        this.logger.debug(`${logPrefix} DEBUG 3: Asset found: ${asset.id}`);
 
-      // 7. Map and save fundamental data
-      const fundamentalData = await this.saveFundamentalData(asset, scrapedResult);
+        // 2. Check if asset has auto-update disabled
+        if (!asset.autoUpdateEnabled && triggeredBy === UpdateTrigger.CRON) {
+          this.logger.warn(`${logPrefix} Auto-update disabled for ${ticker}, skipping cron update`);
+          return {
+            success: false,
+            assetId: asset.id,
+            ticker: asset.ticker,
+            status: UpdateStatus.CANCELLED,
+            traceId,
+            error: 'Auto-update disabled for this asset',
+          };
+        }
 
-      // 7.1. Collect and analyze news automatically (FASE 75.6)
-      // This updates the sentiment thermometer for the asset
-      await this.collectAndAnalyzeNews(ticker, logPrefix);
+        // 3. Create update log entry
+        const updateLog = this.updateLogRepository.create({
+          asset,
+          assetId: asset.id,
+          userId,
+          startedAt: new Date(),
+          status: UpdateStatus.RUNNING,
+          triggeredBy,
+        });
+        await this.updateLogRepository.save(updateLog);
 
-      // 7.2. FASE 144: DESABILITADO - Issue #DIVID-001 (Cloudflare blocking)
-      // StatusInvest Dividends/StockLending requer OAuth (adiado para FASE 145)
-      /*
+        // 4. Emit WebSocket event: update started
+        this.webSocketGateway.emitAssetUpdateStarted({
+          assetId: asset.id,
+          ticker: asset.ticker,
+          updateLogId: updateLog.id,
+          triggeredBy,
+        });
+
+        try {
+          // 5. Execute scrapers with nested span
+          this.logger.log(`${logPrefix} Scraping data for ${ticker}...`);
+          this.logger.debug(`${logPrefix} DEBUG 4: Starting scrapers...`);
+          const scraperStartTime = Date.now();
+
+          // Add event for scraper start
+          this.telemetryService.addSpanEvent('scraper.start', { ticker });
+
+          const scrapedResult = await this.scrapersService.scrapeFundamentalData(ticker);
+          this.logger.debug(
+            `${logPrefix} DEBUG 5: Scrapers returned, duration: ${Date.now() - scraperStartTime}ms`,
+          );
+          this.logger.debug(
+            `${logPrefix} DEBUG 6: scrapedResult = ${JSON.stringify(scrapedResult).substring(0, 200)}...`,
+          );
+          const scraperDuration = Date.now() - scraperStartTime;
+
+          // Record scraper duration metric
+          this.telemetryService.recordScraperDuration(
+            'fundamental_data',
+            scraperDuration,
+            'success',
+          );
+          this.telemetryService.addSpanEvent('scraper.complete', {
+            ticker,
+            duration_ms: scraperDuration,
+            sources_count: scrapedResult?.sourcesCount || 0,
+          });
+
+          this.logger.debug(
+            `${logPrefix} Scrapers completed for ${ticker} in ${scraperDuration}ms`,
+          );
+
+          // 6. Validate data quality
+          if (!scrapedResult || scrapedResult.sourcesCount < this.MIN_SOURCES) {
+            throw new Error(
+              `Insufficient data sources: ${scrapedResult?.sourcesCount || 0} < ${this.MIN_SOURCES}`,
+            );
+          }
+
+          if (scrapedResult.confidence < this.MIN_CONFIDENCE) {
+            throw new Error(`Low confidence: ${scrapedResult.confidence} < ${this.MIN_CONFIDENCE}`);
+          }
+
+          // 7. Map and save fundamental data
+          const fundamentalData = await this.saveFundamentalData(asset, scrapedResult);
+
+          // 7.1. Collect and analyze news automatically (FASE 75.6)
+          // This updates the sentiment thermometer for the asset
+          await this.collectAndAnalyzeNews(ticker, logPrefix);
+
+          // 7.2. FASE 144: DESABILITADO - Issue #DIVID-001 (Cloudflare blocking)
+          // StatusInvest Dividends/StockLending requer OAuth (adiado para FASE 145)
+          /*
       const [dividendsResult, lendingResult] = await Promise.allSettled([
         this.scrapersService.fetchDividendsData(ticker),
         this.scrapersService.fetchStockLendingData(ticker),
@@ -292,161 +296,163 @@ export class AssetsUpdateService {
       }
       */
 
-      // 8. Extract sector from rawSourcesData (BRAPI provides this)
-      // Try BRAPI first (most reliable for sector), then other sources
-      this.logger.debug(
-        `${logPrefix} rawSourcesData for ${ticker}: ${JSON.stringify(
-          scrapedResult.rawSourcesData?.map((s) => ({
-            source: s.source,
-            hasSector: !!s.data?.sector,
-            sector: s.data?.sector,
-          })),
-        )}`,
-      );
-      const sectorFromSources = this.extractSectorFromSources(scrapedResult.rawSourcesData);
-      if (sectorFromSources && !asset.sector) {
-        asset.sector = sectorFromSources;
-        this.logger.debug(`${logPrefix} Extracted sector "${sectorFromSources}" for ${ticker}`);
-      } else if (!sectorFromSources) {
-        this.logger.debug(`${logPrefix} No sector found in sources for ${ticker}`);
-      }
+          // 8. Extract sector from rawSourcesData (BRAPI provides this)
+          // Try BRAPI first (most reliable for sector), then other sources
+          this.logger.debug(
+            `${logPrefix} rawSourcesData for ${ticker}: ${JSON.stringify(
+              scrapedResult.rawSourcesData?.map((s) => ({
+                source: s.source,
+                hasSector: !!s.data?.sector,
+                sector: s.data?.sector,
+              })),
+            )}`,
+          );
+          const sectorFromSources = this.extractSectorFromSources(scrapedResult.rawSourcesData);
+          if (sectorFromSources && !asset.sector) {
+            asset.sector = sectorFromSources;
+            this.logger.debug(`${logPrefix} Extracted sector "${sectorFromSources}" for ${ticker}`);
+          } else if (!sectorFromSources) {
+            this.logger.debug(`${logPrefix} No sector found in sources for ${ticker}`);
+          }
 
-      // 8.1. Check options liquidity for this asset
-      try {
-        const optionsData = await this.checkOptionsForAsset(ticker);
-        if (optionsData) {
-          asset.hasOptions = true;
-          asset.optionsLiquidityMetadata = {
-            periodo: optionsData.periodo,
-            totalNegocios: optionsData.totalNegocios,
-            volumeFinanceiro: optionsData.volumeFinanceiro,
-            quantidadeNegociada: optionsData.quantidadeNegociada,
-            mediaNegocios: optionsData.mediaNegocios,
-            mediaVolume: optionsData.mediaVolume,
-            lastUpdated: optionsData.lastUpdated,
+          // 8.1. Check options liquidity for this asset
+          try {
+            const optionsData = await this.checkOptionsForAsset(ticker);
+            if (optionsData) {
+              asset.hasOptions = true;
+              asset.optionsLiquidityMetadata = {
+                periodo: optionsData.periodo,
+                totalNegocios: optionsData.totalNegocios,
+                volumeFinanceiro: optionsData.volumeFinanceiro,
+                quantidadeNegociada: optionsData.quantidadeNegociada,
+                mediaNegocios: optionsData.mediaNegocios,
+                mediaVolume: optionsData.mediaVolume,
+                lastUpdated: optionsData.lastUpdated,
+              };
+              this.logger.debug(`${logPrefix} Asset ${ticker} has options available`);
+            } else if (asset.hasOptions) {
+              // Asset no longer has options
+              asset.hasOptions = false;
+              asset.optionsLiquidityMetadata = null;
+              this.logger.debug(`${logPrefix} Asset ${ticker} no longer has options`);
+            }
+          } catch (optionsError) {
+            this.logger.warn(
+              `${logPrefix} Failed to check options for ${ticker}: ${optionsError.message}`,
+            );
+            // Continue without failing - options check is not critical
+          }
+
+          // 9. Update asset tracking fields
+          asset.lastUpdated = new Date();
+          asset.lastUpdateStatus = 'success';
+          asset.lastUpdateError = null;
+          asset.updateRetryCount = 0;
+          await this.assetRepository.save(asset);
+
+          // 10. Complete update log
+          const duration = Date.now() - startTime;
+          updateLog.completedAt = new Date();
+          updateLog.status = UpdateStatus.SUCCESS;
+          updateLog.metadata = {
+            sources: scrapedResult.sources,
+            sourcesCount: scrapedResult.sourcesCount,
+            confidence: scrapedResult.confidence,
+            dataPoints: scrapedResult.data ? Object.keys(scrapedResult.data).length : 0, // BUGFIX: Handle undefined data
+            discrepancies: scrapedResult.discrepancies,
+            duration,
+            traceId,
+            batchPosition: traceContext?.position,
+            batchSize: traceContext?.batchSize,
           };
-          this.logger.debug(`${logPrefix} Asset ${ticker} has options available`);
-        } else if (asset.hasOptions) {
-          // Asset no longer has options
-          asset.hasOptions = false;
-          asset.optionsLiquidityMetadata = null;
-          this.logger.debug(`${logPrefix} Asset ${ticker} no longer has options`);
+          await this.updateLogRepository.save(updateLog);
+
+          // 11. Emit WebSocket event: update completed
+          this.webSocketGateway.emitAssetUpdateCompleted({
+            assetId: asset.id,
+            ticker: asset.ticker,
+            updateLogId: updateLog.id,
+            status: UpdateStatus.SUCCESS,
+            duration,
+            metadata: updateLog.metadata,
+          });
+
+          this.logger.log(`${logPrefix} ✅ Successfully updated ${ticker} in ${duration}ms`);
+
+          // Record telemetry metrics for success
+          this.telemetryService.recordScraperDuration('asset_update', duration, 'success');
+          span.setAttributes({
+            'asset.success': true,
+            'asset.duration_ms': duration,
+            'asset.sources_count': scrapedResult.sourcesCount,
+            'asset.confidence': scrapedResult.confidence,
+          });
+
+          return {
+            success: true,
+            assetId: asset.id,
+            ticker: asset.ticker,
+            status: UpdateStatus.SUCCESS,
+            duration,
+            traceId,
+            metadata: updateLog.metadata,
+          };
+        } catch (error) {
+          // Handle failure
+          const duration = Date.now() - startTime;
+          const errorMessage = error.message || 'Unknown error';
+
+          this.logger.error(`${logPrefix} ❌ Failed to update ${ticker}: ${errorMessage}`);
+
+          // Update asset tracking fields
+          asset.lastUpdateStatus = 'failed';
+          asset.lastUpdateError = errorMessage;
+          asset.updateRetryCount += 1;
+
+          // If max retries reached, reset counter for next batch (NEVER disable asset)
+          if (asset.updateRetryCount >= this.MAX_RETRY_COUNT) {
+            this.logger.warn(
+              `${logPrefix} Max retries reached for ${ticker}, resetting counter for next batch`,
+            );
+            asset.updateRetryCount = 0; // Reset para próxima tentativa
+          }
+
+          await this.assetRepository.save(asset);
+
+          // Update log with failure
+          updateLog.completedAt = new Date();
+          updateLog.status = UpdateStatus.FAILED;
+          updateLog.error = errorMessage;
+          updateLog.metadata = {
+            duration,
+            traceId,
+            batchPosition: traceContext?.position,
+            batchSize: traceContext?.batchSize,
+          };
+          await this.updateLogRepository.save(updateLog);
+
+          // Emit WebSocket event: update failed
+          this.webSocketGateway.emitAssetUpdateFailed({
+            assetId: asset.id,
+            ticker: asset.ticker,
+            updateLogId: updateLog.id,
+            error: errorMessage,
+            duration,
+          });
+
+          // Record telemetry metric for failure
+          this.telemetryService.recordScraperDuration('asset_update', duration, 'failure');
+
+          return {
+            success: false,
+            assetId: asset.id,
+            ticker: asset.ticker,
+            status: UpdateStatus.FAILED,
+            error: errorMessage,
+            duration,
+            traceId,
+          };
         }
-      } catch (optionsError) {
-        this.logger.warn(`${logPrefix} Failed to check options for ${ticker}: ${optionsError.message}`);
-        // Continue without failing - options check is not critical
-      }
-
-      // 9. Update asset tracking fields
-      asset.lastUpdated = new Date();
-      asset.lastUpdateStatus = 'success';
-      asset.lastUpdateError = null;
-      asset.updateRetryCount = 0;
-      await this.assetRepository.save(asset);
-
-      // 10. Complete update log
-      const duration = Date.now() - startTime;
-      updateLog.completedAt = new Date();
-      updateLog.status = UpdateStatus.SUCCESS;
-      updateLog.metadata = {
-        sources: scrapedResult.sources,
-        sourcesCount: scrapedResult.sourcesCount,
-        confidence: scrapedResult.confidence,
-        dataPoints: scrapedResult.data ? Object.keys(scrapedResult.data).length : 0,  // BUGFIX: Handle undefined data
-        discrepancies: scrapedResult.discrepancies,
-        duration,
-        traceId,
-        batchPosition: traceContext?.position,
-        batchSize: traceContext?.batchSize,
-      };
-      await this.updateLogRepository.save(updateLog);
-
-      // 11. Emit WebSocket event: update completed
-      this.webSocketGateway.emitAssetUpdateCompleted({
-        assetId: asset.id,
-        ticker: asset.ticker,
-        updateLogId: updateLog.id,
-        status: UpdateStatus.SUCCESS,
-        duration,
-        metadata: updateLog.metadata,
-      });
-
-      this.logger.log(`${logPrefix} ✅ Successfully updated ${ticker} in ${duration}ms`);
-
-      // Record telemetry metrics for success
-      this.telemetryService.recordScraperDuration('asset_update', duration, 'success');
-      span.setAttributes({
-        'asset.success': true,
-        'asset.duration_ms': duration,
-        'asset.sources_count': scrapedResult.sourcesCount,
-        'asset.confidence': scrapedResult.confidence,
-      });
-
-      return {
-        success: true,
-        assetId: asset.id,
-        ticker: asset.ticker,
-        status: UpdateStatus.SUCCESS,
-        duration,
-        traceId,
-        metadata: updateLog.metadata,
-      };
-    } catch (error) {
-      // Handle failure
-      const duration = Date.now() - startTime;
-      const errorMessage = error.message || 'Unknown error';
-
-      this.logger.error(`${logPrefix} ❌ Failed to update ${ticker}: ${errorMessage}`);
-
-      // Update asset tracking fields
-      asset.lastUpdateStatus = 'failed';
-      asset.lastUpdateError = errorMessage;
-      asset.updateRetryCount += 1;
-
-      // If max retries reached, reset counter for next batch (NEVER disable asset)
-      if (asset.updateRetryCount >= this.MAX_RETRY_COUNT) {
-        this.logger.warn(
-          `${logPrefix} Max retries reached for ${ticker}, resetting counter for next batch`,
-        );
-        asset.updateRetryCount = 0; // Reset para próxima tentativa
-      }
-
-      await this.assetRepository.save(asset);
-
-      // Update log with failure
-      updateLog.completedAt = new Date();
-      updateLog.status = UpdateStatus.FAILED;
-      updateLog.error = errorMessage;
-      updateLog.metadata = {
-        duration,
-        traceId,
-        batchPosition: traceContext?.position,
-        batchSize: traceContext?.batchSize,
-      };
-      await this.updateLogRepository.save(updateLog);
-
-      // Emit WebSocket event: update failed
-      this.webSocketGateway.emitAssetUpdateFailed({
-        assetId: asset.id,
-        ticker: asset.ticker,
-        updateLogId: updateLog.id,
-        error: errorMessage,
-        duration,
-      });
-
-      // Record telemetry metric for failure
-      this.telemetryService.recordScraperDuration('asset_update', duration, 'failure');
-
-      return {
-        success: false,
-        assetId: asset.id,
-        ticker: asset.ticker,
-        status: UpdateStatus.FAILED,
-        error: errorMessage,
-        duration,
-        traceId,
-      };
-    }
       },
       { kind: SpanKind.INTERNAL, attributes: { 'operation.type': 'asset_update' } },
     );
@@ -533,7 +539,12 @@ export class AssetsUpdateService {
         position,
         batchSize: uniqueTickers.length,
       };
-      const result = await this.updateSingleAsset(ticker, userId, UpdateTrigger.MANUAL, traceContext);
+      const result = await this.updateSingleAsset(
+        ticker,
+        userId,
+        UpdateTrigger.MANUAL,
+        traceContext,
+      );
       results.push(result);
 
       if (result.success) {
@@ -614,9 +625,7 @@ export class AssetsUpdateService {
       this.logger.warn(`${logPrefix} Tickers not found: ${notFoundTickers.join(', ')}`);
     }
 
-    this.logger.log(
-      `${logPrefix} Validated ${foundTickers.length}/${tickers.length} tickers`,
-    );
+    this.logger.log(`${logPrefix} Validated ${foundTickers.length}/${tickers.length} tickers`);
 
     // 2. Emit WebSocket event: batch update started
     // ✅ FIX FASE 114: Added batchId (using traceId) to prevent race condition
@@ -635,9 +644,7 @@ export class AssetsUpdateService {
       const ticker = foundTickers[i];
       const position = i + 1;
 
-      this.logger.debug(
-        `${logPrefix}[${position}/${foundTickers.length}] Processing ${ticker}...`,
-      );
+      this.logger.debug(`${logPrefix}[${position}/${foundTickers.length}] Processing ${ticker}...`);
 
       // Emit progress
       // ✅ FIX FASE 114: Added batchId to prevent race condition
@@ -832,12 +839,16 @@ export class AssetsUpdateService {
     // FASE 144: REJECT invalid values (do NOT clamp - violates financial data rules)
     // Financial data must NEVER be manipulated. If invalid, return null.
     if (num > MAX_VALUE) {
-      this.logger.error(`[SANITIZE] Value ${num} exceeds max (${MAX_VALUE}), REJECTING (invalid data)`);
-      return null;  // BUGFIX: Reject instead of clamp
+      this.logger.error(
+        `[SANITIZE] Value ${num} exceeds max (${MAX_VALUE}), REJECTING (invalid data)`,
+      );
+      return null; // BUGFIX: Reject instead of clamp
     }
     if (num < MIN_VALUE) {
-      this.logger.error(`[SANITIZE] Value ${num} below min (${MIN_VALUE}), REJECTING (invalid data)`);
-      return null;  // BUGFIX: Reject instead of clamp
+      this.logger.error(
+        `[SANITIZE] Value ${num} below min (${MIN_VALUE}), REJECTING (invalid data)`,
+      );
+      return null; // BUGFIX: Reject instead of clamp
     }
 
     // Return Decimal for precise financial calculations
@@ -952,7 +963,8 @@ export class AssetsUpdateService {
       .insert()
       .into(FundamentalData)
       .values(fundamentalData)
-      .onConflict(`("asset_id", "reference_date") DO UPDATE SET
+      .onConflict(
+        `("asset_id", "reference_date") DO UPDATE SET
         "pl" = EXCLUDED."pl",
         "pvp" = EXCLUDED."pvp",
         "psr" = EXCLUDED."psr",
@@ -994,7 +1006,8 @@ export class AssetsUpdateService {
         "metadata" = EXCLUDED."metadata",
         "field_sources" = EXCLUDED."field_sources",
         "updated_at" = EXCLUDED."updated_at"
-      `)
+      `,
+      )
       .execute();
 
     // Retornar o registro (buscar do banco após UPSERT)
@@ -1048,16 +1061,11 @@ export class AssetsUpdateService {
 
     const assets = await queryBuilder
       .orderBy('asset.hasOptions', 'DESC') // Opções primeiro
-      .addOrderBy(
-        'CASE WHEN asset.lastUpdated IS NULL THEN 0 ELSE 1 END',
-        'ASC',
-      ) // Nunca atualizados primeiro
+      .addOrderBy('CASE WHEN asset.lastUpdated IS NULL THEN 0 ELSE 1 END', 'ASC') // Nunca atualizados primeiro
       .addOrderBy('asset.lastUpdated', 'ASC', 'NULLS FIRST') // Mais antigos primeiro
       .getMany();
 
-    this.logger.log(
-      `[GET-PRIORITY] Returned ${assets.length} assets ordered by priority`,
-    );
+    this.logger.log(`[GET-PRIORITY] Returned ${assets.length} assets ordered by priority`);
 
     // Log first 5 assets for debugging
     if (assets.length > 0) {
@@ -1095,9 +1103,22 @@ export class AssetsUpdateService {
 
     // Invalid/generic sector values to ignore
     const invalidSectors = [
-      'ações', 'acoes', 'fiis', 'fii', 'home', 'início', 'inicio',
-      'de atuação', 'de atuacao', 'setor de atuação', 'setor',
-      'arrow_forward', 'arrow_back', 'papéis', 'papeis', 'misto',
+      'ações',
+      'acoes',
+      'fiis',
+      'fii',
+      'home',
+      'início',
+      'inicio',
+      'de atuação',
+      'de atuacao',
+      'setor de atuação',
+      'setor',
+      'arrow_forward',
+      'arrow_back',
+      'papéis',
+      'papeis',
+      'misto',
     ];
 
     // Helper to validate sector value
@@ -1129,7 +1150,14 @@ export class AssetsUpdateService {
     };
 
     // Priority order: Fundamentus first (best sector data), then others
-    const priorityOrder = ['fundamentus', 'brapi', 'fundamentei', 'statusinvest', 'investidor10', 'investsite'];
+    const priorityOrder = [
+      'fundamentus',
+      'brapi',
+      'fundamentei',
+      'statusinvest',
+      'investidor10',
+      'investsite',
+    ];
 
     // Try priority sources first
     for (const sourceId of priorityOrder) {
@@ -1214,9 +1242,7 @@ export class AssetsUpdateService {
         return;
       }
 
-      this.logger.log(
-        `${logPrefix} Analisando ${allUnanalyzed.length} notícias de ${ticker}...`,
-      );
+      this.logger.log(`${logPrefix} Analisando ${allUnanalyzed.length} notícias de ${ticker}...`);
 
       // 4. Analisar até 5 notícias por ativo (evitar sobrecarga de API)
       const newsToAnalyze = allUnanalyzed.slice(0, 5);
@@ -1233,9 +1259,7 @@ export class AssetsUpdateService {
           analyzedCount++;
           this.logger.debug(`${logPrefix} ✅ Notícia ${news.id} analisada`);
         } catch (error) {
-          this.logger.warn(
-            `${logPrefix} Erro ao analisar notícia ${news.id}: ${error.message}`,
-          );
+          this.logger.warn(`${logPrefix} Erro ao analisar notícia ${news.id}: ${error.message}`);
           // Continua com a próxima notícia
         }
       }

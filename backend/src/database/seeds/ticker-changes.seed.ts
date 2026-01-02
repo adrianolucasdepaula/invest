@@ -59,9 +59,7 @@ export async function seedTickerChanges(dataSource: DataSource): Promise<void> {
     for (const changeData of TICKER_CHANGES) {
       // 2.1. Verificar se já existe
       const exists = existingChanges.some(
-        tc =>
-          tc.oldTicker === changeData.oldTicker &&
-          tc.newTicker === changeData.newTicker,
+        (tc) => tc.oldTicker === changeData.oldTicker && tc.newTicker === changeData.newTicker,
       );
 
       if (exists) {
@@ -127,7 +125,6 @@ export async function seedTickerChanges(dataSource: DataSource): Promise<void> {
     console.log(`  Total ticker changes in DB: ${totalChanges}`);
     console.log(`  Inserted in this run: ${inserted}`);
     console.log(`  Skipped (already exists or missing assets): ${skipped}`);
-
   } catch (error) {
     console.error('❌ Error seeding ticker changes:', error);
     throw error;

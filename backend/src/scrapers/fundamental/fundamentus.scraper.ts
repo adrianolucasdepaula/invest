@@ -82,22 +82,24 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
       let lastMatch: cheerio.Cheerio<any> | null = null;
 
       $('table.w728').each((_, table) => {
-        $(table).find('tr').each((__, row) => {
-          const cells = $(row).find('td');
+        $(table)
+          .find('tr')
+          .each((__, row) => {
+            const cells = $(row).find('td');
 
-          for (let i = 0; i < cells.length; i++) {
-            const labelCell = $(cells[i]).find('.txt').text().trim();
+            for (let i = 0; i < cells.length; i++) {
+              const labelCell = $(cells[i]).find('.txt').text().trim();
 
-            // EXACT match (case-insensitive, normalized)
-            const normalizedLabel = labelCell.toLowerCase().replace('?', '').trim();
-            const searchLabel = label.toLowerCase().replace('?', '').trim();
+              // EXACT match (case-insensitive, normalized)
+              const normalizedLabel = labelCell.toLowerCase().replace('?', '').trim();
+              const searchLabel = label.toLowerCase().replace('?', '').trim();
 
-            if (normalizedLabel === searchLabel && i + 1 < cells.length) {
-              // Found a match - save it (will be overwritten if we find another, keeping the LAST one)
-              lastMatch = $(cells[i + 1]);
+              if (normalizedLabel === searchLabel && i + 1 < cells.length) {
+                // Found a match - save it (will be overwritten if we find another, keeping the LAST one)
+                lastMatch = $(cells[i + 1]);
+              }
             }
-          }
-        });
+          });
       });
 
       if (lastMatch) {
@@ -120,10 +122,7 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
         this.logger.debug(`[FUNDAMENTUS-TS] "${label}" raw HTML text: "${rawText}"`);
       }
 
-      const text = rawText
-        .replace('R$', '')
-        .replace('%', '')
-        .trim();
+      const text = rawText.replace('R$', '').replace('%', '').trim();
 
       // FASE 144 BUGFIX: Handle Brazilian number format correctly
       // "1.234.567,89" → 1234567.89
@@ -151,8 +150,10 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
 
       // FASE 144: Reject scientifically improbable values
       if (parsed > 1e20 || isNaN(parsed)) {
-        this.logger.warn(`[FUNDAMENTUS-TS] Suspicious value for "${label}": text="${text}" → parsed=${parsed.toExponential()}`);
-        return 0;  // Return 0 for invalid values (will be filtered by cross-validation)
+        this.logger.warn(
+          `[FUNDAMENTUS-TS] Suspicious value for "${label}": text="${text}" → parsed=${parsed.toExponential()}`,
+        );
+        return 0; // Return 0 for invalid values (will be filtered by cross-validation)
       }
 
       return parsed || 0;
@@ -164,27 +165,29 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
 
       // Find exact label match using table navigation
       $('table.w728').each((_, table) => {
-        $(table).find('tr').each((__, row) => {
-          const cells = $(row).find('td');
+        $(table)
+          .find('tr')
+          .each((__, row) => {
+            const cells = $(row).find('td');
 
-          // Process in pairs
-          for (let i = 0; i < cells.length - 1; i += 2) {
-            const labelCell = $(cells[i]).find('.txt').text().trim();
+            // Process in pairs
+            for (let i = 0; i < cells.length - 1; i += 2) {
+              const labelCell = $(cells[i]).find('.txt').text().trim();
 
-            // EXACT match (case-insensitive)
-            if (labelCell.toLowerCase() === label.toLowerCase()) {
-              // For text values, check for links first, then .txt
-              const valueCell = $(cells[i + 1]);
-              const linkText = valueCell.find('a').text().trim();
-              if (linkText) {
-                rawText = linkText;
-              } else {
-                rawText = valueCell.find('.txt').text().trim();
+              // EXACT match (case-insensitive)
+              if (labelCell.toLowerCase() === label.toLowerCase()) {
+                // For text values, check for links first, then .txt
+                const valueCell = $(cells[i + 1]);
+                const linkText = valueCell.find('a').text().trim();
+                if (linkText) {
+                  rawText = linkText;
+                } else {
+                  rawText = valueCell.find('.txt').text().trim();
+                }
+                return false; // Break
               }
-              return false; // Break
             }
-          }
-        });
+          });
 
         if (rawText) return false; // Break
       });

@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Param,
-  Body,
-  HttpCode,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, HttpCode, HttpStatus, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { IndexMembershipsService } from './index-memberships.service';
 import { BulkSyncDto, BulkSyncResultDto } from './dto';
@@ -17,9 +8,7 @@ import { BulkSyncDto, BulkSyncResultDto } from './dto';
 export class IndexMembershipsController {
   private readonly logger = new Logger(IndexMembershipsController.name);
 
-  constructor(
-    private readonly indexMembershipsService: IndexMembershipsService,
-  ) {}
+  constructor(private readonly indexMembershipsService: IndexMembershipsService) {}
 
   /**
    * POST /api/v1/index-memberships/sync/:indexName
@@ -114,9 +103,7 @@ export class IndexMembershipsController {
         successful: 18,
         failed: 2,
         totalAssets: 1640,
-        errors: [
-          { validFrom: '2019-09-02', error: 'Asset XXXX4 not found' },
-        ],
+        errors: [{ validFrom: '2019-09-02', error: 'Asset XXXX4 not found' }],
         message: 'Bulk sync completed: 18/20 periods successful, 1640 assets imported',
       },
     },

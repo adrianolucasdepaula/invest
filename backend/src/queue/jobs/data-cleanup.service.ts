@@ -90,8 +90,8 @@ export class DataCleanupService {
 
     // ✅ FASE 145 FIX: Add limits to prevent infinite loops
     const BATCH_SIZE = 1000;
-    const MAX_ITERATIONS = 100;  // Max 100K records per run
-    const BATCH_TIMEOUT_MS = 60000;  // 60s per batch
+    const MAX_ITERATIONS = 100; // Max 100K records per run
+    const BATCH_TIMEOUT_MS = 60000; // 60s per batch
 
     this.logger.log(
       `🧹 Starting scraped data cleanup (retention: ${retentionDays} days, max batches: ${MAX_ITERATIONS}, dry-run: ${isDryRun})`,
@@ -110,9 +110,10 @@ export class DataCleanupService {
       cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
       let hasMore = true;
-      let iteration = 0;  // ✅ Add iteration counter
+      let iteration = 0; // ✅ Add iteration counter
 
-      while (hasMore && iteration < MAX_ITERATIONS) {  // ✅ Add limit check
+      while (hasMore && iteration < MAX_ITERATIONS) {
+        // ✅ Add limit check
         iteration++;
 
         // ✅ Wrap batch processing in timeout
@@ -120,7 +121,7 @@ export class DataCleanupService {
           const batchResult = await Promise.race([
             this.processBatch(cutoffDate, BATCH_SIZE, isDryRun),
             new Promise<{ archived: number; deleted: number; hasMore: boolean }>((_, reject) =>
-              setTimeout(() => reject(new Error('Batch timeout')), BATCH_TIMEOUT_MS)
+              setTimeout(() => reject(new Error('Batch timeout')), BATCH_TIMEOUT_MS),
             ),
           ]);
 
@@ -128,7 +129,7 @@ export class DataCleanupService {
           stats.deleted += batchResult.deleted;
           hasMore = batchResult.hasMore;
 
-          if (isDryRun) break;  // In dry-run, process only first batch
+          if (isDryRun) break; // In dry-run, process only first batch
         } catch (error) {
           this.logger.error(`Batch processing failed: ${error.message}`);
           stats.errors++;
@@ -284,7 +285,7 @@ export class DataCleanupService {
       const result = await Promise.race([
         this.executeDelete(queryRunner, records),
         new Promise<number>((_, reject) =>
-          setTimeout(() => reject(new Error('Transaction timeout')), 30000)
+          setTimeout(() => reject(new Error('Transaction timeout')), 30000),
         ),
       ]);
 
@@ -304,10 +305,7 @@ export class DataCleanupService {
   /**
    * FASE 145 FIX: Execute delete in transaction
    */
-  private async executeDelete(
-    queryRunner: any,
-    records: ScrapedData[],
-  ): Promise<number> {
+  private async executeDelete(queryRunner: any, records: ScrapedData[]): Promise<number> {
     await queryRunner.startTransaction();
 
     const ids = records.map((r) => r.id);
@@ -340,7 +338,9 @@ export class DataCleanupService {
     // Check if cleanup is enabled
     const cleanupEnabled = this.configService.get<string>('CLEANUP_ENABLED') === 'true';
     if (!cleanupEnabled) {
-      this.logger.debug('Data cleanup disabled (CLEANUP_ENABLED != true), skipping scraper metrics cleanup');
+      this.logger.debug(
+        'Data cleanup disabled (CLEANUP_ENABLED != true), skipping scraper metrics cleanup',
+      );
       return { archived: 0, deleted: 0, errors: 0, duration: 0 };
     }
 
@@ -525,7 +525,9 @@ export class DataCleanupService {
     // Check if cleanup is enabled
     const cleanupEnabled = this.configService.get<string>('CLEANUP_ENABLED') === 'true';
     if (!cleanupEnabled) {
-      this.logger.debug('Data cleanup disabled (CLEANUP_ENABLED != true), skipping update logs cleanup');
+      this.logger.debug(
+        'Data cleanup disabled (CLEANUP_ENABLED != true), skipping update logs cleanup',
+      );
       return { archived: 0, deleted: 0, errors: 0, duration: 0 };
     }
 
@@ -618,7 +620,9 @@ export class DataCleanupService {
     // Check if cleanup is enabled
     const cleanupEnabled = this.configService.get<string>('CLEANUP_ENABLED') === 'true';
     if (!cleanupEnabled) {
-      this.logger.debug('Data cleanup disabled (CLEANUP_ENABLED != true), skipping sync history cleanup');
+      this.logger.debug(
+        'Data cleanup disabled (CLEANUP_ENABLED != true), skipping sync history cleanup',
+      );
       return { archived: 0, deleted: 0, errors: 0, duration: 0 };
     }
 
@@ -851,7 +855,9 @@ export class DataCleanupService {
     // Check if cleanup is enabled
     const cleanupEnabled = this.configService.get<string>('CLEANUP_ENABLED') === 'true';
     if (!cleanupEnabled) {
-      this.logger.debug('Data cleanup disabled (CLEANUP_ENABLED != true), skipping MinIO archives cleanup');
+      this.logger.debug(
+        'Data cleanup disabled (CLEANUP_ENABLED != true), skipping MinIO archives cleanup',
+      );
       return { archived: 0, deleted: 0, errors: 0, duration: 0 };
     }
 
@@ -896,18 +902,13 @@ export class DataCleanupService {
       this.logger.debug(`Found ${oldObjects.length} old archives to delete`);
 
       if (isDryRun) {
-        this.logger.warn(
-          `[DRY RUN] Would delete ${oldObjects.length} MinIO archive objects`,
-        );
+        this.logger.warn(`[DRY RUN] Would delete ${oldObjects.length} MinIO archive objects`);
         stats.deleted = oldObjects.length;
       } else {
         // Delete old archives
         for (const obj of oldObjects) {
           try {
-            await this.storageService.deleteObject(
-              this.storageService.BUCKETS.ARCHIVES,
-              obj.name,
-            );
+            await this.storageService.deleteObject(this.storageService.BUCKETS.ARCHIVES, obj.name);
             stats.deleted++;
           } catch (error) {
             this.logger.error(`Failed to delete ${obj.name}: ${error.message}`);
@@ -923,7 +924,10 @@ export class DataCleanupService {
       // Emit metrics
       this.metricsService.recordCleanup('minio_archives', stats.deleted);
       this.metricsService.recordCleanupDuration('minio_archives', stats.duration / 1000);
-      this.metricsService.recordCleanupResult('minio_archives', stats.errors === 0 ? 'success' : 'partial_failure');
+      this.metricsService.recordCleanupResult(
+        'minio_archives',
+        stats.errors === 0 ? 'success' : 'partial_failure',
+      );
 
       this.logger.log(
         `✅ MinIO archives cleanup completed: ${stats.deleted} deleted in ${stats.duration}ms`,
@@ -954,15 +958,15 @@ export class DataCleanupService {
     // Check if cleanup is enabled
     const cleanupEnabled = this.configService.get<string>('CLEANUP_ENABLED') === 'true';
     if (!cleanupEnabled) {
-      this.logger.debug('Data cleanup disabled (CLEANUP_ENABLED != true), skipping Docker volumes cleanup');
+      this.logger.debug(
+        'Data cleanup disabled (CLEANUP_ENABLED != true), skipping Docker volumes cleanup',
+      );
       return { archived: 0, deleted: 0, errors: 0, duration: 0 };
     }
 
     const isDryRun = this.configService.get<string>('CLEANUP_DRY_RUN') === 'true';
 
-    this.logger.log(
-      `🧹 Starting Docker orphan volumes cleanup (dry-run: ${isDryRun})`,
-    );
+    this.logger.log(`🧹 Starting Docker orphan volumes cleanup (dry-run: ${isDryRun})`);
 
     const stats: CleanupStats = {
       archived: 0,
@@ -983,10 +987,7 @@ export class DataCleanupService {
       const { promisify } = await import('util');
       const execAsync = promisify(exec);
 
-      const { stdout, stderr } = await execAsync(
-        'docker volume prune -f',
-        { timeout: 30000 },
-      );
+      const { stdout, stderr } = await execAsync('docker volume prune -f', { timeout: 30000 });
 
       // Parse output for deleted volumes count
       const match = stdout.match(/Total reclaimed space:\s*([\d.]+)\s*(GB|MB)/);

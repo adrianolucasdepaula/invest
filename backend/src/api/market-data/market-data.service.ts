@@ -1251,7 +1251,12 @@ export class MarketDataService {
       if (timeframe === IntradayTimeframeParam.H1 || timeframe === IntradayTimeframeParam.H4) {
         results = await this.intradayPriceRepository.query(query, [asset.id, start, end]);
       } else {
-        results = await this.intradayPriceRepository.query(query, [asset.id, start, end, timeframe]);
+        results = await this.intradayPriceRepository.query(query, [
+          asset.id,
+          start,
+          end,
+          timeframe,
+        ]);
       }
 
       // 6. Transform to DTO
@@ -1432,9 +1437,7 @@ export class MarketDataService {
       await this.batchUpsertIntradayPrices(entities);
 
       // 5. Calculate period
-      const sortedEntities = entities.sort(
-        (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
-      );
+      const sortedEntities = entities.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
       const periodStart = sortedEntities[0]?.timestamp.toISOString() || '';
       const periodEnd = sortedEntities[sortedEntities.length - 1]?.timestamp.toISOString() || '';
 
@@ -1591,7 +1594,18 @@ export class MarketDataService {
           .into(IntradayPrice)
           .values(batch)
           .orUpdate(
-            ['open', 'high', 'low', 'close', 'volume', 'volume_financial', 'number_of_trades', 'vwap', 'source', 'collected_at'],
+            [
+              'open',
+              'high',
+              'low',
+              'close',
+              'volume',
+              'volume_financial',
+              'number_of_trades',
+              'vwap',
+              'source',
+              'collected_at',
+            ],
             ['asset_id', 'timestamp', 'timeframe'], // Composite PK
           )
           .execute();

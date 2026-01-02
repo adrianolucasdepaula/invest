@@ -54,7 +54,7 @@ export class DecimalTransformer implements ValueTransformer {
     if (!(value instanceof Decimal)) {
       throw new TypeError(
         `DecimalTransformer.to() expected Decimal instance, got ${typeof value}. ` +
-          `Ensure entity property is typed as 'Decimal' not 'number'.`
+          `Ensure entity property is typed as 'Decimal' not 'number'.`,
       );
     }
 

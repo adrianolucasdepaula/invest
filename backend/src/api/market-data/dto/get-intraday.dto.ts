@@ -18,13 +18,13 @@ export enum IntradayTimeframeParam {
  * Range de período para consulta
  */
 export enum IntradayRangeParam {
-  H1 = '1h',    // Última hora
-  H4 = '4h',    // Últimas 4 horas
-  D1 = '1d',    // Último dia
-  D5 = '5d',    // Últimos 5 dias
-  W1 = '1w',    // Última semana
-  W2 = '2w',    // Últimas 2 semanas
-  M1 = '1mo',   // Último mês
+  H1 = '1h', // Última hora
+  H4 = '4h', // Últimas 4 horas
+  D1 = '1d', // Último dia
+  D5 = '5d', // Últimos 5 dias
+  W1 = '1w', // Última semana
+  W2 = '2w', // Últimas 2 semanas
+  M1 = '1mo', // Último mês
 }
 
 export class GetIntradayDto {
@@ -83,10 +83,10 @@ export class IntradayDataResponseDto {
     example: [
       {
         timestamp: '2025-12-04T10:00:00-03:00',
-        open: 37.50,
+        open: 37.5,
         high: 37.65,
         low: 37.45,
-        close: 37.60,
+        close: 37.6,
         volume: 1234567,
       },
     ],
@@ -114,7 +114,7 @@ export class IntradayCandleDto {
   @ApiProperty({ example: '2025-12-04T10:00:00-03:00' })
   timestamp: string;
 
-  @ApiProperty({ example: 37.50 })
+  @ApiProperty({ example: 37.5 })
   open: number;
 
   @ApiProperty({ example: 37.65 })
@@ -123,7 +123,7 @@ export class IntradayCandleDto {
   @ApiProperty({ example: 37.45 })
   low: number;
 
-  @ApiProperty({ example: 37.60 })
+  @ApiProperty({ example: 37.6 })
   close: number;
 
   @ApiProperty({ example: 1234567 })

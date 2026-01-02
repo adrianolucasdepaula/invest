@@ -170,7 +170,7 @@ export class Investidor10Scraper extends AbstractScraper<Investidor10Data> {
       $('span:contains("Setor:")').parent().find('a').text().trim(),
       $('span:contains("Setor:")').next().text().trim(),
       getTextValue('.info-company a[href*="/setor/"]'),
-    ].filter(s => s && !isGenericValue(s));
+    ].filter((s) => s && !isGenericValue(s));
 
     if (sectorCandidates.length > 0) {
       sector = cleanSectorText(sectorCandidates[0]);
@@ -182,7 +182,7 @@ export class Investidor10Scraper extends AbstractScraper<Investidor10Data> {
       $('span:contains("Segmento:")').parent().find('a').text().trim(),
       $('span:contains("Segmento:")').next().text().trim(),
       getTextValue('a[href*="/segmento/"]'),
-    ].filter(s => s && !isGenericValue(s));
+    ].filter((s) => s && !isGenericValue(s));
 
     if (segmentCandidates.length > 0) {
       segment = cleanSectorText(segmentCandidates[0]);
@@ -190,9 +190,11 @@ export class Investidor10Scraper extends AbstractScraper<Investidor10Data> {
 
     // Try breadcrumb if not found - skip generic entries like "Ações", "FIIs", "Home"
     if (!sector) {
-      const breadcrumbLinks = $('.breadcrumb a').map((_, el) => $(el).text().trim()).get();
+      const breadcrumbLinks = $('.breadcrumb a')
+        .map((_, el) => $(el).text().trim())
+        .get();
       // Filter out generic values
-      const validLinks = breadcrumbLinks.filter(link => !isGenericValue(link));
+      const validLinks = breadcrumbLinks.filter((link) => !isGenericValue(link));
       if (validLinks.length >= 1) {
         sector = cleanSectorText(validLinks[0]);
         if (validLinks.length >= 2) {
@@ -270,7 +272,8 @@ export class Investidor10Scraper extends AbstractScraper<Investidor10Data> {
 
     const hasValidPrice = data.price > 0;
     const hasValidValuation = data.pl !== 0 || data.pvp !== 0 || data.psr !== 0;
-    const hasValidFinancials = data.receitaLiquida !== 0 || data.ebit !== 0 || data.lucroLiquido !== 0;
+    const hasValidFinancials =
+      data.receitaLiquida !== 0 || data.ebit !== 0 || data.lucroLiquido !== 0;
     const hasValidMarket = data.valorMercado !== 0 || data.volume !== 0;
 
     return hasValidPrice || hasValidValuation || hasValidFinancials || hasValidMarket;

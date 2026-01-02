@@ -48,25 +48,25 @@ export enum WheelStrategyStatus {
  */
 export interface WheelConfig {
   // Filtros fundamentais
-  minROE?: number;              // Default: 15%
-  minDividendYield?: number;    // Default: 6%
-  maxDividaEbitda?: number;     // Default: 2.0
-  minMargemLiquida?: number;    // Default: 10%
+  minROE?: number; // Default: 15%
+  minDividendYield?: number; // Default: 6%
+  maxDividaEbitda?: number; // Default: 2.0
+  minMargemLiquida?: number; // Default: 10%
 
   // Filtros de opções
-  targetDelta?: number;         // Default: 0.15 (15 delta)
-  minOpenInterest?: number;     // Default: 100
-  minVolume?: number;           // Default: 50
-  minIVRank?: number;           // Default: 30%
-  expirationDays?: number;      // Default: 30 (mensal)
+  targetDelta?: number; // Default: 0.15 (15 delta)
+  minOpenInterest?: number; // Default: 100
+  minVolume?: number; // Default: 50
+  minIVRank?: number; // Default: 30%
+  expirationDays?: number; // Default: 30 (mensal)
 
   // Distribuição de capital
   weeklyDistribution?: boolean; // Default: true (distribuir em 4 semanas)
   maxWeeklyAllocation?: number; // Default: 25% do notional
 
   // Regras de CALL coberta
-  callAboveAvgPrice?: boolean;  // Em prejuízo: CALL acima do preço médio
-  callAtMoney?: boolean;        // Em lucro: CALL na linha do dinheiro
+  callAboveAvgPrice?: boolean; // Em prejuízo: CALL acima do preço médio
+  callAtMoney?: boolean; // Em lucro: CALL na linha do dinheiro
 }
 
 @Entity('wheel_strategies')

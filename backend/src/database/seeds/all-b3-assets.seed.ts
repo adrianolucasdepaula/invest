@@ -88,7 +88,7 @@ export async function seedAllB3Assets(dataSource: DataSource): Promise<void> {
     const existingAssets = await assetRepository.find({
       select: ['ticker'],
     });
-    const existingTickers = new Set(existingAssets.map(a => a.ticker));
+    const existingTickers = new Set(existingAssets.map((a) => a.ticker));
 
     console.log(`📊 Existing assets in DB: ${existingTickers.size}`);
 
@@ -164,10 +164,9 @@ export async function seedAllB3Assets(dataSource: DataSource): Promise<void> {
     console.log(`\n📊 FINAL STATISTICS:`);
     console.log(`  Total assets in DB: ${totalAssets}`);
     console.log(`  By type:`);
-    assetsByType.forEach(stat => {
+    assetsByType.forEach((stat) => {
       console.log(`    ${stat.type.toUpperCase()}: ${stat.count}`);
     });
-
   } catch (error) {
     console.error('❌ Error seeding B3 assets:', error);
     throw error;

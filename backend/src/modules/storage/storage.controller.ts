@@ -28,10 +28,7 @@ export class StorageController {
   @ApiParam({ name: 'bucket', description: 'Bucket name' })
   @ApiQuery({ name: 'prefix', required: false, description: 'Object prefix filter' })
   @ApiResponse({ status: 200, description: 'List of objects' })
-  async listObjects(
-    @Param('bucket') bucket: string,
-    @Query('prefix') prefix?: string,
-  ) {
+  async listObjects(@Param('bucket') bucket: string, @Query('prefix') prefix?: string) {
     this.logger.log(`Listing objects in bucket: ${bucket}, prefix: ${prefix || 'none'}`);
     const objects = await this.storageService.listObjects(bucket, prefix);
     return {
@@ -49,18 +46,18 @@ export class StorageController {
   })
   @ApiParam({ name: 'bucket', description: 'Bucket name' })
   @ApiParam({ name: 'objectName', description: 'Object name (can include path)' })
-  @ApiQuery({ name: 'expiry', required: false, description: 'URL expiry in seconds (default: 3600)' })
+  @ApiQuery({
+    name: 'expiry',
+    required: false,
+    description: 'URL expiry in seconds (default: 3600)',
+  })
   @ApiResponse({ status: 200, description: 'Presigned URL' })
   async getDownloadUrl(
     @Param('bucket') bucket: string,
     @Param('objectName') objectName: string,
     @Query('expiry') expiry?: number,
   ) {
-    const url = await this.storageService.getPresignedUrl(
-      bucket,
-      objectName,
-      expiry || 3600,
-    );
+    const url = await this.storageService.getPresignedUrl(bucket, objectName, expiry || 3600);
 
     return {
       bucket,

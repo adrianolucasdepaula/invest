@@ -29,7 +29,7 @@ export class CacheService {
         return value;
       } else {
         this.logger.debug(`Cache miss: ${key}`);
-        return null;  // BUGFIX FASE 144: Sempre retornar null em cache miss (não undefined)
+        return null; // BUGFIX FASE 144: Sempre retornar null em cache miss (não undefined)
       }
     } catch (error) {
       this.logger.error(`Cache get error for key ${key}: ${error.message}`);

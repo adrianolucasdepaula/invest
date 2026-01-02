@@ -56,12 +56,12 @@ export class StorageService implements OnModuleInit {
       await Promise.race([
         this.initializeMinIO(),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('MinIO init timeout after 10s')), 10000)
+          setTimeout(() => reject(new Error('MinIO init timeout after 10s')), 10000),
         ),
       ]);
     } catch (error) {
       this.logger.warn(`MinIO not available: ${error.message}. Storage features disabled.`);
-      this.isConnected = false;  // ✅ Graceful degradation
+      this.isConnected = false; // ✅ Graceful degradation
     }
   }
 
@@ -217,18 +217,12 @@ export class StorageService implements OnModuleInit {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const objectName = `${source}/${ticker}/${timestamp}.html`;
 
-    return this.uploadFile(
-      this.BUCKETS.SCRAPED_HTML,
-      objectName,
-      html,
-      'text/html',
-      {
-        source,
-        ticker,
-        scrapedAt: new Date().toISOString(),
-        ...metadata,
-      },
-    );
+    return this.uploadFile(this.BUCKETS.SCRAPED_HTML, objectName, html, 'text/html', {
+      source,
+      ticker,
+      scrapedAt: new Date().toISOString(),
+      ...metadata,
+    });
   }
 
   /**

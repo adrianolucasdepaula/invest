@@ -68,7 +68,9 @@ export class CreateDiscrepancyResolutions1733840640548 implements MigrationInter
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "discrepancy_resolutions" DROP CONSTRAINT IF EXISTS "FK_discrepancy_resolution_fundamental_data"`);
+    await queryRunner.query(
+      `ALTER TABLE "discrepancy_resolutions" DROP CONSTRAINT IF EXISTS "FK_discrepancy_resolution_fundamental_data"`,
+    );
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_discrepancy_resolution_ticker"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_discrepancy_resolution_method"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_discrepancy_resolution_created_at"`);

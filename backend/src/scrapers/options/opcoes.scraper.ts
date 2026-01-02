@@ -491,153 +491,152 @@ export class OpcoesScraper extends AbstractScraper<OpcoesData> {
         // Small delay to ensure data is fully loaded
         await new Promise((resolve) => setTimeout(resolve, 3000));
 
-      // Try to get the analysis period from page header/title
-      const periodo = await this.page.evaluate(() => {
-        // Look for period information in the page
-        const headerText = document.body.innerText;
-        const periodMatch = headerText.match(/(\d+)\s*dias?/i);
-        return periodMatch ? `${periodMatch[1]} dias` : '30 dias'; // Default to 30 dias
-      });
-
-      let hasNextPage = true;
-      let pageNum = 1;
-
-      while (hasNextPage) {
-        this.logger.log(`Scraping detailed data from page ${pageNum}...`);
-
-        // Extract all columns from the current page
-        const pageData = await this.page.evaluate(() => {
-          const getNumber = (text: string): number => {
-            if (!text) return 0;
-            // Remove dots as thousand separators, replace comma with dot for decimals
-            const cleaned = text
-              .replace(/\./g, '')
-              .replace(',', '.')
-              .replace(/[^\d.-]/g, '');
-            return parseFloat(cleaned) || 0;
-          };
-
-          const rows = Array.from(document.querySelectorAll('table tbody tr'));
-          return rows
-            .map((row) => {
-              const cells = row.querySelectorAll('td');
-              if (cells.length < 2) return null;
-
-              const ticker = cells[0]?.textContent?.trim() || '';
-              if (!ticker || ticker.includes('Ticker')) return null;
-
-              // Try to extract data from available columns
-              // Table structure may vary, but typically:
-              // Col 0: Ticker, Col 1: Num Negocios, Col 2: Vol Financeiro, Col 3: Qtd, Col 4: Media Neg, Col 5: Media Vol
-              return {
-                ticker,
-                totalNegocios: getNumber(cells[1]?.textContent || '0'),
-                volumeFinanceiro: getNumber(cells[2]?.textContent || '0'),
-                quantidadeNegociada: getNumber(cells[3]?.textContent || '0'),
-                mediaNegocios: getNumber(cells[4]?.textContent || '0'),
-                mediaVolume: getNumber(cells[5]?.textContent || '0'),
-              };
-            })
-            .filter((item): item is NonNullable<typeof item> => item !== null);
+        // Try to get the analysis period from page header/title
+        const periodo = await this.page.evaluate(() => {
+          // Look for period information in the page
+          const headerText = document.body.innerText;
+          const periodMatch = headerText.match(/(\d+)\s*dias?/i);
+          return periodMatch ? `${periodMatch[1]} dias` : '30 dias'; // Default to 30 dias
         });
 
-        // Add page data to results
-        for (const item of pageData) {
-          if (!result.has(item.ticker)) {
-            result.set(item.ticker, {
-              ticker: item.ticker,
-              periodo,
-              totalNegocios: item.totalNegocios,
-              volumeFinanceiro: item.volumeFinanceiro,
-              quantidadeNegociada: item.quantidadeNegociada,
-              mediaNegocios: item.mediaNegocios,
-              mediaVolume: item.mediaVolume,
-              lastUpdated: new Date(),
-            });
-          }
-        }
+        let hasNextPage = true;
+        let pageNum = 1;
 
-        this.logger.log(
-          `Found ${pageData.length} tickers on page ${pageNum}. Total unique: ${result.size}`,
-        );
+        while (hasNextPage) {
+          this.logger.log(`Scraping detailed data from page ${pageNum}...`);
 
-        // Pagination logic (same as scrapeLiquidity)
-        const nextButtonSelectors = [
-          'button.dt-paging-button.next',
-          'button.next',
-          '[aria-label="Next"]',
-          'button:has(span.dt-paging-button.next)',
-        ];
+          // Extract all columns from the current page
+          const pageData = await this.page.evaluate(() => {
+            const getNumber = (text: string): number => {
+              if (!text) return 0;
+              // Remove dots as thousand separators, replace comma with dot for decimals
+              const cleaned = text
+                .replace(/\./g, '')
+                .replace(',', '.')
+                .replace(/[^\d.-]/g, '');
+              return parseFloat(cleaned) || 0;
+            };
 
-        let nextButton = null;
-        for (const selector of nextButtonSelectors) {
-          try {
-            const btn = await this.page.$(selector);
-            if (btn) {
-              const isDisabled = await btn.evaluate(
-                (el) => el.classList.contains('disabled') || el.hasAttribute('disabled'),
-              );
-              if (!isDisabled) {
-                nextButton = btn;
-                break;
-              }
-            }
-          } catch (e) {
-            // Ignore errors
-          }
-        }
+            const rows = Array.from(document.querySelectorAll('table tbody tr'));
+            return rows
+              .map((row) => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 2) return null;
 
-        if (nextButton) {
-          await nextButton.click();
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-          pageNum++;
-        } else {
-          // Try DOM evaluation fallback
-          const moved = await this.page.evaluate(() => {
-            const buttons = Array.from(document.querySelectorAll('button.dt-paging-button'));
-            const current = document.querySelector('button.dt-paging-button.current');
-            if (current) {
-              const currentIndex = buttons.indexOf(current as HTMLButtonElement);
-              if (currentIndex >= 0 && currentIndex < buttons.length - 1) {
-                const next = buttons[currentIndex + 1];
-                if (
-                  next &&
-                  !next.classList.contains('disabled') &&
-                  !next.classList.contains('next') &&
-                  !next.classList.contains('last')
-                ) {
-                  (next as HTMLElement).click();
-                  return true;
-                }
-              }
-              const nextBtn = document.querySelector('button.dt-paging-button.next');
-              if (nextBtn && !nextBtn.classList.contains('disabled')) {
-                (nextBtn as HTMLElement).click();
-                return true;
-              }
-            }
-            return false;
+                const ticker = cells[0]?.textContent?.trim() || '';
+                if (!ticker || ticker.includes('Ticker')) return null;
+
+                // Try to extract data from available columns
+                // Table structure may vary, but typically:
+                // Col 0: Ticker, Col 1: Num Negocios, Col 2: Vol Financeiro, Col 3: Qtd, Col 4: Media Neg, Col 5: Media Vol
+                return {
+                  ticker,
+                  totalNegocios: getNumber(cells[1]?.textContent || '0'),
+                  volumeFinanceiro: getNumber(cells[2]?.textContent || '0'),
+                  quantidadeNegociada: getNumber(cells[3]?.textContent || '0'),
+                  mediaNegocios: getNumber(cells[4]?.textContent || '0'),
+                  mediaVolume: getNumber(cells[5]?.textContent || '0'),
+                };
+              })
+              .filter((item): item is NonNullable<typeof item> => item !== null);
           });
 
-          if (moved) {
+          // Add page data to results
+          for (const item of pageData) {
+            if (!result.has(item.ticker)) {
+              result.set(item.ticker, {
+                ticker: item.ticker,
+                periodo,
+                totalNegocios: item.totalNegocios,
+                volumeFinanceiro: item.volumeFinanceiro,
+                quantidadeNegociada: item.quantidadeNegociada,
+                mediaNegocios: item.mediaNegocios,
+                mediaVolume: item.mediaVolume,
+                lastUpdated: new Date(),
+              });
+            }
+          }
+
+          this.logger.log(
+            `Found ${pageData.length} tickers on page ${pageNum}. Total unique: ${result.size}`,
+          );
+
+          // Pagination logic (same as scrapeLiquidity)
+          const nextButtonSelectors = [
+            'button.dt-paging-button.next',
+            'button.next',
+            '[aria-label="Next"]',
+            'button:has(span.dt-paging-button.next)',
+          ];
+
+          let nextButton = null;
+          for (const selector of nextButtonSelectors) {
+            try {
+              const btn = await this.page.$(selector);
+              if (btn) {
+                const isDisabled = await btn.evaluate(
+                  (el) => el.classList.contains('disabled') || el.hasAttribute('disabled'),
+                );
+                if (!isDisabled) {
+                  nextButton = btn;
+                  break;
+                }
+              }
+            } catch (e) {
+              // Ignore errors
+            }
+          }
+
+          if (nextButton) {
+            await nextButton.click();
             await new Promise((resolve) => setTimeout(resolve, 3000));
             pageNum++;
           } else {
-            hasNextPage = false;
+            // Try DOM evaluation fallback
+            const moved = await this.page.evaluate(() => {
+              const buttons = Array.from(document.querySelectorAll('button.dt-paging-button'));
+              const current = document.querySelector('button.dt-paging-button.current');
+              if (current) {
+                const currentIndex = buttons.indexOf(current as HTMLButtonElement);
+                if (currentIndex >= 0 && currentIndex < buttons.length - 1) {
+                  const next = buttons[currentIndex + 1];
+                  if (
+                    next &&
+                    !next.classList.contains('disabled') &&
+                    !next.classList.contains('next') &&
+                    !next.classList.contains('last')
+                  ) {
+                    (next as HTMLElement).click();
+                    return true;
+                  }
+                }
+                const nextBtn = document.querySelector('button.dt-paging-button.next');
+                if (nextBtn && !nextBtn.classList.contains('disabled')) {
+                  (nextBtn as HTMLElement).click();
+                  return true;
+                }
+              }
+              return false;
+            });
+
+            if (moved) {
+              await new Promise((resolve) => setTimeout(resolve, 3000));
+              pageNum++;
+            } else {
+              hasNextPage = false;
+            }
           }
+
+          // Safety break
+          if (pageNum > 20) hasNextPage = false;
         }
 
-        // Safety break
-        if (pageNum > 20) hasNextPage = false;
-      }
+        this.logger.log(
+          `[OPTIONS-LIQUIDITY] Success! Found ${result.size} unique tickers with options data`,
+        );
 
-      this.logger.log(
-        `[OPTIONS-LIQUIDITY] Success! Found ${result.size} unique tickers with options data`,
-      );
-
-      // Se chegou aqui, sucesso - retornar resultado
-      return result;
-
+        // Se chegou aqui, sucesso - retornar resultado
+        return result;
       } catch (error) {
         this.logger.error(`[OPTIONS-LIQUIDITY] Attempt ${attempt} failed: ${error.message}`);
 

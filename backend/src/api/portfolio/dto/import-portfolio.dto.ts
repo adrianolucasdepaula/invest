@@ -16,14 +16,14 @@ export class ImportPositionDto {
   @ApiProperty({ description: 'Quantity', example: 100 })
   quantity: number;
 
-  @ApiProperty({ description: 'Average price', example: 32.50 })
+  @ApiProperty({ description: 'Average price', example: 32.5 })
   averagePrice: number;
 
-  @ApiPropertyOptional({ description: 'Total invested', example: 3250.00 })
+  @ApiPropertyOptional({ description: 'Total invested', example: 3250.0 })
   @IsOptional()
   totalInvested?: number;
 
-  @ApiPropertyOptional({ description: 'Current price', example: 35.00 })
+  @ApiPropertyOptional({ description: 'Current price', example: 35.0 })
   @IsOptional()
   currentPrice?: number;
 

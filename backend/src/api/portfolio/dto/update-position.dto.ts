@@ -14,7 +14,7 @@ export class UpdatePositionDto {
 
   @ApiPropertyOptional({
     description: 'Updated average purchase price per share/unit',
-    example: 35.00,
+    example: 35.0,
     minimum: 0,
   })
   @IsOptional()
@@ -24,7 +24,7 @@ export class UpdatePositionDto {
 
   @ApiPropertyOptional({
     description: 'Current market price per share/unit',
-    example: 38.50,
+    example: 38.5,
     minimum: 0,
   })
   @IsOptional()

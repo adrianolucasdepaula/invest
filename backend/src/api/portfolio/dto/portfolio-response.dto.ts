@@ -28,19 +28,19 @@ export class PortfolioResponseDto {
 
   @ApiProperty({
     description: 'Total amount invested in the portfolio',
-    example: 50000.00,
+    example: 50000.0,
   })
   totalInvested: number;
 
   @ApiProperty({
     description: 'Current market value of the portfolio',
-    example: 55000.00,
+    example: 55000.0,
   })
   currentValue: number;
 
   @ApiProperty({
     description: 'Absolute profit/loss',
-    example: 5000.00,
+    example: 5000.0,
   })
   profit: number;
 

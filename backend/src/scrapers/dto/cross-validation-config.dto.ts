@@ -1,13 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNumber,
-  IsArray,
-  IsObject,
-  IsOptional,
-  Min,
-  Max,
-} from 'class-validator';
+import { IsString, IsNumber, IsArray, IsObject, IsOptional, Min, Max } from 'class-validator';
 
 /**
  * DTO para tolerâncias por campo

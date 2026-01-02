@@ -44,7 +44,9 @@ export class AuthController {
   @ApiOperation({ summary: 'Google OAuth callback' })
   async googleAuthCallback(@Req() req: any, @Res() res: Response) {
     this.logger.log('Google OAuth Callback initiated');
-    this.logger.debug(`User from Google: ${JSON.stringify({ email: req.user?.email, id: req.user?.id })}`);
+    this.logger.debug(
+      `User from Google: ${JSON.stringify({ email: req.user?.email, id: req.user?.id })}`,
+    );
 
     try {
       const result = await this.authService.googleLogin(req.user);

@@ -33,13 +33,7 @@ import {
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([
-      News,
-      NewsAnalysis,
-      SentimentConsensus,
-      EconomicEvent,
-      Asset,
-    ]),
+    TypeOrmModule.forFeature([News, NewsAnalysis, SentimentConsensus, EconomicEvent, Asset]),
   ],
   controllers: [NewsController],
   providers: [

@@ -68,7 +68,9 @@ export class CreateIntradayPricesHypertable1764800000000 implements MigrationInt
 
     // Skip TimescaleDB features if not available
     if (!hasTimescaleDB) {
-      console.log('TimescaleDB not installed. Skipping hypertable conversion and continuous aggregates.');
+      console.log(
+        'TimescaleDB not installed. Skipping hypertable conversion and continuous aggregates.',
+      );
       // Just create basic indexes and FK for regular PostgreSQL
       await queryRunner.query(`
         CREATE INDEX IF NOT EXISTS idx_intraday_asset_time

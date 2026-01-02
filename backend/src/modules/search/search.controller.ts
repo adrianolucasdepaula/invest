@@ -1,6 +1,11 @@
 import { Controller, Get, Query, Logger } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags, ApiResponse } from '@nestjs/swagger';
-import { SearchService, AssetSearchDocument, NewsSearchDocument, SearchResult } from './search.service';
+import {
+  SearchService,
+  AssetSearchDocument,
+  NewsSearchDocument,
+  SearchResult,
+} from './search.service';
 
 @ApiTags('Search')
 @Controller('search')
@@ -34,11 +39,19 @@ export class SearchController {
     description: 'Search assets by ticker, name, sector, etc.',
   })
   @ApiQuery({ name: 'q', required: true, description: 'Search query' })
-  @ApiQuery({ name: 'type', required: false, description: 'Asset type filter (stock, fii, etf, bdr)' })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    description: 'Asset type filter (stock, fii, etf, bdr)',
+  })
   @ApiQuery({ name: 'sector', required: false, description: 'Sector filter' })
   @ApiQuery({ name: 'limit', required: false, description: 'Max results (default: 20)' })
   @ApiQuery({ name: 'offset', required: false, description: 'Results offset (default: 0)' })
-  @ApiQuery({ name: 'sort', required: false, description: 'Sort field (e.g., ticker:asc, marketCap:desc)' })
+  @ApiQuery({
+    name: 'sort',
+    required: false,
+    description: 'Sort field (e.g., ticker:asc, marketCap:desc)',
+  })
   @ApiResponse({ status: 200, description: 'Asset search results' })
   async searchAssets(
     @Query('q') query: string,
@@ -74,7 +87,11 @@ export class SearchController {
   @ApiQuery({ name: 'q', required: true, description: 'Search query' })
   @ApiQuery({ name: 'ticker', required: false, description: 'Ticker filter' })
   @ApiQuery({ name: 'source', required: false, description: 'Source filter' })
-  @ApiQuery({ name: 'sentiment', required: false, description: 'Sentiment filter (positive, negative, neutral)' })
+  @ApiQuery({
+    name: 'sentiment',
+    required: false,
+    description: 'Sentiment filter (positive, negative, neutral)',
+  })
   @ApiQuery({ name: 'limit', required: false, description: 'Max results (default: 20)' })
   @ApiQuery({ name: 'offset', required: false, description: 'Results offset (default: 0)' })
   @ApiQuery({ name: 'sort', required: false, description: 'Sort field (e.g., publishedAt:desc)' })

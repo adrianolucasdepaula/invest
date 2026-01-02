@@ -139,12 +139,13 @@ export class ScheduledJobsService {
       if (inactiveAssets.length > 0) {
         const inactiveAssetIds = inactiveAssets.map((asset) => asset.id);
         const inactiveCount = await this.deleteWithTimeout(
-          () => this.analysisRepository
-            .createQueryBuilder()
-            .delete()
-            .from(Analysis)
-            .where('assetId IN (:...ids)', { ids: inactiveAssetIds })
-            .execute(),
+          () =>
+            this.analysisRepository
+              .createQueryBuilder()
+              .delete()
+              .from(Analysis)
+              .where('assetId IN (:...ids)', { ids: inactiveAssetIds })
+              .execute(),
           TIMEOUT_MS,
           'Analyses from inactive assets',
         );
@@ -156,13 +157,14 @@ export class ScheduledJobsService {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       const failedCount = await this.deleteWithTimeout(
-        () => this.analysisRepository
-          .createQueryBuilder()
-          .delete()
-          .from(Analysis)
-          .where('status = :status', { status: 'failed' })
-          .andWhere('createdAt < :date', { date: sevenDaysAgo })
-          .execute(),
+        () =>
+          this.analysisRepository
+            .createQueryBuilder()
+            .delete()
+            .from(Analysis)
+            .where('status = :status', { status: 'failed' })
+            .andWhere('createdAt < :date', { date: sevenDaysAgo })
+            .execute(),
         TIMEOUT_MS,
         'Failed analyses (>7 days)',
       );
@@ -173,13 +175,14 @@ export class ScheduledJobsService {
       oneHourAgo.setHours(oneHourAgo.getHours() - 1);
 
       const stuckCount = await this.deleteWithTimeout(
-        () => this.analysisRepository
-          .createQueryBuilder()
-          .delete()
-          .from(Analysis)
-          .where('status = :status', { status: 'pending' })
-          .andWhere('createdAt < :date', { date: oneHourAgo })
-          .execute(),
+        () =>
+          this.analysisRepository
+            .createQueryBuilder()
+            .delete()
+            .from(Analysis)
+            .where('status = :status', { status: 'pending' })
+            .andWhere('createdAt < :date', { date: oneHourAgo })
+            .execute(),
         TIMEOUT_MS,
         'Stuck pending analyses (>1 hour)',
       );
@@ -192,12 +195,13 @@ export class ScheduledJobsService {
         cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
         const oldCount = await this.deleteWithTimeout(
-          () => this.analysisRepository
-            .createQueryBuilder()
-            .delete()
-            .from(Analysis)
-            .where('createdAt < :date', { date: cutoffDate })
-            .execute(),
+          () =>
+            this.analysisRepository
+              .createQueryBuilder()
+              .delete()
+              .from(Analysis)
+              .where('createdAt < :date', { date: cutoffDate })
+              .execute(),
           TIMEOUT_MS,
           `Very old analyses (>${retentionDays} days)`,
         );
@@ -205,7 +209,9 @@ export class ScheduledJobsService {
       }
 
       const duration = Date.now() - startTime;
-      this.logger.log(`✅ Analysis cleanup completed: ${totalDeleted} total removed in ${duration}ms`);
+      this.logger.log(
+        `✅ Analysis cleanup completed: ${totalDeleted} total removed in ${duration}ms`,
+      );
     } catch (error) {
       this.logger.error(`❌ Failed to clean old analyses: ${error.message}`);
     } finally {
@@ -225,7 +231,7 @@ export class ScheduledJobsService {
       const result = await Promise.race([
         deleteOperation(),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error(`${entityName} delete timeout`)), timeoutMs)
+          setTimeout(() => reject(new Error(`${entityName} delete timeout`)), timeoutMs),
         ),
       ]);
 
@@ -304,7 +310,9 @@ export class ScheduledJobsService {
         this.logger.debug(`Collected ${result.length} news for ${ticker}`);
       }
 
-      this.logger.log(`📰 News collection completed: ${totalCollected} articles for ${topTickers.length} tickers`);
+      this.logger.log(
+        `📰 News collection completed: ${totalCollected} articles for ${topTickers.length} tickers`,
+      );
     } catch (error) {
       this.logger.error(`Failed to collect news: ${error.message}`);
     }
@@ -388,7 +396,7 @@ export class ScheduledJobsService {
       await Promise.race([
         this.doUpdateOptionPrices(),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Option prices update timeout')), 5 * 60 * 1000)
+          setTimeout(() => reject(new Error('Option prices update timeout')), 5 * 60 * 1000),
         ),
       ]);
     } catch (error) {
@@ -577,7 +585,9 @@ export class ScheduledJobsService {
   /**
    * Trigger immediate option price update for a specific ticker
    */
-  async triggerOptionPriceUpdate(ticker: string): Promise<{ success: boolean; optionsCount: number }> {
+  async triggerOptionPriceUpdate(
+    ticker: string,
+  ): Promise<{ success: boolean; optionsCount: number }> {
     this.logger.log(`🎯 Triggering immediate option price update for ${ticker}`);
 
     try {
@@ -601,29 +611,33 @@ export class ScheduledJobsService {
       }
 
       for (const [expDate, expOptions] of byExpiration) {
-        const calls = expOptions.filter((o) => o.type === OptionType.CALL).map((o) => ({
-          optionTicker: o.ticker,
-          strike: Number(o.strike),
-          lastPrice: Number(o.lastPrice) || 0,
-          bid: Number(o.bid) || 0,
-          ask: Number(o.ask) || 0,
-          volume: o.volume || 0,
-          openInterest: o.openInterest || 0,
-          delta: o.delta ? Number(o.delta) : undefined,
-          impliedVolatility: o.impliedVolatility ? Number(o.impliedVolatility) : undefined,
-        }));
+        const calls = expOptions
+          .filter((o) => o.type === OptionType.CALL)
+          .map((o) => ({
+            optionTicker: o.ticker,
+            strike: Number(o.strike),
+            lastPrice: Number(o.lastPrice) || 0,
+            bid: Number(o.bid) || 0,
+            ask: Number(o.ask) || 0,
+            volume: o.volume || 0,
+            openInterest: o.openInterest || 0,
+            delta: o.delta ? Number(o.delta) : undefined,
+            impliedVolatility: o.impliedVolatility ? Number(o.impliedVolatility) : undefined,
+          }));
 
-        const puts = expOptions.filter((o) => o.type === OptionType.PUT).map((o) => ({
-          optionTicker: o.ticker,
-          strike: Number(o.strike),
-          lastPrice: Number(o.lastPrice) || 0,
-          bid: Number(o.bid) || 0,
-          ask: Number(o.ask) || 0,
-          volume: o.volume || 0,
-          openInterest: o.openInterest || 0,
-          delta: o.delta ? Number(o.delta) : undefined,
-          impliedVolatility: o.impliedVolatility ? Number(o.impliedVolatility) : undefined,
-        }));
+        const puts = expOptions
+          .filter((o) => o.type === OptionType.PUT)
+          .map((o) => ({
+            optionTicker: o.ticker,
+            strike: Number(o.strike),
+            lastPrice: Number(o.lastPrice) || 0,
+            bid: Number(o.bid) || 0,
+            ask: Number(o.ask) || 0,
+            volume: o.volume || 0,
+            openInterest: o.openInterest || 0,
+            delta: o.delta ? Number(o.delta) : undefined,
+            impliedVolatility: o.impliedVolatility ? Number(o.impliedVolatility) : undefined,
+          }));
 
         this.wsGateway.emitOptionChainUpdate(ticker, { expirationDate: expDate, calls, puts });
       }

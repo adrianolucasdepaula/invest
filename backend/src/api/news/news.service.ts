@@ -38,11 +38,11 @@ export class NewsService {
    * Exponential decay: Weight(t) = 2^(-t/halflife)
    */
   private readonly HALF_LIFE_DAYS: Record<SentimentPeriod, number> = {
-    [SentimentPeriod.WEEKLY]: 3.5,      // Notícias >3.5d têm peso <50%
-    [SentimentPeriod.MONTHLY]: 14,      // Notícias >14d têm peso <50%
-    [SentimentPeriod.QUARTERLY]: 30,    // Ciclo de earnings
-    [SentimentPeriod.SEMIANNUAL]: 63,   // ~3 meses
-    [SentimentPeriod.ANNUAL]: 90,       // ~3 meses
+    [SentimentPeriod.WEEKLY]: 3.5, // Notícias >3.5d têm peso <50%
+    [SentimentPeriod.MONTHLY]: 14, // Notícias >14d têm peso <50%
+    [SentimentPeriod.QUARTERLY]: 30, // Ciclo de earnings
+    [SentimentPeriod.SEMIANNUAL]: 63, // ~3 meses
+    [SentimentPeriod.ANNUAL]: 90, // ~3 meses
   };
 
   /**

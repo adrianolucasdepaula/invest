@@ -278,9 +278,7 @@ export class AssetsUpdateController {
     const filterValue = dto.hasOptionsOnly ?? false;
     this.logger.log(`[BULK-ALL] Using filterValue: ${filterValue}`);
 
-    const assets = await this.assetsUpdateService.getAssetsWithPriority(
-      filterValue,
-    );
+    const assets = await this.assetsUpdateService.getAssetsWithPriority(filterValue);
     const tickers = assets.map((asset) => asset.ticker);
 
     // 2. Queue individual jobs via BullMQ (returns immediately)

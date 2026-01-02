@@ -86,8 +86,7 @@ export class FundamenteiScraper extends AbstractScraper<FundamenteiData> {
 
     // Extract company name from h1 in header
     const companyName =
-      $('h1').first().text().trim().replace('Valuation •', '').trim() ||
-      ticker.toUpperCase();
+      $('h1').first().text().trim().replace('Valuation •', '').trim() || ticker.toUpperCase();
 
     const data: FundamenteiData = {
       ticker: ticker.toUpperCase(),

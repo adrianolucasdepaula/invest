@@ -21,7 +21,11 @@ export class DataCleanupController {
    * @returns Cleanup result with stats
    */
   @Post('trigger/scraped-data')
-  async triggerScrapedDataCleanup(): Promise<{ success: boolean; message: string; stats: CleanupStats }> {
+  async triggerScrapedDataCleanup(): Promise<{
+    success: boolean;
+    message: string;
+    stats: CleanupStats;
+  }> {
     return this.dataCleanupService.triggerCleanupManually();
   }
 
@@ -31,7 +35,11 @@ export class DataCleanupController {
    * @returns Cleanup result with stats
    */
   @Post('trigger/scraper-metrics')
-  async triggerScraperMetricsCleanup(): Promise<{ success: boolean; message: string; stats: CleanupStats }> {
+  async triggerScraperMetricsCleanup(): Promise<{
+    success: boolean;
+    message: string;
+    stats: CleanupStats;
+  }> {
     const stats = await this.dataCleanupService.cleanupScraperMetrics();
     return {
       success: true,
@@ -61,7 +69,11 @@ export class DataCleanupController {
    * @returns Cleanup result with stats
    */
   @Post('trigger/update-logs')
-  async triggerUpdateLogsCleanup(): Promise<{ success: boolean; message: string; stats: CleanupStats }> {
+  async triggerUpdateLogsCleanup(): Promise<{
+    success: boolean;
+    message: string;
+    stats: CleanupStats;
+  }> {
     const stats = await this.dataCleanupService.cleanupUpdateLogs();
     return {
       success: true,
@@ -76,7 +88,11 @@ export class DataCleanupController {
    * @returns Cleanup result with stats
    */
   @Post('trigger/sync-history')
-  async triggerSyncHistoryCleanup(): Promise<{ success: boolean; message: string; stats: CleanupStats }> {
+  async triggerSyncHistoryCleanup(): Promise<{
+    success: boolean;
+    message: string;
+    stats: CleanupStats;
+  }> {
     const stats = await this.dataCleanupService.cleanupSyncHistory();
     return {
       success: true,

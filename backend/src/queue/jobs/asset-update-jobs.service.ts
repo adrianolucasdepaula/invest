@@ -48,9 +48,7 @@ export class AssetUpdateJobsService implements OnModuleInit, OnModuleDestroy {
         );
 
         if (cleaned && cleaned.length > 0) {
-          this.logger.warn(
-            `[AUTO-CLEANUP] Removed ${cleaned.length} stale active jobs (> 5min)`,
-          );
+          this.logger.warn(`[AUTO-CLEANUP] Removed ${cleaned.length} stale active jobs (> 5min)`);
         }
       } catch (error) {
         this.logger.error(`[AUTO-CLEANUP] Failed: ${error.message}`);
@@ -216,14 +214,20 @@ export class AssetUpdateJobsService implements OnModuleInit, OnModuleDestroy {
     triggeredBy: UpdateTrigger = UpdateTrigger.MANUAL,
   ) {
     const batchId = this.generateBatchId();
-    this.logger.log(`Queueing ${tickers.length} individual asset update jobs (batchId: ${batchId})`);
+    this.logger.log(
+      `Queueing ${tickers.length} individual asset update jobs (batchId: ${batchId})`,
+    );
 
     // DEBUG: Check if WebSocketGateway is injected
-    this.logger.debug(`[DEBUG] WebSocketGateway instance: ${this.webSocketGateway ? 'INJECTED' : 'UNDEFINED'}`);
+    this.logger.debug(
+      `[DEBUG] WebSocketGateway instance: ${this.webSocketGateway ? 'INJECTED' : 'UNDEFINED'}`,
+    );
 
     // Emit batch started event
     try {
-      this.logger.debug(`[DEBUG] Calling emitBatchUpdateStarted with ${tickers.length} assets (batchId: ${batchId})...`);
+      this.logger.debug(
+        `[DEBUG] Calling emitBatchUpdateStarted with ${tickers.length} assets (batchId: ${batchId})...`,
+      );
       this.webSocketGateway.emitBatchUpdateStarted({
         batchId,
         totalAssets: tickers.length,
@@ -231,7 +235,10 @@ export class AssetUpdateJobsService implements OnModuleInit, OnModuleDestroy {
       });
       this.logger.debug(`[DEBUG] emitBatchUpdateStarted completed successfully`);
     } catch (error) {
-      this.logger.error(`[ERROR] Failed to emit batch started event: ${error.message}`, error.stack);
+      this.logger.error(
+        `[ERROR] Failed to emit batch started event: ${error.message}`,
+        error.stack,
+      );
     }
 
     // ✅ Create individual job for each asset (allows BullMQ concurrency)
@@ -259,10 +266,14 @@ export class AssetUpdateJobsService implements OnModuleInit, OnModuleDestroy {
     const jobs = await Promise.all(jobPromises);
     const jobIds = jobs.map((j) => j.id);
 
-    this.logger.log(`✅ Queued ${jobs.length} individual jobs: ${jobIds[0]} to ${jobIds[jobIds.length - 1]}`);
+    this.logger.log(
+      `✅ Queued ${jobs.length} individual jobs: ${jobIds[0]} to ${jobIds[jobIds.length - 1]}`,
+    );
 
     // Monitor job completion in background and emit batch completed event
-    this.logger.debug(`[DEBUG] Starting monitorBatchCompletion for ${jobIds.length} jobs (batchId: ${batchId})...`);
+    this.logger.debug(
+      `[DEBUG] Starting monitorBatchCompletion for ${jobIds.length} jobs (batchId: ${batchId})...`,
+    );
     this.monitorBatchCompletion(jobIds, tickers.length, batchId).catch((error) => {
       this.logger.error(`[ERROR] Error monitoring batch completion: ${error.message}`, error.stack);
     });
@@ -277,7 +288,9 @@ export class AssetUpdateJobsService implements OnModuleInit, OnModuleDestroy {
    * ✅ FIX FASE 114: Added batchId parameter to track specific batch
    */
   private async monitorBatchCompletion(jobIds: any[], totalAssets: number, batchId: string) {
-    this.logger.log(`[MONITOR] Starting batch monitoring for ${totalAssets} assets (batchId: ${batchId})`);
+    this.logger.log(
+      `[MONITOR] Starting batch monitoring for ${totalAssets} assets (batchId: ${batchId})`,
+    );
     const startTime = Date.now();
     const checkInterval = 5000; // Check every 5 seconds
     let completed = 0;
@@ -286,9 +299,7 @@ export class AssetUpdateJobsService implements OnModuleInit, OnModuleDestroy {
 
     const checkJobs = async () => {
       this.logger.debug(`[MONITOR] Checking job status (iteration)...`);
-      const jobs = await Promise.all(
-        jobIds.map((id) => this.assetUpdatesQueue.getJob(id)),
-      );
+      const jobs = await Promise.all(jobIds.map((id) => this.assetUpdatesQueue.getJob(id)));
 
       completed = 0;
       failed = 0;
@@ -315,7 +326,9 @@ export class AssetUpdateJobsService implements OnModuleInit, OnModuleDestroy {
         const activeJob = jobs.find(async (j) => j && (await j.getState()) === 'active');
         const currentTicker = activeJob ? (activeJob.data as any).ticker : '';
 
-        this.logger.debug(`[MONITOR] Emitting progress: ${currentProgress}/${totalAssets} (${progressPercent}%, batchId: ${batchId})`);
+        this.logger.debug(
+          `[MONITOR] Emitting progress: ${currentProgress}/${totalAssets} (${progressPercent}%, batchId: ${batchId})`,
+        );
         try {
           this.webSocketGateway.emitBatchUpdateProgress({
             batchId,
@@ -334,7 +347,9 @@ export class AssetUpdateJobsService implements OnModuleInit, OnModuleDestroy {
       if (currentProgress >= totalAssets) {
         const duration = Date.now() - startTime;
 
-        this.logger.log(`[MONITOR] All jobs complete! Emitting completion event (batchId: ${batchId})...`);
+        this.logger.log(
+          `[MONITOR] All jobs complete! Emitting completion event (batchId: ${batchId})...`,
+        );
         try {
           this.webSocketGateway.emitBatchUpdateCompleted({
             batchId,
@@ -519,7 +534,9 @@ export class AssetUpdateJobsService implements OnModuleInit, OnModuleDestroy {
 
     const totalRemoved = removedWaitingCount + removedActiveCount;
 
-    this.logger.log(`✅ Removed ${removedWaitingCount} waiting jobs + ${removedActiveCount} active jobs. Total: ${totalRemoved}`);
+    this.logger.log(
+      `✅ Removed ${removedWaitingCount} waiting jobs + ${removedActiveCount} active jobs. Total: ${totalRemoved}`,
+    );
 
     // Emit WebSocket event to notify frontend (cancelled batch)
     this.webSocketGateway.emitBatchUpdateCompleted({

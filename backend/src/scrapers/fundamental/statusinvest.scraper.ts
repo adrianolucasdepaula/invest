@@ -113,8 +113,7 @@ export class StatusInvestScraper extends AbstractScraper<StatusInvestData> {
     };
 
     // Get company name from h1
-    const companyName =
-      $('h1').first().text().trim().split(' - ')[0] || ticker.toUpperCase();
+    const companyName = $('h1').first().text().trim().split(' - ')[0] || ticker.toUpperCase();
 
     // Get price from the "Valor atual" section
     let price = 0;

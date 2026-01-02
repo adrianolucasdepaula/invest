@@ -57,7 +57,11 @@ export class NewsController {
    */
   @Get('market-sentiment')
   @ApiOperation({ summary: 'Obter resumo de sentimento do mercado' })
-  @ApiResponse({ status: 200, description: 'Resumo de sentimento', type: MarketSentimentSummaryDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Resumo de sentimento',
+    type: MarketSentimentSummaryDto,
+  })
   async getMarketSentiment(): Promise<MarketSentimentSummaryDto> {
     this.logger.log('GET /news/market-sentiment');
     return this.newsService.getMarketSentimentSummary();
@@ -85,10 +89,12 @@ export class NewsController {
   @Get('ticker-sentiment/:ticker')
   @ApiOperation({ summary: 'Obter resumo de sentimento de um ativo específico' })
   @ApiParam({ name: 'ticker', description: 'Ticker do ativo (ex: PETR4)' })
-  @ApiResponse({ status: 200, description: 'Resumo de sentimento do ativo', type: TickerSentimentSummaryDto })
-  async getTickerSentiment(
-    @Param('ticker') ticker: string,
-  ): Promise<TickerSentimentSummaryDto> {
+  @ApiResponse({
+    status: 200,
+    description: 'Resumo de sentimento do ativo',
+    type: TickerSentimentSummaryDto,
+  })
+  async getTickerSentiment(@Param('ticker') ticker: string): Promise<TickerSentimentSummaryDto> {
     this.logger.log(`GET /news/ticker-sentiment/${ticker}`);
     return this.newsService.getTickerSentimentSummary(ticker);
   }
@@ -103,7 +109,11 @@ export class NewsController {
   @Get('ticker-sentiment/:ticker/multi')
   @ApiOperation({ summary: 'Obter sentimento multi-timeframe de um ticker (todos os períodos)' })
   @ApiParam({ name: 'ticker', description: 'Ticker do ativo (ex: PETR4)' })
-  @ApiResponse({ status: 200, description: 'Sentimento para todos os períodos', type: MultiTimeframeSentimentDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Sentimento para todos os períodos',
+    type: MultiTimeframeSentimentDto,
+  })
   async getTickerMultiTimeframeSentiment(
     @Param('ticker') ticker: string,
   ): Promise<MultiTimeframeSentimentDto> {
@@ -116,14 +126,20 @@ export class NewsController {
    * Aplica temporal decay (exponential) e source tier weighting
    */
   @Get('ticker-sentiment/:ticker/:period')
-  @ApiOperation({ summary: 'Obter sentimento de um ticker para período específico (temporal decay)' })
+  @ApiOperation({
+    summary: 'Obter sentimento de um ticker para período específico (temporal decay)',
+  })
   @ApiParam({ name: 'ticker', description: 'Ticker do ativo (ex: PETR4)' })
   @ApiParam({
     name: 'period',
     enum: SentimentPeriod,
     description: 'Período de análise (weekly, monthly, quarterly, semiannual, annual)',
   })
-  @ApiResponse({ status: 200, description: 'Sentimento ponderado para o período', type: TimeframeSentimentDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Sentimento ponderado para o período',
+    type: TimeframeSentimentDto,
+  })
   async getTickerSentimentByPeriod(
     @Param('ticker') ticker: string,
     @Param('period') period: SentimentPeriod,
@@ -211,16 +227,12 @@ export class NewsController {
   }> {
     this.logger.log(`POST /news/collect - Ticker: ${dto.ticker}`);
 
-    const news = await this.newsCollectors.collectForTicker(
-      dto.ticker,
-      dto.sources,
-      dto.limit,
-    );
+    const news = await this.newsCollectors.collectForTicker(dto.ticker, dto.sources, dto.limit);
 
     return {
       message: `Collected ${news.length} news articles for ${dto.ticker}`,
       collected: news.length,
-      sources: [...new Set(news.map(n => n.source))],
+      sources: [...new Set(news.map((n) => n.source))],
     };
   }
 

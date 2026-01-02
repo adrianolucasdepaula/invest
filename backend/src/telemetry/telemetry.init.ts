@@ -52,14 +52,13 @@ const otlpEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhos
 // PERFORMANCE OPTIMIZATION: Configure trace sampling
 // Development: 10% sampling to reduce CPU overhead
 // Production: 100% sampling for complete observability
-const samplingRatio = process.env.NODE_ENV === 'production'
-  ? 1.0  // 100% in production
-  : parseFloat(process.env.OTEL_SAMPLING_RATIO || '0.1');  // 10% default in dev
+const samplingRatio =
+  process.env.NODE_ENV === 'production'
+    ? 1.0 // 100% in production
+    : parseFloat(process.env.OTEL_SAMPLING_RATIO || '0.1'); // 10% default in dev
 
 const sampler = new ParentBasedSampler({
-  root: samplingRatio >= 1.0
-    ? new AlwaysOnSampler()
-    : new TraceIdRatioBasedSampler(samplingRatio),
+  root: samplingRatio >= 1.0 ? new AlwaysOnSampler() : new TraceIdRatioBasedSampler(samplingRatio),
 });
 
 // Trace Exporter
@@ -145,7 +144,8 @@ export function initTelemetry(): void {
 
     // Graceful shutdown
     process.on('SIGTERM', () => {
-      sdk.shutdown()
+      sdk
+        .shutdown()
         .then(() => console.log('[Telemetry] SDK shut down successfully'))
         .catch((error) => console.error('[Telemetry] Error shutting down SDK', error))
         .finally(() => process.exit(0));

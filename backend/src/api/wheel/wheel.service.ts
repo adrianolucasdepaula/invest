@@ -173,7 +173,11 @@ export class WheelService {
     return strategy;
   }
 
-  async updateStrategy(id: string, userId: string, dto: UpdateWheelStrategyDto): Promise<WheelStrategy> {
+  async updateStrategy(
+    id: string,
+    userId: string,
+    dto: UpdateWheelStrategyDto,
+  ): Promise<WheelStrategy> {
     const strategy = await this.findStrategy(id, userId);
 
     // Merge config if provided
@@ -205,7 +209,9 @@ export class WheelService {
   // WHEEL CANDIDATES
   // ===========================================
 
-  async findWheelCandidates(query: WheelCandidateQueryDto): Promise<WheelCandidatesListResponseDto> {
+  async findWheelCandidates(
+    query: WheelCandidateQueryDto,
+  ): Promise<WheelCandidatesListResponseDto> {
     this.logger.log('Finding WHEEL candidates with filters:', query);
 
     const {
@@ -364,7 +370,7 @@ export class WheelService {
   async findBestPutToSell(
     assetId: string,
     notional: number,
-    config?: Partial<typeof DEFAULT_CONFIG>
+    config?: Partial<typeof DEFAULT_CONFIG>,
   ): Promise<OptionRecommendationDto[]> {
     this.logger.log(`Finding best PUT to sell for asset ${assetId}, notional ${notional}`);
 
@@ -402,12 +408,12 @@ export class WheelService {
       if ((put.volume || 0) < mergedConfig.minVolume) continue;
 
       const daysToExp = Math.ceil(
-        (new Date(put.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        (new Date(put.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
       );
 
       const premium = Number(put.lastPrice) || 0;
       const strike = Number(put.strike);
-      const currentPrice = Number(put.underlyingPrice) || await this.getLatestPrice(assetId);
+      const currentPrice = Number(put.underlyingPrice) || (await this.getLatestPrice(assetId));
 
       // Calculate returns
       const premiumReturn = (premium / strike) * 100;
@@ -463,7 +469,7 @@ export class WheelService {
     sharesHeld: number,
     averagePrice: number,
     inProfit: boolean,
-    config?: Partial<typeof DEFAULT_CONFIG>
+    config?: Partial<typeof DEFAULT_CONFIG>,
   ): Promise<OptionRecommendationDto[]> {
     this.logger.log(`Finding best covered CALL for asset ${assetId}, shares ${sharesHeld}`);
 
@@ -509,7 +515,7 @@ export class WheelService {
       if ((call.volume || 0) < mergedConfig.minVolume) continue;
 
       const daysToExp = Math.ceil(
-        (new Date(call.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        (new Date(call.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
       );
 
       const premium = Number(call.lastPrice) || 0;
@@ -571,7 +577,7 @@ export class WheelService {
   async calculateWeeklyPutSchedule(
     assetId: string,
     totalNotional: number,
-    config?: Partial<typeof DEFAULT_CONFIG>
+    config?: Partial<typeof DEFAULT_CONFIG>,
   ): Promise<WeeklyScheduleDto[]> {
     this.logger.log(`Calculating weekly PUT schedule for asset ${assetId}`);
 
@@ -585,12 +591,12 @@ export class WheelService {
       throw new NotFoundException(`Asset ${assetId} not found`);
     }
 
-    const currentPrice = await this.getLatestPrice(assetId) || 100;
+    const currentPrice = (await this.getLatestPrice(assetId)) || 100;
 
     for (let week = 1; week <= 4; week++) {
       // Calculate target expiration for each week (7 days apart)
       const targetExpiration = new Date();
-      targetExpiration.setDate(targetExpiration.getDate() + (week * 7) + 14); // 2+ weeks out
+      targetExpiration.setDate(targetExpiration.getDate() + week * 7 + 14); // 2+ weeks out
 
       // Calculate suggested contracts (assuming 100 shares per contract)
       const contractValue = currentPrice * 100;
@@ -633,7 +639,7 @@ export class WheelService {
       premiumPaid: dto.tradeType.includes('BUY') ? totalPremium : 0,
       openedAt: new Date(),
       daysToExpiration: Math.ceil(
-        (new Date(dto.expiration).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        (new Date(dto.expiration).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
       ),
     });
 
@@ -642,7 +648,8 @@ export class WheelService {
     // Update strategy totals
     if (dto.tradeType.includes('SELL')) {
       strategy.totalPremiumReceived = Number(strategy.totalPremiumReceived) + totalPremium;
-      strategy.allocatedCapital = Number(strategy.allocatedCapital) + (dto.strike * dto.contracts * 100);
+      strategy.allocatedCapital =
+        Number(strategy.allocatedCapital) + dto.strike * dto.contracts * 100;
       strategy.availableCapital = Number(strategy.notional) - Number(strategy.allocatedCapital);
       strategy.totalTrades += 1;
     }
@@ -688,15 +695,18 @@ export class WheelService {
     if (trade.tradeType.includes('SELL')) {
       const exitCost = dto.exitPrice * trade.contracts * trade.sharesPerContract;
       trade.premiumPaid = exitCost;
-      trade.realizedPnL = Number(trade.premiumReceived) - exitCost - (dto.commission || 0) - (dto.b3Fees || 0);
+      trade.realizedPnL =
+        Number(trade.premiumReceived) - exitCost - (dto.commission || 0) - (dto.b3Fees || 0);
     }
 
     // Calculate annualized return
     const daysHeld = Math.ceil(
-      (trade.closedAt.getTime() - trade.openedAt.getTime()) / (1000 * 60 * 60 * 24)
+      (trade.closedAt.getTime() - trade.openedAt.getTime()) / (1000 * 60 * 60 * 24),
     );
     if (daysHeld > 0 && trade.strike > 0) {
-      const returnPercent = (trade.realizedPnL / (Number(trade.strike) * trade.contracts * trade.sharesPerContract)) * 100;
+      const returnPercent =
+        (trade.realizedPnL / (Number(trade.strike) * trade.contracts * trade.sharesPerContract)) *
+        100;
       trade.annualizedReturn = (returnPercent / daysHeld) * 365;
     }
 
@@ -771,7 +781,10 @@ export class WheelService {
   // ANALYTICS
   // ===========================================
 
-  async calculateStrategyPnL(strategyId: string, userId: string): Promise<{
+  async calculateStrategyPnL(
+    strategyId: string,
+    userId: string,
+  ): Promise<{
     realizedPnL: number;
     unrealizedPnL: number;
     totalPremiumReceived: number;
@@ -785,27 +798,27 @@ export class WheelService {
   }> {
     const strategy = await this.findStrategy(strategyId, userId);
 
-    const winRate = strategy.totalTrades > 0
-      ? (strategy.winningTrades / strategy.totalTrades) * 100
-      : 0;
+    const winRate =
+      strategy.totalTrades > 0 ? (strategy.winningTrades / strategy.totalTrades) * 100 : 0;
 
-    const exerciseRate = strategy.totalTrades > 0
-      ? (strategy.exercises / strategy.totalTrades) * 100
-      : 0;
+    const exerciseRate =
+      strategy.totalTrades > 0 ? (strategy.exercises / strategy.totalTrades) * 100 : 0;
 
-    const totalReturn = Number(strategy.realizedPnL) +
+    const totalReturn =
+      Number(strategy.realizedPnL) +
       Number(strategy.unrealizedPnL) +
       Number(strategy.cashYield) +
       Number(strategy.dividendsReceived);
 
     // Calculate days since strategy started
     const daysSinceStart = Math.ceil(
-      (Date.now() - new Date(strategy.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+      (Date.now() - new Date(strategy.createdAt).getTime()) / (1000 * 60 * 60 * 24),
     );
 
-    const annualizedReturn = daysSinceStart > 0 && strategy.notional > 0
-      ? ((totalReturn / Number(strategy.notional)) * 365 / daysSinceStart) * 100
-      : 0;
+    const annualizedReturn =
+      daysSinceStart > 0 && strategy.notional > 0
+        ? (((totalReturn / Number(strategy.notional)) * 365) / daysSinceStart) * 100
+        : 0;
 
     return {
       realizedPnL: Number(strategy.realizedPnL),
@@ -862,8 +875,8 @@ export class WheelService {
 
       this.logger.log(
         `Cash yield calculated: Principal=${principal.toFixed(2)}, Days=${days}, ` +
-        `Selic=${selicRate}%, DailyRate=${(dailyRate * 100).toFixed(6)}%, ` +
-        `ExpectedYield=${expectedYield.toFixed(2)}, FinalAmount=${finalAmount.toFixed(2)}`
+          `Selic=${selicRate}%, DailyRate=${(dailyRate * 100).toFixed(6)}%, ` +
+          `ExpectedYield=${expectedYield.toFixed(2)}, FinalAmount=${finalAmount.toFixed(2)}`,
       );
 
       return {
@@ -910,7 +923,7 @@ export class WheelService {
   async calculateStrategyCashYield(
     strategyId: string,
     userId: string,
-    days: number = 30
+    days: number = 30,
   ): Promise<CashYieldDto> {
     const strategy = await this.findStrategy(strategyId, userId);
     const availableCapital = Number(strategy.availableCapital);
@@ -929,7 +942,7 @@ export class WheelService {
       minDividendYield: number;
       maxDividaEbitda: number;
       minMargemLiquida: number;
-    }
+    },
   ): number {
     if (!fd) return 0;
 

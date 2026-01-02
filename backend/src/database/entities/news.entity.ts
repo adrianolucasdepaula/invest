@@ -85,7 +85,11 @@ export class News {
   @Column({ name: 'published_at', type: 'timestamp with time zone' })
   publishedAt: Date;
 
-  @Column({ name: 'collected_at', type: 'timestamp with time zone', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({
+    name: 'collected_at',
+    type: 'timestamp with time zone',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   collectedAt: Date;
 
   @Column({ name: 'is_analyzed', default: false })

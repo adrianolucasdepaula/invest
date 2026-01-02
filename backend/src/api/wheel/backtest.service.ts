@@ -560,7 +560,9 @@ export class BacktestService {
 
       // Premium estimate: ~2% of stock price for 30-day options
       const premiumRate = 0.02;
-      const contracts = Math.floor((state.cash * (config.maxWeeklyAllocation || 0.25)) / (strike * 100));
+      const contracts = Math.floor(
+        (state.cash * (config.maxWeeklyAllocation || 0.25)) / (strike * 100),
+      );
 
       if (contracts <= 0) return;
 
@@ -630,7 +632,10 @@ export class BacktestService {
     profitFactor: number;
     calmarRatio: number;
   } {
-    const finalEquity = state.equityCurve.length > 0 ? state.equityCurve[state.equityCurve.length - 1].equity : initialCapital;
+    const finalEquity =
+      state.equityCurve.length > 0
+        ? state.equityCurve[state.equityCurve.length - 1].equity
+        : initialCapital;
     const totalReturn = finalEquity - initialCapital;
     const totalReturnPercent = (totalReturn / initialCapital) * 100;
 
@@ -649,12 +654,16 @@ export class BacktestService {
     const riskFreeRate = this.DEFAULT_SELIC_RATE / this.TRADING_DAYS_PER_YEAR;
     const excessReturn = avgReturn - riskFreeRate;
     const stdDev = this.calculateStdDev(dailyReturns);
-    const sharpeRatio = stdDev > 0 ? (excessReturn / stdDev) * Math.sqrt(this.TRADING_DAYS_PER_YEAR) : 0;
+    const sharpeRatio =
+      stdDev > 0 ? (excessReturn / stdDev) * Math.sqrt(this.TRADING_DAYS_PER_YEAR) : 0;
 
     // Sortino Ratio
     const negativeReturns = dailyReturns.filter((r) => r < 0);
     const downsideStdDev = this.calculateStdDev(negativeReturns);
-    const sortinoRatio = downsideStdDev > 0 ? (excessReturn / downsideStdDev) * Math.sqrt(this.TRADING_DAYS_PER_YEAR) : 0;
+    const sortinoRatio =
+      downsideStdDev > 0
+        ? (excessReturn / downsideStdDev) * Math.sqrt(this.TRADING_DAYS_PER_YEAR)
+        : 0;
 
     // Max Drawdown
     const { maxDrawdown, maxDrawdownDays } = this.calculateMaxDrawdownWithDays(state.equityCurve);
@@ -694,9 +703,10 @@ export class BacktestService {
     return Math.sqrt(squaredDiffs.reduce((a, b) => a + b, 0) / values.length);
   }
 
-  private calculateMaxDrawdownWithDays(
-    equityCurve: EquityCurvePoint[],
-  ): { maxDrawdown: number; maxDrawdownDays: number } {
+  private calculateMaxDrawdownWithDays(equityCurve: EquityCurvePoint[]): {
+    maxDrawdown: number;
+    maxDrawdownDays: number;
+  } {
     let maxDrawdown = 0;
     let maxDrawdownDays = 0;
     let peak = equityCurve[0]?.equity || 0;
@@ -761,7 +771,9 @@ export class BacktestService {
         winningTrades: backtest.winningTrades,
         losingTrades: backtest.losingTrades,
         exercises: backtest.exercises,
-        averageProfit: new Decimal(this.calculateAverageProfit(backtest.simulatedTrades).toFixed(2)),
+        averageProfit: new Decimal(
+          this.calculateAverageProfit(backtest.simulatedTrades).toFixed(2),
+        ),
         averageLoss: new Decimal(this.calculateAverageLoss(backtest.simulatedTrades).toFixed(2)),
         maxProfit: new Decimal(this.calculateMaxProfit(backtest.simulatedTrades).toFixed(2)),
         maxLoss: new Decimal(this.calculateMaxLoss(backtest.simulatedTrades).toFixed(2)),
@@ -772,10 +784,20 @@ export class BacktestService {
         lendingIncome: backtest.lendingIncome,
         selicIncome: backtest.selicIncome,
         total: new Decimal(totalIncome.toFixed(2)),
-        premiumPercent: new Decimal(totalIncome > 0 ? ((Number(backtest.premiumIncome) / totalIncome) * 100).toFixed(2) : '0'),
-        dividendPercent: new Decimal(totalIncome > 0 ? ((Number(backtest.dividendIncome) / totalIncome) * 100).toFixed(2) : '0'),
-        lendingPercent: new Decimal(totalIncome > 0 ? ((Number(backtest.lendingIncome) / totalIncome) * 100).toFixed(2) : '0'),
-        selicPercent: new Decimal(totalIncome > 0 ? ((Number(backtest.selicIncome) / totalIncome) * 100).toFixed(2) : '0'),
+        premiumPercent: new Decimal(
+          totalIncome > 0 ? ((Number(backtest.premiumIncome) / totalIncome) * 100).toFixed(2) : '0',
+        ),
+        dividendPercent: new Decimal(
+          totalIncome > 0
+            ? ((Number(backtest.dividendIncome) / totalIncome) * 100).toFixed(2)
+            : '0',
+        ),
+        lendingPercent: new Decimal(
+          totalIncome > 0 ? ((Number(backtest.lendingIncome) / totalIncome) * 100).toFixed(2) : '0',
+        ),
+        selicPercent: new Decimal(
+          totalIncome > 0 ? ((Number(backtest.selicIncome) / totalIncome) * 100).toFixed(2) : '0',
+        ),
       },
       equityCurve: backtest.equityCurve,
       simulatedTrades: backtest.simulatedTrades,

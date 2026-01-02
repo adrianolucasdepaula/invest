@@ -15,7 +15,12 @@ import { MarketDataService } from './market-data.service';
 import { GetPricesDto, GetTechnicalDataDto, TechnicalDataResponseDto } from './dto';
 import { SyncCotahistDto, SyncCotahistResponseDto } from './dto/sync-cotahist.dto';
 import { SyncStatusResponseDto, SyncBulkDto, SyncBulkResponseDto } from './dto'; // FASE 35
-import { GetIntradayDto, IntradayDataResponseDto, IntradayTimeframeParam, IntradayRangeParam } from './dto'; // FASE 67
+import {
+  GetIntradayDto,
+  IntradayDataResponseDto,
+  IntradayTimeframeParam,
+  IntradayRangeParam,
+} from './dto'; // FASE 67
 import {
   SyncIntradayDto,
   SyncIntradayBulkDto,

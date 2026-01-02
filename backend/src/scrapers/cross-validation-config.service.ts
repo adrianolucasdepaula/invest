@@ -157,8 +157,8 @@ export class CrossValidationConfigService {
     const newDiscrepancies = this.calculateDiscrepancies(fundamentalData, previewConfig);
 
     // Calcular diferenças
-    const currentByKey = new Map(currentDiscrepancies.map(d => [`${d.ticker}-${d.field}`, d]));
-    const newByKey = new Map(newDiscrepancies.map(d => [`${d.ticker}-${d.field}`, d]));
+    const currentByKey = new Map(currentDiscrepancies.map((d) => [`${d.ticker}-${d.field}`, d]));
+    const newByKey = new Map(newDiscrepancies.map((d) => [`${d.ticker}-${d.field}`, d]));
 
     // Encontrar mudanças
     const affectedAssets = new Set<string>();
@@ -251,8 +251,18 @@ export class CrossValidationConfigService {
   private calculateDiscrepancies(
     fundamentalData: FundamentalData[],
     config: CrossValidationConfigDto,
-  ): Array<{ ticker: string; field: string; severity: 'high' | 'medium' | 'low'; deviation: number }> {
-    const discrepancies: Array<{ ticker: string; field: string; severity: 'high' | 'medium' | 'low'; deviation: number }> = [];
+  ): Array<{
+    ticker: string;
+    field: string;
+    severity: 'high' | 'medium' | 'low';
+    deviation: number;
+  }> {
+    const discrepancies: Array<{
+      ticker: string;
+      field: string;
+      severity: 'high' | 'medium' | 'low';
+      deviation: number;
+    }> = [];
     const seen = new Set<string>();
 
     for (const data of fundamentalData) {
@@ -260,7 +270,9 @@ export class CrossValidationConfigService {
 
       const ticker = data.asset.ticker;
 
-      for (const [fieldName, fieldInfo] of Object.entries(data.fieldSources as Record<string, any>)) {
+      for (const [fieldName, fieldInfo] of Object.entries(
+        data.fieldSources as Record<string, any>,
+      )) {
         if (!fieldInfo || !fieldInfo.values) continue;
 
         // Deduplicar por ticker+field
@@ -270,17 +282,20 @@ export class CrossValidationConfigService {
 
         // Verificar se tem discrepância com a nova configuração
         const values = fieldInfo.values as Array<{ source: string; value: number | null }>;
-        const validValues = values.filter(v => v.value !== null && v.value !== undefined);
+        const validValues = values.filter((v) => v.value !== null && v.value !== undefined);
 
         if (validValues.length < config.minSources) continue;
 
         // Calcular tolerância para este campo
-        const tolerance = config.fieldTolerances.byField?.[fieldName] ?? config.fieldTolerances.default;
+        const tolerance =
+          config.fieldTolerances.byField?.[fieldName] ?? config.fieldTolerances.default;
 
         // Agrupar valores similares
         const groups: Array<{ value: number; sources: string[] }> = [];
         for (const v of validValues) {
-          const existingGroup = groups.find(g => Math.abs((v.value! - g.value) / g.value) <= tolerance);
+          const existingGroup = groups.find(
+            (g) => Math.abs((v.value! - g.value) / g.value) <= tolerance,
+          );
           if (existingGroup) {
             existingGroup.sources.push(v.source);
           } else {
@@ -327,13 +342,15 @@ export class CrossValidationConfigService {
   /**
    * Conta discrepâncias por severidade
    */
-  private countBySeverity(
-    discrepancies: Array<{ severity: 'high' | 'medium' | 'low' }>,
-  ): { high: number; medium: number; low: number } {
+  private countBySeverity(discrepancies: Array<{ severity: 'high' | 'medium' | 'low' }>): {
+    high: number;
+    medium: number;
+    low: number;
+  } {
     return {
-      high: discrepancies.filter(d => d.severity === 'high').length,
-      medium: discrepancies.filter(d => d.severity === 'medium').length,
-      low: discrepancies.filter(d => d.severity === 'low').length,
+      high: discrepancies.filter((d) => d.severity === 'high').length,
+      medium: discrepancies.filter((d) => d.severity === 'medium').length,
+      low: discrepancies.filter((d) => d.severity === 'low').length,
     };
   }
 
@@ -380,9 +397,10 @@ export class CrossValidationConfigService {
       const obj = value as Record<string, unknown>;
       return {
         default: typeof obj.default === 'number' ? obj.default : defaultValue.default,
-        byField: typeof obj.byField === 'object' && obj.byField !== null
-          ? obj.byField as Record<string, number>
-          : defaultValue.byField,
+        byField:
+          typeof obj.byField === 'object' && obj.byField !== null
+            ? (obj.byField as Record<string, number>)
+            : defaultValue.byField,
       };
     }
 

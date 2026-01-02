@@ -332,7 +332,8 @@ export class ValidatorsService {
 
     // Adjusted close validation
     if (adjustedClose !== undefined && adjustedClose !== null) {
-      const numAdjusted = typeof adjustedClose === 'string' ? parseFloat(adjustedClose) : adjustedClose;
+      const numAdjusted =
+        typeof adjustedClose === 'string' ? parseFloat(adjustedClose) : adjustedClose;
       if (isNaN(numAdjusted) || numAdjusted <= 0) {
         errors.push({
           field: 'adjustedClose',

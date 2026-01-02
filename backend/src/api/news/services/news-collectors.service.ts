@@ -133,7 +133,7 @@ export class NewsCollectorsService {
       rateLimit: 15,
     });
 
-    const enabledCount = Array.from(this.sources.values()).filter(s => s.enabled).length;
+    const enabledCount = Array.from(this.sources.values()).filter((s) => s.enabled).length;
     this.logger.log(`Initialized ${enabledCount}/7 news sources`);
   }
 
@@ -153,7 +153,7 @@ export class NewsCollectorsService {
     const asset = await this.assetRepository.findOne({ where: { ticker } });
 
     // Coletar de todas as fontes em paralelo
-    const collectionPromises = sourcesToUse.map(source =>
+    const collectionPromises = sourcesToUse.map((source) =>
       this.collectFromSource(source, ticker, limit),
     );
 
@@ -288,9 +288,10 @@ export class NewsCollectorsService {
 
     // Filtrar por ticker
     return allNews
-      .filter(n =>
-        n.title.toLowerCase().includes(ticker.toLowerCase()) ||
-        (n.summary && n.summary.toLowerCase().includes(ticker.toLowerCase())),
+      .filter(
+        (n) =>
+          n.title.toLowerCase().includes(ticker.toLowerCase()) ||
+          (n.summary && n.summary.toLowerCase().includes(ticker.toLowerCase())),
       )
       .slice(0, limit);
   }
@@ -316,9 +317,10 @@ export class NewsCollectorsService {
     const allNews = this.parseRSS(xml, config, 50);
 
     return allNews
-      .filter(n =>
-        n.title.toLowerCase().includes(ticker.toLowerCase()) ||
-        (n.summary && n.summary.toLowerCase().includes(ticker.toLowerCase())),
+      .filter(
+        (n) =>
+          n.title.toLowerCase().includes(ticker.toLowerCase()) ||
+          (n.summary && n.summary.toLowerCase().includes(ticker.toLowerCase())),
       )
       .slice(0, limit);
   }
@@ -344,9 +346,10 @@ export class NewsCollectorsService {
     const allNews = this.parseRSS(xml, config, 50);
 
     return allNews
-      .filter(n =>
-        n.title.toLowerCase().includes(ticker.toLowerCase()) ||
-        (n.summary && n.summary.toLowerCase().includes(ticker.toLowerCase())),
+      .filter(
+        (n) =>
+          n.title.toLowerCase().includes(ticker.toLowerCase()) ||
+          (n.summary && n.summary.toLowerCase().includes(ticker.toLowerCase())),
       )
       .slice(0, limit);
   }
@@ -372,9 +375,10 @@ export class NewsCollectorsService {
     const allNews = this.parseRSS(xml, config, 50);
 
     return allNews
-      .filter(n =>
-        n.title.toLowerCase().includes(ticker.toLowerCase()) ||
-        (n.summary && n.summary.toLowerCase().includes(ticker.toLowerCase())),
+      .filter(
+        (n) =>
+          n.title.toLowerCase().includes(ticker.toLowerCase()) ||
+          (n.summary && n.summary.toLowerCase().includes(ticker.toLowerCase())),
       )
       .slice(0, limit);
   }
@@ -401,9 +405,10 @@ export class NewsCollectorsService {
       const allNews = this.parseRSS(xml, config, 50);
 
       return allNews
-        .filter(n =>
-          n.title.toLowerCase().includes(ticker.toLowerCase()) ||
-          (n.summary && n.summary.toLowerCase().includes(ticker.toLowerCase())),
+        .filter(
+          (n) =>
+            n.title.toLowerCase().includes(ticker.toLowerCase()) ||
+            (n.summary && n.summary.toLowerCase().includes(ticker.toLowerCase())),
         )
         .slice(0, limit);
     } catch {
@@ -433,9 +438,10 @@ export class NewsCollectorsService {
     const allNews = this.parseRSS(xml, config, 50);
 
     return allNews
-      .filter(n =>
-        n.title.toLowerCase().includes(ticker.toLowerCase()) ||
-        (n.summary && n.summary.toLowerCase().includes(ticker.toLowerCase())),
+      .filter(
+        (n) =>
+          n.title.toLowerCase().includes(ticker.toLowerCase()) ||
+          (n.summary && n.summary.toLowerCase().includes(ticker.toLowerCase())),
       )
       .slice(0, limit);
   }
@@ -484,7 +490,10 @@ export class NewsCollectorsService {
    */
   private extractTag(xml: string, tagName: string): string | undefined {
     // Tenta com CDATA
-    const cdataRegex = new RegExp(`<${tagName}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tagName}>`, 'i');
+    const cdataRegex = new RegExp(
+      `<${tagName}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tagName}>`,
+      'i',
+    );
     const cdataMatch = xml.match(cdataRegex);
     if (cdataMatch) {
       return cdataMatch[1];

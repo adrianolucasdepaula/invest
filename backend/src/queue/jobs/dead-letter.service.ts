@@ -61,7 +61,9 @@ export class DeadLetterService {
   /**
    * Get all jobs in the dead letter queue
    */
-  async getDeadLetterJobs(status: 'waiting' | 'completed' | 'failed' = 'waiting'): Promise<Job<DeadLetterJob>[]> {
+  async getDeadLetterJobs(
+    status: 'waiting' | 'completed' | 'failed' = 'waiting',
+  ): Promise<Job<DeadLetterJob>[]> {
     switch (status) {
       case 'waiting':
         return this.deadLetterQueue.getWaiting();

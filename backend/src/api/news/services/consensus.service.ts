@@ -83,9 +83,7 @@ export class ConsensusService {
     const { validAnalyses, outliers } = this.detectOutliers(analyses);
 
     if (validAnalyses.length < MIN_PROVIDERS_FOR_CONSENSUS) {
-      this.logger.warn(
-        `Not enough valid analyses after outlier removal for news ${newsId}`,
-      );
+      this.logger.warn(`Not enough valid analyses after outlier removal for news ${newsId}`);
       return null;
     }
 
@@ -93,7 +91,10 @@ export class ConsensusService {
     const { weightedScore, totalWeight } = this.calculateWeightedScore(validAnalyses);
 
     // Calcular concordância
-    const { agreementCount, agreementScore } = this.calculateAgreement(validAnalyses, weightedScore);
+    const { agreementCount, agreementScore } = this.calculateAgreement(
+      validAnalyses,
+      weightedScore,
+    );
 
     // Determinar label
     const sentimentLabel = this.scoreToLabel(weightedScore);
@@ -106,7 +107,7 @@ export class ConsensusService {
     );
 
     // Calcular desvio padrão
-    const scores = validAnalyses.map(a => a.sentimentScore);
+    const scores = validAnalyses.map((a) => a.sentimentScore);
     const mean = scores.reduce((sum, s) => sum + s, 0) / scores.length;
     const standardDeviation = Math.sqrt(
       scores.reduce((sum, s) => sum + Math.pow(s - mean, 2), 0) / scores.length,
@@ -114,7 +115,7 @@ export class ConsensusService {
 
     // Construir detalhes do consenso conforme interface ConsensusDetails
     const consensusDetails = {
-      providers: validAnalyses.map(a => ({
+      providers: validAnalyses.map((a) => ({
         name: a.provider,
         score: a.sentimentScore,
         confidence: a.confidence,
@@ -122,7 +123,7 @@ export class ConsensusService {
         agreed: Math.abs(a.sentimentScore - weightedScore) <= 0.3,
         isOutlier: false,
       })),
-      outliers: outliers.map(a => a.provider), // string[] de provider names
+      outliers: outliers.map((a) => a.provider), // string[] de provider names
       methodology: 'weighted_average' as const,
       standardDeviation,
       agreementThreshold: 0.3,
@@ -140,7 +141,8 @@ export class ConsensusService {
       consensus.agreementCount = agreementCount;
       consensus.outliersCount = outliers.length;
       consensus.consensusDetails = consensusDetails;
-      consensus.isHighConfidence = confidenceScore >= HIGH_CONFIDENCE_THRESHOLD && validAnalyses.length >= 3;
+      consensus.isHighConfidence =
+        confidenceScore >= HIGH_CONFIDENCE_THRESHOLD && validAnalyses.length >= 3;
       consensus.processingTime = Date.now() - startTime;
     } else {
       // Criar novo
@@ -165,7 +167,7 @@ export class ConsensusService {
 
     this.logger.log(
       `Consensus calculated for news ${newsId}: ${sentimentLabel} (${weightedScore.toFixed(3)}) ` +
-      `with ${validAnalyses.length} providers, confidence ${confidenceScore.toFixed(2)}`,
+        `with ${validAnalyses.length} providers, confidence ${confidenceScore.toFixed(2)}`,
     );
 
     return saved;
@@ -183,10 +185,11 @@ export class ConsensusService {
     }
 
     // Calcular mediana
-    const scores = analyses.map(a => a.sentimentScore).sort((a, b) => a - b);
-    const median = scores.length % 2 === 0
-      ? (scores[scores.length / 2 - 1] + scores[scores.length / 2]) / 2
-      : scores[Math.floor(scores.length / 2)];
+    const scores = analyses.map((a) => a.sentimentScore).sort((a, b) => a - b);
+    const median =
+      scores.length % 2 === 0
+        ? (scores[scores.length / 2 - 1] + scores[scores.length / 2]) / 2
+        : scores[Math.floor(scores.length / 2)];
 
     const validAnalyses: NewsAnalysis[] = [];
     const outliers: NewsAnalysis[] = [];

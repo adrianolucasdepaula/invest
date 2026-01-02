@@ -8,7 +8,13 @@ import { PythonServiceClient } from './clients/python-service.client';
 import { SyncGateway } from './sync.gateway'; // FASE 35
 import { AssetsModule } from '../assets/assets.module';
 import { ScrapersModule } from '../../scrapers/scrapers.module'; // FASE 69: Intraday sync
-import { Asset, AssetPrice, SyncHistory, TickerChange, IntradayPrice } from '../../database/entities';
+import {
+  Asset,
+  AssetPrice,
+  SyncHistory,
+  TickerChange,
+  IntradayPrice,
+} from '../../database/entities';
 import { TickerMergeService } from './ticker-merge.service';
 
 @Module({

@@ -156,7 +156,10 @@ export class DividendsService {
    *
    * DY = (Total Dividendos no Período / Preço Atual) * 100
    */
-  async calculateDividendYield(assetId: string, months: number = 12): Promise<DividendYieldSummaryDto> {
+  async calculateDividendYield(
+    assetId: string,
+    months: number = 12,
+  ): Promise<DividendYieldSummaryDto> {
     this.logger.log(`Calculating dividend yield for asset ${assetId} (last ${months} months)`);
 
     // 1. Fetch asset
@@ -224,7 +227,10 @@ export class DividendsService {
       dy24m: new Decimal(dy24m.toFixed(2)),
       totalPago12m: new Decimal(totalPago.toFixed(4)),
       pagamentos12m: dividends.length,
-      mediaPorPagamento: dividends.length > 0 ? new Decimal((totalPago / dividends.length).toFixed(4)) : new Decimal(0),
+      mediaPorPagamento:
+        dividends.length > 0
+          ? new Decimal((totalPago / dividends.length).toFixed(4))
+          : new Decimal(0),
       frequenciaPredominante: frequencia,
       proximoProventoEstimado: proximoEstimado
         ? {
@@ -319,7 +325,9 @@ export class DividendsService {
     }
 
     const elapsedTime = (Date.now() - startTime) / 1000;
-    this.logger.log(`Import completed: ${imported} imported, ${skipped} skipped, ${errors.length} errors`);
+    this.logger.log(
+      `Import completed: ${imported} imported, ${skipped} skipped, ${errors.length} errors`,
+    );
 
     return {
       success: errors.length === 0,
@@ -474,12 +482,12 @@ export class DividendsService {
       'juros sobre capital': DividendType.JCP,
       bonus: DividendType.BONUS,
       bonificacao: DividendType.BONUS,
-      'bonificação': DividendType.BONUS,
+      bonificação: DividendType.BONUS,
       rendimento: DividendType.RENDIMENTO,
       fracao: DividendType.FRACAO,
-      'fração': DividendType.FRACAO,
+      fração: DividendType.FRACAO,
       subscricao: DividendType.SUBSCRICAO,
-      'subscrição': DividendType.SUBSCRICAO,
+      subscrição: DividendType.SUBSCRICAO,
     };
 
     return mapping[normalized] || DividendType.DIVIDENDO;

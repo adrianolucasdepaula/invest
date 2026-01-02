@@ -230,13 +230,14 @@ export class EconomicCalendarService {
         headers: {
           // FASE 91: Headers ultra-realistas para evitar bloqueio
           'Content-Type': 'application/x-www-form-urlencoded',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'X-Requested-With': 'XMLHttpRequest',
-          'Accept': '*/*',
+          Accept: '*/*',
           'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
           'Accept-Encoding': 'gzip, deflate, br',
-          'Origin': 'https://br.investing.com',
-          'Referer': 'https://br.investing.com/economic-calendar/',
+          Origin: 'https://br.investing.com',
+          Referer: 'https://br.investing.com/economic-calendar/',
           // FASE 91: Fingerprint headers para bypassar detecção de bot
           'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
           'sec-ch-ua-mobile': '?0',
@@ -248,7 +249,7 @@ export class EconomicCalendarService {
         body: new URLSearchParams({
           country: '32,17', // Brasil (32) e EUA (17)
           importance: '2,3', // Média e Alta
-          timeZone: '55',   // FASE 90 FIX: GMT-3 (Brasília) - era '12' incorretamente
+          timeZone: '55', // FASE 90 FIX: GMT-3 (Brasília) - era '12' incorretamente
           timeFilter: 'timeRemain',
           currentTab: 'thisWeek',
         }),
@@ -330,21 +331,27 @@ export class EconomicCalendarService {
           const row = match[1];
 
           // Extrair dados do evento com múltiplos patterns
-          const dateMatch = row.match(/data-event-datetime="([^"]+)"/) ||
-                           row.match(/datetime="([^"]+)"/);
-          const nameMatch = row.match(/class="event"[^>]*>([^<]+)</) ||
-                           row.match(/class="[^"]*eventName[^"]*"[^>]*>([^<]+)</);
-          const countryMatch = row.match(/class="flagCur[^"]*"\s+title="([^"]+)"/) ||
-                              row.match(/title="([^"]+)"[^>]*class="[^"]*flag/);
-          const impactMatch = row.match(/sentiment\s+(bull\d+)/) ||
-                             row.match(/class="[^"]*grayFullBullishIcon[^"]*"/) ||
-                             row.match(/data-img_key="bull(\d+)"/);
-          const actualMatch = row.match(/class="[^"]*act[^"]*"[^>]*>([^<]*)/) ||
-                             row.match(/id="[^"]*actual[^"]*"[^>]*>([^<]*)/);
-          const forecastMatch = row.match(/class="[^"]*fore[^"]*"[^>]*>([^<]*)/) ||
-                               row.match(/id="[^"]*forecast[^"]*"[^>]*>([^<]*)/);
-          const previousMatch = row.match(/class="[^"]*prev[^"]*"[^>]*>([^<]*)/) ||
-                               row.match(/id="[^"]*previous[^"]*"[^>]*>([^<]*)/);
+          const dateMatch =
+            row.match(/data-event-datetime="([^"]+)"/) || row.match(/datetime="([^"]+)"/);
+          const nameMatch =
+            row.match(/class="event"[^>]*>([^<]+)</) ||
+            row.match(/class="[^"]*eventName[^"]*"[^>]*>([^<]+)</);
+          const countryMatch =
+            row.match(/class="flagCur[^"]*"\s+title="([^"]+)"/) ||
+            row.match(/title="([^"]+)"[^>]*class="[^"]*flag/);
+          const impactMatch =
+            row.match(/sentiment\s+(bull\d+)/) ||
+            row.match(/class="[^"]*grayFullBullishIcon[^"]*"/) ||
+            row.match(/data-img_key="bull(\d+)"/);
+          const actualMatch =
+            row.match(/class="[^"]*act[^"]*"[^>]*>([^<]*)/) ||
+            row.match(/id="[^"]*actual[^"]*"[^>]*>([^<]*)/);
+          const forecastMatch =
+            row.match(/class="[^"]*fore[^"]*"[^>]*>([^<]*)/) ||
+            row.match(/id="[^"]*forecast[^"]*"[^>]*>([^<]*)/);
+          const previousMatch =
+            row.match(/class="[^"]*prev[^"]*"[^>]*>([^<]*)/) ||
+            row.match(/id="[^"]*previous[^"]*"[^>]*>([^<]*)/);
 
           if (dateMatch && nameMatch) {
             const importance = this.parseImportance(impactMatch?.[1]);
@@ -399,7 +406,7 @@ export class EconomicCalendarService {
           const response = await fetch(url, {
             headers: {
               'User-Agent': 'Mozilla/5.0 (compatible; B3AnalysisBot/1.0)',
-              'Accept': 'application/json',
+              Accept: 'application/json',
             },
             signal: AbortSignal.timeout(30000),
           });
@@ -421,7 +428,9 @@ export class EconomicCalendarService {
           const events = this.parseBCBSeriesEvents(data, series);
           allEvents.push(...events);
 
-          this.logger.debug(`Collected ${events.length} events from BCB series ${series.code} (${series.name})`);
+          this.logger.debug(
+            `Collected ${events.length} events from BCB series ${series.code} (${series.name})`,
+          );
         } catch (error) {
           // Edge case: Timeout ou erro de rede
           if (error.name === 'AbortError') {
@@ -451,46 +460,47 @@ export class EconomicCalendarService {
   ): CollectedEvent[] {
     // Para séries diárias (SELIC), pegar apenas quando valor muda
     // Para séries mensais (IPCA), pegar últimos 12 meses
-    const entries = series.frequency === 'daily'
-      ? this.getLastDistinctValues(data, 12)
-      : data.slice(-12);
+    const entries =
+      series.frequency === 'daily' ? this.getLastDistinctValues(data, 12) : data.slice(-12);
 
-    return entries.map((item) => {
-      // Edge case: Formato data inválido
-      let eventDate: Date;
-      try {
-        eventDate = this.parseBRDate(item.data);
-        if (isNaN(eventDate.getTime())) {
-          this.logger.debug(`Invalid date format: ${item.data}`);
+    return entries
+      .map((item) => {
+        // Edge case: Formato data inválido
+        let eventDate: Date;
+        try {
+          eventDate = this.parseBRDate(item.data);
+          if (isNaN(eventDate.getTime())) {
+            this.logger.debug(`Invalid date format: ${item.data}`);
+            return null;
+          }
+        } catch {
+          this.logger.debug(`Failed to parse date: ${item.data}`);
           return null;
         }
-      } catch {
-        this.logger.debug(`Failed to parse date: ${item.data}`);
-        return null;
-      }
 
-      // Edge case: Valor não numérico
-      const actualValue = parseFloat(item.valor);
-      if (isNaN(actualValue)) {
-        this.logger.debug(`Invalid value for ${series.name}: ${item.valor}`);
-        return null;
-      }
+        // Edge case: Valor não numérico
+        const actualValue = parseFloat(item.valor);
+        if (isNaN(actualValue)) {
+          this.logger.debug(`Invalid value for ${series.name}: ${item.valor}`);
+          return null;
+        }
 
-      return {
-        name: series.name,
-        nameEn: series.nameEn,
-        country: 'BRA',
-        importance: series.importance,
-        category: series.category,
-        eventDate,
-        isAllDay: true,
-        actual: actualValue,
-        unit: series.unit,
-        source: EventSource.BCB,
-        sourceId: String(series.code),
-        sourceUrl: `https://www.bcb.gov.br/estatisticas/detalhamentoSeriesTxt?codigoSerie=${series.code}`,
-      };
-    }).filter((e): e is NonNullable<typeof e> => e !== null);
+        return {
+          name: series.name,
+          nameEn: series.nameEn,
+          country: 'BRA',
+          importance: series.importance,
+          category: series.category,
+          eventDate,
+          isAllDay: true,
+          actual: actualValue,
+          unit: series.unit,
+          source: EventSource.BCB,
+          sourceId: String(series.code),
+          sourceUrl: `https://www.bcb.gov.br/estatisticas/detalhamentoSeriesTxt?codigoSerie=${series.code}`,
+        };
+      })
+      .filter((e): e is NonNullable<typeof e> => e !== null);
   }
 
   /**
@@ -531,10 +541,7 @@ export class EconomicCalendarService {
     skipped: number;
     bySource: Record<EventSource, number>;
   }> {
-    const results = await Promise.allSettled([
-      this.collectFromInvesting(),
-      this.collectFromBCB(),
-    ]);
+    const results = await Promise.allSettled([this.collectFromInvesting(), this.collectFromBCB()]);
 
     const bySource: Record<EventSource, number> = {
       [EventSource.INVESTING]: 0,

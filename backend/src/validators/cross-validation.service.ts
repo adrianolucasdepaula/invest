@@ -423,9 +423,7 @@ export class CrossValidationService {
       totalFieldsAnalyzed++;
 
       if (fieldInfo.hasDiscrepancy && fieldInfo.divergentSources) {
-        const maxDeviation = Math.max(
-          ...fieldInfo.divergentSources.map((s) => s.deviation || 0),
-        );
+        const maxDeviation = Math.max(...fieldInfo.divergentSources.map((s) => s.deviation || 0));
 
         if (maxDeviation > 20) {
           fieldsWithHighDiscrepancy++;

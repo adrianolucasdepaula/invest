@@ -254,11 +254,7 @@ export class MetricsService implements OnModuleInit {
   }
 
   // Database Metrics methods
-  observeDatabaseQuery(
-    operation: string,
-    table: string,
-    durationSeconds: number,
-  ): void {
+  observeDatabaseQuery(operation: string, table: string, durationSeconds: number): void {
     this.databaseQueryDuration.observe({ operation, table }, durationSeconds);
   }
 
@@ -295,7 +291,11 @@ export class MetricsService implements OnModuleInit {
   }
 
   // FASE 117: Dead Letter Queue Metrics methods
-  setDeadLetterJobsCount(status: 'waiting' | 'completed' | 'failed', originalQueue: string, count: number): void {
+  setDeadLetterJobsCount(
+    status: 'waiting' | 'completed' | 'failed',
+    originalQueue: string,
+    count: number,
+  ): void {
     this.deadLetterJobsTotal.set({ status, original_queue: originalQueue }, count);
   }
 

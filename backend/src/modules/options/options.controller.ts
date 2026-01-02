@@ -105,7 +105,8 @@ export class OptionsController {
   @ApiResponse({ status: 200, description: 'Greeks updated successfully' })
   async updateGreeks(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() greeks: {
+    @Body()
+    greeks: {
       delta?: number;
       gamma?: number;
       theta?: number;

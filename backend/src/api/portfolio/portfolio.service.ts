@@ -68,7 +68,11 @@ export class PortfolioService {
     return this.toPortfolioResponseDto(savedPortfolio);
   }
 
-  async update(id: string, userId: string, data: UpdatePortfolioDto): Promise<PortfolioResponseDto> {
+  async update(
+    id: string,
+    userId: string,
+    data: UpdatePortfolioDto,
+  ): Promise<PortfolioResponseDto> {
     const portfolio = await this.portfolioRepository.findOne({
       where: { id, userId },
       relations: ['positions', 'positions.asset'],
@@ -99,7 +103,11 @@ export class PortfolioService {
     await this.portfolioRepository.remove(portfolio);
   }
 
-  async addPosition(portfolioId: string, userId: string, data: CreatePositionDto): Promise<PositionResponseDto> {
+  async addPosition(
+    portfolioId: string,
+    userId: string,
+    data: CreatePositionDto,
+  ): Promise<PositionResponseDto> {
     const portfolio = await this.portfolioRepository.findOne({
       where: { id: portfolioId, userId },
     });
@@ -203,7 +211,11 @@ export class PortfolioService {
     await this.positionRepository.remove(position);
   }
 
-  async importFromFile(userId: string, fileBuffer: Buffer, filename: string): Promise<PortfolioResponseDto> {
+  async importFromFile(
+    userId: string,
+    fileBuffer: Buffer,
+    filename: string,
+  ): Promise<PortfolioResponseDto> {
     this.logger.log(`Importing portfolio for user ${userId} from ${filename}`);
 
     try {
@@ -294,7 +306,9 @@ export class PortfolioService {
     this.logger.log(`Importing ${data.positions?.length || 0} positions for user ${userId}`);
 
     // Create portfolio
-    const portfolioName = data.name || `Importação ${data.source || 'Manual'} - ${new Date().toLocaleDateString('pt-BR')}`;
+    const portfolioName =
+      data.name ||
+      `Importação ${data.source || 'Manual'} - ${new Date().toLocaleDateString('pt-BR')}`;
     const portfolio = await this.create(userId, {
       name: portfolioName,
       description: `Portfolio importado de ${data.source || 'importação manual'}`,
@@ -353,7 +367,9 @@ export class PortfolioService {
 
   private toPositionResponseDto(position: PortfolioPosition): PositionResponseDto {
     const totalInvested = position.totalInvested || position.quantity * position.averagePrice;
-    const currentValue = position.currentPrice ? position.currentPrice * position.quantity : totalInvested;
+    const currentValue = position.currentPrice
+      ? position.currentPrice * position.quantity
+      : totalInvested;
     const profit = currentValue - totalInvested;
     const profitPercentage = totalInvested > 0 ? (profit / totalInvested) * 100 : 0;
 

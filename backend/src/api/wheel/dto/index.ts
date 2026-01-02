@@ -5,10 +5,7 @@ export * from './wheel-trade.dto';
 export * from './backtest.dto';
 
 // Re-export specific types for controller usage
-export {
-  CashYieldDto,
-  StrategyAnalyticsDto,
-} from './wheel-trade.dto';
+export { CashYieldDto, StrategyAnalyticsDto } from './wheel-trade.dto';
 
 // Re-export backtest types
 export {

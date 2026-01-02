@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Param, Query, UseGuards, UseInterceptors, HttpCode, HttpStatus, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  HttpCode,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AssetsService } from './assets.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -35,7 +46,8 @@ export class AssetsController {
   @Get('bulk-update-status')
   @ApiOperation({
     summary: 'Get current bulk update status',
-    description: 'Check if there is a bulk update in progress. Returns queue statistics with active jobs.',
+    description:
+      'Check if there is a bulk update in progress. Returns queue statistics with active jobs.',
   })
   async getBulkUpdateStatus() {
     return this.assetUpdateJobsService.getQueueStats();
@@ -79,9 +91,11 @@ export class AssetsController {
     const assets = await this.assetsService.findAllForBulkUpdate();
     const tickers = assets.map((asset) => asset.ticker);
 
-    const optionsCount = assets.filter(a => a.hasOptions).length;
-    const neverUpdatedCount = assets.filter(a => !a.lastUpdated).length;
-    this.logger.log(`Prioritization: ${optionsCount} with options, ${neverUpdatedCount} never updated, ${tickers.length} total`);
+    const optionsCount = assets.filter((a) => a.hasOptions).length;
+    const neverUpdatedCount = assets.filter((a) => !a.lastUpdated).length;
+    this.logger.log(
+      `Prioritization: ${optionsCount} with options, ${neverUpdatedCount} never updated, ${tickers.length} total`,
+    );
 
     // Queue the job (returns immediately)
     const jobId = await this.assetUpdateJobsService.queueMultipleAssets(
@@ -107,7 +121,8 @@ export class AssetsController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Cancel bulk update',
-    description: 'Cancel all pending jobs in the queue (waiting + active). Jobs in execution will complete but be removed from queue to prevent retry.',
+    description:
+      'Cancel all pending jobs in the queue (waiting + active). Jobs in execution will complete but be removed from queue to prevent retry.',
   })
   async cancelBulkUpdate() {
     return this.assetUpdateJobsService.cancelAllPendingJobs();
@@ -118,7 +133,8 @@ export class AssetsController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Pause bulk update queue',
-    description: 'Pause the queue. Active jobs will complete but no new jobs will start until resumed.',
+    description:
+      'Pause the queue. Active jobs will complete but no new jobs will start until resumed.',
   })
   async pauseBulkUpdate() {
     await this.assetUpdateJobsService.pauseQueue();
@@ -142,7 +158,8 @@ export class AssetsController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Clean stale jobs from queue',
-    description: 'Remove orphaned jobs that have been waiting for more than 2 hours. Useful to clear "ghost" updates from previous sessions.',
+    description:
+      'Remove orphaned jobs that have been waiting for more than 2 hours. Useful to clear "ghost" updates from previous sessions.',
   })
   async cleanStaleJobs() {
     await this.assetUpdateJobsService.cleanStaleJobs();

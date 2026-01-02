@@ -53,7 +53,9 @@ export class WheelController {
   // ===========================================
 
   @Get('candidates')
-  @ApiOperation({ summary: 'Find WHEEL-suitable candidates based on fundamental and options criteria' })
+  @ApiOperation({
+    summary: 'Find WHEEL-suitable candidates based on fundamental and options criteria',
+  })
   @ApiResponse({ status: 200, description: 'List of WHEEL candidates with scores' })
   async findCandidates(
     @Query() query: WheelCandidateQueryDto,
@@ -154,9 +156,8 @@ export class WheelController {
     // For inProfit calculation, we let the service handle it
     // since it has access to current prices via getLatestPrice()
     // Default to false here and the service will calculate properly
-    const inProfit = strategy.sharesHeld > 0 &&
-      strategy.averagePrice !== null &&
-      strategy.unrealizedPnL > 0;
+    const inProfit =
+      strategy.sharesHeld > 0 && strategy.averagePrice !== null && strategy.unrealizedPnL > 0;
 
     return this.wheelService.findBestCoveredCall(
       strategy.assetId,
@@ -242,7 +243,9 @@ export class WheelController {
   // ===========================================
 
   @Get('strategies/:id/cash-yield')
-  @ApiOperation({ summary: 'Calculate expected cash yield from Tesouro Selic for unallocated capital' })
+  @ApiOperation({
+    summary: 'Calculate expected cash yield from Tesouro Selic for unallocated capital',
+  })
   @ApiParam({ name: 'id', description: 'Strategy ID' })
   @ApiQuery({ name: 'days', required: false, description: 'Days to project (default: 30)' })
   @ApiResponse({ status: 200, description: 'Cash yield projection', type: CashYieldDto })

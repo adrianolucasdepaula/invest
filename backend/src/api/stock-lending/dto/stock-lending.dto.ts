@@ -111,7 +111,10 @@ export class StockLendingQueryDto {
   @IsOptional()
   endDate?: string;
 
-  @ApiPropertyOptional({ description: 'Numero de dias (alternativa a startDate/endDate)', default: 30 })
+  @ApiPropertyOptional({
+    description: 'Numero de dias (alternativa a startDate/endDate)',
+    default: 30,
+  })
   @IsInt()
   @Min(1)
   @Max(365)

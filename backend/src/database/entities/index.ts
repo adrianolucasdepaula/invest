@@ -31,24 +31,11 @@ export {
   EventSource,
 } from './economic-event.entity';
 // FASE 75.3 - Sistema de Alertas
-export {
-  Alert,
-  AlertType,
-  AlertStatus,
-  NotificationChannel,
-} from './alert.entity';
+export { Alert, AlertType, AlertStatus, NotificationChannel } from './alert.entity';
 // FASE 75.4 - Options Chain
-export {
-  OptionPrice,
-  OptionType,
-  OptionStyle,
-  OptionStatus,
-} from './option-price.entity';
+export { OptionPrice, OptionType, OptionStyle, OptionStatus } from './option-price.entity';
 // FASE 90 - Sistema de Resolução de Discrepâncias
-export {
-  DiscrepancyResolution,
-  ResolutionMethod,
-} from './discrepancy-resolution.entity';
+export { DiscrepancyResolution, ResolutionMethod } from './discrepancy-resolution.entity';
 // FASE 93 - Cross-Validation Configuration
 export { CrossValidationConfig } from './cross-validation-config.entity';
 // FASE 101 - WHEEL Strategy
@@ -59,11 +46,7 @@ export {
   WheelStrategyStatus,
   WheelConfig,
 } from './wheel-strategy.entity';
-export {
-  WheelTrade,
-  WheelTradeType,
-  WheelTradeStatus,
-} from './wheel-trade.entity';
+export { WheelTrade, WheelTradeType, WheelTradeStatus } from './wheel-trade.entity';
 // FASE 101.2 - Dividendos para Wheel Turbinada
 export { Dividend, DividendType, DividendStatus } from './dividend.entity';
 // FASE 101.3 - Aluguel de Ações (BTC) para Wheel Turbinada

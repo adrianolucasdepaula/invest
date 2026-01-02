@@ -1,10 +1,4 @@
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { Asset } from './asset.entity';
 
 /**
@@ -12,12 +6,12 @@ import { Asset } from './asset.entity';
  * Aligned with TradingView conventions
  */
 export enum IntradayTimeframe {
-  M1 = '1m',   // 1 minute
-  M5 = '5m',   // 5 minutes
+  M1 = '1m', // 1 minute
+  M5 = '5m', // 5 minutes
   M15 = '15m', // 15 minutes
   M30 = '30m', // 30 minutes
-  H1 = '1h',   // 1 hour
-  H4 = '4h',   // 4 hours
+  H1 = '1h', // 1 hour
+  H4 = '4h', // 4 hours
 }
 
 /**

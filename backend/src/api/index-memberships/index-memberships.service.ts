@@ -2,12 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual, MoreThanOrEqual, IsNull } from 'typeorm';
 import { Asset, AssetIndexMembership } from '@database/entities';
-import {
-  BulkSyncDto,
-  BulkSyncResultDto,
-  PeriodCompositionDto,
-  PeriodErrorDto,
-} from './dto';
+import { BulkSyncDto, BulkSyncResultDto, PeriodCompositionDto, PeriodErrorDto } from './dto';
 
 @Injectable()
 export class IndexMembershipsService {
@@ -26,7 +21,9 @@ export class IndexMembershipsService {
    * @param indexName - Index name (e.g., 'IDIV', 'IBOV')
    * @returns Object with success status and count of synced assets
    */
-  async syncComposition(indexName: string): Promise<{ success: boolean; count: number; message: string }> {
+  async syncComposition(
+    indexName: string,
+  ): Promise<{ success: boolean; count: number; message: string }> {
     try {
       this.logger.log(`Starting sync for ${indexName} composition`);
 
@@ -78,10 +75,16 @@ export class IndexMembershipsService {
 
       // Step 2: Delete existing memberships of the same period (same valid_from)
       const validFromDate = new Date(valid_from);
-      await this.deleteExistingPeriodMemberships(index_name || indexName.toUpperCase(), validFromDate);
+      await this.deleteExistingPeriodMemberships(
+        index_name || indexName.toUpperCase(),
+        validFromDate,
+      );
 
       // Step 3: Invalidate previous memberships (set valid_to for older periods)
-      await this.invalidatePreviousMemberships(index_name || indexName.toUpperCase(), validFromDate);
+      await this.invalidatePreviousMemberships(
+        index_name || indexName.toUpperCase(),
+        validFromDate,
+      );
 
       // Step 4: Save new memberships
       let count = 0;
@@ -121,7 +124,6 @@ export class IndexMembershipsService {
         count,
         message: `Successfully synced ${count} assets`,
       };
-
     } catch (error) {
       this.logger.error(`Error syncing ${indexName} composition: ${error.message}`);
       throw error;
@@ -153,20 +155,13 @@ export class IndexMembershipsService {
     // Process each period independently
     for (const periodData of compositions) {
       try {
-        const assetCount = await this.savePeriodComposition(
-          normalizedIndexName,
-          periodData,
-        );
+        const assetCount = await this.savePeriodComposition(normalizedIndexName, periodData);
         successful++;
         totalAssets += assetCount;
-        this.logger.log(
-          `Period ${periodData.validFrom}: saved ${assetCount} assets`,
-        );
+        this.logger.log(`Period ${periodData.validFrom}: saved ${assetCount} assets`);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        this.logger.warn(
-          `Period ${periodData.validFrom} failed: ${errorMessage}`,
-        );
+        this.logger.warn(`Period ${periodData.validFrom} failed: ${errorMessage}`);
         errors.push({
           validFrom: periodData.validFrom,
           error: errorMessage,
@@ -256,7 +251,9 @@ export class IndexMembershipsService {
   async getCurrentMemberships(indexName: string): Promise<AssetIndexMembership[]> {
     const today = new Date();
 
-    this.logger.log(`Fetching current memberships for ${indexName} on ${today.toISOString().split('T')[0]}`);
+    this.logger.log(
+      `Fetching current memberships for ${indexName} on ${today.toISOString().split('T')[0]}`,
+    );
 
     const memberships = await this.membershipRepo.find({
       where: [
@@ -338,7 +335,9 @@ export class IndexMembershipsService {
    * @private
    */
   private async deleteExistingPeriodMemberships(indexName: string, validFrom: Date): Promise<void> {
-    this.logger.log(`Deleting existing ${indexName} memberships for period starting ${validFrom.toISOString()}`);
+    this.logger.log(
+      `Deleting existing ${indexName} memberships for period starting ${validFrom.toISOString()}`,
+    );
 
     const result = await this.membershipRepo
       .createQueryBuilder()
@@ -348,7 +347,9 @@ export class IndexMembershipsService {
       .andWhere('valid_from = :validFrom', { validFrom })
       .execute();
 
-    this.logger.log(`Deleted ${result.affected} existing memberships for ${indexName} period ${validFrom.toISOString()}`);
+    this.logger.log(
+      `Deleted ${result.affected} existing memberships for ${indexName} period ${validFrom.toISOString()}`,
+    );
   }
 
   /**
@@ -359,8 +360,13 @@ export class IndexMembershipsService {
    * @param newValidFrom - Start date of new period
    * @private
    */
-  private async invalidatePreviousMemberships(indexName: string, newValidFrom: Date): Promise<void> {
-    this.logger.log(`Invalidating previous ${indexName} memberships before ${newValidFrom.toISOString()}`);
+  private async invalidatePreviousMemberships(
+    indexName: string,
+    newValidFrom: Date,
+  ): Promise<void> {
+    this.logger.log(
+      `Invalidating previous ${indexName} memberships before ${newValidFrom.toISOString()}`,
+    );
 
     // Calculate valid_to as day before new period starts
     const validTo = new Date(newValidFrom);

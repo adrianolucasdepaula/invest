@@ -289,7 +289,9 @@ export class AppWebSocketGateway
       ...data,
       timestamp: new Date(),
     });
-    this.logger.log(`[WS] Batch update started: ${data.totalAssets} assets (batchId: ${data.batchId})`);
+    this.logger.log(
+      `[WS] Batch update started: ${data.totalAssets} assets (batchId: ${data.batchId})`,
+    );
   }
 
   emitBatchUpdateProgress(data: {

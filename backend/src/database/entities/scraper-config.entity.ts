@@ -85,7 +85,15 @@ export class ScraperConfig {
     type: 'enum',
     enum: ['fundamental', 'technical', 'news', 'ai', 'market_data', 'crypto', 'options', 'macro'],
   })
-  category: 'fundamental' | 'technical' | 'news' | 'ai' | 'market_data' | 'crypto' | 'options' | 'macro';
+  category:
+    | 'fundamental'
+    | 'technical'
+    | 'news'
+    | 'ai'
+    | 'market_data'
+    | 'crypto'
+    | 'options'
+    | 'macro';
 
   // ============================================================================
   // CONTROLE DE ATIVAÇÃO

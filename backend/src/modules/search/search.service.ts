@@ -81,14 +81,7 @@ export class SearchService implements OnModuleInit {
       searchableAttributes: ['ticker', 'name', 'sector', 'subsector', 'segment'],
       filterableAttributes: ['type', 'sector', 'subsector'],
       sortableAttributes: ['ticker', 'name', 'lastPrice', 'marketCap', 'updatedAt'],
-      rankingRules: [
-        'words',
-        'typo',
-        'proximity',
-        'attribute',
-        'sort',
-        'exactness',
-      ],
+      rankingRules: ['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness'],
     });
 
     // Create or get news index
@@ -106,14 +99,7 @@ export class SearchService implements OnModuleInit {
       searchableAttributes: ['title', 'content', 'source', 'ticker'],
       filterableAttributes: ['source', 'ticker', 'sentiment', 'publishedAt'],
       sortableAttributes: ['publishedAt', 'createdAt'],
-      rankingRules: [
-        'words',
-        'typo',
-        'proximity',
-        'attribute',
-        'sort',
-        'exactness',
-      ],
+      rankingRules: ['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness'],
     });
 
     this.logger.log('Meilisearch indexes configured successfully');

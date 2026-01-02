@@ -1,16 +1,7 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, Not } from 'typeorm';
-import {
-  ScraperConfig,
-  ScraperExecutionProfile,
-  ScraperConfigAudit,
-} from '@database/entities';
+import { ScraperConfig, ScraperExecutionProfile, ScraperConfigAudit } from '@database/entities';
 import {
   UpdateScraperConfigDto,
   BulkToggleDto,
@@ -162,45 +153,45 @@ export class ScraperConfigService {
         async () => {
           this.logger.debug(`[CACHE-MISS] Fetching from DB: ${cacheKey}`);
 
-        // Buscar todos scrapers ativos da categoria
-        const configs = await this.scraperConfigRepo.find({
-          where: {
-            isEnabled: true,
-            category: category as any,
-          },
-        });
+          // Buscar todos scrapers ativos da categoria
+          const configs = await this.scraperConfigRepo.find({
+            where: {
+              isEnabled: true,
+              category: category as any,
+            },
+          });
 
-        // Filtrar por ticker se especificado
-        const filtered = ticker
-          ? configs.filter(
-              (c) =>
-                c.enabledFor === null || // Habilitado para todos
-                c.enabledFor.includes(ticker), // Habilitado para este ticker
-            )
-          : configs;
+          // Filtrar por ticker se especificado
+          const filtered = ticker
+            ? configs.filter(
+                (c) =>
+                  c.enabledFor === null || // Habilitado para todos
+                  c.enabledFor.includes(ticker), // Habilitado para este ticker
+              )
+            : configs;
 
-        // VALIDAÇÃO CRÍTICA: Mínimo 2 scrapers
-        if (filtered.length < 2) {
-          this.logger.warn(
-            `Ticker ${ticker}: Apenas ${filtered.length} scraper(s) disponível(is). ` +
-              `Mínimo 2 necessário. Sistema usará fallback Python se necessário.`,
+          // VALIDAÇÃO CRÍTICA: Mínimo 2 scrapers
+          if (filtered.length < 2) {
+            this.logger.warn(
+              `Ticker ${ticker}: Apenas ${filtered.length} scraper(s) disponível(is). ` +
+                `Mínimo 2 necessário. Sistema usará fallback Python se necessário.`,
+            );
+          }
+
+          // Ordenar por prioridade (1 = maior)
+          const sorted = filtered.sort((a, b) => a.priority - b.priority);
+
+          this.logger.debug(
+            `[GET-ENABLED] Retornando ${sorted.length} scrapers: ${sorted.map((s) => s.scraperId).join(', ')}`,
           );
-        }
 
-        // Ordenar por prioridade (1 = maior)
-        const sorted = filtered.sort((a, b) => a.priority - b.priority);
-
-        this.logger.debug(
-          `[GET-ENABLED] Retornando ${sorted.length} scrapers: ${sorted.map((s) => s.scraperId).join(', ')}`,
-        );
-
-        return sorted;
-      },
-      300, // TTL 5 minutos
-    );
+          return sorted;
+        },
+        300, // TTL 5 minutos
+      );
 
       this.logger.debug(`[GET-ENABLED] Cache result: ${result?.length || 0} scrapers`);
-      return result || [];  // BUGFIX: Garantir retorno de array mesmo se cache falhar
+      return result || []; // BUGFIX: Garantir retorno de array mesmo se cache falhar
     } catch (error) {
       this.logger.error(`[GET-ENABLED] Error in getEnabledScrapersForAsset: ${error.message}`);
       // Fallback: retornar array vazio ao invés de undefined
@@ -304,9 +295,7 @@ export class ScraperConfigService {
       // GAP-005: Invalidar cache após mudança
       await this.invalidateScraperCache(config.category);
 
-      this.logger.log(
-        `[TOGGLE] ✅ ${config.scraperName} ${newState ? 'ativado' : 'desativado'}`,
-      );
+      this.logger.log(`[TOGGLE] ✅ ${config.scraperName} ${newState ? 'ativado' : 'desativado'}`);
 
       // GAP-006: Registrar audit (após commit para não bloquear transação)
       this.logger.log(`[TOGGLE] Registrando audit para ${config.scraperId}...`);
@@ -498,9 +487,7 @@ export class ScraperConfigService {
 
     // Validar priorityOrder contém TODOS os scraperIds exatamente uma vez
     if (dto.config.priorityOrder.length !== dto.config.scraperIds.length) {
-      throw new BadRequestException(
-        'priorityOrder must contain ALL scraperIds exactly once',
-      );
+      throw new BadRequestException('priorityOrder must contain ALL scraperIds exactly once');
     }
 
     // Verificar se todos os scraperIds estão no priorityOrder
@@ -634,9 +621,7 @@ export class ScraperConfigService {
         profileId,
       );
 
-      this.logger.log(
-        `[APPLY-PROFILE] ✅ Profile "${profile.displayName}" applied successfully`,
-      );
+      this.logger.log(`[APPLY-PROFILE] ✅ Profile "${profile.displayName}" applied successfully`);
 
       return {
         applied: scraperIds.length,
@@ -673,12 +658,7 @@ export class ScraperConfigService {
     // BUG-004 FIX: Lista de scrapers que usam Playwright (browser automation)
     // ANTES: Lógica incorreta "python OU fundamentus" (Python NÃO é Playwright!)
     // DEPOIS: Lista explícita de scrapers TypeScript que usam Playwright
-    const PLAYWRIGHT_SCRAPERS = [
-      'fundamentus',
-      'statusinvest',
-      'investidor10',
-      'fundamentei',
-    ];
+    const PLAYWRIGHT_SCRAPERS = ['fundamentus', 'statusinvest', 'investidor10', 'fundamentei'];
 
     // Contar Playwright vs API
     const playwrightCount = scrapers.filter((s) =>
@@ -725,13 +705,12 @@ export class ScraperConfigService {
 
     const hasTypeScript = scrapers.some((s) => s.runtime === 'typescript');
     if (!hasTypeScript) {
-      warnings.push(
-        '⚠️ Recomendado ter pelo menos 1 scraper TypeScript para melhor performance',
-      );
+      warnings.push('⚠️ Recomendado ter pelo menos 1 scraper TypeScript para melhor performance');
     }
 
     const playwrightLowTimeout = scrapers.filter(
-      (s) => (s.runtime === 'python' || s.scraperId === 'fundamentus') && s.parameters.timeout < 60000,
+      (s) =>
+        (s.runtime === 'python' || s.scraperId === 'fundamentus') && s.parameters.timeout < 60000,
     );
 
     if (playwrightLowTimeout.length > 0) {
@@ -821,8 +800,7 @@ export class ScraperConfigService {
     // REGRA 4: Validar timeouts Playwright
     const playwrightWithLowTimeout = configs.filter(
       (c) =>
-        (c.runtime === 'python' || c.scraperId === 'fundamentus') &&
-        c.parameters.timeout < 60000,
+        (c.runtime === 'python' || c.scraperId === 'fundamentus') && c.parameters.timeout < 60000,
     );
 
     if (playwrightWithLowTimeout.length > 0) {

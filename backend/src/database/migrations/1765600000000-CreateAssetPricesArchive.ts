@@ -109,7 +109,9 @@ export class CreateAssetPricesArchive1765600000000 implements MigrationInterface
 
     // 7. Log migration results
     const mainCount = await queryRunner.query(`SELECT COUNT(*) as count FROM asset_prices;`);
-    const archiveCount = await queryRunner.query(`SELECT COUNT(*) as count FROM asset_prices_archive;`);
+    const archiveCount = await queryRunner.query(
+      `SELECT COUNT(*) as count FROM asset_prices_archive;`,
+    );
 
     console.log(`[MIGRATION] Asset prices archived:`);
     console.log(`  - Main table: ${mainCount[0].count} records (2020+)`);

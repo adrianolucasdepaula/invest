@@ -36,11 +36,7 @@ export class DiskLifecycleService {
   private readonly logger = new Logger(DiskLifecycleService.name);
 
   // Path to PowerShell scripts (absolute path for Docker environment)
-  private readonly scriptsBasePath = path.resolve(
-    __dirname,
-    '../../../..',
-    'backend/src/scripts',
-  );
+  private readonly scriptsBasePath = path.resolve(__dirname, '../../../..', 'backend/src/scripts');
 
   // Track last execution to prevent duplicate runs
   private lastExecutions = new Map<string, number>();
@@ -55,10 +51,7 @@ export class DiskLifecycleService {
    * @param context - Alert context information
    * @returns Cleanup result
    */
-  async executeCleanup(
-    tier: string,
-    context: CleanupContext,
-  ): Promise<CleanupResult> {
+  async executeCleanup(tier: string, context: CleanupContext): Promise<CleanupResult> {
     const startTime = Date.now();
 
     try {
@@ -86,18 +79,13 @@ export class DiskLifecycleService {
       }
 
       // Log alert context
-      this.logger.log(
-        `Executing ${tier} cleanup triggered by alert: ${context.alertName}`,
-      );
+      this.logger.log(`Executing ${tier} cleanup triggered by alert: ${context.alertName}`);
       this.logger.log(`  Severity: ${context.severity}`);
       this.logger.log(`  Summary: ${context.summary}`);
       this.logger.log(`  Started at: ${context.startsAt}`);
 
       // Build script path
-      const scriptPath = path.join(
-        this.scriptsBasePath,
-        `disk-cleanup-${tier}.ps1`,
-      );
+      const scriptPath = path.join(this.scriptsBasePath, `disk-cleanup-${tier}.ps1`);
 
       // Verify script exists
       try {
@@ -146,10 +134,7 @@ export class DiskLifecycleService {
         logPath: this.findLogPath(stdout),
       };
     } catch (error) {
-      this.logger.error(
-        `Failed to execute ${tier} cleanup: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Failed to execute ${tier} cleanup: ${error.message}`, error.stack);
 
       return {
         tier,
