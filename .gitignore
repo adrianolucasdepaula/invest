@@ -178,8 +178,45 @@ ESCLARECIMENTOS_*.md
 CORRECAO_*.md
 VALIDACAO_ATIVOS_*.md
 FASE_*_PLANO.md
-*.png
 response.json
+
+# Temporary screenshots (root level and temp folders only)
+/*.png
+/validation-screenshots/*.png
+/screenshots/*.png
+# Keep documentation screenshots
+!docs/screenshots/*.png
+!frontend/screenshots/*.png
+!frontend/docs/screenshots/*.png
+!validations/**/*.png
+
+# Temporary backup SQL files (root level only - contain sensitive data)
+/*.sql
+
+# Temporary PowerShell utility scripts (root level only)
+/backup-*.ps1
+/check-*.ps1
+/cleanup-*.ps1
+/compact-*.ps1
+/create-*.ps1
+/debug-*.ps1
+/docker-*.ps1
+/emergency-*.ps1
+/fase*.ps1
+/find-*.ps1
+/monitor-*.ps1
+/optimize-*.ps1
+/recreate-*.ps1
+/reinstall-*.ps1
+/run-*.ps1
+/setup-*.ps1
+/test-*.ps1
+/validate-*.ps1
+/verify-*.ps1
+
+# Temporary JSON result files (root level only)
+/baseline-*.json
+/fase*-result.json
 
 # Keep important documentation (exceptions)
 !README.md
