@@ -58,7 +58,7 @@ export function DeletePositionDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Remover posição ${ticker}`}>
             <Trash2 className="h-3 w-3" />
           </Button>
         )}

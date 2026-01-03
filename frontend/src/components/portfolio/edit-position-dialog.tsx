@@ -87,7 +87,7 @@ export function EditPositionDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Editar posição ${position.ticker}`}>
             <Edit className="h-3 w-3" />
           </Button>
         )}

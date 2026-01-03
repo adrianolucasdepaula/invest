@@ -273,7 +273,7 @@ export function WheelStrategyDetailPageClient() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/wheel')}>
+          <Button variant="ghost" size="icon" onClick={() => router.push('/wheel')} aria-label="Voltar para lista de estratégias">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>

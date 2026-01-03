@@ -207,7 +207,7 @@ export function AssetDetailPageClient({ params }: { params: Promise<{ ticker: st
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Link href="/assets">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" aria-label="Voltar para lista de ativos">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>

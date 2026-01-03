@@ -117,7 +117,7 @@ export function ReportDetailPageClient() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/reports">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" aria-label="Voltar para lista de relatórios">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
