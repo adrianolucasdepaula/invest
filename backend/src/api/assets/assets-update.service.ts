@@ -905,28 +905,28 @@ export class AssetsUpdateService {
       evEbitda: getFieldValue('evEbitda'),
       pegRatio: getFieldValue('pegRatio'),
 
-      // Profitability
+      // Profitability (added python-bcb snake_case aliases)
       roe: getFieldValue('roe'),
-      roa: getFieldValue('roa'),
+      roa: getFieldValue('roa'), // python-bcb already returns 'roa'
       roic: getFieldValue('roic'),
-      margemBruta: getFieldValue('margemBruta'),
-      margemEbit: getFieldValue('margemEbit'),
-      margemEbitda: getFieldValue('margemEbitda'),
-      margemLiquida: getFieldValue('margemLiquida'),
-      giroAtivos: getFieldValue('giroAtivos'),
+      margemBruta: getFieldValue('margemBruta', 'margem_bruta'),
+      margemEbit: getFieldValue('margemEbit', 'margem_ebit'),
+      margemEbitda: getFieldValue('margemEbitda', 'margem_ebitda'),
+      margemLiquida: getFieldValue('margemLiquida', 'margem_liquida'),
+      giroAtivos: getFieldValue('giroAtivos', 'giro_ativos'),
 
-      // Debt
-      dividaBruta: getFieldValue('dividaBruta'),
-      dividaLiquida: getFieldValue('dividaLiquida'),
-      dividaLiquidaEbitda: getFieldValue('dividaLiquidaEbitda', 'dividaEbitda'),
-      dividaLiquidaEbit: getFieldValue('dividaLiquidaEbit'),
-      dividaLiquidaPatrimonio: getFieldValue('dividaLiquidaPatrimonio', 'dividaPatrimonio'),
-      patrimonioLiquidoAtivos: getFieldValue('patrimonioLiquidoAtivos'),
-      passivosAtivos: getFieldValue('passivosAtivos'),
+      // Debt (added python-bcb snake_case aliases)
+      dividaBruta: getFieldValue('dividaBruta', 'divida_bruta'),
+      dividaLiquida: getFieldValue('dividaLiquida', 'divida_liquida'),
+      dividaLiquidaEbitda: getFieldValue('dividaLiquidaEbitda', 'dividaEbitda', 'div_liquida_ebitda'),
+      dividaLiquidaEbit: getFieldValue('dividaLiquidaEbit', 'div_liquida_ebit'),
+      dividaLiquidaPatrimonio: getFieldValue('dividaLiquidaPatrimonio', 'dividaPatrimonio', 'div_liquida_patrim', 'div_bruta_patrim'),
+      patrimonioLiquidoAtivos: getFieldValue('patrimonioLiquidoAtivos', 'patrim_liquido_ativos'),
+      passivosAtivos: getFieldValue('passivosAtivos', 'passivos_ativos'),
 
-      // Growth
-      cagrReceitas5anos: getFieldValue('cagrReceitas5anos', 'cagr5Anos'),
-      cagrLucros5anos: getFieldValue('cagrLucros5anos'),
+      // Growth (added python-bcb snake_case aliases)
+      cagrReceitas5anos: getFieldValue('cagrReceitas5anos', 'cagr5Anos', 'crescimento_receita_5a', 'cagr_receitas_5anos'),
+      cagrLucros5anos: getFieldValue('cagrLucros5anos', 'crescimento_lucros_5a', 'cagr_lucros_5anos'),
 
       // Dividends
       dividendYield: getFieldValue('dividendYield', 'dy'),
