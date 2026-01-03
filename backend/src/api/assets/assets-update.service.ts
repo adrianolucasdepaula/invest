@@ -232,7 +232,14 @@ export class AssetsUpdateService {
 
           // 7.1. Collect and analyze news automatically (FASE 75.6)
           // This updates the sentiment thermometer for the asset
-          await this.collectAndAnalyzeNews(ticker, logPrefix);
+          // ✅ FASE 152.1: ASYNC (fire-and-forget) - Don't block asset update
+          // News analysis can take 900s+ (5 articles × 6 AI providers)
+          // Timeout would fail entire asset update if synchronous
+          this.collectAndAnalyzeNews(ticker, logPrefix).catch((error) => {
+            this.logger.warn(
+              `${logPrefix} News analysis failed (non-blocking): ${error.message}`,
+            );
+          });
 
           // 7.2. FASE 144: DESABILITADO - Issue #DIVID-001 (Cloudflare blocking)
           // StatusInvest Dividends/StockLending requer OAuth (adiado para FASE 145)

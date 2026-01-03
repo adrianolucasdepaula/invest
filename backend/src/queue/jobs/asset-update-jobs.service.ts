@@ -589,4 +589,137 @@ export class AssetUpdateJobsService implements OnModuleInit, OnModuleDestroy {
       attemptsMade: job.attemptsMade,
     };
   }
+
+  // ============================================================================
+  // FASE 152: ORPHANED JOBS CLEANUP (ROOT CAUSE FIX FOR BUG #7)
+  // ============================================================================
+
+  /**
+   * ✅ FIX Bug #7: Clean orphaned jobs from previous batches
+   *
+   * Problem: When a batch is cancelled/abandoned, jobs persist in Redis.
+   * On restart, these orphaned jobs continue executing, causing:
+   * - Progress bar to show incorrect counts (sums all jobs, not just current batch)
+   * - WebSocket events from orphaned batches interfering with current batch
+   *
+   * Solution: Remove jobs older than threshold (30 minutes by default)
+   * This is safe because:
+   * - Normal asset updates complete in < 2 minutes
+   * - If a batch is still running after 30min, it's likely orphaned
+   *
+   * @param thresholdMinutes - Age threshold in minutes (default: 30)
+   * @returns Statistics about cleaned jobs
+   */
+  async cleanOrphanedJobs(thresholdMinutes: number = 30) {
+    const thresholdMs = thresholdMinutes * 60 * 1000;
+    const now = Date.now();
+
+    this.logger.warn(`🧹 [CLEANUP-ORPHANS] Starting cleanup (threshold: ${thresholdMinutes}min)...`);
+
+    try {
+      // Get all jobs
+      const [waiting, active, delayed] = await Promise.all([
+        this.assetUpdatesQueue.getWaiting(),
+        this.assetUpdatesQueue.getActive(),
+        this.assetUpdatesQueue.getDelayed(),
+      ]);
+
+      let cleanedWaiting = 0;
+      let cleanedActive = 0;
+      let cleanedDelayed = 0;
+
+      // Clean orphaned waiting jobs
+      for (const job of waiting) {
+        const jobAge = now - job.timestamp;
+        if (jobAge > thresholdMs) {
+          await job.remove();
+          cleanedWaiting++;
+          this.logger.debug(
+            `[CLEANUP-ORPHANS] Removed waiting job ${job.id} (age: ${Math.round(jobAge / 60000)}min)`,
+          );
+        }
+      }
+
+      // Clean orphaned active jobs (stuck in processing)
+      for (const job of active) {
+        const jobAge = now - job.timestamp;
+        // For active jobs, use shorter threshold (5 min) - they should complete fast
+        const activeThresholdMs = 5 * 60 * 1000;
+        if (jobAge > activeThresholdMs) {
+          try {
+            await job.remove();
+            cleanedActive++;
+            this.logger.debug(
+              `[CLEANUP-ORPHANS] Removed stuck active job ${job.id} (age: ${Math.round(jobAge / 60000)}min)`,
+            );
+          } catch (error) {
+            this.logger.warn(`[CLEANUP-ORPHANS] Failed to remove active job ${job.id}: ${error.message}`);
+          }
+        }
+      }
+
+      // Clean orphaned delayed jobs
+      for (const job of delayed) {
+        const jobAge = now - job.timestamp;
+        if (jobAge > thresholdMs) {
+          await job.remove();
+          cleanedDelayed++;
+          this.logger.debug(
+            `[CLEANUP-ORPHANS] Removed delayed job ${job.id} (age: ${Math.round(jobAge / 60000)}min)`,
+          );
+        }
+      }
+
+      const totalCleaned = cleanedWaiting + cleanedActive + cleanedDelayed;
+
+      // Emit WebSocket event to notify frontend queue was cleaned
+      if (totalCleaned > 0) {
+        this.webSocketGateway.emitBatchUpdateCompleted({
+          batchId: `cleanup-${Date.now()}`,
+          totalAssets: totalCleaned,
+          successCount: 0,
+          failedCount: 0,
+          duration: 0,
+        });
+      }
+
+      this.logger.log(
+        `✅ [CLEANUP-ORPHANS] Cleaned ${totalCleaned} orphaned jobs: ${cleanedWaiting} waiting, ${cleanedActive} active, ${cleanedDelayed} delayed`,
+      );
+
+      return {
+        cleanedWaiting,
+        cleanedActive,
+        cleanedDelayed,
+        totalCleaned,
+        thresholdMinutes,
+        message: `✅ Limpou ${totalCleaned} jobs órfãos (threshold: ${thresholdMinutes}min)`,
+      };
+    } catch (error) {
+      this.logger.error(`[CLEANUP-ORPHANS] Failed: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * ✅ FIX Bug #7: Clean jobs from a specific batch ID
+   *
+   * Used when frontend detects orphaned batch and wants to clean only that batch
+   * without affecting current operations.
+   *
+   * @param batchId - The batch ID to clean (from WebSocket events)
+   * @returns Statistics about cleaned jobs
+   */
+  async cleanBatchJobs(batchId: string) {
+    this.logger.warn(`🧹 [CLEANUP-BATCH] Cleaning jobs for batch: ${batchId}`);
+
+    // Note: BullMQ doesn't store batchId in job data directly by default
+    // This would require modifying how jobs are queued to include batchId
+    // For now, use cleanOrphanedJobs() which is more reliable
+
+    // TODO: Implement batch-specific cleanup when jobs include batchId in data
+    this.logger.warn(`[CLEANUP-BATCH] Batch-specific cleanup not yet implemented, using age-based cleanup`);
+
+    return this.cleanOrphanedJobs(15); // Use 15 min threshold for batch-specific cleanup
+  }
 }

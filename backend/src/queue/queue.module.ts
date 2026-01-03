@@ -73,6 +73,14 @@ const defaultRetryOptions = {
           ...defaultRetryOptions,
           timeout: 180000, // ✅ FASE 4.1: 180s (3min) - Permite fila de inicialização Playwright (30s+) + scraping (150s máx)
         },
+        // FASE 152: Configure stalledInterval to prevent false "job stalled" errors
+        // With fallback taking up to 5min, we need higher stalledInterval
+        settings: {
+          stalledInterval: 360000, // 6min - FASE 152: Increased from default 30s (fallback can take 5min)
+          maxStalledCount: 2, // Allow 2 stalls before marking as failed
+          lockDuration: 420000, // 7min - Must be > stalledInterval
+          lockRenewTime: 120000, // Renew lock every 2min
+        },
         // Note: Concurrency is configured in processor @Processor() decorator
         // See: asset-update.processor.ts
       },

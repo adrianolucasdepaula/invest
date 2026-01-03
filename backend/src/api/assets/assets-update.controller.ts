@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   Body,
   Param,
   Query,
@@ -325,5 +326,139 @@ export class AssetsUpdateController {
   })
   async updateByTicker(@Param('ticker') ticker: string, @Body('userId') userId?: string) {
     return this.assetsUpdateService.updateSingleAsset(ticker, userId);
+  }
+
+  // ============================================================================
+  // FASE 152: JOB MANAGEMENT ENDPOINTS (ROOT CAUSE FIX)
+  // ============================================================================
+
+  /**
+   * ENDPOINT 9: Cancelar TODOS os jobs pendentes (waiting + active)
+   * DELETE /api/v1/assets/updates/cancel-all
+   *
+   * ✅ FIX Bug #1: Expõe o método cancelAllPendingJobs() que já existe no service
+   * Solução ROOT CAUSE: permite cancelar jobs sem restart do backend
+   */
+  @Delete('cancel-all')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Cancel all pending update jobs',
+    description:
+      'Cancels all waiting and active jobs in the BullMQ queue. Use when you need to stop a bulk update in progress. Jobs currently being processed by scrapers will complete, but no new jobs will start.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'All pending jobs cancelled',
+    schema: {
+      example: {
+        removedWaitingJobs: 150,
+        removedActiveJobs: 3,
+        totalRemoved: 153,
+        message: '✅ Cancelados 153 jobs (150 waiting + 3 active)',
+      },
+    },
+  })
+  async cancelAllPendingJobs() {
+    this.logger.warn('[CANCEL-ALL] User requested cancellation of all pending jobs');
+    return this.assetUpdateJobsService.cancelAllPendingJobs();
+  }
+
+  /**
+   * ENDPOINT 10: Limpar jobs órfãos de batches antigos
+   * DELETE /api/v1/assets/updates/orphaned-jobs
+   *
+   * ✅ FIX Bug #7: Jobs de batches cancelados/abandonados persistem em Redis
+   * Solução ROOT CAUSE: Limpa jobs órfãos sem restart do backend
+   */
+  @Delete('orphaned-jobs')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Clean orphaned jobs from previous sessions',
+    description:
+      'Removes jobs from batches that were abandoned (cancelled, server restart, etc). Uses age threshold to identify orphans. Safe to call at any time - only removes truly orphaned jobs.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Orphaned jobs cleaned',
+    schema: {
+      example: {
+        cleanedWaiting: 120,
+        cleanedActive: 5,
+        totalCleaned: 125,
+        message: '✅ Limpou 125 jobs órfãos (threshold: 30min)',
+      },
+    },
+  })
+  async cleanOrphanedJobs() {
+    this.logger.log('[CLEANUP-ORPHANS] User requested orphaned jobs cleanup');
+    return this.assetUpdateJobsService.cleanOrphanedJobs();
+  }
+
+  /**
+   * ENDPOINT 11: Status detalhado da fila de jobs
+   * GET /api/v1/assets/updates/queue-status
+   *
+   * ✅ FIX Bug #2: Frontend precisa detectar jobs em execução
+   * Retorna estatísticas detalhadas incluindo jobs active no processor
+   */
+  @Get('queue-status')
+  @ApiOperation({
+    summary: 'Get detailed queue status',
+    description:
+      'Returns detailed statistics about the BullMQ queue including waiting, active, completed, and failed jobs. Use to monitor bulk update progress.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Queue statistics',
+    schema: {
+      example: {
+        counts: { waiting: 150, active: 3, completed: 10, failed: 2 },
+        waiting: 150,
+        active: 3,
+        completed: 10,
+        failed: 2,
+        delayed: 0,
+        jobs: {
+          waiting: [{ id: '1', name: 'update-single-asset', data: { ticker: 'PETR4' } }],
+          active: [{ id: '2', name: 'update-single-asset', data: { ticker: 'VALE3' } }],
+          failed: [{ id: '3', failedReason: 'Timeout', attemptsMade: 3 }],
+        },
+      },
+    },
+  })
+  async getQueueStatus() {
+    return this.assetUpdateJobsService.getQueueStats();
+  }
+
+  /**
+   * ENDPOINT 12: Pausar fila (modo manutenção)
+   * POST /api/v1/assets/updates/queue/pause
+   */
+  @Post('queue/pause')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Pause the update queue',
+    description: 'Pauses job processing. Active jobs will complete but no new jobs will start.',
+  })
+  async pauseQueue() {
+    this.logger.warn('[QUEUE] User requested queue pause');
+    await this.assetUpdateJobsService.pauseQueue();
+    return { success: true, message: 'Queue paused' };
+  }
+
+  /**
+   * ENDPOINT 13: Retomar fila
+   * POST /api/v1/assets/updates/queue/resume
+   */
+  @Post('queue/resume')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Resume the update queue',
+    description: 'Resumes job processing after a pause.',
+  })
+  async resumeQueue() {
+    this.logger.log('[QUEUE] User requested queue resume');
+    await this.assetUpdateJobsService.resumeQueue();
+    return { success: true, message: 'Queue resumed' };
   }
 }

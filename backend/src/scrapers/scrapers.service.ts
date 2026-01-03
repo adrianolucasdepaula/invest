@@ -2472,9 +2472,9 @@ export class ScrapersService {
           url,
           {
             scraper_ids: [scraperId], // Apenas 1 scraper específico
-            timeout: 60,
+            timeout: 110, // FASE 152: Increased from 60s to 110s (Python scrapers need more time)
           },
-          { timeout: 65000 }, // Timeout HTTP ligeiramente maior
+          { timeout: 120000 }, // FASE 152: Increased from 65s to 120s (prevent premature timeouts)
         ),
       );
 
@@ -2728,10 +2728,18 @@ export class ScrapersService {
 
     let round = 0;
     const startTime = Date.now();
-    const MAX_TOTAL_TIME = 600000; // 10 min (dev mode - mais generoso)
+    const MAX_TOTAL_TIME = 300000; // FASE 152: Reduced from 10min to 5min (prevent excessive processing)
+    const MAX_FALLBACK_ROUNDS = 5; // FASE 152: Limit fallback attempts to prevent stalling
 
-    // ✅ Loop EXAUSTIVO - tenta TODOS os scrapers disponíveis
+    // ✅ Loop LIMITADO - tenta até MAX_FALLBACK_ROUNDS scrapers
     for (const scraper of usefulScrapers) {
+      // FASE 152: Stop after max rounds to prevent job stalling
+      if (round >= MAX_FALLBACK_ROUNDS) {
+        this.logger.warn(
+          `[FALLBACK] ${ticker}: Reached max fallback rounds (${MAX_FALLBACK_ROUNDS}). Stopping.`,
+        );
+        break;
+      }
       // Timeout global
       if (Date.now() - startTime > MAX_TOTAL_TIME) {
         this.logger.warn(
