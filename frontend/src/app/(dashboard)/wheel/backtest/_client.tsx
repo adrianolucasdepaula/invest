@@ -212,19 +212,6 @@ export function BacktestPageClient() {
   const { data: selectedBacktest, isLoading: loadingSelected } = useBacktest(selectedBacktestId || '');
   const { data: assetsData, isLoading: loadingAssets, error: assetsError } = useAssets({ limit: 1000 });
 
-  // IMMEDIATE DEBUG - Runs on EVERY render
-  if (typeof window !== 'undefined') {
-  }
-
-  // DEBUG: useEffect to track client-side data changes
-  useEffect(() => {
-    // ALERT DEBUG - This CANNOT be optimized away by bundlers
-    if (typeof window !== 'undefined') {
-      const msg = `ALERT DEBUG:\nassetsData: ${Array.isArray(assetsData) ? assetsData.length + ' items' : 'NOT ARRAY'}\nloading: ${loadingAssets}\nerror: ${assetsError ? 'YES' : 'NO'}`;
-      window.alert(msg);
-    }
-  }, [assetsData, loadingAssets, assetsError]);
-
   // Mutations
   const createMutation = useCreateBacktest();
   const deleteMutation = useDeleteBacktest();
@@ -890,19 +877,6 @@ export function BacktestPageClient() {
 
         {/* Candidates Tab */}
         <TabsContent value="candidates" className="space-y-4">
-          {/* DEBUG: Visual state indicator - REMOVE AFTER FIXING */}
-          <div className="p-4 bg-yellow-100 dark:bg-yellow-900 border border-yellow-500 rounded-md mb-4">
-            <p className="font-bold text-yellow-800 dark:text-yellow-200">DEBUG STATE:</p>
-            <ul className="text-sm text-yellow-700 dark:text-yellow-300">
-              <li>loadingAssets: {String(loadingAssets)}</li>
-              <li>assetsError: {assetsError ? String(assetsError) : 'null'}</li>
-              <li>assetsData type: {typeof assetsData}</li>
-              <li>assetsData isArray: {String(Array.isArray(assetsData))}</li>
-              <li>assetsData length: {Array.isArray(assetsData) ? assetsData.length : 'N/A'}</li>
-              <li>allAssets.length: {allAssets.length}</li>
-              <li>filteredAssets.length: {filteredAssets.length}</li>
-            </ul>
-          </div>
           {/* Filter Card */}
           <Card>
             <CardHeader>

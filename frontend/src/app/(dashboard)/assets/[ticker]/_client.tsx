@@ -27,7 +27,7 @@ import {
   Hash,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useAsset, useMarketDataPrices, useAssetFundamentals, useAssetDataSources } from '@/lib/hooks/use-assets';
+import { useAsset, useMarketDataPrices, useAssetDataSources } from '@/lib/hooks/use-assets';
 import { DataQualitySummary } from '@/components/assets/DataSourceIndicator';
 import { ChartErrorBoundary } from '@/components/error-boundary';
 import { useAnalysis, useRequestAnalysis } from '@/lib/hooks/use-analysis';
@@ -70,12 +70,7 @@ export function AssetDetailPageClient({ params }: { params: Promise<{ ticker: st
     unified: showUnifiedHistory,
   });
 
-  // TODO: Fundamentals API not implemented yet - temporarily disabled to avoid 404 errors
-  // const { data: fundamentals, isLoading: fundamentalsLoading } = useAssetFundamentals(ticker);
-  const fundamentals = null;
-  const fundamentalsLoading = false;
-
-  // Fetch data sources information for quality indicators
+  // Fetch data sources information for quality indicators (includes fundamental data)
   const { data: dataSources, isLoading: dataSourcesLoading } = useAssetDataSources(ticker);
 
   // Fetch technical data from backend (ALWAYS - advanced mode is default)

@@ -39,13 +39,10 @@ export function HealthPageClient() {
   const checkHealth = useCallback(async () => {
     setIsRefreshing(true);
 
-    // Check Backend API using HARDCODED URL (FASE 148.5: Bypass getApiBaseUrl() for debugging)
-    // CRITICAL: This is a workaround until Turbopack cache issue is fully resolved
+    // Check Backend API health using dynamic URL resolution
     try {
       const backendStart = Date.now();
-      // HARDCODED: Bypass getApiBaseUrl() to ensure correct URL
-      const backendHealthUrl = 'http://localhost:3101/api/v1/health';
-      console.log('[HealthCheck] HARDCODED Backend URL:', backendHealthUrl);
+      const backendHealthUrl = `${getApiBaseUrl()}/health`;
       const response = await fetch(backendHealthUrl, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },

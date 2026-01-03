@@ -34,6 +34,13 @@ export interface FundamentusData {
   // Per Share Data - FASE LPA/VPA
   lpa: number; // Lucro por Ação
   vpa: number; // Valor Patrimonial por Ação
+  // FASE 153 - Campos faltantes adicionados
+  roa: number; // Return on Assets
+  giroAtivos: number; // Asset Turnover
+  crescimentoReceita5a: number; // 5-year Revenue Growth (CAGR)
+  dividaLiquidaPatrimonio: number; // Net Debt / Equity
+  dividaLiquidaEbit: number; // Net Debt / EBIT
+  margemBruta: number; // Gross Margin
 }
 
 @Injectable()
@@ -231,6 +238,13 @@ export class FundamentusScraper extends AbstractScraper<FundamentusData> {
       // Per Share Data - FASE LPA/VPA
       lpa: getValue('LPA'),
       vpa: getValue('VPA'),
+      // FASE 153 - Campos faltantes adicionados
+      roa: getValue('ROA'),
+      giroAtivos: getValue('Giro Ativos'),
+      crescimentoReceita5a: getValue('Cresc. Rec. (5a)'),
+      dividaLiquidaPatrimonio: getValue('Dív. Líq. / Patrim.'),
+      dividaLiquidaEbit: getValue('Dív. Líq. / EBIT'),
+      margemBruta: getValue('Marg. Bruta'),
     };
 
     return data;

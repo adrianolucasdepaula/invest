@@ -268,7 +268,7 @@ export const FIELD_SELECTION_STRATEGY: Record<string, SelectionStrategy> = {
  * Ordem: mais confiável primeiro
  */
 export const SOURCE_PRIORITY = [
-  'fundamentus', // 1º - Dados oficiais CVM, mais completo
+  'fundamentus', // 1º - Dados oficiais CVM, mais completo (ROA, Giro, CAGR, Dívidas)
   'statusinvest', // 2º - Boa qualidade e cobertura
   'investidor10', // 3º - Dados extras (PEG Ratio, CAGR)
   'brapi', // 4º - API com dados B3
@@ -338,10 +338,10 @@ export const FIELD_AVAILABILITY: Record<string, SourceName[]> = {
   // === RENTABILIDADE ===
   roe: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'],
   roic: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'],
-  roa: ['fundamentus', 'investidor10'],
+  roa: ['fundamentus', 'investidor10'], // FASE 153: fundamentus agora extrai ROA
 
   // === MARGENS ===
-  margemBruta: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'],
+  margemBruta: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'], // FASE 153: fundamentus agora extrai Marg. Bruta
   margemEbit: ['fundamentus', 'investidor10', 'investsite'],
   margemEbitda: ['investidor10', 'investsite'],
   margemLiquida: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'],
@@ -357,14 +357,17 @@ export const FIELD_AVAILABILITY: Record<string, SourceName[]> = {
   // === LIQUIDEZ ===
   liquidezCorrente: ['fundamentus', 'investidor10', 'investsite'],
 
-  // === GROWTH (EXCLUSIVO INVESTIDOR10) ===
-  cagrReceitas5anos: ['investidor10'],
+  // === EFFICIENCY ===
+  giroAtivos: ['fundamentus'], // FASE 153: fundamentus agora extrai Giro Ativos
+
+  // === GROWTH ===
+  cagrReceitas5anos: ['fundamentus', 'investidor10'], // FASE 153: fundamentus agora extrai Cresc. Rec. (5a)
   cagrLucros5anos: ['investidor10'],
 
   // === DÍVIDA RATIOS ===
-  dividaLiquidaPatrimonio: ['fundamentus', 'investidor10', 'investsite'],
+  dividaLiquidaPatrimonio: ['fundamentus', 'investidor10', 'investsite'], // FASE 153: fundamentus agora extrai
   dividaLiquidaEbitda: ['fundamentus', 'statusinvest', 'investidor10', 'investsite'],
-  dividaLiquidaEbit: ['fundamentus', 'investidor10'],
+  dividaLiquidaEbit: ['fundamentus', 'investidor10'], // FASE 153: fundamentus agora extrai
 };
 
 // Mantendo exports antigos para compatibilidade (deprecated)
