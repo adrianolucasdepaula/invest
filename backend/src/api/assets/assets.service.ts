@@ -424,9 +424,10 @@ export class AssetsService {
   }
 
   async findByTicker(ticker: string) {
-    // Optimized query with LEFT JOIN to get latest 2 prices
+    // Optimized query with LEFT JOIN to get latest 2 prices + fundamental data
     const result = await this.assetRepository
       .createQueryBuilder('asset')
+      .leftJoinAndSelect('asset.fundamentalData', 'fundamentalData') // JOIN fundamental data
       .leftJoinAndSelect(
         'asset_prices',
         'price1',
