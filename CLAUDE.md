@@ -15,8 +15,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 5. [Financial Data Rules](#financial-data-rules) ⚠️ **CRÍTICO**
 6. [Zero Tolerance Policy](#zero-tolerance-policy) ⚠️ **CRÍTICO**
 7. [Validation & MCPs](#validation--mcps)
-8. [Checklist Automatico](#checklist-automatico)
-9. [Detailed Guides](#detailed-guides)
+8. [Mandatory Agent Usage](#mandatory-agent-usage) ⚠️ **CRÍTICO**
+9. [Checklist Automatico](#checklist-automatico)
+10. [Detailed Guides](#detailed-guides)
 
 ---
 
@@ -203,6 +204,24 @@ npm run lint      # 0 critical warnings
 - ✅ **MCP Quadruplo:** Para features complexas ou bugs >2h sem solução
   - MCP Triplo + Documentation Research (busca preventiva em conhecimento)
 
+- ✅ **Context7 MCP (Proactive Documentation Research):** ⭐ **NOVO**
+  - **Quando usar:** ANTES de implementar features com bibliotecas novas/desconhecidas
+  - **ROI:** 10-20h economizadas/mês (95% redução trial-and-error)
+  - **Workflow:** 2 passos
+    1. `mcp__context7__resolve-library-id` → obter Library ID
+    2. `mcp__context7__query-docs` → consultar documentação atualizada
+  - **Limite:** Máximo 3 calls/conversa
+  - **Skill:** `/research-lib` (automatiza workflow)
+
+  **Exemplos de uso:**
+  - Nova biblioteca: "recharts", "bullmq", "typeorm"
+  - Feature complexa: "JWT auth with refresh tokens in NestJS"
+  - Breaking changes: Atualização major version (v1 → v2)
+  - Bug >1h sem solução em biblioteca de terceiros
+
+  **Anti-pattern:** Implementar direto → 4-8h trial-and-error
+  **Correto:** Context7 primeiro → 10min research + implementação correta
+
 - ✅ **Browser Session Management:** Se erro de conflito, usar `/mcp-browser-reset`
 
 **Workflow Recomendado:**
@@ -218,6 +237,72 @@ npm run lint      # 0 critical warnings
 **Limitação Conhecida:** Playwright MCP e Chrome DevTools MCP usam browsers SEPARADOS. Não misturar na mesma validação.
 
 @ .claude/guides/testing-patterns.md (multi-layer testing, React Testing Library, Vitest)
+
+---
+
+## Mandatory Agent Usage ⚠️ **CRÍTICO**
+
+**Specialized agents DEVEM ser usados para:**
+
+### Regras de Delegação Obrigatória
+
+**SEMPRE delegar para agent especializado quando:**
+
+1. **Backend API changes** → `backend-api-expert`
+   - Controllers, services, DTOs, entities TypeORM
+   - Garante NestJS best practices + Zero Tolerance
+
+2. **Frontend UI changes** → `frontend-components-expert`
+   - Components, pages, hooks React
+   - Garante Next.js App Router patterns + accessibility
+
+3. **Database schema changes** → `database-migration-expert`
+   - Migrations, entities, indexes
+   - Previne corrupção de schema + garante rollback
+
+4. **Phase completion** → `pm-expert`
+   - Validação 100% do ecossistema antes de declarar fase completa
+   - Previne regressões + garante qualidade
+
+### Quick Decision Tree
+
+```
+Task involves...
+├─ Backend NestJS? ──────────→ backend-api-expert
+├─ Frontend React/Next.js? ──→ frontend-components-expert
+├─ Charts/Graphs? ───────────→ chart-analysis-expert
+├─ Python scrapers? ─────────→ scraper-development-expert
+├─ TypeScript errors? ───────→ typescript-validation-expert
+├─ BullMQ jobs? ─────────────→ queue-management-expert
+├─ Database migrations? ─────→ database-migration-expert
+├─ E2E/MCP Triplo? ──────────→ e2e-testing-expert
+├─ Documentation? ───────────→ documentation-expert
+└─ 100% validation? ─────────→ pm-expert
+```
+
+### Anti-Patterns
+
+| Anti-Pattern | Consequência | Correto |
+|--------------|--------------|---------|
+| ❌ Implementar direto sem delegação | Código inconsistente | ✅ Delegar ao agent correto |
+| ❌ "Vou fazer rápido aqui mesmo" | Pula Zero Tolerance | ✅ Agent garante qualidade |
+| ❌ Pular validação de especialista | Bugs não detectados | ✅ Agent valida output |
+| ❌ Usar agent genérico | Falta expertise | ✅ Agent especializado |
+
+### ROI da Delegação
+
+**Economia estimada:** 15-30h/semana (60-120h/mês)
+
+**Por que delegar:**
+- ✅ Expertise de domínio aplicado automaticamente
+- ✅ Zero Tolerance enforced em CADA mudança
+- ✅ Padrões consistentes em todo o código
+- ✅ Validação automática (TypeScript, Build, Console)
+- ✅ Documentação atualizada automaticamente
+
+@ .claude/AGENT_QUICK_REFERENCE.md (guia completo de quando usar cada agent)
+
+@ .claude/guides/specialized-agents.md (detalhes dos 10 agents especializados)
 
 ---
 
@@ -282,6 +367,8 @@ O projeto possui **sistema de automação 100%** com detecção de keywords, cor
 ### Workflow & Commands
 
 - @ .claude/guides/skills-slash-commands.md (15 slash commands: /validate-all, /mcp-triplo, /check-context, etc.)
+- @ .claude/skills/research-lib.md (Context7 proactive documentation research, 10-20h/month savings) ⭐ **NOVO**
+- @ .claude/skills/context-check.md (Context check workflow with Context7 integration)
 
 ### Process Documentation
 
@@ -331,6 +418,7 @@ cd frontend && npx tsc --noEmit && npm run build && npm run lint
 
 # Slash commands essenciais
 /check-context      # ANTES de iniciar tarefa complexa
+/research-lib       # ANTES de implementar com biblioteca nova/desconhecida ⭐ NOVO
 /validate-all       # ANTES de QUALQUER commit (obrigatório)
 /mcp-triplo         # APÓS mudanças frontend
 /mcp-quadruplo      # Feature complexa ou bug >2h
