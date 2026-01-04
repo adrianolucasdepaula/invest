@@ -3,7 +3,9 @@
     "playwright": {
       "command": "cmd",
       "args": ["/c", "npx", "-y", "@playwright/mcp@latest"],
-      "env": {},
+      "env": {
+        "PLAYWRIGHT_TIMEOUT": "10000"
+      },
       "alwaysAllow": ["*"]
     },
     "chrome-devtools": {
