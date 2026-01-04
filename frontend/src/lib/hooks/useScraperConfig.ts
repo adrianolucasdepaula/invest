@@ -135,9 +135,11 @@ export function useUpdateScraperConfig() {
     mutationFn: ({ id, data }: { id: string; data: UpdateScraperConfigDto }) =>
       scraperConfigApi.updateScraperConfig(id, data),
     onSuccess: (updatedConfig) => {
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.scraperConfigs });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.scraperConfig(updatedConfig.id) });
+      // Force refetch to update UI immediately (without F5)
+      queryClient.refetchQueries({
+        queryKey: QUERY_KEYS.scraperConfigs,
+        type: 'all',
+      });
 
       toast.success(`Scraper ${updatedConfig.scraperName} atualizado com sucesso`);
     },
@@ -162,7 +164,11 @@ export function useToggleScraperEnabled() {
   return useMutation({
     mutationFn: scraperConfigApi.toggleScraperEnabled,
     onSuccess: (updatedConfig) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.scraperConfigs });
+      // Force refetch to update UI immediately (without F5)
+      queryClient.refetchQueries({
+        queryKey: QUERY_KEYS.scraperConfigs,
+        type: 'all',
+      });
 
       const status = updatedConfig.isEnabled ? 'ativado' : 'desativado';
       toast.success(`Scraper ${updatedConfig.scraperName} ${status}`);
@@ -188,7 +194,11 @@ export function useBulkToggle() {
   return useMutation({
     mutationFn: scraperConfigApi.bulkToggleScrapers,
     onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.scraperConfigs });
+      // Force refetch to update UI immediately (without F5)
+      queryClient.refetchQueries({
+        queryKey: QUERY_KEYS.scraperConfigs,
+        type: 'all',
+      });
 
       const status = variables.enabled ? 'ativados' : 'desativados';
       toast.success(`${response.updated} scrapers ${status}`);
@@ -214,7 +224,11 @@ export function useUpdatePriorities() {
   return useMutation({
     mutationFn: scraperConfigApi.updateScraperPriorities,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.scraperConfigs });
+      // Force refetch to update UI immediately (without F5)
+      queryClient.refetchQueries({
+        queryKey: QUERY_KEYS.scraperConfigs,
+        type: 'all',
+      });
       toast.success('Prioridades atualizadas');
     },
     onError: (error: unknown) => {

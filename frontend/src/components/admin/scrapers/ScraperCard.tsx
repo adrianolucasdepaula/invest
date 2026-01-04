@@ -101,8 +101,19 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
         },
       },
     });
-    setHasUnsavedChanges(false);
+    // Flag will be synced via useEffect below (based on mutation state)
   }, 1000);
+
+  // Sync hasUnsavedChanges with mutation state (BUG-FIX: was resetting too early)
+  useEffect(() => {
+    if (updateMutation.isPending) {
+      setHasUnsavedChanges(true);  // Saving...
+    } else if (updateMutation.isSuccess) {
+      setHasUnsavedChanges(false);  // Saved successfully
+    } else if (updateMutation.isError) {
+      setHasUnsavedChanges(true);  // Error - not saved
+    }
+  }, [updateMutation.isPending, updateMutation.isSuccess, updateMutation.isError]);
 
   const handleParameterChange = (key: string, value: any, validator?: (v: string) => number | null) => {
     // BUG-FIX: Update local state IMMEDIATELY for visual feedback
