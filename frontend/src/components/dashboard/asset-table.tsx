@@ -189,6 +189,7 @@ export function AssetTable({
                   <button
                     onClick={() => handleSort('ticker')}
                     className="flex items-center hover:text-primary transition-colors"
+                    aria-label="Ordenar por Ticker"
                   >
                     Ticker
                     <SortIcon column="ticker" />
@@ -198,6 +199,7 @@ export function AssetTable({
                   <button
                     onClick={() => handleSort('name')}
                     className="flex items-center hover:text-primary transition-colors"
+                    aria-label="Ordenar por Nome"
                   >
                     Nome
                     <SortIcon column="name" />
@@ -207,6 +209,7 @@ export function AssetTable({
                   <button
                     onClick={() => handleSort('sector')}
                     className="flex items-center hover:text-primary transition-colors"
+                    aria-label="Ordenar por Setor"
                   >
                     Setor
                     <SortIcon column="sector" />
@@ -217,6 +220,7 @@ export function AssetTable({
                   <button
                     onClick={() => handleSort('price')}
                     className="ml-auto flex items-center hover:text-primary transition-colors"
+                    aria-label="Ordenar por Preço"
                   >
                     Preço
                     <SortIcon column="price" />
@@ -226,6 +230,7 @@ export function AssetTable({
                   <button
                     onClick={() => handleSort('changePercent')}
                     className="ml-auto flex items-center hover:text-primary transition-colors"
+                    aria-label="Ordenar por Variação"
                   >
                     Variação
                     <SortIcon column="changePercent" />
@@ -235,6 +240,7 @@ export function AssetTable({
                   <button
                     onClick={() => handleSort('dividendYield')}
                     className="ml-auto flex items-center hover:text-primary transition-colors"
+                    aria-label="Ordenar por Dividend Yield"
                   >
                     DY%
                     <SortIcon column="dividendYield" />
@@ -244,6 +250,7 @@ export function AssetTable({
                   <button
                     onClick={() => handleSort('volume')}
                     className="ml-auto flex items-center hover:text-primary transition-colors"
+                    aria-label="Ordenar por Volume"
                   >
                     Volume
                     <SortIcon column="volume" />
@@ -254,6 +261,7 @@ export function AssetTable({
                     <button
                       onClick={() => handleSort('marketCap')}
                       className="ml-auto flex items-center hover:text-primary transition-colors"
+                      aria-label="Ordenar por Market Cap"
                     >
                       Market Cap
                       <SortIcon column="marketCap" />
@@ -445,7 +453,7 @@ export function AssetTable({
                       ) : (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Ações para ${asset.ticker}`}>
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
