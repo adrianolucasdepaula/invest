@@ -2,16 +2,23 @@
   "mcpServers": {
     "playwright": {
       "command": "cmd",
-      "args": ["/c", "npx", "-y", "@playwright/mcp@latest"],
+      "args": [
+        "/c", "npx", "-y", "@playwright/mcp@latest",
+        "--browser", "chromium"
+      ],
       "env": {
-        "PLAYWRIGHT_TIMEOUT": "10000"
+        "PLAYWRIGHT_TIMEOUT": "300000",
+        "MCP_REQUEST_TIMEOUT": "300",
+        "MCP_CONNECTION_TIMEOUT": "30"
       },
+      "timeout": 300000,
       "alwaysAllow": ["*"]
     },
     "chrome-devtools": {
       "command": "cmd",
-      "args": ["/c", "npx", "-y", "chrome-devtools-mcp@latest"],
+      "args": ["/c", "npx", "-y", "chrome-devtools-mcp@latest", "--autoConnect"],
       "env": {},
+      "timeout": 300000,
       "alwaysAllow": ["*"]
     },
     "a11y": {
