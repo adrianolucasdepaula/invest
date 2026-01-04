@@ -31,9 +31,11 @@
       "alwaysAllow": ["*"]
     },
     "react-context": {
-      "command": "cmd",
-      "args": ["/c", "npx", "-y", "react-context-mcp@latest", "--headless", "--isolated"],
-      "env": {},
+      "command": "react-context-mcp",
+      "args": ["--headless", "--isolated", "--executablePath", "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"],
+      "env": {
+        "PUPPETEER_SKIP_DOWNLOAD": "true"
+      },
       "alwaysAllow": ["*"]
     }
   }
