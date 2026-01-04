@@ -1,0 +1,13 @@
+       tabela        | total 
+---------------------+-------
+ analyses            |   868
+ asset_prices        |  1265
+ assets              |   861
+ economic_indicators |   117
+ fundamental_data    |   944
+ news                |  4178
+ portfolios          |     1
+ scraper_configs     |    42
+ users               |     5
+(9 rows)
+
