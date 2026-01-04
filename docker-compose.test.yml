@@ -1,0 +1,14 @@
+services:
+  # TESTE C: Playwright em Docker Container
+  playwright-tests:
+    image: mcr.microsoft.com/playwright:v1.57.0-jammy
+    container_name: invest_playwright_tests
+    volumes:
+      - ./frontend:/app
+      - ./frontend/test-results:/app/test-results
+      - ./frontend/playwright-report:/app/playwright-report
+    working_dir: /app
+    command: sh -c "npm ci && npx playwright test integration-scrapers-config-e2e.spec.ts --project=chromium --reporter=list"
+    environment:
+      - CI=true
+    network_mode: "host"

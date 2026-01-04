@@ -2,16 +2,10 @@
   "mcpServers": {
     "playwright": {
       "command": "cmd",
-      "args": [
-        "/c", "npx", "-y", "@playwright/mcp@latest",
-        "--browser", "chromium"
-      ],
+      "args": ["/c", "npx", "-y", "@playwright/mcp@latest"],
       "env": {
-        "PLAYWRIGHT_TIMEOUT": "300000",
-        "MCP_REQUEST_TIMEOUT": "300",
-        "MCP_CONNECTION_TIMEOUT": "30"
+        "PLAYWRIGHT_TIMEOUT": "300000"
       },
-      "timeout": 300000,
       "alwaysAllow": ["*"]
     },
     "chrome-devtools": {
