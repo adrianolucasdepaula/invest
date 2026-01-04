@@ -9,7 +9,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -45,6 +45,17 @@ export function ScraperList({ configs, category }: ScraperListProps) {
     [...configs].sort((a, b) => a.priority - b.priority)
   );
 
+  // BUG-FIX: Track drag state to avoid sync during drag
+  const [isDragging, setIsDragging] = useState(false);
+
+  // BUG-FIX: Sync local state with props when configs change (after mutations)
+  // Skip sync during drag to avoid flickering
+  useEffect(() => {
+    if (!isDragging) {
+      setItems([...configs].sort((a, b) => a.priority - b.priority));
+    }
+  }, [configs, isDragging]);
+
   const sortedConfigs = items;
 
   // GAP-001: Sensores de drag (mouse + keyboard para a11y)
@@ -55,8 +66,21 @@ export function ScraperList({ configs, category }: ScraperListProps) {
     })
   );
 
+  // BUG-FIX: Handler de drag start
+  function handleDragStart() {
+    setIsDragging(true);
+  }
+
+  // BUG-FIX: Handler de drag cancel (ESC key)
+  function handleDragCancel() {
+    setIsDragging(false);
+  }
+
   // GAP-001: Handler de drag end
   function handleDragEnd(event: DragEndEvent) {
+    // BUG-FIX: Reset dragging state first
+    setIsDragging(false);
+
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -151,6 +175,8 @@ export function ScraperList({ configs, category }: ScraperListProps) {
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragCancel={handleDragCancel}
         onDragEnd={handleDragEnd}
       >
         <SortableContext

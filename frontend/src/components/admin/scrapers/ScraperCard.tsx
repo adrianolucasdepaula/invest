@@ -14,7 +14,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -51,6 +51,15 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const toggleMutation = useToggleScraperEnabled();
   const updateMutation = useUpdateScraperConfig();
+
+  // BUG-FIX: Local state for immediate input feedback
+  // Inputs bound to props don't update visually while typing
+  const [localParams, setLocalParams] = useState(config.parameters);
+
+  // Sync local state when config.parameters changes (after mutation success)
+  useEffect(() => {
+    setLocalParams(config.parameters);
+  }, [config.parameters]);
 
   const handleToggle = () => {
     toggleMutation.mutate(config.id);
@@ -96,10 +105,15 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
   }, 1000);
 
   const handleParameterChange = (key: string, value: any, validator?: (v: string) => number | null) => {
+    // BUG-FIX: Update local state IMMEDIATELY for visual feedback
+    setLocalParams((prev) => ({ ...prev, [key]: value }));
+
     if (validator) {
       const validated = validator(String(value));
       if (validated === null) {
         toast.error(`Valor inválido para ${key}. Verifique os limites permitidos.`);
+        // Revert local state to original on validation error
+        setLocalParams(config.parameters);
         return;
       }
       value = validated;
@@ -218,7 +232,7 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
               <Input
                 id={`timeout-${config.id}`}
                 type="number"
-                value={config.parameters.timeout}
+                value={localParams.timeout}
                 onChange={(e) => handleParameterChange('timeout', e.target.value, validateTimeout)}
                 min={10000}
                 max={300000}
@@ -235,7 +249,7 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
               <Input
                 id={`retry-${config.id}`}
                 type="number"
-                value={config.parameters.retryAttempts}
+                value={localParams.retryAttempts}
                 onChange={(e) => handleParameterChange('retryAttempts', e.target.value, validateRetry)}
                 min={0}
                 max={10}
@@ -251,7 +265,7 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
               <Input
                 id={`weight-${config.id}`}
                 type="number"
-                value={config.parameters.validationWeight}
+                value={localParams.validationWeight}
                 onChange={(e) => handleParameterChange('validationWeight', e.target.value, validateWeight)}
                 min={0}
                 max={1}
@@ -266,7 +280,7 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
             <div>
               <Label htmlFor={`strategy-${config.id}`}>Estratégia de Espera</Label>
               <Select
-                value={config.parameters.waitStrategy}
+                value={localParams.waitStrategy}
                 onValueChange={(v) => handleParameterChange('waitStrategy', v)}
               >
                 <SelectTrigger id={`strategy-${config.id}`}>
@@ -286,7 +300,7 @@ export function ScraperCard({ config, index, isSelected, onSelectChange }: Scrap
             <Input
               id={`cache-${config.id}`}
               type="number"
-              value={config.parameters.cacheExpiry}
+              value={localParams.cacheExpiry}
               onChange={(e) => handleParameterChange('cacheExpiry', e.target.value, validateCache)}
               min={0}
               max={86400}

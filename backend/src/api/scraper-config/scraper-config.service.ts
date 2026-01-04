@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, Not } from 'typeorm';
 import { ScraperConfig, ScraperExecutionProfile, ScraperConfigAudit } from '@database/entities';
@@ -392,15 +398,28 @@ export class ScraperConfigService {
     await queryRunner.startTransaction();
 
     try {
+      // BUG-BE-001 FIX: Use temporary negative priorities to avoid UNIQUE constraint violations
+      // PASSO 1: Setar ALL priorities para valores NEGATIVOS
+      // Isso evita conflicts porque -1, -2, -3 não colidem com 1, 2, 3
       for (const item of dto.priorities) {
         await queryRunner.manager.update(
           ScraperConfig,
           { scraperId: item.scraperId },
-          { priority: item.priority },
+          { priority: -item.priority },  // NEGATIVO temporário
         );
       }
 
+      // PASSO 2: Converter todas de volta para POSITIVO em 1 query atômica
+      // Agora não há conflicts porque todos estão negativos
+      await queryRunner.query(`
+        UPDATE scraper_configs
+        SET priority = -priority
+        WHERE priority < 0
+      `);
+
       await queryRunner.commitTransaction();
+
+      this.logger.log(`[UPDATE_PRIORITY] ✅ Atualizadas ${dto.priorities.length} prioridades`);
 
       // GAP-006: Registrar audit
       await this.logAudit('UPDATE_PRIORITY', null, {
@@ -409,7 +428,12 @@ export class ScraperConfigService {
       });
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw error;
+      this.logger.error(`[UPDATE_PRIORITY] ❌ Database error: ${error.message}`, error.stack);
+
+      // Melhorar mensagem de erro
+      throw new ConflictException(
+        `Falha ao atualizar prioridades. Detalhes: ${error.message}`,
+      );
     } finally {
       await queryRunner.release();
     }
