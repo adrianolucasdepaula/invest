@@ -1,0 +1,211 @@
+name: Mutation Testing
+
+on:
+  # Run weekly on Sundays at 2 AM UTC
+  schedule:
+    - cron: '0 2 * * 0'
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Target to mutate'
+        required: true
+        default: 'frontend'
+        type: choice
+        options:
+          - frontend
+          - backend
+          - financial-critical
+      incremental:
+        description: 'Run incremental mutation (only changed files)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  mutation-frontend:
+    name: Stryker Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: github.event_name == 'schedule' || github.event.inputs.target == 'frontend'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for incremental mutation
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run Stryker (Full)
+        if: github.event.inputs.incremental != 'true'
+        working-directory: frontend
+        run: npx stryker run
+        continue-on-error: true
+
+      - name: Run Stryker (Incremental)
+        if: github.event.inputs.incremental == 'true'
+        working-directory: frontend
+        run: npx stryker run --incremental
+        continue-on-error: true
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stryker-frontend-report
+          path: frontend/reports/mutation/
+          retention-days: 30
+
+      - name: Create mutation summary
+        if: always()
+        run: |
+          echo "## Stryker Mutation Testing - Frontend" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f frontend/reports/mutation/mutation.json ]; then
+            echo "### Results" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat frontend/reports/mutation/mutation.json | head -100 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No mutation report found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  mutation-financial:
+    name: Stryker Financial Critical
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    if: github.event.inputs.target == 'financial-critical'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run Stryker on Financial Critical Files
+        working-directory: frontend
+        run: |
+          npx stryker run --mutate "src/lib/calculations/**/*.ts,src/utils/decimal*.ts"
+        continue-on-error: true
+
+      - name: Check mutation score threshold
+        working-directory: frontend
+        run: |
+          if [ -f reports/mutation/mutation.json ]; then
+            SCORE=$(cat reports/mutation/mutation.json | grep -o '"mutationScore":[0-9.]*' | head -1 | cut -d: -f2)
+            echo "Mutation Score: $SCORE"
+            if (( $(echo "$SCORE < 90" | bc -l) )); then
+              echo "::error::Mutation score ($SCORE%) is below 90% threshold for financial critical code!"
+              exit 1
+            fi
+          fi
+
+      - name: Upload financial mutation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stryker-financial-report
+          path: frontend/reports/mutation/
+          retention-days: 30
+
+  mutation-backend:
+    name: Stryker Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: github.event.inputs.target == 'backend'
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: invest_user
+          POSTGRES_PASSWORD: invest_pass_2024
+          POSTGRES_DB: invest_platform_db
+        ports:
+          - 5532:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Install Stryker
+        working-directory: backend
+        run: npm install --save-dev @stryker-mutator/core @stryker-mutator/jest-runner @stryker-mutator/typescript-checker
+
+      - name: Run Stryker
+        working-directory: backend
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5532
+          DB_USER: invest_user
+          DB_PASSWORD: invest_pass_2024
+          DB_NAME: invest_platform_db
+        run: npx stryker run
+        continue-on-error: true
+
+      - name: Upload backend mutation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stryker-backend-report
+          path: backend/reports/mutation/
+          retention-days: 30
+
+  mutation-summary:
+    name: Mutation Summary
+    runs-on: ubuntu-latest
+    needs: [mutation-frontend]
+    if: always()
+
+    steps:
+      - name: Download frontend report
+        uses: actions/download-artifact@v4
+        with:
+          name: stryker-frontend-report
+          path: reports/frontend/
+        continue-on-error: true
+
+      - name: Generate summary
+        run: |
+          echo "## Mutation Testing Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Target | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | ${{ needs.mutation-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Reports available as artifacts." >> $GITHUB_STEP_SUMMARY

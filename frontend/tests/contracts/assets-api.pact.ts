@@ -50,8 +50,8 @@ describe('Assets API Contract', () => {
               type: string('ACAO'),
               sector: string('Petróleo'),
               isActive: boolean(true),
-              createdAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
-              updatedAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
+              createdAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", '2024-01-15T10:30:00.000Z'),
+              updatedAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", '2024-01-15T10:30:00.000Z'),
             }),
             meta: {
               total: integer(100),
@@ -137,8 +137,8 @@ describe('Assets API Contract', () => {
             sector: string('Petróleo'),
             subsector: string('Exploração e Produção'),
             isActive: boolean(true),
-            createdAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
-            updatedAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
+            createdAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", '2024-01-15T10:30:00.000Z'),
+            updatedAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", '2024-01-15T10:30:00.000Z'),
           },
         });
 
@@ -213,10 +213,10 @@ describe('Assets API Contract', () => {
                 name: string('fundamentus'),
                 value: decimal(12.5),
                 deviation: decimal(0.02),
-                timestamp: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
+                timestamp: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", '2024-01-15T10:30:00.000Z'),
               }),
             },
-            lastUpdated: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
+            lastUpdated: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", '2024-01-15T10:30:00.000Z'),
           },
         });
 
@@ -255,7 +255,7 @@ describe('Assets API Contract', () => {
           body: {
             ticker: string('PETR4'),
             prices: eachLike({
-              date: timestamp("yyyy-MM-dd"),
+              date: timestamp("yyyy-MM-dd", '2024-01-15'),
               open: decimal(35.50),
               high: decimal(36.20),
               low: decimal(35.10),
@@ -264,8 +264,8 @@ describe('Assets API Contract', () => {
               adjustedClose: decimal(35.80),
             }),
             period: {
-              start: timestamp("yyyy-MM-dd"),
-              end: timestamp("yyyy-MM-dd"),
+              start: timestamp("yyyy-MM-dd", '2024-01-01'),
+              end: timestamp("yyyy-MM-dd", '2024-01-31'),
               days: integer(30),
             },
           },
@@ -313,8 +313,8 @@ describe('Portfolio API Contract', () => {
             profitLoss: decimal(10000.00),
             profitLossPercentage: decimal(0.1111),
             positionsCount: integer(5),
-            createdAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
-            updatedAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
+            createdAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", '2024-01-15T10:30:00.000Z'),
+            updatedAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", '2024-01-15T10:30:00.000Z'),
           }),
         });
 
@@ -359,7 +359,7 @@ describe('Portfolio API Contract', () => {
             name: string('Nova Carteira'),
             description: string('Descrição da carteira'),
             totalValue: decimal(0),
-            createdAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
+            createdAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", '2024-01-15T10:30:00.000Z'),
           },
         });
 
@@ -406,7 +406,7 @@ describe('Options API Contract (WHEEL Strategy)', () => {
               ticker: string('PETRA123'),
               type: string('CALL'),
               strike: decimal(36.00),
-              expiration: timestamp("yyyy-MM-dd"),
+              expiration: timestamp("yyyy-MM-dd", '2024-02-15'),
               daysToExpiry: integer(30),
               // Greeks (CRITICAL for WHEEL)
               delta: decimal(0.45),
@@ -423,7 +423,7 @@ describe('Options API Contract (WHEEL Strategy)', () => {
               bid: decimal(1.50),
               ask: decimal(1.55),
             }),
-            expirations: eachLike(timestamp("yyyy-MM-dd")),
+            expirations: eachLike(timestamp("yyyy-MM-dd", '2024-02-15')),
           },
         });
 
@@ -467,7 +467,7 @@ describe('Cross-Validation API Contract', () => {
           },
           body: {
             ticker: string('PETR4'),
-            validatedAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
+            validatedAt: timestamp("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", '2024-01-15T10:30:00.000Z'),
             fields: eachLike({
               fieldName: string('pl'),
               consensusValue: decimal(12.5),

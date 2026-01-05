@@ -63,7 +63,10 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.0",
     "@eslint/eslintrc": "^3.3.3",
+    "@pact-foundation/pact": "^16.0.4",
     "@playwright/test": "^1.57.0",
+    "@stryker-mutator/core": "^9.4.0",
+    "@stryker-mutator/typescript-checker": "^9.4.0",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
@@ -75,6 +78,7 @@
     "postcss": "^8.5.6",
     "prettier-plugin-tailwindcss": "^0.7.1",
     "tailwindcss": "^4.1.17",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
   }
 }

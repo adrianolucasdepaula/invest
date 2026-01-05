@@ -7,23 +7,70 @@
  * 3. Layer 3: VS Code Extension (conditional debug)
  * 4-6. Layers 4-6: DevTools, a11y, React Context (parallel)
  *
+ * FASE 158 Enhancements:
+ * - Test Impact Analysis (TIA) for intelligent test selection
+ * - Flaky Test Detection & Quarantine
+ * - Risk-Based Test Prioritization
+ * - Self-Healing Locators integration
+ *
  * Generates comprehensive pipeline summary with bug comparison matrix.
  *
  * Usage:
- *   npx ts-node frontend/scripts/run-test-pipeline.ts [config]
+ *   npx ts-node frontend/scripts/run-test-pipeline.ts [config] [flags]
  *
  * Configs:
  *   development  - All layers, parallel execution
  *   ci           - Fast layers only (Native + MCP + a11y)
  *   debug        - Native + VS Code + DevTools
+ *   optimized    - TIA + Risk-first + Flaky quarantine (FASE 158)
+ *
+ * Flags:
+ *   --use-tia             Enable Test Impact Analysis
+ *   --use-flaky-quarantine Enable flaky test quarantine
+ *   --risk-first          Order tests by risk priority
+ *   --skip-chaos          Skip chaos engineering scenarios
  *
  * @see Plan: foamy-singing-toast.md - Pipeline specification
+ * @see FASE 158: Universal Validation Flow v3.0
  */
 
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
 import * as fs from 'fs';
+
+// FASE 158: Import advanced testing tools
+import {
+  analyzeImpact,
+  TIAResult,
+  configure as configureTIA,
+  printSummary as printTIASummary,
+} from './test-impact-analysis';
+
+import {
+  recordTestRun,
+  shouldSkipTest,
+  getQuarantinedTests,
+  generateFlakyReport,
+  loadTestsFromReport as loadFlakyReport,
+  printSummary as printFlakySummary,
+  configure as configureFlakyTracker,
+} from '../tests/shared/flaky-tracker';
+
+import {
+  getPrioritizedTests,
+  getCriticalTests,
+  getSafetyTests as getRiskSafetyTests,
+  generateReport as generateRiskReport,
+  loadTestsFromReport as loadRiskReport,
+  printSummary as printRiskSummary,
+  configure as configureRiskPriority,
+} from '../tests/shared/risk-priority';
+
+import {
+  generateHealingReport,
+  printHealingSummary,
+} from '../tests/shared/self-healing';
 
 const execAsync = promisify(exec);
 
@@ -40,6 +87,19 @@ interface PipelineConfig {
   runReactContext: boolean;
   stopOnFailure: boolean;
   parallelExecution: boolean;
+  // FASE 158: Advanced testing features
+  useTIA: boolean;                    // Test Impact Analysis
+  useFlakyQuarantine: boolean;        // Flaky test quarantine
+  useRiskPriority: boolean;           // Risk-based test ordering
+  runChaosScenarios: boolean;         // Chaos engineering
+}
+
+// FASE 158: CLI flags
+interface CLIFlags {
+  useTIA: boolean;
+  useFlakyQuarantine: boolean;
+  riskFirst: boolean;
+  skipChaos: boolean;
 }
 
 const configs: Record<string, PipelineConfig> = {
@@ -52,6 +112,10 @@ const configs: Record<string, PipelineConfig> = {
     runReactContext: true,
     stopOnFailure: false,
     parallelExecution: true,
+    useTIA: false,
+    useFlakyQuarantine: false,
+    useRiskPriority: false,
+    runChaosScenarios: false,
   },
   ci: {
     runNative: true,
@@ -62,6 +126,10 @@ const configs: Record<string, PipelineConfig> = {
     runReactContext: false,
     stopOnFailure: true,
     parallelExecution: true,
+    useTIA: true,                      // FASE 158: TIA enabled for CI
+    useFlakyQuarantine: true,          // FASE 158: Quarantine in CI
+    useRiskPriority: true,             // FASE 158: Critical first
+    runChaosScenarios: false,
   },
   debug: {
     runNative: true,
@@ -72,6 +140,25 @@ const configs: Record<string, PipelineConfig> = {
     runReactContext: false,
     stopOnFailure: false,
     parallelExecution: false,
+    useTIA: false,
+    useFlakyQuarantine: false,
+    useRiskPriority: false,
+    runChaosScenarios: false,
+  },
+  // FASE 158: New optimized config with all advanced features
+  optimized: {
+    runNative: true,
+    runMCP: true,
+    runVSCode: false,
+    runDevTools: true,
+    runA11y: true,
+    runReactContext: false,
+    stopOnFailure: false,
+    parallelExecution: true,
+    useTIA: true,                      // Test Impact Analysis
+    useFlakyQuarantine: true,          // Flaky quarantine
+    useRiskPriority: true,             // Risk-first ordering
+    runChaosScenarios: true,           // Chaos engineering
   },
 };
 
@@ -79,17 +166,140 @@ const configs: Record<string, PipelineConfig> = {
 // MAIN PIPELINE EXECUTOR
 // ============================================================================
 
+// FASE 158: Parse CLI flags
+function parseCLIFlags(): CLIFlags {
+  const args = process.argv.slice(2);
+  return {
+    useTIA: args.includes('--use-tia'),
+    useFlakyQuarantine: args.includes('--use-flaky-quarantine'),
+    riskFirst: args.includes('--risk-first'),
+    skipChaos: args.includes('--skip-chaos'),
+  };
+}
+
+// FASE 158: Pre-pipeline analysis
+async function runPrePipelineAnalysis(config: PipelineConfig): Promise<{
+  tiaResult?: TIAResult;
+  quarantinedTests: string[];
+  prioritizedTests: string[];
+}> {
+  const result: {
+    tiaResult?: TIAResult;
+    quarantinedTests: string[];
+    prioritizedTests: string[];
+  } = {
+    quarantinedTests: [],
+    prioritizedTests: [],
+  };
+
+  console.log('\n📊 FASE 158: Pre-Pipeline Analysis\n');
+  console.log('═'.repeat(60));
+
+  // Load historical data
+  loadFlakyReport();
+  loadRiskReport();
+
+  // TIA: Test Impact Analysis
+  if (config.useTIA) {
+    console.log('\n🔍 Running Test Impact Analysis (TIA)...');
+    try {
+      result.tiaResult = await analyzeImpact();
+      printTIASummary(result.tiaResult);
+      console.log(`   Tests to run: ${result.tiaResult.testsToRun.length}`);
+      console.log(`   Tests skipped: ${result.tiaResult.testsSkipped.length}`);
+      console.log(`   Optimization: ${result.tiaResult.metadata.skipPercentage.toFixed(1)}% reduction`);
+    } catch (error) {
+      console.warn('   ⚠️ TIA analysis failed, running all tests');
+    }
+  }
+
+  // Flaky Quarantine
+  if (config.useFlakyQuarantine) {
+    console.log('\n🧪 Checking Flaky Test Quarantine...');
+    const quarantined = getQuarantinedTests();
+    result.quarantinedTests = quarantined.map(t => t.testId);
+    console.log(`   Quarantined tests: ${result.quarantinedTests.length}`);
+    if (result.quarantinedTests.length > 0) {
+      console.log('   Quarantined:');
+      result.quarantinedTests.slice(0, 5).forEach(id => console.log(`     - ${id}`));
+      if (result.quarantinedTests.length > 5) {
+        console.log(`     ... and ${result.quarantinedTests.length - 5} more`);
+      }
+    }
+  }
+
+  // Risk Priority
+  if (config.useRiskPriority) {
+    console.log('\n⚡ Analyzing Risk Priority...');
+    const critical = getCriticalTests();
+    const safety = getRiskSafetyTests();
+    console.log(`   Critical tests: ${critical.length}`);
+    console.log(`   Safety tests: ${safety.length}`);
+
+    const prioritized = getPrioritizedTests({ includeQuarantined: !config.useFlakyQuarantine });
+    result.prioritizedTests = prioritized.map(t => t.testId);
+    console.log(`   Total prioritized: ${result.prioritizedTests.length}`);
+  }
+
+  console.log('\n' + '═'.repeat(60) + '\n');
+
+  return result;
+}
+
+// FASE 158: Post-pipeline reports
+function printFase158Reports(config: PipelineConfig): void {
+  if (!config.useTIA && !config.useFlakyQuarantine && !config.useRiskPriority) {
+    return;
+  }
+
+  console.log('\n📈 FASE 158: Post-Pipeline Reports\n');
+  console.log('═'.repeat(60));
+
+  if (config.useFlakyQuarantine) {
+    console.log('\n🧪 Flaky Test Report:');
+    printFlakySummary();
+  }
+
+  if (config.useRiskPriority) {
+    console.log('\n⚡ Risk Priority Report:');
+    printRiskSummary();
+  }
+
+  // Self-healing report
+  const healingReport = generateHealingReport();
+  if (healingReport.totalElements > 0) {
+    console.log('\n🔧 Self-Healing Report:');
+    printHealingSummary();
+  }
+
+  console.log('\n' + '═'.repeat(60) + '\n');
+}
+
 async function runTestPipeline(configName: string = 'development'): Promise<void> {
   const config = configs[configName];
+  const cliFlags = parseCLIFlags();
+
+  // Apply CLI flags to config
+  if (cliFlags.useTIA) config.useTIA = true;
+  if (cliFlags.useFlakyQuarantine) config.useFlakyQuarantine = true;
+  if (cliFlags.riskFirst) config.useRiskPriority = true;
+  if (cliFlags.skipChaos) config.runChaosScenarios = false;
+
   if (!config) {
     console.error(`❌ Unknown config: ${configName}`);
     console.error(`Available configs: ${Object.keys(configs).join(', ')}`);
     process.exit(1);
   }
 
-  console.log('\n🚀 Starting Test Pipeline\n');
+  console.log('\n🚀 Starting Test Pipeline (FASE 158 Enhanced)\n');
   console.log(`Config: ${configName}`);
-  console.log(`Timestamp: ${new Date().toISOString()}\n`);
+  console.log(`Timestamp: ${new Date().toISOString()}`);
+  console.log(`FASE 158 Features:`);
+  console.log(`  - TIA: ${config.useTIA ? '✅' : '❌'}`);
+  console.log(`  - Flaky Quarantine: ${config.useFlakyQuarantine ? '✅' : '❌'}`);
+  console.log(`  - Risk Priority: ${config.useRiskPriority ? '✅' : '❌'}`);
+  console.log(`  - Chaos Scenarios: ${config.runChaosScenarios ? '✅' : '❌'}`);
+  console.log('');
 
   const startTime = Date.now();
   const results: Record<string, unknown> = {
@@ -99,9 +309,12 @@ async function runTestPipeline(configName: string = 'development'): Promise<void
     devtools: null,
     a11y: null,
     reactContext: null,
+    fase158: null,  // FASE 158 analysis results
   };
 
   try {
+    // FASE 158: Pre-pipeline analysis
+    const preAnalysis = await runPrePipelineAnalysis(config);
     // LAYER 1: Playwright Native (BASELINE)
     if (config.runNative) {
       console.log('🔵 [1/6] Running Layer 1: Playwright Native (baseline)...\n');
@@ -195,18 +408,72 @@ async function runTestPipeline(configName: string = 'development'): Promise<void
     const totalTime = Date.now() - startTime;
     console.log('\n📊 Generating pipeline summary...\n');
 
+    // Store FASE 158 analysis results
+    results.fase158 = {
+      tiaResult: preAnalysis.tiaResult,
+      quarantinedTests: preAnalysis.quarantinedTests,
+      prioritizedTests: preAnalysis.prioritizedTests,
+      healingReport: generateHealingReport(),
+      flakyReport: config.useFlakyQuarantine ? generateFlakyReport() : null,
+      riskReport: config.useRiskPriority ? generateRiskReport() : null,
+    };
+
     const summary = generatePipelineSummary(results, totalTime);
     savePipelineReport(summary);
 
     // Print final summary
     printFinalSummary(summary);
 
-    console.log('\n✅ Pipeline completed successfully!\n');
+    // FASE 158: Print advanced reports
+    printFase158Reports(config);
+
+    // Save FASE 158 reports
+    saveFase158Reports(config);
+
+    console.log('\n✅ Pipeline completed successfully (FASE 158 Enhanced)!\n');
     process.exit(0);
   } catch (error) {
     console.error('\n❌ Pipeline failed:', (error as Error).message);
     process.exit(1);
   }
+}
+
+// FASE 158: Save advanced reports
+function saveFase158Reports(config: PipelineConfig): void {
+  const reportsDir = path.join(__dirname, '../reports/fase-158');
+
+  // Ensure reports directory exists
+  if (!fs.existsSync(reportsDir)) {
+    fs.mkdirSync(reportsDir, { recursive: true });
+  }
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+  if (config.useFlakyQuarantine) {
+    const flakyReport = generateFlakyReport();
+    fs.writeFileSync(
+      path.join(reportsDir, `flaky-report-${timestamp}.json`),
+      JSON.stringify(flakyReport, null, 2)
+    );
+  }
+
+  if (config.useRiskPriority) {
+    const riskReport = generateRiskReport();
+    fs.writeFileSync(
+      path.join(reportsDir, `risk-report-${timestamp}.json`),
+      JSON.stringify(riskReport, null, 2)
+    );
+  }
+
+  const healingReport = generateHealingReport();
+  if (healingReport.totalElements > 0) {
+    fs.writeFileSync(
+      path.join(reportsDir, `healing-report-${timestamp}.json`),
+      JSON.stringify(healingReport, null, 2)
+    );
+  }
+
+  console.log(`✅ FASE 158 reports saved to: ${reportsDir}`);
 }
 
 // ============================================================================
