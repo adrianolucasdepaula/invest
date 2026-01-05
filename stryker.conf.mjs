@@ -13,7 +13,7 @@
  * @license FREE (Apache 2.0)
  *
  * Installation:
- * npm install --save-dev @stryker-mutator/core @stryker-mutator/jest-runner @stryker-mutator/typescript-checker
+ * npm install --save-dev @stryker-mutator/core @stryker-mutator/vitest-runner @stryker-mutator/typescript-checker
  */
 
 /** @type {import('@stryker-mutator/api/core').PartialStrykerOptions} */
@@ -30,27 +30,21 @@ const config = {
   /**
    * Files to mutate (introduce bugs)
    * Excludes test files, type definitions, and config files
+   * Focused on frontend since we're using vitest runner
    */
   mutate: [
-    // Backend source files
-    'backend/src/**/*.ts',
-    // Frontend source files
+    // Frontend source files (primary target with vitest)
     'frontend/src/**/*.ts',
     'frontend/src/**/*.tsx',
 
     // Exclude patterns
-    '!backend/src/**/*.spec.ts',
-    '!backend/src/**/*.test.ts',
-    '!backend/src/**/*.d.ts',
-    '!backend/src/**/*.module.ts',
-    '!backend/src/main.ts',
-
     '!frontend/src/**/*.spec.ts',
     '!frontend/src/**/*.spec.tsx',
     '!frontend/src/**/*.test.ts',
     '!frontend/src/**/*.test.tsx',
     '!frontend/src/**/*.d.ts',
     '!frontend/src/**/*.stories.tsx',
+    '!frontend/src/**/*.config.ts',
   ],
 
   // ==========================================================================
@@ -60,16 +54,16 @@ const config = {
   /**
    * Test runner to use
    * Options: jest, vitest, mocha, karma
+   * Using vitest for frontend (primary target)
    */
-  testRunner: 'jest',
+  testRunner: 'vitest',
 
   /**
-   * Jest configuration options
+   * Vitest configuration options
+   * Frontend uses vitest as test runner
    */
-  jest: {
-    projectType: 'custom',
-    configFile: 'backend/jest.config.js',
-    enableFindRelatedTests: true,
+  vitest: {
+    configFile: 'frontend/vitest.config.ts',
   },
 
   // ==========================================================================
@@ -84,8 +78,9 @@ const config = {
 
   /**
    * Path to tsconfig file
+   * Using frontend tsconfig since we're targeting frontend with vitest
    */
-  tsconfigFile: 'backend/tsconfig.json',
+  tsconfigFile: 'frontend/tsconfig.json',
 
   /**
    * TypeScript checker options
