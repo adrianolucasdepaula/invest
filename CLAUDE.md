@@ -367,8 +367,18 @@ O projeto possui **sistema de automação 100%** com detecção de keywords, cor
 ### Workflow & Commands
 
 - @ .claude/guides/skills-slash-commands.md (15 slash commands: /validate-all, /mcp-triplo, /check-context, etc.)
-- @ .claude/skills/research-lib.md (Context7 proactive documentation research, 10-20h/month savings) ⭐ **NOVO**
+- @ .claude/skills/research-lib.md (Context7 proactive documentation research, 10-20h/month savings)
 - @ .claude/skills/context-check.md (Context check workflow with Context7 integration)
+
+### Universal Validation Flow (FASE 157) ⭐ **NOVO**
+
+- @ FLUXO_UNIVERSAL_VALIDACAO.md (6-level progressive validation, layer hierarchy, decision matrix)
+- @ .claude/skills/validate-nivel-1.md (Quick Validation: L1+L2 cross-validation, MCP Triplo, 5-10min)
+- @ .claude/skills/validate-nivel-2.md (Deep Validation: FASE 156 Pipeline CI, backend tests, 15-30min)
+- @ .claude/skills/validate-nivel-3.md (Comprehensive: PM Expert, security audit, 45-60min)
+- @ .claude/skills/validate-nivel-4.md (Troubleshooting: Sequential Thinking, root cause analysis, 2-8h)
+- @ .claude/skills/validate-nivel-5.md (Ecosystem Audit: 3 PM agents parallel, full coverage, 2-4h)
+- @ .claude/templates/VALIDATION_REPORT_TEMPLATE.md (Standardized validation report template)
 
 ### Process Documentation
 
@@ -418,11 +428,18 @@ cd frontend && npx tsc --noEmit && npm run build && npm run lint
 
 # Slash commands essenciais
 /check-context      # ANTES de iniciar tarefa complexa
-/research-lib       # ANTES de implementar com biblioteca nova/desconhecida ⭐ NOVO
+/research-lib       # ANTES de implementar com biblioteca nova/desconhecida
 /validate-all       # ANTES de QUALQUER commit (obrigatório)
 /mcp-triplo         # APÓS mudanças frontend
 /mcp-quadruplo      # Feature complexa ou bug >2h
 /sync-docs          # APÓS mudar CLAUDE.md ou GEMINI.md
+
+# Validação progressiva (FASE 157) ⭐ NOVO
+/validate-nivel-1   # Quick (5-10min): L1+L2 + MCP Triplo
+/validate-nivel-2   # Deep (15-30min): Pipeline CI + backend tests
+/validate-nivel-3   # Comprehensive (45-60min): PM Expert + security
+/validate-nivel-4   # Troubleshooting (2-8h): Sequential Thinking
+/validate-nivel-5   # Ecosystem Audit (2-4h): 3 PM agents parallel
 
 # Docker essencial
 docker-compose up -d                    # Start all
@@ -458,6 +475,6 @@ docker logs invest_backend --tail 50    # Backend logs
 
 ---
 
-**Última Atualização:** 2025-12-21
-**Versão:** 2.0 (Modular com @ references)
-**Total de Guias:** 16 (6 novos + 10 migrados do CLAUDE.md original)
+**Última Atualização:** 2026-01-04
+**Versão:** 3.0 (Universal Validation Flow + @ references)
+**Total de Guias:** 23 (16 anteriores + 5 validate-nivel + FLUXO + template)

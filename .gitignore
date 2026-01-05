@@ -152,6 +152,10 @@ dump.rdb
 
 # Claude Code and IDE specific
 .claude/
+!.claude/skills/
+!.claude/templates/
+!.claude/guides/
+!.claude/AGENT_QUICK_REFERENCE.md
 .history/
 .mcp.json
 

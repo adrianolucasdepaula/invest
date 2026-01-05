@@ -30,6 +30,8 @@
 19. [INVENTARIO DOCKER](#secao-19-inventario-docker)
 20. [INVENTARIO APIs EXTERNAS](#secao-20-inventario-apis-externas)
 21. [INVENTARIO MCP E TOOLS](#secao-21-inventario-mcp-e-tools)
+22. [PESQUISA WEB PARALELA](#secao-22-pesquisa-web-paralela)
+23. [FLUXO UNIVERSAL DE VALIDACAO](#secao-23-fluxo-universal-de-validacao)
 
 ---
 
@@ -1222,6 +1224,127 @@ Execute em paralelo para maxima eficiencia:
 
 ---
 
+## SECAO 23: FLUXO UNIVERSAL DE VALIDACAO
+
+> **Referencia Completa:** `FLUXO_UNIVERSAL_VALIDACAO.md` (47KB, ~1800 linhas)
+
+### 23.1 Hierarquia de 6 Layers de Teste
+
+| Layer | Tipo | Quando Usar | Fallback Para |
+|-------|------|-------------|---------------|
+| **L1** | PRIMARY | **SEMPRE** (junto com L2) | - |
+| **L2** | SECONDARY | **SEMPRE** (junto com L1) | - |
+| **L3** | TERTIARY | L1+L2 nao funcionam/qualidade | L1+L2 |
+| **L4** | QUATERNARY | Outras nao funcionam/especifico | L1+L2+L3 |
+| **L5** | SPECIALIZED | Recursos de a11y (WCAG) | Nenhum |
+| **L6** | SPECIALIZED | Recursos de React (state/props) | Nenhum |
+
+**REGRA CRITICA:** L1 (Playwright Native) + L2 (Playwright MCP) **SEMPRE juntos** para validacao cruzada.
+
+### 23.2 6 Niveis Progressivos de Validacao
+
+| Nivel | Nome | Tempo | Frequencia | Skill |
+|-------|------|-------|------------|-------|
+| 0 | Pre-requisitos | 3-5 min | SEMPRE | (automatico) |
+| 1 | Quick Validation | 5-10 min | Diario | `/validate-nivel-1` |
+| 2 | Deep Validation | 15-30 min | Antes PR | `/validate-nivel-2` |
+| 3 | Comprehensive | 45-60 min | Features criticas | `/validate-nivel-3` |
+| 4 | Troubleshooting | 2-8h | Bugs complexos | `/validate-nivel-4` |
+| 5 | Ecosystem Audit | 2-4h | Before release | `/validate-nivel-5` |
+
+### 23.3 Matriz de Decisao
+
+| Mudanca | Arquivos | Nivel Minimo | Tempo |
+|---------|----------|--------------|-------|
+| Typo, comment | 1 | 0 + 1 | 5-10 min |
+| Bug fix pequeno | 1-3 | 0 + 1 | 10-15 min |
+| Feature pequena | 2-5 | 0 + 1 + 2 | 30-45 min |
+| Feature media | 5-10 | 0 + 1 + 2 | 45-60 min |
+| Feature grande | 10-20 | 0 + 1 + 2 + 3 | 90-120 min |
+| Bug critico/complexo | Variavel | 0 + 4 | 2-8h |
+| Release candidate | Todos | 0 + 1 + 2 + 3 | 2-3h |
+| Release major | Todos | 0-5 (TODOS) | 4-6h |
+
+### 23.4 Validacao Cruzada L1 + L2
+
+| L1 Result | L2 Result | Interpretacao | Acao |
+|-----------|-----------|---------------|------|
+| PASS | PASS | Bug nao existe | Prosseguir |
+| PASS | FAIL | **Race condition** | Investigar BUG-B1 |
+| FAIL | PASS | Timing issue | Verificar timing |
+| FAIL | FAIL | **Bug confirmado** | Corrigir |
+
+### 23.5 Skills de Validacao
+
+| Skill | Descricao | Arquivo |
+|-------|-----------|---------|
+| `/validate-nivel-1` | Quick Validation (L1+L2, MCP Triplo) | `.claude/skills/validate-nivel-1.md` |
+| `/validate-nivel-2` | Deep Validation (FASE 156 Pipeline CI) | `.claude/skills/validate-nivel-2.md` |
+| `/validate-nivel-3` | Comprehensive (PM Expert, Security) | `.claude/skills/validate-nivel-3.md` |
+| `/validate-nivel-4` | Troubleshooting (Sequential Thinking) | `.claude/skills/validate-nivel-4.md` |
+| `/validate-nivel-5` | Ecosystem Audit (3 PM Agents) | `.claude/skills/validate-nivel-5.md` |
+
+### 23.6 Criterios de Aprovacao por Nivel
+
+**Nivel 1:**
+- [ ] /validate-all: 100% PASS
+- [ ] L1 (Native): >= 60% scenarios (8/14)
+- [ ] L2 (MCP): Executado para validacao cruzada
+- [ ] Console: 0 errors
+- [ ] Network: 0 erros 4xx/5xx
+- [ ] a11y: 0 SERIOUS/CRITICAL
+
+**Nivel 2:**
+- [ ] Nivel 1: 100% PASS
+- [ ] FASE 156 Pipeline CI: L1+L2+L5 passed
+- [ ] Backend tests: 100% PASS
+- [ ] Prometheus targets: ALL UP
+
+**Nivel 3:**
+- [ ] Nivel 2: 100% PASS
+- [ ] FASE 156 Pipeline FULL: >= 70%
+- [ ] PM Expert: 18/18 pages, 11/11 controllers
+- [ ] Security audit: 0 critical/high
+- [ ] Documentation: CLAUDE.md === GEMINI.md
+
+**Nivel 4:**
+- [ ] Root cause identificado (NAO sintoma)
+- [ ] Fix validado (Niveis 1-3)
+- [ ] KNOWN-ISSUES.md atualizado
+- [ ] Prevencao implementada
+
+**Nivel 5:**
+- [ ] Niveis 0-3: 100% PASS
+- [ ] 3 PM Agents: 100% coverage
+- [ ] Data integrity: 0 inconsistencias
+- [ ] Performance: Lighthouse >= 90
+- [ ] Security: OWASP Top 10 verified
+- [ ] Backup: Database backup criado
+
+### 23.7 Template de Report
+
+**Arquivo:** `.claude/templates/VALIDATION_REPORT_TEMPLATE.md`
+
+**Estrutura:**
+- Resumo Executivo (metricas)
+- Resultados por Nivel
+- Issues Encontrados (criticos + warnings)
+- Recomendacao Final (APROVADO/REPROVADO/INVESTIGAR)
+- Proximos Passos
+
+### 23.8 Orchestrator Script
+
+**Arquivo:** `frontend/scripts/validate-full.ts`
+
+```bash
+# Uso:
+npx ts-node frontend/scripts/validate-full.ts --level=2         # Nivel especifico
+npx ts-node frontend/scripts/validate-full.ts --level=2 --ci    # CI mode
+npx ts-node frontend/scripts/validate-full.ts --level=3 --report # Com report
+```
+
+---
+
 ## ARQUIVOS CRITICOS PARA LEITURA
 
 | Arquivo | Prioridade | Conteudo |
@@ -1237,5 +1360,6 @@ Execute em paralelo para maxima eficiencia:
 ---
 
 **Criado:** 2025-12-15
-**Versao:** 2.0.0 (22 secoes)
-**Refs:** CHECKLIST_TODO_MASTER.md, CLAUDE.md, ARCHITECTURE.md
+**Atualizado:** 2026-01-04
+**Versao:** 3.0.0 (23 secoes)
+**Refs:** CHECKLIST_TODO_MASTER.md, CLAUDE.md, ARCHITECTURE.md, FLUXO_UNIVERSAL_VALIDACAO.md
