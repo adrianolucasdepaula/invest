@@ -72,6 +72,12 @@ import {
   printHealingSummary,
 } from '../tests/shared/self-healing';
 
+// FASE 158: Chaos Engineering
+import {
+  runAllScenarios as runChaosScenarios,
+  ChaosResult,
+} from './chaos-scenarios';
+
 const execAsync = promisify(exec);
 
 // ============================================================================
@@ -246,6 +252,52 @@ async function runPrePipelineAnalysis(config: PipelineConfig): Promise<{
   return result;
 }
 
+// FASE 158: Execute Chaos Engineering Scenarios
+async function executeChaosScenarios(config: PipelineConfig): Promise<{
+  results: ChaosResult[];
+  passed: number;
+  failed: number;
+  skipped: boolean;
+}> {
+  if (!config.runChaosScenarios) {
+    return {
+      results: [],
+      passed: 0,
+      failed: 0,
+      skipped: true,
+    };
+  }
+
+  console.log('\n🌪️  [CHAOS] Running Chaos Engineering Scenarios...\n');
+  console.log('═'.repeat(60));
+
+  try {
+    const results = await runChaosScenarios();
+    const passed = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
+
+    console.log('\n🌪️  [CHAOS] Chaos Scenarios Complete');
+    console.log(`   Passed: ${passed}/${results.length}`);
+    console.log(`   Failed: ${failed}/${results.length}`);
+    console.log(`   Success Rate: ${((passed / results.length) * 100).toFixed(1)}%\n`);
+
+    return {
+      results,
+      passed,
+      failed,
+      skipped: false,
+    };
+  } catch (error) {
+    console.error('🌪️  [CHAOS] Error running chaos scenarios:', error);
+    return {
+      results: [],
+      passed: 0,
+      failed: 0,
+      skipped: false,
+    };
+  }
+}
+
 // FASE 158: Post-pipeline reports
 function printFase158Reports(config: PipelineConfig): void {
   if (!config.useTIA && !config.useFlakyQuarantine && !config.useRiskPriority) {
@@ -404,6 +456,9 @@ async function runTestPipeline(configName: string = 'development'): Promise<void
       }
     }
 
+    // FASE 158: Run Chaos Engineering Scenarios
+    const chaosResults = await executeChaosScenarios(config);
+
     // Generate comprehensive pipeline report
     const totalTime = Date.now() - startTime;
     console.log('\n📊 Generating pipeline summary...\n');
@@ -416,6 +471,7 @@ async function runTestPipeline(configName: string = 'development'): Promise<void
       healingReport: generateHealingReport(),
       flakyReport: config.useFlakyQuarantine ? generateFlakyReport() : null,
       riskReport: config.useRiskPriority ? generateRiskReport() : null,
+      chaosResults: chaosResults,  // FASE 158: Chaos Engineering results
     };
 
     const summary = generatePipelineSummary(results, totalTime);
