@@ -584,6 +584,95 @@ jobs:
 
 ---
 
+## MCP Validation Hierarchy (FASE 158+)
+
+### Estratégia de Validação Multi-Camada
+
+A validação do frontend segue uma hierarquia clara de ferramentas, onde cada camada tem um propósito específico:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    HIERARQUIA DE VALIDAÇÃO MCP                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  🥇 PRIMÁRIO: Playwright Native                                             │
+│  ├── Sempre executar PRIMEIRO                                               │
+│  ├── Fonte principal de verdade para E2E                                    │
+│  ├── Comandos: npx playwright test, npm run test:e2e                        │
+│  └── Uso: Validação completa, CI/CD gates, regression testing               │
+│                                                                             │
+│  🥈 SECUNDÁRIO: Playwright MCP                                              │
+│  ├── Cross-validação dos resultados do primário                             │
+│  ├── Verificar se primário não identificou algum problema                   │
+│  ├── Ferramentas: mcp__playwright__browser_*                                │
+│  └── Uso: Exploração interativa, debugging, validação visual                │
+│                                                                             │
+│  🔧 FALLBACK/ESPECIALIZADO:                                                 │
+│                                                                             │
+│  ├── VS Code Extension (Playwright)                                         │
+│  │   └── Recursos que primary/secondary não entregam                        │
+│  │   └── Fallback quando MCPs falham                                        │
+│  │   └── UI visual para debugging complexo                                  │
+│  │                                                                          │
+│  ├── Chrome DevTools MCP                                                    │
+│  │   └── Ferramentas: mcp__chrome-devtools__*                               │
+│  │   └── Inspeção de network, console, performance                          │
+│  │   └── Screenshots, snapshots detalhados                                  │
+│  │   └── Fallback para Playwright MCP                                       │
+│  │                                                                          │
+│  ├── a11y MCP                                                               │
+│  │   └── Ferramentas: mcp__a11y__*                                          │
+│  │   └── Validação WCAG 2.1 AA especializada                                │
+│  │   └── Color contrast, ARIA attributes                                    │
+│  │                                                                          │
+│  └── React Context MCP                                                      │
+│      └── Ferramentas: mcp__react-context__*                                 │
+│      └── Inspeção de componentes React                                      │
+│      └── Estado, props, hierarquia de componentes                           │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Workflow de Validação Recomendado
+
+```bash
+# 1. PRIMÁRIO - Playwright Native (SEMPRE EXECUTAR)
+cd frontend
+npx playwright test                          # Suite completa
+npx playwright test tests/e2e/dashboard.spec.ts  # Específico
+npx playwright test --ui                     # Modo visual
+
+# 2. SECUNDÁRIO - Playwright MCP (Cross-validação)
+# Usar via Claude Code para validar mesmas páginas
+# mcp__playwright__browser_navigate + browser_snapshot
+
+# 3. ESPECIALIZADO - Conforme necessidade
+# Chrome DevTools: Network, Console, Performance
+# a11y: Acessibilidade WCAG
+# React Context: Estado de componentes
+```
+
+### Quando Usar Cada Ferramenta
+
+| Cenário | Ferramenta | Motivo |
+|---------|------------|--------|
+| CI/CD Pipeline | Playwright Native | Automação, gates, reports |
+| Debugging interativo | Playwright MCP | Snapshot instantâneo |
+| Network issues | Chrome DevTools MCP | Request/response inspection |
+| Accessibility audit | a11y MCP | WCAG compliance |
+| Component state debug | React Context MCP | React internals |
+| Visual regression | Playwright Native | Screenshot comparison |
+| Flaky test investigation | Playwright MCP + DevTools | Multi-perspective |
+
+### Regras de Fallback
+
+1. **Se Playwright Native falhar** → Verificar com Playwright MCP
+2. **Se Playwright MCP falhar** → Usar Chrome DevTools MCP ou VS Code Extension
+3. **Se ambos falharem** → Investigar conflito de browser, usar `/mcp-browser-reset`
+4. **Para features específicas** → Usar ferramenta especializada diretamente
+
+---
+
 ## Fontes
 
 - [Next.js 14 App Router Testing - Shinagawa Labs](https://shinagawa-web.com/en/blogs/nextjs-app-router-testing-setup)
