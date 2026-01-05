@@ -8,7 +8,11 @@
     "build": "cross-env NODE_ENV=production next build",
     "start": "next start -p 3000",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test:pipeline": "ts-node scripts/run-test-pipeline.ts development",
+    "test:pipeline:dev": "ts-node scripts/run-test-pipeline.ts development",
+    "test:pipeline:ci": "ts-node scripts/run-test-pipeline.ts ci",
+    "test:pipeline:debug": "ts-node scripts/run-test-pipeline.ts debug"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
