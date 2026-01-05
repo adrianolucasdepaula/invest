@@ -58,6 +58,7 @@
   ],
   "exclude": [
     "node_modules",
-    "tests/integration-pipeline/**/*"
+    "tests/integration-pipeline/**/*",
+    "tests/contracts/**/*"
   ]
 }

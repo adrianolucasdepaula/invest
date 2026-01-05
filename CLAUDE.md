@@ -342,6 +342,26 @@ O projeto possui **sistema de automação 100%** com detecção de keywords, cor
 - @ .claude/guides/testing-patterns.md (Multi-layer testing, React Testing Library, Playwright E2E, Vitest)
 - @ .claude/guides/web-research-strategy.md (Proactive WebSearch, 4 parallel queries, cross-validation)
 
+### Advanced Testing (FASE 158) ⭐ **v3.0**
+
+**All tools are 100% FREE (Apache 2.0, MIT, AGPL 3.0)**
+
+| Tool | Purpose | File |
+|------|---------|------|
+| Self-Healing | Auto-fallback locators | `frontend/tests/shared/self-healing.ts` |
+| Flaky Detection | ML-inspired quarantine | `frontend/tests/shared/flaky-tracker.ts` |
+| Risk Priority | Financial tests first | `frontend/tests/shared/risk-priority.ts` |
+| TIA | 70-90% CI time reduction | `frontend/scripts/test-impact-analysis.ts` |
+| Contract Testing | Pact CDC | `frontend/tests/contracts/` + `backend/tests/contracts/` |
+| Visual Regression | Playwright built-in | `frontend/tests/visual/visual-regression.spec.ts` |
+| Mutation Testing | 90% threshold financial | `stryker.conf.mjs` |
+| Performance | k6 smoke tests | `k6/smoke-test.js` |
+| Chaos Engineering | Fault injection | `frontend/scripts/chaos-scenarios.ts` |
+
+**ROI esperado:**
+- CI Time: ~15min → ~3min (-80%)
+- Test Maintenance: ~8h/semana → ~2h/semana (-75%)
+
 ### Security & Financial Data
 
 - @ .claude/guides/financial-data-rules.md (Decimal.js, cross-validation, timezone, outlier detection) ⚠️ **CRÍTICO**
@@ -370,9 +390,9 @@ O projeto possui **sistema de automação 100%** com detecção de keywords, cor
 - @ .claude/skills/research-lib.md (Context7 proactive documentation research, 10-20h/month savings)
 - @ .claude/skills/context-check.md (Context check workflow with Context7 integration)
 
-### Universal Validation Flow (FASE 157) ⭐ **NOVO**
+### Universal Validation Flow (FASE 157 + 158) ⭐ **v3.0**
 
-- @ FLUXO_UNIVERSAL_VALIDACAO.md (6-level progressive validation, layer hierarchy, decision matrix)
+- @ FLUXO_UNIVERSAL_VALIDACAO.md (6-level progressive validation, layer hierarchy, decision matrix, v3.0 enhancements)
 - @ .claude/skills/validate-nivel-1.md (Quick Validation: L1+L2 cross-validation, MCP Triplo, 5-10min)
 - @ .claude/skills/validate-nivel-2.md (Deep Validation: FASE 156 Pipeline CI, backend tests, 15-30min)
 - @ .claude/skills/validate-nivel-3.md (Comprehensive: PM Expert, security audit, 45-60min)
@@ -475,6 +495,6 @@ docker logs invest_backend --tail 50    # Backend logs
 
 ---
 
-**Última Atualização:** 2026-01-04
-**Versão:** 3.0 (Universal Validation Flow + @ references)
-**Total de Guias:** 23 (16 anteriores + 5 validate-nivel + FLUXO + template)
+**Última Atualização:** 2026-01-05
+**Versão:** 3.1 (FASE 158 Advanced Testing + Universal Validation Flow v3.0)
+**Total de Guias:** 32 (23 anteriores + 9 FASE 158 testing tools)
